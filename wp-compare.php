@@ -16,7 +16,7 @@
  * Plugin Name:       WP Compare
  * Plugin URI:        wp-mike.com
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           0.1
+ * Version:           0.1.2
  * Author:            Mike Miler
  * Author URI:        wp-mike.com
  * License:           GPL-2.0+
@@ -87,10 +87,10 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'wp-compare'
 );
 
-$myUpdateChecker->setAuthentication(array(
+/*$myUpdateChecker->setAuthentication(array(
 	'consumer_key' => 'QawnqxjWe443wnHUCJ',
 	'consumer_secret' => 'gZ9SGH3d585aFkWZsh8fhbHjnd9sAMzq',
-));
+));*/
 
 //$myUpdateChecker->setBranch('stable-branch');
 
