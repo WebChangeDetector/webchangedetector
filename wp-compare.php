@@ -87,6 +87,11 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'wp-compare'
 );
 
+$myUpdateChecker->setAuthentication(array(
+	'consumer_key' => 'QawnqxjWe443wnHUCJ',
+	'consumer_secret' => 'gZ9SGH3d585aFkWZsh8fhbHjnd9sAMzq',
+));
+
 //$myUpdateChecker->setBranch('stable-branch');
 
 
