@@ -82,12 +82,12 @@ function run_wp_compare() {
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://mm-plugins.s3.eu-central-1.amazonaws.com/wp-compare/plugin.json',
+	'https://bitbucket.org/wpmike/compare-plugin',
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'wp-compare'
 );
 
-$myUpdateChecker->setBranch('stable-branch');
+//$myUpdateChecker->setBranch('stable-branch');
 
 
 run_wp_compare();
