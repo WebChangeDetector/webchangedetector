@@ -9,14 +9,14 @@
  * that starts the plugin.
  *
  * @link              wp-mike.com
- * @since             1.0.0
+ * @since             0.1
  * @package           Wp_Compare
  *
  * @wordpress-plugin
  * Plugin Name:       WP Compare
  * Plugin URI:        wp-mike.com
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           1.0.0
+ * Version:           0.1
  * Author:            Mike Miler
  * Author URI:        wp-mike.com
  * License:           GPL-2.0+
@@ -86,5 +86,8 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'wp-compare'
 );
+
+$myUpdateChecker->setBranch('stable-branch');
+
 
 run_wp_compare();
