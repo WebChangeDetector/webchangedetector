@@ -1,0 +1,47 @@
+.mm_wp_compare td,
+.mm_wp_compare th {
+	padding: 10px;
+}
+
+.mm_wp_compare tr:nth-child( even ) {
+	background-color: #fff;
+}
+
+.mm_wp_compare .pagination {
+	text-align: center;
+}
+
+.mm_wp_compare td.is-difference {
+	text-align: center;
+	background: darkred;
+	color: #fff;
+	border-bottom: 1px solid #fff;
+}
+
+.mm_wp_compare td.no-difference {
+	text-align: center;
+	background: darkgreen;
+	color: #fff;
+	border-bottom: 1px solid #fff;
+}
+
+.mm_wp_compare hr {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.mm_wp_compare .image1,
+.mm_wp_compare .image2,
+.mm_wp_compare .comp_image {
+	width: 32%;
+	float: left;
+	margin-right: 1%;
+}
+
+.mm_wp_compare .image1 img,
+.mm_wp_compare .image2 img,
+.mm_wp_compare .comp_image img {
+	border: 1px solid #eee;
+	padding: 2px;
+	width: 100%;
+}
