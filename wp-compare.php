@@ -79,4 +79,12 @@ function run_wp_compare() {
 	$plugin->run();
 
 }
+
+require 'plugin-update-checker/plugin-update-checker.php';
+$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+	'https://mm-plugins.s3.eu-central-1.amazonaws.com/wp-compare/plugin.json',
+	__FILE__, //Full path to the main plugin file or functions.php.
+	'wp-compare'
+);
+
 run_wp_compare();
