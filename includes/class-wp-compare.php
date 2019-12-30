@@ -304,7 +304,7 @@ class Wp_Compare {
 
 function mm_api( $args ) {
 
-	$url = 'https://compare.wp-mike.com/v1/api.php';
+	$url = 'https://comp.wpmike.com/v1/api.php';
 
 	$api_key = get_option( 'wpcompare_api_key' );
 	//if( !$api_key )
