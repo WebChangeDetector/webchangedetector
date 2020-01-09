@@ -111,7 +111,7 @@ function wp_compare_init(){
 	if( isset( $postdata['action'] ) ) {
 		switch( $postdata['action'] ) {
 			case 'create_free_account':
-				$api_key = $wp_comp->create_free_account();
+				$api_key = $wp_comp->create_free_account( $postdata );
 				break;
 		}
 	}
@@ -122,17 +122,15 @@ function wp_compare_init(){
 	//$verified = $wp_comp->verify_api_key( $api_key );
 
 	if( !$api_key ){
-
 		echo $wp_comp->get_no_account_page();
-
 		return;
-		//$api_key = $wp_comp->create_free_account();
 	}
 
 
 	$group_id = get_option( 'wpcompare_group_id' );
+	$monitoring_group_id = get_option( 'wpcompare_monitoring_group_id' );
 
-	if( !$group_id )
+	if( !$group_id || !$monitoring_group_id )
 		$wp_comp->create_group( $api_key );
 
 	$active_posts = array();
@@ -153,7 +151,7 @@ function wp_compare_init(){
 		// Update API URLs
 		$args = array(
 			'action'		=> 'update_urls',
-			'group_id'		=> $group_id,
+			'group_id'		=> $postdata['group_id'],
 			'posts'			=> json_encode( $active_posts ),
 		);
 
@@ -176,7 +174,7 @@ function wp_compare_init(){
 			</div>';
 	}
 
-	// Get urls of group
+	// Get manual urls of group
 	$args = array(
 		'action'		=> 'get_group_urls',
 		'group_id'		=> $group_id
@@ -190,12 +188,37 @@ function wp_compare_init(){
 		$check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
 	}
 
+	// Get Monitoring URLs
+	$args = array(
+		'action'		=> 'get_group_urls',
+		'group_id'		=> $monitoring_group_id
+	);
+	$monitoring_group_urls = mm_api( $args );
+
+	$check_posts_monitoring = array();
+	foreach( $monitoring_group_urls as $group_url_monitoring ) {
+		$check_posts_monitoring[] = (int)$group_url_monitoring['wp_post_id'];
+		$check_desktop_monitoring[$group_url_monitoring['wp_post_id']] = $group_url_monitoring['desktop'];
+		$check_mobile_monitoring[$group_url_monitoring['wp_post_id']] = $group_url_monitoring['mobile'];
+	}
+
+	// Update monitoring settings
+	if( isset( $postdata['update_monitoring_settings'] ) ) {
+		$args = array(
+			'action'		=> 'update_monitoring_settings',
+			'group_id'		=> $monitoring_group_id,
+			'hour'			=> $postdata['hour'],
+			'interval_in_h'	=> $postdata['interval_in_h']
+		);
+		$updated_monitoring_settings = mm_api( $args );
+	}
+
 	$post_types = get_post_types();
 	echo '<div class="mm_wp_compare">';
 	echo '<h1>WP Compare</h1>';
 
-
 	mm_tabs();
+
 
 	echo '<div style="margin-top: 30px;"></div>';
 	if( isset( $get['tab'] ) )
@@ -203,32 +226,76 @@ function wp_compare_init(){
 	else
 		$tab = 'take-screenshots';
 
-
 	$client_details = $wp_comp->get_account_details( $api_key );
 
-	$comp_usage = $wp_comp->get_usage( $api_key );
+	$comp_usage = $client_details[0]['usage'];
 
 	$limit = $client_details[0]['comp_limit'];
 	$available_compares = $limit - (int)$comp_usage;
+
+	// Amount selected Screenshots
+	$args = array(
+		'action'		=> 'get_amount_sc',
+		'group_id'		=> $group_id
+	);
+	$amount_sc = mm_api( $args );
+
+	//Amount selected Monitoring Screenshots
+	$args = array(
+		'action'		=> 'get_amount_sc',
+		'group_id'		=> $monitoring_group_id
+	);
+	$amount_sc_monitoring = mm_api( $args );
+
+	wp_enqueue_script( 'jquery-ui-accordion' );
+	?>
+	<script type="text/javascript">
+	jQuery(function($){
+		$(".accordion").accordion({ header: "h3", collapsible: true, active: false });
+		$(".accordion").last().accordion("option", "icons", true);
+	});
+	</script>
+	<style>
+		.mm_accordion_title {
+			background: #e8e8e8;
+			padding: 0 20px;
+			border: 1px solid #adadad;
+			margin: 5px auto;
+		}
+
+		.mm_accordion_title small {
+			font-weight: normal;
+		}
+	</style>
+	<?php
 
 	switch( $tab ) {
 
 		case 'take-screenshots':
 			// Take Screenshot
+			echo '<h2>Select URLs</h2>';
+			?>
+			<div class="accordion">
+				<div class="mm_accordion_title">
+					<h3>
+						Manual Compare URLs<br>
+						<small>Currently selected: <strong><?= $amount_sc ?></strong> URLs</small>
+					</h3>
+					<div class="mm_accordion_content">
+						<?php mm_get_url_settings( $group_id ) ?>
+					</div>
+				</div>
+			</div>
+			<?php
 
 			echo '<h2>Do the magic</h2>';
-			$args = array(
-				'action'		=> 'get_amount_sc',
-				'group_id'		=> $group_id
-			);
-
-			$amount_sc = mm_api( $args );
-			echo '<p>Please select the URLs to take a screenshot for at <a href="/wp-admin/admin.php?page=wp-compare&tab=url-settings">Select URLs</a><br>
-				Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
+			echo '<p>
+					Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
 				<strong>Currently selected amount of compares: ' . $amount_sc . '</strong></p>';
 
 			echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=take-screenshots" method="post">';
 			echo '<input type="hidden" value="true" name="take-screenshots">';
+			//echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
 			echo '<input type="submit" value="Take & Compare Screenshots" class="button">';
 			echo '</form>';
 
@@ -258,7 +325,9 @@ function wp_compare_init(){
 			echo '<h2>Latest compares</h2>';
 			$args = array(
 				'action'	=> 'get_compares',
-				'domain'	=> $_SERVER['SERVER_NAME']
+				'domain'	=> $_SERVER['SERVER_NAME'],
+				'group_id'	=> $group_id
+
 			);
 			$compares = mm_api( $args );
 
@@ -289,79 +358,120 @@ function wp_compare_init(){
 			}
 			break;
 
-		case 'url-settings':
+		// Monitoring Screenshots
+		case 'monitoring-screenshots':
 
-			// Select URLS
-			echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=url-settings" method="post">';
-			echo '<input type="hidden" value="wp-compare" name="page">';
-			echo '<input type="hidden" value="true" name="post-urls">';
+			$args = array(
+				'action'	=> 'get_monitoring_settings',
+				'group_id'	=> $monitoring_group_id
+			);
+			$group_settings = mm_api( $args );
+			$group_settings = $group_settings[0];
+			echo '<h2>Select URLs</h2>';
 
-			echo '<script>
-				function mmMarkRows( postId ) {
-					var checkBox = document.getElementById("active-" + postId);
-					var row = document.getElementById("post_id_" + postId );
+			?>
+			<div class="accordion">
+				<div class="mm_accordion_title">
+					<h3>
+						Monitoring Compare URLs<br>
+						<small>Currently selected: <strong><?= $amount_sc_monitoring ?></strong> URLs</small>
 
-					if (checkBox.checked == true){
-						row.style.background = "#17b33147";
-					} else {
-						row.style.background = "#dc323247";
+					</h3>
+					<div class="mm_accordion_content">
+						<?php mm_get_url_settings( $monitoring_group_id, true ) ?>
+					</div>
+				</div>
+
+			</div>
+
+			<h2>Settings for Monitoring</h2>
+			<p>
+				The current settings require <strong><?= $amount_sc_monitoring * ( 24 / $group_settings['interval_in_h'] ) * 30 ?></strong> compares per month.<br>
+				Your available compares are <strong><?= $available_compares . ' / ' . $limit ?></strong>.
+			<p>
+			<form action="/wp-admin/admin.php?page=wp-compare&tab=monitoring-screenshots" method="post">
+			<input type="hidden" name="update_monitoring_settings" value="true">
+				<p>
+					<label for="monitoring">Enable Monitoring</label>
+					<select name="monitoring">
+						<option value="1" <?= isset( $group_settings['monitoring'] ) && $group_settings['monitoring'] == '1' ? 'selected' : ''; ?>>Yes</option>
+						<option value="0" <?= isset( $group_settings['monitoring'] ) && $group_settings['monitoring'] == '0' ? 'selected' : ''; ?>>No</option>
+					</select>
+				</p>
+				<p>
+				<label for="hour">Hour of the day</label>
+				<select name="hour" >
+					<?php
+					for( $i=0; $i < 24; $i++ ) {
+						if( isset( $group_settings['hour'] ) && $group_settings['hour'] == $i )
+							$selected = 'selected';
+						else
+							$selected = '';
+						echo '<option value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
 					}
+					?>
+
+				</select>
+				</p>
+
+				<label for="interval_in_h">Enable Monitoring</label>
+				<select name="interval_in_h">
+					<option value="1" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '1' ? 'selected' : ''; ?>>
+						Every 1 hour (720 Compares / URL / month)
+					</option>
+					<option value="3" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '3' ? 'selected' : ''; ?>>
+						Every 3 hours (240 Compares / URL / month)
+						</option>
+					<option value="6" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '6' ? 'selected' : ''; ?>>
+						Every 6 hours (120 Compares / URL /  month)
+						</option>
+					<option value="12" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '12' ? 'selected' : ''; ?>>
+						Every 12 hours (60 Compares / URL /  month)
+						</option>
+					<option value="24" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '24' ? 'selected' : ''; ?>>
+						Every 24 hours (30 Compares / URL /  month)
+					</option>
+				</select>
+				<br>
+				<input class="button" type="submit" value="Save" >
+			</form>
+
+			<?php
+
+			// Compare overview
+			echo '<h2>Latest compares</h2>';
+			$args = array(
+				'action'	=> 'get_compares',
+				'domain'	=> $_SERVER['SERVER_NAME'],
+				'group_id'	=> $monitoring_group_id
+			);
+			$compares = mm_api( $args );
+
+			if( count( $compares ) == 0 )
+				echo "There are no compares to show yet...";
+			else {
+				echo '<table><tr><th>URL</th><th>Device</th><th>Compare Date</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+				foreach( $compares as $key => $compare) {
+					echo '<tr>';
+					echo '<td>' . $compare['url'] . '</td>';
+					echo '<td>' . $compare['device'] . '</td>';
+					echo '<td>' . date( "d/m/Y H:i", $compare['timestamp'] ) . '</td>';
+					echo '<td>' . date( "d/m/Y H:i", $compare['image1_timestamp'] ) . '<br>'. date( "d/m/Y H:i", $compare['image2_timestamp'] ) . '</td>';
+					if( $compare['difference_percent'] )
+						$class = 'is-difference';
+					else
+						$class = 'no-difference';
+					echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
+					//echo '<td><a href="' . $compare['link'] . '" target="_blank">Show compare image</a></td>';
+					echo '<td><form action="/wp-admin/admin.php?page=wp-compare&tab=show-compare" method="post">';
+					echo '<input type="hidden" name="action" value="show_compare">';
+					echo '<input type="hidden" name="compare_id" value="' . $compare['ID'] . '">';
+					echo '<input class="button" type="submit" value="Show Compare">';
+					echo '</form></td>';
+					echo '</tr>';
 				}
-			</script>';
-
-
-			foreach( $post_types as $post_type ) {
-
-				$posts = get_posts([
-				  'post_type' => $post_type,
-				  'post_status' => 'publish',
-				  'numberposts' => -1,
-				  'order'    => 'ASC'
-				]);
-
-				if( $posts ) {
-					echo '<h2>' . ucfirst( $post_type ) . '</h2>';
-					echo '<table><tr><th>Active</th><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
-					foreach( $posts as $post ) {
-						$url = get_permalink( $post );
-
-						// Check posts
-						if( in_array( $post->ID, $check_posts ) )
-							$checked = 'checked';
-						else
-							$checked = '';
-
-						// Check Desktop
-						if( isset( $check_desktop[$post->ID] ) && $check_desktop[$post->ID] == 1 )
-							$checked_desktop = 'checked';
-						else
-							$checked_desktop = '';
-
-						// Check Mobile
-						if( isset( $check_mobile[$post->ID] ) && $check_mobile[$post->ID] == 1 )
-							$checked_mobile = 'checked';
-						else
-							$checked_mobile = '';
-
-
-						echo '<tr id="post_id_' . $post->ID . '">';
-						echo '<td><input id="active-' . $post->ID . '" onclick="mmMarkRows(' . $post->ID . ')" type="checkbox" name="pid-' . $post->ID . '" value="' . $post->ID . '" ' . $checked . '></td>';
-						echo '<td><input type="hidden" value="0" name="desktop-' . $post->ID . '"><input type="checkbox" name="desktop-' . $post->ID . '" value="1" ' . $checked_desktop . '></td>';
-						echo '<td><input type="hidden" value="0" name="mobile-' . $post->ID . '"><input type="checkbox" name="mobile-' . $post->ID . '" value="1" ' . $checked_mobile . '></td>';
-						echo '<td>' . $post->post_title . '</td>';
-						echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-						echo '</tr>';
-
-						echo '<script>mmMarkRows(' . $post->ID . '); </script>';
-
-
-					}
-					echo '</table>';
-
-				}
+				echo '</table>';
 			}
-			echo '<input class="button" type="submit" value="Save" style="margin-top: 30px">';
-			echo '</form>';
 			break;
 
 		case 'settings':
@@ -373,29 +483,57 @@ function wp_compare_init(){
     				<p>Please enter a valid API Key.</p>
 				</div>';
 			} else {
-
-
-				echo '<p>Monthly compares: ' . $limit . '</p>';
-
-				echo '<p>Used compares: ' . $comp_usage . '</p>';
-				//var_dump( $client_details );
-
-				echo '<p>Available compares for this month: ' . $available_compares . '</p>';
+				echo '<h2>Your credits</h2>';
+				echo 'Your current plan: <strong>' . $client_details[0]['name'] . '</strong>';
+				echo '<p>Monthly compares: ' . $limit . '<br>';
+				echo 'Used compares: ' . $comp_usage . '<br>';
+				echo 'Available compares for this month: ' . $available_compares . '</p>';
 			}
+			?>
 
-			echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">';
-			echo 'API Key <input type="text" name="api-key" value="' . $api_key . '">';
-			echo '<input type="submit" value="Save" class="button">';
-			echo '</form>';
+			<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">
+				API Key
+				<input type="text" name="api-key" value="<?= $api_key ?>">
+				<input type="submit" value="Save" class="button">
+			</form>
+
+
+			<h2>Get more compares</h2>
+			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>" target="_blank">WP Compare S (100 Compares / month)</a><br>
+			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>" target="_blank">WP Compare M (1000 Compares / month)</a><br>
+			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>" target="_blank">WP Compare L (10000 Compares / month)</a><br>
+			You need more compares? Contact us at <a href="mailto:mike@wp-mike.com">mike@wp-mike.com</a>.
+
+
+			<?php
 			break;
 
 		case 'help':
+
 			echo '<h2>How it works:</h2>';
 			echo '<p>
-					<ol><li>Select the urls you want to take a screenshot for and do a compare at <a href="/wp-admin/admin.php?page=wp-compare&tab=url-settings"> Select URLs</a></li>
-					<li>Hit the Button "Take & Compare Screenshots". The URLs will be added to our queue. Below you can see all URLs in the queue</li>
-					<li>When the screenshots and compares are finished, you can see the compare at "Latest Compares"</li></ol>
-					At the Tab "Settings" you have an overview of your usage and limits. </p>';
+					<strong>Manual Change Detection</strong><br>
+					Here you can select the pages of your website and manually take the screenshots.
+					Use this Method, when you want to perform updates on your website. Take and compare screenshots
+					before and after the update and you will see if there are differences on the selected pages.
+					<ol>
+						<li>Select the urls you want to take a screenshot.</li>
+						<li>Hit the Button "Take & Compare Screenshots". The URLs will be added to our queue. Below you can see all URLs in the queue</li>
+						<li>When the screenshots and compares are finished, you can see the compare at "Latest Compares"</li>
+					</ol>
+					</p>
+					<p>
+					<strong>Monitoring Change Detection</strong><br>
+					Use the monitoring to automatically take and compare screenshots in a specific interval.
+					When there are differences in a compare, you will automatically receive an alert email.
+					<ol>
+						<li>Select the urls you want monitor.</li>
+						<li>Select the interval and the hour of day for the first screenshot to be taken. Please be aware
+						 that compares will be only performed when you have enough credit available.</li>
+						<li>You find all monitoring compares "Latest Compares"</li>
+					</ol>
+					At the Tab "Settings" you have an overview of your usage and limits. You can also up- or downgrade your package.
+					</p>';
 			break;
 
 		case 'show-compare':
@@ -407,6 +545,101 @@ function wp_compare_init(){
 			echo mm_api( $args );
 	}
 	echo '</div>'; // closing from div mm_wp_compare
+}
+
+function mm_get_url_settings( $group_id, $monitoring_group = false ) {
+
+	// Get manual urls of group
+	$args = array(
+		'action'		=> 'get_group_urls',
+		'group_id'		=> $group_id
+	);
+	$group_urls = mm_api( $args );
+
+	$check_posts = array();
+	foreach( $group_urls as $group_url ) {
+		$check_posts[] = (int)$group_url['wp_post_id'];
+		$check_desktop[$group_url['wp_post_id']] = $group_url['desktop'];
+		$check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
+	}
+
+	// Select URLS
+	if( $monitoring_group )
+		$tab = "monitoring-screenshots";
+	else
+		$tab = "take-screenshots";
+
+	echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=' . $tab . '" method="post">';
+	echo '<input type="hidden" value="wp-compare" name="page">';
+	echo '<input type="hidden" value="true" name="post-urls">';
+	echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
+
+	echo '<script>
+		function mmMarkRows( postId ) {
+			var checkBox = document.getElementById("active-" + postId);
+			var row = document.getElementById("post_id_" + postId );
+
+			if (checkBox.checked == true){
+				row.style.background = "#17b33147";
+			} else {
+				row.style.background = "#dc323247";
+			}
+		}
+	</script>';
+
+	$post_types = get_post_types();
+
+	foreach( $post_types as $post_type ) {
+
+		$posts = get_posts([
+		  'post_type' => $post_type,
+		  'post_status' => 'publish',
+		  'numberposts' => -1,
+		  'order'    => 'ASC'
+		]);
+
+		if( $posts ) {
+			echo '<h2>' . ucfirst( $post_type ) . '</h2>';
+			echo '<table><tr><th>Active</th><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
+			foreach( $posts as $post ) {
+				$url = get_permalink( $post );
+
+				// Check posts
+				if( in_array( $post->ID, $check_posts ) )
+					$checked = 'checked';
+				else
+					$checked = '';
+
+				// Check Desktop
+				if( isset( $check_desktop[$post->ID] ) && $check_desktop[$post->ID] == 1 )
+					$checked_desktop = 'checked';
+				else
+					$checked_desktop = '';
+
+				// Check Mobile
+				if( isset( $check_mobile[$post->ID] ) && $check_mobile[$post->ID] == 1 )
+					$checked_mobile = 'checked';
+				else
+					$checked_mobile = '';
+
+				echo '<tr id="post_id_' . $group_id . '-' . $post->ID . '">';
+				echo '<td><input id="active-' . $group_id . '-' . $post->ID . '" onclick="mmMarkRows(\'' . $group_id . '-' . $post->ID . '\')" type="checkbox" name="pid-' . $post->ID . '" value="' . $post->ID . '" ' . $checked . '></td>';
+				echo '<td><input type="hidden" value="0" name="desktop-' . $post->ID . '"><input type="checkbox" name="desktop-' . $post->ID . '" value="1" ' . $checked_desktop . '></td>';
+				echo '<td><input type="hidden" value="0" name="mobile-' . $post->ID . '"><input type="checkbox" name="mobile-' . $post->ID . '" value="1" ' . $checked_mobile . '></td>';
+				echo '<td>' . $post->post_title . '</td>';
+				echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+				echo '</tr>';
+
+				echo '<script>mmMarkRows(\'' . $group_id . '-' . $post->ID . '\'); </script>';
+
+
+			}
+			echo '</table>';
+
+		}
+	}
+	echo '<input class="button" type="submit" value="Save" style="margin-top: 30px">';
+	echo '</form>';
 }
 
 function isJson($string) {
@@ -428,8 +661,8 @@ function mm_tabs() {
         ?>
 
         <h2 class="nav-tab-wrapper">
-            <a href="?page=wp-compare&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Take and Compare Screenshots</a>
-	        <a href="?page=wp-compare&tab=url-settings" class="nav-tab <?php echo $active_tab == 'url-settings' ? 'nav-tab-active' : ''; ?>">Select URLs</a>
+            <a href="?page=wp-compare&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Manual Change Detection</a>
+            <a href="?page=wp-compare&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Monitoring Change Detection</a>
             <a href="?page=wp-compare&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
             <a href="?page=wp-compare&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
         </h2>

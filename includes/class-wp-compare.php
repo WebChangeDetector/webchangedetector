@@ -236,16 +236,20 @@ class Wp_Compare {
 	public function take_screenshot( $group_id, $api_key ) {
 		$args = array(
 			'action'		=> 'take_screenshots',
-			'group_id'		=> $group_id
+			'group_id'		=> $group_id,
+			'api_key'		=> $api_key
 		);
 
 		return mm_api( $args );
 	}
 
-	function create_free_account() {
+	function create_free_account( $post ) {
 		$args = array(
 			'action'		=> 'add_free_account',
-			'domain'		=> $_SERVER['SERVER_NAME']
+			'domain'		=> $_SERVER['SERVER_NAME'],
+			'first_name'	=> $post['first_name'],
+			'last_name'		=> $post['last_name'],
+			'email'			=> $post['email'],
 		);
 
 		$api_key = mm_api( $args );
@@ -288,24 +292,33 @@ class Wp_Compare {
 
 		$group = mm_api( $args );
 
-		$group_id = $group[0]['id'];
+		$manual_group_id = $group['manual_group']['id'];
+		$monitoring_group_id = $group['monitoring_group']['id'];
 
-		update_option( 'wpcompare_group_id', $group_id );
+		update_option( 'wpcompare_group_id', $manual_group_id );
+		update_option( 'wpcompare_monitoring_group_id', $monitoring_group_id );
 	}
 
 	function get_no_account_page() {
-		$output = '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">';
-		$output .= '<input type="hidden" name="action" value="create_free_account">';
+		$output = '<div class="mm_wp_compare">';
+		$output .= '<h1>WP Compare</h1>
+					<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>';
+		$output .= '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">';
+		$output .= '<input type="hidden" name="action" value="create_free_account"><br>';
+		$output .= '<p><label>First Name</label><input type="text" name="first_name"></p>';
+		$output .= '<p><label>Last Name</label><input type="text" name="last_name"></p>';
+		$output .= '<p><label>Email</label><input type="text" name="email"></p>';
 		$output .= '<input type="submit" value="Create free account" class="button">';
-
+		$output .= '</div>';
 		return $output;
 	}
 }
 
 function mm_api( $args ) {
 
-	$url = 'https://comp.wpmike.com/v1/api.php';
-
+	//$url = 'https://comp.wpmike.com/v1/api.php';
+	$url = 'https://app.wpmike.com/v1/api.php';
+// 34.243.134.105
 	$api_key = get_option( 'wpcompare_api_key' );
 	//if( !$api_key )
 	//	return 'No API Key';
@@ -314,13 +327,17 @@ function mm_api( $args ) {
 		$args['api_key'] = $api_key;
 
 	$ch = curl_init( $url );
-	curl_setopt($ch, CURLOPT_USERPWD, "wpmike:letmein");
+	//curl_setopt($ch, CURLOPT_USERPWD, "wpmike:letmein");
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
 	curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+	//curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 	$result = curl_exec($ch);
+
+	if( !$result )
+		return curl_error($ch);
 
 	if( isJson( $result ) )
 		return json_decode( $result, true );
