@@ -247,6 +247,12 @@ function wp_compare_init(){
 	);
 	$amount_sc_monitoring = mm_api( $args );
 
+	if( !$amount_sc_monitoring )
+		$amount_sc_monitoring = '0';
+	
+	if( !$amount_sc )
+		$amount_sc = '0';
+
 	wp_enqueue_script( 'jquery-ui-accordion' );
 	?>
 	<script type="text/javascript">
