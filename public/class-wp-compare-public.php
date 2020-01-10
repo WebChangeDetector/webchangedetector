@@ -208,7 +208,8 @@ function wp_compare_init(){
 			'action'		=> 'update_monitoring_settings',
 			'group_id'		=> $monitoring_group_id,
 			'hour'			=> $postdata['hour'],
-			'interval_in_h'	=> $postdata['interval_in_h']
+			'interval_in_h'	=> $postdata['interval_in_h'],
+			'alert_email'	=> $postdata['alert_email']
 		);
 		$updated_monitoring_settings = mm_api( $args );
 	}
@@ -227,10 +228,18 @@ function wp_compare_init(){
 		$tab = 'take-screenshots';
 
 	$client_details = $wp_comp->get_account_details( $api_key );
+	$client_details = $client_details[0];
 
-	$comp_usage = $client_details[0]['usage'];
+	$comp_usage = $client_details['usage'];
 
-	$limit = $client_details[0]['comp_limit'];
+	if( $client_details['one_time'] ) {
+		if( strtotime( "+1 month", $client_details['start_month'] ) > date("U" ) )
+			$limit = $client_details['comp_limit'];
+		else
+			$limit = 0;
+	} else
+		$limit = $client_details['comp_limit'];
+
 	$available_compares = $limit - (int)$comp_usage;
 
 	// Amount selected Screenshots
@@ -249,7 +258,7 @@ function wp_compare_init(){
 
 	if( !$amount_sc_monitoring )
 		$amount_sc_monitoring = '0';
-	
+
 	if( !$amount_sc )
 		$amount_sc = '0';
 
@@ -278,6 +287,27 @@ function wp_compare_init(){
 	switch( $tab ) {
 
 		case 'take-screenshots':
+
+			// Show queued urls
+			$args = array(
+				'action'	=> 'get_queue',
+				'group_id'	=> $group_id
+			);
+			$queue = mm_api( $args );
+
+			if( !empty( $queue ) ) {
+				echo '<div class="mm_processing_container">';
+				echo '<h2>Currently Processing</h2>';
+
+				echo '<table><tr><th>URL</th><th>Device</th><th>Status</th></tr>';
+
+				foreach( $queue as $url ) {
+					echo '<tr><td>' . $url['url'] . '</td><td>' . ucfirst( $url['device'] ) . '</td><td>Processing...</td></tr>';
+				}
+				echo '</table>';
+				echo '</div>';
+				echo '<hr>';
+			}
 			// Take Screenshot
 			echo '<h2>Select URLs</h2>';
 			?>
@@ -307,25 +337,7 @@ function wp_compare_init(){
 
 
 			echo '<hr>';
-			// Show queued urls
-			echo '<h2>Currently Processing</h2>';
-			$args = array(
-				'action'	=> 'get_queue',
-				'group_id'	=> $group_id
-			);
-			$queue = mm_api( $args );
 
-			if( empty( $queue) )
-				echo 'There are currently no urls to process.';
-			else {
-				echo '<table><tr><th>URL</th><th>Device</th><th>Status</th></tr>';
-
-				foreach( $queue as $url ) {
-					echo '<tr><td>' . $url['url'] . '</td><td>' . ucfirst( $url['device'] ) . '</td><td>Processing...</td></tr>';
-				}
-				echo '</table>';
-			}
-			echo '<hr>';
 
 			// Compare overview
 			echo '<h2>Latest compares</h2>';
@@ -344,7 +356,7 @@ function wp_compare_init(){
 				foreach( $compares as $key => $compare) {
 					echo '<tr>';
 					echo '<td>' . $compare['url'] . '</td>';
-					echo '<td>' . $compare['device'] . '</td>';
+					echo '<td>' . ucfirst( $compare['device'] ) . '</td>';
 					echo '<td>' . date( "d/m/Y H:i", $compare['timestamp'] ) . '</td>';
 					echo '<td>' . date( "d/m/Y H:i", $compare['image1_timestamp'] ) . '<br>'. date( "d/m/Y H:i", $compare['image2_timestamp'] ) . '</td>';
 					if( $compare['difference_percent'] )
@@ -419,7 +431,7 @@ function wp_compare_init(){
 
 				</select>
 				</p>
-
+				<p>
 				<label for="interval_in_h">Enable Monitoring</label>
 				<select name="interval_in_h">
 					<option value="1" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '1' ? 'selected' : ''; ?>>
@@ -438,7 +450,11 @@ function wp_compare_init(){
 						Every 24 hours (30 Compares / URL /  month)
 					</option>
 				</select>
-				<br>
+				</p>
+				<p>
+				<label for="alert_email">Email address for alerts</label>
+				<input type="text" name="alert_email" value="<?= isset( $group_settings['alert_email'] ) ? $group_settings['alert_email'] : '' ?> ">
+				</p>
 				<input class="button" type="submit" value="Save" >
 			</form>
 
@@ -489,11 +505,37 @@ function wp_compare_init(){
     				<p>Please enter a valid API Key.</p>
 				</div>';
 			} else {
+
 				echo '<h2>Your credits</h2>';
-				echo 'Your current plan: <strong>' . $client_details[0]['name'] . '</strong>';
-				echo '<p>Monthly compares: ' . $limit . '<br>';
+				echo 'Your current plan: <strong>' . $client_details['name'] . '</strong><br>';
+
+				$start_date = strtotime( $client_details['start_date'] );
+
+				// Calculate end of one-time plans
+				if( $client_details['one_time'] ) {
+
+					$end_of_trial = strtotime( "+1 month ", $start_date );
+					echo 'Your compares are valid until <strong>' . date( "d/m/Y" , $end_of_trial ) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
+
+				} else
+				// Calculate next renew date
+				{
+
+					$renew_current_month = mktime( 0,0,0, date("m"), date("d", $start_date), date("Y" ) );
+					$today = date("U");
+
+					if( $today > $renew_current_month )
+						$renew_date = strtotime( "+1 month", $renew_current_month );
+					else
+						$renew_date = $renew_current_month;
+
+					echo 'Next renew: ' . date( "d/m/Y" , $renew_date );
+					//if( !$client_details['one_time'] ) {
+
+				}
+				echo '<p>Compares in this period: ' . $limit . '<br>';
 				echo 'Used compares: ' . $comp_usage . '<br>';
-				echo 'Available compares for this month: ' . $available_compares . '</p>';
+				echo 'Available compares in this period: ' . $available_compares . '</p>';
 			}
 			?>
 
@@ -503,15 +545,30 @@ function wp_compare_init(){
 				<input type="submit" value="Save" class="button">
 			</form>
 
-
-			<h2>Get more compares</h2>
-			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>" target="_blank">WP Compare S (100 Compares / month)</a><br>
-			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>" target="_blank">WP Compare M (1000 Compares / month)</a><br>
-			<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>" target="_blank">WP Compare L (10000 Compares / month)</a><br>
-			You need more compares? Contact us at <a href="mailto:mike@wp-mike.com">mike@wp-mike.com</a>.
-
-
 			<?php
+			if( (int)$client_details['plan_id'] === 1 ) {
+			?>
+				<h2>Get more compares</h2>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>" target="_blank">WP Compare S (100 Compares / month)</a><br>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>" target="_blank">WP Compare M (1000 Compares / month)</a><br>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>" target="_blank">WP Compare L (10000 Compares / month)</a><br>
+				You need more compares? Contact us at <a href="mailto:mike@wp-mike.com">mike@wp-mike.com</a>.
+			<?php
+			} else {
+				?>
+				<h2>Need more compares?</h2>
+				To upgrade your account follow these steps:
+				<ol>
+					<li>Login to your account at <a href="https://www.wp-mike.com/boarding" target="_blank">wp-mike.com</a></li>
+					<li>Navigate to your Services or click this link: <a href="https://hosting.wp-mike.com/clientarea.php?action=products" target="_blank">My Services</a></li>
+					<li>Select your Compare package</li>
+					<li>Click the Upgrade button in the left sidebar</li>
+					<li>Select your new package and complete the upgrade</li>
+				</ol>
+				The new amount of compares will be available immediatelly. The renew date will not change with an upgrade.
+
+				<?php
+			}
 			break;
 
 		case 'help':

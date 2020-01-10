@@ -1,3 +1,7 @@
+.mm_wp_compare {
+	max-width: 98%;
+}
+
 .mm_wp_compare td,
 .mm_wp_compare th {
 	padding: 10px;
@@ -54,4 +58,10 @@
 .mm_wp_compare ul li {
 	list-style: disc;
 	margin-left: 15px;
+}
+
+.mm_wp_compare .mm_processing_container {
+	padding: 20px;
+    background: #fff2db;
+    border: 1px solid #adadad;
 }
