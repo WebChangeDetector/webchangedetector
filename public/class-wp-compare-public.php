@@ -229,11 +229,10 @@ function wp_compare_init(){
 
 	$client_details = $wp_comp->get_account_details( $api_key );
 	$client_details = $client_details[0];
-
+//echo strtotime( "+1 month", strtotime( $client_details['start_date'] ) )  . '<br>' . date("U" );
 	$comp_usage = $client_details['usage'];
-
 	if( $client_details['one_time'] ) {
-		if( strtotime( "+1 month", $client_details['start_month'] ) > date("U" ) )
+		if( strtotime( "+1 month", strtotime( $client_details['start_date'] ) ) > date("U" ) )
 			$limit = $client_details['comp_limit'];
 		else
 			$limit = 0;
@@ -549,9 +548,9 @@ function wp_compare_init(){
 			if( (int)$client_details['plan_id'] === 1 ) {
 			?>
 				<h2>Get more compares</h2>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>" target="_blank">WP Compare S (100 Compares / month)</a><br>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>" target="_blank">WP Compare M (1000 Compares / month)</a><br>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>" target="_blank">WP Compare L (10000 Compares / month)</a><br>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>&language=english" target="_blank">WP Compare S (100 Compares / month)</a><br>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>&language=english" target="_blank">WP Compare M (1000 Compares / month)</a><br>
+				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>&language=english" target="_blank">WP Compare L (10000 Compares / month)</a><br>
 				You need more compares? Contact us at <a href="mailto:mike@wp-mike.com">mike@wp-mike.com</a>.
 			<?php
 			} else {
