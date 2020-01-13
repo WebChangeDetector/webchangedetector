@@ -65,3 +65,14 @@
     background: #fff2db;
     border: 1px solid #adadad;
 }
+
+.mm_accordion_title {
+	background: #e8e8e8;
+	padding: 0 20px;
+	border: 1px solid #adadad;
+	margin: 5px auto;
+}
+
+.mm_accordion_title small {
+	font-weight: normal;
+}

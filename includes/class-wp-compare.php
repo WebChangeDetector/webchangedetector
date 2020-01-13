@@ -256,10 +256,31 @@ class Wp_Compare {
 
 		update_option( 'wpcompare_api_key', $api_key );
 		delete_option( 'wpcompare_group_id' );
+		delete_option( 'wpcompare_monitoring_group_id' );
 
 		$this->create_group( $api_key );
 
 		return $api_key;
+	}
+
+	function verify_account() { //Replaces get_api_key and verify_api_key
+		$api_key = get_option( 'wpcompare_api_key' );
+		if( $api_key ) {
+			$args = array(
+				'action'		=> 'verify_account',
+				'api_key'		=> $api_key
+			);
+			return mm_api( $args );
+		} else
+			return false;
+	}
+
+	function resend_confirmation_mail( $api_key ) {
+		$args = array(
+			'action'	=> 'resend_verification_email',
+			'api_key'	=> $api_key
+		);
+		mm_api( $args );
 	}
 
 	function get_api_key() {
@@ -273,10 +294,28 @@ class Wp_Compare {
 
 	}
 
+	function get_api_key_form( $api_key = false ) {
+
+		return '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">
+				API Key
+				<input type="text" name="api-key" value="' . $api_key .  '">
+				<input type="submit" value="Save" class="button">
+			</form>';
+	}
+
 	function verify_api_key( $api_key ) {
 		$args = array(
 			'action'		=> 'check_api_key',
 			'api_key'		=> $api_key
+		);
+
+		return mm_api( $args );
+	}
+
+	function check_activated_account( $api_key ) {
+		$args = array(
+			'action'	=> 'check_account_activated',
+			'api_key'	=> $api_key
 		);
 
 		return mm_api( $args );
@@ -300,16 +339,69 @@ class Wp_Compare {
 	}
 
 	function get_no_account_page() {
-		$output = '<div class="mm_wp_compare">';
-		$output .= '<h1>WP Compare</h1>
-					<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>';
-		$output .= '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">';
-		$output .= '<input type="hidden" name="action" value="create_free_account"><br>';
-		$output .= '<p><label>First Name</label><input type="text" name="first_name"></p>';
-		$output .= '<p><label>Last Name</label><input type="text" name="last_name"></p>';
-		$output .= '<p><label>Email</label><input type="text" name="email"></p>';
-		$output .= '<input type="submit" value="Create free account" class="button">';
-		$output .= '</div>';
+
+		?>
+		<script>
+			function mmValidateEmail(email) {
+				var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+				return re.test(email);
+			}
+
+			function mmValidateForm() {
+
+				var firstName = document.forms["new_account"]["first_name"].value;
+				var lastName = document.forms["new_account"]["last_name"].value;
+				var email = document.forms["new_account"]["email"].value;
+				var message = "";
+
+				if (firstName == "") {
+					document.getElementById("form_first_name").style.border='1px solid red';
+					message = message + "First Name must be filled \n";
+				} else
+					document.getElementById("form_first_name").style.border='1px solid green';
+				if (lastName == "") {
+					document.getElementById("form_last_name").style.border='1px solid red';
+					message = message + "Last Name must be filled \n";
+				} else
+					document.getElementById("form_last_name").style.border='1px solid green';
+
+				if (email == "") {
+					document.getElementById("form_email").style.border='1px solid red';
+					  message = message + "Email must be filled \n";
+				} else {
+					if( !mmValidateEmail( email ) ) {
+						document.getElementById("form_email").style.border='1px solid red';
+						message = message + "Please check your email address."
+					} else
+						document.getElementById("form_email").style.border='1px solid green';
+				}
+
+				if( message != "" ) {
+					alert( message );
+					return false;
+				}
+			}
+
+		</script>
+		<?php
+
+		delete_option( 'wpcompare_api_key' );
+		delete_option( 'wpcompare_group_id');
+		delete_option( 'wpcompare_monitoring_group_id' );
+
+		$output =  '<div class="mm_wp_compare">
+		<h1>WP Compare</h1>
+		<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>
+		<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=wp-compare&tab=settings" onsubmit="return mmValidateForm()" method="post">
+			<input type="hidden" name="action" value="create_free_account"><br>
+			<p><label>First Name</label><input id="form_first_name" type="text" name="first_name"></p>
+			<p><label>Last Name</label><input type="text" id="form_last_name" name="last_name"></p>
+			<p><label>Email</label><input type="text" id="form_email" name="email"></p>
+			<input type="submit" value="Create free account" class="button">
+		</form>
+		<h2>You already have an API key?</h2>
+		' . $this->get_api_key_form() . '
+		</div>';
 		return $output;
 	}
 }

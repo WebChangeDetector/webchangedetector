@@ -103,29 +103,60 @@ function wp_compare_init(){
 
 	$wp_comp = new WP_COMPARE;
 
+
 	if( isset( $postdata['api-key'] ) ){
 		update_option( 'wpcompare_api_key', $postdata['api-key'] );
-		delete_option( 'wpcompare_group_id' );
+		//delete_option( 'wpcompare_group_id' );
 	}
+
+
 
 	if( isset( $postdata['action'] ) ) {
 		switch( $postdata['action'] ) {
 			case 'create_free_account':
 				$api_key = $wp_comp->create_free_account( $postdata );
 				break;
+
+
 		}
 	}
 
-	if( !isset( $api_key ) )
-		$api_key = $wp_comp->get_api_key();
+	// Check for the account
+	$account_keys = $wp_comp->verify_account();
 
-	//$verified = $wp_comp->verify_api_key( $api_key );
-
-	if( !$api_key ){
+	// The account doesn't have an api_key or activation_key
+	if( !$account_keys ) {
 		echo $wp_comp->get_no_account_page();
 		return;
 	}
 
+	// The account is not activated yet, but the api_key is there already
+	if( isset( $account_keys['api_key'] ) && isset( $account_keys['activation_key'] ) ) {
+
+		if( isset( $postdata['action'] ) && $postdata['action'] == 'resend_confirmation_mail' ) {
+			$wp_comp->resend_confirmation_mail( $account_keys['api_key'] );
+			echo '<div class="updated notice">
+   					<p>Email sent successfully.</p>
+				</div>';
+
+		}
+
+		echo '<div class="error notice">
+   					<p>Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.</p>
+				</div>
+				<p>You didn\'t receive the email? Please also check your spam folder. To send the email again, please click the button below</p>
+				<form action="/wp-admin/admin.php?page=wp-compare&tab=take-screenshots" method="post">
+					<input type="hidden" name="action" value="resend_confirmation_mail">
+					<input type="submit" value="Send confirmation mail again" class="button">
+				</form>';
+		return;
+	}
+
+	// Set the api_key
+	if( isset( $account_keys['api_key'] ) )
+		$api_key = $account_keys['api_key'];
+	else
+		$api_key = false;
 
 	$group_id = get_option( 'wpcompare_group_id' );
 	$monitoring_group_id = get_option( 'wpcompare_monitoring_group_id' );
@@ -269,18 +300,7 @@ function wp_compare_init(){
 		$(".accordion").last().accordion("option", "icons", true);
 	});
 	</script>
-	<style>
-		.mm_accordion_title {
-			background: #e8e8e8;
-			padding: 0 20px;
-			border: 1px solid #adadad;
-			margin: 5px auto;
-		}
 
-		.mm_accordion_title small {
-			font-weight: normal;
-		}
-	</style>
 	<?php
 
 	switch( $tab ) {
@@ -307,6 +327,7 @@ function wp_compare_init(){
 				echo '</div>';
 				echo '<hr>';
 			}
+
 			// Take Screenshot
 			echo '<h2>Select URLs</h2>';
 			?>
@@ -333,10 +354,7 @@ function wp_compare_init(){
 			//echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
 			echo '<input type="submit" value="Take & Compare Screenshots" class="button">';
 			echo '</form>';
-
-
 			echo '<hr>';
-
 
 			// Compare overview
 			echo '<h2>Latest compares</h2>';
@@ -516,10 +534,8 @@ function wp_compare_init(){
 					$end_of_trial = strtotime( "+1 month ", $start_date );
 					echo 'Your compares are valid until <strong>' . date( "d/m/Y" , $end_of_trial ) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
 
-				} else
-				// Calculate next renew date
-				{
-
+				} else {
+					// Calculate next renew date
 					$renew_current_month = mktime( 0,0,0, date("m"), date("d", $start_date), date("Y" ) );
 					$today = date("U");
 
@@ -535,39 +551,17 @@ function wp_compare_init(){
 				echo '<p>Compares in this period: ' . $limit . '<br>';
 				echo 'Used compares: ' . $comp_usage . '<br>';
 				echo 'Available compares in this period: ' . $available_compares . '</p>';
+
 			}
-			?>
+			echo $wp_comp->get_api_key_form( $api_key );
 
-			<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">
-				API Key
-				<input type="text" name="api-key" value="<?= $api_key ?>">
-				<input type="submit" value="Save" class="button">
-			</form>
+			$args = array(
+				'action'	=> 'get_upgrade_options',
+				'plan_id'	=> (int)$client_details['plan_id']
+			);
 
-			<?php
-			if( (int)$client_details['plan_id'] === 1 ) {
-			?>
-				<h2>Get more compares</h2>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=50&customfield[51]=<?= $api_key ?>&language=english" target="_blank">WP Compare S (100 Compares / month)</a><br>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=51&customfield[52]=<?= $api_key ?>&language=english" target="_blank">WP Compare M (1000 Compares / month)</a><br>
-				<a href="https://hosting.wp-mike.com/cart.php?a=add&pid=52&customfield[53]=<?= $api_key ?>&language=english" target="_blank">WP Compare L (10000 Compares / month)</a><br>
-				You need more compares? Contact us at <a href="mailto:mike@wp-mike.com">mike@wp-mike.com</a>.
-			<?php
-			} else {
-				?>
-				<h2>Need more compares?</h2>
-				To upgrade your account follow these steps:
-				<ol>
-					<li>Login to your account at <a href="https://www.wp-mike.com/boarding" target="_blank">wp-mike.com</a></li>
-					<li>Navigate to your Services or click this link: <a href="https://hosting.wp-mike.com/clientarea.php?action=products" target="_blank">My Services</a></li>
-					<li>Select your Compare package</li>
-					<li>Click the Upgrade button in the left sidebar</li>
-					<li>Select your new package and complete the upgrade</li>
-				</ol>
-				The new amount of compares will be available immediatelly. The renew date will not change with an upgrade.
+			echo mm_api( $args );
 
-				<?php
-			}
 			break;
 
 		case 'help':
