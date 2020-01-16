@@ -212,13 +212,15 @@ function wp_compare_init(){
                 // Get active posts from post data
                 $active_posts = array();
                 foreach( $postdata as $key => $post_id ) {
-                    if( strpos( $key, 'pid' ) === 0 )
+                    if( strpos( $key, 'sc_id' ) === 0 ) {
                         $active_posts[] = array(
-                            'sc_id'	        => $post_id,
-                            'url'			=> get_permalink( $post_id ),
-                            'desktop'		=> $postdata['desktop-' . $post_id],
-                            'mobile'		=> $postdata['mobile-' . $post_id]
+                            'sc_id'     => $post_id,
+                            'url'       => get_permalink($post_id),
+                            'active'    => $postdata['active-' . $post_id],
+                            'desktop'   => $postdata['desktop-' . $post_id],
+                            'mobile'    => $postdata['mobile-' . $post_id]
                         );
+                    }
                 }
 
                 // Update API URLs
@@ -228,6 +230,7 @@ function wp_compare_init(){
                     'posts'			=> json_encode( $active_posts ),
                 );
                 $results = mm_api( $args );
+                //var_dump( $results );
                 break;
         }
     }

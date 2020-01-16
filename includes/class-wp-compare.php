@@ -408,6 +408,7 @@ class Wp_Compare {
             $check_posts['urls'][] = array(
                 'wp_post_id'    => (int)$group_url['wp_post_id'],
                 'sc_id'         => (int)$group_url['id'],
+                'active'        => $group_url['active'],
                 'desktop'       => $group_url['desktop'],
                 'mobile'        => $group_url['mobile']
             );
@@ -444,10 +445,12 @@ class Wp_Compare {
 
         echo '<script>
 		function mmMarkRows( postId ) {
-			var checkBox = document.getElementById("active-" + postId);
+			var active = document.getElementById("active-" + postId);
+			var desktop = document.getElementById("desktop-" + postId);
+			var mobile = document.getElementById("mobile-" + postId);
 			var row = document.getElementById("post_id_" + postId );
 
-			if (checkBox.checked == true){
+			if ( active.checked == true && ( desktop.checked == true || mobile.checked == true ) ){
 				row.style.background = "#17b33147";
 			} else {
 				row.style.background = "#dc323247";
@@ -477,17 +480,17 @@ class Wp_Compare {
                             $sc_id = $synced_post['sc_id'];
                         }
                     }
-                   // $sc_id = '';
+
                     $checked = array(
-                        'checked' => '',
+                        'active' => '',
                         'desktop' => '',
                         'mobile' => ''
                     );
                     if( isset( $checks['urls'] ) ) {
                         foreach ( $checks['urls'] as $key => $check ) {
                             if ( $check['sc_id'] == $sc_id ) {
-
-                                $checked['checked'] = 'checked';
+                                if ( $check['active'] )
+                                    $checked['active'] = 'checked';
                                 if ( $check['desktop'] )
                                     $checked['desktop'] = 'checked';
                                 if ( $check['mobile'] )
@@ -498,9 +501,19 @@ class Wp_Compare {
                     }
 
                     echo '<tr id="post_id_' . $group_id . '-' . $sc_id . '">';
-                    echo '<td><input id="active-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')" type="checkbox" name="pid-' . $sc_id . '" value="' . $sc_id . '" ' . $checked['checked'] . '></td>';
-                    echo '<td><input type="hidden" value="0" name="desktop-' . $sc_id . '"><input type="checkbox" name="desktop-' . $sc_id . '" value="1" ' . $checked['desktop'] . '></td>';
-                    echo '<td><input type="hidden" value="0" name="mobile-' . $sc_id . '"><input type="checkbox" name="mobile-' . $sc_id . '" value="1" ' . $checked['mobile'] . '></td>';
+                    echo '<input type="hidden" name="sc_id-' . $sc_id . '" value="' . $sc_id . '">';
+                    echo '<td><input type="hidden" value="0" name="active-' . $sc_id . '">
+                            <input type="checkbox" name="active-' . $sc_id . '" value="1" ' . $checked['active'] . ' 
+                            id="active-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+
+                    echo '<td><input type="hidden" value="0" name="desktop-' . $sc_id . '">
+                            <input type="checkbox" name="desktop-' . $sc_id . '" value="1" ' . $checked['desktop'] . ' 
+                            id="desktop-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+
+                    echo '<td><input type="hidden" value="0" name="mobile-' . $sc_id . '">
+                            <input type="checkbox" name="mobile-' . $sc_id . '" value="1" ' . $checked['mobile'] . ' 
+                            id="mobile-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+
                     echo '<td>' . $post->post_title . '</td>';
                     echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
                     echo '</tr>';
@@ -508,7 +521,6 @@ class Wp_Compare {
                     echo '<script>mmMarkRows(\'' . $group_id . '-' . $sc_id . '\'); </script>';
                 }
                 echo '</table>';
-
             }
         }
         echo '<input class="button" type="submit" value="Save" style="margin-top: 30px">';
@@ -592,10 +604,8 @@ function mm_api( $args ) {
         $args['api_key'] = get_option( 'wpcompare_api_key' );
 
 	$ch = curl_init( $url );
-	//curl_setopt($ch, CURLOPT_USERPWD, "wpmike:letmein");
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
 	curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-	//curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
