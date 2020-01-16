@@ -110,7 +110,7 @@ function wp_compare_init(){
 				$api_key = $wp_comp->create_free_account( $postdata );
 
 				// If we didn't get an api key, put the error message out there and show the no-account-page
-           
+
 				if( isset( $api_key['status'] ) && $api_key['status'] == 'error') {
 				    echo '<div class="error notice">
                                 <p>' . $api_key['reason'] . '</p>
