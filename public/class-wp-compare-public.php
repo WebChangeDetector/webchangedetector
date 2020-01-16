@@ -103,21 +103,41 @@ function wp_compare_init(){
 
 	$wp_comp = new WP_COMPARE;
 
-
-	if( isset( $postdata['api-key'] ) ){
-		update_option( 'wpcompare_api_key', $postdata['api-key'] );
-		//delete_option( 'wpcompare_group_id' );
-	}
-
-
-
+	// Actions without API key needed
 	if( isset( $postdata['action'] ) ) {
 		switch( $postdata['action'] ) {
 			case 'create_free_account':
 				$api_key = $wp_comp->create_free_account( $postdata );
+
+				// If we didn't get an api key, put the error message out there and show the no-account-page
+           
+				if( isset( $api_key['status'] ) && $api_key['status'] == 'error') {
+				    echo '<div class="error notice">
+                                <p>' . $api_key['reason'] . '</p>
+                            </div>';
+                    echo $wp_comp->get_no_account_page();
+                    return;
+                }
 				break;
 
+            case 'reset_api_key':
+                $api_key = get_option( 'wpcompare_api_key' );
+                $group_id = get_option( 'wpcompare_group_id' );
+                $monitoring_group_id = get_option( 'wpcompare_monitoring_group_id' );
 
+                $wp_comp->delete_group( $group_id, $api_key );
+                $wp_comp->delete_group( $monitoring_group_id, $api_key );
+
+                delete_option( 'wpcompare_api_key' );
+                delete_option( 'wpcompare_group_id' );
+                delete_option( 'wpcompare_monitoring_group_id' );
+                break;
+
+            case 'save_api_key':
+                update_option( 'wpcompare_api_key', $postdata['api-key'] );
+                delete_option( 'wpcompare_group_id' );
+                delete_option( 'wpcompare_monitoring_group_id' );
+                break;
 		}
 	}
 
@@ -158,99 +178,64 @@ function wp_compare_init(){
 	else
 		$api_key = false;
 
+	// Create group if not exists yet
 	$group_id = get_option( 'wpcompare_group_id' );
 	$monitoring_group_id = get_option( 'wpcompare_monitoring_group_id' );
 
 	if( !$group_id || !$monitoring_group_id )
 		$wp_comp->create_group( $api_key );
 
-	$active_posts = array();
+	if( isset( $postdata['action'] ) ) {
+	    switch( $postdata['action'] ) {
+            case 'take_screenshots':
+                $results = $wp_comp->take_screenshot( $group_id, $api_key );
 
-	// Get active posts from post data
-	if( isset( $postdata['post-urls'] ) ) {
-		
-		foreach( $postdata as $key => $post_id ) {
-			if( strpos( $key, 'pid' ) === 0 ) 
-				$active_posts[] = array(
-					'wp_post_id'	=> $post_id,
-					'url'			=> get_permalink( $post_id ),
-					'desktop'		=> $postdata['desktop-' . $post_id],
-					'mobile'		=> $postdata['mobile-' . $post_id]
-				);
-		}
+                if( isset( $results['error'] ) )
+                    echo '<div class="error notice"><p>' . $results['error'] . '</p></div>';
 
-		// Update API URLs
-		$args = array(
-			'action'		=> 'update_urls',
-			'group_id'		=> $postdata['group_id'],
-			'posts'			=> json_encode( $active_posts ),
-		);
+                if( isset( $results['success'] ) )
+                    echo '<div class="updated notice"><p>' . $results['success'] . '</p></div>';
+                break;
 
-		$results = mm_api( $args );
-	}
+            case 'update_monitoring_settings':
+                $args = array(
+                    'action'		=> 'update_monitoring_settings',
+                    'group_id'		=> $monitoring_group_id,
+                    'hour'			=> $postdata['hour'],
+                    'interval_in_h'	=> $postdata['interval_in_h'],
+                    'alert_email'	=> $postdata['alert_email']
+                );
+                $updated_monitoring_settings = mm_api( $args );
+                break;
 
-	// Add group to screenshot queue
-	if( isset( $postdata['take-screenshots'] ) ) {
+            case 'post_urls':
+                // Get active posts from post data
+                $active_posts = array();
+                foreach( $postdata as $key => $post_id ) {
+                    if( strpos( $key, 'pid' ) === 0 )
+                        $active_posts[] = array(
+                            'wp_post_id'	=> $post_id,
+                            'url'			=> get_permalink( $post_id ),
+                            'desktop'		=> $postdata['desktop-' . $post_id],
+                            'mobile'		=> $postdata['mobile-' . $post_id]
+                        );
+                }
 
-		$results = $wp_comp->take_screenshot( $group_id, $api_key );
+                // Update API URLs
+                $args = array(
+                    'action'		=> 'update_urls',
+                    'group_id'		=> $postdata['group_id'],
+                    'posts'			=> json_encode( $active_posts ),
+                );
+                $results = mm_api( $args );
+                break;
+        }
+    }
 
-		//var_dump( $results );
-		if( isset( $results['error'] ) )
-			echo '<div class="error notice">
-    				<p>' . $results['error'] . '</p>
-				</div>';
-		if( isset( $results['success'] ) )
-			echo '<div class="updated notice">
-				<p>' . $results['success'] . '</p>
-			</div>';
-	}
-
-	// Get manual urls of group
-	$args = array(
-		'action'		=> 'get_group_urls',
-		'group_id'		=> $group_id
-	);
-	$group_urls = mm_api( $args );
-
-	$check_posts = array();
-	foreach( $group_urls as $group_url ) {
-		$check_posts[] = (int)$group_url['wp_post_id'];
-		$check_desktop[$group_url['wp_post_id']] = $group_url['desktop'];
-		$check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
-	}
-
-	// Get Monitoring URLs
-	$args = array(
-		'action'		=> 'get_group_urls',
-		'group_id'		=> $monitoring_group_id
-	);
-	$monitoring_group_urls = mm_api( $args );
-
-	$check_posts_monitoring = array();
-	foreach( $monitoring_group_urls as $group_url_monitoring ) {
-		$check_posts_monitoring[] = (int)$group_url_monitoring['wp_post_id'];
-		$check_desktop_monitoring[$group_url_monitoring['wp_post_id']] = $group_url_monitoring['desktop'];
-		$check_mobile_monitoring[$group_url_monitoring['wp_post_id']] = $group_url_monitoring['mobile'];
-	}
-
-	// Update monitoring settings
-	if( isset( $postdata['update_monitoring_settings'] ) ) {
-		$args = array(
-			'action'		=> 'update_monitoring_settings',
-			'group_id'		=> $monitoring_group_id,
-			'hour'			=> $postdata['hour'],
-			'interval_in_h'	=> $postdata['interval_in_h'],
-			'alert_email'	=> $postdata['alert_email']
-		);
-		$updated_monitoring_settings = mm_api( $args );
-	}
-
-	$post_types = get_post_types();
 	echo '<div class="mm_wp_compare">';
 	echo '<h1>WP Compare</h1>';
 
 	mm_tabs();
-
 
 	echo '<div style="margin-top: 30px;"></div>';
 	if( isset( $get['tab'] ) )
@@ -260,7 +245,7 @@ function wp_compare_init(){
 
 	$client_details = $wp_comp->get_account_details( $api_key );
 	$client_details = $client_details[0];
-//echo strtotime( "+1 month", strtotime( $client_details['start_date'] ) )  . '<br>' . date("U" );
+
 	$comp_usage = $client_details['usage'];
 	if( $client_details['one_time'] ) {
 		if( strtotime( "+1 month", strtotime( $client_details['start_date'] ) ) > date("U" ) )
@@ -272,25 +257,9 @@ function wp_compare_init(){
 
 	$available_compares = $limit - (int)$comp_usage;
 
-	// Amount selected Screenshots
-	$args = array(
-		'action'		=> 'get_amount_sc',
-		'group_id'		=> $group_id
-	);
-	$amount_sc = mm_api( $args );
 
-	//Amount selected Monitoring Screenshots
-	$args = array(
-		'action'		=> 'get_amount_sc',
-		'group_id'		=> $monitoring_group_id
-	);
-	$amount_sc_monitoring = mm_api( $args );
 
-	if( !$amount_sc_monitoring )
-		$amount_sc_monitoring = '0';
 
-	if( !$amount_sc )
-		$amount_sc = '0';
 
 	wp_enqueue_script( 'jquery-ui-accordion' );
 	?>
@@ -304,6 +273,10 @@ function wp_compare_init(){
 	<?php
 
 	switch( $tab ) {
+
+        /********************
+         * Take Screenshot
+         ********************/
 
 		case 'take-screenshots':
 
@@ -328,7 +301,16 @@ function wp_compare_init(){
 				echo '<hr>';
 			}
 
-			// Take Screenshot
+            // Get amount selected Screenshots
+            $args = array(
+                'action'		=> 'get_amount_sc',
+                'group_id'		=> $group_id
+            );
+            $amount_sc = mm_api( $args );
+
+            if( !$amount_sc )
+                $amount_sc = '0';
+
 			echo '<h2>Select URLs</h2>';
 			?>
 			<div class="accordion">
@@ -338,7 +320,7 @@ function wp_compare_init(){
 						<small>Currently selected: <strong><?= $amount_sc ?></strong> URLs</small>
 					</h3>
 					<div class="mm_accordion_content">
-						<?php mm_get_url_settings( $group_id ) ?>
+						<?php $wp_comp->mm_get_url_settings( $group_id ) ?>
 					</div>
 				</div>
 			</div>
@@ -350,7 +332,7 @@ function wp_compare_init(){
 				<strong>Currently selected amount of compares: ' . $amount_sc . '</strong></p>';
 
 			echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=take-screenshots" method="post">';
-			echo '<input type="hidden" value="true" name="take-screenshots">';
+			echo '<input type="hidden" value="take_screenshots" name="action">';
 			//echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
 			echo '<input type="submit" value="Take & Compare Screenshots" class="button">';
 			echo '</form>';
@@ -393,8 +375,21 @@ function wp_compare_init(){
 			}
 			break;
 
-		// Monitoring Screenshots
+		/************************
+         * Monitoring Screenshots
+         * **********************/
+
 		case 'monitoring-screenshots':
+
+            //Amount selected Monitoring Screenshots
+            $args = array(
+                'action'		=> 'get_amount_sc',
+                'group_id'		=> $monitoring_group_id
+            );
+            $amount_sc_monitoring = mm_api( $args );
+
+            if( !$amount_sc_monitoring )
+                $amount_sc_monitoring = '0';
 
 			$args = array(
 				'action'	=> 'get_monitoring_settings',
@@ -410,13 +405,11 @@ function wp_compare_init(){
 					<h3>
 						Monitoring Compare URLs<br>
 						<small>Currently selected: <strong><?= $amount_sc_monitoring ?></strong> URLs</small>
-
 					</h3>
 					<div class="mm_accordion_content">
-						<?php mm_get_url_settings( $monitoring_group_id, true ) ?>
+						<?php $wp_comp->mm_get_url_settings( $monitoring_group_id, true ) ?>
 					</div>
 				</div>
-
 			</div>
 
 			<h2>Settings for Monitoring</h2>
@@ -425,7 +418,7 @@ function wp_compare_init(){
 				Your available compares are <strong><?= $available_compares . ' / ' . $limit ?></strong>.
 			<p>
 			<form action="/wp-admin/admin.php?page=wp-compare&tab=monitoring-screenshots" method="post">
-			<input type="hidden" name="update_monitoring_settings" value="true">
+			<input type="hidden" name="action" value="update_monitoring_settings">
 				<p>
 					<label for="monitoring">Enable Monitoring</label>
 					<select name="monitoring">
@@ -513,9 +506,11 @@ function wp_compare_init(){
 			}
 			break;
 
-		case 'settings':
+        /********************
+         * Settings
+         ********************/
 
-			//$api_key = get_option( 'wpcompare_api_key' );
+		case 'settings':
 
 			if( !$api_key ) {
 				echo '<div class="error notice">
@@ -553,17 +548,19 @@ function wp_compare_init(){
 				echo 'Available compares in this period: ' . $available_compares . '</p>';
 
 			}
+            $args = array(
+                'action'	=> 'get_upgrade_options',
+                'plan_id'	=> (int)$client_details['plan_id']
+            );
+
+            echo mm_api( $args );
+
 			echo $wp_comp->get_api_key_form( $api_key );
-
-			$args = array(
-				'action'	=> 'get_upgrade_options',
-				'plan_id'	=> (int)$client_details['plan_id']
-			);
-
-			echo mm_api( $args );
-
 			break;
 
+        /*******************
+         * Help
+         *******************/
 		case 'help':
 
 			echo '<h2>How it works:</h2>';
@@ -603,128 +600,25 @@ function wp_compare_init(){
 	echo '</div>'; // closing from div mm_wp_compare
 }
 
-function mm_get_url_settings( $group_id, $monitoring_group = false ) {
-
-	// Get manual urls of group
-	$args = array(
-		'action'		=> 'get_group_urls',
-		'group_id'		=> $group_id
-	);
-	$group_urls = mm_api( $args );
-
-	$check_posts = array();
-	foreach( $group_urls as $group_url ) {
-		$check_posts[] = (int)$group_url['wp_post_id'];
-		$check_desktop[$group_url['wp_post_id']] = $group_url['desktop'];
-		$check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
-	}
-
-	// Select URLS
-	if( $monitoring_group )
-		$tab = "monitoring-screenshots";
-	else
-		$tab = "take-screenshots";
-
-	echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=' . $tab . '" method="post">';
-	echo '<input type="hidden" value="wp-compare" name="page">';
-	echo '<input type="hidden" value="true" name="post-urls">';
-	echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
-
-	echo '<script>
-		function mmMarkRows( postId ) {
-			var checkBox = document.getElementById("active-" + postId);
-			var row = document.getElementById("post_id_" + postId );
-
-			if (checkBox.checked == true){
-				row.style.background = "#17b33147";
-			} else {
-				row.style.background = "#dc323247";
-			}
-		}
-	</script>';
-
-	$post_types = get_post_types();
-
-	foreach( $post_types as $post_type ) {
-
-		$posts = get_posts([
-		  'post_type' => $post_type,
-		  'post_status' => 'publish',
-		  'numberposts' => -1,
-		  'order'    => 'ASC'
-		]);
-
-		if( $posts ) {
-			echo '<h2>' . ucfirst( $post_type ) . '</h2>';
-			echo '<table><tr><th>Active</th><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
-			foreach( $posts as $post ) {
-				$url = get_permalink( $post );
-
-				// Check posts
-				if( in_array( $post->ID, $check_posts ) )
-					$checked = 'checked';
-				else
-					$checked = '';
-
-				// Check Desktop
-				if( isset( $check_desktop[$post->ID] ) && $check_desktop[$post->ID] == 1 )
-					$checked_desktop = 'checked';
-				else
-					$checked_desktop = '';
-
-				// Check Mobile
-				if( isset( $check_mobile[$post->ID] ) && $check_mobile[$post->ID] == 1 )
-					$checked_mobile = 'checked';
-				else
-					$checked_mobile = '';
-
-				echo '<tr id="post_id_' . $group_id . '-' . $post->ID . '">';
-				echo '<td><input id="active-' . $group_id . '-' . $post->ID . '" onclick="mmMarkRows(\'' . $group_id . '-' . $post->ID . '\')" type="checkbox" name="pid-' . $post->ID . '" value="' . $post->ID . '" ' . $checked . '></td>';
-				echo '<td><input type="hidden" value="0" name="desktop-' . $post->ID . '"><input type="checkbox" name="desktop-' . $post->ID . '" value="1" ' . $checked_desktop . '></td>';
-				echo '<td><input type="hidden" value="0" name="mobile-' . $post->ID . '"><input type="checkbox" name="mobile-' . $post->ID . '" value="1" ' . $checked_mobile . '></td>';
-				echo '<td>' . $post->post_title . '</td>';
-				echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-				echo '</tr>';
-
-				echo '<script>mmMarkRows(\'' . $group_id . '-' . $post->ID . '\'); </script>';
-
-
-			}
-			echo '</table>';
-
-		}
-	}
-	echo '<input class="button" type="submit" value="Save" style="margin-top: 30px">';
-	echo '</form>';
-}
-
 function isJson($string) {
  json_decode($string);
  return (json_last_error() == JSON_ERROR_NONE);
 }
 
 function mm_tabs() {
-?>
-    <!-- Create a header in the default WordPress 'wrap' container -->
+    settings_errors();
+    if( isset( $_GET[ 'tab' ] ) ) {
+        $active_tab = $_GET[ 'tab' ];
+    }
+    ?>
     <div class="wrap">
-
-        <?php settings_errors(); ?>
-
-        <?php
-            if( isset( $_GET[ 'tab' ] ) ) {
-                $active_tab = $_GET[ 'tab' ];
-            } // end if
-        ?>
-
         <h2 class="nav-tab-wrapper">
             <a href="?page=wp-compare&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Manual Change Detection</a>
             <a href="?page=wp-compare&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Monitoring Change Detection</a>
             <a href="?page=wp-compare&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
             <a href="?page=wp-compare&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
         </h2>
-
     </div>
 
-	<!-- /.wrap -->
 <?php
-} // end sandbox_theme_display
+}
