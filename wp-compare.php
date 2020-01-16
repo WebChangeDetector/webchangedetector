@@ -96,3 +96,14 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 
 
 run_wp_compare();
+
+// Add hook to auto sync posts when they are published
+add_action('transition_post_status', 'send_new_post', 10, 3);
+
+// Sync all pages and posts when there is a new page or post published
+function sync_urls_on_publish($new_status, $old_status, $post) {
+    if('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page') ) ) {
+        $wp_compare = new Wp_Compare();
+        $wp_compare->sync_posts();
+    }
+}

@@ -214,7 +214,7 @@ function wp_compare_init(){
                 foreach( $postdata as $key => $post_id ) {
                     if( strpos( $key, 'pid' ) === 0 )
                         $active_posts[] = array(
-                            'wp_post_id'	=> $post_id,
+                            'sc_id'	        => $post_id,
                             'url'			=> get_permalink( $post_id ),
                             'desktop'		=> $postdata['desktop-' . $post_id],
                             'mobile'		=> $postdata['mobile-' . $post_id]
@@ -256,9 +256,6 @@ function wp_compare_init(){
 		$limit = $client_details['comp_limit'];
 
 	$available_compares = $limit - (int)$comp_usage;
-
-
-
 
 
 	wp_enqueue_script( 'jquery-ui-accordion' );

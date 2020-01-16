@@ -233,6 +233,38 @@ class Wp_Compare {
 		return mm_api( $args );
 	}
 
+	public function sync_posts() {
+
+	    $posttypes = array(
+            'pages' => get_pages(),
+            'posts' => get_posts( array( 'numberposts' => '-1' ) )
+        );
+
+	    $array = array();
+	    foreach( $posttypes as $posts) {
+            if ($posts) {
+                foreach ($posts as $post) {
+                    $url = get_permalink($post);
+                    $url = substr($url, strpos($url, '//') + 2);
+                    $array[] = array(
+                        'url' => $url,
+                        'wp_post_id' => $post->ID
+                    );
+                }
+            }
+        }
+
+	    if( $array ) {
+            $args = array(
+                'action'    => 'sync_urls',
+                'posts'     => json_encode( $array ),
+            );
+            //var_dump( $args );
+            return mm_api( $args );
+        } else
+            return false;
+    }
+
 	public function take_screenshot( $group_id, $api_key ) {
 		$args = array(
 			'action'		=> 'take_screenshots',
@@ -294,8 +326,7 @@ class Wp_Compare {
 	}
 
 	function get_api_key_form( $api_key = false ) {
-
-
+	    
 	    if( $api_key ) {
             $output = '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post" 
                         onsubmit="return confirm(\'Do you really want to reset the API key?\nYour settings will get lost.\');">
@@ -374,9 +405,12 @@ class Wp_Compare {
 
         foreach( $group_urls as $group_url ) {
             // Create array with all active urls of group
-            $check_posts[] = (int)$group_url['wp_post_id'];
-            $check_desktop[$group_url['wp_post_id']] = $group_url['desktop'];
-            $check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
+            $check_posts['urls'][] = array(
+                'wp_post_id'    => (int)$group_url['wp_post_id'],
+                'sc_id'         => (int)$group_url['id'],
+                'desktop'       => $group_url['desktop'],
+                'mobile'        => $group_url['mobile']
+            );
 
             // Count amount of sc
             if( $group_url['desktop'] )
@@ -385,33 +419,17 @@ class Wp_Compare {
                 $amount_sc++;
         }
 
-        return array(
-            'check_posts'   => $check_posts,
-            'check_desktop' => $check_desktop,
-            'check_mobile'  => $check_mobile,
-            'amount_sc'     => $amount_sc
-        );
+        $check_posts['amount_sc'] = $amount_sc;
+        return $check_posts;
     }
 
     function mm_get_url_settings( $group_id, $monitoring_group = false ) {
 
         global $api_key;
 
+        // Sync urls - post_types defined in function @todo make settings for post_types to sync
+        $synced_posts = $this->sync_posts();
         $checks = $this->get_urls_of_group( $group_id );
-        // Get manual urls of group
-        /*$args = array(
-            'action'		=> 'get_group_urls',
-            'group_id'		=> $group_id,
-            'api_key'       => $api_key
-        );
-        $group_urls = mm_api( $args );
-
-        $check_posts = array();
-        foreach( $group_urls as $group_url ) {
-            $check_posts[] = (int)$group_url['wp_post_id'];
-            $check_desktop[$group_url['wp_post_id']] = $group_url['desktop'];
-            $check_mobile[$group_url['wp_post_id']] = $group_url['mobile'];
-        }*/
 
         // Select URLS
         if( $monitoring_group )
@@ -454,35 +472,40 @@ class Wp_Compare {
                 foreach( $posts as $post ) {
                     $url = get_permalink( $post );
 
-                    // Check posts
-                    if( in_array( $post->ID, $checks['check_posts'] ) )
-                        $checked = 'checked';
-                    else
-                        $checked = '';
+                    foreach( $synced_posts as $synced_post ) {
+                        if( $synced_post['wp_post_id'] == $post->ID) {
+                            $sc_id = $synced_post['sc_id'];
+                        }
+                    }
+                   // $sc_id = '';
+                    $checked = array(
+                        'checked' => '',
+                        'desktop' => '',
+                        'mobile' => ''
+                    );
+                    if( isset( $checks['urls'] ) ) {
+                        foreach ( $checks['urls'] as $key => $check ) {
+                            if ( $check['sc_id'] == $sc_id ) {
 
-                    // Check Desktop
-                    if( isset( $checks['check_desktop'][$post->ID] ) && $checks['check_desktop'][$post->ID] == 1 )
-                        $checked_desktop = 'checked';
-                    else
-                        $checked_desktop = '';
+                                $checked['checked'] = 'checked';
+                                if ( $check['desktop'] )
+                                    $checked['desktop'] = 'checked';
+                                if ( $check['mobile'] )
+                                    $checked['mobile'] = 'checked';
 
-                    // Check Mobile
-                    if( isset( $checks['check_mobile'][$post->ID] ) && $checks['check_mobile'][$post->ID] == 1 )
-                        $checked_mobile = 'checked';
-                    else
-                        $checked_mobile = '';
+                            }
+                        }
+                    }
 
-                    echo '<tr id="post_id_' . $group_id . '-' . $post->ID . '">';
-                    echo '<td><input id="active-' . $group_id . '-' . $post->ID . '" onclick="mmMarkRows(\'' . $group_id . '-' . $post->ID . '\')" type="checkbox" name="pid-' . $post->ID . '" value="' . $post->ID . '" ' . $checked . '></td>';
-                    echo '<td><input type="hidden" value="0" name="desktop-' . $post->ID . '"><input type="checkbox" name="desktop-' . $post->ID . '" value="1" ' . $checked_desktop . '></td>';
-                    echo '<td><input type="hidden" value="0" name="mobile-' . $post->ID . '"><input type="checkbox" name="mobile-' . $post->ID . '" value="1" ' . $checked_mobile . '></td>';
+                    echo '<tr id="post_id_' . $group_id . '-' . $sc_id . '">';
+                    echo '<td><input id="active-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')" type="checkbox" name="pid-' . $sc_id . '" value="' . $sc_id . '" ' . $checked['checked'] . '></td>';
+                    echo '<td><input type="hidden" value="0" name="desktop-' . $sc_id . '"><input type="checkbox" name="desktop-' . $sc_id . '" value="1" ' . $checked['desktop'] . '></td>';
+                    echo '<td><input type="hidden" value="0" name="mobile-' . $sc_id . '"><input type="checkbox" name="mobile-' . $sc_id . '" value="1" ' . $checked['mobile'] . '></td>';
                     echo '<td>' . $post->post_title . '</td>';
                     echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
                     echo '</tr>';
 
-                    echo '<script>mmMarkRows(\'' . $group_id . '-' . $post->ID . '\'); </script>';
-
-
+                    echo '<script>mmMarkRows(\'' . $group_id . '-' . $sc_id . '\'); </script>';
                 }
                 echo '</table>';
 
