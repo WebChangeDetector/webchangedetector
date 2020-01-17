@@ -448,7 +448,7 @@ class Wp_Compare {
 			var active = document.getElementById("active-" + postId);
 			var desktop = document.getElementById("desktop-" + postId);
 			var mobile = document.getElementById("mobile-" + postId);
-			var row = document.getElementById("post_id_" + postId );
+			var row = document.getElementById( postId );
 
 			if ( active.checked == true && ( desktop.checked == true || mobile.checked == true ) ){
 				row.style.background = "#17b33147";
@@ -456,7 +456,23 @@ class Wp_Compare {
 				row.style.background = "#dc323247";
 			}
 		}
-	</script>';
+		
+		function mmToggle(source, postType, column, groupId) {
+            var checkboxes = document.querySelectorAll(\'.checkbox-\' + column + \'-\' + postType + \' input[type=\"checkbox\"]\');
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] != source) {
+                    checkboxes[i].checked = source.checked;
+                }
+            }
+            
+            var rows = document.querySelectorAll(\'.post_id_\' + groupId );
+            for (var i = 0; i < rows.length; i++) {
+                
+                var id = rows[i].id;
+                mmMarkRows( id );
+            }
+        }
+	    </script>';
 
         $post_types = get_post_types();
 
@@ -472,6 +488,13 @@ class Wp_Compare {
             if( $posts ) {
                 echo '<h2>' . ucfirst( $post_type ) . '</h2>';
                 echo '<table><tr><th>Active</th><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
+
+                echo '<tr style="background: none; text-align: center">
+                            <td><input type="checkbox" id="select-active-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'active\', \'' . $group_id . '\' )" /></td>
+                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
+                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
+                        </tr>';
+
                 foreach( $posts as $post ) {
                     $url = get_permalink( $post );
 
@@ -500,25 +523,28 @@ class Wp_Compare {
                         }
                     }
 
-                    echo '<tr id="post_id_' . $group_id . '-' . $sc_id . '">';
+                    echo '<tr class="post_id_' . $group_id . '" id="' . $sc_id . '" >';
                     echo '<input type="hidden" name="sc_id-' . $sc_id . '" value="' . $sc_id . '">';
-                    echo '<td><input type="hidden" value="0" name="active-' . $sc_id . '">
-                            <input type="checkbox" name="active-' . $sc_id . '" value="1" ' . $checked['active'] . ' 
-                            id="active-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+                    echo '<td class="checkbox-active-' . $post_type . '" style="text-align: center;">
+                            <input type="hidden" value="0" name="active-' . $sc_id . '">
+                            <input  type="checkbox" name="active-' . $sc_id . '" value="1" ' . $checked['active'] . ' 
+                            id="active-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
 
-                    echo '<td><input type="hidden" value="0" name="desktop-' . $sc_id . '">
+                    echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
+                            <input type="hidden" value="0" name="desktop-' . $sc_id . '">
                             <input type="checkbox" name="desktop-' . $sc_id . '" value="1" ' . $checked['desktop'] . ' 
-                            id="desktop-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+                            id="desktop-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
 
-                    echo '<td><input type="hidden" value="0" name="mobile-' . $sc_id . '">
+                    echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
+                            <input type="hidden" value="0" name="mobile-' . $sc_id . '">
                             <input type="checkbox" name="mobile-' . $sc_id . '" value="1" ' . $checked['mobile'] . ' 
-                            id="mobile-' . $group_id . '-' . $sc_id . '" onclick="mmMarkRows(\'' . $group_id . '-' . $sc_id . '\')"></td>';
+                            id="mobile-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
 
-                    echo '<td>' . $post->post_title . '</td>';
-                    echo '<td><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                    echo '<td style="text-align: left;">' . $post->post_title . '</td>';
+                    echo '<td style="text-align: left;"><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
                     echo '</tr>';
 
-                    echo '<script>mmMarkRows(\'' . $group_id . '-' . $sc_id . '\'); </script>';
+                    echo '<script> mmMarkRows(\'' . $sc_id . '\'); </script>';
                 }
                 echo '</table>';
             }
