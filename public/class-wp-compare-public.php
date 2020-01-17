@@ -201,7 +201,7 @@ function wp_compare_init(){
                 $args = array(
                     'action'		=> 'update_monitoring_settings',
                     'group_id'		=> $monitoring_group_id,
-                    'hour'			=> $postdata['hour'],
+                    'hour_of_day'	=> $postdata['hour_of_day'],
                     'interval_in_h'	=> $postdata['interval_in_h'],
                     'alert_email'	=> $postdata['alert_email']
                 );
@@ -427,11 +427,11 @@ function wp_compare_init(){
 					</select>
 				</p>
 				<p>
-				<label for="hour">Hour of the day</label>
-				<select name="hour" >
+				<label for="hour_of_day">Hour of the day</label>
+				<select name="hour_of_day" >
 					<?php
 					for( $i=0; $i < 24; $i++ ) {
-						if( isset( $group_settings['hour'] ) && $group_settings['hour'] == $i )
+						if( isset( $group_settings['hour_of_day'] ) && $group_settings['hour_of_day'] == $i )
 							$selected = 'selected';
 						else
 							$selected = '';
