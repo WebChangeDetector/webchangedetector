@@ -369,7 +369,7 @@ class Wp_Compare {
 	function create_group( $api_key ) {
 		// Create group if it doesn't exist yet
 		$args = array(
-			'action'	    => 'add_group',
+			'action'	    => 'add_website_groups',
 			'domain'	    => $_SERVER['SERVER_NAME'],
 			'website_group' => 1,
 			'api_key'	    => $api_key
