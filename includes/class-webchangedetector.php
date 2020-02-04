@@ -9,8 +9,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  */
 
 /**
@@ -23,11 +23,11 @@
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    webchangedetector
+ * @subpackage webchangedetector/includes
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class Wp_Compare {
+class WebChangeDetector {
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -35,7 +35,7 @@ class Wp_Compare {
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      Wp_Compare_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @var      WebChangeDetector_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
@@ -67,12 +67,12 @@ class Wp_Compare {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( defined( 'WP_COMPARE_VERSION' ) ) {
-			$this->version = WP_COMPARE_VERSION;
+		if ( defined( 'WebChangeDetector_VERSION' ) ) {
+			$this->version = WebChangeDetector_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
-		$this->plugin_name = 'wp-compare';
+		$this->plugin_name = 'webchangedetector';
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -86,10 +86,10 @@ class Wp_Compare {
 	 *
 	 * Include the following files that make up the plugin:
 	 *
-	 * - Wp_Compare_Loader. Orchestrates the hooks of the plugin.
-	 * - Wp_Compare_i18n. Defines internationalization functionality.
-	 * - Wp_Compare_Admin. Defines all hooks for the admin area.
-	 * - Wp_Compare_Public. Defines all hooks for the public side of the site.
+	 * - WebChangeDetector_Loader. Orchestrates the hooks of the plugin.
+	 * - WebChangeDetector_i18n. Defines internationalization functionality.
+	 * - WebChangeDetector_Admin. Defines all hooks for the admin area.
+	 * - WebChangeDetector_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -103,33 +103,33 @@ class Wp_Compare {
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-compare-loader.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-webchangedetector-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-compare-i18n.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-webchangedetector-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-wp-compare-admin.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-webchangedetector-admin.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wp-compare-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-webchangedetector-public.php';
 
-		$this->loader = new Wp_Compare_Loader();
+		$this->loader = new WebChangeDetector_Loader();
 
 	}
 
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
-	 * Uses the Wp_Compare_i18n class in order to set the domain and to register the hook
+	 * Uses the WebChangeDetector_i18n class in order to set the domain and to register the hook
 	 * with WordPress.
 	 *
 	 * @since    1.0.0
@@ -137,7 +137,7 @@ class Wp_Compare {
 	 */
 	private function set_locale() {
 
-		$plugin_i18n = new Wp_Compare_i18n();
+		$plugin_i18n = new WebChangeDetector_i18n();
 
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
@@ -152,7 +152,7 @@ class Wp_Compare {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Wp_Compare_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
@@ -168,7 +168,7 @@ class Wp_Compare {
 	 */
 	private function define_public_hooks() {
 
-		$plugin_public = new Wp_Compare_Public( $this->get_plugin_name(), $this->get_version() );
+		$plugin_public = new WebChangeDetector_Public( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
@@ -199,7 +199,7 @@ class Wp_Compare {
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    Wp_Compare_Loader    Orchestrates the hooks of the plugin.
+	 * @return    WebChangeDetector_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader() {
 		return $this->loader;
@@ -286,9 +286,9 @@ class Wp_Compare {
 		$api_key = mm_api( $args );
 		if( isset( $api_key['status'] ) && $api_key['status'] == 'success' ) {
 
-            update_option('wpcompare_api_key', $api_key['api_key']);
-            delete_option('wpcompare_group_id');
-            delete_option('wpcompare_monitoring_group_id');
+            update_option('webchangedetector_api_key', $api_key['api_key']);
+            delete_option('webchangedetector_group_id');
+            delete_option('webchangedetector_monitoring_group_id');
 
             $this->create_group($api_key['api_key']);
         }
@@ -296,7 +296,7 @@ class Wp_Compare {
 	}
 
 	function verify_account() { //Replaces get_api_key and verify_api_key
-		$api_key = get_option( 'wpcompare_api_key' );
+		$api_key = get_option( 'webchangedetector_api_key' );
 		if( $api_key ) {
 			$args = array(
 				'action'		=> 'verify_account',
@@ -317,7 +317,7 @@ class Wp_Compare {
 
 	function get_api_key() {
 
-		$api_key = get_option( 'wpcompare_api_key' );
+		$api_key = get_option( 'webchangedetector_api_key' );
 		if( $api_key && $this->verify_api_key( $api_key ) ) {
 			// Verify User
 			return $api_key;
@@ -328,7 +328,7 @@ class Wp_Compare {
 	function get_api_key_form( $api_key = false ) {
 	    
 	    if( $api_key ) {
-            $output = '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post" 
+            $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post" 
                         onsubmit="return confirm(\'Do you really want to reset the API key?\nYour settings will get lost.\');">
                         <input type="hidden" name="action" value="reset_api_key">
                         <h2>API Key</h2>
@@ -337,7 +337,7 @@ class Wp_Compare {
                         <p><strong>ATTENTION: With resetting the API key, all settings get lost and 
                         the monitoring won\'t be continued!</strong></p>';
         } else {
-	        $output = '<form action="/wp-admin/admin.php?page=wp-compare&tab=settings" method="post">
+	        $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post">
                         <input type="hidden" name="action" value="save_api_key">
                         <h2>You already have an API key?</h2>
                         <p>Enter your API key here and start comparing.</p>
@@ -380,8 +380,8 @@ class Wp_Compare {
 		$manual_group_id = $group['manual_group']['id'];
 		$monitoring_group_id = $group['monitoring_group']['id'];
 
-		update_option( 'wpcompare_group_id', $manual_group_id );
-		update_option( 'wpcompare_monitoring_group_id', $monitoring_group_id );
+		update_option( 'webchangedetector_group_id', $manual_group_id );
+		update_option( 'webchangedetector_monitoring_group_id', $monitoring_group_id );
 	}
 
 	function delete_group( $group_id, $api_key ) {
@@ -438,8 +438,8 @@ class Wp_Compare {
         else
             $tab = "take-screenshots";
 
-        echo '<form action="/wp-admin/admin.php?page=wp-compare&tab=' . $tab . '" method="post">';
-        echo '<input type="hidden" value="wp-compare" name="page">';
+        echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
+        echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="action">';
         echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
 
@@ -600,15 +600,15 @@ class Wp_Compare {
 		</script>
 		<?php
 
-		delete_option( 'wpcompare_api_key' );
-		delete_option( 'wpcompare_group_id');
-		delete_option( 'wpcompare_monitoring_group_id' );
+		delete_option( 'webchangedetector_api_key' );
+		delete_option( 'webchangedetector_group_id');
+		delete_option( 'webchangedetector_monitoring_group_id' );
 
-		$output =  '<div class="mm_wp_compare">
-		<h1>WP Compare</h1>
+		$output =  '<div class="webchangedetector">
+		<h1>Web Change Detector</h1>
 		<h2>Create Free Account</h2>
 		<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>
-		<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=wp-compare&tab=settings" onsubmit="return mmValidateForm()" method="post">
+		<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=webchangedetector&tab=settings" onsubmit="return mmValidateForm()" method="post">
 			<input type="hidden" name="action" value="create_free_account"><br>
 			<p><label>First Name</label><input id="form_first_name" type="text" name="first_name"></p>
 			<p><label>Last Name</label><input type="text" id="form_last_name" name="last_name"></p>
@@ -627,7 +627,7 @@ function mm_api( $args ) {
 	$url = 'https://app.wpmike.com/v1/api.php';
 
     if( !isset( $args['api_key'] ) )
-        $args['api_key'] = get_option( 'wpcompare_api_key' );
+        $args['api_key'] = get_option( 'webchangedetector_api_key' );
 
 	$ch = curl_init( $url );
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $args);

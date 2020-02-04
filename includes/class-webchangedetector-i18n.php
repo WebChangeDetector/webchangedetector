@@ -9,8 +9,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  */
 
 /**
@@ -20,11 +20,11 @@
  * so that it is ready for translation.
  *
  * @since      1.0.0
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class Wp_Compare_i18n {
+class WebChangeDetector_i18n {
 
 
 	/**
@@ -35,7 +35,7 @@ class Wp_Compare_i18n {
 	public function load_plugin_textdomain() {
 
 		load_plugin_textdomain(
-			'wp-compare',
+			'webchangedetector',
 			false,
 			dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/'
 		);

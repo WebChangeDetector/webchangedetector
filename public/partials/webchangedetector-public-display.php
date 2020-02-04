@@ -8,8 +8,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/public/partials
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/public/partials
  */
 ?>
 

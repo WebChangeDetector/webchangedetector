@@ -6,8 +6,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  */
 
 /**
@@ -16,11 +16,11 @@
  * This class defines all code necessary to run during the plugin's activation.
  *
  * @since      1.0.0
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class Wp_Compare_Activator {
+class WebChangeDetector_Activator {
 
 	/**
 	 * Short Description. (use period)

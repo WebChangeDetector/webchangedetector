@@ -6,8 +6,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  */
 
 /**
@@ -17,11 +17,11 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/includes
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/includes
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class Wp_Compare_Loader {
+class WebChangeDetector_Loader {
 
 	/**
 	 * The array of actions registered with WordPress.

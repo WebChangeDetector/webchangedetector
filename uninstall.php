@@ -22,7 +22,7 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
+ * @package    WebChangeDetector
  */
 
 // If uninstall not called from WordPress, then exit.

@@ -10,18 +10,18 @@
  *
  * @link              wp-mike.com
  * @since             0.1
- * @package           Wp_Compare
+ * @package           WebChangeDetector
  *
  * @wordpress-plugin
- * Plugin Name:       WP Compare
- * Plugin URI:        wp-mike.com
+ * Plugin Name:       Web Change Detector
+ * Plugin URI:        webchangedetector.com
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           0.2.4
+ * Version:           0.3
  * Author:            Mike Miler
- * Author URI:        wp-mike.com
+ * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       wp-compare
+ * Text Domain:       webchangedetector
  * Domain Path:       /languages
  */
 
@@ -35,34 +35,34 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'WP_COMPARE_VERSION', '1.0.0' );
+define( 'WebChangeDetector_VERSION', '1.0.0' );
 
 /**
  * The code that runs during plugin activation.
- * This action is documented in includes/class-wp-compare-activator.php
+ * This action is documented in includes/class-webchangedetector-activator.php
  */
-function activate_wp_compare() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-wp-compare-activator.php';
-	Wp_Compare_Activator::activate();
+function activate_webchangedetector() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-activator.php';
+	WebChangeDetector_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-wp-compare-deactivator.php
+ * This action is documented in includes/class-webchangedetector-deactivator.php
  */
-function deactivate_wp_compare() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-wp-compare-deactivator.php';
-	Wp_Compare_Deactivator::deactivate();
+function deactivate_webchangedetector() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-deactivator.php';
+	WebChangeDetector_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_wp_compare' );
-register_deactivation_hook( __FILE__, 'deactivate_wp_compare' );
+register_activation_hook( __FILE__, 'activate_webchangedetector' );
+register_deactivation_hook( __FILE__, 'deactivate_webchangedetector' );
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-wp-compare.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector.php';
 
 /**
  * Begins execution of the plugin.
@@ -73,9 +73,9 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-wp-compare.php';
  *
  * @since    1.0.0
  */
-function run_wp_compare() {
+function run_webchangedetector() {
 
-	$plugin = new Wp_Compare();
+	$plugin = new WebChangeDetector();
 	$plugin->run();
 
 }
@@ -84,7 +84,7 @@ require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'https://bitbucket.org/wpmike/compare-plugin',
 	__FILE__, //Full path to the main plugin file or functions.php.
-	'wp-compare'
+	'webchangedetector'
 );
 
 /*$myUpdateChecker->setAuthentication(array(
@@ -95,7 +95,7 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 //$myUpdateChecker->setBranch('stable-branch');
 
 
-run_wp_compare();
+run_webchangedetector();
 
 // Add hook to auto sync posts when they are published
 add_action('transition_post_status', 'send_new_post', 10, 3);
@@ -103,7 +103,7 @@ add_action('transition_post_status', 'send_new_post', 10, 3);
 // Sync all pages and posts when there is a new page or post published
 function sync_urls_on_publish($new_status, $old_status, $post) {
     if('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page') ) ) {
-        $wp_compare = new Wp_Compare();
-        $wp_compare->sync_posts();
+        $wcd = new WebChangeDetector();
+        $wcd->sync_posts();
     }
 }

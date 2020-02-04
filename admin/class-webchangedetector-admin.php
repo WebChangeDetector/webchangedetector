@@ -6,8 +6,8 @@
  * @link       wp-mike.com
  * @since      1.0.0
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/admin
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/admin
  */
 
 /**
@@ -16,11 +16,11 @@
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
- * @package    Wp_Compare
- * @subpackage Wp_Compare/admin
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/admin
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class Wp_Compare_Admin {
+class WebChangeDetector_Admin {
 
 	/**
 	 * The ID of this plugin.
@@ -65,15 +65,15 @@ class Wp_Compare_Admin {
 		 * This function is provided for demonstration purposes only.
 		 *
 		 * An instance of this class should be passed to the run() function
-		 * defined in Wp_Compare_Loader as all of the hooks are defined
+		 * defined in WebChangeDetector_Loader as all of the hooks are defined
 		 * in that particular class.
 		 *
-		 * The Wp_Compare_Loader will then create the relationship
+		 * The WebChangeDetector_Loader will then create the relationship
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/wp-compare-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 
 	}
 
@@ -88,15 +88,15 @@ class Wp_Compare_Admin {
 		 * This function is provided for demonstration purposes only.
 		 *
 		 * An instance of this class should be passed to the run() function
-		 * defined in Wp_Compare_Loader as all of the hooks are defined
+		 * defined in WebChangeDetector_Loader as all of the hooks are defined
 		 * in that particular class.
 		 *
-		 * The Wp_Compare_Loader will then create the relationship
+		 * The WebChangeDetector_Loader will then create the relationship
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wp-compare-admin.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
 
 	}
 
