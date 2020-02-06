@@ -614,7 +614,8 @@ function mm_tabs() {
     settings_errors();
     if( isset( $_GET[ 'tab' ] ) ) {
         $active_tab = $_GET[ 'tab' ];
-    }
+    } else
+        $active_tab = 'take-screenshots';
     ?>
     <div class="wrap">
         <h2 class="nav-tab-wrapper">
