@@ -203,7 +203,10 @@ function webchangedetector_init(){
                     'group_id'		=> $monitoring_group_id,
                     'hour_of_day'	=> $postdata['hour_of_day'],
                     'interval_in_h'	=> $postdata['interval_in_h'],
-                    'alert_email'	=> $postdata['alert_email']
+                    'monitoring'    => $postdata['monitoring'],
+                    'enabled'       => $postdata['enabled'],
+                    'alert_email'	=> $postdata['alert_email'],
+                    'group_name'    => $postdata['group_name']
                 );
                 $updated_monitoring_settings = mm_api( $args );
                 break;
@@ -418,12 +421,14 @@ function webchangedetector_init(){
 				Your available compares are <strong><?= $available_compares . ' / ' . $limit ?></strong>.
 			<p>
 			<form action="/wp-admin/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
-			<input type="hidden" name="action" value="update_monitoring_settings">
+                <input type="hidden" name="action" value="update_monitoring_settings">
+                <input type="hidden" name="monitoring" value="1">
+                <input type="hidden" name="group_name" value="<?= $group_settings['group_name'] ?>">
 				<p>
-					<label for="monitoring">Enable Monitoring</label>
-					<select name="monitoring">
-						<option value="1" <?= isset( $group_settings['monitoring'] ) && $group_settings['monitoring'] == '1' ? 'selected' : ''; ?>>Yes</option>
-						<option value="0" <?= isset( $group_settings['monitoring'] ) && $group_settings['monitoring'] == '0' ? 'selected' : ''; ?>>No</option>
+					<label for="enabled">Enabled</label>
+					<select name="enabled">
+						<option value="1" <?= isset( $group_settings['enabled'] ) && $group_settings['enabled'] == '1' ? 'selected' : ''; ?>>Yes</option>
+						<option value="0" <?= isset( $group_settings['enabled'] ) && $group_settings['enabled'] == '0' ? 'selected' : ''; ?>>No</option>
 					</select>
 				</p>
 				<p>
