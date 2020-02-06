@@ -82,7 +82,7 @@ function run_webchangedetector() {
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://bitbucket.org/wpmike/compare-plugin',
+	'https://bitbucket.org/wpmike/wcd-plugin',
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'webchangedetector'
 );
