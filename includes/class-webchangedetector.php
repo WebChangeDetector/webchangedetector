@@ -624,7 +624,7 @@ class WebChangeDetector {
 
 function mm_api( $args ) {
 
-	$url = 'https://app.wpmike.com/v1/api.php';
+	$url = 'https://api.webchangedetector.com/v1/api.php';
 
     if( !isset( $args['api_key'] ) )
         $args['api_key'] = get_option( 'webchangedetector_api_key' );
