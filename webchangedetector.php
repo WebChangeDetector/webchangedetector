@@ -8,15 +8,15 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              wp-mike.com
+ * @link              webchangedetector.com
  * @since             0.1
  * @package           WebChangeDetector
  *
  * @wordpress-plugin
  * Plugin Name:       Web Change Detector
  * Plugin URI:        webchangedetector.com
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           0.3.4
+ * Description:       Run automatic change detections and get notified on changes of your website. Or run manual change detections before and after updates.
+ * Version:           0.3.5
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+

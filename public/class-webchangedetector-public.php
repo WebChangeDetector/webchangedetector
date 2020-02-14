@@ -94,7 +94,12 @@ function mm_admin_css() {
 }
 
 function WebChangeDetector_plugin_setup_menu(){
-        add_menu_page( 'Web Change Detector', 'Web Change Detector', 'manage_options', 'webchangedetector', 'webchangedetector_init' );
+        add_menu_page( 'Web Change Detector',
+                    'Web Change Detector',
+                    'manage_options',
+                    'webchangedetector',
+                    'webchangedetector_init',
+                    plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg');
 }
  
 function webchangedetector_init(){
