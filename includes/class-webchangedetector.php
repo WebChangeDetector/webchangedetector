@@ -224,6 +224,15 @@ class WebChangeDetector {
 		return mm_api( $args );
 	}
 
+	public function get_monitoring_settings( $group_id ) {
+        $args = array(
+            'action'	=> 'get_monitoring_settings',
+            'group_id'	=> $group_id
+        );
+        $monitoring_group_settings = mm_api( $args );
+        return $monitoring_group_settings[0];
+    }
+
 	public function get_usage( $api_key ) {
 		$args = array(
 			'action'	=> 'get_usage',
@@ -233,7 +242,7 @@ class WebChangeDetector {
 		return mm_api( $args );
 	}
 
-	public function sync_posts() {
+	public function sync_posts( $auto_detection_group = false, $manual_detection_group = false ) {
 
 	    $posttypes = array(
             'pages' => get_pages(),
@@ -258,11 +267,23 @@ class WebChangeDetector {
             $args = array(
                 'action'    => 'sync_urls',
                 'posts'     => json_encode( $array ),
+                'auto_detection_group_id' => $auto_detection_group,
+                'manual_detection_group_id' => $manual_detection_group,
+
             );
             //var_dump( $args );
             return mm_api( $args );
         } else
             return false;
+    }
+
+    public function update_urls( $group_id, $active_posts = array() ) {
+	    $args = array(
+            'action'		=> 'update_urls',
+            'group_id'		=> $group_id,
+            'posts'			=> json_encode( $active_posts ),
+        );
+        $results = mm_api( $args );
     }
 
 	public function take_screenshot( $group_id, $api_key ) {
@@ -287,8 +308,6 @@ class WebChangeDetector {
 		if( isset( $api_key['status'] ) && $api_key['status'] == 'success' ) {
 
             update_option('webchangedetector_api_key', $api_key['api_key']);
-            delete_option('webchangedetector_group_id');
-            delete_option('webchangedetector_monitoring_group_id');
 
             $this->create_group($api_key['api_key']);
         }
@@ -375,15 +394,17 @@ class WebChangeDetector {
 			'api_key'	    => $api_key
 		);
 
-		$group = mm_api( $args );
-
-		$manual_group_id = $group['manual_group']['id'];
-		$monitoring_group_id = $group['monitoring_group']['id'];
-
-		update_option( 'webchangedetector_group_id', $manual_group_id );
-		update_option( 'webchangedetector_monitoring_group_id', $monitoring_group_id );
+		return mm_api( $args );
 	}
 
+	function delete_website( $api_key ) {
+	    $args = array(
+            'action'    => 'delete_website',
+            'domain'    =>  $_SERVER['SERVER_NAME'],
+            'api_key'   => $api_key
+        );
+	    mm_api( $args );
+	}
 	function delete_group( $group_id, $api_key ) {
 	    $args = array(
 	        'action'    => 'delete_group',
@@ -391,6 +412,17 @@ class WebChangeDetector {
             'api_key'   => $api_key
         );
 	    mm_api( $args );
+    }
+
+    function get_website_details( $api_key ) {
+	    $args = array(
+	        'action'    => 'get_client_website_details',
+            'domain'    => $_SERVER['SERVER_NAME'],
+            'api_key'   => $api_key
+        );
+
+	    $website_details = mm_api( $args );
+	    return $website_details[0];
     }
 
     function get_urls_of_group( $group_id ) {

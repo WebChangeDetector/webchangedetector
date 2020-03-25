@@ -127,21 +127,13 @@ function webchangedetector_init(){
 
             case 'reset_api_key':
                 $api_key = get_option( 'webchangedetector_api_key' );
-                $group_id = get_option( 'webchangedetector_group_id' );
-                $monitoring_group_id = get_option( 'webchangedetector_monitoring_group_id' );
-
-                $wcd->delete_group( $group_id, $api_key );
-                $wcd->delete_group( $monitoring_group_id, $api_key );
+                $wcd->delete_website( $api_key );
 
                 delete_option( 'webchangedetector_api_key' );
-                delete_option( 'webchangedetector_group_id' );
-                delete_option( 'webchangedetector_monitoring_group_id' );
                 break;
 
             case 'save_api_key':
                 update_option( 'webchangedetector_api_key', $postdata['api-key'] );
-                delete_option( 'webchangedetector_group_id' );
-                delete_option( 'webchangedetector_monitoring_group_id' );
                 break;
 		}
 	}
@@ -183,13 +175,21 @@ function webchangedetector_init(){
 	else
 		$api_key = false;
 
-	// Create group if not exists yet
-	$group_id = get_option( 'webchangedetector_group_id' );
-	$monitoring_group_id = get_option( 'webchangedetector_monitoring_group_id' );
+	$website_details = $wcd->get_website_details( $api_key );
 
-	if( !$group_id || !$monitoring_group_id )
-		$wcd->create_group( $api_key );
+	// Create website and groups if not exists yet
+	if( !$website_details ) {
+        $website_details = $wcd->create_group($api_key);
+        $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
 
+    }
+
+	$group_id = $website_details['manual_detection_group_id'];
+	$monitoring_group_id = $website_details['auto_detection_group_id'];
+
+    $monitoring_group_settings = $wcd->get_monitoring_settings( $monitoring_group_id );
+
+	// Perform actions
 	if( isset( $postdata['action'] ) ) {
 	    switch( $postdata['action'] ) {
             case 'take_screenshots':
@@ -219,6 +219,7 @@ function webchangedetector_init(){
             case 'post_urls':
                 // Get active posts from post data
                 $active_posts = array();
+                $count_selected = 0;
                 foreach( $postdata as $key => $post_id ) {
                     if( strpos( $key, 'sc_id' ) === 0 ) {
                         $active_posts[] = array(
@@ -228,21 +229,40 @@ function webchangedetector_init(){
                             'desktop'   => $postdata['desktop-' . $post_id],
                             'mobile'    => $postdata['mobile-' . $post_id]
                         );
+                        if( $postdata['active-' . $post_id] &&  $postdata['desktop-' . $post_id] )
+                            $count_selected ++;
+
+                        if( $postdata['active-' . $post_id] &&  $postdata['mobile-' . $post_id] )
+                            $count_selected ++;
                     }
                 }
 
-                // Update API URLs
-                $args = array(
-                    'action'		=> 'update_urls',
-                    'group_id'		=> $postdata['group_id'],
-                    'posts'			=> json_encode( $active_posts ),
-                );
-                $results = mm_api( $args );
-                //var_dump( $results );
+                // Check if there is a limit for selecting URLs
+                if( $website_details['enable_limits'] &&
+                    $website_details['url_limit_manual_detection'] < $count_selected &&
+                    $website_details['manual_detection_group_id'] == $postdata['group_id']) {
+                    echo '<div class="error notice"><p>The limit for selecting URLs is ' .
+                            $website_details['url_limit_manual_detection'] . '. 
+                            You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
+
+                } else if( $website_details['enable_limits'] &&
+                            $website_details['sc_limit'] < $count_selected * ( 24 / $monitoring_group_settings['interval_in_h'] ) * 30 &&
+                            $website_details['auto_detection_group_id'] == $postdata['group_id'] ) {
+
+                             echo '<div class="error notice"><p>The limit for auto change detection is ' .
+                                $website_details['sc_limit'] . '. per month. 
+                                You selected ' . $count_selected * ( 24 / $monitoring_group_settings['interval_in_h'] ) * 30 . ' change detections. The settings were not saved.</p></div>';
+                } else {
+                    // Update API URLs
+                    $wcd->update_urls($postdata['group_id'], $active_posts);
+                    echo '<div class="updated notice"><p>Settings saved.</p></div>';
+                }
+
                 break;
         }
     }
 
+	// Start view
 	echo '<div class="webchangedetector">';
 	echo '<h1>Web Change Detector</h1>';
 
@@ -280,6 +300,27 @@ function webchangedetector_init(){
 
 	<?php
 
+    // Show queued urls
+    $args = array(
+        'action'	=> 'get_queue',
+        'group_id'	=> $group_id
+    );
+    $queue = mm_api( $args );
+
+    if( !empty( $queue ) ) {
+        echo '<div class="mm_processing_container">';
+        echo '<h2>Currently Processing</h2>';
+
+        echo '<table><tr><th>URL</th><th>Device</th><th>Status</th></tr>';
+
+        foreach( $queue as $url ) {
+            echo '<tr><td>' . $url['url'] . '</td><td>' . ucfirst( $url['device'] ) . '</td><td>Processing...</td></tr>';
+        }
+        echo '</table>';
+        echo '</div>';
+        echo '<hr>';
+    }
+
 	switch( $tab ) {
 
         /********************
@@ -287,27 +328,6 @@ function webchangedetector_init(){
          ********************/
 
 		case 'take-screenshots':
-
-			// Show queued urls
-			$args = array(
-				'action'	=> 'get_queue',
-				'group_id'	=> $group_id
-			);
-			$queue = mm_api( $args );
-
-			if( !empty( $queue ) ) {
-				echo '<div class="mm_processing_container">';
-				echo '<h2>Currently Processing</h2>';
-
-				echo '<table><tr><th>URL</th><th>Device</th><th>Status</th></tr>';
-
-				foreach( $queue as $url ) {
-					echo '<tr><td>' . $url['url'] . '</td><td>' . ucfirst( $url['device'] ) . '</td><td>Processing...</td></tr>';
-				}
-				echo '</table>';
-				echo '</div>';
-				echo '<hr>';
-			}
 
             // Get amount selected Screenshots
             $args = array(
@@ -325,7 +345,7 @@ function webchangedetector_init(){
 				<div class="mm_accordion_title">
 					<h3>
 						Manual Compare URLs<br>
-						<small>Currently selected: <strong><?= $amount_sc ?></strong> URLs</small>
+						<small>Currently selected: <strong><?= $amount_sc ?><?= $website_details['enable_limits'] ? " / " .  $website_details['url_limit_manual_detection'] : '' ?> </strong> URLs</small>
 					</h3>
 					<div class="mm_accordion_content">
 						<?php $wcd->mm_get_url_settings( $group_id ) ?>
@@ -333,17 +353,18 @@ function webchangedetector_init(){
 				</div>
 			</div>
 			<?php
-
-			echo '<h2>Do the magic</h2>';
-			echo '<p>
+            if( !$website_details['enable_limits'] ) {
+                echo '<h2>Do the magic</h2>';
+                echo '<p>
 					Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
 				<strong>Currently selected amount of compares: ' . $amount_sc . '</strong></p>';
 
-			echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">';
-			echo '<input type="hidden" value="take_screenshots" name="action">';
-			//echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
-			echo '<input type="submit" value="Start Manual Change Detection" class="button">';
-			echo '</form>';
+                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">';
+                echo '<input type="hidden" value="take_screenshots" name="action">';
+                //echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
+                echo '<input type="submit" value="Start Manual Change Detection" class="button">';
+                echo '</form>';
+            }
 			echo '<hr>';
 
 			// Compare overview
@@ -389,6 +410,7 @@ function webchangedetector_init(){
 
 		case 'monitoring-screenshots':
 
+
             //Amount selected Monitoring Screenshots
             $args = array(
                 'action'		=> 'get_amount_sc',
@@ -399,12 +421,8 @@ function webchangedetector_init(){
             if( !$amount_sc_monitoring )
                 $amount_sc_monitoring = '0';
 
-			$args = array(
-				'action'	=> 'get_monitoring_settings',
-				'group_id'	=> $monitoring_group_id
-			);
-			$group_settings = mm_api( $args );
-			$group_settings = $group_settings[0];
+            $group_settings = $wcd->get_monitoring_settings( $monitoring_group_id );
+
 			echo '<h2>Select URLs</h2>';
 
 			?>
@@ -422,8 +440,15 @@ function webchangedetector_init(){
 
 			<h2>Settings for Monitoring</h2>
 			<p>
-				The current settings require <strong><?= $amount_sc_monitoring * ( 24 / $group_settings['interval_in_h'] ) * 30 ?></strong> compares per month.<br>
-				Your available compares are <strong><?= $available_compares . ' / ' . $limit ?></strong>.
+				The current settings require <strong><?= $amount_sc_monitoring * ( 24 / $group_settings['interval_in_h'] ) * 30 ?></strong> change detections per month.<br>
+				Your available change detections are <strong>
+                    <?php
+                    if( $website_details['enable_limits'] )
+                        echo $website_details['sc_limit'] . " / month";
+                    else
+                        echo $available_compares . ' / ' . $limit;
+                    ?>
+                </strong>.
 			<p>
 			<form action="/wp-admin/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
                 <input type="hidden" name="action" value="update_monitoring_settings">
@@ -526,7 +551,7 @@ function webchangedetector_init(){
 				echo '<div class="error notice">
     				<p>Please enter a valid API Key.</p>
 				</div>';
-			} else {
+			} else if( !$website_details['enable_limits'] ) {
 
 				echo '<h2>Your credits</h2>';
 				echo 'Your current plan: <strong>' . $client_details['plan_name'] . '</strong><br>';
@@ -557,14 +582,13 @@ function webchangedetector_init(){
 				echo 'Used compares: ' . $comp_usage . '<br>';
 				echo 'Available compares in this period: ' . $available_compares . '</p>';
 
-			}
-            $args = array(
-                'action'	=> 'get_upgrade_options',
-                'plan_id'	=> (int)$client_details['plan_id']
-            );
 
-            echo mm_api( $args );
-
+                $args = array(
+                    'action'	=> 'get_upgrade_options',
+                    'plan_id'	=> (int)$client_details['plan_id']
+                );
+                echo mm_api( $args );
+            }
 			echo $wcd->get_api_key_form( $api_key );
 			break;
 
@@ -616,16 +640,35 @@ function isJson($string) {
 }
 
 function mm_tabs() {
-    settings_errors();
+    //settings_errors();
+
+    $args = array(
+        'action'    => 'get_client_website_details',
+        'domain'    => $_SERVER['HTTP_HOST']
+    );
+
+    $restrictions = mm_api( $args );
+
+    $restrictions = $restrictions[0];
+    //var_dump( $restrictions );
+
     if( isset( $_GET[ 'tab' ] ) ) {
         $active_tab = $_GET[ 'tab' ];
     } else
         $active_tab = 'take-screenshots';
+
+
+
     ?>
     <div class="wrap">
         <h2 class="nav-tab-wrapper">
+            <?php if( !$restrictions['enable_limits'] || $restrictions['allow_manual_detection'] ) { ?>
             <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Manual Change Detection</a>
+            <?php }
+
+            if( !$restrictions['enable_limits'] || $restrictions['allow_auto_detection'] ) { ?>
             <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
+            <?php } ?>
             <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
             <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
         </h2>
