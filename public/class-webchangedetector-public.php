@@ -115,7 +115,6 @@ function webchangedetector_init(){
 				$api_key = $wcd->create_free_account( $postdata );
 
 				// If we didn't get an api key, put the error message out there and show the no-account-page
-
 				if( isset( $api_key['status'] ) && $api_key['status'] == 'error') {
 				    echo '<div class="error notice">
                                 <p>' . $api_key['reason'] . '</p>
@@ -153,7 +152,7 @@ function webchangedetector_init(){
 		if( isset( $postdata['action'] ) && $postdata['action'] == 'resend_confirmation_mail' ) {
 			$wcd->resend_confirmation_mail( $account_keys['api_key'] );
 			echo '<div class="updated notice">
-   					<p>Email sent successfully.</p>
+   					<p>Email sent successfully to your email address ' . $account_keys['email'] . '.</p>
 				</div>';
 
 		}
