@@ -509,7 +509,7 @@ class WebChangeDetector {
         $post_types = get_post_types();
 
         foreach( $post_types as $post_type ) {
-echo $post_type . '<br>';
+
             if( $post_type != 'post' && $post_type != 'page' )
                 continue;
 
