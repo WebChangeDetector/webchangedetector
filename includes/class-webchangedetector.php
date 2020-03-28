@@ -509,6 +509,9 @@ class WebChangeDetector {
         $post_types = get_post_types();
 
         foreach( $post_types as $post_type ) {
+echo $post_type . '<br>';
+            if( $post_type != 'post' && $post_type != 'page' )
+                continue;
 
             $posts = get_posts([
                 'post_type' => $post_type,
@@ -529,12 +532,14 @@ class WebChangeDetector {
 
                 foreach( $posts as $post ) {
                     $url = get_permalink( $post );
-
+                    $sc_id = false;
                     foreach( $synced_posts as $synced_post ) {
                         if( $synced_post['wp_post_id'] == $post->ID) {
                             $sc_id = $synced_post['sc_id'];
                         }
                     }
+                    if( !$sc_id )
+                        continue;
 
                     $checked = array(
                         'active' => '',
