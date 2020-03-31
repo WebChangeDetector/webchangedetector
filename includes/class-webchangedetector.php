@@ -661,7 +661,10 @@ class WebChangeDetector {
 
 function mm_api( $args ) {
 
-	$url = 'https://api.webchangedetector.com/v1/api.php';
+    if( $_SERVER['SERVER_NAME'] == 'compare-plugin.wpmike-website.com' )
+        $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
+    else
+        $url = 'https://api.webchangedetector.com/v1/api.php';
 
     if( !isset( $args['api_key'] ) )
         $args['api_key'] = get_option( 'webchangedetector_api_key' );

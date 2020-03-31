@@ -133,6 +133,7 @@ function webchangedetector_init(){
 
             case 'save_api_key':
                 update_option( 'webchangedetector_api_key', $postdata['api-key'] );
+                $wcd->create_group( $postdata['api-key'] );
                 break;
 		}
 	}
@@ -320,6 +321,8 @@ function webchangedetector_init(){
         echo '<hr>';
     }
 
+    $restrictions = mm_get_restrictions();
+
 	switch( $tab ) {
 
         /********************
@@ -328,6 +331,10 @@ function webchangedetector_init(){
 
 		case 'take-screenshots':
 
+		    if( $restrictions['enable_limits'] && !$restrictions['allow_manual_detection'] ) {
+		        echo 'Settings for Update Change detections are disabled by your API Key.';
+		        break;
+            }
             // Get amount selected Screenshots
             $args = array(
                 'action'		=> 'get_amount_sc',
@@ -343,7 +350,7 @@ function webchangedetector_init(){
 			<div class="accordion">
 				<div class="mm_accordion_title">
 					<h3>
-						Manual Compare URLs<br>
+						Update Change Detection URLs<br>
 						<small>Currently selected: <strong><?= $amount_sc ?><?= $website_details['enable_limits'] ? " / " .  $website_details['url_limit_manual_detection'] : '' ?> </strong> URLs</small>
 					</h3>
 					<div class="mm_accordion_content">
@@ -356,18 +363,18 @@ function webchangedetector_init(){
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
 					Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
-				<strong>Currently selected amount of compares: ' . $amount_sc . '</strong></p>';
+				<strong>Currently selected amount of change detections: ' . $amount_sc . '</strong></p>';
 
                 echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">';
                 echo '<input type="hidden" value="take_screenshots" name="action">';
                 //echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
-                echo '<input type="submit" value="Start Manual Change Detection" class="button">';
+                echo '<input type="submit" value="Start Update Change Detection" class="button">';
                 echo '</form>';
             }
 			echo '<hr>';
 
 			// Compare overview
-			echo '<h2>Latest compares</h2>';
+			echo '<h2>Latest Change Detections</h2>';
 			$args = array(
 				'action'	=> 'get_compares',
 				'domain'	=> $_SERVER['SERVER_NAME'],
@@ -379,12 +386,11 @@ function webchangedetector_init(){
 			if( count( $compares ) == 0 )
 				echo "There are no compares to show yet...";
 			else {
-				echo '<table><tr><th>URL</th><th>Device</th><th>Compare Date</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+				echo '<table><tr><th>URL</th><th>Device</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
 				foreach( $compares as $key => $compare) {
 					echo '<tr>';
 					echo '<td>' . $compare['url'] . '</td>';
 					echo '<td>' . ucfirst( $compare['device'] ) . '</td>';
-					echo '<td>' . date( "d/m/Y H:i", $compare['timestamp'] ) . '</td>';
 					echo '<td>' . date( "d/m/Y H:i", $compare['image1_timestamp'] ) . '<br>'. date( "d/m/Y H:i", $compare['image2_timestamp'] ) . '</td>';
 					if( $compare['difference_percent'] )
 						$class = 'is-difference';
@@ -408,7 +414,10 @@ function webchangedetector_init(){
          * **********************/
 
 		case 'monitoring-screenshots':
-
+            if( $restrictions['enable_limits'] && !$restrictions['allow_auto_detection'] ) {
+                echo 'Settings for Update Change detections are disabled by your API Key.';
+                break;
+            }
 
             //Amount selected Monitoring Screenshots
             $args = array(
@@ -428,7 +437,7 @@ function webchangedetector_init(){
 			<div class="accordion">
 				<div class="mm_accordion_title">
 					<h3>
-						Monitoring Compare URLs<br>
+						Auto Change Detection URLs<br>
 						<small>Currently selected: <strong><?= $amount_sc_monitoring ?></strong> URLs</small>
 					</h3>
 					<div class="mm_accordion_content">
@@ -437,7 +446,7 @@ function webchangedetector_init(){
 				</div>
 			</div>
 
-			<h2>Settings for Monitoring</h2>
+			<h2>Settings for Auto Change Detection</h2>
 			<p>
 				The current settings require <strong><?= $amount_sc_monitoring * ( 24 / $group_settings['interval_in_h'] ) * 30 ?></strong> change detections per month.<br>
 				Your available change detections are <strong>
@@ -476,22 +485,22 @@ function webchangedetector_init(){
 				</select>
 				</p>
 				<p>
-				<label for="interval_in_h">Enable Monitoring</label>
+				<label for="interval_in_h">Enable Auto Change Detection</label>
 				<select name="interval_in_h">
 					<option value="1" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '1' ? 'selected' : ''; ?>>
-						Every 1 hour (720 Compares / URL / month)
+						Every 1 hour (720 Change Detections / URL / month)
 					</option>
 					<option value="3" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '3' ? 'selected' : ''; ?>>
-						Every 3 hours (240 Compares / URL / month)
+						Every 3 hours (240 Change Detections / URL / month)
 						</option>
 					<option value="6" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '6' ? 'selected' : ''; ?>>
-						Every 6 hours (120 Compares / URL /  month)
+						Every 6 hours (120 Change Detections / URL /  month)
 						</option>
 					<option value="12" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '12' ? 'selected' : ''; ?>>
-						Every 12 hours (60 Compares / URL /  month)
+						Every 12 hours (60 Change Detections / URL /  month)
 						</option>
 					<option value="24" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '24' ? 'selected' : ''; ?>>
-						Every 24 hours (30 Compares / URL /  month)
+						Every 24 hours (30 Change Detections / URL /  month)
 					</option>
 				</select>
 				</p>
@@ -505,7 +514,7 @@ function webchangedetector_init(){
 			<?php
 
 			// Compare overview
-			echo '<h2>Latest compares</h2>';
+			echo '<h2>Latest Change Detections</h2>';
 			$args = array(
 				'action'	=> 'get_compares',
 				'domain'	=> $_SERVER['SERVER_NAME'],
@@ -516,12 +525,11 @@ function webchangedetector_init(){
 			if( count( $compares ) == 0 )
 				echo "There are no compares to show yet...";
 			else {
-				echo '<table><tr><th>URL</th><th>Device</th><th>Compare Date</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+				echo '<table><tr><th>URL</th><th>Device</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
 				foreach( $compares as $key => $compare) {
 					echo '<tr>';
 					echo '<td>' . $compare['url'] . '</td>';
 					echo '<td>' . $compare['device'] . '</td>';
-					echo '<td>' . date( "d/m/Y H:i", $compare['timestamp'] ) . '</td>';
 					echo '<td>' . date( "d/m/Y H:i", $compare['image1_timestamp'] ) . '<br>'. date( "d/m/Y H:i", $compare['image2_timestamp'] ) . '</td>';
 					if( $compare['difference_percent'] )
 						$class = 'is-difference';
@@ -561,7 +569,7 @@ function webchangedetector_init(){
 				if( $client_details['one_time'] ) {
 
 					$end_of_trial = strtotime( "+1 month ", $start_date );
-					echo 'Your compares are valid until <strong>' . date( "d/m/Y" , $end_of_trial ) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
+					echo 'Your change detections are valid until <strong>' . date( "d/m/Y" , $end_of_trial ) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
 
 				} else {
 					// Calculate next renew date
@@ -577,9 +585,9 @@ function webchangedetector_init(){
 					//if( !$client_details['one_time'] ) {
 
 				}
-				echo '<p>Compares in this period: ' . $limit . '<br>';
-				echo 'Used compares: ' . $comp_usage . '<br>';
-				echo 'Available compares in this period: ' . $available_compares . '</p>';
+				echo '<p>Change detections in this period: ' . $limit . '<br>';
+				echo 'Used change detections: ' . $comp_usage . '<br>';
+				echo 'Available change detections in this period: ' . $available_compares . '</p>';
 
 
                 $args = array(
@@ -598,24 +606,24 @@ function webchangedetector_init(){
 
 			echo '<h2>How it works:</h2>';
 			echo '<p>
-					<strong>Manual Change Detection</strong><br>
+					<strong>Update Change Detection</strong><br>
 					Here you can select the pages of your website and manually take the screenshots.
-					Use this Manual Change Detection for e.g. when you perform updates on your website. Run a change detection
+					Use the Update Change Detection when you perform updates on your website. Run a change detection
 					before and after the update and you will see if there are differences on the selected pages.
 					<ol>
 						<li>Select the urls and the devices (desktop and / or mobile) you want to take a screenshot.</li>
-						<li>Hit the Button "Start Manual Detection". The Detection might take couple of minutes. </li>
-						<li>When the manual detections are finished, you can see the results below the settings at "Latest compares"</li>
+						<li>Hit the Button "Start Update Detection". The Detection might take couple of minutes. </li>
+						<li>When the update detections are finished, you can see the results below the settings at "Latest Change Detections"</li>
 					</ol>
 					</p>
 					<p>
 					<strong>Auto Change Detection</strong><br>
-					Use the monitoring to automatically take and compare screenshots in a specific interval.
-					When there are differences in a compare, you will automatically receive an alert email.
+					Use the Auto Change Detection to automatically do a change detection in a specific interval.
+					When there are differences in a change detection, you will automatically receive an alert email.
 					<ol>
 						<li>Select the urls you want to auto detect.</li>
 						<li>Select the interval and the hour of day for the first screenshot to be taken. Please be aware
-						 that compares will be only performed when you have enough credit available.</li>
+						 that change detections will be only performed when you have enough credit available.</li>
 						<li>You find all auto detections below the settings</li>
 					</ol>
 					At the Tab "Settings" you have an overview of your usage and limits. You can also up- or downgrade your package.
@@ -638,18 +646,18 @@ function isJson($string) {
  return (json_last_error() == JSON_ERROR_NONE);
 }
 
-function mm_tabs() {
-    //settings_errors();
-
+function mm_get_restrictions() {
     $args = array(
         'action'    => 'get_client_website_details',
         'domain'    => $_SERVER['HTTP_HOST']
     );
 
-    $restrictions = mm_api( $args );
 
-    $restrictions = $restrictions[0];
-    //var_dump( $restrictions );
+    $restrictions = mm_api( $args );
+    return $restrictions[0];
+}
+
+function mm_tabs() {
 
     if( isset( $_GET[ 'tab' ] ) ) {
         $active_tab = $_GET[ 'tab' ];
@@ -661,13 +669,9 @@ function mm_tabs() {
     ?>
     <div class="wrap">
         <h2 class="nav-tab-wrapper">
-            <?php if( !$restrictions['enable_limits'] || $restrictions['allow_manual_detection'] ) { ?>
-            <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Manual Change Detection</a>
-            <?php }
+            <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update Change Detection</a>
 
-            if( !$restrictions['enable_limits'] || $restrictions['allow_auto_detection'] ) { ?>
             <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
-            <?php } ?>
             <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
             <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
         </h2>
