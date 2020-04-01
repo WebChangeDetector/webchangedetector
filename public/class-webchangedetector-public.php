@@ -225,14 +225,14 @@ function webchangedetector_init(){
                         $active_posts[] = array(
                             'sc_id'     => $post_id,
                             'url'       => get_permalink($post_id),
-                            'active'    => $postdata['active-' . $post_id],
+                            'active'    => 1,
                             'desktop'   => $postdata['desktop-' . $post_id],
                             'mobile'    => $postdata['mobile-' . $post_id]
                         );
-                        if( $postdata['active-' . $post_id] &&  $postdata['desktop-' . $post_id] )
+                        if( $postdata['desktop-' . $post_id] )
                             $count_selected ++;
 
-                        if( $postdata['active-' . $post_id] &&  $postdata['mobile-' . $post_id] )
+                        if( $postdata['mobile-' . $post_id] )
                             $count_selected ++;
                     }
                 }
@@ -485,7 +485,7 @@ function webchangedetector_init(){
 				</select>
 				</p>
 				<p>
-				<label for="interval_in_h">Enable Auto Change Detection</label>
+				<label for="interval_in_h">Interval in hours</label>
 				<select name="interval_in_h">
 					<option value="1" <?= isset( $group_settings['interval_in_h'] ) && $group_settings['interval_in_h'] == '1' ? 'selected' : ''; ?>>
 						Every 1 hour (720 Change Detections / URL / month)

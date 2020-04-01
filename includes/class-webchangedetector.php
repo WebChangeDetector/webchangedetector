@@ -482,7 +482,7 @@ class WebChangeDetector {
 			var mobile = document.getElementById("mobile-" + postId);
 			var row = document.getElementById( postId );
 
-			if ( active.checked == true && ( desktop.checked == true || mobile.checked == true ) ){
+			if (  desktop.checked == true || mobile.checked == true ){
 				row.style.background = "#17b33147";
 			} else {
 				row.style.background = "#dc323247";
@@ -522,10 +522,9 @@ class WebChangeDetector {
 
             if( $posts ) {
                 echo '<h2>' . ucfirst( $post_type ) . '</h2>';
-                echo '<table><tr><th>Active</th><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
+                echo '<table><tr><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
 
                 echo '<tr style="background: none; text-align: center">
-                            <td><input type="checkbox" id="select-active-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'active\', \'' . $group_id . '\' )" /></td>
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
                             <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
                         </tr>';
@@ -542,15 +541,15 @@ class WebChangeDetector {
                         continue;
 
                     $checked = array(
-                        'active' => '',
+                        'active' => 1,
                         'desktop' => '',
                         'mobile' => ''
                     );
                     if( isset( $checks['urls'] ) ) {
                         foreach ( $checks['urls'] as $key => $check ) {
                             if ( $check['sc_id'] == $sc_id ) {
-                                if ( $check['active'] )
-                                    $checked['active'] = 'checked';
+                                $checked['active'] = 'checked';
+
                                 if ( $check['desktop'] )
                                     $checked['desktop'] = 'checked';
                                 if ( $check['mobile'] )
@@ -562,10 +561,7 @@ class WebChangeDetector {
 
                     echo '<tr class="post_id_' . $group_id . '" id="' . $sc_id . '" >';
                     echo '<input type="hidden" name="sc_id-' . $sc_id . '" value="' . $sc_id . '">';
-                    echo '<td class="checkbox-active-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="active-' . $sc_id . '">
-                            <input  type="checkbox" name="active-' . $sc_id . '" value="1" ' . $checked['active'] . ' 
-                            id="active-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
+                    echo '<input type="hidden" name="active-' . $sc_id . ' value="1">';
 
                     echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
                             <input type="hidden" value="0" name="desktop-' . $sc_id . '">
