@@ -349,7 +349,7 @@ class WebChangeDetector {
 	    if( $api_key ) {
             $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post" 
                         onsubmit="return confirm(\'Do you really want to reset the API key?\nYour settings will get lost.\');">
-                        <input type="hidden" name="action" value="reset_api_key">
+                        <input type="hidden" name="wcd_action" value="reset_api_key">
                         <h2>API Key</h2>
                         <p>Your API key: <strong>' . $api_key . '</strong></p>
                         <input type="submit" value="Reset API key" class="button"><br>
@@ -357,7 +357,7 @@ class WebChangeDetector {
                         the monitoring won\'t be continued!</strong></p>';
         } else {
 	        $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post">
-                        <input type="hidden" name="action" value="save_api_key">
+                        <input type="hidden" name="wcd_action" value="save_api_key">
                         <h2>You already have an API key?</h2>
                         <p>Enter your API key here and start comparing.</p>
                         <input type="text" name="api-key" value="' . $api_key .  '">
@@ -472,7 +472,7 @@ class WebChangeDetector {
 
         echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
-        echo '<input type="hidden" value="post_urls" name="action">';
+        echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
 
         echo '<script>
@@ -642,7 +642,7 @@ class WebChangeDetector {
 		<h2>Create Free Account</h2>
 		<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>
 		<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=webchangedetector&tab=settings" onsubmit="return mmValidateForm()" method="post">
-			<input type="hidden" name="action" value="create_free_account"><br>
+			<input type="hidden" name="wcd_action" value="create_free_account"><br>
 			<p><label>First Name</label><input id="form_first_name" type="text" name="first_name"></p>
 			<p><label>Last Name</label><input type="text" id="form_last_name" name="last_name"></p>
 			<p><label>Email</label><input type="text" id="form_email" name="email"></p>

@@ -109,8 +109,8 @@ function webchangedetector_init(){
 	$wcd = new WebChangeDetector;
 
 	// Actions without API key needed
-	if( isset( $postdata['action'] ) ) {
-		switch( $postdata['action'] ) {
+	if( isset( $postdata['wcd_action'] ) ) {
+		switch( $postdata['wcd_action'] ) {
 			case 'create_free_account':
 				$api_key = $wcd->create_free_account( $postdata );
 
@@ -150,7 +150,7 @@ function webchangedetector_init(){
 	// The account is not activated yet, but the api_key is there already
 	if( isset( $account_keys['api_key'] ) && isset( $account_keys['activation_key'] ) ) {
 
-		if( isset( $postdata['action'] ) && $postdata['action'] == 'resend_confirmation_mail' ) {
+		if( isset( $postdata['wcd_action'] ) && $postdata['wcd_action'] == 'resend_confirmation_mail' ) {
 			$wcd->resend_confirmation_mail( $account_keys['api_key'] );
 			echo '<div class="updated notice">
    					<p>Email sent successfully to your email address ' . $account_keys['email'] . '.</p>
@@ -163,7 +163,7 @@ function webchangedetector_init(){
 				</div>
 				<p>You didn\'t receive the email? Please also check your spam folder. To send the email again, please click the button below</p>
 				<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">
-					<input type="hidden" name="action" value="resend_confirmation_mail">
+					<input type="hidden" name="wcd_action" value="resend_confirmation_mail">
 					<input type="submit" value="Send confirmation mail again" class="button">
 				</form>';
 		return;
@@ -190,8 +190,8 @@ function webchangedetector_init(){
     $monitoring_group_settings = $wcd->get_monitoring_settings( $monitoring_group_id );
 
 	// Perform actions
-	if( isset( $postdata['action'] ) ) {
-	    switch( $postdata['action'] ) {
+	if( isset( $postdata['wcd_action'] ) ) {
+	    switch( $postdata['wcd_action'] ) {
             case 'take_screenshots':
                 $results = $wcd->take_screenshot( $group_id, $api_key );
 
@@ -366,7 +366,7 @@ function webchangedetector_init(){
 				<strong>Currently selected amount of change detections: ' . $amount_sc . '</strong></p>';
 
                 echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">';
-                echo '<input type="hidden" value="take_screenshots" name="action">';
+                echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
                 //echo '<input type="hidden" value="' . $api_key . '" name="api_key">';
                 echo '<input type="submit" value="Start Update Change Detection" class="button">';
                 echo '</form>';
@@ -399,7 +399,7 @@ function webchangedetector_init(){
 					echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
 					//echo '<td><a href="' . $compare['link'] . '" target="_blank">Show compare image</a></td>';
 					echo '<td><form action="/wp-admin/admin.php?page=webchangedetector&tab=show-compare" method="post">';
-					echo '<input type="hidden" name="action" value="show_compare">';
+					echo '<input type="hidden" name="wcd_action" value="show_compare">';
 					echo '<input type="hidden" name="compare_id" value="' . $compare['ID'] . '">';
 					echo '<input class="button" type="submit" value="Show Compare">';
 					echo '</form></td>';
@@ -459,7 +459,7 @@ function webchangedetector_init(){
                 </strong>.
 			<p>
 			<form action="/wp-admin/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
-                <input type="hidden" name="action" value="update_monitoring_settings">
+                <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
                 <input type="hidden" name="group_name" value="<?= $group_settings['group_name'] ?>">
 				<p>
@@ -538,7 +538,7 @@ function webchangedetector_init(){
 					echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
 					//echo '<td><a href="' . $compare['link'] . '" target="_blank">Show compare image</a></td>';
 					echo '<td><form action="/wp-admin/admin.php?page=webchangedetector&tab=show-compare" method="post">';
-					echo '<input type="hidden" name="action" value="show_compare">';
+					echo '<input type="hidden" name="wcd_action" value="show_compare">';
 					echo '<input type="hidden" name="compare_id" value="' . $compare['ID'] . '">';
 					echo '<input class="button" type="submit" value="Show Compare">';
 					echo '</form></td>';

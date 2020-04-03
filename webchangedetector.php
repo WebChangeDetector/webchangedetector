@@ -16,7 +16,7 @@
  * Plugin Name:       Web Change Detector
  * Plugin URI:        webchangedetector.com
  * Description:       Run automatic change detections and get notified on changes of your website. Or run update change detections before and after updates.
- * Version:           0.3.11
+ * Version:           0.3.12
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
@@ -98,7 +98,7 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 run_webchangedetector();
 
 // Add hook to auto sync posts when they are published
-add_action('transition_post_status', 'send_new_post', 10, 3);
+add_action('transition_post_status', 'sync_urls_on_publish', 10, 3);
 
 // Sync all pages and posts when there is a new page or post published
 function sync_urls_on_publish($new_status, $old_status, $post) {
