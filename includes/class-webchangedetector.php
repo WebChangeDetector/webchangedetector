@@ -221,7 +221,7 @@ class WebChangeDetector {
 			'action'		=> 'account_details',
 			'api_key'		=> $api_key
 		);
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	public function get_monitoring_settings( $group_id ) {
@@ -229,7 +229,7 @@ class WebChangeDetector {
             'action'	=> 'get_monitoring_settings',
             'group_id'	=> $group_id
         );
-        $monitoring_group_settings = mm_api( $args );
+        $monitoring_group_settings = $this->mm_api( $args );
         return $monitoring_group_settings[0];
     }
 
@@ -239,7 +239,7 @@ class WebChangeDetector {
 			'api_key'	=> $api_key
 		);
 
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	public function sync_posts( $auto_detection_group = false, $manual_detection_group = false ) {
@@ -272,7 +272,7 @@ class WebChangeDetector {
 
             );
             //var_dump( $args );
-            return mm_api( $args );
+            return $this->mm_api( $args );
         } else
             return false;
     }
@@ -283,7 +283,7 @@ class WebChangeDetector {
             'group_id'		=> $group_id,
             'posts'			=> json_encode( $active_posts ),
         );
-        $results = mm_api( $args );
+        $results = $this->mm_api( $args );
     }
 
 	public function take_screenshot( $group_id, $api_key ) {
@@ -292,7 +292,7 @@ class WebChangeDetector {
 			'group_id'		=> $group_id,
 			'api_key'		=> $api_key
 		);
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	function create_free_account( $post ) {
@@ -304,7 +304,7 @@ class WebChangeDetector {
 			'email'			=> $post['email'],
 		);
 
-		$api_key = mm_api( $args );
+		$api_key = $this->mm_api( $args );
 		if( isset( $api_key['status'] ) && $api_key['status'] == 'success' ) {
 
             update_option('webchangedetector_api_key', $api_key['api_key']);
@@ -321,7 +321,7 @@ class WebChangeDetector {
 				'action'		=> 'verify_account',
 				'api_key'		=> $api_key
 			);
-			return mm_api( $args );
+			return $this->mm_api( $args );
 		} else
 			return false;
 	}
@@ -331,7 +331,7 @@ class WebChangeDetector {
 			'action'	=> 'resend_verification_email',
 			'api_key'	=> $api_key
 		);
-		mm_api( $args );
+        $this->mm_api( $args );
 	}
 
 	function get_api_key() {
@@ -373,7 +373,7 @@ class WebChangeDetector {
 			'api_key'		=> $api_key
 		);
 
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	function check_activated_account( $api_key ) {
@@ -382,7 +382,7 @@ class WebChangeDetector {
 			'api_key'	=> $api_key
 		);
 
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	function create_group( $api_key ) {
@@ -394,7 +394,7 @@ class WebChangeDetector {
 			'api_key'	    => $api_key
 		);
 
-		return mm_api( $args );
+		return $this->mm_api( $args );
 	}
 
 	function delete_website( $api_key ) {
@@ -403,7 +403,7 @@ class WebChangeDetector {
             'domain'    =>  $_SERVER['SERVER_NAME'],
             'api_key'   => $api_key
         );
-	    mm_api( $args );
+        $this->mm_api( $args );
 	}
 	function delete_group( $group_id, $api_key ) {
 	    $args = array(
@@ -411,7 +411,7 @@ class WebChangeDetector {
             'group_id'  => $group_id,
             'api_key'   => $api_key
         );
-	    mm_api( $args );
+        $this->mm_api( $args );
     }
 
     function get_website_details( $api_key ) {
@@ -421,7 +421,7 @@ class WebChangeDetector {
             'api_key'   => $api_key
         );
 
-	    $website_details = mm_api( $args );
+	    $website_details = $this->mm_api( $args );
 	    return $website_details[0];
     }
 
@@ -430,7 +430,7 @@ class WebChangeDetector {
             'action'		=> 'get_group_urls',
             'group_id'		=> $group_id
         );
-        $group_urls = mm_api( $args );
+        $group_urls = $this->mm_api( $args );
 
         $check_posts = array();
         $amount_sc = 0;
@@ -457,8 +457,6 @@ class WebChangeDetector {
     }
 
     function mm_get_url_settings( $group_id, $monitoring_group = false ) {
-
-        global $api_key;
 
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
         $synced_posts = $this->sync_posts();
@@ -653,31 +651,72 @@ class WebChangeDetector {
 		</div>';
 		return $output;
 	}
+
+    function mm_get_restrictions() {
+        $args = array(
+            'action'    => 'get_client_website_details',
+            'domain'    => $_SERVER['HTTP_HOST']
+        );
+
+
+        $restrictions = $this->mm_api( $args );
+        return $restrictions[0];
+    }
+
+    function mm_tabs() {
+
+        if( isset( $_GET[ 'tab' ] ) ) {
+            $active_tab = $_GET[ 'tab' ];
+        } else
+            $active_tab = 'take-screenshots';
+
+
+
+        ?>
+        <div class="wrap">
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update Change Detection</a>
+                <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
+                <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
+                <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
+            </h2>
+        </div>
+
+        <?php
+    }
+
+    function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+
+    function mm_api( $args ) {
+
+        if( $_SERVER['SERVER_NAME'] == 'compare-plugin.wpmike-website.com' )
+            $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
+        else
+            $url = 'https://api.webchangedetector.com/v1/api.php';
+
+        if( !isset( $args['api_key'] ) )
+            $args['api_key'] = get_option( 'webchangedetector_api_key' );
+
+        $ch = curl_init( $url );
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $result = curl_exec($ch);
+
+        if( !$result )
+            return curl_error($ch);
+
+        if( $this->isJson( $result ) )
+            return json_decode( $result, true );
+        else
+            return $result;
+    }
 }
 
-function mm_api( $args ) {
 
-    if( $_SERVER['SERVER_NAME'] == 'compare-plugin.wpmike-website.com' )
-        $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
-    else
-        $url = 'https://api.webchangedetector.com/v1/api.php';
 
-    if( !isset( $args['api_key'] ) )
-        $args['api_key'] = get_option( 'webchangedetector_api_key' );
-
-	$ch = curl_init( $url );
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
-	curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-	$result = curl_exec($ch);
-
-	if( !$result )
-		return curl_error($ch);
-
-	if( isJson( $result ) )
-		return json_decode( $result, true );
-	else
-		return $result;
-}

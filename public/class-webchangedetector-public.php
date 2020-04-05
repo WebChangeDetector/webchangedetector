@@ -213,7 +213,7 @@ function webchangedetector_init(){
                     'alert_email'	=> $postdata['alert_email'],
                     'group_name'    => $postdata['group_name']
                 );
-                $updated_monitoring_settings = mm_api( $args );
+                $updated_monitoring_settings = $wcd->mm_api( $args );
                 break;
 
             case 'post_urls':
@@ -266,7 +266,7 @@ function webchangedetector_init(){
 	echo '<div class="webchangedetector">';
 	echo '<h1>Web Change Detector</h1>';
 
-	mm_tabs();
+	$wcd->mm_tabs();
 
 	echo '<div style="margin-top: 30px;"></div>';
 	if( isset( $get['tab'] ) )
@@ -305,7 +305,7 @@ function webchangedetector_init(){
         'action'	=> 'get_queue',
         'group_id'	=> $group_id
     );
-    $queue = mm_api( $args );
+    $queue = $wcd->mm_api( $args );
 
     if( !empty( $queue ) ) {
         echo '<div class="mm_processing_container">';
@@ -321,7 +321,7 @@ function webchangedetector_init(){
         echo '<hr>';
     }
 
-    $restrictions = mm_get_restrictions();
+    $restrictions = $wcd->mm_get_restrictions();
 
 	switch( $tab ) {
 
@@ -340,7 +340,7 @@ function webchangedetector_init(){
                 'action'		=> 'get_amount_sc',
                 'group_id'		=> $group_id
             );
-            $amount_sc = mm_api( $args );
+            $amount_sc = $wcd->mm_api( $args );
 
             if( !$amount_sc )
                 $amount_sc = '0';
@@ -381,7 +381,7 @@ function webchangedetector_init(){
 				'group_id'	=> $group_id
 
 			);
-			$compares = mm_api( $args );
+			$compares = $wcd->mm_api( $args );
 
 			if( count( $compares ) == 0 )
 				echo "There are no compares to show yet...";
@@ -424,7 +424,7 @@ function webchangedetector_init(){
                 'action'		=> 'get_amount_sc',
                 'group_id'		=> $monitoring_group_id
             );
-            $amount_sc_monitoring = mm_api( $args );
+            $amount_sc_monitoring = $wcd->mm_api( $args );
 
             if( !$amount_sc_monitoring )
                 $amount_sc_monitoring = '0';
@@ -520,7 +520,7 @@ function webchangedetector_init(){
 				'domain'	=> $_SERVER['SERVER_NAME'],
 				'group_id'	=> $monitoring_group_id
 			);
-			$compares = mm_api( $args );
+			$compares = $wcd->mm_api( $args );
 
 			if( count( $compares ) == 0 )
 				echo "There are no compares to show yet...";
@@ -594,7 +594,7 @@ function webchangedetector_init(){
                     'action'	=> 'get_upgrade_options',
                     'plan_id'	=> (int)$client_details['plan_id']
                 );
-                echo mm_api( $args );
+                echo $wcd->mm_api( $args );
             }
 			echo $wcd->get_api_key_form( $api_key );
 			break;
@@ -636,46 +636,10 @@ function webchangedetector_init(){
 				'compare_id'	=> $_POST['compare_id']
 			);
 
-			echo mm_api( $args );
+			echo $wcd->mm_api( $args );
 	}
 	echo '</div>'; // closing from div webchangedetector
 }
 
-function isJson($string) {
- json_decode($string);
- return (json_last_error() == JSON_ERROR_NONE);
-}
-
-function mm_get_restrictions() {
-    $args = array(
-        'action'    => 'get_client_website_details',
-        'domain'    => $_SERVER['HTTP_HOST']
-    );
 
 
-    $restrictions = mm_api( $args );
-    return $restrictions[0];
-}
-
-function mm_tabs() {
-
-    if( isset( $_GET[ 'tab' ] ) ) {
-        $active_tab = $_GET[ 'tab' ];
-    } else
-        $active_tab = 'take-screenshots';
-
-
-
-    ?>
-    <div class="wrap">
-        <h2 class="nav-tab-wrapper">
-            <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update Change Detection</a>
-
-            <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
-            <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
-            <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
-        </h2>
-    </div>
-
-<?php
-}
