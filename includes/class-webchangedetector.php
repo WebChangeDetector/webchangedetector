@@ -262,7 +262,7 @@ class WebChangeDetector {
                 }
             }
         }
-
+//var_dump( $array );
 	    if( $array ) {
             $args = array(
                 'action'    => 'sync_urls',
@@ -459,7 +459,14 @@ class WebChangeDetector {
     function mm_get_url_settings( $group_id, $monitoring_group = false ) {
 
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
-        $synced_posts = $this->sync_posts();
+        if( $monitoring_group ) {
+            $auto_detection_group_id = $group_id;
+            $update_detection_group_id = false;
+        } else {
+            $auto_detection_group_id = false;
+            $update_detection_group_id = $group_id;
+        }
+        $synced_posts = $this->sync_posts( $auto_detection_group_id, $update_detection_group_id );
         $checks = $this->get_urls_of_group( $group_id );
 
         // Select URLS
@@ -475,7 +482,7 @@ class WebChangeDetector {
 
         echo '<script>
 		function mmMarkRows( postId ) {
-			var active = document.getElementById("active-" + postId);
+			//var active = document.getElementById("active-" + postId);
 			var desktop = document.getElementById("desktop-" + postId);
 			var mobile = document.getElementById("mobile-" + postId);
 			var row = document.getElementById( postId );
@@ -526,10 +533,10 @@ class WebChangeDetector {
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
                             <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
                         </tr>';
-
                 foreach( $posts as $post ) {
                     $url = get_permalink( $post );
                     $sc_id = false;
+
                     foreach( $synced_posts as $synced_post ) {
                         if( $synced_post['wp_post_id'] == $post->ID) {
                             $sc_id = $synced_post['sc_id'];
@@ -711,10 +718,17 @@ class WebChangeDetector {
         if( !$result )
             return curl_error($ch);
 
+        if( $result )
         if( $this->isJson( $result ) )
-            return json_decode( $result, true );
-        else
-            return $result;
+            $result = json_decode( $result, true );
+
+
+        /*if( !is_array( $result ) && ( strpos( $result, 'Fatal error' ) === 0  || strpos( $result, 'Warning:' ) === 0 ) ) {
+            echo "An error occured. <br>We sent an error report to the developer. Don't worry, nothing bad happened.";
+            mail( 'mike@webchangedetector.com', 'Fatal error occured', 'Website: ' . $_SERVER['SERVER_NAME'] . '<br> Error message: ' . $result );
+            die();
+        }*/
+        return $result;
     }
 }
 

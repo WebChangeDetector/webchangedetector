@@ -133,7 +133,8 @@ function webchangedetector_init(){
 
             case 'save_api_key':
                 update_option( 'webchangedetector_api_key', $postdata['api-key'] );
-                $wcd->create_group( $postdata['api-key'] );
+                $website = $wcd->create_group( $postdata['api-key'] );
+                $wcd->sync_posts( $website['auto_detection_group_id'], $website['manual_detection_group_id'] );
                 break;
 		}
 	}
@@ -181,7 +182,6 @@ function webchangedetector_init(){
 	if( !$website_details ) {
         $website_details = $wcd->create_group($api_key);
         $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
-
     }
 
 	$group_id = $website_details['manual_detection_group_id'];
@@ -263,6 +263,7 @@ function webchangedetector_init(){
     }
 
 	// Start view
+    echo '<div class="wrap">';
 	echo '<div class="webchangedetector">';
 	echo '<h1>Web Change Detector</h1>';
 
@@ -639,6 +640,7 @@ function webchangedetector_init(){
 			echo $wcd->mm_api( $args );
 	}
 	echo '</div>'; // closing from div webchangedetector
+    echo '</div>'; // closing wrap
 }
 
 
