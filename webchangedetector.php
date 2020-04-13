@@ -87,24 +87,8 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'webchangedetector'
 );
 
-/*$myUpdateChecker->setAuthentication(array(
-	'consumer_key' => 'QawnqxjWe443wnHUCJ',
-	'consumer_secret' => 'gZ9SGH3d585aFkWZsh8fhbHjnd9sAMzq',
-));*/
-
-//$myUpdateChecker->setBranch('stable-branch');
-
-
 run_webchangedetector();
 
-// Add hook to auto sync posts when they are published
-add_action('transition_post_status', 'sync_urls_on_publish', 10, 3);
 
-// Sync all pages and posts when there is a new page or post published
-function sync_urls_on_publish( $new_status, $old_status, $post ) {
-    if('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page') ) ) {
-        $wcd = new WebChangeDetector();
-        $website_details = $wcd->get_website_details( get_option( 'webchangedetector_api_key' ) );
-        $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
-    }
-}
+
+

@@ -2,3 +2,86 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+.webchangedetector {
+    max-width: 98%;
+}
+
+.webchangedetector td,
+.webchangedetector th {
+    padding: 10px;
+}
+
+.webchangedetector tr:nth-child( even ) {
+    background-color: #fff;
+}
+
+.webchangedetector .pagination {
+    text-align: center;
+}
+
+.webchangedetector td.is-difference {
+    text-align: center;
+    background: darkred;
+    color: #fff;
+    border-bottom: 1px solid #fff;
+}
+
+.webchangedetector td.no-difference {
+    text-align: center;
+    background: darkgreen;
+    color: #fff;
+    border-bottom: 1px solid #fff;
+}
+
+.webchangedetector hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.webchangedetector .image1,
+.webchangedetector .image2,
+.webchangedetector .comp_image {
+    width: 32%;
+    float: left;
+    margin-right: 1%;
+}
+
+.webchangedetector .image1 img,
+.webchangedetector .image2 img,
+.webchangedetector .comp_image img {
+    border: 1px solid #eee;
+    padding: 2px;
+    width: 100%;
+}
+
+.webchangedetector label {
+    min-width: 150px;
+    display: inline-block;
+}
+
+.webchangedetector ul li {
+    list-style: disc;
+    margin-left: 15px;
+}
+
+.webchangedetector .mm_processing_container {
+    padding: 20px;
+    background: #fff2db;
+    border: 1px solid #adadad;
+}
+
+.webchangedetector .mm_accordion_title {
+    background: #e8e8e8;
+    padding: 0 20px;
+    border: 1px solid #adadad;
+    margin: 5px auto;
+}
+
+.webchangedetector .mm_accordion_title small {
+    font-weight: normal;
+}
+
+.webchangedetector .accordion:hover {
+    cursor: pointer;
+}
