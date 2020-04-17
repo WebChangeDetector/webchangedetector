@@ -460,7 +460,7 @@ function webchangedetector_init() {
                 echo 'Used change detections: ' . $comp_usage . '<br>';
                 echo 'Available change detections in this period: ' . $available_compares . '</p>';
 
-                echo $wcd->get_upgrade_options($client_details['plan_id']);
+                echo $wcd->get_upgrade_options($client_details['plan_id'] );
             }
             echo $wcd->get_api_key_form($api_key);
             break;

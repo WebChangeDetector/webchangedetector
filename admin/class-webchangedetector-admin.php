@@ -169,7 +169,7 @@ class WebChangeDetector_Admin {
         $this->mm_api($args);
     }
 
-    public function get_upgrade_options( $plan_id) {
+    public function get_upgrade_options( $plan_id ) {
         $args = array(
             'action' => 'get_upgrade_options',
             'plan_id' => $plan_id

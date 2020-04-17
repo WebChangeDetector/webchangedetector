@@ -150,16 +150,16 @@ class WebChangeDetector {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_admin_hooks() {
+	private function define_admin_hooks()
+    {
 
-		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name(), $this->get_version() );
+        $plugin_admin = new WebChangeDetector_Admin($this->get_plugin_name(), $this->get_version());
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-        $this->loader->add_action( 'admin_menu', $plugin_admin, 'wcd_plugin_setup_menu');
-        $this->loader->add_action( 'transition_post_status', $plugin_admin, 'wcd_sync_urls_on_publish'); // Sync all pages and posts when there is a new page or post published
-	}
-
+        $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
+        $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
+        $this->loader->add_action('admin_menu', $plugin_admin, 'wcd_plugin_setup_menu');
+        $this->loader->add_action('transition_post_status', $plugin_admin, 'wcd_sync_urls_on_publish', 10, 3); // Sync all pages and posts when there is a new page or post published
+    }
 	/**
 	 * Register all of the hooks related to the public-facing functionality
 	 * of the plugin.
