@@ -354,7 +354,7 @@ class WebChangeDetector_Admin {
             $check_posts['urls'][] = array(
                 'wp_post_id'    => (int)$group_url['wp_post_id'],
                 'sc_id'         => (int)$group_url['id'],
-                'active'        => $group_url['active'],
+                //'active'        => $group_url['active'],
                 'desktop'       => $group_url['desktop'],
                 'mobile'        => $group_url['mobile']
             );
@@ -403,10 +403,11 @@ class WebChangeDetector_Admin {
                 continue;
 
             $posts = get_posts([
-                'post_type' => $post_type,
-                'post_status' => 'publish',
-                'numberposts' => -1,
-                'order'    => 'ASC'
+                'post_type'     => $post_type,
+                'post_status'   => 'publish',
+                'numberposts'   => -1,
+                'order'         => 'ASC',
+                'orderby'      => 'title'
             ]);
 
             if( $posts ) {
