@@ -38,7 +38,7 @@ class WebChangeDetector_Admin {
 	 * @access   private
 	 * @var      string    $version    The current version of this plugin.
 	 */
-	private $version;
+	private $version = '1.0.3';
 
 	/**
 	 * Initialize the class and set its properties.
@@ -47,7 +47,7 @@ class WebChangeDetector_Admin {
 	 * @param      string    $plugin_name       The name of this plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.0' ) {
+	public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.3' ) {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;

@@ -73,9 +73,13 @@
 
 .webchangedetector .mm_accordion_title {
     background: #e8e8e8;
-    padding: 0 20px;
+    padding: 20px;
     border: 1px solid #adadad;
     margin: 5px auto;
+}
+
+.webchangedetector h3 {
+    margin: 0 0;
 }
 
 .webchangedetector .mm_accordion_title small {
@@ -85,3 +89,19 @@
 .webchangedetector .accordion:hover {
     cursor: pointer;
 }
+
+.webchangedetector .ui-accordion .ui-accordion-header,
+.webchangedetector .ui-accordion .ui-accordion-content {
+    background: none;
+    border: none;
+    height: 100% !important;
+}
+
+.webchangedetector .ui-accordion .ui-accordion-icons {
+    padding-left: 0;
+}
+
+.webchangedetector .ui-accordion .ui-accordion-header .ui-accordion-header-icon {
+    display: none;
+}
+
