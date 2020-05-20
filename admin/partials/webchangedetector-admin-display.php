@@ -231,7 +231,7 @@ function webchangedetector_init() {
                     <h3>
                         Update Change Detection URLs<br>
                         <small>Currently selected:
-                            <strong><?= $amount_sc ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
+                            <strong><?= is_array( $amount_sc ) ? $amount_sc['selected'] : $amount_sc ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
                             URLs</small>
                     </h3>
                     <div class="mm_accordion_content">
