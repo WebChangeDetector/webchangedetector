@@ -221,6 +221,10 @@ function webchangedetector_init() {
             // Get amount selected Screenshots
             $amount_sc = $wcd->get_amount_sc( $group_id );
 
+            // Because of change in API we need to check this
+            if( is_array( $amount_sc ) )
+                $amount_sc = $amount_sc['selected'];
+
             if (!$amount_sc)
                 $amount_sc = '0';
 
@@ -231,7 +235,7 @@ function webchangedetector_init() {
                     <h3>
                         Update Change Detection URLs<br>
                         <small>Currently selected:
-                            <strong><?= is_array( $amount_sc ) ? $amount_sc['selected'] : $amount_sc ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
+                            <strong><?= $amount_sc ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
                             URLs</small>
                     </h3>
                     <div class="mm_accordion_content">
@@ -297,7 +301,11 @@ function webchangedetector_init() {
             //Amount selected Monitoring Screenshots
             $amount_sc_monitoring = $wcd->get_amount_sc( $monitoring_group_id );
 
-            if (!$amount_sc_monitoring)
+            // Because of change in API we need to check this
+            if( is_array( $amount_sc_monitoring ) )
+                $amount_sc_monitoring = $amount_sc_monitoring['selected'];
+
+            if ( !$amount_sc_monitoring )
                 $amount_sc_monitoring = '0';
 
             $group_settings = $wcd->get_monitoring_settings($monitoring_group_id);

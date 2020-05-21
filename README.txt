@@ -2,8 +2,8 @@
 Donate link: https://www.webchangedetector.com
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
-Tested up to: 5.2
-Stable tag: 1.0.4
+Tested up to: 5.4.1
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,3 +23,12 @@ Here a few features of WebChangeDetector:
 *   Get change detections for mobile and desktop screen sizes
 *   Alert email with direct link to see the changes
 *   Start update change detection to see changes before and after updates
+
+== Changelog ==
+
+= 1.0.5 =
+* Fix: Prepare Plugin for changes in API
+
+= 1.0.4 =
+* Fix: Change in API for Amount of selected urls in Update Change Detection
+

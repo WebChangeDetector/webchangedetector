@@ -16,7 +16,7 @@
  * Plugin Name:       Web Change Detector
  * Plugin URI:        webchangedetector.com
  * Description:       Run automatic change detections and get notified on changes of your website. Or run update change detections before and after updates.
- * Version:           1.0.4
+ * Version:           1.0.5
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'WebChangeDetector_VERSION', '1.0.4' );
+define( 'WebChangeDetector_VERSION', '1.0.5' );
 
 /**
  * The code that runs during plugin activation.
