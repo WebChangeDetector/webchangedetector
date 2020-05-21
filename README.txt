@@ -32,3 +32,14 @@ Here a few features of WebChangeDetector:
 = 1.0.4 =
 * Fix: Change in API for Amount of selected urls in Update Change Detection
 
+= 1.0.3 =
+* Fix: Disabled auto sync after publishing posts. This caused issues on publishing posts.
+
+= 1.0.2 =
+* Feature: Order urls by page title
+
+= 1.0.1 =
+* Feature: Sync new posts with API
+
+= 1.0.0 =
+* Launch Stable Version
