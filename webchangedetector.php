@@ -13,7 +13,7 @@
  * @package           WebChangeDetector
  *
  * @wordpress-plugin
- * Plugin Name:       Web Change Detector
+ * Plugin Name:       WebChangeDetector
  * Plugin URI:        webchangedetector.com
  * Description:       Run automatic change detections and get notified on changes of your website. Or run update change detections before and after updates.
  * Version:           1.0.5

@@ -1,4 +1,5 @@
 === Plugin Name ===
+Contributors: (this should be a list of wordpress.org userid's)
 Donate link: https://www.webchangedetector.com
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
@@ -11,12 +12,17 @@ Run automatic change detections and get notified on changes of your website. Or 
 
 == Description ==
 
-Quite often WP website break for many different reasons. And also quite often we don't realize it until a client
-tells us that something is wrong. And then we are embarrassed and don't look professional.
-
-With the WebChangeDetector you can track changes on every page of your WP website. When something changes on your website,
+With  WebChangeDetector you can track changes on every page of your WP website. When something changes on your website,
 you get an email with an image, where the differences are marked. You will also see images with the two compared versions
 to see better what changed.
+
+You can use WebChangeDetector in two different ways:
+1. Update Change Detection
+Take screenshots before and after updating your website and detect changes. This way you see immediately if something
+broke and you can fix it.
+2. Auto Change Detection
+Automatically detect changes on your website in a certain interval. If something changes on your website, you will get an email
+to review the changes. All changes of your page are marked in a screenshot.
 
 Here a few features of WebChangeDetector:
 *   Set intervals for auto change detections from 1 hour up to 24 hours.

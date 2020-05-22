@@ -38,7 +38,7 @@ class WebChangeDetector_Admin {
 	 * @access   private
 	 * @var      string    $version    The current version of this plugin.
 	 */
-	private $version = '1.0.3';
+	private $version = '1.0.5';
 
 	/**
 	 * Initialize the class and set its properties.
@@ -47,7 +47,7 @@ class WebChangeDetector_Admin {
 	 * @param      string    $plugin_name       The name of this plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.3' ) {
+	public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.5' ) {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
@@ -104,8 +104,8 @@ class WebChangeDetector_Admin {
 	// Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
     public function wcd_plugin_setup_menu(){
 	    require_once "partials/webchangedetector-admin-display.php";
-        add_menu_page( 'Web Change Detector',
-            'Web Change Detector',
+        add_menu_page( 'WebChangeDetector',
+            'WCD',
             'manage_options',
             'webchangedetector',
             'webchangedetector_init',
@@ -122,7 +122,6 @@ class WebChangeDetector_Admin {
     }
 
     public function get_account_details( $api_key ) {
-
         $args = array(
             'action'		=> 'account_details',
             'api_key'		=> $api_key
@@ -555,12 +554,6 @@ class WebChangeDetector_Admin {
             if( $this->isJson( $result ) )
                 $result = json_decode( $result, true );
 
-
-        /*if( !is_array( $result ) && ( strpos( $result, 'Fatal error' ) === 0  || strpos( $result, 'Warning:' ) === 0 ) ) {
-            echo "An error occured. <br>We sent an error report to the developer. Don't worry, nothing bad happened.";
-            mail( 'mike@webchangedetector.com', 'Fatal error occured', 'Website: ' . $_SERVER['SERVER_NAME'] . '<br> Error message: ' . $result );
-            die();
-        }*/
         return $result;
     }
 }
