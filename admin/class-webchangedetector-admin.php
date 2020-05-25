@@ -176,6 +176,15 @@ class WebChangeDetector_Admin {
         return $this->mm_api( $args );
     }
 
+    public function mm_get_device_icon( $device ) {
+        if( $device == 'desktop' )
+            return '<span class="group_icon dashicons dashicons-laptop"></span>';
+        if( $device == 'mobile' )
+            return '<span class="group_icon dashicons dashicons-smartphone"></span>';
+
+        return '';
+    }
+
     public function get_compares( $group_id ) {
         $args = array(
             'action' => 'get_compares',
@@ -517,6 +526,7 @@ class WebChangeDetector_Admin {
             <h2 class="nav-tab-wrapper">
                 <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update Change Detection</a>
                 <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
+                <a href="?page=webchangedetector&tab=queue" class="nav-tab <?php echo $active_tab == 'queue' ? 'nav-tab-active' : ''; ?>">Queue</a>
                 <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
                 <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
             </h2>

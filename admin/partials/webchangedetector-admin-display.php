@@ -105,11 +105,11 @@ function webchangedetector_init() {
             case 'take_screenshots':
                 $results = $wcd->take_screenshot($group_id, $api_key);
 
-                if (isset($results['error']))
-                    echo '<div class="error notice"><p>' . $results['error'] . '</p></div>';
+                if ( $results[0] == 'error' )
+                    echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
 
-                if (isset($results['success']))
-                    echo '<div class="updated notice"><p>' . $results['success'] . '</p></div>';
+                if ( $results[0] == 'success' )
+                    echo '<div class="updated notice"><p>' . $results[1] . '</p></div>';
                 break;
 
             case 'update_monitoring_settings':
@@ -188,7 +188,7 @@ function webchangedetector_init() {
 
     $available_compares = $limit - (int)$comp_usage;
 
-    $queue = $wcd->get_queue( $group_id );
+    /*$queue = $wcd->get_queue( $group_id );
 
     if (!empty($queue)) {
         echo '<div class="mm_processing_container">';
@@ -202,7 +202,7 @@ function webchangedetector_init() {
         echo '</table>';
         echo '</div>';
         echo '<hr>';
-    }
+    }*/
 
     $restrictions = $wcd->mm_get_restrictions();
 
@@ -428,6 +428,47 @@ function webchangedetector_init() {
             }
             break;
 
+        /********************
+         * Queue
+         ********************/
+
+        case 'queue':
+            // Show queued urls
+            $args = array(
+                'action'	=> 'get_queue',
+                'status'    => json_encode( array( 'open', 'processing', 'done' ) )
+            );
+            $queue = $wcd->mm_api( $args );
+            if( $queue ) {
+                echo '<h2>Currently processing and already processed URLs</h2>';
+                echo '<table>';
+                echo '<tr><th>URL</th><th>Status</th><th>Added to queue</th><th>Last changed</th></tr>';
+                foreach( $queue as $url ) {
+                    switch( $url['status'] ) {
+                        case 'done':
+                            $background = '#eee';
+                            break;
+
+                        case 'processing':
+                            $background = 'rgba( 254, 204, 48, 0.3)';
+                            break;
+
+                        case 'open':
+                            $background = 'rgba(23, 179, 49, 0.3);';
+                            break;
+                    }
+                    echo '<tr style="background: ' . $background . ';">';
+                    echo '<td style="border-bottom: 1px solid #cecece;">' . $wcd->mm_get_device_icon( $url['device'] ) . $url['url'] . '</td>';
+                    echo '<td style="border-bottom: 1px solid #cecece;">' . ucfirst($url['status'] ) . '</td>';
+                    echo '<td style="border-bottom: 1px solid #cecece;">' .  date("d/m/Y H:i:s", strtotime($url['timestamp_added'] ) ) . '</td>';
+                    echo '<td style="border-bottom: 1px solid #cecece;">' .  date("d/m/Y H:i:s", strtotime($url['timestamp_last_change'] ) ) . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+
+            } else
+                echo 'All done';
+            break;
         /********************
          * Settings
          ********************/
