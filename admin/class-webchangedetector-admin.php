@@ -185,11 +185,11 @@ class WebChangeDetector_Admin {
         return '';
     }
 
-    public function get_compares( $group_id ) {
+    public function get_compares( $group_id, $limit_latest_compares = 7 ) {
         $args = array(
-            'action' => 'get_compares',
-            'domain' => $_SERVER['SERVER_NAME'],
-            'group_id' => $group_id
+            'action'        => 'get_compares_by_group_ids',
+            'limit_days'    => $limit_latest_compares,
+            'group_ids'     => json_encode(array( $group_id ))
         );
         return $this->mm_api($args);
     }

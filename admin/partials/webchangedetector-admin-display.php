@@ -260,8 +260,22 @@ function webchangedetector_init() {
             // Compare overview
             echo '<h2>Latest Change Detections</h2>';
 
-            $compares = $wcd->get_compares( $group_id );
-
+            if( isset( $postdata['limit_days'] ) )
+                $limit_days = $postdata['limit_days'];
+            else
+                $limit_days = 7;
+            $compares = $wcd->get_compares( $group_id, $limit_days );
+            ?>
+            <form method="post">
+                <select name="limit_days">
+                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
+                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
+                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
+                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
+                </select>
+                <input class="button" type="submit" value="Filter">
+            </form>
+            <?php
             if (count($compares) == 0)
                 echo "There are no compares to show yet...";
             else {
@@ -401,7 +415,23 @@ function webchangedetector_init() {
             <?php
             // Compare overview
             echo '<h2>Latest Change Detections</h2>';
-            $compares = $wcd->get_compares( $monitoring_group_id );
+
+            if( isset( $postdata['limit_days'] ) )
+                $limit_days = $postdata['limit_days'];
+            else
+                $limit_days = 7;
+            $compares = $wcd->get_compares( $monitoring_group_id, $limit_days );
+            ?>
+            <form method="post">
+                <select name="limit_days">
+                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
+                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
+                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
+                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
+                </select>
+                <input class="button" type="submit" value="Filter">
+            </form>
+            <?php
 
             if (count($compares) == 0)
                 echo "There are no compares to show yet...";
