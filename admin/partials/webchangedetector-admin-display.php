@@ -276,30 +276,30 @@ function webchangedetector_init() {
                 <input class="button" type="submit" value="Filter">
             </form>
             <?php
-            if (count($compares) == 0)
-                echo "There are no compares to show yet...";
-            else {
-                echo '<table><tr><th>URL</th><th>Device</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
-                foreach ($compares as $key => $compare) {
-                    echo '<tr>';
-                    echo '<td>' . $compare['url'] . '</td>';
-                    echo '<td>' . ucfirst($compare['device']) . '</td>';
-                    echo '<td>' . date("d/m/Y H:i", $compare['image1_timestamp']) . '<br>' . date("d/m/Y H:i", $compare['image2_timestamp']) . '</td>';
-                    if ($compare['difference_percent'])
-                        $class = 'is-difference';
-                    else
-                        $class = 'no-difference';
-                    echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
-                    //echo '<td><a href="' . $compare['link'] . '" target="_blank">Show compare image</a></td>';
-                    echo '<td><form action="/wp-admin/admin.php?page=webchangedetector&tab=show-compare" method="post">';
-                    echo '<input type="hidden" name="wcd_action" value="show_compare">';
-                    echo '<input type="hidden" name="compare_id" value="' . $compare['ID'] . '">';
-                    echo '<input class="button" type="submit" value="Show Compare">';
-                    echo '</form></td>';
-                    echo '</tr>';
-                }
-                echo '</table>';
+
+            echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+            $change_detection_added = false;
+            foreach ($compares as $key => $compare) {
+                if( !$compare['difference_percent'] )
+                    continue;
+
+                echo '<tr>';
+                echo '<td>' . $wcd->mm_get_device_icon( $compare['device'] ) . $compare['url'] . '</td>';
+                echo '<td>' . date("d/m/Y H:i", $compare['image1_timestamp']) . '<br>' . date("d/m/Y H:i", $compare['image2_timestamp']) . '</td>';
+                if ($compare['difference_percent'])
+                    $class = 'is-difference';
+                else
+                    $class = 'no-difference';
+                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
+                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
+                echo '</tr>';
+                $change_detection_added = true;
+
             }
+            if( !$change_detection_added )
+                echo "There are no change detections to show yet...";
+            echo '</table>';
+
             break;
 
         /************************
@@ -433,29 +433,29 @@ function webchangedetector_init() {
             </form>
             <?php
 
-            if (count($compares) == 0)
-                echo "There are no compares to show yet...";
-            else {
-                echo '<table><tr><th>URL</th><th>Device</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
-                foreach ($compares as $key => $compare) {
-                    echo '<tr>';
-                    echo '<td>' . $compare['url'] . '</td>';
-                    echo '<td>' . $compare['device'] . '</td>';
-                    echo '<td>' . date("d/m/Y H:i", $compare['image1_timestamp']) . '<br>' . date("d/m/Y H:i", $compare['image2_timestamp']) . '</td>';
-                    if ($compare['difference_percent'])
-                        $class = 'is-difference';
-                    else
-                        $class = 'no-difference';
-                    echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
-                    echo '<td><form action="/wp-admin/admin.php?page=webchangedetector&tab=show-compare" method="post">';
-                    echo '<input type="hidden" name="wcd_action" value="show_compare">';
-                    echo '<input type="hidden" name="compare_id" value="' . $compare['ID'] . '">';
-                    echo '<input class="button" type="submit" value="Show Compare">';
-                    echo '</form></td>';
-                    echo '</tr>';
-                }
-                echo '</table>';
+            echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+            $change_detection_added = false;
+
+            foreach ($compares as $key => $compare) {
+                if( !$compare['difference_percent'] )
+                    continue;
+
+                echo '<tr>';
+                echo '<td>' . $wcd->mm_get_device_icon( $compare['device'] ) . $compare['url'] . '</td>';
+                echo '<td>' . date("d/m/Y H:i", $compare['image1_timestamp']) . '<br>' . date("d/m/Y H:i", $compare['image2_timestamp']) . '</td>';
+                if ( $compare['difference_percent'] )
+                    $class = 'is-difference';
+                else
+                    $class = 'no-difference';
+                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
+                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
+                echo '</tr>';
+                $change_detection_added = true;
             }
+            if( !$change_detection_added )
+                echo "There are no change detections to show yet...";
+            echo '</table>';
+
             break;
 
         /********************
@@ -576,7 +576,26 @@ function webchangedetector_init() {
             break;
 
         case 'show-compare':
-            echo $wcd->show_compare( $_POST['compare_id'] );
+            echo '<h1>The Change Detection Images</h1>';
+            if( defined( 'WCD_DEV_API' ) && WCD_DEV_API )
+                $wcd_domain = 'https://www.dev.webchangedetector.com';
+            else
+                $wcd_domain = 'https://www.webchangedetector.com';
+
+            $public_link = $wcd_domain . '/change-detection/?action=show_change_detection&token=' . urlencode( $_GET['token'] );
+            echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
+
+            $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
+
+            echo $back_button;
+            //$token = $wp_comp->mm_get_compare_token( $postdata['compare_id'] );
+            //echo $token;
+
+            echo  $wcd->mm_show_change_detection( $_GET['token'] );
+
+            echo '<div class="clear"></div>';
+            echo $back_button;
+            //echo $wcd->show_compare( $_POST['compare_id'] );
 
     }
     echo '</div>'; // closing from div webchangedetector

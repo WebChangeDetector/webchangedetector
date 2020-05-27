@@ -22,99 +22,99 @@
  */
 class WebChangeDetector_Admin {
 
-	/**
-	 * The ID of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $plugin_name    The ID of this plugin.
-	 */
-	private $plugin_name;
+    /**
+     * The ID of this plugin.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      string $plugin_name The ID of this plugin.
+     */
+    private $plugin_name;
 
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
-	 */
-	private $version = '1.0.5';
+    /**
+     * The version of this plugin.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      string $version The current version of this plugin.
+     */
+    private $version = '1.0.5';
 
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since    1.0.0
-	 * @param      string    $plugin_name       The name of this plugin.
-	 * @param      string    $version    The version of this plugin.
-	 */
-	public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.5' ) {
+    /**
+     * Initialize the class and set its properties.
+     *
+     * @param string $plugin_name The name of this plugin.
+     * @param string $version The version of this plugin.
+     * @since    1.0.0
+     */
+    public function __construct( $plugin_name = "WebChangeDetector", $version = '1.0.5' ) {
 
-		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+        $this->plugin_name = $plugin_name;
+        $this->version = $version;
 
-	}
+    }
 
-	/**
-	 * Register the stylesheets for the admin area.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_styles() {
+    /**
+     * Register the stylesheets for the admin area.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_styles() {
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in WebChangeDetector_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The WebChangeDetector_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
+        /**
+         * This function is provided for demonstration purposes only.
+         *
+         * An instance of this class should be passed to the run() function
+         * defined in WebChangeDetector_Loader as all of the hooks are defined
+         * in that particular class.
+         *
+         * The WebChangeDetector_Loader will then create the relationship
+         * between the defined hooks and the functions defined in this
+         * class.
+         */
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
+        wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 
-	}
+    }
 
-	/**
-	 * Register the JavaScript for the admin area.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_scripts() {
+    /**
+     * Register the JavaScript for the admin area.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_scripts() {
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in WebChangeDetector_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The WebChangeDetector_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
+        /**
+         * This function is provided for demonstration purposes only.
+         *
+         * An instance of this class should be passed to the run() function
+         * defined in WebChangeDetector_Loader as all of the hooks are defined
+         * in that particular class.
+         *
+         * The WebChangeDetector_Loader will then create the relationship
+         * between the defined hooks and the functions defined in this
+         * class.
+         */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-        wp_enqueue_script('jquery-ui-accordion');
+        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+        wp_enqueue_script( 'jquery-ui-accordion' );
 
-	}
+    }
 
-	// Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
-    public function wcd_plugin_setup_menu(){
-	    require_once "partials/webchangedetector-admin-display.php";
+    // Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
+    public function wcd_plugin_setup_menu() {
+        require_once "partials/webchangedetector-admin-display.php";
         add_menu_page( 'WebChangeDetector',
             'WCD',
             'manage_options',
             'webchangedetector',
             'webchangedetector_init',
-            plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg');
+            plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg' );
     }
 
     // Sync urls on publishing (called by hook in includes/class-webchangedetector.php)
     public function wcd_sync_urls_on_publish( $new_status, $old_status, $post ) {
-        if('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page') ) ) {
+        if( 'publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page' ) ) ) {
             $wcd = new WebChangeDetector();
             $website_details = $wcd->get_website_details( get_option( 'webchangedetector_api_key' ) );
             $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
@@ -123,35 +123,43 @@ class WebChangeDetector_Admin {
 
     public function get_account_details( $api_key ) {
         $args = array(
-            'action'		=> 'account_details',
-            'api_key'		=> $api_key
+            'action' => 'account_details',
+            'api_key' => $api_key
         );
         return $this->mm_api( $args );
     }
 
     public function get_monitoring_settings( $group_id ) {
         $args = array(
-            'action'	=> 'get_monitoring_settings',
-            'group_id'	=> $group_id
+            'action' => 'get_monitoring_settings',
+            'group_id' => $group_id
         );
         $monitoring_group_settings = $this->mm_api( $args );
         return $monitoring_group_settings[0];
     }
 
-    public function get_amount_sc ( $group_id ) {
+    public function get_amount_sc( $group_id ) {
         $args = array(
             'action' => 'get_amount_sc',
             'group_id' => $group_id
         );
-        return $this->mm_api($args);
+        return $this->mm_api( $args );
     }
 
     public function show_compare( $compare_id ) {
         $args = array(
-            'action'        => 'show_compare',
-            'compare_id'    => $compare_id
+            'action' => 'show_compare',
+            'compare_id' => $compare_id
         );
-        return $this->mm_api($args);
+        return $this->mm_api( $args );
+    }
+
+    public function mm_show_change_detection( $token ) {
+        $args = array(
+            'action' => 'show_change_detection',
+            'token' => $token
+        );
+        return $this->mm_api( $args );
     }
 
     public function update_monitoring_settings( $postdata, $monitoring_group_id ) {
@@ -165,7 +173,7 @@ class WebChangeDetector_Admin {
             'alert_email' => $postdata['alert_email'],
             'group_name' => $postdata['group_name']
         );
-        $this->mm_api($args);
+        $this->mm_api( $args );
     }
 
     public function get_upgrade_options( $plan_id ) {
@@ -187,18 +195,19 @@ class WebChangeDetector_Admin {
 
     public function get_compares( $group_id, $limit_latest_compares = 7 ) {
         $args = array(
-            'action'        => 'get_compares_by_group_ids',
-            'limit_days'    => $limit_latest_compares,
-            'group_ids'     => json_encode(array( $group_id ))
+            'action' => 'get_compares_by_group_ids',
+            'limit_days' => $limit_latest_compares,
+            'group_ids' => json_encode( array( $group_id ) )
         );
-        return $this->mm_api($args);
+        return $this->mm_api( $args );
     }
+
     public function get_queue( $group_id ) {
         $args = array(
             'action' => 'get_queue',
             'group_id' => $group_id
         );
-        return $this->mm_api($args);
+        return $this->mm_api( $args );
     }
 
     public function sync_posts( $auto_detection_group = false, $manual_detection_group = false ) {
@@ -209,11 +218,11 @@ class WebChangeDetector_Admin {
         );
 
         $array = array();
-        foreach( $posttypes as $posts) {
-            if ($posts) {
-                foreach ($posts as $post) {
-                    $url = get_permalink($post);
-                    $url = substr($url, strpos($url, '//') + 2);
+        foreach( $posttypes as $posts ) {
+            if( $posts ) {
+                foreach( $posts as $post ) {
+                    $url = get_permalink( $post );
+                    $url = substr( $url, strpos( $url, '//' ) + 2 );
                     $array[] = array(
                         'url' => $url,
                         'wp_post_id' => $post->ID
@@ -224,8 +233,8 @@ class WebChangeDetector_Admin {
 
         if( $array ) {
             $args = array(
-                'action'    => 'sync_urls',
-                'posts'     => json_encode( $array ),
+                'action' => 'sync_urls',
+                'posts' => json_encode( $array ),
                 'auto_detection_group_id' => $auto_detection_group,
                 'manual_detection_group_id' => $manual_detection_group
             );
@@ -237,37 +246,37 @@ class WebChangeDetector_Admin {
 
     public function update_urls( $group_id, $active_posts = array() ) {
         $args = array(
-            'action'		=> 'update_urls',
-            'group_id'		=> $group_id,
-            'posts'			=> json_encode( $active_posts ),
+            'action' => 'update_urls',
+            'group_id' => $group_id,
+            'posts' => json_encode( $active_posts ),
         );
         $results = $this->mm_api( $args );
     }
 
     public function take_screenshot( $group_id, $api_key ) {
         $args = array(
-            'action'		=> 'take_screenshots',
-            'group_id'		=> $group_id,
-            'api_key'		=> $api_key
+            'action' => 'take_screenshots',
+            'group_id' => $group_id,
+            'api_key' => $api_key
         );
         return $this->mm_api( $args );
     }
 
     function create_free_account( $post ) {
         $args = array(
-            'action'		=> 'add_free_account',
-            'domain'		=> $_SERVER['SERVER_NAME'],
-            'first_name'	=> $post['first_name'],
-            'last_name'		=> $post['last_name'],
-            'email'			=> $post['email'],
+            'action' => 'add_free_account',
+            'domain' => $_SERVER['SERVER_NAME'],
+            'first_name' => $post['first_name'],
+            'last_name' => $post['last_name'],
+            'email' => $post['email'],
         );
 
         $api_key = $this->mm_api( $args );
         if( isset( $api_key['status'] ) && $api_key['status'] == 'success' ) {
 
-            update_option('webchangedetector_api_key', $api_key['api_key']);
+            update_option( 'webchangedetector_api_key', $api_key['api_key'] );
 
-            $this->create_group($api_key['api_key']);
+            $this->create_group( $api_key['api_key'] );
         }
         return $api_key;
     }
@@ -276,8 +285,8 @@ class WebChangeDetector_Admin {
         $api_key = get_option( 'webchangedetector_api_key' );
         if( $api_key ) {
             $args = array(
-                'action'		=> 'verify_account',
-                'api_key'		=> $api_key
+                'action' => 'verify_account',
+                'api_key' => $api_key
             );
             return $this->mm_api( $args );
         } else
@@ -286,8 +295,8 @@ class WebChangeDetector_Admin {
 
     function resend_confirmation_mail( $api_key ) {
         $args = array(
-            'action'	=> 'resend_verification_email',
-            'api_key'	=> $api_key
+            'action' => 'resend_verification_email',
+            'api_key' => $api_key
         );
         $this->mm_api( $args );
     }
@@ -308,20 +317,20 @@ class WebChangeDetector_Admin {
                         <input type="hidden" name="wcd_action" value="save_api_key">
                         <h2>You already have an API key?</h2>
                         <p>Enter your API key here and start comparing.</p>
-                        <input type="text" name="api-key" value="' . $api_key .  '">
+                        <input type="text" name="api-key" value="' . $api_key . '">
                         <input type="submit" value="Save" class="button">';
         }
         $output .= '</form>';
-        return  $output;
+        return $output;
     }
 
     function create_group( $api_key ) {
         // Create group if it doesn't exist yet
         $args = array(
-            'action'	    => 'add_website_groups',
-            'domain'	    => $_SERVER['SERVER_NAME'],
+            'action' => 'add_website_groups',
+            'domain' => $_SERVER['SERVER_NAME'],
             'website_group' => 1,
-            'api_key'	    => $api_key
+            'api_key' => $api_key
         );
 
         return $this->mm_api( $args );
@@ -329,18 +338,18 @@ class WebChangeDetector_Admin {
 
     function delete_website( $api_key ) {
         $args = array(
-            'action'    => 'delete_website',
-            'domain'    =>  $_SERVER['SERVER_NAME'],
-            'api_key'   => $api_key
+            'action' => 'delete_website',
+            'domain' => $_SERVER['SERVER_NAME'],
+            'api_key' => $api_key
         );
         $this->mm_api( $args );
     }
 
     function get_website_details( $api_key ) {
         $args = array(
-            'action'    => 'get_client_website_details',
-            'domain'    => $_SERVER['SERVER_NAME'],
-            'api_key'   => $api_key
+            'action' => 'get_client_website_details',
+            'domain' => $_SERVER['SERVER_NAME'],
+            'api_key' => $api_key
         );
 
         $website_details = $this->mm_api( $args );
@@ -349,8 +358,8 @@ class WebChangeDetector_Admin {
 
     function get_urls_of_group( $group_id ) {
         $args = array(
-            'action'		=> 'get_group_urls',
-            'group_id'		=> $group_id
+            'action' => 'get_group_urls',
+            'group_id' => $group_id
         );
         $group_urls = $this->mm_api( $args );
 
@@ -360,11 +369,11 @@ class WebChangeDetector_Admin {
         foreach( $group_urls as $group_url ) {
             // Create array with all active urls of group
             $check_posts['urls'][] = array(
-                'wp_post_id'    => (int)$group_url['wp_post_id'],
-                'sc_id'         => (int)$group_url['id'],
+                'wp_post_id' => (int)$group_url['wp_post_id'],
+                'sc_id' => (int)$group_url['id'],
                 //'active'        => $group_url['active'],
-                'desktop'       => $group_url['desktop'],
-                'mobile'        => $group_url['mobile']
+                'desktop' => $group_url['desktop'],
+                'mobile' => $group_url['mobile']
             );
 
             // Count amount of sc
@@ -410,13 +419,13 @@ class WebChangeDetector_Admin {
             if( $post_type != 'post' && $post_type != 'page' )
                 continue;
 
-            $posts = get_posts([
-                'post_type'     => $post_type,
-                'post_status'   => 'publish',
-                'numberposts'   => -1,
-                'order'         => 'ASC',
-                'orderby'      => 'title'
-            ]);
+            $posts = get_posts( [
+                'post_type' => $post_type,
+                'post_status' => 'publish',
+                'numberposts' => -1,
+                'order' => 'ASC',
+                'orderby' => 'title'
+            ] );
 
             if( $posts ) {
                 echo '<h2>' . ucfirst( $post_type ) . '</h2>';
@@ -431,7 +440,7 @@ class WebChangeDetector_Admin {
                     $sc_id = false;
 
                     foreach( $synced_posts as $synced_post ) {
-                        if( $synced_post['wp_post_id'] == $post->ID) {
+                        if( $synced_post['wp_post_id'] == $post->ID ) {
                             $sc_id = $synced_post['sc_id'];
                         }
                     }
@@ -444,13 +453,13 @@ class WebChangeDetector_Admin {
                         'mobile' => ''
                     );
                     if( isset( $checks['urls'] ) ) {
-                        foreach ( $checks['urls'] as $key => $check ) {
-                            if ( $check['sc_id'] == $sc_id ) {
+                        foreach( $checks['urls'] as $key => $check ) {
+                            if( $check['sc_id'] == $sc_id ) {
                                 $checked['active'] = 'checked';
 
-                                if ( $check['desktop'] )
+                                if( $check['desktop'] )
                                     $checked['desktop'] = 'checked';
-                                if ( $check['mobile'] )
+                                if( $check['mobile'] )
                                     $checked['mobile'] = 'checked';
 
                             }
@@ -487,7 +496,7 @@ class WebChangeDetector_Admin {
     function get_no_account_page() {
         delete_option( 'webchangedetector_api_key' );
 
-        $output =  '<div class="webchangedetector">
+        $output = '<div class="webchangedetector">
 		<h1>Web Change Detector</h1>
 		<h2>Create Free Account</h2>
 		<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>
@@ -506,8 +515,8 @@ class WebChangeDetector_Admin {
 
     function mm_get_restrictions() {
         $args = array(
-            'action'    => 'get_client_website_details',
-            'domain'    => $_SERVER['HTTP_HOST']
+            'action' => 'get_client_website_details',
+            'domain' => $_SERVER['HTTP_HOST']
         );
 
         $restrictions = $this->mm_api( $args );
@@ -516,54 +525,72 @@ class WebChangeDetector_Admin {
 
     function mm_tabs() {
 
-        if( isset( $_GET[ 'tab' ] ) ) {
-            $active_tab = $_GET[ 'tab' ];
+        if( isset( $_GET['tab'] ) ) {
+            $active_tab = $_GET['tab'];
         } else
             $active_tab = 'take-screenshots';
 
         ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
-                <a href="?page=webchangedetector&tab=take-screenshots" class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update Change Detection</a>
-                <a href="?page=webchangedetector&tab=monitoring-screenshots" class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto Change Detection</a>
-                <a href="?page=webchangedetector&tab=queue" class="nav-tab <?php echo $active_tab == 'queue' ? 'nav-tab-active' : ''; ?>">Queue</a>
-                <a href="?page=webchangedetector&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
-                <a href="?page=webchangedetector&tab=help" class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
+                <a href="?page=webchangedetector&tab=take-screenshots"
+                   class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update
+                    Change Detection</a>
+                <a href="?page=webchangedetector&tab=monitoring-screenshots"
+                   class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto
+                    Change Detection</a>
+                <a href="?page=webchangedetector&tab=queue"
+                   class="nav-tab <?php echo $active_tab == 'queue' ? 'nav-tab-active' : ''; ?>">Queue</a>
+                <a href="?page=webchangedetector&tab=settings"
+                   class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
+                <a href="?page=webchangedetector&tab=help"
+                   class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
             </h2>
         </div>
 
         <?php
     }
 
-    function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+    function isJson( $string ) {
+        json_decode( $string );
+        return ( json_last_error() == JSON_ERROR_NONE );
     }
+
     function mm_api( $args ) {
 
-	    if ( defined('WCD_DEV_API') && WCD_DEV_API )
+        if( defined( 'WCD_DEV_API' ) && WCD_DEV_API )
             $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
         else
             $url = 'https://api.webchangedetector.com/v1/api.php';
 
         if( !isset( $args['api_key'] ) )
             $args['api_key'] = get_option( 'webchangedetector_api_key' );
+        $args['wp_plugin_version'] = $this->version;
 
         $ch = curl_init( $url );
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+        curl_setopt( $ch, CURLOPT_POSTFIELDS, $args );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, 300 );
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
-        $result = curl_exec($ch);
+        $result = curl_exec( $ch );
 
         if( !$result )
-            return curl_error($ch);
+            return curl_error( $ch );
 
-        if( $result )
+        if( $result ) {
+
             if( $this->isJson( $result ) )
                 $result = json_decode( $result, true );
 
-        return $result;
+            if( $result == 'plugin_update_required' ) {
+                echo '<div class="error notice">
+                            <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at 
+                            <a href="/wp-admin/plugins.php">Plugins</a>.</p>
+                        </div>';
+                die();
+            }
+            return $result;
+        }
     }
 }
