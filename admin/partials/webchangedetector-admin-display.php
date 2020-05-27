@@ -93,7 +93,6 @@ function webchangedetector_init() {
         $website_details = $wcd->create_group($api_key);
         $wcd->sync_posts($website_details['auto_detection_group_id'], $website_details['manual_detection_group_id']);
     }
-
     $group_id = $website_details['manual_detection_group_id'];
     $monitoring_group_id = $website_details['auto_detection_group_id'];
 
@@ -103,7 +102,7 @@ function webchangedetector_init() {
     if (isset($postdata['wcd_action'])) {
         switch ($postdata['wcd_action']) {
             case 'take_screenshots':
-                $results = $wcd->take_screenshot($group_id, $api_key);
+                $results = $wcd->take_screenshot($group_id, $postdata['sc_type'], $api_key);
 
                 if ( $results[0] == 'error' )
                     echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
@@ -250,10 +249,19 @@ function webchangedetector_init() {
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
             <strong>Currently selected amount of change detections: ' . $amount_sc . '</strong></p>';
 
-                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">';
+                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
-                echo '<input type="submit" value="Start Update Change Detection" class="button">';
+                echo '<input type="hidden" name="sc_type" value="pre_sc">';
+                echo '<input type="submit" value="Pre Update Change Detection" class="button">';
                 echo '</form>';
+
+                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left;">';
+                echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
+                echo '<input type="hidden" name="sc_type" value="post_sc">';
+                echo '<input type="submit" value="Post Update Change Detection" class="button">';
+                echo '</form>';
+
+                echo '<div class="clear"></div>';
             }
             echo '<hr>';
 
@@ -296,9 +304,10 @@ function webchangedetector_init() {
                 $change_detection_added = true;
 
             }
+
+            echo '</table>';
             if( !$change_detection_added )
                 echo "There are no change detections to show yet...";
-            echo '</table>';
 
             break;
 
@@ -452,9 +461,10 @@ function webchangedetector_init() {
                 echo '</tr>';
                 $change_detection_added = true;
             }
+
+            echo '</table>';
             if( !$change_detection_added )
                 echo "There are no change detections to show yet...";
-            echo '</table>';
 
             break;
 
@@ -466,7 +476,8 @@ function webchangedetector_init() {
             // Show queued urls
             $args = array(
                 'action'	=> 'get_queue',
-                'status'    => json_encode( array( 'open', 'processing', 'done' ) )
+                'status'    => json_encode( array( 'open', 'processing', 'done' ) ),
+                'domain'    => $_SERVER['SERVER_NAME']
             );
             $queue = $wcd->mm_api( $args );
             if( $queue ) {

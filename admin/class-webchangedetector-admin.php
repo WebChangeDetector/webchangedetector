@@ -253,11 +253,12 @@ class WebChangeDetector_Admin {
         $results = $this->mm_api( $args );
     }
 
-    public function take_screenshot( $group_id, $api_key ) {
+    public function take_screenshot( $group_id, $sc_type, $api_key ) {
         $args = array(
-            'action' => 'take_screenshots',
-            'group_id' => $group_id,
-            'api_key' => $api_key
+            'action'    => 'take_screenshots',
+            'sc_type'   => $sc_type,
+            'group_id'  => $group_id,
+            'api_key'   => $api_key
         );
         return $this->mm_api( $args );
     }
