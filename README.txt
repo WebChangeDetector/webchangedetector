@@ -31,6 +31,13 @@ Here a few features of WebChangeDetector:
 *   Start update change detection to see changes before and after updates
 
 == Changelog ==
+= 1.0.6 =
+* Improvement: Free account with 50 change detections every month
+* Improvement: Only show change detections with differences
+* Improvement: Show icons for devices
+* Feature: Show queue for currently processing urls and already processed ones
+* Feature: Pre- and post update change detections for less unnecessary compares
+* Feature: Filter showing change detections by days
 
 = 1.0.5 =
 * Fix: Prepare Plugin for changes in API
