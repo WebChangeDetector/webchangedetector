@@ -316,9 +316,9 @@ class WebChangeDetector_Admin {
         } else {
             $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post">
                         <input type="hidden" name="wcd_action" value="save_api_key">
-                        <h2>You already have an API key?</h2>
-                        <p>Enter your API key here and start comparing.</p>
-                        <input type="text" name="api-key" value="' . $api_key . '">
+                        <h2>2. Your API Key</h2>
+                        <p>After creating your account, you get an API Key. Enter this API key here and start your Change Detections.</p>
+                        <input type="text" name="api-key" value="' . $api_key . '" style="width: 200px;">
                         <input type="submit" value="Save" class="button">';
         }
         $output .= '</form>';
@@ -499,15 +499,18 @@ class WebChangeDetector_Admin {
 
         $output = '<div class="webchangedetector">
 		<h1>Web Change Detector</h1>
-		<h2>Create Free Account</h2>
-		<p>Create now your free account and <strong>100 compares</strong> for one month for free!</p>
-		<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=webchangedetector&tab=settings" onsubmit="return mmValidateForm()" method="post">
+		<hr>
+		<h2>1. Free Account</h2>
+		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
+		If you already have an API Key, you can enter it below and start your Change Detections.</p>
+		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=57" target="_blank" class="button">Create Free Account</a>
+		<!--<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=webchangedetector&tab=settings" onsubmit="return mmValidateForm()" method="post">
 			<input type="hidden" name="wcd_action" value="create_free_account"><br>
 			<p><label>First Name</label><input id="form_first_name" type="text" name="first_name"></p>
 			<p><label>Last Name</label><input type="text" id="form_last_name" name="last_name"></p>
 			<p><label>Email</label><input type="text" id="form_email" name="email"></p>
 			<input type="submit" value="Create free account" class="button">
-		</form>
+		</form>-->
 		<hr>
 		' . $this->get_api_key_form() . '
 		</div>';

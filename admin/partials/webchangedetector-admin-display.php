@@ -66,7 +66,6 @@ function webchangedetector_init() {
             echo '<div class="updated notice">
                 <p>Email sent successfully to your email address ' . $account_keys['email'] . '.</p>
             </div>';
-
         }
 
         echo '<div class="error notice">
