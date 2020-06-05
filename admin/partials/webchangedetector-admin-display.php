@@ -72,7 +72,7 @@ function webchangedetector_init() {
                 <p>Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.</p>
             </div>
             <p>You didn\'t receive the email? Please also check your spam folder. To send the email again, please click the button below</p>
-            <form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post">
+            <form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post">
                 <input type="hidden" name="wcd_action" value="resend_confirmation_mail">
                 <input type="submit" value="Send confirmation mail again" class="button">
             </form>';
@@ -186,22 +186,6 @@ function webchangedetector_init() {
 
     $available_compares = $limit - (int)$comp_usage;
 
-    /*$queue = $wcd->get_queue( $group_id );
-
-    if (!empty($queue)) {
-        echo '<div class="mm_processing_container">';
-        echo '<h2>Currently Processing</h2>';
-        echo '<table><tr><th>URL</th><th>Device</th><th>Status</th></tr>';
-
-        foreach ($queue as $url) {
-            echo '<tr><td>' . $url['url'] . '</td><td>' . ucfirst($url['device']) . '</td><td>Processing...</td></tr>';
-        }
-
-        echo '</table>';
-        echo '</div>';
-        echo '<hr>';
-    }*/
-
     $restrictions = $wcd->mm_get_restrictions();
 
     switch ($tab) {
@@ -248,13 +232,13 @@ function webchangedetector_init() {
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
             <strong>Currently selected amount of change detections: ' . $amount_sc . '</strong></p>';
 
-                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
+                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
                 echo '<input type="hidden" name="sc_type" value="pre_sc">';
                 echo '<input type="submit" value="Pre Update Change Detection" class="button">';
                 echo '</form>';
 
-                echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left;">';
+                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
                 echo '<input type="hidden" name="sc_type" value="post_sc">';
                 echo '<input type="submit" value="Post Update Change Detection" class="button">';
@@ -362,7 +346,7 @@ function webchangedetector_init() {
                 </strong>.
             </p>
 
-            <form action="/wp-admin/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
+            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
             <p>
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
@@ -563,12 +547,16 @@ function webchangedetector_init() {
             echo '<p>
                 <strong>Update Change Detection</strong><br>
                 Here you can select the pages of your website and manually take the screenshots.
-                Use the Update Change Detection when you perform updates on your website. Run a change detection
-                before and after the update and you will see if there are differences on the selected pages.
+                Use the Update Change Detection when you perform updates on your website. Run a Pre Update Change Detection
+                before and a Post Update Change Detection after the update and you will see if there are differences on the selected pages.
+                The Post Update Change Detection automatically compares the screenshots with the latest Pre Change Detection Screenshots.
+                
                 <ol>
                     <li>Select the urls and the devices (desktop and / or mobile) you want to take a screenshot.</li>
-                    <li>Hit the Button "Start Update Detection". The Detection might take couple of minutes. </li>
-                    <li>When the update detections are finished, you can see the results below the settings at "Latest Change Detections"</li>
+                    <li>Hit the Button "Pre Update Change Detection". The Screenshots might take couple of minutes. 
+                        You can see the current status in the tab "Queue".</li>
+                    <li>After updating your website, press the button "Post Update Change Detection. </li>
+                    <li>When the Update Change Detections are finished, you can see the results below the settings at "Latest Change Detections"</li>
                 </ol>
                 </p>
                 <p>
@@ -596,16 +584,10 @@ function webchangedetector_init() {
             echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
-
             echo $back_button;
-            //$token = $wp_comp->mm_get_compare_token( $postdata['compare_id'] );
-            //echo $token;
-
             echo  $wcd->mm_show_change_detection( $_GET['token'] );
-
             echo '<div class="clear"></div>';
             echo $back_button;
-            //echo $wcd->show_compare( $_POST['compare_id'] );
 
     }
     echo '</div>'; // closing from div webchangedetector

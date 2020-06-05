@@ -51,7 +51,6 @@ class WebChangeDetector_Admin {
 
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-
     }
 
     /**
@@ -113,11 +112,24 @@ class WebChangeDetector_Admin {
     }
 
     // Sync urls on publishing (called by hook in includes/class-webchangedetector.php)
-    public function wcd_sync_urls_on_publish( $new_status, $old_status, $post ) {
+    /*public function wcd_sync_urls_on_publish( $new_status, $old_status, $post ) {
         if( 'publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page' ) ) ) {
             $wcd = new WebChangeDetector();
             $website_details = $wcd->get_website_details( get_option( 'webchangedetector_api_key' ) );
             $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
+        }
+    }*/
+
+    // Sync Post if permalink changed
+    public function sync_post_after_save( $post_id, $post, $update ) {
+
+        if( $update ) {
+            $latest_revision = array_shift(wp_get_post_revisions( $post_id ) );
+            if( $latest_revision && get_permalink( $latest_revision ) !== get_permalink( $post )) {
+                $this->sync_posts( $post );
+            }
+        } else {
+            $this->sync_posts( $post );
         }
     }
 
@@ -210,28 +222,37 @@ class WebChangeDetector_Admin {
         return $this->mm_api( $args );
     }
 
-    public function sync_posts( $auto_detection_group = false, $manual_detection_group = false ) {
+    public function sync_posts( $auto_detection_group = false, $manual_detection_group = false, $post_obj = false ) {
 
-        $posttypes = array(
-            'pages' => get_pages(),
-            'posts' => get_posts( array( 'numberposts' => '-1' ) )
-        );
+        if( $post_obj ) {
+            $array[] = array(
+                'url'   => get_permalink( $post_obj ),
+                'wp_post_id'    => $post_obj->ID
+            );
 
-        $array = array();
-        foreach( $posttypes as $posts ) {
-            if( $posts ) {
-                foreach( $posts as $post ) {
-                    $url = get_permalink( $post );
-                    $url = substr( $url, strpos( $url, '//' ) + 2 );
-                    $array[] = array(
-                        'url' => $url,
-                        'wp_post_id' => $post->ID
-                    );
+        } else {
+
+            $posttypes = array(
+                'pages' => get_pages(),
+                'posts' => get_posts( array( 'numberposts' => '-1' ) )
+            );
+
+            foreach( $posttypes as $posts ) {
+                if( $posts ) {
+                    foreach( $posts as $post ) {
+                        $url = get_permalink( $post );
+                        $url = substr( $url, strpos( $url, '//' ) + 2 );
+                        $array[] = array(
+                            'url' => $url,
+                            'wp_post_id' => $post->ID
+                        );
+                    }
                 }
             }
         }
 
-        if( $array ) {
+
+        if( !empty( $array ) ) {
             $args = array(
                 'action' => 'sync_urls',
                 'posts' => json_encode( $array ),
@@ -305,7 +326,7 @@ class WebChangeDetector_Admin {
     function get_api_key_form( $api_key = false ) {
 
         if( $api_key ) {
-            $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post" 
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=settings" method="post" 
                         onsubmit="return confirm(\'Do you really want to reset the API key?\nYour settings will get lost.\');">
                         <input type="hidden" name="wcd_action" value="reset_api_key">
                         <h2>API Key</h2>
@@ -314,7 +335,7 @@ class WebChangeDetector_Admin {
                         <p><strong>ATTENTION: With resetting the API key, all settings get lost and 
                         the monitoring won\'t be continued!</strong></p>';
         } else {
-            $output = '<form action="/wp-admin/admin.php?page=webchangedetector&tab=settings" method="post">
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=settings" method="post">
                         <input type="hidden" name="wcd_action" value="save_api_key">
                         <h2>2. Your API Key</h2>
                         <p>After creating your account, you get an API Key. Enter this API key here and start your Change Detections.</p>
@@ -408,7 +429,7 @@ class WebChangeDetector_Admin {
         else
             $tab = "take-screenshots";
 
-        echo '<form action="/wp-admin/admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
+        echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
@@ -504,13 +525,6 @@ class WebChangeDetector_Admin {
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Key, you can enter it below and start your Change Detections.</p>
 		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=57" target="_blank" class="button">Create Free Account</a>
-		<!--<form id="frm_new_account" name="new_account" action="/wp-admin/admin.php?page=webchangedetector&tab=settings" onsubmit="return mmValidateForm()" method="post">
-			<input type="hidden" name="wcd_action" value="create_free_account"><br>
-			<p><label>First Name</label><input id="form_first_name" type="text" name="first_name"></p>
-			<p><label>Last Name</label><input type="text" id="form_last_name" name="last_name"></p>
-			<p><label>Email</label><input type="text" id="form_email" name="email"></p>
-			<input type="submit" value="Create free account" class="button">
-		</form>-->
 		<hr>
 		' . $this->get_api_key_form() . '
 		</div>';
@@ -555,46 +569,31 @@ class WebChangeDetector_Admin {
         <?php
     }
 
-    function isJson( $string ) {
-        json_decode( $string );
-        return ( json_last_error() == JSON_ERROR_NONE );
-    }
+    function mm_api( $post ) {
 
-    function mm_api( $args ) {
-
-        if( defined( 'WCD_DEV_API' ) && WCD_DEV_API )
+        if( get_option( "_webchangedetector_dev") )
             $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
         else
             $url = 'https://api.webchangedetector.com/v1/api.php';
 
-        if( !isset( $args['api_key'] ) )
-            $args['api_key'] = get_option( 'webchangedetector_api_key' );
-        $args['wp_plugin_version'] = $this->version;
+        if( !isset( $post['api_key'] ) )
+            $post['api_key'] = get_option( 'webchangedetector_api_key' );
+        $post['wp_plugin_version'] = $this->version;
+        $post['domain'] = $_SERVER['SERVER_NAME'];
 
-        $ch = curl_init( $url );
-        curl_setopt( $ch, CURLOPT_POSTFIELDS, $args );
-        curl_setopt( $ch, CURLOPT_TIMEOUT, 300 );
+        $args = array(
+                'body'  => $post
+        );
+        $response = wp_remote_post( $url, $args );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-
-        $result = curl_exec( $ch );
-
-        if( !$result )
-            return curl_error( $ch );
-
-        if( $result ) {
-
-            if( $this->isJson( $result ) )
-                $result = json_decode( $result, true );
-
-            if( $result == 'plugin_update_required' ) {
-                echo '<div class="error notice">
-                            <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at 
-                            <a href="/wp-admin/plugins.php">Plugins</a>.</p>
-                        </div>';
-                die();
-            }
-            return $result;
+        if( $body == 'plugin_update_required' ) {
+            echo '<div class="error notice">
+                        <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at 
+                        <a href="/wp-admin/plugins.php">Plugins</a>.</p>
+                    </div>';
+            die();
         }
+        return $body;
     }
 }

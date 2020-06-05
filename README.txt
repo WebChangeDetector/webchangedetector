@@ -1,10 +1,10 @@
-=== Plugin Name ===
-Contributors: (this should be a list of wordpress.org userid's)
+=== WebChangeDetector ===
+Contributors: Mike.Miler
 Donate link: https://www.webchangedetector.com
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.4.1
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
