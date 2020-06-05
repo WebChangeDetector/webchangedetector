@@ -44,7 +44,7 @@ function webchangedetector_init() {
             case 'save_api_key':
                 update_option('webchangedetector_api_key', $postdata['api-key']);
                 $website = $wcd->create_group($postdata['api-key']);
-                $wcd->sync_posts($website['auto_detection_group_id'], $website['manual_detection_group_id']);
+                $wcd->sync_posts();
                 break;
         }
     }
@@ -90,7 +90,7 @@ function webchangedetector_init() {
     // Create website and groups if not exists yet
     if (!$website_details) {
         $website_details = $wcd->create_group($api_key);
-        $wcd->sync_posts($website_details['auto_detection_group_id'], $website_details['manual_detection_group_id']);
+        $wcd->sync_posts();
     }
     $group_id = $website_details['manual_detection_group_id'];
     $monitoring_group_id = $website_details['auto_detection_group_id'];

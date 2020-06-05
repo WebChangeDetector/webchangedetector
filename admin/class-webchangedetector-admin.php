@@ -222,13 +222,17 @@ class WebChangeDetector_Admin {
         return $this->mm_api( $args );
     }
 
-    public function sync_posts( $auto_detection_group = false, $manual_detection_group = false, $post_obj = false ) {
+    public function sync_posts( $post_obj = false ) {
 
         if( $post_obj ) {
-            $array[] = array(
-                'url'   => get_permalink( $post_obj ),
-                'wp_post_id'    => $post_obj->ID
-            );
+            if( get_post_status( $post_obj ) === "publish" ) {
+                $url = get_permalink( $post_obj );
+                $url = substr( $url, strpos( $url, '//' ) + 2 );
+                $array[] = array(
+                    'url' => $url,
+                    'wp_post_id' => $post_obj->ID
+                );
+            }
 
         } else {
 
@@ -253,11 +257,13 @@ class WebChangeDetector_Admin {
 
 
         if( !empty( $array ) ) {
+
+            $website_details = $this->get_website_details( get_option( 'webchangedetector_api_key' ) );
             $args = array(
                 'action' => 'sync_urls',
                 'posts' => json_encode( $array ),
-                'auto_detection_group_id' => $auto_detection_group,
-                'manual_detection_group_id' => $manual_detection_group
+                'auto_detection_group_id' => $website_details['auto_detection_group_id'],
+                'manual_detection_group_id' => $website_details['manual_detection_group_id']
             );
 
             return $this->mm_api( $args );
@@ -373,8 +379,8 @@ class WebChangeDetector_Admin {
             'domain' => $_SERVER['SERVER_NAME'],
             'api_key' => $api_key
         );
-
         $website_details = $this->mm_api( $args );
+
         return $website_details[0];
     }
 
@@ -410,17 +416,9 @@ class WebChangeDetector_Admin {
     }
 
     function mm_get_url_settings( $group_id, $monitoring_group = false ) {
-
-        if( $monitoring_group ) {
-            $auto_detection_group_id = $group_id;
-            $update_detection_group_id = false;
-        } else {
-            $auto_detection_group_id = false;
-            $update_detection_group_id = $group_id;
-        }
-
+        
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
-        $synced_posts = $this->sync_posts( $auto_detection_group_id, $update_detection_group_id );
+        $synced_posts = $this->sync_posts();
         $checks = $this->get_urls_of_group( $group_id );
 
         // Select URLS
