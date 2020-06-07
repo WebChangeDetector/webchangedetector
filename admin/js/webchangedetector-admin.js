@@ -70,37 +70,14 @@ function mmValidateEmail(email) {
 }
 
 function mmValidateForm() {
+	var email = document.getElementById("alert_email");
 
-	var firstName = document.forms["new_account"]["first_name"].value;
-	var lastName = document.forms["new_account"]["last_name"].value;
-	var email = document.forms["new_account"]["email"].value;
-	var message = "";
-
-	if (firstName == "") {
-		document.getElementById("form_first_name").style.border='1px solid red';
-		message = message + "First Name must be filled \n";
-	} else
-		document.getElementById("form_first_name").style.border='1px solid green';
-	if (lastName == "") {
-		document.getElementById("form_last_name").style.border='1px solid red';
-		message = message + "Last Name must be filled \n";
-	} else
-		document.getElementById("form_last_name").style.border='1px solid green';
-
-	if (email == "") {
-		document.getElementById("form_email").style.border='1px solid red';
-		message = message + "Email must be filled \n";
+	if( !mmValidateEmail( email.value ) ) {
+		email.style.border='1px solid red';
+		return "Please check your email address."
 	} else {
-		if( !mmValidateEmail( email ) ) {
-			document.getElementById("form_email").style.border='1px solid red';
-			message = message + "Please check your email address."
-		} else
-			document.getElementById("form_email").style.border='1px solid green';
-	}
-
-	if( message != "" ) {
-		alert( message );
-		return false;
+		email.style.border='1px solid green';
+		return true;
 	}
 }
 

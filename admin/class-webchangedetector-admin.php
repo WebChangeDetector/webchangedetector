@@ -345,7 +345,12 @@ class WebChangeDetector_Admin {
                         <input type="hidden" name="wcd_action" value="save_api_key">
                         <h2>2. Your API Key</h2>
                         <p>After creating your account, you get an API Key. Enter this API key here and start your Change Detections.</p>
-                        <input type="text" name="api-key" value="' . $api_key . '" style="width: 200px;">
+                        <input type="text" name="api-key" value="' . $api_key . '" 
+                            style="width: 200px;" 
+                            pattern="[a-z0-9]{20}" 
+                            oninvalid="this.setCustomValidity(\'Invalid format for api key.\')"
+                            onchange="try{setCustomValidity(\'\')}catch(e){}"
+                            oninput="setCustomValidity(\' \')">
                         <input type="submit" value="Save" class="button">';
         }
         $output .= '</form>';

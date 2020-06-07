@@ -44,7 +44,11 @@ function webchangedetector_init() {
             case 'save_api_key':
                 update_option('webchangedetector_api_key', $postdata['api-key']);
                 $website = $wcd->create_group($postdata['api-key']);
-                $wcd->sync_posts();
+
+                if( empty( $website ) )
+                    echo '<div class="error notice"><p>The API Key is invalid. Please try again.</p></div>';
+                else
+                    $wcd->sync_posts();
                 break;
         }
     }
@@ -346,7 +350,7 @@ function webchangedetector_init() {
                 </strong>.
             </p>
 
-            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post">
+            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post" onsubmit="return mmValidateForm()">
             <p>
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
@@ -398,10 +402,14 @@ function webchangedetector_init() {
             </p>
             <p>
                 <label for="alert_email">Email address for alerts</label>
-                <input type="text" name="alert_email"
-                       value="<?= isset($group_settings['alert_email']) ? $group_settings['alert_email'] : '' ?> ">
+                <input type="text" name="alert_email" id="alert_email"
+                       value="<?= isset($group_settings['alert_email']) ? $group_settings['alert_email'] : '' ?>"
+                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                       oninvalid="this.setCustomValidity('Invalid email address.')"
+                       onchange="try{setCustomValidity('')}catch(e){}"
+                       oninput="setCustomValidity(' ')">
             </p>
-            <input class="button" type="submit" value="Save">
+                <input type="submit" class="button" value="Save" >
             </form>
 
             <?php
