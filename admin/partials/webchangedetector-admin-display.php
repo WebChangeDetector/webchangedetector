@@ -476,7 +476,6 @@ function webchangedetector_init() {
             $args = array(
                 'action'	=> 'get_queue',
                 'status'    => json_encode( array( 'open', 'processing', 'done' ) ),
-                'domain'    => $_SERVER['SERVER_NAME']
             );
             $queue = $wcd->mm_api( $args );
             if( $queue ) {

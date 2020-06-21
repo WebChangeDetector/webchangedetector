@@ -229,7 +229,7 @@ class WebChangeDetector_Admin {
                 $url = substr( $url, strpos( $url, '//' ) + 2 );
                 $array[] = array(
                     'url' => $url,
-                    'wp_post_id' => $post_obj->ID
+                    'cms_resource_id' => $post_obj->ID
                 );
             }
 
@@ -247,7 +247,7 @@ class WebChangeDetector_Admin {
                         $url = substr( $url, strpos( $url, '//' ) + 2 );
                         $array[] = array(
                             'url' => $url,
-                            'wp_post_id' => $post->ID
+                            'cms_resource_id' => $post->ID
                         );
                     }
                 }
@@ -292,7 +292,6 @@ class WebChangeDetector_Admin {
     function create_free_account( $post ) {
         $args = array(
             'action' => 'add_free_account',
-            'domain' => $_SERVER['SERVER_NAME'],
             'first_name' => $post['first_name'],
             'last_name' => $post['last_name'],
             'email' => $post['email'],
@@ -360,7 +359,6 @@ class WebChangeDetector_Admin {
         // Create group if it doesn't exist yet
         $args = array(
             'action' => 'add_website_groups',
-            'domain' => $_SERVER['SERVER_NAME'],
             //'website_group' => 1,
             'api_key' => $api_key
         );
@@ -371,8 +369,6 @@ class WebChangeDetector_Admin {
     function delete_website( $api_key ) {
         $args = array(
             'action' => 'delete_website',
-            'domain' => $_SERVER['SERVER_NAME'],
-            'api_key' => $api_key
         );
         $this->mm_api( $args );
     }
@@ -380,8 +376,6 @@ class WebChangeDetector_Admin {
     function get_website_details( $api_key ) {
         $args = array(
             'action' => 'get_client_website_details',
-            'domain' => $_SERVER['SERVER_NAME'],
-            'api_key' => $api_key
         );
         $website_details = $this->mm_api( $args );
 
@@ -393,6 +387,7 @@ class WebChangeDetector_Admin {
             'action' => 'get_group_urls',
             'group_id' => $group_id
         );
+        
         $group_urls = $this->mm_api( $args );
 
         $check_posts = array();
@@ -401,7 +396,7 @@ class WebChangeDetector_Admin {
         foreach( $group_urls as $group_url ) {
             // Create array with all active urls of group
             $check_posts['urls'][] = array(
-                'wp_post_id' => (int)$group_url['wp_post_id'],
+                'cms_resource_id' => (int)$group_url['cms_resource_id'],
                 'sc_id' => (int)$group_url['id'],
                 //'active'        => $group_url['active'],
                 'desktop' => $group_url['desktop'],
@@ -423,8 +418,8 @@ class WebChangeDetector_Admin {
         
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
         $synced_posts = $this->sync_posts();
+
         $checks = $this->get_urls_of_group( $group_id );
-dd($synced_posts);
         // Select URLS
         if( $monitoring_group )
             $tab = "monitoring-screenshots";
@@ -463,8 +458,9 @@ dd($synced_posts);
                     $url = get_permalink( $post );
                     $sc_id = false;
 
+
                     foreach( $synced_posts as $synced_post ) {
-                        if( $synced_post['wp_post_id'] == $post->ID ) {
+                        if( $synced_post['cms_resource_id'] == $post->ID ) {
                             $sc_id = $synced_post['sc_id'];
                         }
                     }
@@ -536,7 +532,6 @@ dd($synced_posts);
     function mm_get_restrictions() {
         $args = array(
             'action' => 'get_client_website_details',
-            'domain' => $_SERVER['HTTP_HOST']
         );
 
         $restrictions = $this->mm_api( $args );
