@@ -64,20 +64,22 @@ function mmToggle(source, postType, column, groupId) {
 	}
 }
 
-function mmValidateEmail(email) {
-	var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-	return re.test(email);
-}
-
 function mmValidateForm() {
-	var email = document.getElementById("alert_email");
 
-	if( !mmValidateEmail( email.value ) ) {
-		email.style.border='1px solid red';
-		return "Please check your email address."
-	} else {
-		email.style.border='1px solid green';
-		return true;
+	var emailsElement = document.getElementById("alert_emails");
+	console.log(emailsElement.value);
+	emails = emailsElement.value.replace(/\s/g,'').split(",");
+
+	var valid = true;
+	var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+	for (var i = 0; i < emails.length; i++) {
+		if( emails[i] == "" || ! regex.test(emails[i])){
+			valid = false;
+			emailsElement.style.border = "2px solid red";
+		}
 	}
+	emailsElement.style.border = "2px solid green";
+	return valid;
 }
 

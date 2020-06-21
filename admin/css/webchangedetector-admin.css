@@ -7,6 +7,14 @@
     max-width: 98%;
 }
 
+.webchangedetector table {
+    border-spacing: 0;
+}
+
+.webchangedetector table tr td {
+    border-top: 1px solid #aaa;
+}
+
 .webchangedetector td,
 .webchangedetector th {
     padding: 10px;
@@ -105,3 +113,13 @@
     display: none;
 }
 
+.webchangedetector .queue-status.open {
+    background: #eee;
+}
+.webchangedetector .queue-status.processing
+{
+    background: rgba( 254, 204, 48, 0.3);
+}
+.webchangedetector .queue-status.done {
+    background: #E7F2E7;
+}

@@ -38,7 +38,7 @@ class WebChangeDetector_Admin {
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.0.5';
+    private $version = '1.0.7';
 
     /**
      * Initialize the class and set its properties.
@@ -111,18 +111,8 @@ class WebChangeDetector_Admin {
             plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg' );
     }
 
-    // Sync urls on publishing (called by hook in includes/class-webchangedetector.php)
-    /*public function wcd_sync_urls_on_publish( $new_status, $old_status, $post ) {
-        if( 'publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, array( 'post', 'page' ) ) ) {
-            $wcd = new WebChangeDetector();
-            $website_details = $wcd->get_website_details( get_option( 'webchangedetector_api_key' ) );
-            $wcd->sync_posts( $website_details['auto_detection_group_id'], $website_details['manual_detection_group_id'] );
-        }
-    }*/
-
-    // Sync Post if permalink changed
+    // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save( $post_id, $post, $update ) {
-
         if( $update ) {
             $latest_revision = array_shift(wp_get_post_revisions( $post_id ) );
             if( $latest_revision && get_permalink( $latest_revision ) !== get_permalink( $post )) {
@@ -149,22 +139,6 @@ class WebChangeDetector_Admin {
         return $monitoring_group_settings[0];
     }
 
-    public function get_amount_sc( $group_id ) {
-        $args = array(
-            'action' => 'get_amount_sc',
-            'group_id' => $group_id
-        );
-        return $this->mm_api( $args );
-    }
-
-    public function show_compare( $compare_id ) {
-        $args = array(
-            'action' => 'show_compare',
-            'compare_id' => $compare_id
-        );
-        return $this->mm_api( $args );
-    }
-
     public function mm_show_change_detection( $token ) {
         $args = array(
             'action' => 'show_change_detection',
@@ -181,10 +155,10 @@ class WebChangeDetector_Admin {
             'interval_in_h' => $postdata['interval_in_h'],
             'monitoring' => $postdata['monitoring'],
             'enabled' => $postdata['enabled'],
-            'alert_email' => $postdata['alert_email'],
-            'group_name' => $postdata['group_name']
+            'alert_emails' => $postdata['alert_emails'],
+            'name' => $postdata['group_name']
         );
-        $this->mm_api( $args );
+        return $this->mm_api( $args );
     }
 
     public function get_upgrade_options( $plan_id ) {
@@ -213,10 +187,10 @@ class WebChangeDetector_Admin {
         return $this->mm_api( $args );
     }
 
-    public function get_queue( $group_id ) {
+    public function get_queue() {
         $args = array(
             'action' => 'get_queue',
-            'group_id' => $group_id
+            'status' => json_encode(['open','done','processing','failed']),
         );
         return $this->mm_api( $args );
     }
@@ -229,6 +203,7 @@ class WebChangeDetector_Admin {
                 $url = substr( $url, strpos( $url, '//' ) + 2 );
                 $array[] = array(
                     'url' => $url,
+                    'html_title' => $post_obj->post_title,
                     'cms_resource_id' => $post_obj->ID
                 );
             }
@@ -247,6 +222,7 @@ class WebChangeDetector_Admin {
                         $url = substr( $url, strpos( $url, '//' ) + 2 );
                         $array[] = array(
                             'url' => $url,
+                            'html_title' => $post->post_title,
                             'cms_resource_id' => $post->ID
                         );
                     }
@@ -276,15 +252,15 @@ class WebChangeDetector_Admin {
             'group_id' => $group_id,
             'posts' => json_encode( $active_posts ),
         );
-        $results = $this->mm_api( $args );
+        return $this->mm_api( $args );
+
     }
 
-    public function take_screenshot( $group_id, $sc_type, $api_key ) {
+    public function take_screenshot( $group_id, $sc_type ) {
         $args = array(
             'action'    => 'take_screenshots',
             'sc_type'   => $sc_type,
             'group_id'  => $group_id,
-            'api_key'   => $api_key
         );
         return $this->mm_api( $args );
     }
@@ -305,18 +281,6 @@ class WebChangeDetector_Admin {
             $this->create_group( $api_key['api_key'] );
         }
         return $api_key;
-    }
-
-    function verify_account() { //Replaces get_api_key and verify_api_key
-        $api_key = get_option( 'webchangedetector_api_key' );
-        if( $api_key ) {
-            $args = array(
-                'action' => 'verify_account',
-                'api_key' => $api_key
-            );
-            return $this->mm_api( $args );
-        } else
-            return false;
     }
 
     function resend_confirmation_mail( $api_key ) {
@@ -375,7 +339,7 @@ class WebChangeDetector_Admin {
 
     function get_website_details( $api_key ) {
         $args = array(
-            'action' => 'get_client_website_details',
+            'action' => 'get_user_websites',
         );
         $website_details = $this->mm_api( $args );
 
@@ -384,52 +348,31 @@ class WebChangeDetector_Admin {
 
     function get_urls_of_group( $group_id ) {
         $args = array(
-            'action' => 'get_group_urls',
-            'group_id' => $group_id
+            'action' => 'get_user_groups_and_urls',
+            'group_id' => $group_id,
         );
-        
-        $group_urls = $this->mm_api( $args );
 
-        $check_posts = array();
-        $amount_sc = 0;
+        $groups_and_urls = $this->mm_api( $args )[0];
+        $groups_and_urls['group_id'] = $groups_and_urls['id'];
 
-        foreach( $group_urls as $group_url ) {
-            // Create array with all active urls of group
-            $check_posts['urls'][] = array(
-                'cms_resource_id' => (int)$group_url['cms_resource_id'],
-                'sc_id' => (int)$group_url['id'],
-                //'active'        => $group_url['active'],
-                'desktop' => $group_url['desktop'],
-                'mobile' => $group_url['mobile']
-            );
-
-            // Count amount of sc
-            if( $group_url['desktop'] )
-                $amount_sc++;
-            if( $group_url['mobile'] )
-                $amount_sc++;
-        }
-
-        $check_posts['amount_sc'] = $amount_sc;
-        return $check_posts;
+        return $groups_and_urls;
     }
 
-    function mm_get_url_settings( $group_id, $monitoring_group = false ) {
-        
+    function mm_get_url_settings( $groups_and_urls, $monitoring_group = false ) {
+
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
         $synced_posts = $this->sync_posts();
 
-        $checks = $this->get_urls_of_group( $group_id );
         // Select URLS
         if( $monitoring_group )
             $tab = "monitoring-screenshots";
         else
             $tab = "take-screenshots";
 
-        echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
+        echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
-        echo '<input type="hidden" value="' . $group_id . '" name="group_id">';
+        echo '<input type="hidden" value="' . $groups_and_urls['group_id'] . '" name="group_id">';
 
         $post_types = get_post_types();
 
@@ -453,58 +396,59 @@ class WebChangeDetector_Admin {
                 echo '<tr style="background: none; text-align: center">
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
                             <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
+                            <td></td>
+                            <td></td>
                         </tr>';
                 foreach( $posts as $post ) {
                     $url = get_permalink( $post );
-                    $sc_id = false;
-
-
+                    $url_id = false;
                     foreach( $synced_posts as $synced_post ) {
                         if( $synced_post['cms_resource_id'] == $post->ID ) {
-                            $sc_id = $synced_post['sc_id'];
+                            $url_id = $synced_post['url_id'];
                         }
                     }
                     if( !$sc_id )
                         continue;
 
                     $checked = array(
-                        'active' => 1,
                         'desktop' => '',
                         'mobile' => ''
                     );
-                    if( isset( $checks['urls'] ) ) {
-                        foreach( $checks['urls'] as $key => $check ) {
-                            if( $check['sc_id'] == $sc_id ) {
+
+                    if( !empty( $groups_and_urls['urls'] ) ) {
+                        foreach( $groups_and_urls['urls'] as $key => $url_details ) {
+                            //dd($groups_and_urls['urls']);
+                            if( $url_details['pivot']['url_id'] == $url_id ) {
                                 $checked['active'] = 'checked';
 
-                                if( $check['desktop'] )
+                                if( $url_details['pivot']['desktop'] )
                                     $checked['desktop'] = 'checked';
-                                if( $check['mobile'] )
+                                if( $url_details['pivot']['mobile'] )
                                     $checked['mobile'] = 'checked';
-
                             }
                         }
                     }
 
-                    echo '<tr class="post_id_' . $group_id . '" id="' . $sc_id . '" >';
-                    echo '<input type="hidden" name="sc_id-' . $sc_id . '" value="' . $sc_id . '">';
-                    echo '<input type="hidden" name="active-' . $sc_id . ' value="1">';
+                    echo '<tr class="post_id_' . $group_id . '" id="' . $url_id . '" >';
+                    echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
+                    echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
+                    echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
 
                     echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="desktop-' . $sc_id . '">
-                            <input type="checkbox" name="desktop-' . $sc_id . '" value="1" ' . $checked['desktop'] . ' 
-                            id="desktop-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
+                            <input type="hidden" value="0" name="desktop-' . $url_id . '">
+                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . ' 
+                            id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
                     echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="mobile-' . $sc_id . '">
-                            <input type="checkbox" name="mobile-' . $sc_id . '" value="1" ' . $checked['mobile'] . ' 
-                            id="mobile-' . $sc_id . '" onclick="mmMarkRows(\'' . $sc_id . '\')" ></td>';
+                            <input type="hidden" value="0" name="mobile-' . $url_id . '">
+                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . ' 
+                            id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
                     echo '<td style="text-align: left;">' . $post->post_title . '</td>';
                     echo '<td style="text-align: left;"><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
                     echo '</tr>';
 
-                    echo '<script> mmMarkRows(\'' . $sc_id . '\'); </script>';
+                    echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
                 }
                 echo '</table>';
             }
@@ -583,7 +527,7 @@ class WebChangeDetector_Admin {
             $api_token = $post['api_key'];
         unset($post['api_key']);
 
-        //$post['wp_plugin_version'] = $this->version;
+        $post['wp_plugin_version'] = $this->version;
         $post['domain'] = $_SERVER['SERVER_NAME'];
 
         $args = array(
@@ -596,9 +540,7 @@ class WebChangeDetector_Admin {
 
         $response = wp_remote_post( $url, $args );
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        if( $action == 'add_website_groups') {
-            //dd( $response );
-        }
+
         if( $body == 'plugin_update_required' ) {
             echo '<div class="error notice">
                         <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at 

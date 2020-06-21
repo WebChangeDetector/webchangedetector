@@ -62,48 +62,11 @@ function webchangedetector_init() {
     // The account doesn't have an api_key or activation_key
     if (!$api_key) {
         echo $wcd->get_no_account_page();
-        return;
+        return false;
     }
 
-    // Check for the account
-    /*$account_keys = $wcd->get_account_details();
-
-
-
-    // The account is not activated yet, but the api_key is there already
-    if (isset($account_keys['api_key']) && isset($account_keys['activation_key'])) {
-
-        if (isset($postdata['wcd_action']) && $postdata['wcd_action'] == 'resend_confirmation_mail') {
-            $wcd->resend_confirmation_mail($account_keys['api_key']);
-            echo '<div class="updated notice">
-                <p>Email sent successfully to your email address ' . $account_keys['email'] . '.</p>
-            </div>';
-        }
-
-        echo '<div class="error notice">
-                <p>Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.</p>
-            </div>
-            <p>You didn\'t receive the email? Please also check your spam folder. To send the email again, please click the button below</p>
-            <form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post">
-                <input type="hidden" name="wcd_action" value="resend_confirmation_mail">
-                <input type="submit" value="Send confirmation mail again" class="button">
-            </form>';
-        return;
-    }
-
-    // Set the api_key
-    if (isset($account_keys['api_key']))
-        $api_key = $account_keys['api_key'];
-    else
-        $api_key = false;
-*/
     $website_details = $wcd->get_website_details($api_key);
 
-    // Create website and groups if not exists yet
-    /*if (!$website_details) {
-        $website_details = $wcd->create_group($api_key);
-        $wcd->sync_posts();
-    }*/
     $group_id = $website_details['manual_detection_group_id'];
     $monitoring_group_id = $website_details['auto_detection_group_id'];
 
@@ -113,7 +76,7 @@ function webchangedetector_init() {
     if (isset($postdata['wcd_action'])) {
         switch ($postdata['wcd_action']) {
             case 'take_screenshots':
-                $results = $wcd->take_screenshot($group_id, $postdata['sc_type'], $api_key);
+                $results = $wcd->take_screenshot($group_id, $postdata['sc_type']);
 
                 if ( $results[0] == 'error' )
                     echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
@@ -123,7 +86,7 @@ function webchangedetector_init() {
                 break;
 
             case 'update_monitoring_settings':
-                $wcd->update_monitoring_settings( $postdata, $monitoring_group_id );
+                $group = $wcd->update_monitoring_settings( $postdata, $monitoring_group_id );
                 break;
 
             case 'post_urls':
@@ -131,11 +94,11 @@ function webchangedetector_init() {
                 $active_posts = array();
                 $count_selected = 0;
                 foreach ($postdata as $key => $post_id) {
-                    if (strpos($key, 'sc_id') === 0) {
+                    if (strpos($key, 'url_id') === 0) {
                         $active_posts[] = array(
-                            'sc_id' => $post_id,
-                            'url' => get_permalink($post_id),
-                            'active' => 1,
+                            'url_id' => $post_id,
+                            'url' => get_permalink($postdata['post_id-'. $post_id]),
+                            //'active' => 1,
                             'desktop' => $postdata['desktop-' . $post_id],
                             'mobile' => $postdata['mobile-' . $post_id]
                         );
@@ -156,6 +119,7 @@ function webchangedetector_init() {
                         You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
 
                 } else if ($website_details['enable_limits'] &&
+                    isset( $monitoring_group_settings ) &&
                     $website_details['sc_limit'] < $count_selected * (24 / $monitoring_group_settings['interval_in_h']) * 30 &&
                     $website_details['auto_detection_group_id'] == $postdata['group_id']) {
 
@@ -164,7 +128,8 @@ function webchangedetector_init() {
                             You selected ' . $count_selected * (24 / $monitoring_group_settings['interval_in_h']) * 30 . ' change detections. The settings were not saved.</p></div>';
                 } else {
                     // Update API URLs
-                    $wcd->update_urls($postdata['group_id'], $active_posts);
+                    $result = $wcd->update_urls($postdata['group_id'], $active_posts);
+                    //dd($result);
                     echo '<div class="updated notice"><p>Settings saved.</p></div>';
                 }
                 break;
@@ -212,28 +177,22 @@ function webchangedetector_init() {
                 echo 'Settings for Update Change detections are disabled by your API Key.';
                 break;
             }
+
             // Get amount selected Screenshots
-            $amount_sc = $wcd->get_amount_sc( $group_id );
+            $groups_and_urls = $wcd->get_urls_of_group($group_id);
 
-            // Because of change in API we need to check this
-            if( is_array( $amount_sc ) )
-                $amount_sc = $amount_sc['selected'];
-
-            if (!$amount_sc)
-                $amount_sc = '0';
-
-            echo '<h2>Select URLs</h2>';
             ?>
+            <h2>Select URLs</h2>
             <div class="accordion">
                 <div class="mm_accordion_title">
                     <h3>
                         Update Change Detection URLs<br>
                         <small>Currently selected:
-                            <strong><?= $amount_sc ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
+                            <strong><?= $groups_and_urls['amount_selected_urls'] ?><?= $website_details['enable_limits'] ? " / " . $website_details['url_limit_manual_detection'] : '' ?> </strong>
                             URLs</small>
                     </h3>
                     <div class="mm_accordion_content">
-                        <?php $wcd->mm_get_url_settings($group_id) ?>
+                        <?php $wcd->mm_get_url_settings($groups_and_urls) ?>
                     </div>
                 </div>
             </div>
@@ -242,17 +201,17 @@ function webchangedetector_init() {
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
-            <strong>Currently selected amount of change detections: ' . $amount_sc . '</strong></p>';
+            <strong>Currently selected amount of change detections: ' . $groups_and_urls['amount_sc'] . '</strong></p>';
 
                 echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
-                echo '<input type="hidden" name="sc_type" value="pre_sc">';
+                echo '<input type="hidden" name="sc_type" value="pre">';
                 echo '<input type="submit" value="Pre Update Change Detection" class="button">';
                 echo '</form>';
 
                 echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
-                echo '<input type="hidden" name="sc_type" value="post_sc">';
+                echo '<input type="hidden" name="sc_type" value="post">';
                 echo '<input type="submit" value="Post Update Change Detection" class="button">';
                 echo '</form>';
 
@@ -297,7 +256,6 @@ function webchangedetector_init() {
                 echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
                 echo '</tr>';
                 $change_detection_added = true;
-
             }
 
             echo '</table>';
@@ -316,29 +274,18 @@ function webchangedetector_init() {
                 break;
             }
 
-            //Amount selected Monitoring Screenshots
-            $amount_sc_monitoring = $wcd->get_amount_sc( $monitoring_group_id );
-
-            // Because of change in API we need to check this
-            if( is_array( $amount_sc_monitoring ) )
-                $amount_sc_monitoring = $amount_sc_monitoring['selected'];
-
-            if ( !$amount_sc_monitoring )
-                $amount_sc_monitoring = '0';
-
-            $group_settings = $wcd->get_monitoring_settings($monitoring_group_id);
-
-            echo '<h2>Select URLs</h2>';
+            $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
             ?>
+            <h2>Select URLs</h2>
             <div class="accordion">
                 <div class="mm_accordion_title">
                     <h3>
                         Auto Change Detection URLs<br>
-                        <small>Currently selected: <strong><?= $amount_sc_monitoring ?></strong> URLs</small>
+                        <small>Currently selected: <strong><?= $groups_and_urls['amount_selected_urls'] ?></strong> URLs</small>
                     </h3>
                     <div class="mm_accordion_content">
-                        <?php $wcd->mm_get_url_settings($monitoring_group_id, true) ?>
+                        <?php $wcd->mm_get_url_settings($groups_and_urls, true) ?>
                     </div>
                 </div>
             </div>
@@ -346,7 +293,7 @@ function webchangedetector_init() {
             <h2>Settings for Auto Change Detection</h2>
             <p>
                 The current settings require
-                <strong><?= $amount_sc_monitoring * (24 / $group_settings['interval_in_h']) * 30 ?></strong> change
+                <strong><?= $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30 ?></strong> change
                 detections per month.<br>
                 Your available change detections are <strong>
                     <?php
@@ -362,14 +309,14 @@ function webchangedetector_init() {
             <p>
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
-                <input type="hidden" name="group_name" value="<?= $group_settings['group_name'] ?>">
+                <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
             <label for="enabled">Enabled</label>
             <select name="enabled">
-                <option value="1" <?= isset($group_settings['enabled']) && $group_settings['enabled'] == '1' ? 'selected' : ''; ?>>
+                <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
                     Yes
                 </option>
-                <option value="0" <?= isset($group_settings['enabled']) && $group_settings['enabled'] == '0' ? 'selected' : ''; ?>>
+                <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
                     No
                 </option>
             </select>
@@ -379,7 +326,7 @@ function webchangedetector_init() {
                 <select name="hour_of_day">
                     <?php
                     for ($i = 0; $i < 24; $i++) {
-                        if (isset($group_settings['hour_of_day']) && $group_settings['hour_of_day'] == $i)
+                        if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i)
                             $selected = 'selected';
                         else
                             $selected = '';
@@ -391,36 +338,37 @@ function webchangedetector_init() {
             <p>
                 <label for="interval_in_h">Interval in hours</label>
                 <select name="interval_in_h">
-                    <option value="1" <?= isset($group_settings['interval_in_h']) && $group_settings['interval_in_h'] == '1' ? 'selected' : ''; ?>>
+                    <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '1' ? 'selected' : ''; ?>>
                         Every 1 hour (720 Change Detections / URL / month)
                     </option>
-                    <option value="3" <?= isset($group_settings['interval_in_h']) && $group_settings['interval_in_h'] == '3' ? 'selected' : ''; ?>>
+                    <option value="3" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '3' ? 'selected' : ''; ?>>
                         Every 3 hours (240 Change Detections / URL / month)
                     </option>
-                    <option value="6" <?= isset($group_settings['interval_in_h']) && $group_settings['interval_in_h'] == '6' ? 'selected' : ''; ?>>
+                    <option value="6" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '6' ? 'selected' : ''; ?>>
                         Every 6 hours (120 Change Detections / URL / month)
                     </option>
-                    <option value="12" <?= isset($group_settings['interval_in_h']) && $group_settings['interval_in_h'] == '12' ? 'selected' : ''; ?>>
+                    <option value="12" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '12' ? 'selected' : ''; ?>>
                         Every 12 hours (60 Change Detections / URL / month)
                     </option>
-                    <option value="24" <?= isset($group_settings['interval_in_h']) && $group_settings['interval_in_h'] == '24' ? 'selected' : ''; ?>>
+                    <option value="24" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '24' ? 'selected' : ''; ?>>
                         Every 24 hours (30 Change Detections / URL / month)
                     </option>
                 </select>
             </p>
             <p>
-                <label for="alert_email">Email address for alerts</label>
-                <input type="text" name="alert_email" id="alert_email"
-                       value="<?= isset($group_settings['alert_email']) ? $group_settings['alert_email'] : '' ?>"
-                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                <label for="alert_emails">Email address for alerts</label>
+                <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
+                       value="<?= isset($groups_and_urls['alert_emails']) ? implode(",",$groups_and_urls['alert_emails']) : '' ?>">
+                       <!--pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
                        oninvalid="this.setCustomValidity('Invalid email address.')"
                        onchange="try{setCustomValidity('')}catch(e){}"
-                       oninput="setCustomValidity(' ')">
+                       oninput="setCustomValidity(' ')"-->
             </p>
                 <input type="submit" class="button" value="Save" >
             </form>
 
             <?php
+
             // Compare overview
             echo '<h2>Latest Change Detections</h2>';
 
@@ -473,40 +421,38 @@ function webchangedetector_init() {
 
         case 'queue':
             // Show queued urls
-            $args = array(
-                'action'	=> 'get_queue',
-                'status'    => json_encode( array( 'open', 'processing', 'done' ) ),
-            );
-            $queue = $wcd->mm_api( $args );
-            if( $queue ) {
-                echo '<h2>Currently processing and already processed URLs</h2>';
-                echo '<table>';
-                echo '<tr><th>URL</th><th>Status</th><th>Added to queue</th><th>Last changed</th></tr>';
-                foreach( $queue as $url ) {
-                    switch( $url['status'] ) {
-                        case 'done':
-                            $background = '#eee';
-                            break;
+            $queues = $wcd->get_queue();
+            $type_nice_name = [
+                'pre' => 'Reference Screenshot',
+                'post' => 'Compare Screenshot',
+                'auto' => 'Auto Detection',
+                'compare' => 'Change Detection'
+            ];
+            if (! empty($queues) && is_iterable($queues)) {
+                echo '<table class="queue">';
+                echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
+                foreach ($queues as $queue) {
+                    $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
+                    echo '<tr class="queue-status ' . $queue['status'] . '">';
+                    echo '<td>' . $wcd->mm_get_device_icon($queue['device']) . '</td>';
+                    echo '<td>
+                                <span class="html-title queue"> ' . $queue['url']['html_title'] . '</span><br>
+                                <span class="url queue">URL: '.$queue['url']['url'] . '</span><br>
+                                ' . $group_type . '
+                          </td>';
 
-                        case 'processing':
-                            $background = 'rgba( 254, 204, 48, 0.3)';
-                            break;
 
-                        case 'open':
-                            $background = 'rgba(23, 179, 49, 0.3);';
-                            break;
-                    }
-                    echo '<tr style="background: ' . $background . ';">';
-                    echo '<td style="border-bottom: 1px solid #cecece;">' . $wcd->mm_get_device_icon( $url['device'] ) . $url['url'] . '</td>';
-                    echo '<td style="border-bottom: 1px solid #cecece;">' . ucfirst($url['status'] ) . '</td>';
-                    echo '<td style="border-bottom: 1px solid #cecece;">' .  date("d/m/Y H:i:s", strtotime($url['timestamp_added'] ) ) . '</td>';
-                    echo '<td style="border-bottom: 1px solid #cecece;">' .  date("d/m/Y H:i:s", strtotime($url['timestamp_last_change'] ) ) . '</td>';
+                    echo '<td>' . $type_nice_name[$queue['sc_type']] . '</td>';
+                    echo '<td>' . ucfirst($queue['status']) . '</td>';
+                    echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
+                    echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
                     echo '</tr>';
                 }
                 echo '</table>';
 
-            } else
+            } else {
                 echo 'All done';
+            }
             break;
         /********************
          * Settings
