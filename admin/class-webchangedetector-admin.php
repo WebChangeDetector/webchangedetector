@@ -133,10 +133,9 @@ class WebChangeDetector_Admin {
         }
     }
 
-    public function get_account_details( $api_key ) {
+    public function get_account_details(  ) {
         $args = array(
             'action' => 'account_details',
-            'api_key' => $api_key
         );
         return $this->mm_api( $args );
     }
@@ -346,11 +345,11 @@ class WebChangeDetector_Admin {
                         <h2>2. Your API Key</h2>
                         <p>After creating your account, you get an API Key. Enter this API key here and start your Change Detections.</p>
                         <input type="text" name="api-key" value="' . $api_key . '" 
-                            style="width: 200px;" 
-                            pattern="[a-z0-9]{20}" 
+                            style="width: 200px;" >
+                            <!--pattern="[a-z0-9]{20}" 
                             oninvalid="this.setCustomValidity(\'Invalid format for api key.\')"
                             onchange="try{setCustomValidity(\'\')}catch(e){}"
-                            oninput="setCustomValidity(\' \')">
+                            oninput="setCustomValidity(\' \')"-->
                         <input type="submit" value="Save" class="button">';
         }
         $output .= '</form>';
@@ -362,7 +361,7 @@ class WebChangeDetector_Admin {
         $args = array(
             'action' => 'add_website_groups',
             'domain' => $_SERVER['SERVER_NAME'],
-            'website_group' => 1,
+            //'website_group' => 1,
             'api_key' => $api_key
         );
 
@@ -425,7 +424,7 @@ class WebChangeDetector_Admin {
         // Sync urls - post_types defined in function @todo make settings for post_types to sync
         $synced_posts = $this->sync_posts();
         $checks = $this->get_urls_of_group( $group_id );
-
+dd($synced_posts);
         // Select URLS
         if( $monitoring_group )
             $tab = "monitoring-screenshots";
@@ -575,21 +574,36 @@ class WebChangeDetector_Admin {
     function mm_api( $post ) {
 
         if( get_option( "_webchangedetector_dev") )
-            $url = 'https://www.dev.api.webchangedetector.com/v1/api.php';
+            $url = 'http://api.webchangedetector.test/api/v1/';
         else
-            $url = 'https://api.webchangedetector.com/v1/api.php';
+            $url = 'https://api.webchangedetector.com/api/v1/';
+
+        $url .= str_replace( '_', '-', $post['action']);
+        $action = $post['action']; // For debugging
+        unset($post['action']);
 
         if( !isset( $post['api_key'] ) )
-            $post['api_key'] = get_option( 'webchangedetector_api_key' );
-        $post['wp_plugin_version'] = $this->version;
+            $api_token = get_option( 'webchangedetector_api_key' );
+        else
+            $api_token = $post['api_key'];
+        unset($post['api_key']);
+
+        //$post['wp_plugin_version'] = $this->version;
         $post['domain'] = $_SERVER['SERVER_NAME'];
 
         $args = array(
-                'body'  => $post
+            'body'  => $post,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $api_token,
+            ],
         );
+
         $response = wp_remote_post( $url, $args );
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
+        if( $action == 'add_website_groups') {
+            //dd( $response );
+        }
         if( $body == 'plugin_update_required' ) {
             echo '<div class="error notice">
                         <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at 
@@ -599,4 +613,11 @@ class WebChangeDetector_Admin {
         }
         return $body;
     }
+}
+
+function dd( $output) {
+    echo '<pre>';
+    print_r($output);
+    echo '</pre>';
+    die();
 }

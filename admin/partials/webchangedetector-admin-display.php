@@ -42,25 +42,33 @@ function webchangedetector_init() {
                 break;
 
             case 'save_api_key':
-                update_option('webchangedetector_api_key', $postdata['api-key']);
+
                 $website = $wcd->create_group($postdata['api-key']);
 
-                if( empty( $website ) )
+                if( empty( $website ) ) {
                     echo '<div class="error notice"><p>The API Key is invalid. Please try again.</p></div>';
-                else
+                    return false;
+                } else {
                     $wcd->sync_posts();
+                    update_option( 'webchangedetector_api_key', $postdata['api-key'] );
+
+                }
                 break;
         }
     }
 
-    // Check for the account
-    $account_keys = $wcd->verify_account();
+    $api_key = get_option( 'webchangedetector_api_key' );
 
     // The account doesn't have an api_key or activation_key
-    if (!$account_keys) {
+    if (!$api_key) {
         echo $wcd->get_no_account_page();
         return;
     }
+
+    // Check for the account
+    /*$account_keys = $wcd->get_account_details();
+
+
 
     // The account is not activated yet, but the api_key is there already
     if (isset($account_keys['api_key']) && isset($account_keys['activation_key'])) {
@@ -88,14 +96,14 @@ function webchangedetector_init() {
         $api_key = $account_keys['api_key'];
     else
         $api_key = false;
-
+*/
     $website_details = $wcd->get_website_details($api_key);
 
     // Create website and groups if not exists yet
-    if (!$website_details) {
+    /*if (!$website_details) {
         $website_details = $wcd->create_group($api_key);
         $wcd->sync_posts();
-    }
+    }*/
     $group_id = $website_details['manual_detection_group_id'];
     $monitoring_group_id = $website_details['auto_detection_group_id'];
 
