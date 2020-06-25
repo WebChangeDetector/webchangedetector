@@ -26,8 +26,8 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die;
+if (! defined('WPINC')) {
+    die;
 }
 
 /**
@@ -35,34 +35,36 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'WebChangeDetector_VERSION', '1.0.7' );
+define('WebChangeDetector_VERSION', '1.0.7');
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-webchangedetector-activator.php
  */
-function activate_webchangedetector() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-activator.php';
-	WebChangeDetector_Activator::activate();
+function activate_webchangedetector()
+{
+    require_once plugin_dir_path(__FILE__) . 'includes/class-webchangedetector-activator.php';
+    WebChangeDetector_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-webchangedetector-deactivator.php
  */
-function deactivate_webchangedetector() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-deactivator.php';
-	WebChangeDetector_Deactivator::deactivate();
+function deactivate_webchangedetector()
+{
+    require_once plugin_dir_path(__FILE__) . 'includes/class-webchangedetector-deactivator.php';
+    WebChangeDetector_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_webchangedetector' );
-register_deactivation_hook( __FILE__, 'deactivate_webchangedetector' );
+register_activation_hook(__FILE__, 'activate_webchangedetector');
+register_deactivation_hook(__FILE__, 'deactivate_webchangedetector');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector.php';
+require plugin_dir_path(__FILE__) . 'includes/class-webchangedetector.php';
 
 /**
  * Begins execution of the plugin.
@@ -73,22 +75,17 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector.php';
  *
  * @since    1.0.0
  */
-function run_webchangedetector() {
-
-	$plugin = new WebChangeDetector();
-	$plugin->run();
-
+function run_webchangedetector()
+{
+    $plugin = new WebChangeDetector();
+    $plugin->run();
 }
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://bitbucket.org/wpmike/wcd-plugin',
-	__FILE__, //Full path to the main plugin file or functions.php.
-	'webchangedetector'
+    'https://github.com/webchangedetector/wp-plugin',
+    __FILE__, //Full path to the main plugin file or functions.php.
+    'webchangedetector'
 );
 
 run_webchangedetector();
-
-
-
-
