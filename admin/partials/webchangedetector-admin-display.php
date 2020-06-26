@@ -258,7 +258,7 @@ function webchangedetector_init()
                 }
 
                 echo '<tr>';
-                echo '<td>' . $wcd->mm_get_device_icon($compare['device']) . $compare['url'] . '</td>';
+                echo '<td>' . $wcd->mm_get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] . '</td>';
                 echo '<td>' . date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' . date('d/m/Y H:i', $compare['image2_timestamp']) . '</td>';
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
