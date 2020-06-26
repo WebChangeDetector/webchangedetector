@@ -100,6 +100,7 @@ function webchangedetector_init()
                 break;
 
             case 'post_urls':
+                //dd($postdata);
                 // Get active posts from post data
                 $active_posts = array();
                 $count_selected = 0;

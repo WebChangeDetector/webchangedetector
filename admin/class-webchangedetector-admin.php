@@ -395,7 +395,7 @@ class WebChangeDetector_Admin
         echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
-        echo '<input type="hidden" value="' . $groups_and_urls['group_id'] . '" name="group_id">';
+        echo '<input type="hidden" value="' . $groups_and_urls['id'] . '" name="group_id">';
 
         $post_types = get_post_types();
 
@@ -416,6 +416,7 @@ class WebChangeDetector_Admin
                 echo '<h2>' . ucfirst($post_type) . '</h2>';
                 echo '<table><tr><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
 
+                // Select all from same device
                 echo '<tr style="background: none; text-align: center">
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
                             <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
@@ -425,11 +426,15 @@ class WebChangeDetector_Admin
                 foreach ($posts as $post) {
                     $url = get_permalink($post);
                     $url_id = false;
+
+                    // Check if current WP post ID is in synced_posts and get the url_id
                     foreach ($synced_posts as $synced_post) {
                         if ($synced_post['cms_resource_id'] == $post->ID) {
                             $url_id = $synced_post['url_id'];
                         }
                     }
+
+                    // If we don't have the url_id, the url is not synced and we continue
                     if (! $url_id) {
                         continue;
                     }
