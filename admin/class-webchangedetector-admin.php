@@ -155,6 +155,15 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
+    public function mm_get_comparison_partial($token)
+    {
+        $args = array(
+            'action' => 'get_comparison_partial',
+            'token' => $token
+        );
+        return $this->mm_api($args);
+    }
+
     public function update_monitoring_settings($postdata, $monitoring_group_id)
     {
         $args = array(

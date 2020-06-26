@@ -558,16 +558,18 @@ function webchangedetector_init()
             echo '<h1>The Change Detection Images</h1>';
             if (defined('WCD_DEV_API') && WCD_DEV_API) {
                 $wcd_domain = 'https://www.dev.webchangedetector.com';
+            } elseif(mm_dev()) {
+                $wcd_domain = 'http://webchangedetector.test';
             } else {
                 $wcd_domain = 'https://www.webchangedetector.com';
             }
 
-            $public_link = $wcd_domain . '/change-detection/?action=show_change_detection&token=' . urlencode($_GET['token']);
+            $public_link = $wcd_domain . '/show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
             echo $back_button;
-            echo  $wcd->mm_show_change_detection($_GET['token']);
+            dd($wcd->mm_get_comparison_partial($_GET['token']));
             echo '<div class="clear"></div>';
             echo $back_button;
 
