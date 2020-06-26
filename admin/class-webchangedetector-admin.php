@@ -326,7 +326,7 @@ class WebChangeDetector_Admin
                         <input type="hidden" name="wcd_action" value="save_api_token">
                         <h2>2. Your API Token</h2>
                         <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
-                        <input type="text" name="api-token" value="' . $api_token . '"
+                        <input type="text" name="api_token" value="' . $api_token . '"
                             style="width: 200px;" >
                             <!--pattern="[a-z0-9]{20}"
                             oninvalid="this.setCustomValidity(\'Invalid format for api token.\')"
@@ -343,6 +343,8 @@ class WebChangeDetector_Admin
         // Create group if it doesn't exist yet
         $args = array(
             'action' => 'add_website_groups',
+            'api_token' => $_POST['api_token'],
+            'cms' => 'wordpress'
             //'website_group' => 1,
         );
 
@@ -549,8 +551,11 @@ class WebChangeDetector_Admin
         $url .= str_replace(['client', '_'], ['user', '-'], $post['action']);
         $action = $post['action']; // For debugging
 
-        $api_token = get_option('webchangedetector_api_token');
-
+        if( empty( $post['api_token'])) {
+            $api_token = get_option( 'webchangedetector_api_token' );
+        } else {
+            $api_token = $post['api_token'];
+        }
         unset($post['action']);
         unset($post['api_token']);
 
@@ -591,6 +596,11 @@ class WebChangeDetector_Admin
 
         return $body;
     }
+}
+
+function is_json($string) {
+    json_decode($string);
+    return (json_last_error() == JSON_ERROR_NONE);
 }
 
 function dd($output)

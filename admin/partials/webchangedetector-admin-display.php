@@ -50,7 +50,7 @@ function webchangedetector_init()
                     return false;
                 } else {
                     $wcd->sync_posts();
-                    update_option('webchangedetector_api_token', $postdata['api-token']);
+                    update_option('webchangedetector_api_token', $postdata['api_token']);
                 }
                 break;
         }
@@ -506,7 +506,7 @@ function webchangedetector_init()
 
                 echo $wcd->get_upgrade_options($client_details['plan_id']);
             }
-            echo $wcd->get_api_key_form($api_token);
+            echo $wcd->get_api_token_form($api_token);
             break;
 
         /*******************
