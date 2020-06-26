@@ -558,20 +558,30 @@ function webchangedetector_init()
             echo '<h1>The Change Detection Images</h1>';
             if (defined('WCD_DEV_API') && WCD_DEV_API) {
                 $wcd_domain = 'https://www.dev.webchangedetector.com';
-            } elseif(mm_dev()) {
+            } elseif (mm_dev()) {
                 $wcd_domain = 'http://webchangedetector.test';
             } else {
                 $wcd_domain = 'https://www.webchangedetector.com';
             }
 
-            wp_enqueue_style('change-detection', 'http://api.webchangedetector.test' . '/css/change-detection.css');
-
+            function change_detection_css()
+            {
+                if (defined('WCD_DEV_API') && WCD_DEV_API) {
+                    $api_domain = 'https://dev.api.webchangedetector.com';
+                } elseif (mm_dev()) {
+                    $api_domain = 'http://api.webchangedetector.test';
+                } else {
+                    $api_domain = 'https://api.webchangedetector.com';
+                }
+                wp_enqueue_style('change-detection', $api_domain . '/css/change-detection.css');
+            }
+            add_action('admin_enqueue_scripts', 'change_detection_css');
             $public_link = $wcd_domain . '/show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
             echo $back_button;
-            dd($wcd->mm_get_comparison_partial($_GET['token']));
+            echo $wcd->mm_get_comparison_partial($_GET['token']);
             echo '<div class="clear"></div>';
             echo $back_button;
 
