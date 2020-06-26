@@ -434,7 +434,7 @@ class WebChangeDetector_Admin
                             $url_id = $synced_post['url_id'];
                         }
                     }
-                    if (! $sc_id) {
+                    if (! $url_id) {
                         continue;
                     }
 
