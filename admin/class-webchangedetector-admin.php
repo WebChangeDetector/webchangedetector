@@ -374,13 +374,9 @@ class WebChangeDetector_Admin
             'group_id' => $group_id,
         );
 
-        $groups_and_urls = $this->mm_api($args);
+        // We only get one group as we send the group_id
+        return $this->mm_api($args)[0];
 
-        if (count($groups_and_urls) > 1) {
-            $groups_and_urls = $groups_and_urls[0];
-        }
-
-        return $groups_and_urls;
     }
 
     public function mm_get_url_settings($groups_and_urls, $monitoring_group = false)
