@@ -375,8 +375,9 @@ class WebChangeDetector_Admin
         );
 
         $groups_and_urls = $this->mm_api($args);
-        foreach ($groups_and_urls as $g) {
-            $g['group_id'] = $group_id;
+
+        if (count($groups_and_urls) > 0) {
+            $groups_and_urls = $groups_and_urls[0];
         }
 
         return $groups_and_urls;
@@ -590,7 +591,7 @@ class WebChangeDetector_Admin
 
         if (! mm_http_successful((int) $responseCode)) {
             if (mm_dev()) {
-                dd($response, $action, $responseCode, $body);
+                // dd($response, $action, $responseCode, $body);
             }
         }
 
