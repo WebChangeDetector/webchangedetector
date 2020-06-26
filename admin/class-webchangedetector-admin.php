@@ -470,12 +470,12 @@ class WebChangeDetector_Admin
 
                     echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
                             <input type="hidden" value="0" name="desktop-' . $url_id . '">
-                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . ' 
+                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
                             id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
                     echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
                             <input type="hidden" value="0" name="mobile-' . $url_id . '">
-                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . ' 
+                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
                             id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
                     echo '<td style="text-align: left;">' . $post->post_title . '</td>';
