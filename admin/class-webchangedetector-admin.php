@@ -422,8 +422,8 @@ class WebChangeDetector_Admin
 
                 // Select all from same device
                 echo '<tr style="background: none; text-align: center">
-                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $group_id . '\' )" /></td>
-                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $group_id . '\' )" /></td>
+                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
                             <td></td>
                             <td></td>
                         </tr>';
@@ -463,7 +463,7 @@ class WebChangeDetector_Admin
                         }
                     }
 
-                    echo '<tr class="post_id_' . $group_id . '" id="' . $url_id . '" >';
+                    echo '<tr class="post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
                     echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
                     echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
                     echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
