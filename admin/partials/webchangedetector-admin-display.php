@@ -564,6 +564,8 @@ function webchangedetector_init()
                 $wcd_domain = 'https://www.webchangedetector.com';
             }
 
+            wp_enqueue_style('change-detection', 'http://api.webchangedetector.test' . '/css/change-detection.css');
+
             $public_link = $wcd_domain . '/show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
 
