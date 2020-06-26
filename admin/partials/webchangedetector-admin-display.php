@@ -300,7 +300,7 @@ function webchangedetector_init()
                         <small>Currently selected: <strong><?= $groups_and_urls['amount_selected_urls'] ?></strong> URLs</small>
                     </h3>
                     <div class="mm_accordion_content">
-                        <?php $wcd->mm_get_url_settings($groups_and_urls, true) ?>
+                        <?php $wcd->mm_get_url_settings($groups_and_urls, true); ?>
                     </div>
                 </div>
             </div>
@@ -308,8 +308,12 @@ function webchangedetector_init()
             <h2>Settings for Auto Change Detection</h2>
             <p>
                 The current settings require
-                <strong><?= $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30 ?></strong> change
-                detections per month.<br>
+                <strong><?php
+                if(! empty($groups_and_urls['interval_in_h'])) {
+                    echo $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30;
+                }
+                ?></strong>
+                change detections per month.<br>
                 Your available change detections are <strong>
                     <?php
                     if ($website_details['enable_limits']) {
