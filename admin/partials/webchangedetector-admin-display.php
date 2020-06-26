@@ -67,7 +67,7 @@ function webchangedetector_init()
     $website_details = $wcd->get_website_details();
 
     // Call is giving back an array on purpose, in the plugin, there should be only one result
-    if (count($website_details) > 0) {
+    if (count($website_details) > 1) {
         $website_details = $website_details[0];
     }
 

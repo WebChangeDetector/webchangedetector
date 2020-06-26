@@ -376,7 +376,7 @@ class WebChangeDetector_Admin
 
         $groups_and_urls = $this->mm_api($args);
 
-        if (count($groups_and_urls) > 0) {
+        if (count($groups_and_urls) > 1) {
             $groups_and_urls = $groups_and_urls[0];
         }
 
