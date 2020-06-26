@@ -66,10 +66,19 @@ function webchangedetector_init()
 
     $website_details = $wcd->get_website_details();
 
-    $group_id = $website_details['manual_detection_group_id'];
-    $monitoring_group_id = $website_details['auto_detection_group_id'];
+    // Call is giving back an array on purpose, in the plugin, there should be only one result
+    if (count($website_details) > 0) {
+        $website_details = $website_details[0];
+    }
 
-    $monitoring_group_settings = $wcd->get_monitoring_settings($monitoring_group_id);
+    $group_id = $website_details['manual_detection_group_id'] ?? null;
+    $monitoring_group_id = $website_details['auto_detection_group_id'] ?? null;
+
+    $monitoring_group_settings = null;
+
+    if ($monitoring_group_id) {
+        $wcd->get_monitoring_settings($monitoring_group_id);
+    }
 
     // Perform actions
     if (isset($postdata['wcd_action'])) {
@@ -130,7 +139,6 @@ function webchangedetector_init()
                 } else {
                     // Update API URLs
                     $result = $wcd->update_urls($postdata['group_id'], $active_posts);
-                    //dd($result);
                     echo '<div class="updated notice"><p>Settings saved.</p></div>';
                 }
                 break;
@@ -152,17 +160,16 @@ function webchangedetector_init()
     }
 
     $client_details = $wcd->get_account_details($api_token);
-    $client_details = $client_details[0];
 
     $comp_usage = $client_details['usage'];
-    if ($client_details['one_time']) {
+    if ($client_details['plan']['one_time']) {
         if (strtotime('+1 month', strtotime($client_details['subscription_started_at'])) > date('U')) {
             $limit = $client_details['sc_limit'];
         } else {
             $limit = 0;
         }
     } else {
-        $limit = $client_details['sc_limit'];
+        $limit = $client_details['plan']['sc_limit'];
     }
 
     $available_compares = $limit - (int) $comp_usage;
@@ -366,7 +373,7 @@ function webchangedetector_init()
                 </select>
             </p>
             <p>
-                <label for="alert_emails">Email address for alerts</label>
+                <label for="alert_emails">Email addresses for alerts</label>
                 <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
                        value="<?= isset($groups_and_urls['alert_emails']) ? implode(',', $groups_and_urls['alert_emails']) : '' ?>">
                        <!--pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
@@ -484,7 +491,7 @@ function webchangedetector_init()
                 $subscription_started_at = strtotime($client_details['subscription_started_at']);
 
                 // Calculate end of one-time plans
-                if ($client_details['one_time']) {
+                if ($client_details['plan']['one_time']) {
                     $end_of_trial = strtotime('+1 month ', $subscription_started_at);
                     echo 'Your change detections are valid until <strong>' . date('d/m/Y', $end_of_trial) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
                 } else {

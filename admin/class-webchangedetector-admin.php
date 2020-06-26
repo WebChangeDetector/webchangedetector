@@ -143,7 +143,7 @@ class WebChangeDetector_Admin
             'group_id' => $group_id
         );
         $monitoring_group_settings = $this->mm_api($args);
-        return $monitoring_group_settings[0];
+        return $monitoring_group_settings;
     }
 
     public function mm_show_change_detection($token)
@@ -364,9 +364,7 @@ class WebChangeDetector_Admin
         $args = array(
             'action' => 'get_user_websites',
         );
-        $website_details = $this->mm_api($args);
-
-        return $website_details[0];
+        return $this->mm_api($args);
     }
 
     public function get_urls_of_group($group_id)
@@ -376,8 +374,10 @@ class WebChangeDetector_Admin
             'group_id' => $group_id,
         );
 
-        $groups_and_urls = $this->mm_api($args)[0];
-        $groups_and_urls['group_id'] = $groups_and_urls['id'];
+        $groups_and_urls = $this->mm_api($args);
+        foreach ($groups_and_urls as $g) {
+            $g['group_id'] = $group_id;
+        }
 
         return $groups_and_urls;
     }
@@ -444,7 +444,6 @@ class WebChangeDetector_Admin
 
                     if (! empty($groups_and_urls['urls'])) {
                         foreach ($groups_and_urls['urls'] as $key => $url_details) {
-                            //dd($groups_and_urls['urls']);
                             if ($url_details['pivot']['url_id'] == $url_id) {
                                 $checked['active'] = 'checked';
 
@@ -506,11 +505,15 @@ class WebChangeDetector_Admin
     public function mm_get_restrictions()
     {
         $args = array(
-            'action' => 'get_user_website_details',
+            'action' => 'get_website_details',
         );
 
         $restrictions = $this->mm_api($args);
-        return $restrictions[0];
+
+        if (count($restrictions) > 0) {
+            return $restrictions[0];
+        }
+        return $restrictions;
     }
 
     public function mm_tabs()
@@ -542,17 +545,16 @@ class WebChangeDetector_Admin
 
     public function mm_api($post)
     {
-        if (get_option('_webchangedetector_dev')) {
+        $url = 'https://api.webchangedetector.com/api/v1/';
+        if (mm_dev()) {
             $url = 'http://api.webchangedetector.test/api/v1/';
-        } else {
-            $url = 'https://api.webchangedetector.com/api/v1/';
         }
 
         $url .= str_replace(['client', '_'], ['user', '-'], $post['action']);
         $action = $post['action']; // For debugging
 
-        if( empty( $post['api_token'])) {
-            $api_token = get_option( 'webchangedetector_api_token' );
+        if (empty($post['api_token'])) {
+            $api_token = get_option('webchangedetector_api_token');
         } else {
             $api_token = $post['api_token'];
         }
@@ -587,7 +589,9 @@ class WebChangeDetector_Admin
         }
 
         if (! mm_http_successful((int) $responseCode)) {
-            //
+            if (mm_dev()) {
+                dd($response, $action, $responseCode, $body);
+            }
         }
 
         if (is_json($body)) {
@@ -598,17 +602,40 @@ class WebChangeDetector_Admin
     }
 }
 
-function is_json($string) {
-    json_decode($string);
-    return (json_last_error() == JSON_ERROR_NONE);
+if (! function_exists('is_json')) {
+    function is_json($string)
+    {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
 }
 
-function dd($output)
-{
-    echo '<pre>';
-    print_r($output);
-    echo '</pre>';
-    die();
+if (! function_exists('dd')) {
+    function dd(... $output)
+    {
+        echo '<pre>';
+        foreach ($output as $o) {
+            if (is_array($o)) {
+                print_r($o);
+                continue;
+            }
+            echo $o;
+        }
+        echo '</pre>';
+        die();
+    }
+}
+
+if (! function_exists('mm_dev')) {
+    /**
+     * Set this if you wanna debug API calls with dd()
+     *
+     * @return void
+     */
+    function mm_dev() : bool
+    {
+        return ! empty(get_option('_webchangedetector_dev'));
+    }
 }
 
 if (! function_exists('mm_http_successful')) {
