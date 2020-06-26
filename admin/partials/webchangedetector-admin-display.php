@@ -208,6 +208,7 @@ function webchangedetector_init()
                 </div>
             </div>
             <?php
+            
             if (! $website_details['enable_limits']) {
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
@@ -309,7 +310,7 @@ function webchangedetector_init()
             <p>
                 The current settings require
                 <strong><?php
-                if(! empty($groups_and_urls['interval_in_h'])) {
+                if (! empty($groups_and_urls['interval_in_h'])) {
                     echo $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30;
                 }
                 ?></strong>
@@ -420,7 +421,7 @@ function webchangedetector_init()
                 }
 
                 echo '<tr>';
-                echo '<td>' . $wcd->mm_get_device_icon($compare['device']) . $compare['url'] . '</td>';
+                echo '<td>' . $wcd->mm_get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] . '</td>';
                 echo '<td>' . date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' . date('d/m/Y H:i', $compare['image2_timestamp']) . '</td>';
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
