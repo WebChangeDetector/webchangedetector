@@ -371,12 +371,16 @@ class WebChangeDetector_Admin
     {
         $args = array(
             'action' => 'get_user_groups_and_urls',
+            'cms' => 'wordpress',
             'group_id' => $group_id,
         );
 
         // We only get one group as we send the group_id
-        return $this->mm_api($args)[0];
-
+        $response = $this->mm_api($args);
+        if (array_key_exists(0, $response)) {
+            return $response[0];
+        }
+        return $response;
     }
 
     public function mm_get_url_settings($groups_and_urls, $monitoring_group = false)

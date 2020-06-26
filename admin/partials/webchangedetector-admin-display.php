@@ -67,9 +67,7 @@ function webchangedetector_init()
     $website_details = $wcd->get_website_details();
 
     // Call is giving back an array on purpose, in the plugin, there should be only one result
-    if (count($website_details) > 1) {
-        $website_details = $website_details[0];
-    }
+    $website_details = $website_details[0];
 
     $group_id = $website_details['manual_detection_group_id'] ?? null;
     $monitoring_group_id = $website_details['auto_detection_group_id'] ?? null;
@@ -192,7 +190,6 @@ function webchangedetector_init()
 
             // Get amount selected Screenshots
             $groups_and_urls = $wcd->get_urls_of_group($group_id);
-
             ?>
             <h2>Select URLs</h2>
             <div class="accordion">
@@ -209,7 +206,7 @@ function webchangedetector_init()
                 </div>
             </div>
             <?php
-            
+
             if (! $website_details['enable_limits']) {
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
