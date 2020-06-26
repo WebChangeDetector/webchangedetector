@@ -254,7 +254,8 @@ class WebChangeDetector_Admin
 
 
         if (! empty($array)) {
-            $website_details = $this->get_website_details();
+            $website_details = $this->get_website_details()[0];
+
             $args = array(
                 'action' => 'sync_urls',
                 'posts' => json_encode($array),
