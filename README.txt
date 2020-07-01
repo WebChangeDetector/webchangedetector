@@ -4,7 +4,7 @@ Donate link: https://www.webchangedetector.com
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.4.1
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,13 @@ Here a few features of WebChangeDetector:
 *   Start update change detection to see changes before and after updates
 
 == Changelog ==
+= 1.0.8 =
+* Redesign selecting urls
+* Move Change Detections to seperate tab
+
+= 1.0.7 =
+* Switch to new API
+
 = 1.0.6 =
 * Improvement: Free account with 50 change detections every month
 * Improvement: Only show change detections with differences

@@ -80,10 +80,11 @@
 }
 
 .webchangedetector .mm_accordion_title {
-    background: #e8e8e8;
-    padding: 20px;
-    border: 1px solid #adadad;
-    margin: 5px auto;
+    background: #fff;
+    padding: 0;
+    border: 2px solid #276ECC;
+    border-radius: 3px;
+    margin: 15px auto;
 }
 
 .webchangedetector h3 {
@@ -101,12 +102,19 @@
 .webchangedetector .ui-accordion .ui-accordion-header,
 .webchangedetector .ui-accordion .ui-accordion-content {
     background: none;
-    border: none;
     height: 100% !important;
 }
 
+.webchangedetector .ui-state-focus {
+    border: none;
+}
+.webchangedetector .ui-accordion .ui-accordion-content {
+    padding: 20px;
+    border-radius: 3px;
+}
+
 .webchangedetector .ui-accordion .ui-accordion-icons {
-    padding-left: 0;
+    padding: 20px;
 }
 
 .webchangedetector .ui-accordion .ui-accordion-header .ui-accordion-header-icon {

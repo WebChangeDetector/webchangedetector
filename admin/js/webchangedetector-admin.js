@@ -79,7 +79,9 @@ function mmValidateForm() {
 			emailsElement.style.border = "2px solid red";
 		}
 	}
-	emailsElement.style.border = "2px solid green";
+	if( valid ) {
+		emailsElement.style.border = "2px solid green";
+	}
 	return valid;
 }
 

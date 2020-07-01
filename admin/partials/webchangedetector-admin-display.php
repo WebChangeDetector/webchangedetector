@@ -32,7 +32,7 @@ function webchangedetector_init()
                             <p>' . $api_token['reason'] . '</p>
                         </div>';
                     echo $wcd->get_no_account_page();
-                    return;
+                    return false;
                 }
                 break;
 
@@ -105,7 +105,7 @@ function webchangedetector_init()
                 break;
 
             case 'post_urls':
-                //dd($postdata);
+
                 // Get active posts from post data
                 $active_posts = array();
                 $count_selected = 0;
@@ -162,7 +162,7 @@ function webchangedetector_init()
     if (isset($get['tab'])) {
         $tab = $get['tab'];
     } else {
-        $tab = 'take-screenshots';
+        $tab = 'change-detections';
     }
 
     $client_details = $wcd->get_account_details($api_token);
@@ -185,10 +185,39 @@ function webchangedetector_init()
     switch ($tab) {
 
         /********************
-         * Take Screenshot
+         * Change Detections
          ********************/
 
-        case 'take-screenshots':
+        case 'change-detections':
+            echo '<h2>Latest Change Detections</h2>';
+
+            if (isset($postdata['limit_days'])) {
+                $limit_days = $postdata['limit_days'];
+            } else {
+                $limit_days = 7;
+            }
+
+            $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days);
+            ?>
+            <form method="post">
+                <select name="limit_days">
+                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
+                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
+                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
+                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
+                </select>
+                <input class="button" type="submit" value="Filter">
+            </form>
+            <?php
+
+            $wcd->compare_view($compares);
+            break;
+
+        /********************
+         * Update Change Detections
+         ********************/
+
+        case 'update-settings':
 
             if ($restrictions['enable_limits'] && ! $restrictions['allow_manual_detection']) {
                 echo 'Settings for Update Change detections are disabled by your API Token.';
@@ -198,27 +227,24 @@ function webchangedetector_init()
             // Get amount selected Screenshots
             $groups_and_urls = $wcd->get_urls_of_group($group_id);
             ?>
-            <h2>Select URLs</h2>
-            <div class="accordion">
-                <div class="mm_accordion_title">
-                    <h3>
-                        Update Change Detection URLs<br>
-                        <small>Currently selected:
-                            <strong><?= $groups_and_urls['amount_selected_urls'] ?><?= $website_details['enable_limits'] ? ' / ' . $website_details['url_limit_manual_detection'] : '' ?> </strong>
-                            URLs</small>
-                    </h3>
-                    <div class="mm_accordion_content">
-                        <?php $wcd->mm_get_url_settings($groups_and_urls) ?>
-                    </div>
-                </div>
-            </div>
-            <?php
+            <h2>Select Update Change Detection URLs</h2>
+            <p>Currently selected:
+                <strong>
+                    <?= $groups_and_urls['amount_selected_urls'] ?>
+                    Change Detections
+                </strong>
+            </p>
+            <?php $wcd->mm_get_url_settings($groups_and_urls);
 
             if (! $website_details['enable_limits']) {
+
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
-            <strong>Currently selected amount of change detections: ' . $groups_and_urls['amount_sc'] . '</strong></p>';
+                <strong>
+                Currently selected amount of change detections: ' . $groups_and_urls['amount_sc'] . '
+                </strong>
+                </p>';
 
                 echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
@@ -237,34 +263,14 @@ function webchangedetector_init()
             echo '<hr>';
 
             // Compare overview
-            echo '<h2>Latest Change Detections</h2>';
 
-            if (isset($postdata['limit_days'])) {
-                $limit_days = $postdata['limit_days'];
-            } else {
-                $limit_days = 7;
-            }
-            $compares = $wcd->get_compares($group_id, $limit_days);
-            ?>
-            <form method="post">
-                <select name="limit_days">
-                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
-                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
-                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
-                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
-                </select>
-                <input class="button" type="submit" value="Filter">
-            </form>
-            <?php
-
-            $wcd->compare_view($compares);
             break;
 
         /************************
-         * Monitoring Screenshots
+         * Auto Change Detections
          * **********************/
 
-        case 'monitoring-screenshots':
+        case 'auto-settings':
             if ($restrictions['enable_limits'] && ! $restrictions['allow_auto_detection']) {
                 echo 'Settings for Update Change detections are disabled by your API Token.';
                 break;
@@ -273,19 +279,14 @@ function webchangedetector_init()
             $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
             ?>
-            <h2>Select URLs</h2>
-            <div class="accordion">
-                <div class="mm_accordion_title">
-                    <h3>
-                        Auto Change Detection URLs<br>
-                        <small>Currently selected: <strong><?= $groups_and_urls['amount_selected_urls'] ?></strong> URLs</small>
-                    </h3>
-                    <div class="mm_accordion_content">
-                        <?php $wcd->mm_get_url_settings($groups_and_urls, true); ?>
-                    </div>
-                </div>
-            </div>
-
+            <h2>Select Auto Change Detection URLs</h2>
+            <p>Currently selected:
+                <strong>
+                    <?= $groups_and_urls['amount_selected_urls'] ?>
+                    Change Detections
+                </strong>
+            </p>
+            <?php $wcd->mm_get_url_settings($groups_and_urls, true); ?>
             <h2>Settings for Auto Change Detection</h2>
             <p>
                 The current settings require
@@ -306,7 +307,7 @@ function webchangedetector_init()
                 </strong>.
             </p>
 
-            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=monitoring-screenshots" method="post" onsubmit="return mmValidateForm()">
+            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
             <p>
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
@@ -361,45 +362,19 @@ function webchangedetector_init()
                 <label for="alert_emails">Email addresses for alerts</label>
                 <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
                        value="<?= isset($groups_and_urls['alert_emails']) ? implode(',', $groups_and_urls['alert_emails']) : '' ?>">
-                       <!--pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                       oninvalid="this.setCustomValidity('Invalid email address.')"
-                       onchange="try{setCustomValidity('')}catch(e){}"
-                       oninput="setCustomValidity(' ')"-->
+
             </p>
                 <input type="submit" class="button" value="Save" >
             </form>
 
             <?php
-
-            // Compare overview
-            echo '<h2>Latest Change Detections</h2>';
-
-            if (isset($postdata['limit_days'])) {
-                $limit_days = $postdata['limit_days'];
-            } else {
-                $limit_days = 7;
-            }
-            $compares = $wcd->get_compares($monitoring_group_id, $limit_days);
-            ?>
-            <form method="post">
-                <select name="limit_days">
-                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
-                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
-                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
-                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
-                </select>
-                <input class="button" type="submit" value="Filter">
-            </form>
-            <?php
-
-            $wcd->compare_view($compares);
             break;
 
         /********************
-         * Queue
+         * Logs
          ********************/
 
-        case 'queue':
+        case 'logs':
             // Show queued urls
             $queues = $wcd->get_queue();
             $type_nice_name = [
@@ -412,6 +387,9 @@ function webchangedetector_init()
                 echo '<table class="queue">';
                 echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
                 foreach ($queues as $queue) {
+                    if( strpos($queue['url']['url'], $_SERVER['SERVER_NAME']) === false ) {
+                        continue;
+                    }
                     $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
                     echo '<tr class="queue-status ' . $queue['status'] . '">';
                     echo '<td>' . $wcd->mm_get_device_icon($queue['device']) . '</td>';

@@ -39,7 +39,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.0.7';
+    private $version = '1.0.8';
 
     /**
      * Initialize the class and set its properties.
@@ -146,14 +146,14 @@ class WebChangeDetector_Admin
         return $monitoring_group_settings;
     }
 
-    public function mm_show_change_detection($token)
+    /*public function mm_show_change_detection($token)
     {
         $args = array(
             'action' => 'show_change_detection',
             'token' => $token
         );
         return $this->mm_api($args);
-    }
+    }*/
 
     public function mm_get_comparison_partial($token)
     {
@@ -200,12 +200,12 @@ class WebChangeDetector_Admin
         return '';
     }
 
-    public function get_compares($group_id, $limit_latest_compares = 7)
+    public function get_compares($group_ids, $limit_latest_compares = 7)
     {
         $args = array(
             'action' => 'get_compares_by_group_ids',
             'limit_days' => $limit_latest_compares,
-            'group_ids' => json_encode(array( $group_id ))
+            'group_ids' => json_encode(array( $group_ids ))
         );
         $compares = $this->mm_api($args);
 
@@ -451,9 +451,9 @@ class WebChangeDetector_Admin
 
         // Select URLS
         if ($monitoring_group) {
-            $tab = 'monitoring-screenshots';
+            $tab = 'auto-settings';
         } else {
-            $tab = 'take-screenshots';
+            $tab = 'update-settings';
         }
 
         echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
@@ -477,9 +477,19 @@ class WebChangeDetector_Admin
             ]);
 
             if ($posts) {
-                echo '<h2>' . ucfirst($post_type) . '</h2>';
-                echo '<table><tr><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>';
+                ?>
 
+                <div class="accordion">
+                <div class="mm_accordion_title">
+                    <h3>
+                        <?= ucfirst($post_type) ?><br>
+
+                    </h3>
+                    <div class="mm_accordion_content">
+
+                <table>
+                    <tr><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>
+                <?php
                 // Select all from same device
                 echo '<tr style="background: none; text-align: center">
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
@@ -546,8 +556,13 @@ class WebChangeDetector_Admin
                 }
                 echo '</table>';
             }
+            ?>
+            </div>
+            </div>
+            </div>
+            <?php
         }
-        echo '<input class="button" type="submit" value="Save" style="margin-top: 30px">';
+        echo '<input class="button" type="submit" value="Save" style="margin-bottom: 30px">';
         echo '</form>';
     }
 
@@ -587,18 +602,22 @@ class WebChangeDetector_Admin
         if (isset($_GET['tab'])) {
             $active_tab = $_GET['tab'];
         } else {
-            $active_tab = 'take-screenshots';
+            $active_tab = 'change-detections';
         } ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
-                <a href="?page=webchangedetector&tab=take-screenshots"
-                   class="nav-tab <?php echo $active_tab == 'take-screenshots' ? 'nav-tab-active' : ''; ?>">Update
-                    Change Detection</a>
-                <a href="?page=webchangedetector&tab=monitoring-screenshots"
-                   class="nav-tab <?php echo $active_tab == 'monitoring-screenshots' ? 'nav-tab-active' : ''; ?>">Auto
-                    Change Detection</a>
-                <a href="?page=webchangedetector&tab=queue"
-                   class="nav-tab <?php echo $active_tab == 'queue' ? 'nav-tab-active' : ''; ?>">Queue</a>
+
+                <a href="?page=webchangedetector&tab=change-detections"
+                   class="nav-tab <?php echo $active_tab == 'change-detections' ? 'nav-tab-active' : ''; ?>">
+                    Change Detections</a>
+                <a href="?page=webchangedetector&tab=update-settings"
+                   class="nav-tab <?php echo $active_tab == 'update-settings' ? 'nav-tab-active' : ''; ?>">
+                    Update Settings</a>
+                <a href="?page=webchangedetector&tab=auto-settings"
+                   class="nav-tab <?php echo $active_tab == 'auto-settings' ? 'nav-tab-active' : ''; ?>">
+                    Auto Settings</a>
+                <a href="?page=webchangedetector&tab=logs"
+                   class="nav-tab <?php echo $active_tab == 'logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
                 <a href="?page=webchangedetector&tab=settings"
                    class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
                 <a href="?page=webchangedetector&tab=help"
