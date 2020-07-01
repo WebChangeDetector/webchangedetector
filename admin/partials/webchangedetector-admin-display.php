@@ -58,6 +58,13 @@ function webchangedetector_init()
 
     $api_token = get_option('webchangedetector_api_token');
 
+    // Change api token option name from V1.0.7
+    if(! $api_token ) {
+        $api_token = get_option('webchangedetector_api_key');
+        add_option('webchangedetector_api_token', $api_token, '', false);
+        delete_option('webchangedetector_api_key');
+    }
+
     // The account doesn't have an api_token or activation_key
     if (! $api_token) {
         echo $wcd->get_no_account_page();
