@@ -48,10 +48,10 @@ class WebChangeDetector_Admin
      * @param string $version The version of this plugin.
      * @since    1.0.0
      */
-    public function __construct($plugin_name = 'WebChangeDetector', $version = '1.0.5')
+    public function __construct($plugin_name = 'WebChangeDetector' )
     {
         $this->plugin_name = $plugin_name;
-        $this->version = $version;
+        //$this->version = $version;
     }
 
     /**
@@ -591,8 +591,9 @@ class WebChangeDetector_Admin
         $response = wp_remote_post($url, $args);
         $body = wp_remote_retrieve_body($response);
         $responseCode = wp_remote_retrieve_response_code($response);
-
-        if ($body === 'plugin_update_required') {
+//dd($url);
+        if (!empty(json_decode($body, true)['message']) &&
+            json_decode($body, true)['message'] === 'plugin_update_required') {
             echo '<div class="error notice">
                         <p>Me made major changes on the API which requires to update the plugin WebChangeDetector. Please install the update at
                         <a href="/wp-admin/plugins.php">Plugins</a>.</p>
