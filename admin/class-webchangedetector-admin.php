@@ -632,7 +632,7 @@ if (! function_exists('dd')) {
     {
         echo '<pre>';
         foreach ($output as $o) {
-            if (is_array($o)) {
+            if (is_array($o) || is_object($o)) {
                 print_r($o);
                 continue;
             }
