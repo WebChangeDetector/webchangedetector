@@ -250,39 +250,7 @@ function webchangedetector_init()
             </form>
             <?php
 
-            echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
-            $change_detection_added = false;
-            foreach ($compares as $key => $compare) {
-
-                // Only show change detections with a difference
-                if (! $compare['difference_percent']) {
-                    continue;
-                }
-
-                // Make sure to only show urls from the website. Has to fixed in api.
-                if( strpos( $compare['url'], $_SERVER['SERVER_NAME']) === false ) {
-                    continue;
-                }
-
-                echo '<tr>';
-                echo '<td>' . $wcd->mm_get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] . '</td>';
-                echo '<td>' . date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' . date('d/m/Y H:i', $compare['image2_timestamp']) . '</td>';
-                if ($compare['difference_percent']) {
-                    $class = 'is-difference';
-                } else {
-                    $class = 'no-difference';
-                }
-                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
-                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
-                echo '</tr>';
-                $change_detection_added = true;
-            }
-
-            echo '</table>';
-            if (! $change_detection_added) {
-                echo 'There are no change detections to show yet...';
-            }
-
+            $wcd->compare_view($compares);
             break;
 
         /************************
@@ -417,33 +385,7 @@ function webchangedetector_init()
             </form>
             <?php
 
-            echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
-            $change_detection_added = false;
-
-            foreach ($compares as $key => $compare) {
-                if (! $compare['difference_percent']) {
-                    continue;
-                }
-
-                echo '<tr>';
-                echo '<td>' . $wcd->mm_get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] . '</td>';
-                echo '<td>' . date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' . date('d/m/Y H:i', $compare['image2_timestamp']) . '</td>';
-                if ($compare['difference_percent']) {
-                    $class = 'is-difference';
-                } else {
-                    $class = 'no-difference';
-                }
-                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
-                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
-                echo '</tr>';
-                $change_detection_added = true;
-            }
-
-            echo '</table>';
-            if (! $change_detection_added) {
-                echo 'There are no change detections to show yet...';
-            }
-
+            $wcd->compare_view($compares);
             break;
 
         /********************

@@ -207,7 +207,57 @@ class WebChangeDetector_Admin
             'limit_days' => $limit_latest_compares,
             'group_ids' => json_encode(array( $group_id ))
         );
-        return $this->mm_api($args);
+        $compares = $this->mm_api($args);
+
+        $return = [];
+        if(count( $compares ) == 0 ) {
+            return $return;
+        }
+
+        foreach( $compares as $compare ) {
+            // Only show change detections with a difference
+            if (! $compare['difference_percent']) {
+                continue;
+            }
+
+            // Make sure to only show urls from the website. Has to fixed in api.
+            if( strpos( $compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) === false ) {
+                continue;
+            }
+
+            $return[] = $compare;
+        }
+        return $return;
+    }
+
+    public function compare_view($compares) {
+        if(empty($compares)) {
+            echo '<p>There are no change detections to show yet...</p>';
+        } else {
+            echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
+            $change_detection_added = false;
+            foreach( $compares as $key => $compare ) {
+
+                echo '<tr>';
+                echo '<td>' . $this->mm_get_device_icon( $compare['screenshot1']['device'] ) . $compare['screenshot1']['url'] . '</td>';
+                echo '<td>' . date( 'd/m/Y H:i', $compare['image1_timestamp'] ) . '<br>' . date( 'd/m/Y H:i', $compare['image2_timestamp'] ) . '</td>';
+                if( $compare['difference_percent'] ) {
+                    $class = 'is-difference';
+                } else {
+                    $class = 'no-difference';
+                }
+                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
+                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
+                echo '</tr>';
+                $change_detection_added = true;
+            }
+
+            echo '</table>';
+
+            if( !$change_detection_added ) {
+                echo '<p>There are no change detections to show yet...</p>';
+            }
+        }
     }
 
     public function get_queue()
