@@ -253,7 +253,14 @@ function webchangedetector_init()
             echo '<table><tr><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
             $change_detection_added = false;
             foreach ($compares as $key => $compare) {
+
+                // Only show change detections with a difference
                 if (! $compare['difference_percent']) {
+                    continue;
+                }
+
+                // Make sure to only show urls from the website. Has to fixed in api.
+                if( strpos( $compare['url'], $_SERVER['SERVER_NAME']) === false ) {
                     continue;
                 }
 
