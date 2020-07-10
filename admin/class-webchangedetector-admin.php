@@ -302,7 +302,6 @@ class WebChangeDetector_Admin
             }
         }
 
-
         if (! empty($array)) {
             $website_details = $this->get_website_details()[0];
 
@@ -387,7 +386,7 @@ class WebChangeDetector_Admin
                         <h2>2. Your API Token</h2>
                         <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
                         <input type="text" name="api_token" value="' . $api_token . '"
-                            style="width: 200px;" >
+                            style="width: 550px;" >
                             <!--pattern="[a-z0-9]{20}"
                             oninvalid="this.setCustomValidity(\'Invalid format for api token.\')"
                             onchange="try{setCustomValidity(\'\')}catch(e){}"
@@ -566,7 +565,7 @@ class WebChangeDetector_Admin
         echo '</form>';
     }
 
-    public function get_no_account_page()
+    public function get_no_account_page($api_token = '')
     {
         delete_option('webchangedetector_api_token');
 
@@ -578,7 +577,7 @@ class WebChangeDetector_Admin
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
 		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=57" target="_blank" class="button">Create Free Account</a>
 		<hr>
-		' . $this->get_api_token_form() . '
+		' . $this->get_api_token_form($api_token) . '
 		</div>';
         return $output;
     }
@@ -660,7 +659,7 @@ class WebChangeDetector_Admin
         $response = wp_remote_post($url, $args);
         $body = wp_remote_retrieve_body($response);
         $responseCode = wp_remote_retrieve_response_code($response);
-//dd($url);
+
         if (!empty(json_decode($body, true)['message']) &&
             json_decode($body, true)['message'] === 'plugin_update_required') {
             echo '<div class="error notice">

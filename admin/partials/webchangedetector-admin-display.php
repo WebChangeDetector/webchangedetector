@@ -49,8 +49,8 @@ function webchangedetector_init()
                     echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
                     return false;
                 } else {
-                    $wcd->sync_posts();
                     update_option('webchangedetector_api_token', $postdata['api_token']);
+                    $wcd->sync_posts();
                 }
                 break;
         }
@@ -72,6 +72,14 @@ function webchangedetector_init()
     }
 
     $website_details = $wcd->get_website_details();
+    //dd($website_details);
+    if( !empty($website_details['message']) && strtolower($website_details['message']) === 'unauthorized'){
+        echo '<div class="error notice">
+                            <p>Your API Token is not valid (anymore). Please enter a valid token or create a new account.</p>
+                        </div>';
+        echo $wcd->get_no_account_page($api_token);
+        wp_die();
+    }
 
     // Call is giving back an array on purpose, in the plugin, there should be only one result
     $website_details = $website_details[0];
@@ -246,13 +254,13 @@ function webchangedetector_init()
                 </strong>
                 </p>';
 
-                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left; margin-right: 10px;">';
+                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
                 echo '<input type="hidden" name="sc_type" value="pre">';
                 echo '<input type="submit" value="Pre Update Change Detection" class="button">';
                 echo '</form>';
 
-                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=take-screenshots" method="post" style="float:left;">';
+                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left;">';
                 echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
                 echo '<input type="hidden" name="sc_type" value="post">';
                 echo '<input type="submit" value="Post Update Change Detection" class="button">';
