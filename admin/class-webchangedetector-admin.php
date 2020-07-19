@@ -118,6 +118,7 @@ class WebChangeDetector_Admin
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save($post_id, $post, $update)
     {
+
         if ($update) {
             $latest_revision = array_shift(wp_get_post_revisions($post_id));
             if ($latest_revision && get_permalink($latest_revision) !== get_permalink($post)) {
@@ -272,7 +273,8 @@ class WebChangeDetector_Admin
     public function sync_posts($post_obj = false)
     {
         if ($post_obj) {
-            if (get_post_status($post_obj) === 'publish') {
+            $save_post_types = ['post','page']; // @TODO Make this a setting
+            if( in_array($post_obj->post_type, $save_post_types) && get_post_status($post_obj) === 'publish') {
                 $url = get_permalink($post_obj);
                 $url = substr($url, strpos($url, '//') + 2);
                 $array[] = array(
