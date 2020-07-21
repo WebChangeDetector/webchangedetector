@@ -236,12 +236,7 @@ function webchangedetector_init()
             $groups_and_urls = $wcd->get_urls_of_group($group_id);
             ?>
             <h2>Select Update Change Detection URLs</h2>
-            <p>Currently selected:
-                <strong>
-                    <?= $groups_and_urls['amount_selected_urls'] ?>
-                    Change Detections
-                </strong>
-            </p>
+
             <?php $wcd->mm_get_url_settings($groups_and_urls);
 
             if (! $website_details['enable_limits']) {
@@ -249,9 +244,12 @@ function webchangedetector_init()
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
+               <p>Currently selected:
                 <strong>
-                Currently selected amount of change detections: ' . $groups_and_urls['amount_sc'] . '
+                    ' . $groups_and_urls['amount_selected_urls'] . '
+                    Change Detections
                 </strong>
+            </p>
                 </p>';
 
                 echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">';

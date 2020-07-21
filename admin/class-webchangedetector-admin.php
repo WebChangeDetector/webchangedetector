@@ -212,6 +212,7 @@ class WebChangeDetector_Admin
 
         $return = [];
         if(count( $compares ) == 0 ) {
+        if(!array_key_exists(0, $compares) ) {
             return $return;
         }
 
@@ -272,6 +273,7 @@ class WebChangeDetector_Admin
 
     public function sync_posts($post_obj = false)
     {
+        // Sync single post
         if ($post_obj) {
             $save_post_types = ['post','page']; // @TODO Make this a setting
             if( in_array($post_obj->post_type, $save_post_types) && get_post_status($post_obj) === 'publish') {
@@ -284,6 +286,7 @@ class WebChangeDetector_Admin
                 );
             }
         } else {
+            // Sync all posts
             $posttypes = array(
                 'pages' => get_pages(),
                 'posts' => get_posts(array( 'numberposts' => '-1' ))
@@ -305,13 +308,13 @@ class WebChangeDetector_Admin
         }
 
         if (! empty($array)) {
-            $website_details = $this->get_website_details()[0];
+            //$website_details = $this->get_website_details()[0];
 
             $args = array(
                 'action' => 'sync_urls',
                 'posts' => json_encode($array),
-                'auto_detection_group_id' => $website_details['auto_detection_group_id'],
-                'manual_detection_group_id' => $website_details['manual_detection_group_id']
+                //'auto_detection_group_id' => $website_details['auto_detection_group_id'],
+                //'manual_detection_group_id' => $website_details['manual_detection_group_id']
             );
 
             return $this->mm_api($args);
@@ -438,9 +441,11 @@ class WebChangeDetector_Admin
 
         // We only get one group as we send the group_id
         $response = $this->mm_api($args);
+
         if (array_key_exists(0, $response)) {
             return $response[0];
         }
+
         return $response;
     }
 
@@ -503,7 +508,9 @@ class WebChangeDetector_Admin
                     $url_id = false;
 
                     // Check if current WP post ID is in synced_posts and get the url_id
+
                     foreach ($synced_posts as $synced_post) {
+
                         if ($synced_post['cms_resource_id'] == $post->ID) {
                             $url_id = $synced_post['url_id'];
                         }
