@@ -211,7 +211,6 @@ class WebChangeDetector_Admin
         $compares = $this->mm_api($args);
 
         $return = [];
-        if(count( $compares ) == 0 ) {
         if(!array_key_exists(0, $compares) ) {
             return $return;
         }
