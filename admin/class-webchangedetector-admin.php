@@ -728,7 +728,7 @@ if (! function_exists('mm_dev')) {
     /**
      * Set this if you wanna debug API calls with dd()
      *
-     * @return void
+     * @return bool
      */
     function mm_dev() : bool
     {
@@ -751,20 +751,6 @@ if (! function_exists('mm_http_successful')) {
         return ($httpCode >= HTTP_OK) && ($httpCode < HTTP_MULTIPLE_CHOICES);
     }
 }
-
-if (! function_exists('mm_http_successful')) {
-    /**
-     * HTTP Response Code in between 200 (incl) and 300
-     *
-     * @param int $httpCode
-     * @return bool
-     */
-    function mm_http_successful($httpCode)
-    {
-        return ($httpCode >= HTTP_OK) && ($httpCode < HTTP_MULTIPLE_CHOICES);
-    }
-}
-
 
 if (! defined('HTTP_OK')) {
     define('HTTP_OK', 200);
