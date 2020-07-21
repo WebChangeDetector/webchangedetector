@@ -631,10 +631,7 @@ class WebChangeDetector_Admin
 
     public function mm_api($post)
     {
-        $url = 'https://api.webchangedetector.com/api/v1/';
-        if (mm_dev()) {
-            $url = 'http://api.webchangedetector.test/api/v1/';
-        }
+        $url = mm_get_api_url();
 
         $url .= str_replace(['client', '_'], ['user', '-'], $post['action']);
         $action = $post['action']; // For debugging
@@ -676,9 +673,9 @@ class WebChangeDetector_Admin
         }
 
         if (! mm_http_successful((int) $responseCode)) {
-            if (mm_dev()) {
+            //if (mm_dev()) {
                 // dd($response, $action, $responseCode, $body);
-            }
+            //}
         }
 
         if (is_json($body)) {
@@ -713,6 +710,20 @@ if (! function_exists('dd')) {
     }
 }
 
+function mm_get_api_url() {
+    if (defined('WCD_API_URL') && WCD_API_URL) {
+        return WCD_API_URL;
+    }
+    return 'https://api.webchangedetector.com/api/v1';
+}
+
+function mm_get_app_domain() {
+    if (defined('WCD_APP_DOMAIN') && WCD_APP_DOMAIN) {
+        return WCD_APP_DOMAIN;
+    }
+    return 'https://www.webchangedetector.com';
+}
+
 if (! function_exists('mm_dev')) {
     /**
      * Set this if you wanna debug API calls with dd()
@@ -721,7 +732,10 @@ if (! function_exists('mm_dev')) {
      */
     function mm_dev() : bool
     {
-        return ! empty(get_option('_webchangedetector_dev'));
+        if( defined('WCD_API_URL') && WCD_API_URL) {
+            return true;
+        }
+        return false;
     }
 }
 

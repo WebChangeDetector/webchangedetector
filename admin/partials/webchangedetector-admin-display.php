@@ -496,30 +496,22 @@ function webchangedetector_init()
                 </p>';
             break;
 
+        /*****************
+         * Show compare
+         ****************/
         case 'show-compare':
             echo '<h1>The Change Detection Images</h1>';
-            if (defined('WCD_DEV_API') && WCD_DEV_API) {
-                $wcd_domain = 'https://www.dev.webchangedetector.com';
-            } elseif (mm_dev()) {
-                $wcd_domain = 'http://webchangedetector.test';
-            } else {
-                $wcd_domain = 'https://www.webchangedetector.com';
-            }
+            $wcd_domain = mm_get_app_domain();
 
-            function change_detection_css()
+            /* Why do we need an extra css file from the api?
+             * function change_detection_css()
             {
-                if (defined('WCD_DEV_API') && WCD_DEV_API) {
-                    $api_domain = 'https://dev.api.webchangedetector.com';
-                } elseif (mm_dev()) {
-                    $api_domain = 'http://api.webchangedetector.test';
-                } else {
-                    $api_domain = 'https://api.webchangedetector.com';
-                }
-                wp_enqueue_style('change-detection', $api_domain . '/css/change-detection.css');
+                wp_enqueue_style('change-detection', mm_get_api_url() . '/css/change-detection.css');
             }
-            add_action('admin_enqueue_scripts', 'change_detection_css');
+            add_action('admin_enqueue_scripts', 'change_detection_css');*/
+
             $public_link = $wcd_domain . '/show-change-detection/?token=' . $_GET['token'];
-            echo '<p>Public link: <a href="' . $public_link . '"target="_blank">' . $public_link . '</a></p>';
+            echo '<p>Public link: <a href="' . $public_link . '" target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
             echo $back_button;
