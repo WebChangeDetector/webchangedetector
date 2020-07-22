@@ -20,7 +20,7 @@
     padding: 10px;
 }
 
-.webchangedetector tr:nth-child( even ) {
+.webchangedetector .even-tr-white  tr:nth-child( even ) {
     background-color: #fff;
 }
 
@@ -29,30 +29,30 @@
 }
 
 .webchangedetector td.is-difference {
-    text-align: center;
     background: darkred;
-    color: #fff;
     border-bottom: 1px solid #fff;
+    color: #fff;
+    text-align: center;
 }
 
 .webchangedetector td.no-difference {
-    text-align: center;
     background: darkgreen;
-    color: #fff;
     border-bottom: 1px solid #fff;
+    color: #fff;
+    text-align: center;
 }
 
 .webchangedetector hr {
-    margin-top: 20px;
     margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 .webchangedetector .image1,
 .webchangedetector .image2,
 .webchangedetector .comp_image {
-    width: 32%;
     float: left;
     margin-right: 1%;
+    width: 32%;
 }
 
 .webchangedetector .image1 img,
@@ -64,8 +64,8 @@
 }
 
 .webchangedetector label {
-    min-width: 150px;
     display: inline-block;
+    min-width: 150px;
 }
 
 .webchangedetector ul li {
@@ -74,17 +74,17 @@
 }
 
 .webchangedetector .mm_processing_container {
-    padding: 20px;
     background: #fff2db;
     border: 1px solid #adadad;
+    padding: 20px;
 }
 
 .webchangedetector .mm_accordion_title {
     background: #fff;
-    padding: 0;
-    border: 1px solid #276ECC;
     border-radius: 3px;
-    margin: 0 auto 15px;
+    border: 1px solid #276ECC;
+    margin: 15px auto;
+    padding: 0;
 }
 
 .webchangedetector h3 {
@@ -109,8 +109,8 @@
     border: none;
 }
 .webchangedetector .ui-accordion .ui-accordion-content {
-    padding: 20px;
     border-radius: 3px;
+    padding: 20px;
 }
 
 .webchangedetector .ui-accordion .ui-accordion-icons {
@@ -121,13 +121,16 @@
     display: none;
 }
 
-.webchangedetector .queue-status.open {
+.webchangedetector .queue-status-open {
     background: #eee;
 }
-.webchangedetector .queue-status.processing
+.webchangedetector .queue-status-processing
 {
     background: rgba( 254, 204, 48, 0.3);
 }
-.webchangedetector .queue-status.done {
+.webchangedetector .queue-status-done {
     background: #E7F2E7;
+}
+.webchangedetector .queue-status-failed {
+    background: #ce8080;
 }

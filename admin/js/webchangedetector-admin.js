@@ -67,7 +67,7 @@ function mmToggle(source, postType, column, groupId) {
 function mmValidateForm() {
 
 	var emailsElement = document.getElementById("alert_emails");
-	console.log(emailsElement.value);
+
 	emails = emailsElement.value.replace(/\s/g,'').split(",");
 
 	var valid = true;
