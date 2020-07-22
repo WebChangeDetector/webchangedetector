@@ -600,8 +600,6 @@ class WebChangeDetector_Admin
                    class="nav-tab <?php echo $active_tab == 'logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
                 <a href="?page=webchangedetector&tab=settings"
                    class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
-                <a href="?page=webchangedetector&tab=help"
-                   class="nav-tab <?php echo $active_tab == 'help' ? 'nav-tab-active' : ''; ?>">Help</a>
             </h2>
         </div>
 

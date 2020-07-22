@@ -181,7 +181,7 @@ function webchangedetector_init()
             if (isset($postdata['limit_days'])) {
                 $limit_days = $postdata['limit_days'];
             } else {
-                $limit_days = 7;
+                $limit_days = 3;
             }
 
             $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days);
@@ -189,6 +189,7 @@ function webchangedetector_init()
             <div class="action-container">
                 <form method="post">
                     <select name="limit_days">
+                        <option value="3" <?= $limit_days == 3 ? 'selected' : '' ?>>Last 3 days</option>
                         <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
                         <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
                         <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
