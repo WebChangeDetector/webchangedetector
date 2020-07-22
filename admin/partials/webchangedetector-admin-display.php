@@ -234,10 +234,6 @@ function webchangedetector_init()
                 if (! $website_details['enable_limits']) {
                     ?>
                     <h2>Do the magic</h2>
-                    <p>
-                        Your available balance is <?= $available_compares . ' / ' . $limit ?>
-                    </p>
-
                     <p>Currently selected:
                         <strong>
                             <?= $groups_and_urls['amount_selected_urls'] ?>
@@ -302,16 +298,6 @@ function webchangedetector_init()
                     }
                     ?></strong>
                     change detections per month.<br>
-
-                    Your available change detections are <strong>
-                        <?php
-                        if ($website_details['enable_limits']) {
-                            echo $website_details['sc_limit'] . ' / month';
-                        } else {
-                            echo $available_compares . ' / ' . $limit;
-                        }
-                        ?>
-                    </strong>.
                 </p>
 
                 <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
