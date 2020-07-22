@@ -23,19 +23,6 @@ function webchangedetector_init()
     // Actions without API Token needed
     if (isset($postdata['wcd_action'])) {
         switch ($postdata['wcd_action']) {
-            case 'create_free_account':
-                $api_token = $wcd->create_free_account($postdata);
-
-                // If we didn't get an API Token, put the error message out there and show the no-account-page
-                if (isset($api_token['status']) && $api_token['status'] == 'error') {
-                    echo '<div class="error notice">
-                            <p>' . $api_token['reason'] . '</p>
-                        </div>';
-                    echo $wcd->get_no_account_page();
-                    return false;
-                }
-                break;
-
             case 'reset_api_token':
                 $wcd->delete_website();
                 delete_option('webchangedetector_api_token');
@@ -48,10 +35,11 @@ function webchangedetector_init()
                 if (empty($website)) {
                     echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
                     return false;
-                } else {
-                    update_option('webchangedetector_api_token', $postdata['api_token']);
-                    $wcd->sync_posts();
                 }
+
+                update_option('webchangedetector_api_token', $postdata['api_token']);
+                $wcd->sync_posts();
+
                 break;
         }
     }
@@ -59,10 +47,12 @@ function webchangedetector_init()
     $api_token = get_option('webchangedetector_api_token');
 
     // Change api token option name from V1.0.7
-    if(! $api_token ) {
+    if (! $api_token) {
         $api_token = get_option('webchangedetector_api_key');
-        add_option('webchangedetector_api_token', $api_token, '', false);
-        delete_option('webchangedetector_api_key');
+        if (! $api_token) {
+            delete_option('webchangedetector_api_key');
+            add_option('webchangedetector_api_token', $api_token, '', false);
+        }
     }
 
     // The account doesn't have an api_token or activation_key
@@ -72,20 +62,9 @@ function webchangedetector_init()
     }
 
     $website_details = $wcd->get_website_details();
-    //dd($website_details);
-    if( !empty($website_details['message']) && strtolower($website_details['message']) === 'unauthorized'){
-        echo '<div class="error notice">
-                            <p>Your API Token is not valid (anymore). Please enter a valid token or create a new account.</p>
-                        </div>';
-        echo $wcd->get_no_account_page($api_token);
-        wp_die();
-    }
 
-    // Call is giving back an array on purpose, in the plugin, there should be only one result
-    $website_details = $website_details[0];
-
-    $group_id = $website_details['manual_detection_group_id'] ?? null;
-    $monitoring_group_id = $website_details['auto_detection_group_id'] ?? null;
+    $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
+    $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
 
     $monitoring_group_settings = null;
 
@@ -99,17 +78,17 @@ function webchangedetector_init()
             case 'take_screenshots':
                 $results = $wcd->take_screenshot($group_id, $postdata['sc_type']);
 
-                if ($results[0] == 'error') {
+                if ($results[0] === 'error') {
                     echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
                 }
 
-                if ($results[0] == 'success') {
+                if ($results[0] === 'success') {
                     echo '<div class="updated notice"><p>' . $results[1] . '</p></div>';
                 }
                 break;
 
             case 'update_monitoring_settings':
-                $group = $wcd->update_monitoring_settings($postdata, $monitoring_group_id);
+                $wcd->update_monitoring_settings($postdata, $monitoring_group_id);
                 break;
 
             case 'post_urls':
@@ -152,7 +131,7 @@ function webchangedetector_init()
                             You selected ' . $count_selected * (24 / $monitoring_group_settings['interval_in_h']) * 30 . ' change detections. The settings were not saved.</p></div>';
                 } else {
                     // Update API URLs
-                    $result = $wcd->update_urls($postdata['group_id'], $active_posts);
+                    $wcd->update_urls($postdata['group_id'], $active_posts);
                     echo '<div class="updated notice"><p>Settings saved.</p></div>';
                 }
                 break;
@@ -164,7 +143,7 @@ function webchangedetector_init()
     echo '<div class="webchangedetector">';
     echo '<h1>Web Change Detector</h1>';
 
-    $wcd->mm_tabs();
+    $wcd->tabs();
 
     echo '<div style="margin-top: 30px;"></div>';
     if (isset($get['tab'])) {
@@ -173,22 +152,21 @@ function webchangedetector_init()
         $tab = 'change-detections';
     }
 
-    $client_details = $wcd->get_account_details($api_token);
+    $account_details = $wcd->account_details($api_token);
 
-    $comp_usage = $client_details['usage'];
-    if ($client_details['plan']['one_time']) {
-        if (strtotime('+1 month', strtotime($client_details['subscription_started_at'])) > date('U')) {
-            $limit = $client_details['sc_limit'];
-        } else {
-            $limit = 0;
+    $comp_usage = $account_details['usage'];
+    if ($account_details['plan']['one_time']) {
+        $limit = 0; // init
+        if (strtotime('+1 month', strtotime($account_details['subscription_started_at'])) > date('U')) {
+            $limit = $account_details['sc_limit'];
         }
     } else {
-        $limit = $client_details['plan']['sc_limit'];
+        $limit = $account_details['plan']['sc_limit'];
     }
 
     $available_compares = $limit - (int) $comp_usage;
 
-    $restrictions = $wcd->mm_get_restrictions();
+    $website_details = $wcd->get_website_details();
 
     switch ($tab) {
 
@@ -227,7 +205,7 @@ function webchangedetector_init()
 
         case 'update-settings':
 
-            if ($restrictions['enable_limits'] && ! $restrictions['allow_manual_detection']) {
+            if ($website_details['enable_limits'] && ! $website_details['allow_manual_detection']) {
                 echo 'Settings for Update Change detections are disabled by your API Token.';
                 break;
             }
@@ -237,10 +215,9 @@ function webchangedetector_init()
             ?>
             <h2>Select Update Change Detection URLs</h2>
 
-            <?php $wcd->mm_get_url_settings($groups_and_urls);
+            <?php $wcd->get_url_settings($groups_and_urls);
 
             if (! $website_details['enable_limits']) {
-
                 echo '<h2>Do the magic</h2>';
                 echo '<p>
                 Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
@@ -277,7 +254,7 @@ function webchangedetector_init()
          * **********************/
 
         case 'auto-settings':
-            if ($restrictions['enable_limits'] && ! $restrictions['allow_auto_detection']) {
+            if ($website_details['enable_limits'] && ! $website_details['allow_auto_detection']) {
                 echo 'Settings for Update Change detections are disabled by your API Token.';
                 break;
             }
@@ -292,7 +269,7 @@ function webchangedetector_init()
                     Change Detections
                 </strong>
             </p>
-            <?php $wcd->mm_get_url_settings($groups_and_urls, true); ?>
+            <?php $wcd->get_url_settings($groups_and_urls, true); ?>
             <h2>Settings for Auto Change Detection</h2>
             <p>
                 The current settings require
@@ -383,22 +360,23 @@ function webchangedetector_init()
         case 'logs':
             // Show queued urls
             $queues = $wcd->get_queue();
-            $type_nice_name = [
+            $type_nice_name = array(
                 'pre' => 'Reference Screenshot',
                 'post' => 'Compare Screenshot',
                 'auto' => 'Auto Detection',
-                'compare' => 'Change Detection'
-            ];
+                'compare' => 'Change Detection',
+            );
             if (! empty($queues) && is_iterable($queues)) {
                 echo '<table class="queue">';
                 echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
                 foreach ($queues as $queue) {
-                    if( strpos($queue['url']['url'], $_SERVER['SERVER_NAME']) === false ) {
+                    // should not be returned by the API anyway, but if the URL does not contain the current domain name, it's not the data to look at here
+                    if (! str_contains($queue['url']['url'], $_SERVER['SERVER_NAME'])) {
                         continue;
                     }
                     $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
-                    echo '<tr class="queue-status ' . $queue['status'] . '">';
-                    echo '<td>' . $wcd->mm_get_device_icon($queue['device']) . '</td>';
+                    echo '<tr class="queue-status-' . $queue['status'] . '">';
+                    echo '<td>' . $wcd->get_device_icon($queue['device']) . '</td>';
                     echo '<td>
                                 <span class="html-title queue"> ' . $queue['url']['html_title'] . '</span><br>
                                 <span class="url queue">URL: '.$queue['url']['url'] . '</span><br>
@@ -429,12 +407,12 @@ function webchangedetector_init()
             </div>';
             } elseif (! $website_details['enable_limits']) {
                 echo '<h2>Your credits</h2>';
-                echo 'Your current plan: <strong>' . $client_details['plan']['name'] . '</strong><br>';
+                echo 'Your current plan: <strong>' . $account_details['plan']['name'] . '</strong><br>';
 
-                $subscription_started_at = strtotime($client_details['subscription_started_at']);
+                $subscription_started_at = strtotime($account_details['subscription_started_at']);
 
                 // Calculate end of one-time plans
-                if ($client_details['plan']['one_time']) {
+                if ($account_details['plan']['one_time']) {
                     $end_of_trial = strtotime('+1 month ', $subscription_started_at);
                     echo 'Your change detections are valid until <strong>' . date('d/m/Y', $end_of_trial) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
                 } else {
@@ -454,7 +432,7 @@ function webchangedetector_init()
                 echo 'Used change detections: ' . $comp_usage . '<br>';
                 echo 'Available change detections in this period: ' . $available_compares . '</p>';
 
-                echo $wcd->get_upgrade_options($client_details['plan_id']);
+                echo $wcd->get_upgrade_options($account_details['plan_id']);
             }
             echo $wcd->get_api_token_form($api_token);
             break;
@@ -499,7 +477,7 @@ function webchangedetector_init()
          ****************/
         case 'show-compare':
             echo '<h1>The Change Detection Images</h1>';
-            $wcd_domain = mm_get_app_domain();
+            $wcd_url = mm_get_app_url();
 
             /* Why do we need an extra css file from the api?
              * function change_detection_css()
@@ -508,12 +486,12 @@ function webchangedetector_init()
             }
             add_action('admin_enqueue_scripts', 'change_detection_css');*/
 
-            $public_link = $wcd_domain . '/show-change-detection/?token=' . $_GET['token'];
+            $public_link = $wcd_url . '/show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '" target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
             echo $back_button;
-            echo $wcd->mm_get_comparison_partial($_GET['token']);
+            echo $wcd->get_comparison_partial($_GET['token']);
             echo '<div class="clear"></div>';
             echo $back_button;
 

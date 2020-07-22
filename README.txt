@@ -1,12 +1,14 @@
 === WebChangeDetector ===
-Contributors: Mike.Miler
+Contributors: Mike Miler/Rene Schultz
 Donate link: https://www.webchangedetector.com
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.4.1
 Stable tag: 1.0.8
+PHP: 5.6+
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+GitHub: https://github.com/WebChangeDetector/wp-plugin
 
 Run automatic change detections and get notified on changes of your website. Or run manual change detections before and after updates.
 
@@ -29,6 +31,15 @@ Here a few features of WebChangeDetector:
 *   Get change detections for mobile and desktop screen sizes
 *   Alert email with direct link to see the changes
 *   Start update change detection to see changes before and after updates
+
+== Development ==
+* Open issues at https://github.com/WebChangeDetector/wp-plugin/issues
+* Only relevant files are in /admin
+
+Linting all files with `$ ./lint-check.sh`:
+* `$ php -l admin/class-webchangedetector-admin.php`
+* `$ php -l admin/partials/webchangedetector-admin-display.php`
+* `$ eslint admin/js/webchangedetector-admin.js`
 
 == Changelog ==
 = 1.0.8 =
