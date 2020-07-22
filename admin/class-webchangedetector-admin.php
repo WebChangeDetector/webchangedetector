@@ -493,13 +493,16 @@ class WebChangeDetector_Admin
                     <div class="mm_accordion_content">
 
                 <table>
-                    <tr><th>Desktop</th><th>Mobile</th><th>Post Name</th><th>URL</th></tr>
+                    <tr>
+                        <th>Desktop</th>
+                        <th>Mobile</th>
+                        <th width="100%">URL</th>
+                    </tr>
                 <?php
                 // Select all from same device
                 echo '<tr style="background: none; text-align: center">
                             <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
                             <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                            <td></td>
                             <td></td>
                         </tr>';
                 foreach ($posts as $post) {
@@ -555,8 +558,8 @@ class WebChangeDetector_Admin
                             <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
                             id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
-                    echo '<td style="text-align: left;">' . $post->post_title . '</td>';
-                    echo '<td style="text-align: left;"><a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                    echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
+                    echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
                     echo '</tr>';
 
                     echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';

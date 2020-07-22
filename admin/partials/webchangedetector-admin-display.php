@@ -228,47 +228,52 @@ function webchangedetector_init()
         case 'update-settings':
 
             if ($restrictions['enable_limits'] && ! $restrictions['allow_manual_detection']) {
-                echo 'Settings for Update Change detections are disabled by your API Token.';
+                echo 'Settings for Update Change detections are disabled by your API token.';
                 break;
             }
 
             // Get amount selected Screenshots
             $groups_and_urls = $wcd->get_urls_of_group($group_id);
             ?>
+
             <h2>Select Update Change Detection URLs</h2>
+            <div style="float: left; margin-right: 20px; width: calc(100% - 400px);">
+                <?php
+                $wcd->mm_get_url_settings($groups_and_urls);
+                if (! $website_details['enable_limits']) {
+                    ?>
+                    <h2>Do the magic</h2>
+                    <p>
+                        Your available balance is <?= $available_compares . ' / ' . $limit ?>
+                    </p>
 
-            <?php $wcd->mm_get_url_settings($groups_and_urls);
+                    <p>Currently selected:
+                        <strong>
+                            <?= $groups_and_urls['amount_selected_urls'] ?>
+                            Change Detections
+                        </strong>
+                    </p>
 
-            if (! $website_details['enable_limits']) {
+                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">
+                    <input type="hidden" value="take_screenshots" name="wcd_action">
+                    <input type="hidden" name="sc_type" value="pre">
+                    <input type="submit" value="Create Reference Screenshots" class="button">
+                    </form>
 
-                echo '<h2>Do the magic</h2>';
-                echo '<p>
-                Your available balance is ' . $available_compares . ' / ' . $limit . '<br>
-               <p>Currently selected:
-                <strong>
-                    ' . $groups_and_urls['amount_selected_urls'] . '
-                    Change Detections
-                </strong>
-            </p>
-                </p>';
+                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left;">
+                    <input type="hidden" value="take_screenshots" name="wcd_action">
+                    <input type="hidden" name="sc_type" value="post">
+                    <input type="submit" value="Create Change Detections" class="button">
+                    </form>
 
-                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">';
-                echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
-                echo '<input type="hidden" name="sc_type" value="pre">';
-                echo '<input type="submit" value="Pre Update Change Detection" class="button">';
-                echo '</form>';
+                    </div>
+                    <div style="float:left; width: 300px; background: #276ECC; color: #fff; padding: 20px; display: flex;">
+                        Help text
+                    </div>
 
-                echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left;">';
-                echo '<input type="hidden" value="take_screenshots" name="wcd_action">';
-                echo '<input type="hidden" name="sc_type" value="post">';
-                echo '<input type="submit" value="Post Update Change Detection" class="button">';
-                echo '</form>';
-
-                echo '<div class="clear"></div>';
+                    <div class="clear"></div>
+                    <?php
             }
-            echo '<hr>';
-
-            // Compare overview
 
             break;
 

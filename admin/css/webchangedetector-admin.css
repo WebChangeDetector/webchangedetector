@@ -84,7 +84,7 @@
     padding: 0;
     border: 1px solid #276ECC;
     border-radius: 3px;
-    margin: 15px auto;
+    margin: 0 auto 15px;
 }
 
 .webchangedetector h3 {
