@@ -15,6 +15,10 @@
     border-top: 1px solid #aaa;
 }
 
+.webchangedetector tr th {
+    text-align: left;
+}
+
 .webchangedetector td,
 .webchangedetector th {
     padding: 10px;
