@@ -178,13 +178,37 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
-    public function get_device_icon($device)
+    public function get_device_icon($icon, $class = '')
     {
-        if ($device === 'desktop') {
-            return '<span class="group_icon dashicons dashicons-laptop"></span>';
+        if ($icon == 'thumbnail') {
+            return '<span class="dashicons dashicons-camera-alt"></span>';
         }
-        if ($device === 'mobile') {
-            return '<span class="group_icon dashicons dashicons-smartphone"></span>';
+        if ($icon == 'desktop') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-laptop"></span>';
+        }
+        if ($icon == 'mobile') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-smartphone"></span>';
+        }
+        if ($icon == 'page') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-media-default"></span>';
+        }
+        if ($icon == 'change-detections') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-welcome-view-site"></span>';
+        }
+        if ($icon == 'dashboard') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-admin-home"></span>';
+        }
+        if ($icon == 'logs') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-menu-alt"></span>';
+        }
+        if ($icon == 'settings') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-admin-generic"></span>';
+        }
+        if ($icon == 'website-settings') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-welcome-widgets-menus"></span>';
+        }
+        if( $icon == 'help') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-editor-help"></span>';
         }
 
         return '';
@@ -441,8 +465,8 @@ class WebChangeDetector_Admin
 
                 <table>
                     <tr>
-                        <th>Desktop</th>
-                        <th>Mobile</th>
+                        <th><?= $this->get_device_icon('desktop') ?></th>
+                        <th><?= $this->get_device_icon('mobile') ?></th>
                         <th width="100%">URL</th>
                     </tr>
                 <?php

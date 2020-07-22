@@ -152,21 +152,22 @@ function webchangedetector_init()
         $tab = 'change-detections';
     }
 
-    $account_details = $wcd->account_details($api_token);
+    $account_details = $wcd->account_details();
+    $website_details = $wcd->get_website_details();
 
+    // Account credits
     $comp_usage = $account_details['usage'];
-    if ($account_details['plan']['one_time']) {
-        $limit = 0; // init
-        if (strtotime('+1 month', strtotime($account_details['subscription_started_at'])) > date('U')) {
-            $limit = $account_details['sc_limit'];
-        }
-    } else {
-        $limit = $account_details['plan']['sc_limit'];
-    }
-
+    $limit = $account_details['plan']['sc_limit'];
     $available_compares = $limit - (int) $comp_usage;
 
-    $website_details = $wcd->get_website_details();
+    if( $website_details['enable_limits']) {
+        //$comp_usage = $website_details['usage']
+        $limit = $website_details['sc_limit'];
+        $available_compares = $limit - (int) $comp_usage;
+    }
+
+    // Renew date
+    $renew_date = strtotime($account_details['renewal_at']);
 
     switch ($tab) {
 
@@ -185,18 +186,30 @@ function webchangedetector_init()
 
             $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days);
             ?>
-            <form method="post">
-                <select name="limit_days">
-                    <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
-                    <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
-                    <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
-                    <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
-                </select>
-                <input class="button" type="submit" value="Filter">
-            </form>
-            <?php
+            <div class="action-container">
+                <form method="post">
+                    <select name="limit_days">
+                        <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
+                        <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
+                        <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
+                        <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
+                    </select>
+                    <input class="button" type="submit" value="Filter">
+                </form>
+                <?php
 
-            $wcd->compare_view($compares);
+                $wcd->compare_view($compares);
+                ?>
+            </div>
+            <div class="sidebar">
+                <div class="account-box">
+                    <?php include "templates/account.php"; ?>
+                </div>
+                <div class="help-box">
+                    <?php include "templates/help-change-detection.php"; ?>
+                </div>
+            </div>
+            <?php
             break;
 
         /********************
@@ -204,8 +217,6 @@ function webchangedetector_init()
          ********************/
 
         case 'update-settings':
-
-
             if ($website_details['enable_limits'] && ! $website_details['allow_manual_detection']) {
                 echo 'Settings for Update Change detections are disabled by your API Token.';
                 break;
@@ -216,9 +227,9 @@ function webchangedetector_init()
             ?>
 
             <h2>Select Update Change Detection URLs</h2>
-            <div style="float: left; margin-right: 20px; width: calc(100% - 400px);">
+            <div class="action-container">
                 <?php
-                $wcd->mm_get_url_settings($groups_and_urls);
+                $wcd->get_url_settings($groups_and_urls);
                 if (! $website_details['enable_limits']) {
                     ?>
                     <h2>Do the magic</h2>
@@ -245,15 +256,18 @@ function webchangedetector_init()
                     <input type="submit" value="Create Change Detections" class="button">
                     </form>
 
+                <?php } ?>
+                </div>
+                <div class="sidebar">
+                    <div class="account-box">
+                        <?php include "templates/account.php"; ?>
                     </div>
-                    <div style="float:left; width: 300px; background: #276ECC; color: #fff; padding: 20px; display: flex;">
-                        Help text
+                    <div class="help-box">
+                        <?php include "templates/help-update.php"; ?>
                     </div>
-
-                    <div class="clear"></div>
-                    <?php
-            }
-
+                </div>
+                <div class="clear"></div>
+            <?php
             break;
 
         /************************
@@ -270,92 +284,103 @@ function webchangedetector_init()
 
             ?>
             <h2>Select Auto Change Detection URLs</h2>
-            <p>Currently selected:
-                <strong>
-                    <?= $groups_and_urls['amount_selected_urls'] ?>
-                    Change Detections
-                </strong>
-            </p>
-            <?php $wcd->get_url_settings($groups_and_urls, true); ?>
-            <h2>Settings for Auto Change Detection</h2>
-            <p>
-                The current settings require
-                <strong><?php
-                if (! empty($groups_and_urls['interval_in_h'])) {
-                    echo $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30;
-                }
-                ?></strong>
-                change detections per month.<br>
-                Your available change detections are <strong>
-                    <?php
-                    if ($website_details['enable_limits']) {
-                        echo $website_details['sc_limit'] . ' / month';
-                    } else {
-                        echo $available_compares . ' / ' . $limit;
+            <div class="action-container">
+                <?php $wcd->get_url_settings($groups_and_urls, true); ?>
+                <h2>Settings for Auto Change Detection</h2>
+                <p>
+                    Currently selected:
+                    <strong>
+                        <?= $groups_and_urls['amount_selected_urls'] ?>
+                        Change Detections
+                    </strong>
+                    <br>
+                    The current settings require
+                    <strong><?php
+                    if (! empty($groups_and_urls['interval_in_h'])) {
+                        echo $groups_and_urls['amount_selected_urls'] * (24 / $groups_and_urls['interval_in_h']) * 30;
                     }
-                    ?>
-                </strong>.
-            </p>
+                    ?></strong>
+                    change detections per month.<br>
 
-            <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
-            <p>
-                <input type="hidden" name="wcd_action" value="update_monitoring_settings">
-                <input type="hidden" name="monitoring" value="1">
-                <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
-
-            <label for="enabled">Enabled</label>
-            <select name="enabled">
-                <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
-                    Yes
-                </option>
-                <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
-                    No
-                </option>
-            </select>
-            </p>
-            <p>
-                <label for="hour_of_day">Hour of the day</label>
-                <select name="hour_of_day">
-                    <?php
-                    for ($i = 0; $i < 24; $i++) {
-                        if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
-                            $selected = 'selected';
+                    Your available change detections are <strong>
+                        <?php
+                        if ($website_details['enable_limits']) {
+                            echo $website_details['sc_limit'] . ' / month';
                         } else {
-                            $selected = '';
+                            echo $available_compares . ' / ' . $limit;
                         }
-                        echo '<option value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
-                    }
-                    ?>
-                </select>
-            </p>
-            <p>
-                <label for="interval_in_h">Interval in hours</label>
-                <select name="interval_in_h">
-                    <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '1' ? 'selected' : ''; ?>>
-                        Every 1 hour (720 Change Detections / URL / month)
-                    </option>
-                    <option value="3" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '3' ? 'selected' : ''; ?>>
-                        Every 3 hours (240 Change Detections / URL / month)
-                    </option>
-                    <option value="6" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '6' ? 'selected' : ''; ?>>
-                        Every 6 hours (120 Change Detections / URL / month)
-                    </option>
-                    <option value="12" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '12' ? 'selected' : ''; ?>>
-                        Every 12 hours (60 Change Detections / URL / month)
-                    </option>
-                    <option value="24" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '24' ? 'selected' : ''; ?>>
-                        Every 24 hours (30 Change Detections / URL / month)
-                    </option>
-                </select>
-            </p>
-            <p>
-                <label for="alert_emails">Email addresses for alerts</label>
-                <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
-                       value="<?= isset($groups_and_urls['alert_emails']) ? implode(',', $groups_and_urls['alert_emails']) : '' ?>">
+                        ?>
+                    </strong>.
+                </p>
 
-            </p>
-                <input type="submit" class="button" value="Save" >
-            </form>
+                <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
+                <p>
+                    <input type="hidden" name="wcd_action" value="update_monitoring_settings">
+                    <input type="hidden" name="monitoring" value="1">
+                    <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
+
+                <label for="enabled">Enabled</label>
+                <select name="enabled">
+                    <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
+                        Yes
+                    </option>
+                    <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
+                        No
+                    </option>
+                </select>
+                </p>
+                <p>
+                    <label for="hour_of_day">Hour of the day</label>
+                    <select name="hour_of_day">
+                        <?php
+                        for ($i = 0; $i < 24; $i++) {
+                            if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
+                                $selected = 'selected';
+                            } else {
+                                $selected = '';
+                            }
+                            echo '<option value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
+                        }
+                        ?>
+                    </select>
+                </p>
+                <p>
+                    <label for="interval_in_h">Interval in hours</label>
+                    <select name="interval_in_h">
+                        <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '1' ? 'selected' : ''; ?>>
+                            Every 1 hour (720 Change Detections / URL / month)
+                        </option>
+                        <option value="3" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '3' ? 'selected' : ''; ?>>
+                            Every 3 hours (240 Change Detections / URL / month)
+                        </option>
+                        <option value="6" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '6' ? 'selected' : ''; ?>>
+                            Every 6 hours (120 Change Detections / URL / month)
+                        </option>
+                        <option value="12" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '12' ? 'selected' : ''; ?>>
+                            Every 12 hours (60 Change Detections / URL / month)
+                        </option>
+                        <option value="24" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '24' ? 'selected' : ''; ?>>
+                            Every 24 hours (30 Change Detections / URL / month)
+                        </option>
+                    </select>
+                </p>
+                <p>
+                    <label for="alert_emails">Email addresses for alerts</label>
+                    <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
+                           value="<?= isset($groups_and_urls['alert_emails']) ? implode(',', $groups_and_urls['alert_emails']) : '' ?>">
+
+                </p>
+                    <input type="submit" class="button" value="Save" >
+                </form>
+            </div>
+            <div class="sidebar">
+                <div class="account-box">
+                    <?php include "templates/account.php"; ?>
+                </div>
+                <div class="help-box">
+                    <?php include "templates/help-auto.php"; ?>
+                </div>
+            </div>
 
             <?php
             break;
@@ -373,34 +398,48 @@ function webchangedetector_init()
                 'auto' => 'Auto Detection',
                 'compare' => 'Change Detection',
             );
-            if (! empty($queues) && is_iterable($queues)) {
-                echo '<table class="queue">';
-                echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
-                foreach ($queues as $queue) {
-                    // should not be returned by the API anyway, but if the URL does not contain the current domain name, it's not the data to look at here
-                    if (! str_contains($queue['url']['url'], $_SERVER['SERVER_NAME'])) {
-                        continue;
+            ?>
+            <div class="action-container">
+            <?php
+                if (! empty($queues) && is_iterable($queues)) {
+                    echo '<table class="queue">';
+                    echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
+                    foreach ($queues as $queue) {
+                        // should not be returned by the API anyway, but if the URL does not contain the current domain name, it's not the data to look at here
+                        if (! str_contains($queue['url']['url'], $_SERVER['SERVER_NAME'])) {
+                            continue;
+                        }
+                        $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
+                        echo '<tr class="queue-status-' . $queue['status'] . '">';
+                        echo '<td>' . $wcd->get_device_icon($queue['device']) . '</td>';
+                        echo '<td>
+                                    <span class="html-title queue"> ' . $queue['url']['html_title'] . '</span><br>
+                                    <span class="url queue">URL: '.$queue['url']['url'] . '</span><br>
+                                    ' . $group_type . '
+                              </td>';
+
+
+                        echo '<td>' . $type_nice_name[$queue['sc_type']] . '</td>';
+                        echo '<td>' . ucfirst($queue['status']) . '</td>';
+                        echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
+                        echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
+                        echo '</tr>';
                     }
-                    $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
-                    echo '<tr class="queue-status-' . $queue['status'] . '">';
-                    echo '<td>' . $wcd->get_device_icon($queue['device']) . '</td>';
-                    echo '<td>
-                                <span class="html-title queue"> ' . $queue['url']['html_title'] . '</span><br>
-                                <span class="url queue">URL: '.$queue['url']['url'] . '</span><br>
-                                ' . $group_type . '
-                          </td>';
-
-
-                    echo '<td>' . $type_nice_name[$queue['sc_type']] . '</td>';
-                    echo '<td>' . ucfirst($queue['status']) . '</td>';
-                    echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
-                    echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
-                    echo '</tr>';
+                    echo '</table>';
+                } else {
+                    echo 'Nothing to show yet.';
                 }
-                echo '</table>';
-            } else {
-                echo 'All done';
-            }
+                ?>
+            </div>
+            <div class="sidebar">
+                <div class="account-box">
+                    <?php include "templates/account.php"; ?>
+                </div>
+                <div class="help-box">
+                    <?php include "templates/help-logs.php"; ?>
+                </div>
+            </div>
+            <?php
             break;
         /********************
          * Settings
@@ -415,26 +454,7 @@ function webchangedetector_init()
             } elseif (! $website_details['enable_limits']) {
                 echo '<h2>Your credits</h2>';
                 echo 'Your current plan: <strong>' . $account_details['plan']['name'] . '</strong><br>';
-
-                $subscription_started_at = strtotime($account_details['subscription_started_at']);
-
-                // Calculate end of one-time plans
-                if ($account_details['plan']['one_time']) {
-                    $end_of_trial = strtotime('+1 month ', $subscription_started_at);
-                    echo 'Your change detections are valid until <strong>' . date('d/m/Y', $end_of_trial) . '</strong>.<br>Please upgrade your account to renew your balance afterwards.';
-                } else {
-                    // Calculate next renew date
-                    $renew_current_month = mktime(0, 0, 0, date('m'), date('d', $subscription_started_at), date('Y'));
-                    $today = date('U');
-
-                    if ($today > $renew_current_month) {
-                        $renew_date = strtotime('+1 month', $renew_current_month);
-                    } else {
-                        $renew_date = $renew_current_month;
-                    }
-
-                    echo 'Next renew: ' . date('d/m/Y', $renew_date);
-                }
+                echo 'Next renew: ' . date('d/m/Y', $renew_date);
                 echo '<p>Change detections in this period: ' . $limit . '<br>';
                 echo 'Used change detections: ' . $comp_usage . '<br>';
                 echo 'Available change detections in this period: ' . $available_compares . '</p>';
@@ -442,41 +462,6 @@ function webchangedetector_init()
                 echo $wcd->get_upgrade_options($account_details['plan_id']);
             }
             echo $wcd->get_api_token_form($api_token);
-            break;
-
-        /*******************
-         * Help
-         *******************/
-        case 'help':
-
-            echo '<h2>How it works:</h2>';
-            echo '<p>
-                <strong>Update Change Detection</strong><br>
-                Here you can select the pages of your website and manually take the screenshots.
-                Use the Update Change Detection when you perform updates on your website. Run a Pre Update Change Detection
-                before and a Post Update Change Detection after the update and you will see if there are differences on the selected pages.
-                The Post Update Change Detection automatically compares the screenshots with the latest Pre Change Detection Screenshots.
-
-                <ol>
-                    <li>Select the urls and the devices (desktop and / or mobile) you want to take a screenshot.</li>
-                    <li>Hit the Button "Pre Update Change Detection". The Screenshots might take couple of minutes.
-                        You can see the current status in the tab "Queue".</li>
-                    <li>After updating your website, press the button "Post Update Change Detection. </li>
-                    <li>When the Update Change Detections are finished, you can see the results below the settings at "Latest Change Detections"</li>
-                </ol>
-                </p>
-                <p>
-                <strong>Auto Change Detection</strong><br>
-                Use the Auto Change Detection to automatically do a change detection in a specific interval.
-                When there are differences in a change detection, you will automatically receive an alert email.
-                <ol>
-                    <li>Select the urls you want to auto detect.</li>
-                    <li>Select the interval and the hour of day for the first screenshot to be taken. Please be aware
-                     that change detections will be only performed when you have enough credit available.</li>
-                    <li>You find all auto detections below the settings</li>
-                </ol>
-                At the Tab "Settings" you have an overview of your usage and limits. You can also up- or downgrade your package.
-                </p>';
             break;
 
         /*****************

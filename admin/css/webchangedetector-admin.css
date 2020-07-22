@@ -83,7 +83,7 @@
     background: #fff;
     border-radius: 3px;
     border: 1px solid #276ECC;
-    margin: 15px auto;
+    margin: 0 auto 15px;
     padding: 0;
 }
 
@@ -110,7 +110,6 @@
 }
 .webchangedetector .ui-accordion .ui-accordion-content {
     border-radius: 3px;
-    padding: 20px;
 }
 
 .webchangedetector .ui-accordion .ui-accordion-icons {
@@ -119,6 +118,50 @@
 
 .webchangedetector .ui-accordion .ui-accordion-header .ui-accordion-header-icon {
     display: none;
+}
+
+.webchangedetector .action-container {
+    float: left;
+    margin-right: 20px;
+    width: calc(100% - 400px);
+    min-width: 400px;
+}
+
+.webchangedetector .sidebar {
+    float:left;
+    width: 300px;
+
+}
+
+.webchangedetector .help-box,
+.webchangedetector .account-box {
+    background: #276ECC;
+    color: #fff;
+    padding: 0 10px;
+    display: block;
+    border: 1px solid #fff;
+    box-shadow: 0 0 10px #000;
+    margin-bottom: 20px;
+}
+
+.webchangedetector .help-box h2,
+.webchangedetector .help-box h3,
+.webchangedetector .account-box h2,
+.webchangedetector .account-box h3{
+    color: #fff;
+}
+.webchangedetector .account-box a.account {
+    border-color: #fff;
+    float:right;
+}
+.webchangedetector .account-box a.account:hover{
+    background: rgba( 255,255,255,0.7);
+    border-color:#fff;
+}
+
+
+.webchangedetector .help-box h3 {
+    font-weight: 400;
 }
 
 .webchangedetector .queue-status-open {
