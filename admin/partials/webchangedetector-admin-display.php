@@ -163,6 +163,8 @@ function webchangedetector_init()
     if( $website_details['enable_limits']) {
         $comp_usage = $website_details['usage'];
         $limit = $website_details['sc_limit'];
+        $account_details['usage'] = $comp_usage; // used in dashboard
+        $account_details['plan']['sc_limit'] = $limit; // used in dashboard
         $available_compares = $limit - (int) $comp_usage;
     }
 
