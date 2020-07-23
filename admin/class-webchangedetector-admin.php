@@ -645,7 +645,7 @@ class WebChangeDetector_Admin
         if ( $auto_group['enabled']) {
             $amount_auto_detection += 24 / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * 30;
         }
-
+        ?>
         <div class="dashboard">
             <div>
                 <div class="box-half no-border">
