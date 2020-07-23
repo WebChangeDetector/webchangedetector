@@ -161,7 +161,7 @@ function webchangedetector_init()
     $available_compares = $limit - (int) $comp_usage;
 
     if( $website_details['enable_limits']) {
-        //$comp_usage = $website_details['usage']
+        $comp_usage = $website_details['usage'];
         $limit = $website_details['sc_limit'];
         $available_compares = $limit - (int) $comp_usage;
     }
