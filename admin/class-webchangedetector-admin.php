@@ -280,6 +280,13 @@ class WebChangeDetector_Admin
                 ?>
                 <tr>
                     <td>
+                        <strong>
+                        <?php
+                        if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
+                            echo $compare['screenshot1']['queue']['url']['html_title'] . '<br>';
+                        }
+                        ?>
+                        </strong>
                         <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
                         <?= $compare['screenshot2']['monitoring'] ? $this->get_device_icon('auto-group') : $this->get_device_icon('update-group')?>
                         <?= $compare['screenshot2']['monitoring'] ? 'Auto Detection' : 'Update Detection' ?>
