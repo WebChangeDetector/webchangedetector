@@ -141,7 +141,7 @@ function webchangedetector_init()
     // Start view
     echo '<div class="wrap">';
     echo '<div class="webchangedetector">';
-    echo '<h1>Web Change Detector</h1>';
+    echo '<h1>WebChangeDetector</h1>';
 
     $wcd->tabs();
 
@@ -171,6 +171,10 @@ function webchangedetector_init()
 
     switch ($tab) {
 
+        case'dashboard':
+            $wcd->get_dashboard_view($account_details, $group_id, $monitoring_group_id);
+            break;
+
         /********************
          * Change Detections
          ********************/
@@ -178,23 +182,44 @@ function webchangedetector_init()
         case 'change-detections':
             echo '<h2>Latest Change Detections</h2>';
 
+            $limit_days = null;
             if (isset($postdata['limit_days'])) {
                 $limit_days = $postdata['limit_days'];
-            } else {
-                $limit_days = 3;
+            }
+            $group_type = null;
+            if (isset($postdata['group_type'])) {
+                $group_type = $postdata['group_type'];
             }
 
-            $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days);
+            $difference_only = null;
+            if (isset($postdata['difference_only'])) {
+                $difference_only = $postdata['difference_only'];
+            }
+
+            $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days, $group_type, $difference_only);
             ?>
             <div class="action-container">
                 <form method="post">
                     <select name="limit_days">
+                        <option value="" <?= $limit_days == null ? 'selected' : '' ?>> Show all</option>
                         <option value="3" <?= $limit_days == 3 ? 'selected' : '' ?>>Last 3 days</option>
                         <option value="7" <?= $limit_days == 7 ? 'selected' : '' ?>>Last 7 days</option>
                         <option value="14" <?= $limit_days == 14 ? 'selected' : '' ?>>Last 14 days</option>
                         <option value="30"<?= $limit_days == 30 ? 'selected' : '' ?>>Last 30 days</option>
                         <option value="60"<?= $limit_days == 60 ? 'selected' : '' ?>>Last 60 days</option>
                     </select>
+
+                    <select name="group_type" >
+                        <option value="" <?= ! $group_type ? 'selected' : '' ?>>All Change Detections</option>
+                        <option value="update" <?= $group_type == 'update' ? 'selected' : '' ?>>Only Update Change Detections</option>
+                        <option value="auto" <?= $group_type == 'auto' ? 'selected' : '' ?>>Only Auto Change Detections</option>
+                    </select>
+
+                    <select name="difference_only" class="js-dropdown">
+                        <option value="1" <?= $difference_only ? 'selected' : '' ?>>With changes</option>
+                        <option value="0" <?= ! $difference_only ? 'selected' : '' ?>>All detections</option>
+                    </select>
+
                     <input class="button" type="submit" value="Filter">
                 </form>
                 <?php
@@ -229,18 +254,21 @@ function webchangedetector_init()
 
             <h2>Select Update Change Detection URLs</h2>
             <div class="action-container">
+                <h2>Do the magic</h2>
+                <p>Currently selected:
+                    <strong>
+                        <?= $groups_and_urls['amount_selected_urls'] ?>
+                        Change Detections
+                    </strong>
+                </p>
                 <?php
                 $wcd->get_url_settings($groups_and_urls);
-                if (! $website_details['enable_limits']) {
+                if ( $website_details['enable_limits']) {
                     ?>
-                    <h2>Do the magic</h2>
-                    <p>Currently selected:
-                        <strong>
-                            <?= $groups_and_urls['amount_selected_urls'] ?>
-                            Change Detections
-                        </strong>
-                    </p>
-
+                    <p><strong>Creating Update Change Detections is disabled.</strong></p>
+                    <?php
+                } else {
+                    ?>
                     <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">
                     <input type="hidden" value="take_screenshots" name="wcd_action">
                     <input type="hidden" name="sc_type" value="pre">
@@ -252,9 +280,9 @@ function webchangedetector_init()
                     <input type="hidden" name="sc_type" value="post">
                     <input type="submit" value="Create Change Detections" class="button">
                     </form>
-
                 <?php } ?>
                 </div>
+
                 <div class="sidebar">
                     <div class="account-box">
                         <?php include "templates/account.php"; ?>
@@ -456,7 +484,6 @@ function webchangedetector_init()
          ****************/
         case 'show-compare':
             echo '<h1>The Change Detection Images</h1>';
-            $wcd_url = mm_get_app_url();
 
             /* Why do we need an extra css file from the api?
              * function change_detection_css()
@@ -465,7 +492,7 @@ function webchangedetector_init()
             }
             add_action('admin_enqueue_scripts', 'change_detection_css');*/
 
-            $public_link = $wcd_url . '/show-change-detection/?token=' . $_GET['token'];
+            $public_link = mm_get_app_url() . 'show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '" target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';

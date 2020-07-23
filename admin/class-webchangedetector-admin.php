@@ -190,35 +190,44 @@ class WebChangeDetector_Admin
             return '<span class="group_icon ' . $class . ' dashicons dashicons-smartphone"></span>';
         }
         if ($icon == 'page') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-media-default"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-media-default"></span>';
         }
         if ($icon == 'change-detections') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-welcome-view-site"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-view-site"></span>';
         }
         if ($icon == 'dashboard') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-admin-home"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-home"></span>';
         }
         if ($icon == 'logs') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-menu-alt"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-menu-alt"></span>';
         }
         if ($icon == 'settings') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-admin-generic"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-generic"></span>';
         }
         if ($icon == 'website-settings') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-welcome-widgets-menus"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-widgets-menus"></span>';
         }
         if( $icon == 'help') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons dashicons-editor-help"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-editor-help"></span>';
+        }
+        if($icon == 'auto-group') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-video-alt"></span>';
+        }
+        if($icon == 'update-group') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-camera"></span>';
         }
 
         return '';
     }
 
-    public function get_compares($group_ids, $limit_latest_compares = 7)
+    public function get_compares($group_ids, $limit_days = null, $group_type = null, $difference_only = null, $limit_compares = null)
     {
         $args = array(
             'action' => 'get_compares_by_group_ids',
-            'limit_days' => $limit_latest_compares,
+            'limit_days' => $limit_days,
+            'group_type' => $group_type,
+            'difference_only' => $difference_only,
+            'limit_compares' => $limit_compares,
             'group_ids' => json_encode(array( $group_ids ))
         );
         $compares = $this->mm_api($args);
@@ -229,10 +238,6 @@ class WebChangeDetector_Admin
         }
 
         foreach ($compares as $compare) {
-            // Only show change detections with a difference
-            if (! $compare['difference_percent']) {
-                continue;
-            }
 
             // Make sure to only show urls from the website. Has to fixed in api.
             if (strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) === false) {
@@ -246,32 +251,55 @@ class WebChangeDetector_Admin
 
     public function compare_view($compares)
     {
+        ?>
+            <table class="toggle" style="width: 100%">
+                <tr>
+                    <th width="auto">URL</th>
+                    <th width="150px">Compared Screenshots</th>
+                    <th width="50px">Difference</th>
+                    <th>Show</th>
+                </tr>
+            <?php
         if (empty($compares)) {
-            echo '<p>There are no change detections to show yet...</p>';
+            ?>
+            <tr>
+                <td colspan="4" style="text-align: center">
+                    <strong>There are no change detections yet.</strong
+                </td>
+            </tr>
+            <?php
         } else {
-            echo '<table><tr class="even-tr-white"><th>URL</th><th>Compared Screenshots</th><th>Difference</th><th>Compare Link</th></tr>';
-            $change_detection_added = false;
+
             foreach ($compares as $compare) {
-                echo '<tr class="even-tr-white">';
-                echo '<td>' . $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] . '</td>';
-                echo '<td>' . date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' . date('d/m/Y H:i', $compare['image2_timestamp']) . '</td>';
+
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
                 } else {
                     $class = 'no-difference';
                 }
-                echo '<td class="' . $class . '">' . $compare['difference_percent'] . ' %</td>';
-                echo '<td><a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=' . $compare['token'] . '" class="button">Show</a>';
-                echo '</tr>';
-                $change_detection_added = true;
-            }
-
-            echo '</table>';
-
-            if (! $change_detection_added) {
-                echo '<p>There are no change detections to show yet...</p>';
+                ?>
+                <tr>
+                    <td>
+                        <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
+                        <?= $compare['screenshot2']['monitoring'] ? $this->get_device_icon('auto-group') : $this->get_device_icon('update-group')?>
+                        <?= $compare['screenshot2']['monitoring'] ? 'Auto Detection' : 'Update Detection' ?>
+                    </td>
+                    <td>
+                        <?= date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' .
+                            date('d/m/Y H:i', $compare['image2_timestamp']) ?>
+                    </td>
+                    <td class="<?= $class ?>"><?= $compare['difference_percent'] ?>%</td>
+                    <td>
+                        <a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=<?= $compare['token'] ?>"
+                           class="button">
+                            Show
+                        </a>
+                    </td>
+                </tr>
+                <?php
             }
         }
+         echo '</table>';
     }
 
     public function get_queue()
@@ -459,11 +487,10 @@ class WebChangeDetector_Admin
                 <div class="mm_accordion_title">
                     <h3>
                         <?= ucfirst($post_type) ?><br>
-
                     </h3>
                     <div class="mm_accordion_content">
 
-                <table>
+                <table class="no-margin">
                     <tr>
                         <th><?= $this->get_device_icon('desktop') ?></th>
                         <th><?= $this->get_device_icon('mobile') ?></th>
@@ -579,14 +606,16 @@ class WebChangeDetector_Admin
 
     public function tabs()
     {
-        $active_tab = 'change-detections'; // init
+        $active_tab = 'dashboard'; // init
 
         if (isset($_GET['tab'])) {
             $active_tab = $_GET['tab'];
         } ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
-
+                <a href="?page=webchangedetector&tab=dashboard"
+                   class="nav-tab <?php echo $active_tab == 'dashboard' ? 'nav-tab-active' : ''; ?>">
+                   Dashboard</a>
                 <a href="?page=webchangedetector&tab=change-detections"
                    class="nav-tab <?php echo $active_tab == 'change-detections' ? 'nav-tab-active' : ''; ?>">
                     Change Detections</a>
@@ -603,6 +632,83 @@ class WebChangeDetector_Admin
             </h2>
         </div>
 
+        <?php
+    }
+
+    public function get_dashboard_view($client_account, $update_group_id, $auto_group_id)
+    {
+        $recent_comparisons = $this->get_compares([$update_group_id, $auto_group_id], null, null, true, 10 );
+
+        $auto_group = $this->get_urls_of_group($auto_group_id);
+        $amount_auto_detection = 0;
+        $month_in_seconds = 60*60*24*30;
+        if ( $auto_group['enabled']) {
+            $amount_auto_detection += 24 / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * 30;
+        }
+
+        <div class="dashboard">
+            <div>
+                <div class="box-half no-border">
+                    <a class="box" href="?page=webchangedetector&tab=update-settings">
+                        <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
+                            <?= $this->get_device_icon('update-group') ?>
+                        </div>
+                        <div style="float: left; max-width: 350px;">
+                            <strong>Update Change Detection</strong><br>
+                            Create change detections manually
+                        </div>
+                        <div class="clear"></div>
+                    </a>
+                    <a class="box" href="?page=webchangedetector&tab=auto-settings">
+                        <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
+                            <?= $this->get_device_icon('auto-group') ?>
+                        </div>
+                        <div style="float: left; max-width: 350px;">
+                            <strong>Auto Change Detection</strong><br>
+                            Create automatic change detections
+                        </div>
+                        <div class="clear"></div>
+                    </a>
+                    <a class="box" href="?page=webchangedetector&tab=change-detections">
+                        <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
+                            <?= $this->get_device_icon('change-detections') ?>
+                        </div>
+                        <div style="float: left; max-width: 350px;">
+                            <strong>Show Change Detections</strong><br>
+                            Check all your change detections
+                        </div>
+                        <div class="clear"></div>
+                    </a>
+
+                </div>
+
+                <div class="box-half box-plain">
+                    <h2 ><strong><?= number_format($client_account['usage'] / $client_account['plan']['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
+                    <hr>
+                    <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['plan']['sc_limit'] ?></p>
+
+                    <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
+
+                    <p><strong>Auto change detections until renewal:</strong>
+                        <?= number_format($amount_auto_detection / $month_in_seconds * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
+
+                    <p><strong>Renewal on:</strong> <?= date('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+
+            <div>
+                <h2>Latest Change Detections</h2>
+                <?php
+                $this->compare_view($recent_comparisons);
+                if (! empty($recent_comparisons)) { ?>
+                    <a class="button" href="?page=webchangedetector&tab=change-detections">Show Change Detections</a>
+                <?php } ?>
+            </div>
+
+            <div class="clear"></div>
+        </div>
         <?php
     }
 
