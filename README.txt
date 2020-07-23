@@ -41,6 +41,14 @@ Linting all files with `$ ./lint-check.sh`:
 * `$ php -l admin/partials/webchangedetector-admin-display.php`
 * `$ eslint admin/js/webchangedetector-admin.js`
 
+=== Git Hooks ===
+Create a new file called `pre-commit` in `.git/hooks`:
+
+```sh
+#!/bin/sh
+./lint-check.sh
+```
+
 == Changelog ==
 = 1.0.8 =
 * Redesign selecting urls
