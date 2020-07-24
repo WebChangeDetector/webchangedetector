@@ -7,7 +7,7 @@
         compared versions, and how big the difference is.
     </p>
     <p>
-        By clicking “Show”, you can see the screenshots.
+        By clicking "Show", you can see the screenshots.
     <ul>
         <li>Left: The reference screenshot.</li>
         <li>Right: The new screenshot.</li>

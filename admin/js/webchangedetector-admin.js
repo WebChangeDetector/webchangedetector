@@ -31,6 +31,21 @@
 	$( document ).ready(function() {
 		$(".accordion").accordion({header: "h3", collapsible: true, active: false});
 		$(".accordion").last().accordion("option", "icons", true);
+
+		// Enable / disable settings for auto change detection
+		showAutoSettings();
+		$("#auto-enabled").change(function() {
+			showAutoSettings()
+		});
+
+		function showAutoSettings() {
+			const enabledSelect = $("#auto-enabled");
+			if(enabledSelect.val() === "0") {
+				$(".auto-setting").hide();
+			} else {
+				$(".auto-setting").show();
+			}
+		}
 	});
 
 })( jQuery );

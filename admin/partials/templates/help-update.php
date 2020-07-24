@@ -13,7 +13,7 @@
         </li>
 
         <li>
-            After updating your website, click “Create change detections” to take another screenshot and compare
+            After updating your website, click "Create change detections" to take another screenshot and compare
             with your reference.
         </li>
         <li>

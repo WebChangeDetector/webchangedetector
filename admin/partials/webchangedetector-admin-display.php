@@ -55,9 +55,17 @@ function webchangedetector_init()
         }
     }
 
-    // The account doesn't have an api_token or activation_key
+    // The account doesn't have an api_token
     if (! $api_token) {
         echo $wcd->get_no_account_page();
+        return false;
+    }
+
+    $account_details = $wcd->account_details();
+
+    // Check if account is activated and if the api key is authorized
+    if($account_details === 'activate account' || $account_details === 'unauthorized') {
+        $wcd->show_activate_account($account_details);
         return false;
     }
 
@@ -92,7 +100,6 @@ function webchangedetector_init()
                 break;
 
             case 'post_urls':
-
                 // Get active posts from post data
                 $active_posts = array();
                 $count_selected = 0;
@@ -136,6 +143,10 @@ function webchangedetector_init()
                 }
                 break;
         }
+
+        // Get updated account and website data
+        $account_details = $wcd->account_details();
+        $website_details = $wcd->get_website_details();
     }
 
     // Start view
@@ -151,9 +162,6 @@ function webchangedetector_init()
     } else {
         $tab = 'change-detections';
     }
-
-    $account_details = $wcd->account_details();
-    $website_details = $wcd->get_website_details();
 
     // Account credits
     $comp_usage = $account_details['usage'];
@@ -218,7 +226,7 @@ function webchangedetector_init()
                     </select>
 
                     <select name="difference_only" class="js-dropdown">
-                        <option value="1" <?= $difference_only ? 'selected' : '' ?>>With changes</option>
+                        <option value="1" <?= $difference_only ? 'selected' : '' ?>>With difference</option>
                         <option value="0" <?= ! $difference_only ? 'selected' : '' ?>>All detections</option>
                     </select>
 
@@ -337,7 +345,7 @@ function webchangedetector_init()
                     <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
                 <label for="enabled">Enabled</label>
-                <select name="enabled">
+                <select name="enabled" id="auto-enabled">
                     <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
                         Yes
                     </option>
@@ -347,8 +355,8 @@ function webchangedetector_init()
                 </select>
                 </p>
                 <p>
-                    <label for="hour_of_day">Hour of the day</label>
-                    <select name="hour_of_day">
+                    <label for="hour_of_day" class="auto-setting">Hour of the day</label>
+                    <select name="hour_of_day" class="auto-setting">
                         <?php
                         for ($i = 0; $i < 24; $i++) {
                             if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
@@ -362,8 +370,8 @@ function webchangedetector_init()
                     </select>
                 </p>
                 <p>
-                    <label for="interval_in_h">Interval in hours</label>
-                    <select name="interval_in_h">
+                    <label for="interval_in_h" class="auto-setting">Interval in hours</label>
+                    <select name="interval_in_h" class="auto-setting">
                         <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '1' ? 'selected' : ''; ?>>
                             Every 1 hour (720 Change Detections / URL / month)
                         </option>
@@ -382,10 +390,15 @@ function webchangedetector_init()
                     </select>
                 </p>
                 <p>
-                    <label for="alert_emails">Email addresses for alerts</label>
-                    <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;"
+                    <label for="alert_emails" class="auto-setting">
+                        Alert email addresses
+                    </label>
+                    <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;" class="auto-setting"
                            value="<?= isset($groups_and_urls['alert_emails']) ? implode(',', $groups_and_urls['alert_emails']) : '' ?>">
-
+                    <br>
+                    <label for="alert_emails" class="auto-setting">
+                    (Separate more email addresses with ",")
+                    </label>
                 </p>
                     <input type="submit" class="button" value="Save" >
                 </form>
