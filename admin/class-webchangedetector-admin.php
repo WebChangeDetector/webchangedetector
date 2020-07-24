@@ -207,13 +207,13 @@ class WebChangeDetector_Admin
         if ($icon == 'website-settings') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-widgets-menus"></span>';
         }
-        if( $icon == 'help') {
+        if ($icon == 'help') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-editor-help"></span>';
         }
-        if($icon == 'auto-group') {
+        if ($icon == 'auto-group') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-video-alt"></span>';
         }
-        if($icon == 'update-group') {
+        if ($icon == 'update-group') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-camera"></span>';
         }
 
@@ -269,23 +269,19 @@ class WebChangeDetector_Admin
             </tr>
             <?php
         } else {
-
             foreach ($compares as $compare) {
-
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
                 } else {
                     $class = 'no-difference';
-                }
-                ?>
+                } ?>
                 <tr>
                     <td>
                         <strong>
                         <?php
                         if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
                             echo $compare['screenshot1']['queue']['url']['html_title'] . '<br>';
-                        }
-                        ?>
+                        } ?>
                         </strong>
                         <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
                         <?= $compare['screenshot2']['monitoring'] ? $this->get_device_icon('auto-group') : $this->get_device_icon('update-group')?>
@@ -306,7 +302,7 @@ class WebChangeDetector_Admin
                 <?php
             }
         }
-         echo '</table>';
+        echo '</table>';
     }
 
     public function get_queue()
@@ -644,15 +640,14 @@ class WebChangeDetector_Admin
 
     public function get_dashboard_view($client_account, $update_group_id, $auto_group_id)
     {
-        $recent_comparisons = $this->get_compares([$update_group_id, $auto_group_id], null, null, true, 10 );
+        $recent_comparisons = $this->get_compares([$update_group_id, $auto_group_id], null, null, true, 10);
 
         $auto_group = $this->get_urls_of_group($auto_group_id);
         $amount_auto_detection = 0;
         $month_in_seconds = 60*60*24*30;
-        if ( $auto_group['enabled']) {
+        if ($auto_group['enabled']) {
             $amount_auto_detection += 24 / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * 30;
-        }
-        ?>
+        } ?>
         <div class="dashboard">
             <div>
                 <div class="box-half no-border">
@@ -709,7 +704,7 @@ class WebChangeDetector_Admin
                 <h2>Latest Change Detections</h2>
                 <?php
                 $this->compare_view($recent_comparisons);
-                if (! empty($recent_comparisons)) { ?>
+        if (! empty($recent_comparisons)) { ?>
                     <a class="button" href="?page=webchangedetector&tab=change-detections">Show Change Detections</a>
                 <?php } ?>
             </div>
@@ -758,7 +753,9 @@ class WebChangeDetector_Admin
 
         $decodedBody = json_decode($body, (bool) JSON_OBJECT_AS_ARRAY);
 
-        if (is_array($decodedBody) &&
+        // `message` is part of the Laravel Stacktrace
+        if ($responseCode === HTTP_BAD_REQUEST &&
+            is_array($decodedBody) &&
             array_key_exists('message', $decodedBody) &&
             $decodedBody['message'] === 'plugin_update_required') {
             echo '<div class="error notice">
@@ -895,12 +892,16 @@ if (! defined('HTTP_OK')) {
     define('HTTP_OK', 200);
 }
 
-if (! defined('HTTP_INTERNAL_SERVER_ERROR')) {
-    define('HTTP_INTERNAL_SERVER_ERROR', 500);
-}
-
 if (! defined('HTTP_MULTIPLE_CHOICES')) {
     define('HTTP_MULTIPLE_CHOICES', 300);
+}
+
+if (! defined('HTTP_BAD_REQUEST')) {
+    define('HTTP_BAD_REQUEST', 400);
+}
+
+if (! defined('HTTP_INTERNAL_SERVER_ERROR')) {
+    define('HTTP_INTERNAL_SERVER_ERROR', 500);
 }
 
 if (! defined('PRODUCT_ID_FREE')) {
