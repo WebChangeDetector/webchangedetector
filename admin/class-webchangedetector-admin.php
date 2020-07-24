@@ -687,7 +687,7 @@ class WebChangeDetector_Admin
                 <div class="box-half box-plain">
                     <h2 ><strong><?= number_format($client_account['usage'] / $client_account['plan']['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
                     <hr>
-                    <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['plan']['sc_limit'] ?></p>
+                    <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
 
                     <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
 
@@ -716,7 +716,7 @@ class WebChangeDetector_Admin
 
     public function show_activate_account($error)
     {
-        if( $error === 'activate account') { ?>
+        if ($error === 'activate account') { ?>
             <div class="error notice"></span>
                 Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.
                 <p>You cannot find the email? Please also check your spam folder.</p>
@@ -724,7 +724,7 @@ class WebChangeDetector_Admin
         <?php
         }
 
-        if( $error === 'unauthorized') { ?>
+        if ($error === 'unauthorized') { ?>
             <div class="error notice"><span class="dashicons dashicons-warning"></span>
                 The API token is not valid. Please reset the API token and enter a valid one.
             </div>
@@ -759,6 +759,7 @@ class WebChangeDetector_Admin
         $post['wp_plugin_version'] = $this->version; // API will check this to check compatability
         // there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;)
         $post['domain'] = $_SERVER['SERVER_NAME'];
+        $post['wp_id'] = get_current_user_id();
 
         $args = array(
             'body'  => $post,
@@ -790,7 +791,7 @@ class WebChangeDetector_Admin
             return 'activate account';
         }
 
-        if($responseCode === 401) {
+        if ($responseCode === 401) {
             return 'unauthorized';
         }
 

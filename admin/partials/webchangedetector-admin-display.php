@@ -64,7 +64,7 @@ function webchangedetector_init()
     $account_details = $wcd->account_details();
 
     // Check if account is activated and if the api key is authorized
-    if($account_details === 'activate account' || $account_details === 'unauthorized') {
+    if ($account_details === 'activate account' || $account_details === 'unauthorized') {
         $wcd->show_activate_account($account_details);
         return false;
     }
@@ -165,15 +165,12 @@ function webchangedetector_init()
 
     // Account credits
     $comp_usage = $account_details['usage'];
-    $limit = $account_details['plan']['sc_limit'];
-    $available_compares = $limit - (int) $comp_usage;
+    $limit = $account_details['sc_limit'];
+    $available_compares = $account_details['available_compares'];
 
-    if( $website_details['enable_limits']) {
-        $comp_usage = $website_details['usage'];
-        $limit = $website_details['sc_limit'];
+    if ($website_details['enable_limits']) {
         $account_details['usage'] = $comp_usage; // used in dashboard
         $account_details['plan']['sc_limit'] = $limit; // used in dashboard
-        $available_compares = $limit - (int) $comp_usage;
     }
 
     // Renew date
@@ -239,10 +236,10 @@ function webchangedetector_init()
             </div>
             <div class="sidebar">
                 <div class="account-box">
-                    <?php include "templates/account.php"; ?>
+                    <?php include 'templates/account.php'; ?>
                 </div>
                 <div class="help-box">
-                    <?php include "templates/help-change-detection.php"; ?>
+                    <?php include 'templates/help-change-detection.php'; ?>
                 </div>
             </div>
             <?php
@@ -273,7 +270,7 @@ function webchangedetector_init()
                 </p>
                 <?php
                 $wcd->get_url_settings($groups_and_urls);
-                if ( $website_details['enable_limits']) {
+                if ($website_details['enable_limits']) {
                     ?>
                     <p><strong>Creating Update Change Detections is disabled.</strong></p>
                     <?php
@@ -290,15 +287,16 @@ function webchangedetector_init()
                     <input type="hidden" name="sc_type" value="post">
                     <input type="submit" value="Create Change Detections" class="button">
                     </form>
-                <?php } ?>
+                <?php
+                } ?>
                 </div>
 
                 <div class="sidebar">
                     <div class="account-box">
-                        <?php include "templates/account.php"; ?>
+                        <?php include 'templates/account.php'; ?>
                     </div>
                     <div class="help-box">
-                        <?php include "templates/help-update.php"; ?>
+                        <?php include 'templates/help-update.php'; ?>
                     </div>
                 </div>
                 <div class="clear"></div>
@@ -405,10 +403,10 @@ function webchangedetector_init()
             </div>
             <div class="sidebar">
                 <div class="account-box">
-                    <?php include "templates/account.php"; ?>
+                    <?php include 'templates/account.php'; ?>
                 </div>
                 <div class="help-box">
-                    <?php include "templates/help-auto.php"; ?>
+                    <?php include 'templates/help-auto.php'; ?>
                 </div>
             </div>
 
@@ -463,10 +461,10 @@ function webchangedetector_init()
             </div>
             <div class="sidebar">
                 <div class="account-box">
-                    <?php include "templates/account.php"; ?>
+                    <?php include 'templates/account.php'; ?>
                 </div>
                 <div class="help-box">
-                    <?php include "templates/help-logs.php"; ?>
+                    <?php include 'templates/help-logs.php'; ?>
                 </div>
             </div>
             <?php
