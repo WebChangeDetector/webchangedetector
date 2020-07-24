@@ -25,7 +25,7 @@ function webchangedetector_init()
         switch ($postdata['wcd_action']) {
             case 'reset_api_token':
                 $wcd->delete_website();
-                delete_option('webchangedetector_api_token');
+                delete_option(WP_OPTION_KEY_API_TOKEN);
                 break;
 
             case 'save_api_token':
@@ -37,21 +37,21 @@ function webchangedetector_init()
                     return false;
                 }
 
-                update_option('webchangedetector_api_token', $postdata['api_token']);
+                update_option(WP_OPTION_KEY_API_TOKEN, $postdata['api_token']);
                 $wcd->sync_posts();
 
                 break;
         }
     }
 
-    $api_token = get_option('webchangedetector_api_token');
+    $api_token = get_option(WP_OPTION_KEY_API_TOKEN);
 
     // Change api token option name from V1.0.7
     if (! $api_token) {
         $api_token = get_option('webchangedetector_api_key');
         if (! $api_token) {
             delete_option('webchangedetector_api_key');
-            add_option('webchangedetector_api_token', $api_token, '', false);
+            add_option(WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
         }
     }
 

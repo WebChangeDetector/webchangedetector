@@ -577,7 +577,7 @@ class WebChangeDetector_Admin
 
     public function get_no_account_page($api_token = '')
     {
-        delete_option('webchangedetector_api_token');
+        delete_option(WP_OPTION_KEY_API_TOKEN);
 
         $output = '<div class="webchangedetector">
 		<h1>Web Change Detector</h1>
@@ -731,7 +731,7 @@ class WebChangeDetector_Admin
         <?php
         }
 
-        echo $this->get_api_token_form(get_option('webchangedetector_api_token', true));
+        echo $this->get_api_token_form(get_option(WP_OPTION_KEY_API_TOKEN, true));
         return true;
     }
 
@@ -751,7 +751,7 @@ class WebChangeDetector_Admin
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = get_option('webchangedetector_api_token');
+        $api_token = get_option(WP_OPTION_KEY_API_TOKEN);
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case
@@ -932,4 +932,8 @@ if (! defined('HTTP_INTERNAL_SERVER_ERROR')) {
 
 if (! defined('PRODUCT_ID_FREE')) {
     define('PRODUCT_ID_FREE', 57);
+}
+
+if (! defined('WP_OPTION_KEY_API_TOKEN')) {
+    define('WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
