@@ -714,6 +714,27 @@ class WebChangeDetector_Admin
         <?php
     }
 
+    public function show_activate_account($error)
+    {
+        if( $error === 'activate account') { ?>
+            <div class="error notice"></span>
+                Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.
+                <p>You cannot find the email? Please also check your spam folder.</p>
+            </div>
+        <?php
+        }
+
+        if( $error === 'unauthorized') { ?>
+            <div class="error notice"><span class="dashicons dashicons-warning"></span>
+                The API token is not valid. Please reset the API token and enter a valid one.
+            </div>
+        <?php
+        }
+
+        echo $this->get_api_token_form(get_option('webchangedetector_api_token', true));
+        return true;
+    }
+
     /**
      * Call to API
      *
@@ -767,6 +788,10 @@ class WebChangeDetector_Admin
 
         if ($responseCode === HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
             return 'activate account';
+        }
+
+        if($responseCode === 401) {
+            return 'unauthorized';
         }
 
         if (! mm_http_successful($responseCode)) {
