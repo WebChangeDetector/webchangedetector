@@ -160,7 +160,7 @@ function webchangedetector_init()
     if (isset($get['tab'])) {
         $tab = $get['tab'];
     } else {
-        $tab = 'change-detections';
+        $tab = 'dashboard';
     }
 
     // Account credits

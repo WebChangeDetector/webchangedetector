@@ -35,7 +35,7 @@
 		// Enable / disable settings for auto change detection
 		showAutoSettings();
 		$("#auto-enabled").change(function() {
-			showAutoSettings()
+			showAutoSettings();
 		});
 
 		function showAutoSettings() {
