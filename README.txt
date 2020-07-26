@@ -1,8 +1,8 @@
 === WebChangeDetector ===
-Contributors: Mike.Miler
+Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
-Tested up to: 5.4.1
+Tested up to: 5.4.2
 Stable tag: 1.1.0
 Requires PHP: 5.6
 License: GPLv2 or later
