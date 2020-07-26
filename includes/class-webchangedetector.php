@@ -69,11 +69,11 @@ class WebChangeDetector
      */
     public function __construct()
     {
-        /*if (defined('WebChangeDetector_VERSION')) {
+        if (defined('WebChangeDetector_VERSION')) {
             $this->version = WebChangeDetector_VERSION;
         } else {
             $this->version = '1.0.0';
-        }*/
+        }
         $this->plugin_name = 'webchangedetector';
 
         $this->load_dependencies();

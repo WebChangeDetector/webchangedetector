@@ -39,7 +39,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.0.8';
+    private $version = '1.1.0';
 
     /**
      * Initialize the class and set its properties.
