@@ -685,7 +685,7 @@ class WebChangeDetector_Admin
                 </div>
 
                 <div class="box-half box-plain">
-                    <h2 ><strong><?= number_format($client_account['usage'] / $client_account['plan']['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
+                    <h2 ><strong><?= number_format($client_account['usage'] / $client_account['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
                     <hr>
                     <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
 
