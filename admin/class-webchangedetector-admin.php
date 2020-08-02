@@ -512,7 +512,7 @@ class WebChangeDetector_Admin
 
                     // Check if current WP post ID is in synced_posts and get the url_id
                     foreach ($synced_posts as $synced_post) {
-                        if ($synced_post['cms_resource_id'] == $post->ID) {
+                        if (!empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
                             $url_id = $synced_post['url_id'];
                         }
                     }
