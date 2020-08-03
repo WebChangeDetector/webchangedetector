@@ -39,7 +39,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.1.0';
+    private $version = '1.1.1';
 
     /**
      * Initialize the class and set its properties.
@@ -412,12 +412,21 @@ class WebChangeDetector_Admin
         return $output;
     }
 
-    public function create_group()
+    /**
+     * Creates Websites and Groups
+     *
+     * NOTE API Token needs to be sent here because it's not in the options yet
+     * at Website creation
+     *
+     * @param string $api_token
+     */
+    public function create_group($api_token)
     {
         // Create group if it doesn't exist yet
         $args = array(
             'action' => 'add_website_groups',
             'cms' => 'wordpress',
+            'api_token' => $api_token
             // domain sent at mm_api
         );
 
@@ -751,7 +760,7 @@ class WebChangeDetector_Admin
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = get_option(WP_OPTION_KEY_API_TOKEN);
+        $api_token = $post['api_token'] ?? get_option(WP_OPTION_KEY_API_TOKEN);
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case

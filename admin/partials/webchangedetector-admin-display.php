@@ -30,7 +30,7 @@ function webchangedetector_init()
 
             case 'save_api_token':
 
-                $website = $wcd->create_group();
+                $website = $wcd->create_group($postdata['api_token']);
 
                 if (empty($website)) {
                     echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
