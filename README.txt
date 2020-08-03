@@ -33,7 +33,7 @@ Here a few features of WebChangeDetector:
 == Changelog ==
 
 = 1.1.1 =
-* Fix adding Websites
+* Fix initial sync of urls
 
 = 1.1.0 =
 * New Layout
