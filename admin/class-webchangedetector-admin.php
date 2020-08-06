@@ -22,6 +22,38 @@
  */
 class WebChangeDetector_Admin
 {
+    const API_TOKEN_LENGTH = 40;
+    const PRODUCT_ID_FREE = 57;
+
+    const VALID_WCD_ACTIONS = [
+        'reset_api_token',
+        'save_api_token',
+        'take_screenshots',
+        'update_monitoring_settings',
+        'post_urls',
+        'dashboard',
+        'change-detections',
+        'update-settings',
+        'auto-settings',
+        'logs',
+        'settings',
+        'show-compare',
+    ];
+
+    const VALID_SC_TYPES = [
+        'pre',
+        'post',
+        'auto',
+        'compare',
+    ];
+
+    const VALID_GROUP_TYPES = [
+        'all', // filter
+        'generic', // filter
+        'wordpress', // filter
+        'auto',
+        'update',
+    ];
 
     /**
      * The ID of this plugin.
@@ -159,12 +191,12 @@ class WebChangeDetector_Admin
         $args = array(
             'action' => 'update_monitoring_settings',
             'group_id' => $monitoring_group_id,
-            'hour_of_day' => $postdata['hour_of_day'],
-            'interval_in_h' => $postdata['interval_in_h'],
-            'monitoring' => $postdata['monitoring'],
-            'enabled' => $postdata['enabled'],
-            'alert_emails' => $postdata['alert_emails'],
-            'name' => $postdata['group_name'],
+            'hour_of_day' => sanitize_key($postdata['hour_of_day']),
+            'interval_in_h' => sanitize_key($postdata['interval_in_h']),
+            'monitoring' => sanitize_key($postdata['monitoring']),
+            'enabled' => sanitize_key($postdata['enabled']),
+            'alert_emails' => sanitize_textarea_field($postdata['alert_emails']),
+            'name' => sanitize_textarea_field($postdata['group_name']),
         );
         return $this->mm_api($args);
     }
@@ -178,6 +210,11 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
+    /**
+     * `<span>` with icon
+     *
+     * TODO make switch-case
+     */
     public function get_device_icon($icon, $class = '')
     {
         if ($icon == 'thumbnail') {
@@ -228,7 +265,7 @@ class WebChangeDetector_Admin
             'group_type' => $group_type,
             'difference_only' => $difference_only,
             'limit_compares' => $limit_compares,
-            'group_ids' => json_encode(array( $group_ids ))
+            'group_ids' => json_encode(array($group_ids))
         );
         $compares = $this->mm_api($args);
 
@@ -238,7 +275,6 @@ class WebChangeDetector_Admin
         }
 
         foreach ($compares as $compare) {
-
             // Make sure to only show urls from the website. Has to fixed in api.
             if (strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) === false) {
                 continue;
@@ -270,17 +306,16 @@ class WebChangeDetector_Admin
             <?php
         } else {
             foreach ($compares as $compare) {
+                $class = 'no-difference'; // init
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
-                } else {
-                    $class = 'no-difference';
                 } ?>
                 <tr>
                     <td>
                         <strong>
                         <?php
                         if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
-                            echo $compare['screenshot1']['queue']['url']['html_title'] . '<br>';
+                            echo esc_html($compare['screenshot1']['queue']['url']['html_title']) . '<br>';
                         } ?>
                         </strong>
                         <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
@@ -339,7 +374,7 @@ class WebChangeDetector_Admin
             );
 
             foreach ($posttypes as $posts) {
-                if ($posts) {
+                if (! empty($posts) && is_iterable($posts)) {
                     foreach ($posts as $post) {
                         $url = get_permalink($post);
                         $url = substr($url, strpos($url, '//') + 2);
@@ -475,7 +510,7 @@ class WebChangeDetector_Admin
         echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
-        echo '<input type="hidden" value="' . $groups_and_urls['id'] . '" name="group_id">';
+        echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
         $post_types = get_post_types();
 
@@ -594,7 +629,7 @@ class WebChangeDetector_Admin
 		<h2>1. Free Account</h2>
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . MM_WCD_PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
+		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . self::PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
 		<hr>
 		' . $this->get_api_token_form($api_token) . '
 		</div>';
@@ -621,7 +656,8 @@ class WebChangeDetector_Admin
         $active_tab = 'dashboard'; // init
 
         if (isset($_GET['tab'])) {
-            $active_tab = $_GET['tab'];
+            // sanitize: lower-case with "-"
+            $active_tab = sanitize_key($_GET['tab']);
         } ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
@@ -653,9 +689,8 @@ class WebChangeDetector_Admin
 
         $auto_group = $this->get_urls_of_group($auto_group_id);
         $amount_auto_detection = 0;
-        $month_in_seconds = 60*60*24*30;
         if ($auto_group['enabled']) {
-            $amount_auto_detection += 24 / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * 30;
+            $amount_auto_detection += MM_WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * MM_WCD_DAYS_PER_MONTH;
         } ?>
         <div class="dashboard">
             <div>
@@ -694,14 +729,24 @@ class WebChangeDetector_Admin
                 </div>
 
                 <div class="box-half box-plain">
-                    <h2 ><strong><?= number_format($client_account['usage'] / $client_account['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
+                    <h2>
+                        <strong>
+                            <?php
+                            if (! empty($client_account['sc_limit'])) {
+                                echo number_format($client_account['usage'] / $client_account['sc_limit'] * 100, 1);
+                            } else {
+                                echo 0;
+                            } ?>
+                             % credits used
+                        </strong>
+                    </h2>
                     <hr>
                     <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
 
                     <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
 
                     <p><strong>Auto change detections until renewal:</strong>
-                        <?= number_format($amount_auto_detection / $month_in_seconds * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
+                        <?= number_format($amount_auto_detection / MM_WCD_SECONDS_IN_MONTH * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
 
                     <p><strong>Renewal on:</strong> <?= date('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
                 </div>
@@ -749,12 +794,23 @@ class WebChangeDetector_Admin
      *
      * @return string
      */
-    function get_app_url()
+    public function app_url()
     {
         if (defined('WCD_APP_DOMAIN') && is_string(WCD_APP_DOMAIN) && ! empty(WCD_APP_DOMAIN)) {
             return WCD_APP_DOMAIN;
         }
         return 'https://www.webchangedetector.com/';
+    }
+
+    /**
+     * If in development mode
+     *
+     * @return bool
+     */
+    public function dev()
+    {
+        // if either .test or dev. can be found in the URL, we're developing
+        return strpos($this->app_url(), '.test') !== false || strpos($this->app_url(), 'dev.') !== false;
     }
 
     /**
@@ -767,8 +823,9 @@ class WebChangeDetector_Admin
      */
     public function mm_api($post)
     {
-        $url = 'https://api.webchangedetector.com/api/v1/'; // init
+        $url = 'https://api.webchangedetector.com/api/v1/'; // init for production
 
+        // This is where it can be changed to a local/dev address
         if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
             $url = WCD_API_URL;
         }
@@ -822,7 +879,7 @@ class WebChangeDetector_Admin
         }
 
         // if (! mm_wcd_http_successful($responseCode)) {
-        //     if (mm_wcd_dev()) {
+        //     if ($this->dev()) {
         //         dd($response, $action, $responseCode, $body);
         //     }
         // }
@@ -836,6 +893,7 @@ class WebChangeDetector_Admin
     }
 }
 
+// HTTP Status Codes
 if (! defined('MM_WCD_HTTP_BAD_REQUEST')) {
     define('MM_WCD_HTTP_BAD_REQUEST', 400);
 }
@@ -848,10 +906,21 @@ if (! defined('MM_WCD_HTTP_INTERNAL_SERVER_ERROR')) {
     define('MM_WCD_HTTP_INTERNAL_SERVER_ERROR', 500);
 }
 
-if (! defined('MM_WCD_PRODUCT_ID_FREE')) {
-    define('MM_WCD_PRODUCT_ID_FREE', 57);
+// Time/Date Related
+if (! defined('MM_WCD_DAYS_PER_MONTH')) {
+    define('MM_WCD_DAYS_PER_MONTH', 30);
 }
 
+if (! defined('MM_WCD_HOURS_IN_DAY')) {
+    define('MM_WCD_HOURS_IN_DAY', 24);
+}
+
+if (! defined('MM_WCD_SECONDS_IN_MONTH')) {
+    // 60 * 60 * 24 * 30
+    define('MM_WCD_SECONDS_IN_MONTH', 2592000);
+}
+
+// Option / UserMeta keys
 if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
     define('MM_WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
@@ -881,18 +950,6 @@ if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
 //         }
 //         echo '</pre>';
 //         die();
-//     }
-// }
-
-// if (! function_exists('mm_wcd_dev')) {
-//     /**
-//      * Set this if you wanna debug API calls with dd()
-//      *
-//      * @return bool
-//      */
-//     function mm_wcd_dev()
-//     {
-//         return false;
 //     }
 // }
 
