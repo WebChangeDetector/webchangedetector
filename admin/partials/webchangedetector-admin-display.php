@@ -202,7 +202,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
         if ($website_details['enable_limits']) {
             $account_details['usage'] = $comp_usage; // used in dashboard
-        $account_details['plan']['sc_limit'] = $limit; // used in dashboard
+            $account_details['plan']['sc_limit'] = $limit; // used in dashboard
         }
 
         // Renew date
@@ -223,7 +223,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 $limit_days = null;
                 if (isset($_POST['limit_days'])) {
                     $limit_days = sanitize_key($_POST['limit_days']);
-                    if (! is_numeric($limit_days)) {
+                    if (! empty($limit_days) && ! is_numeric($limit_days)) {
                         echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
                         return false;
                     }
@@ -231,7 +231,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 $group_type = null;
                 if (isset($_POST['group_type'])) {
                     $group_type = sanitize_key($_POST['group_type']);
-                    if (! in_array($group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES)) {
+                    if (! empty($group_type) && ! in_array($group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES)) {
                         echo '<div class="error notice"><p>Invalid group_type.</p></div>';
                         return false;
                     }
@@ -286,9 +286,9 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 <?php
                 break;
 
-            /********************
+            /***************************
              * Update Change Detections
-             ********************/
+            ****************************/
 
             case 'update-settings':
                 if ($website_details['enable_limits'] && ! $website_details['allow_manual_detection']) {
@@ -344,9 +344,9 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 <?php
                 break;
 
-            /************************
+            /**************************
              * Auto Change Detections
-             * **********************/
+             **************************/
 
             case 'auto-settings':
                 if ($website_details['enable_limits'] && ! $website_details['allow_auto_detection']) {
@@ -454,9 +454,9 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 <?php
                 break;
 
-            /********************
+            /*********
              * Logs
-             ********************/
+             *********/
 
             case 'logs':
                 // Show queued urls
@@ -507,9 +507,10 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 </div>
                 <?php
                 break;
-            /********************
+
+            /***********
              * Settings
-             ********************/
+             ***********/
 
             case 'settings':
 
@@ -530,9 +531,10 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 echo $wcd->get_api_token_form($api_token);
                 break;
 
-            /*****************
+            /***************
              * Show compare
-             ****************/
+             ***************/
+
             case 'show-compare':
                 echo '<h1>The Change Detection Images</h1>';
                 // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field

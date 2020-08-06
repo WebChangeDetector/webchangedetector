@@ -274,12 +274,10 @@ class WebChangeDetector_Admin
             return $return;
         }
 
-        foreach ($compares as $compare) {
-            // Make sure to only show urls from the website. Has to fixed in api.
-            if (strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) === false) {
-                continue;
-            }
-
+        foreach (array_filter($compares, function ($compare) {
+            // Make sure to only show urls from the website. Shouldn't come from the API anyway.
+            return strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) !== false;
+        }) as $compare) {
             $return[] = $compare;
         }
         return $return;
