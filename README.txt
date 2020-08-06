@@ -32,6 +32,10 @@ Here a few features of WebChangeDetector:
 
 == Changelog ==
 
+= 1.1.3 =
+* Remove Plugin Updater
+* Prepare for WP Directory
+
 = 1.1.2 =
 * Update repository url
 

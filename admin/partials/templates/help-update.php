@@ -1,4 +1,4 @@
-<?php include "help-headline.php"; ?>
+<?php include 'help-headline.php'; ?>
     <p>
         Compare your website before and after updates and see the exact difference between the versions.
     </p>
@@ -23,4 +23,4 @@
     </ol>
 
 
-<?php //include "help-contact-form.php"; ?>
+<?php //include "help-contact-form.php";?>

@@ -1,4 +1,4 @@
-<?php include "help-headline.php"; ?>
+<?php include 'help-headline.php'; ?>
     <p>
         Here you find all change detections created for your websites and use filters to navigate easier.
     </p>
@@ -16,4 +16,4 @@
     </p>
 
 
-<?php //include "help-contact-form.php"; ?>
+<?php //include "help-contact-form.php";?>

@@ -1,4 +1,4 @@
-<?php include "help-headline.php"; ?>
+<?php include 'help-headline.php'; ?>
     <p>
         Automatically detect changes on your website and receive alert emails on change detections.
     </p>
@@ -19,4 +19,4 @@
     </ol>
 
 
-<?php //include "help-contact-form.php"; ?>
+<?php //include "help-contact-form.php";?>

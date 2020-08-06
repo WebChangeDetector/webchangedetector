@@ -13,19 +13,20 @@
  */
 
 
-function webchangedetector_init()
-{
-    $postdata = $_POST;
-    $get = $_GET;
+if (! function_exists('mm_wcd_webchangedetector_init')) {
+    function mm_wcd_webchangedetector_init()
+    {
+        $postdata = $_POST;
+        $get = $_GET;
 
-    $wcd = new WebChangeDetector_Admin();
+        $wcd = new WebChangeDetector_Admin();
 
-    // Actions without API Token needed
-    if (isset($postdata['wcd_action'])) {
-        switch ($postdata['wcd_action']) {
+        // Actions without API Token needed
+        if (isset($postdata['wcd_action'])) {
+            switch ($postdata['wcd_action']) {
             case 'reset_api_token':
                 $wcd->delete_website();
-                delete_option(WP_OPTION_KEY_API_TOKEN);
+                delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
                 break;
 
             case 'save_api_token':
@@ -37,52 +38,52 @@ function webchangedetector_init()
                     return false;
                 }
 
-                update_option(WP_OPTION_KEY_API_TOKEN, $postdata['api_token']);
+                update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $postdata['api_token']);
                 $wcd->sync_posts();
 
                 break;
         }
-    }
-
-    $api_token = get_option(WP_OPTION_KEY_API_TOKEN);
-
-    // Change api token option name from V1.0.7
-    if (! $api_token) {
-        $api_token = get_option('webchangedetector_api_key');
-        if (! $api_token) {
-            delete_option('webchangedetector_api_key');
-            add_option(WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
         }
-    }
 
-    // The account doesn't have an api_token
-    if (! $api_token) {
-        echo $wcd->get_no_account_page();
-        return false;
-    }
+        $api_token = get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
-    $account_details = $wcd->account_details();
+        // Change api token option name from V1.0.7
+        if (! $api_token) {
+            $api_token = get_option('webchangedetector_api_key');
+            if (! $api_token) {
+                delete_option('webchangedetector_api_key');
+                add_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
+            }
+        }
 
-    // Check if account is activated and if the api key is authorized
-    if ($account_details === 'activate account' || $account_details === 'unauthorized') {
-        $wcd->show_activate_account($account_details);
-        return false;
-    }
+        // The account doesn't have an api_token
+        if (! $api_token) {
+            echo $wcd->get_no_account_page();
+            return false;
+        }
 
-    $website_details = $wcd->get_website_details();
+        $account_details = $wcd->account_details();
 
-    $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
-    $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
+        // Check if account is activated and if the api key is authorized
+        if ($account_details === 'activate account' || $account_details === 'unauthorized') {
+            $wcd->show_activate_account($account_details);
+            return false;
+        }
 
-    $monitoring_group_settings = null;
+        $website_details = $wcd->get_website_details();
 
-    if ($monitoring_group_id) {
-        $wcd->get_monitoring_settings($monitoring_group_id);
-    }
+        $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
+        $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
 
-    // Perform actions
-    if (isset($postdata['wcd_action'])) {
-        switch ($postdata['wcd_action']) {
+        $monitoring_group_settings = null;
+
+        if ($monitoring_group_id) {
+            $wcd->get_monitoring_settings($monitoring_group_id);
+        }
+
+        // Perform actions
+        if (isset($postdata['wcd_action'])) {
+            switch ($postdata['wcd_action']) {
             case 'take_screenshots':
                 $results = $wcd->take_screenshot($group_id, $postdata['sc_type']);
 
@@ -144,39 +145,39 @@ function webchangedetector_init()
                 break;
         }
 
-        // Get updated account and website data
-        $account_details = $wcd->account_details();
-        $website_details = $wcd->get_website_details();
-    }
+            // Get updated account and website data
+            $account_details = $wcd->account_details();
+            $website_details = $wcd->get_website_details();
+        }
 
-    // Start view
-    echo '<div class="wrap">';
-    echo '<div class="webchangedetector">';
-    echo '<h1>WebChangeDetector</h1>';
+        // Start view
+        echo '<div class="wrap">';
+        echo '<div class="webchangedetector">';
+        echo '<h1>WebChangeDetector</h1>';
 
-    $wcd->tabs();
+        $wcd->tabs();
 
-    echo '<div style="margin-top: 30px;"></div>';
-    if (isset($get['tab'])) {
-        $tab = $get['tab'];
-    } else {
-        $tab = 'dashboard';
-    }
+        echo '<div style="margin-top: 30px;"></div>';
+        if (isset($get['tab'])) {
+            $tab = $get['tab'];
+        } else {
+            $tab = 'dashboard';
+        }
 
-    // Account credits
-    $comp_usage = $account_details['usage'];
-    $limit = $account_details['sc_limit'];
-    $available_compares = $account_details['available_compares'];
+        // Account credits
+        $comp_usage = $account_details['usage'];
+        $limit = $account_details['sc_limit'];
+        $available_compares = $account_details['available_compares'];
 
-    if ($website_details['enable_limits']) {
-        $account_details['usage'] = $comp_usage; // used in dashboard
+        if ($website_details['enable_limits']) {
+            $account_details['usage'] = $comp_usage; // used in dashboard
         $account_details['plan']['sc_limit'] = $limit; // used in dashboard
-    }
+        }
 
-    // Renew date
-    $renew_date = strtotime($account_details['renewal_at']);
+        // Renew date
+        $renew_date = strtotime($account_details['renewal_at']);
 
-    switch ($tab) {
+        switch ($tab) {
 
         case'dashboard':
             $wcd->get_dashboard_view($account_details, $group_id, $monitoring_group_id);
@@ -433,10 +434,6 @@ function webchangedetector_init()
                     echo '<table class="queue">';
                     echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
                     foreach ($queues as $queue) {
-                        // should not be returned by the API anyway, but if the URL does not contain the current domain name, it's not the data to look at here
-                        if (! str_contains($queue['url']['url'], $_SERVER['SERVER_NAME'])) {
-                            continue;
-                        }
                         $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
                         echo '<tr class="queue-status-' . $queue['status'] . '">';
                         echo '<td>' . $wcd->get_device_icon($queue['device']) . '</td>';
@@ -498,14 +495,7 @@ function webchangedetector_init()
         case 'show-compare':
             echo '<h1>The Change Detection Images</h1>';
 
-            /* Why do we need an extra css file from the api?
-             * function change_detection_css()
-            {
-                wp_enqueue_style('change-detection', mm_get_api_url() . '/css/change-detection.css');
-            }
-            add_action('admin_enqueue_scripts', 'change_detection_css');*/
-
-            $public_link = mm_get_app_url() . 'show-change-detection/?token=' . $_GET['token'];
+            $public_link = $wcd->get_app_url() . 'show-change-detection/?token=' . $_GET['token'];
             echo '<p>Public link: <a href="' . $public_link . '" target="_blank">' . $public_link . '</a></p>';
 
             $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
@@ -515,6 +505,7 @@ function webchangedetector_init()
             echo $back_button;
 
     }
-    echo '</div>'; // closing from div webchangedetector
-    echo '</div>'; // closing wrap
+        echo '</div>'; // closing from div webchangedetector
+        echo '</div>'; // closing wrap
+    }
 }

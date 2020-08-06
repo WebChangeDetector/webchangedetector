@@ -109,7 +109,7 @@ class WebChangeDetector_Admin
             'WCD',
             'manage_options',
             'webchangedetector',
-            'webchangedetector_init',
+            'mm_wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
     }
@@ -521,7 +521,7 @@ class WebChangeDetector_Admin
 
                     // Check if current WP post ID is in synced_posts and get the url_id
                     foreach ($synced_posts as $synced_post) {
-                        if (!empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
+                        if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
                             $url_id = $synced_post['url_id'];
                         }
                     }
@@ -586,7 +586,7 @@ class WebChangeDetector_Admin
 
     public function get_no_account_page($api_token = '')
     {
-        delete_option(WP_OPTION_KEY_API_TOKEN);
+        delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
         $output = '<div class="webchangedetector">
 		<h1>Web Change Detector</h1>
@@ -594,7 +594,7 @@ class WebChangeDetector_Admin
 		<h2>1. Free Account</h2>
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
+		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . MM_WCD_PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
 		<hr>
 		' . $this->get_api_token_form($api_token) . '
 		</div>';
@@ -740,8 +740,21 @@ class WebChangeDetector_Admin
         <?php
         }
 
-        echo $this->get_api_token_form(get_option(WP_OPTION_KEY_API_TOKEN, true));
+        echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
         return true;
+    }
+
+    /**
+     * App Domain can be set outside this plugin for development
+     *
+     * @return string
+     */
+    function get_app_url()
+    {
+        if (defined('WCD_APP_DOMAIN') && is_string(WCD_APP_DOMAIN) && ! empty(WCD_APP_DOMAIN)) {
+            return WCD_APP_DOMAIN;
+        }
+        return 'https://www.webchangedetector.com/';
     }
 
     /**
@@ -754,13 +767,17 @@ class WebChangeDetector_Admin
      */
     public function mm_api($post)
     {
-        $url = mm_get_api_url(); // init
+        $url = 'https://api.webchangedetector.com/api/v1/'; // init
+
+        if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
+            $url = WCD_API_URL;
+        }
 
         $url .= str_replace('_', '-', $post['action']); // add kebab action to url
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = $post['api_token'] ?? get_option(WP_OPTION_KEY_API_TOKEN);
+        $api_token = $post['api_token'] ?? get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case
@@ -785,7 +802,7 @@ class WebChangeDetector_Admin
         $decodedBody = json_decode($body, (bool) JSON_OBJECT_AS_ARRAY);
 
         // `message` is part of the Laravel Stacktrace
-        if ($responseCode === HTTP_BAD_REQUEST &&
+        if ($responseCode === MM_WCD_HTTP_BAD_REQUEST &&
             is_array($decodedBody) &&
             array_key_exists('message', $decodedBody) &&
             $decodedBody['message'] === 'plugin_update_required') {
@@ -796,19 +813,19 @@ class WebChangeDetector_Admin
             die();
         }
 
-        if ($responseCode === HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
+        if ($responseCode === MM_WCD_HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
             return 'activate account';
         }
 
-        if ($responseCode === 401) {
+        if ($responseCode === MM_WCD_HTTP_UNAUTHORIZED) {
             return 'unauthorized';
         }
 
-        if (! mm_http_successful($responseCode)) {
-            if (mm_dev()) {
-                dd($response, $action, $responseCode, $body);
-            }
-        }
+        // if (! mm_wcd_http_successful($responseCode)) {
+        //     if (mm_wcd_dev()) {
+        //         dd($response, $action, $responseCode, $body);
+        //     }
+        // }
 
         // if parsing JSON into $decodedBody was without error
         if (json_last_error() === JSON_ERROR_NONE) {
@@ -819,130 +836,75 @@ class WebChangeDetector_Admin
     }
 }
 
-if (! function_exists('is_json')) {
-    /**
-     * Is input valid JSON
-     *
-     * @unused
-     *
-     * @param string $string
-     * @return boolean
-     */
-    function is_json($string)
-    {
-        json_decode($string);
-        return (json_last_error() === JSON_ERROR_NONE);
-    }
+if (! defined('MM_WCD_HTTP_BAD_REQUEST')) {
+    define('MM_WCD_HTTP_BAD_REQUEST', 400);
 }
 
-if (! function_exists('dd')) {
-    /**
-     * Dump and Die
-     */
-    function dd(... $output) // this is PHP 5.6+
-    {
-        echo '<pre>';
-        foreach ($output as $o) {
-            if (is_array($o) || is_object($o)) {
-                print_r($o);
-                continue;
-            }
-            echo $o;
-        }
-        echo '</pre>';
-        die();
-    }
+if (! defined('MM_WCD_HTTP_UNAUTHORIZED')) {
+    define('MM_WCD_HTTP_UNAUTHORIZED', 401);
 }
 
-if (! function_exists('mm_get_api_url')) {
-    /**
-     * API URL can be set outside this plugin for development
-     *
-     * @return string
-     */
-    function mm_get_api_url()
-    {
-        if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
-            return WCD_API_URL;
-        }
-        return 'https://api.webchangedetector.com/api/v1/';
-    }
+if (! defined('MM_WCD_HTTP_INTERNAL_SERVER_ERROR')) {
+    define('MM_WCD_HTTP_INTERNAL_SERVER_ERROR', 500);
 }
 
-if (! function_exists('mm_get_app_url')) {
-    /**
-     * App Domain can be set outside this plugin for development
-     *
-     * @return string
-     */
-    function mm_get_app_url()
-    {
-        if (defined('WCD_APP_DOMAIN') && is_string(WCD_APP_DOMAIN) && ! empty(WCD_APP_DOMAIN)) {
-            return WCD_APP_DOMAIN;
-        }
-        return 'https://www.webchangedetector.com/';
-    }
+if (! defined('MM_WCD_PRODUCT_ID_FREE')) {
+    define('MM_WCD_PRODUCT_ID_FREE', 57);
 }
 
-if (! function_exists('mm_dev')) {
-    /**
-     * Set this if you wanna debug API calls with dd()
-     *
-     * @return bool
-     */
-    function mm_dev()
-    {
-        return false;
-    }
+if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
+    define('MM_WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
 
-if (! function_exists('mm_http_successful')) {
-    /**
-     * HTTP Response Code in between 200 (incl) and 300
-     *
-     * @param int $httpCode
-     * @return bool
-     */
-    function mm_http_successful($httpCode)
-    {
-        return ($httpCode >= HTTP_OK) && ($httpCode < HTTP_MULTIPLE_CHOICES);
-    }
-}
+// // Uncommented defines()
+// if (! defined('MM_WCD_HTTP_OK')) {
+//     define('MM_WCD_HTTP_OK', 200);
+// }
+// if (! defined('MM_WCD_HTTP_MULTIPLE_CHOICES')) {
+//     define('MM_WCD_HTTP_MULTIPLE_CHOICES', 300);
+// }
 
-if (! function_exists('str_contains')) {
-    /**
-     * If string (`$haystack`) contains `$needle`
-     *
-     * @param string $haystack
-     * @param string $needle
-     * @return void
-     */
-    function str_contains($haystack, $needle)
-    {
-        return strpos(strval($haystack), $needle) !== false;
-    }
-}
+// // Uncommented functions()
+// if (! function_exists('dd')) {
+//     /**
+//      * Dump and Die
+//      */
+//     function dd(... $output) // this is PHP 5.6+
+//     {
+//         echo '<pre>';
+//         foreach ($output as $o) {
+//             if (is_array($o) || is_object($o)) {
+//                 print_r($o);
+//                 continue;
+//             }
+//             echo $o;
+//         }
+//         echo '</pre>';
+//         die();
+//     }
+// }
 
-if (! defined('HTTP_OK')) {
-    define('HTTP_OK', 200);
-}
+// if (! function_exists('mm_wcd_dev')) {
+//     /**
+//      * Set this if you wanna debug API calls with dd()
+//      *
+//      * @return bool
+//      */
+//     function mm_wcd_dev()
+//     {
+//         return false;
+//     }
+// }
 
-if (! defined('HTTP_MULTIPLE_CHOICES')) {
-    define('HTTP_MULTIPLE_CHOICES', 300);
-}
-
-if (! defined('HTTP_BAD_REQUEST')) {
-    define('HTTP_BAD_REQUEST', 400);
-}
-
-if (! defined('HTTP_INTERNAL_SERVER_ERROR')) {
-    define('HTTP_INTERNAL_SERVER_ERROR', 500);
-}
-
-if (! defined('PRODUCT_ID_FREE')) {
-    define('PRODUCT_ID_FREE', 57);
-}
-
-if (! defined('WP_OPTION_KEY_API_TOKEN')) {
-    define('WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
-}
+// if (! function_exists('mm_wcd_http_successful')) {
+//     /**
+//      * HTTP Response Code in between 200 (incl) and 300
+//      *
+//      * @param int $httpCode
+//      * @return bool
+//      */
+//     function mm_wcd_http_successful($httpCode)
+//     {
+//         return ($httpCode >= MM_WCD_HTTP_OK) && ($httpCode < MM_WCD_HTTP_MULTIPLE_CHOICES);
+//     }
+// }

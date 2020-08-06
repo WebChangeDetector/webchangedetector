@@ -35,7 +35,7 @@ if (! defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('WebChangeDetector_VERSION', '1.1.2');
+define('WebChangeDetector_VERSION', '1.1.3');
 
 /**
  * The code that runs during plugin activation.
@@ -80,12 +80,5 @@ function run_webchangedetector()
     $plugin = new WebChangeDetector();
     $plugin->run();
 }
-
-require 'plugin-update-checker/plugin-update-checker.php';
-$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://github.com/webchangedetector/wp-webchangedetector',
-    __FILE__, //Full path to the main plugin file or functions.php.
-    'webchangedetector'
-);
 
 run_webchangedetector();
