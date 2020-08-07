@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.4.2
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -31,6 +31,9 @@ Here a few features of WebChangeDetector:
 *   Start update change detection to see changes before and after updates
 
 == Changelog ==
+
+= 1.1.4 =
+* More prep for WP Directory
 
 = 1.1.3 =
 * Remove Plugin Updater

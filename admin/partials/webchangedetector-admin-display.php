@@ -136,11 +136,21 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 $count_selected = 0;
                 foreach ($_POST as $key => $post_id) {
                     if (strpos($key, 'url_id') === 0) {
+
+                        // sanitize before
+                        $wpPostId = sanitize_key($_POST['post_id-'. $post_id]); // should be numeric
+                        if (! is_numeric($wpPostId)) {
+                            continue; // just skip it
+                        }
+                        $permalink = get_permalink($wpPostId); // should return the whole link
+                        $desktop = array_key_exists('desktop-'. $post_id, $_POST) ? sanitize_key($_POST['desktop-' . $post_id]) : 0;
+                        $mobile = array_key_exists('mobile-'. $post_id, $_POST) ? sanitize_key($_POST['mobile-' . $post_id]) : 0;
+
                         $active_posts[] = array(
                             'url_id' => $post_id,
-                            'url' => get_permalink($_POST['post_id-'. $post_id]),
-                            'desktop' => $_POST['desktop-' . $post_id],
-                            'mobile' => $_POST['mobile-' . $post_id]
+                            'url' => $permalink,
+                            'desktop' => $desktop,
+                            'mobile' => $mobile
                         );
                         if (isset($_POST['desktop-' . $post_id])) {
                             $count_selected++;
