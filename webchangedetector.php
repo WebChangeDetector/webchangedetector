@@ -83,7 +83,7 @@ function run_webchangedetector()
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://github.com/webchangedetector/wp-webchangedetector',
+    'https://www.webchangedetector.com/plugin.json',
     __FILE__, //Full path to the main plugin file or functions.php.
     'webchangedetector'
 );
