@@ -3,34 +3,33 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.5
-Stable tag: 1.1.6
+Stable tag: 1.1.5
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Check your website before and after updates to see if something broke, or let us check your website automatically in
-intervals and get notified about any changes.
+Check your website after updates to see if something broke. Check your website automatically in
+intervals and get notified about any change.
 
 == Description ==
+**Make sure your website looks good after updates and other changes**
 
-It is important to keep your WordPress site and plugins up to date. But sometimes an update or a CSS change can cause
-another part of your website to change or even break. Sometimes you don’t even notice until your customers do.
+With WebChangeDetector you can check your website **before and after updates , installing new plugins or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
 
-With WebChangeDetector you can check your website before and after updates and see differences marked in a screenshot.
-Now you can make sure your updates look the way you want them to – and fix anything that does not. Before your visitors do.
-* Save them by letting us check your website after updates – both desktop and mobile.
-* Don’t miss sales because of an overlooked issue on your site.
+Now you can make sure your updates look the way you want them to – and fix anything that does not, before your visitors do.
 
-Even a small update on your website can have unexpected consequences. Track changes on every page on your WordPress site.
-If something changes, we will send you a notification so you can make sure everything looks at it should.
-* Start for free with 50 change detections per month.
-* Set automatic tracking with intervals, from 1 hour up to 24 hours.
-* Check both desktop and mobile screens.
-* Receive an email alert for change detections with a direct link to see the changes.
-* Run a change detection to see changes before and after making an update to your website.
+*   **Save troubles** with your visitors by letting us check your website after updates – for desktop and mobile.
+*   **Save time** with checking all pages yourself after some changes.
+*   **Don’t miss sales** because of overlooking issues on your site.
 
-Create a free account at https://www.webchangedetector.com/create-free-account and you will know if something changes on
-your website before visitors and potential clients do.
+Track automatically changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
+
+*   Start for free with **50 change detections per month**.
+*   Run a change detection to see changes before and after making an update to your website.
+*   Set **automatic trackings** with intervals, from 1 hour up to 24 hours.
+*   Check **desktop and mobile** screens.
+*   Receive an **email alert** for change detections with a direct link to see the changes.
+*   **Share the change detection link** with you Webdesigner to fix issues.
 
 == Installation ==
 
@@ -42,11 +41,9 @@ your website before visitors and potential clients do.
 
 == Changelog ==
 
-= 1.1.6 =
-* Bugfixes
-* Fix link to create free account
-
 = 1.1.5 =
+* Fix for new accounts
+* Fix link to create free account
 * Update readme
 
 = 1.1.4 =

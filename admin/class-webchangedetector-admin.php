@@ -627,7 +627,7 @@ class WebChangeDetector_Admin
 		<h2>1. Free Account</h2>
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . self::PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
+		<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>
 		<hr>
 		' . $this->get_api_token_form($api_token) . '
 		</div>';
