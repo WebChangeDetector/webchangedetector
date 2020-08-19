@@ -41,7 +41,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                     return false;
                 }
 
-                $api_token = sanitize_key($_POST['api_token']);
+                $api_token = sanitize_textarea_field($_POST['api_token']);
 
                 if ($wcd->dev()) {
                     // using emails as api_token to develop on localhost
