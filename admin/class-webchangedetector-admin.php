@@ -22,7 +22,7 @@
  */
 class WebChangeDetector_Admin
 {
-    const API_TOKEN_LENGTH = 40;
+    const API_TOKEN_LENGTH = 20;
     const PRODUCT_ID_FREE = 57;
 
     const VALID_WCD_ACTIONS = [
