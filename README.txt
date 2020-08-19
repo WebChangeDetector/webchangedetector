@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.5
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -40,6 +40,9 @@ Track automatically changes on every page on your WordPress site. If something c
 5. Activate your account by clicking the 'Activate Account' button in the email we sent you
 
 == Changelog ==
+
+= 1.1.6 =
+* Fix comparison view
 
 = 1.1.5 =
 * Fix for new accounts

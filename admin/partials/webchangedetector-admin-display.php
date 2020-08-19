@@ -553,7 +553,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
                 echo $back_button;
                 // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field
-                echo esc_html($wcd->get_comparison_partial(sanitize_textarea_field($_GET['token'])));
+                echo $wcd->get_comparison_partial(sanitize_textarea_field($_GET['token']));
                 echo '<div class="clear"></div>';
                 echo $back_button;
             break;
