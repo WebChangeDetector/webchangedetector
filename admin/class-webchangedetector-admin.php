@@ -317,8 +317,7 @@ class WebChangeDetector_Admin
                         } ?>
                         </strong>
                         <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
-                        <?= $compare['screenshot2']['monitoring'] ? $this->get_device_icon('auto-group') : $this->get_device_icon('update-group')?>
-                        <?= $compare['screenshot2']['monitoring'] ? 'Auto Detection' : 'Update Detection' ?>
+                        <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
                     </td>
                     <td>
                         <?= date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' .
