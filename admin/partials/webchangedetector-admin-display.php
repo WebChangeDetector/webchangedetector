@@ -71,7 +71,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
         // Change api token option name from V1.0.7
         if (! $api_token) {
             $api_token = get_option('webchangedetector_api_key');
-            if (! $api_token) {
+            if ($api_token) {
                 delete_option('webchangedetector_api_key');
                 add_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
             }
