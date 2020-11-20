@@ -186,7 +186,10 @@ const MM_SERVER_TIME_OFFSET = -1;
         amountSelectedTotal += amountSelectedTotal * scPerUrlUntilRenew;
 
         // Update total credits on top of page
-        $("#ajax_amount_total_sc").html(amountSelectedTotal);
+        $("#ajax_amount_total_sc").html("0");
+        if(amountSelectedTotal && autoEnabled) {
+            $("#ajax_amount_total_sc").html(amountSelectedTotal);
+        }
 
         if( amountSelectedTotal > availableCredits) {
             $("#sc_until_renew").addClass("exceeding");
