@@ -14,7 +14,7 @@
             </option>
         </select>
     </p>
-    <p>
+    <p class="auto-setting">
         <label for="hour_of_day" class="auto-setting">Hour of the day</label>
         <select name="hour_of_day" class="auto-setting">
             <?php
@@ -29,7 +29,7 @@
             ?>
         </select>
     </p>
-    <p>
+    <p class="auto-setting">
         <label for="interval_in_h" class="auto-setting">Interval in hours</label>
         <select name="interval_in_h" class="auto-setting">
             <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 1 ? 'selected' : ''; ?>>
@@ -49,7 +49,7 @@
             </option>
         </select>
     </p>
-    <p>
+    <p class="auto-setting">
         <label for="alert_emails" class="auto-setting">
             Alert email addresses
         </label>

@@ -106,6 +106,7 @@ class WebChangeDetector_Admin
          */
 
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/webchangedetector-admin.css', array(), $this->version, 'all');
+        wp_enqueue_style('twentytwenty-css', plugin_dir_url(__FILE__) . 'css/twentytwenty.css', array(), $this->version, 'all');
     }
 
     /**
@@ -130,6 +131,8 @@ class WebChangeDetector_Admin
 
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false);
         wp_enqueue_script('jquery-ui-accordion');
+        wp_enqueue_script('twentytwenty-js', plugin_dir_url(__FILE__) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false);
+        wp_enqueue_script('twentytwenty-move-js', plugin_dir_url(__FILE__) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false);
     }
 
     // Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
@@ -324,7 +327,7 @@ class WebChangeDetector_Admin
                         <?= date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' .
                             date('d/m/Y H:i', $compare['image2_timestamp']) ?>
                     </td>
-                    <td class="<?= $class ?>"><?= $compare['difference_percent'] ?>%</td>
+                    <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>
                         <a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=<?= $compare['token'] ?>"
                            class="button">
@@ -336,6 +339,38 @@ class WebChangeDetector_Admin
             }
         }
         echo '</table>';
+    }
+
+    function get_comparison_by_token($token, $hide_switch = false, $whitelabel = false)
+    {
+
+        if (! $token && ! empty($_GET['token'])) {
+            $token = $_GET['token'];
+        }
+        if (isset($token)) {
+            //$wcd = new Wp_Compare();
+            //$compare = $wcd->get_comparison_by_token($token); // $compare will be used in partial
+
+            $args = array(
+                'action' => 'get_comparison_by_token',
+                'token' => $token
+            );
+            $compare = $this->mm_api($args);
+            $public_page = true;
+
+            ob_start();
+            if(!$hide_switch) {
+                echo '<style>#comp-switch {display: none !important;}</style>';
+            }
+            echo '<div style="padding: 0 20px;">';
+            if (! $whitelabel) {
+                echo '<style>.public-detection-logo {display: none;}</style>';
+            }
+            include 'partials/templates/show-change-detection.php';
+            echo '</div>';
+            return ob_get_clean();
+        }
+        return 'Ooops! We didn\'t understand the request. Please contact us if the issue persists.';
     }
 
     public function get_queue()

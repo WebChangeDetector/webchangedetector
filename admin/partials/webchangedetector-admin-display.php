@@ -448,7 +448,24 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                     <div class="accordion" style="margin-bottom: 40px;">
                         <div class="mm_accordion_title">
                             <h3>
-                                Settings for Auto Change Detection
+                                Settings for Auto Change Detection<br>
+                                <small>
+                                    <?php
+                                    $enabled = $groups_and_urls['enabled'];
+                                    if($enabled) {
+                                        ?>
+                                        Currently: <strong>Tracking</strong> |
+                                        Interval: <strong>
+                                            every
+                                            <?= $groups_and_urls['interval_in_h'] ?>
+                                            <?= $groups_and_urls['interval_in_h'] === 1 ? " hour" : " hours"?>
+                                        </strong> |
+                                        Notifications to: <strong><?= implode(", ", $groups_and_urls['alert_emails']) ?></strong>
+                                        <?php
+                                    } else { ?>
+                                        Currently: <strong>Not tracking</strong>
+                                    <?php } ?>
+                                </small>
                             </h3>
                             <div class="mm_accordion_content padding">
                                 <?php include 'templates/auto-settings.php'; ?>
@@ -563,8 +580,10 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
             /***************
              * Show compare
              ***************/
-
             case 'show-compare':
+                echo $wcd->get_comparison_by_token($_GET['token']);
+            /*
+                include 'templates/show-change-detection.php';
                 echo '<h1>The Change Detection Images</h1>';
                 // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field
                 $public_link = $wcd->app_url() . 'show-change-detection/?token=' . sanitize_textarea_field($_GET['token']);
@@ -574,7 +593,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field
                 echo $wcd->get_comparison_partial(sanitize_textarea_field($_GET['token']));
                 echo '<div class="clear"></div>';
-                echo $back_button;
+                echo $back_button;*/
             break;
             default:
                 // Should already be validated by VALID_WCD_ACTIONS

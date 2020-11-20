@@ -43,12 +43,69 @@ const MM_SERVER_TIME_OFFSET = -1;
         return new Date(date * 1000).toLocaleString(navigator.language, options);
     }
 
+    function getDifferenceBgColor(percent) {
+        // early return if no difference in percent
+        if(parseFloat(percent) === 0.0) {
+            // Dark green
+            return MM_BG_COLOR_DARK_GREEN;
+        }
+        var pct =  1 - (percent / 100);
+
+        var percentColors = [
+            // #8C0000 - dark red
+            { pct: 0.0, color: { r: 0x8c, g: 0x00, b: 0 } },
+            // #E5A025 - orange
+            { pct: 1.0, color: { r: 0xe5, g: 0xa0, b: 0x25 } }
+        ];
+
+        for (var i = 1; i < percentColors.length - 1; i++) {
+            if (pct < percentColors[i].pct) {
+                break;
+            }
+        }
+        var lower = percentColors[i - 1];
+        var upper = percentColors[i];
+        var range = upper.pct - lower.pct;
+        var rangePct = (pct - lower.pct) / range;
+        var pctLower = 1 - rangePct;
+        var pctUpper = rangePct;
+        var color = {
+            r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+            g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+            b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+        };
+
+        // this.style.background = 'rgb(' + [color.r, color.g, color.b].join(',');
+        return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+    }
+
     $( document ).ready(function() {
-        $(".accordion").accordion({header: "h3", collapsible: true, active: false});
-        $(".accordion").last().accordion("option", "icons", true);
+        if($(".accordion").length) {
+            $(".accordion").accordion({header: "h3", collapsible: true, active: false});
+            $(".accordion").last().accordion("option", "icons", true);
+        }
+
+        var diffTile = $(".comparison-diff-tile");
+        var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
+        diffTile.css("background", bgColor);
+
+        // Background color differences
+        $(".diff-tile").each( function() {
+            var diffPercent = $(this).data("diff_percent");
+            if( diffPercent > 0 ) {
+                var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
+                $(this).css("background", bgColor);
+            }
+        });
 
         // Enable / disable settings for auto change detection
         showAutoSettings();
+        $("#diff-container").twentytwenty();
+
+        $("#diff-container .comp-img").load( function() {
+            $("#diff-container").twentytwenty();
+        });
+
 
         $("#auto-enabled").change(function() {
             showAutoSettings();
@@ -95,7 +152,6 @@ const MM_SERVER_TIME_OFFSET = -1;
 
         // Set time until next screenshots
         var autoEnabled = parseInt($("#auto-enabled").val());
-        console.log(autoEnabled);
         var txtNextScIn = "No trackings active";
         var nextScIn = false;
         var nextScDate = $("#next_sc_date").data("date");

@@ -59,7 +59,7 @@
 }
 
 .webchangedetector .status_bar {
-    border: 1px solid #b8b8f8;
+    border: 1px solid #aaa;
     background: #276dcc1c;
     padding: 10px;
     color: #444;
@@ -81,7 +81,6 @@
 .webchangedetector .comp_image {
     float: left;
     margin-right: 1%;
-    width: 32%;
 }
 
 .webchangedetector .image1 img,
@@ -90,6 +89,52 @@
     border: 1px solid #eee;
     padding: 2px;
     width: 100%;
+}
+
+.webchangedetector .comparison-tiles {
+    display: flex;
+}
+
+.webchangedetector .comparison-tile {
+    float: left;
+    padding: 10px;
+    background: #276dcc1c;
+    color: #444;
+    border: 1px solid #aaa;
+    border-right: none;
+}
+
+.webchangedetector .comparison-url-tile {
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+}
+
+.webchangedetector .twentytwenty-container img {
+    width: 100%
+}
+
+.webchangedetector .comparison-diff-tile {
+    width: 100px;
+}
+
+.webchangedetector .comparison-date-tile {
+    width: 180px;
+    border-right: 1px solid #aaa;
+}
+
+
+.webchangedetector .comparison-tiles:last-child {
+    border-right: 1px solid #aaa;
+}
+
+.webchangedetector .comparison-diff-tile {
+    color: #fff;
+    text-shadow: 0 0 0 5px #fff;
+}
+
+.webchangedetector .twentytwenty-overlay:hover {
+    background: rgba(0,0,0,0) !important;
 }
 
 .webchangedetector label {
@@ -117,7 +162,7 @@
 }
 
 .webchangedetector .mm_accordion_title .mm_accordion_content.padding .button {
-    margin: 0 10px 10px 10px;
+    margin: 10px;
 }
 
 .webchangedetector .mm_accordion_title .mm_accordion_content.padding p {
