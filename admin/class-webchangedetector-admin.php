@@ -324,8 +324,8 @@ class WebChangeDetector_Admin
                         <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
                     </td>
                     <td>
-                        <?= date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' .
-                            date('d/m/Y H:i', $compare['image2_timestamp']) ?>
+                        <div class="local-time" data-date="<?= $compare['image1_timestamp'] ?>"></div>
+                        <div class="local-time" data-date="<?= $compare['image2_timestamp'] ?>"></div>
                     </td>
                     <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>

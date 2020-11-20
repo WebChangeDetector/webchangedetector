@@ -530,8 +530,8 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
                             echo '<td>' . $type_nice_name[$queue['sc_type']] . '</td>';
                             echo '<td>' . ucfirst($queue['status']) . '</td>';
-                            echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
-                            echo '<td>' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
+                            echo '<td class="local-time" data-date="' . strtotime($queue['created_at']) . '">' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
+                            echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
                             echo '</tr>';
                         }
                         echo '</table>';

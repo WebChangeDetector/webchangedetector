@@ -43,6 +43,15 @@ const MM_SERVER_TIME_OFFSET = -1;
         return new Date(date * 1000).toLocaleString(navigator.language, options);
     }
 
+    function getLocalDate(date) {
+        let options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        };
+        return new Date(date * 1000).toLocaleString(navigator.language, options);
+    }
+
     function getDifferenceBgColor(percent) {
         // early return if no difference in percent
         if(parseFloat(percent) === 0.0) {
