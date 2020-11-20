@@ -50,6 +50,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
                 if (! is_string($api_token) || (! $wcd->dev() && strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH)) {
                     echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+                    echo $wcd->get_no_account_page();
                     return false;
                 }
 
@@ -57,6 +58,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
                 if (empty($website)) {
                     echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+                    echo $wcd->get_no_account_page();
                     return false;
                 }
 
