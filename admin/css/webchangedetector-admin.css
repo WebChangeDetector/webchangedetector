@@ -170,6 +170,10 @@
     margin: 0;
 }
 
+.webchangedetector .mm_accordion_title small {
+    padding-top: 10px;
+    display: block;
+}
 
 .webchangedetector .mm_accordion_title .mm_accordion_content.padding p:nth-of-type(odd) {
     background: #eee;
