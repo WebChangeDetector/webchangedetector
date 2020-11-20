@@ -529,88 +529,88 @@ class WebChangeDetector_Admin
                 ?>
 
                 <div class="accordion">
-                <div class="mm_accordion_title">
-                    <h3>
-                        <?= ucfirst($post_type) ?><br>
-                    </h3>
-                    <div class="mm_accordion_content">
+                    <div class="mm_accordion_title">
+                        <h3>
+                            <?= ucfirst($post_type) ?><br>
+                        </h3>
+                        <div class="mm_accordion_content">
 
-                <table class="no-margin">
-                    <tr>
-                        <th><?= $this->get_device_icon('desktop') ?></th>
-                        <th><?= $this->get_device_icon('mobile') ?></th>
-                        <th width="100%">URL</th>
-                    </tr>
-                <?php
-                // Select all from same device
-                echo '<tr class="even-tr-white" style="background: none; text-align: center">
-                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                            <td></td>
-                        </tr>';
-                foreach ($posts as $post) {
-                    $url = get_permalink($post);
-                    $url_id = false;
+                            <table class="no-margin">
+                            <tr>
+                                <th><?= $this->get_device_icon('desktop') ?></th>
+                                <th><?= $this->get_device_icon('mobile') ?></th>
+                                <th width="100%">URL</th>
+                            </tr>
+                            <?php
+                            // Select all from same device
+                            echo '<tr class="even-tr-white" style="background: none; text-align: center">
+                                        <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                        <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                        <td></td>
+                                    </tr>';
+                            foreach ($posts as $post) {
+                                $url = get_permalink($post);
+                                $url_id = false;
 
-                    // Check if current WP post ID is in synced_posts and get the url_id
-                    foreach ($synced_posts as $synced_post) {
-                        if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
-                            $url_id = $synced_post['url_id'];
-                        }
-                    }
-
-                    // If we don't have the url_id, the url is not synced and we continue
-                    if (! $url_id) {
-                        continue;
-                    }
-
-                    // init
-                    $checked = array(
-                        'desktop' => '',
-                        'mobile' => ''
-                    );
-
-                    if (! empty($groups_and_urls['urls'])) {
-                        foreach ($groups_and_urls['urls'] as $url_details) {
-                            if ($url_details['pivot']['url_id'] == $url_id) {
-                                $checked['active'] = 'checked';
-
-                                if ($url_details['pivot']['desktop']) {
-                                    $checked['desktop'] = 'checked';
+                                // Check if current WP post ID is in synced_posts and get the url_id
+                                foreach ($synced_posts as $synced_post) {
+                                    if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
+                                        $url_id = $synced_post['url_id'];
+                                    }
                                 }
-                                if ($url_details['pivot']['mobile']) {
-                                    $checked['mobile'] = 'checked';
+
+                                // If we don't have the url_id, the url is not synced and we continue
+                                if (! $url_id) {
+                                    continue;
                                 }
+
+                                // init
+                                $checked = array(
+                                    'desktop' => '',
+                                    'mobile' => ''
+                                );
+
+                                if (! empty($groups_and_urls['urls'])) {
+                                    foreach ($groups_and_urls['urls'] as $url_details) {
+                                        if ($url_details['pivot']['url_id'] == $url_id) {
+                                            $checked['active'] = 'checked';
+
+                                            if ($url_details['pivot']['desktop']) {
+                                                $checked['desktop'] = 'checked';
+                                            }
+                                            if ($url_details['pivot']['mobile']) {
+                                                $checked['mobile'] = 'checked';
+                                            }
+                                        }
+                                    }
+                                }
+
+                                echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
+                                echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
+                                echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
+                                echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
+
+                                echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
+                                        <input type="hidden" value="0" name="desktop-' . $url_id . '">
+                                        <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
+                                        id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
+                                        <input type="hidden" value="0" name="mobile-' . $url_id . '">
+                                        <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
+                                        id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
+                                echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                                echo '</tr>';
+
+                                echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
                             }
-                        }
-                    }
-
-                    echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
-                    echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
-                    echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
-                    echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
-
-                    echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="desktop-' . $url_id . '">
-                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
-                            id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                    echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="mobile-' . $url_id . '">
-                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
-                            id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                    echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
-                    echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-                    echo '</tr>';
-
-                    echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
-                }
-                echo '</table>';
-            } ?>
-            </div>
-            </div>
-            </div>
+                            echo '</table>';
+                            } ?>
+                        </div>
+                    </div>
+                </div>
             <?php
         }
         echo '<input class="button" type="submit" value="Save" style="margin-bottom: 30px">';

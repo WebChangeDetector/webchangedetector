@@ -116,6 +116,20 @@
     padding: 0;
 }
 
+.webchangedetector .mm_accordion_title .mm_accordion_content.padding .button {
+    margin: 0 10px 10px 10px;
+}
+
+.webchangedetector .mm_accordion_title .mm_accordion_content.padding p {
+    padding: 10px;
+    margin: 0;
+}
+
+
+.webchangedetector .mm_accordion_title .mm_accordion_content.padding p:nth-of-type(odd) {
+    background: #eee;
+}
+
 .webchangedetector h3 {
     margin: 0 0;
 }

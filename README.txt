@@ -41,6 +41,10 @@ Track automatically changes on every page on your WordPress site. If something c
 
 == Changelog ==
 
+= 1.1.7 =
+* Show browser time for auto detections
+* UX improvements
+
 = 1.1.6 =
 * Fix comparison view
 
