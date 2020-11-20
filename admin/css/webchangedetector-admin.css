@@ -1,6 +1,5 @@
 /**
- * All of the CSS for your admin-specific functionality should be
- * included in this file.
+ * Global
  */
 
 .webchangedetector {
@@ -57,6 +56,24 @@
 .webchangedetector hr {
     margin-bottom: 20px;
     margin-top: 20px;
+}
+
+.webchangedetector .status_bar {
+    border: 1px solid #b8b8f8;
+    background: #276dcc1c;
+    padding: 10px;
+    color: #444;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.webchangedetector .status_bar .big {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.webchangedetector .status_bar .box.half {
+    width: 50%;
+    float: left;
 }
 
 .webchangedetector .image1,
@@ -140,14 +157,13 @@
 .webchangedetector .action-container {
     float: left;
     margin-right: 20px;
-    width: calc(100% - 400px);
+    width: calc(100% - 340px);
     min-width: 400px;
 }
 
 .webchangedetector .sidebar {
     float:left;
     width: 300px;
-
 }
 
 .webchangedetector .help-box,
@@ -176,7 +192,6 @@
     border-color:#fff;
 }
 
-
 .webchangedetector .help-box h3 {
     font-weight: 400;
 }
@@ -194,6 +209,40 @@
 .webchangedetector .queue-status-failed {
     background: #ce8080;
 }
+
+/**************
+Auto Detection
+ **************/
+.webchangedetector .status_bar #sc_until_renew.exceeding,
+.webchangedetector .status_bar #sc_available_until_renew.exceeding,
+.webchangedetector .status_bar #notice_screenshots_exceeding {
+    color: #E8930B;
+}
+
+/***************
+Update Detection
+ ***************/
+
+.webchangedetector .sc_button {
+    width: calc(50% - 10px);
+    text-align: left;
+    float: left;
+    white-space: inherit;
+    margin-right: 20px;
+}
+.webchangedetector .sc_button.last {
+    margin-right: 0;
+}
+
+.webchangedetector .sc_button button  {
+    white-space: inherit;
+}
+
+.webchangedetector .sc_button .button_headline  {
+    font-size: 16px;
+    font-weight: 700;
+}
+
 
 /********
 Dashboard

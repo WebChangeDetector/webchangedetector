@@ -201,6 +201,7 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
+    /* Not needed anymore
     public function get_upgrade_options($plan_id)
     {
         $args = array(
@@ -209,7 +210,7 @@ class WebChangeDetector_Admin
         );
         return $this->mm_api($args);
     }
-
+    */
     /**
      * `<span>` with icon
      *

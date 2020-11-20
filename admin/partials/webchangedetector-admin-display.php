@@ -293,6 +293,8 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                         <?php include 'templates/help-change-detection.php'; ?>
                     </div>
                 </div>
+                <div class="clear"></div>
+
                 <?php
                 break;
 
@@ -310,47 +312,47 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                 $groups_and_urls = $wcd->get_urls_of_group($group_id);
                 ?>
 
-                <h2>Select Update Change Detection URLs</h2>
                 <div class="action-container">
-                    <h2>Do the magic</h2>
-                    <p>Currently selected:
-                        <strong>
+                    <div class="status_bar">Current settings require<br>
+                        <span class="big">
                             <?= $groups_and_urls['amount_selected_urls'] ?>
-                            Change Detections
-                        </strong>
-                    </p>
-                    <?php
-                    $wcd->get_url_settings($groups_and_urls);
-                    if ($website_details['enable_limits']) {
-                        ?>
-                        <p><strong>Creating Update Change Detections is disabled.</strong></p>
-                        <?php
-                    } else {
-                        ?>
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left; margin-right: 10px;">
+                            Screenshots
+                        </span><br>
+                        <?= $account_details['available_compares'] ?> available until renewal
+                    </div>
+                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" class="sc_button">
                         <input type="hidden" value="take_screenshots" name="wcd_action">
                         <input type="hidden" name="sc_type" value="pre">
-                        <input type="submit" value="Create Reference Screenshots" class="button">
-                        </form>
+                        <button type="submit" class="button">
+                            <span class="button_headline">Create Reference Screenshots</span><br>
+                            <span>Take screenshots <strong>before</strong> you do updates. The screenshots after the update will be compared with these screenshots.</span>
+                        </button>
+                    </form>
 
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" style="float:left;">
+                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" class="sc_button last">
                         <input type="hidden" value="take_screenshots" name="wcd_action">
                         <input type="hidden" name="sc_type" value="post">
-                        <input type="submit" value="Create Change Detections" class="button">
-                        </form>
-                    <?php
-                    } ?>
-                    </div>
+                        <button type="submit" class="button">
+                            <span class="button_headline">Create Change Detections </span><br>
+                            <span>Take screenshots <strong>after</strong> you finished the updates and compare them with the reference screenshots.</span>
+                        </button>
+                    </form>
+                    <div class="clear" style="margin-bottom: 30px;"></div>
 
-                    <div class="sidebar">
-                        <div class="account-box">
-                            <?php include 'templates/account.php'; ?>
-                        </div>
-                        <div class="help-box">
-                            <?php include 'templates/help-update.php'; ?>
-                        </div>
+                    <h2>Select Update Change Detection URLs</h2>
+                    <?php $wcd->get_url_settings($groups_and_urls); ?>
+
+                </div>
+
+                <div class="sidebar">
+                    <div class="account-box">
+                        <?php include 'templates/account.php'; ?>
                     </div>
-                    <div class="clear"></div>
+                    <div class="help-box">
+                        <?php include 'templates/help-update.php'; ?>
+                    </div>
+                </div>
+                <div class="clear"></div>
                 <?php
                 break;
 
@@ -366,92 +368,157 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
                 $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
+                //var_dump($groups_and_urls);
+                $hour_of_day = $groups_and_urls['hour_of_day'];
+                $interval = $groups_and_urls['interval_in_h'];
+
+                for($i=0; $i < 24/$interval; $i++) {
+                    $current_hour = $hour_of_day + $i * $interval;
+                    $sc_hours[] = $current_hour > 23 ? $current_hour - 24 : $current_hour;
+                }
+
+                // Calculation for auto detections
+                $date_next_sc = false;
+
+                $next_possible_sc = mktime(date("H") + 1,0,0,date("m"),date("d"),date("Y"));
+                $amount_sc_per_day = (24 / $groups_and_urls['interval_in_h']);
+
+                // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
+                for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
+                    $time_take_sc = mktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, date( "m" ), date( "d" ) - 1, date( "Y" ) );
+
+                    // If we don't have a date yet take the first which is in the future
+                    // If we have a date we check if the current one is closer in the future
+                    if( ( !$date_next_sc && $time_take_sc >= $next_possible_sc ) || ( $date_next_sc > $time_take_sc && $time_take_sc >= $next_possible_sc ) ) {
+                        $date_next_sc = $time_take_sc;
+                    }
+                }
+
+                // Calculate total change detections
+                $date_next_renewal = strtotime( $account_details['renewal_at'] );
+                $total_sc_current_period = 0;
+                $date_next_sc = false;
+                $next_possible_sc = mktime( date( "H" ) + 1, 0, 0, date( "m" ), date( "d" ), date( "Y" ) );
+                $amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
+
+                // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
+                for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
+                    $time_take_sc = mktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, date( "m" ), date( "d" ) - 1, date( "Y" ) );
+
+                    // If we don't have a date yet take the first which is in the future
+                    // If we have a date we check if the current one is closer in the future
+                    if( ( !$date_next_sc && $time_take_sc >= $next_possible_sc ) ) {
+                        $date_next_sc = $time_take_sc;
+                    }
+                }
+
+                // Calculate total screenshots until renewal
+                $total_date_next_sc = $date_next_sc;
+                while( $date_next_renewal >= $total_date_next_sc ) {
+                    $total_sc_current_period++;
+                    $total_date_next_sc = $total_date_next_sc + $groups_and_urls['interval_in_h'] * 3600;
+                }
                 ?>
-                <h2>Select Auto Change Detection URLs</h2>
+
                 <div class="action-container">
-                    <?php $wcd->get_url_settings($groups_and_urls, true); ?>
-                    <h2>Settings for Auto Change Detection</h2>
-                    <p>
+                    <div class="status_bar">
+                        <div class="box half">
+                            <div id="txt_next_sc_in">Next change detections in</div>
+                            <div id="next_sc_in" class="big"></div>
+                            <div id="next_sc_date" class="local-time" data-date="<?= $date_next_sc ?>"></div>
+                        </div>
+                        <div class="box half">
+                            Current settings require
+                            <div id="sc_until_renew" class="big">
+                                <span id="ajax_amount_total_sc"></span> Screenshots
+                            </div>
+                            <div id="sc_available_until_renew"
+                                 data-amount_selected_urls="<?= $groups_and_urls['amount_selected_urls'] ?>"
+                                 data-auto_sc_per_url_until_renewal="<?= $total_sc_current_period ?>"
+                            >
+                                <?= $account_details['available_compares'] ?> available until renewal
+                            </div>
+                        </div>
+                        <div class="clear"></div>
+                    </div>
+
+                    <h2>Select Auto Change Detection URLs</h2>
+                    <p class="status_bar">
                         Currently selected:
                         <strong>
                             <?= $groups_and_urls['amount_selected_urls'] ?>
                             Change Detections
                         </strong>
-                        <br>
-                        The current settings require
-                        <strong><?php
-                        if (! empty($groups_and_urls['interval_in_h'])) {
-                            echo $groups_and_urls['amount_selected_urls'] * (MM_WCD_HOURS_IN_DAY / $groups_and_urls['interval_in_h']) * MM_WCD_DAYS_PER_MONTH;
-                        }
-                        ?></strong>
-                        change detections per month.<br>
                     </p>
+                    <?php $wcd->get_url_settings($groups_and_urls, true); ?>
+                    <h2>Settings for Auto Change Detection</h2>
 
                     <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
-                    <p>
-                        <input type="hidden" name="wcd_action" value="update_monitoring_settings">
-                        <input type="hidden" name="monitoring" value="1">
-                        <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
+                        <p>
+                            <input type="hidden" name="wcd_action" value="update_monitoring_settings">
+                            <input type="hidden" name="monitoring" value="1">
+                            <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
-                    <label for="enabled">Enabled</label>
-                    <select name="enabled" id="auto-enabled">
-                        <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
-                            Yes
-                        </option>
-                        <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
-                            No
-                        </option>
-                    </select>
-                    </p>
-                    <p>
-                        <label for="hour_of_day" class="auto-setting">Hour of the day</label>
-                        <select name="hour_of_day" class="auto-setting">
-                            <?php
-                            for ($i = 0; $i < MM_WCD_HOURS_IN_DAY; $i++) {
-                                if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
-                                    $selected = 'selected';
-                                } else {
-                                    $selected = '';
+                            <label for="enabled">Enabled</label>
+                            <select name="enabled" id="auto-enabled">
+                                <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
+                                    Yes
+                                </option>
+                                <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
+                                    No
+                                </option>
+                            </select>
+                        </p>
+                        <p>
+                            <label for="hour_of_day" class="auto-setting">Hour of the day</label>
+                            <select name="hour_of_day" class="auto-setting">
+                                <?php
+                                for ($i = 0; $i < MM_WCD_HOURS_IN_DAY; $i++) {
+                                    if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
+                                        $selected = 'selected';
+                                    } else {
+                                        $selected = '';
+                                    }
+                                    echo '<option class="select-time" value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
                                 }
-                                echo '<option value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
-                            }
-                            ?>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="interval_in_h" class="auto-setting">Interval in hours</label>
-                        <select name="interval_in_h" class="auto-setting">
-                            <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 1 ? 'selected' : ''; ?>>
-                                Every 1 hour (720 Change Detections / URL / month)
-                            </option>
-                            <option value="3" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 3 ? 'selected' : ''; ?>>
-                                Every 3 hours (240 Change Detections / URL / month)
-                            </option>
-                            <option value="6" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 6 ? 'selected' : ''; ?>>
-                                Every 6 hours (120 Change Detections / URL / month)
-                            </option>
-                            <option value="12" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 12 ? 'selected' : ''; ?>>
-                                Every 12 hours (60 Change Detections / URL / month)
-                            </option>
-                            <option value="24" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 24 ? 'selected' : ''; ?>>
-                                Every 24 hours (30 Change Detections / URL / month)
-                            </option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="alert_emails" class="auto-setting">
-                            Alert email addresses
-                        </label>
-                        <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;" class="auto-setting"
-                            value="<?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode(',', $groups_and_urls['alert_emails'])) : '' ?>">
-                        <br>
-                        <label for="alert_emails" class="auto-setting">
-                        (Separate more email addresses with ",")
-                        </label>
-                    </p>
-                        <input type="submit" class="button" value="Save" >
+                                ?>
+                            </select>
+                        </p>
+                        <p>
+                            <label for="interval_in_h" class="auto-setting">Interval in hours</label>
+                            <select name="interval_in_h" class="auto-setting">
+                                <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 1 ? 'selected' : ''; ?>>
+                                    Every 1 hour
+                                </option>
+                                <option value="3" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 3 ? 'selected' : ''; ?>>
+                                    Every 3 hours
+                                </option>
+                                <option value="6" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 6 ? 'selected' : ''; ?>>
+                                    Every 6 hours
+                                </option>
+                                <option value="12" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 12 ? 'selected' : ''; ?>>
+                                    Every 12 hours
+                                </option>
+                                <option value="24" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 24 ? 'selected' : ''; ?>>
+                                    Every 24 hours
+                                </option>
+                            </select>
+                        </p>
+                        <p>
+                            <label for="alert_emails" class="auto-setting">
+                                Alert email addresses
+                            </label>
+                            <input type="text" name="alert_emails" id="alert_emails" style="width: 500px;" class="auto-setting"
+                                value="<?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode(',', $groups_and_urls['alert_emails'])) : '' ?>">
+                            <br>
+                            <label for="alert_emails" class="auto-setting">
+                            (Separate more email addresses with ",")
+                            </label>
+                        </p>
+                        <input type="submit" class="button" value="Save">
                     </form>
                 </div>
+
                 <div class="sidebar">
                     <div class="account-box">
                         <?php include 'templates/account.php'; ?>
@@ -460,7 +527,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                         <?php include 'templates/help-auto.php'; ?>
                     </div>
                 </div>
-
+                <div class="clear"></div>
                 <?php
                 break;
 
@@ -515,6 +582,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                         <?php include 'templates/help-logs.php'; ?>
                     </div>
                 </div>
+                <div class="clear"></div>
                 <?php
                 break;
 
@@ -535,8 +603,10 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                     echo '<p>Change detections in this period: ' . esc_html($limit) . '<br>';
                     echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
                     echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';
-
-                    echo $wcd->get_upgrade_options($account_details['plan_id']);
+                    echo '<h2>Need more screenshots?</h2>';
+                    echo '<a class="button" href="' . $wcd->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
+                    echo '<p>The new amount of compares will be available immediately. The renew date will not change with an upgrade.</p>';
+                    //echo( $wcd->get_upgrade_options($account_details['plan_id']));
                 }
                 echo $wcd->get_api_token_form($api_token);
                 break;

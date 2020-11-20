@@ -1,3 +1,6 @@
+const MM_SERVER_TIME_OFFSET = -1;
+
+
 (function( $ ) {
     'use strict';
 
@@ -28,6 +31,18 @@
      * Although scripts in the WordPress core, Plugins and Themes may be
      * practising this, we should strive to set a better example in our own work.
      */
+
+    function getLocalDateTime(date) {
+        let options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        };
+        return new Date(date * 1000).toLocaleString(navigator.language, options);
+    }
+
     $( document ).ready(function() {
         $(".accordion").accordion({header: "h3", collapsible: true, active: false});
         $(".accordion").last().accordion("option", "icons", true);
@@ -46,6 +61,80 @@
                 return;
             }
             $(".auto-setting").show();
+        }
+
+        // Show local time in dropdowns
+        var localDate = new Date();
+
+        var timeDiff = localDate.getTimezoneOffset();
+        timeDiff = (timeDiff / 60) ;
+        $(".select-time").each( function(i, e) {
+            let utcHour = parseInt($(this).val());
+            let newDate = localDate.setHours(utcHour - timeDiff, 0);
+            let localHour = new Date(newDate);
+            let options = {
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            $(this).html(localHour.toLocaleString(navigator.language, options));
+        });
+
+        // Replace time with local time
+        $(".local-time").each( function(i,e) {
+            if($(this).data("date")) {
+                $(this).text(getLocalDateTime($(this).data("date")));
+            }
+        });
+
+        // Replace date with local date
+        $(".local-date").each( function() {
+            if($(this).data("date")) {
+                $(this).text(getLocalDate($(this).data("date")));
+            }
+        });
+
+        // Set time until next screenshots
+        var autoEnabled = parseInt($("#auto-enabled").val());
+        console.log(autoEnabled);
+        var txtNextScIn = "No trackings active";
+        var nextScIn = false;
+        var nextScDate = $("#next_sc_date").data("date");
+        $("#txt_next_sc_in").html("Currently");
+        $("#next_sc_date").html("");
+
+        if(nextScDate && autoEnabled) {
+            nextScIn = new Date(nextScDate * 1000);
+            nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60));
+            nextScIn = new Date(nextScIn - $.now());
+            var minutes = nextScIn.getMinutes() == 1 ? " Minute " : " Minutes ";
+            var hours = nextScIn.getHours() == 1 ? " Hour " : " Hours ";
+            txtNextScIn = nextScIn.getHours() + hours + nextScIn.getMinutes() + minutes;
+            $("#next_sc_date").html(getLocalDateTime(nextScDate));
+            $("#txt_next_sc_in").html("Next change detections in ");
+        }
+
+        $("#next_sc_in").html(txtNextScIn);
+
+        var scUsage = $("#wcd_account_details").data("sc_usage");
+        var scLimit = $("#wcd_account_details").data("sc_limit");
+        var availableCredits = scLimit - scUsage;
+        var scPerUrlUntilRenew = $("#sc_available_until_renew").data("auto_sc_per_url_until_renewal");
+        var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
+        if(availableCredits <= 0) {
+            $("#next_sc_in").html("Not Tracking").css("color","#A00000");
+            $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>" +
+                "<a href='" + upgradeUrl + "'>Upgrade plan</a> or wait for renewal");
+        }
+
+        // Calculate total auto sc until renewal
+        amountSelectedTotal += amountSelectedTotal * scPerUrlUntilRenew;
+
+        // Update total credits on top of page
+        $("#ajax_amount_total_sc").html(amountSelectedTotal);
+
+        if( amountSelectedTotal > availableCredits) {
+            $("#sc_until_renew").addClass("exceeding");
+            $("#sc_available_until_renew").addClass("exceeding");
         }
     });
 
