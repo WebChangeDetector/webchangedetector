@@ -2,35 +2,63 @@
 Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
-Tested up to: 5.4.2
-Stable tag: 1.1.3
+Tested up to: 5.5
+Stable tag: 1.1.6
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Run automatic change detections and get notified on changes of your website. Or run manual change detections before and after updates.
+Check your website after updates to see if something broke. Check your website automatically in
+intervals and get notified about any change.
 
 == Description ==
+**Make sure your website looks good after updates and other changes**
 
-With  WebChangeDetector you can track changes on every page of your WP website. When something changes on your website,
-you get an email with an image, where the differences are marked. You will also see images with the two compared versions
-to see better what changed.
+With WebChangeDetector you can check your website **before and after updates , installing new plugins or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
 
-You can use WebChangeDetector in two different ways:
-1. Update Change Detection
-Take screenshots before and after updating your website and detect changes. This way you see immediately if something
-broke and you can fix it.
-2. Auto Change Detection
-Automatically detect changes on your website in a certain interval. If something changes on your website, you will get an email
-to review the changes. All changes of your page are marked in a screenshot.
+Now you can make sure your updates look the way you want them to – and fix anything that does not, before your visitors do.
 
-Here a few features of WebChangeDetector:
-*   Set intervals for auto change detections from 1 hour up to 24 hours.
-*   Get change detections for mobile and desktop screen sizes
-*   Alert email with direct link to see the changes
-*   Start update change detection to see changes before and after updates
+*   **Save troubles** with your visitors by letting us check your website after updates – for desktop and mobile.
+*   **Save time** with checking all pages yourself after some changes.
+*   **Don’t miss sales** because of overlooking issues on your site.
+
+Track automatically changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
+
+*   Start for free with **50 change detections per month**.
+*   Run a change detection to see changes before and after making an update to your website.
+*   Set **automatic trackings** with intervals, from 1 hour up to 24 hours.
+*   Check **desktop and mobile** screens.
+*   Receive an **email alert** for change detections with a direct link to see the changes.
+*   **Share the change detection link** with you Webdesigner to fix issues.
+
+== Installation ==
+
+1. Upload 'webchangedetector' to the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Create a free account at https://www.webchangedetector.com
+4. After creating the account, you see your API Token. Paste the API Token at 'WCD' in the menu of your website
+5. Activate your account by clicking the 'Activate Account' button in the email we sent you
 
 == Changelog ==
+
+= 1.1.7 =
+* Show browser time for auto detections
+* UX improvements
+
+= 1.1.6 =
+* Fix comparison view
+
+= 1.1.5 =
+* Fix for new accounts
+* Fix link to create free account
+* Update readme
+
+= 1.1.4 =
+* Validation fixes
+
+= 1.1.3 =
+* Remove Plugin Updater
+* Prepare for WP Directory
 
 = 1.1.2 =
 * Update repository url
@@ -77,3 +105,11 @@ Here a few features of WebChangeDetector:
 
 = 1.0.0 =
 * Launch Stable Version
+
+== Screenshots ==
+1. Show Change Detection: Check the change detection and see what changed
+2. Dashboard:  Show the latest change detections and account information
+3. Change Detections: All change detections
+4. Update Settings: Update change detections for creating screenshots before and after updates or changes
+5. Auto Settings: Automatic change detections in intervals with email notification
+6. Logs: Shows currently processing screenshots and finished change detections

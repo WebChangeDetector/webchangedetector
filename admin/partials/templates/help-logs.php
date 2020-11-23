@@ -1,4 +1,4 @@
-<?php include "help-headline.php"; ?>
+<?php include 'help-headline.php'; ?>
 <p>
     Here you can see the status of all your requested change detections and performed screenshots.
 </p>
@@ -21,4 +21,4 @@
 </p>
 
 
-<?php //include "help-contact-form.php"; ?>
+<?php //include "help-contact-form.php";?>

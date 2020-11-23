@@ -22,6 +22,38 @@
  */
 class WebChangeDetector_Admin
 {
+    const API_TOKEN_LENGTH = 20;
+    const PRODUCT_ID_FREE = 57;
+
+    const VALID_WCD_ACTIONS = [
+        'reset_api_token',
+        'save_api_token',
+        'take_screenshots',
+        'update_monitoring_settings',
+        'post_urls',
+        'dashboard',
+        'change-detections',
+        'update-settings',
+        'auto-settings',
+        'logs',
+        'settings',
+        'show-compare',
+    ];
+
+    const VALID_SC_TYPES = [
+        'pre',
+        'post',
+        'auto',
+        'compare',
+    ];
+
+    const VALID_GROUP_TYPES = [
+        'all', // filter
+        'generic', // filter
+        'wordpress', // filter
+        'auto',
+        'update',
+    ];
 
     /**
      * The ID of this plugin.
@@ -39,7 +71,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.1.1';
+    private $version = '1.1.6';
 
     /**
      * Initialize the class and set its properties.
@@ -74,6 +106,7 @@ class WebChangeDetector_Admin
          */
 
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/webchangedetector-admin.css', array(), $this->version, 'all');
+        wp_enqueue_style('twentytwenty-css', plugin_dir_url(__FILE__) . 'css/twentytwenty.css', array(), $this->version, 'all');
     }
 
     /**
@@ -98,6 +131,8 @@ class WebChangeDetector_Admin
 
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false);
         wp_enqueue_script('jquery-ui-accordion');
+        wp_enqueue_script('twentytwenty-js', plugin_dir_url(__FILE__) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false);
+        wp_enqueue_script('twentytwenty-move-js', plugin_dir_url(__FILE__) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false);
     }
 
     // Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
@@ -109,7 +144,7 @@ class WebChangeDetector_Admin
             'WCD',
             'manage_options',
             'webchangedetector',
-            'webchangedetector_init',
+            'mm_wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
     }
@@ -159,16 +194,17 @@ class WebChangeDetector_Admin
         $args = array(
             'action' => 'update_monitoring_settings',
             'group_id' => $monitoring_group_id,
-            'hour_of_day' => $postdata['hour_of_day'],
-            'interval_in_h' => $postdata['interval_in_h'],
-            'monitoring' => $postdata['monitoring'],
-            'enabled' => $postdata['enabled'],
-            'alert_emails' => $postdata['alert_emails'],
-            'name' => $postdata['group_name'],
+            'hour_of_day' => sanitize_key($postdata['hour_of_day']),
+            'interval_in_h' => sanitize_key($postdata['interval_in_h']),
+            'monitoring' => sanitize_key($postdata['monitoring']),
+            'enabled' => sanitize_key($postdata['enabled']),
+            'alert_emails' => sanitize_textarea_field($postdata['alert_emails']),
+            'name' => sanitize_textarea_field($postdata['group_name']),
         );
         return $this->mm_api($args);
     }
 
+    /* Not needed anymore
     public function get_upgrade_options($plan_id)
     {
         $args = array(
@@ -177,7 +213,12 @@ class WebChangeDetector_Admin
         );
         return $this->mm_api($args);
     }
-
+    */
+    /**
+     * `<span>` with icon
+     *
+     * TODO make switch-case
+     */
     public function get_device_icon($icon, $class = '')
     {
         if ($icon == 'thumbnail') {
@@ -228,7 +269,7 @@ class WebChangeDetector_Admin
             'group_type' => $group_type,
             'difference_only' => $difference_only,
             'limit_compares' => $limit_compares,
-            'group_ids' => json_encode(array( $group_ids ))
+            'group_ids' => json_encode(array($group_ids))
         );
         $compares = $this->mm_api($args);
 
@@ -237,13 +278,10 @@ class WebChangeDetector_Admin
             return $return;
         }
 
-        foreach ($compares as $compare) {
-
-            // Make sure to only show urls from the website. Has to fixed in api.
-            if (strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) === false) {
-                continue;
-            }
-
+        foreach (array_filter($compares, function ($compare) {
+            // Make sure to only show urls from the website. Shouldn't come from the API anyway.
+            return strpos($compare['screenshot1']['url'], $_SERVER['SERVER_NAME']) !== false;
+        }) as $compare) {
             $return[] = $compare;
         }
         return $return;
@@ -270,28 +308,26 @@ class WebChangeDetector_Admin
             <?php
         } else {
             foreach ($compares as $compare) {
+                $class = 'no-difference'; // init
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
-                } else {
-                    $class = 'no-difference';
                 } ?>
                 <tr>
                     <td>
                         <strong>
                         <?php
                         if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
-                            echo $compare['screenshot1']['queue']['url']['html_title'] . '<br>';
+                            echo esc_html($compare['screenshot1']['queue']['url']['html_title']) . '<br>';
                         } ?>
                         </strong>
                         <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
-                        <?= $compare['screenshot2']['monitoring'] ? $this->get_device_icon('auto-group') : $this->get_device_icon('update-group')?>
-                        <?= $compare['screenshot2']['monitoring'] ? 'Auto Detection' : 'Update Detection' ?>
+                        <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
                     </td>
                     <td>
-                        <?= date('d/m/Y H:i', $compare['image1_timestamp']) . '<br>' .
-                            date('d/m/Y H:i', $compare['image2_timestamp']) ?>
+                        <div class="local-time" data-date="<?= $compare['image1_timestamp'] ?>"></div>
+                        <div class="local-time" data-date="<?= $compare['image2_timestamp'] ?>"></div>
                     </td>
-                    <td class="<?= $class ?>"><?= $compare['difference_percent'] ?>%</td>
+                    <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>
                         <a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=<?= $compare['token'] ?>"
                            class="button">
@@ -303,6 +339,38 @@ class WebChangeDetector_Admin
             }
         }
         echo '</table>';
+    }
+
+    function get_comparison_by_token($token, $hide_switch = false, $whitelabel = false)
+    {
+
+        if (! $token && ! empty($_GET['token'])) {
+            $token = $_GET['token'];
+        }
+        if (isset($token)) {
+            //$wcd = new Wp_Compare();
+            //$compare = $wcd->get_comparison_by_token($token); // $compare will be used in partial
+
+            $args = array(
+                'action' => 'get_comparison_by_token',
+                'token' => $token
+            );
+            $compare = $this->mm_api($args);
+            $public_page = true;
+
+            ob_start();
+            if(!$hide_switch) {
+                echo '<style>#comp-switch {display: none !important;}</style>';
+            }
+            echo '<div style="padding: 0 20px;">';
+            if (! $whitelabel) {
+                echo '<style>.public-detection-logo {display: none;}</style>';
+            }
+            include 'partials/templates/show-change-detection.php';
+            echo '</div>';
+            return ob_get_clean();
+        }
+        return 'Ooops! We didn\'t understand the request. Please contact us if the issue persists.';
     }
 
     public function get_queue()
@@ -339,7 +407,7 @@ class WebChangeDetector_Admin
             );
 
             foreach ($posttypes as $posts) {
-                if ($posts) {
+                if (! empty($posts) && is_iterable($posts)) {
                     foreach ($posts as $post) {
                         $url = get_permalink($post);
                         $url = substr($url, strpos($url, '//') + 2);
@@ -475,7 +543,7 @@ class WebChangeDetector_Admin
         echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
-        echo '<input type="hidden" value="' . $groups_and_urls['id'] . '" name="group_id">';
+        echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
         $post_types = get_post_types();
 
@@ -496,88 +564,88 @@ class WebChangeDetector_Admin
                 ?>
 
                 <div class="accordion">
-                <div class="mm_accordion_title">
-                    <h3>
-                        <?= ucfirst($post_type) ?><br>
-                    </h3>
-                    <div class="mm_accordion_content">
+                    <div class="mm_accordion_title">
+                        <h3>
+                            <?= ucfirst($post_type) ?><br>
+                        </h3>
+                        <div class="mm_accordion_content">
 
-                <table class="no-margin">
-                    <tr>
-                        <th><?= $this->get_device_icon('desktop') ?></th>
-                        <th><?= $this->get_device_icon('mobile') ?></th>
-                        <th width="100%">URL</th>
-                    </tr>
-                <?php
-                // Select all from same device
-                echo '<tr class="even-tr-white" style="background: none; text-align: center">
-                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                            <td></td>
-                        </tr>';
-                foreach ($posts as $post) {
-                    $url = get_permalink($post);
-                    $url_id = false;
+                            <table class="no-margin">
+                            <tr>
+                                <th><?= $this->get_device_icon('desktop') ?></th>
+                                <th><?= $this->get_device_icon('mobile') ?></th>
+                                <th width="100%">URL</th>
+                            </tr>
+                            <?php
+                            // Select all from same device
+                            echo '<tr class="even-tr-white" style="background: none; text-align: center">
+                                        <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                        <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                        <td></td>
+                                    </tr>';
+                            foreach ($posts as $post) {
+                                $url = get_permalink($post);
+                                $url_id = false;
 
-                    // Check if current WP post ID is in synced_posts and get the url_id
-                    foreach ($synced_posts as $synced_post) {
-                        if (!empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
-                            $url_id = $synced_post['url_id'];
-                        }
-                    }
-
-                    // If we don't have the url_id, the url is not synced and we continue
-                    if (! $url_id) {
-                        continue;
-                    }
-
-                    // init
-                    $checked = array(
-                        'desktop' => '',
-                        'mobile' => ''
-                    );
-
-                    if (! empty($groups_and_urls['urls'])) {
-                        foreach ($groups_and_urls['urls'] as $url_details) {
-                            if ($url_details['pivot']['url_id'] == $url_id) {
-                                $checked['active'] = 'checked';
-
-                                if ($url_details['pivot']['desktop']) {
-                                    $checked['desktop'] = 'checked';
+                                // Check if current WP post ID is in synced_posts and get the url_id
+                                foreach ($synced_posts as $synced_post) {
+                                    if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
+                                        $url_id = $synced_post['url_id'];
+                                    }
                                 }
-                                if ($url_details['pivot']['mobile']) {
-                                    $checked['mobile'] = 'checked';
+
+                                // If we don't have the url_id, the url is not synced and we continue
+                                if (! $url_id) {
+                                    continue;
                                 }
+
+                                // init
+                                $checked = array(
+                                    'desktop' => '',
+                                    'mobile' => ''
+                                );
+
+                                if (! empty($groups_and_urls['urls'])) {
+                                    foreach ($groups_and_urls['urls'] as $url_details) {
+                                        if ($url_details['pivot']['url_id'] == $url_id) {
+                                            $checked['active'] = 'checked';
+
+                                            if ($url_details['pivot']['desktop']) {
+                                                $checked['desktop'] = 'checked';
+                                            }
+                                            if ($url_details['pivot']['mobile']) {
+                                                $checked['mobile'] = 'checked';
+                                            }
+                                        }
+                                    }
+                                }
+
+                                echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
+                                echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
+                                echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
+                                echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
+
+                                echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
+                                        <input type="hidden" value="0" name="desktop-' . $url_id . '">
+                                        <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
+                                        id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
+                                        <input type="hidden" value="0" name="mobile-' . $url_id . '">
+                                        <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
+                                        id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
+                                echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                                echo '</tr>';
+
+                                echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
                             }
-                        }
-                    }
-
-                    echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
-                    echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
-                    echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
-                    echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
-
-                    echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="desktop-' . $url_id . '">
-                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
-                            id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                    echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
-                            <input type="hidden" value="0" name="mobile-' . $url_id . '">
-                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
-                            id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                    echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
-                    echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-                    echo '</tr>';
-
-                    echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
-                }
-                echo '</table>';
-            } ?>
-            </div>
-            </div>
-            </div>
+                            echo '</table>';
+                            } ?>
+                        </div>
+                    </div>
+                </div>
             <?php
         }
         echo '<input class="button" type="submit" value="Save" style="margin-bottom: 30px">';
@@ -586,7 +654,7 @@ class WebChangeDetector_Admin
 
     public function get_no_account_page($api_token = '')
     {
-        delete_option(WP_OPTION_KEY_API_TOKEN);
+        delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
         $output = '<div class="webchangedetector">
 		<h1>Web Change Detector</h1>
@@ -594,7 +662,7 @@ class WebChangeDetector_Admin
 		<h2>1. Free Account</h2>
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<a href="https://www.webchangedetector.com/account/cart/?a=add&pid=' . PRODUCT_ID_FREE . '" target="_blank" class="button">Create Free Account</a>
+		<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>
 		<hr>
 		' . $this->get_api_token_form($api_token) . '
 		</div>';
@@ -621,7 +689,8 @@ class WebChangeDetector_Admin
         $active_tab = 'dashboard'; // init
 
         if (isset($_GET['tab'])) {
-            $active_tab = $_GET['tab'];
+            // sanitize: lower-case with "-"
+            $active_tab = sanitize_key($_GET['tab']);
         } ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
@@ -653,9 +722,8 @@ class WebChangeDetector_Admin
 
         $auto_group = $this->get_urls_of_group($auto_group_id);
         $amount_auto_detection = 0;
-        $month_in_seconds = 60*60*24*30;
         if ($auto_group['enabled']) {
-            $amount_auto_detection += 24 / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * 30;
+            $amount_auto_detection += MM_WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * MM_WCD_DAYS_PER_MONTH;
         } ?>
         <div class="dashboard">
             <div>
@@ -694,14 +762,24 @@ class WebChangeDetector_Admin
                 </div>
 
                 <div class="box-half box-plain">
-                    <h2 ><strong><?= number_format($client_account['usage'] / $client_account['sc_limit'] * 100, 1) ?>% credits used</strong></h2>
+                    <h2>
+                        <strong>
+                            <?php
+                            if (! empty($client_account['sc_limit'])) {
+                                echo number_format($client_account['usage'] / $client_account['sc_limit'] * 100, 1);
+                            } else {
+                                echo 0;
+                            } ?>
+                             % credits used
+                        </strong>
+                    </h2>
                     <hr>
                     <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
 
                     <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
 
                     <p><strong>Auto change detections until renewal:</strong>
-                        <?= number_format($amount_auto_detection / $month_in_seconds * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
+                        <?= number_format($amount_auto_detection / MM_WCD_SECONDS_IN_MONTH * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
 
                     <p><strong>Renewal on:</strong> <?= date('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
                 </div>
@@ -740,8 +818,32 @@ class WebChangeDetector_Admin
         <?php
         }
 
-        echo $this->get_api_token_form(get_option(WP_OPTION_KEY_API_TOKEN, true));
+        echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
         return true;
+    }
+
+    /**
+     * App Domain can be set outside this plugin for development
+     *
+     * @return string
+     */
+    public function app_url()
+    {
+        if (defined('WCD_APP_DOMAIN') && is_string(WCD_APP_DOMAIN) && ! empty(WCD_APP_DOMAIN)) {
+            return WCD_APP_DOMAIN;
+        }
+        return 'https://www.webchangedetector.com/';
+    }
+
+    /**
+     * If in development mode
+     *
+     * @return bool
+     */
+    public function dev()
+    {
+        // if either .test or dev. can be found in the URL, we're developing
+        return strpos($this->app_url(), '.test') !== false || strpos($this->app_url(), 'dev.') !== false;
     }
 
     /**
@@ -754,13 +856,18 @@ class WebChangeDetector_Admin
      */
     public function mm_api($post)
     {
-        $url = mm_get_api_url(); // init
+        $url = 'https://api.webchangedetector.com/api/v1/'; // init for production
+
+        // This is where it can be changed to a local/dev address
+        if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
+            $url = WCD_API_URL;
+        }
 
         $url .= str_replace('_', '-', $post['action']); // add kebab action to url
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = $post['api_token'] ?? get_option(WP_OPTION_KEY_API_TOKEN);
+        $api_token = $post['api_token'] ?? get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case
@@ -785,7 +892,7 @@ class WebChangeDetector_Admin
         $decodedBody = json_decode($body, (bool) JSON_OBJECT_AS_ARRAY);
 
         // `message` is part of the Laravel Stacktrace
-        if ($responseCode === HTTP_BAD_REQUEST &&
+        if ($responseCode === MM_WCD_HTTP_BAD_REQUEST &&
             is_array($decodedBody) &&
             array_key_exists('message', $decodedBody) &&
             $decodedBody['message'] === 'plugin_update_required') {
@@ -796,19 +903,19 @@ class WebChangeDetector_Admin
             die();
         }
 
-        if ($responseCode === HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
+        if ($responseCode === MM_WCD_HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
             return 'activate account';
         }
 
-        if ($responseCode === 401) {
+        if ($responseCode === MM_WCD_HTTP_UNAUTHORIZED) {
             return 'unauthorized';
         }
 
-        if (! mm_http_successful($responseCode)) {
-            if (mm_dev()) {
-                dd($response, $action, $responseCode, $body);
-            }
-        }
+        // if (! mm_wcd_http_successful($responseCode)) {
+        //     if ($this->dev()) {
+        //         dd($response, $action, $responseCode, $body);
+        //     }
+        // }
 
         // if parsing JSON into $decodedBody was without error
         if (json_last_error() === JSON_ERROR_NONE) {
@@ -819,130 +926,75 @@ class WebChangeDetector_Admin
     }
 }
 
-if (! function_exists('is_json')) {
-    /**
-     * Is input valid JSON
-     *
-     * @unused
-     *
-     * @param string $string
-     * @return boolean
-     */
-    function is_json($string)
-    {
-        json_decode($string);
-        return (json_last_error() === JSON_ERROR_NONE);
-    }
+// HTTP Status Codes
+if (! defined('MM_WCD_HTTP_BAD_REQUEST')) {
+    define('MM_WCD_HTTP_BAD_REQUEST', 400);
 }
 
-if (! function_exists('dd')) {
-    /**
-     * Dump and Die
-     */
-    function dd(... $output) // this is PHP 5.6+
-    {
-        echo '<pre>';
-        foreach ($output as $o) {
-            if (is_array($o) || is_object($o)) {
-                print_r($o);
-                continue;
-            }
-            echo $o;
-        }
-        echo '</pre>';
-        die();
-    }
+if (! defined('MM_WCD_HTTP_UNAUTHORIZED')) {
+    define('MM_WCD_HTTP_UNAUTHORIZED', 401);
 }
 
-if (! function_exists('mm_get_api_url')) {
-    /**
-     * API URL can be set outside this plugin for development
-     *
-     * @return string
-     */
-    function mm_get_api_url()
-    {
-        if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
-            return WCD_API_URL;
-        }
-        return 'https://api.webchangedetector.com/api/v1/';
-    }
+if (! defined('MM_WCD_HTTP_INTERNAL_SERVER_ERROR')) {
+    define('MM_WCD_HTTP_INTERNAL_SERVER_ERROR', 500);
 }
 
-if (! function_exists('mm_get_app_url')) {
-    /**
-     * App Domain can be set outside this plugin for development
-     *
-     * @return string
-     */
-    function mm_get_app_url()
-    {
-        if (defined('WCD_APP_DOMAIN') && is_string(WCD_APP_DOMAIN) && ! empty(WCD_APP_DOMAIN)) {
-            return WCD_APP_DOMAIN;
-        }
-        return 'https://www.webchangedetector.com/';
-    }
+// Time/Date Related
+if (! defined('MM_WCD_DAYS_PER_MONTH')) {
+    define('MM_WCD_DAYS_PER_MONTH', 30);
 }
 
-if (! function_exists('mm_dev')) {
-    /**
-     * Set this if you wanna debug API calls with dd()
-     *
-     * @return bool
-     */
-    function mm_dev()
-    {
-        return false;
-    }
+if (! defined('MM_WCD_HOURS_IN_DAY')) {
+    define('MM_WCD_HOURS_IN_DAY', 24);
 }
 
-if (! function_exists('mm_http_successful')) {
-    /**
-     * HTTP Response Code in between 200 (incl) and 300
-     *
-     * @param int $httpCode
-     * @return bool
-     */
-    function mm_http_successful($httpCode)
-    {
-        return ($httpCode >= HTTP_OK) && ($httpCode < HTTP_MULTIPLE_CHOICES);
-    }
+if (! defined('MM_WCD_SECONDS_IN_MONTH')) {
+    // 60 * 60 * 24 * 30
+    define('MM_WCD_SECONDS_IN_MONTH', 2592000);
 }
 
-if (! function_exists('str_contains')) {
-    /**
-     * If string (`$haystack`) contains `$needle`
-     *
-     * @param string $haystack
-     * @param string $needle
-     * @return void
-     */
-    function str_contains($haystack, $needle)
-    {
-        return strpos(strval($haystack), $needle) !== false;
-    }
+// Option / UserMeta keys
+if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
+    define('MM_WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
 
-if (! defined('HTTP_OK')) {
-    define('HTTP_OK', 200);
-}
+// // Uncommented defines()
+// if (! defined('MM_WCD_HTTP_OK')) {
+//     define('MM_WCD_HTTP_OK', 200);
+// }
+// if (! defined('MM_WCD_HTTP_MULTIPLE_CHOICES')) {
+//     define('MM_WCD_HTTP_MULTIPLE_CHOICES', 300);
+// }
 
-if (! defined('HTTP_MULTIPLE_CHOICES')) {
-    define('HTTP_MULTIPLE_CHOICES', 300);
-}
+// // Uncommented functions()
+// if (! function_exists('dd')) {
+//     /**
+//      * Dump and Die
+//      */
+//     function dd(... $output) // this is PHP 5.6+
+//     {
+//         echo '<pre>';
+//         foreach ($output as $o) {
+//             if (is_array($o) || is_object($o)) {
+//                 print_r($o);
+//                 continue;
+//             }
+//             echo $o;
+//         }
+//         echo '</pre>';
+//         die();
+//     }
+// }
 
-if (! defined('HTTP_BAD_REQUEST')) {
-    define('HTTP_BAD_REQUEST', 400);
-}
-
-if (! defined('HTTP_INTERNAL_SERVER_ERROR')) {
-    define('HTTP_INTERNAL_SERVER_ERROR', 500);
-}
-
-if (! defined('PRODUCT_ID_FREE')) {
-    define('PRODUCT_ID_FREE', 57);
-}
-
-if (! defined('WP_OPTION_KEY_API_TOKEN')) {
-    define('WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
-}
+// if (! function_exists('mm_wcd_http_successful')) {
+//     /**
+//      * HTTP Response Code in between 200 (incl) and 300
+//      *
+//      * @param int $httpCode
+//      * @return bool
+//      */
+//     function mm_wcd_http_successful($httpCode)
+//     {
+//         return ($httpCode >= MM_WCD_HTTP_OK) && ($httpCode < MM_WCD_HTTP_MULTIPLE_CHOICES);
+//     }
+// }
