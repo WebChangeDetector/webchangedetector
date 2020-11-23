@@ -12,11 +12,11 @@ Check your website after updates to see if something broke. Check your website a
 intervals and get notified about any change.
 
 == Description ==
-**Make sure your website looks good after updates and other changes**
+**#1 Change Detector For WordPress**
 
 With WebChangeDetector you can check your website **before and after updates , installing new plugins or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
 
-Now you can make sure your updates look the way you want them to – and fix anything that does not, before your visitors do.
+Now you can make sure your website looks the way you want after installing updates – and fix anything that does not, before your visitors do.
 
 *   **Save troubles** with your visitors by letting us check your website after updates – for desktop and mobile.
 *   **Save time** with checking all pages yourself after some changes.
@@ -25,11 +25,11 @@ Now you can make sure your updates look the way you want them to – and fix any
 Track automatically changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
 
 *   Start for free with **50 change detections per month**.
-*   Run a change detection to see changes before and after making an update to your website.
+*   Run a change detection to see changes before and after updates at your website.
 *   Set **automatic trackings** with intervals, from 1 hour up to 24 hours.
-*   Check **desktop and mobile** screens.
+*   Check **desktop and mobile** screen sizes.
 *   Receive an **email alert** for change detections with a direct link to see the changes.
-*   **Share the change detection link** with you Webdesigner to fix issues.
+*   **Share the change detection link** with your web designer to fix issues.
 
 == Installation ==
 
