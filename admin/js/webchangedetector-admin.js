@@ -277,3 +277,7 @@ function mmValidateForm() {
     return border === '2px solid green';
 }
 
+function showUpdates() {
+    jQuery("#updates").toggle("slow");
+}
+

@@ -624,6 +624,7 @@ class WebChangeDetector_Admin
                                             }
                                             if ($url_details['pivot']['mobile']) {
                                                 $checked['mobile'] = 'checked';
+                                                $selected_desktop++;
                                                 $amount_active_posts++;
                                             }
                                         }
