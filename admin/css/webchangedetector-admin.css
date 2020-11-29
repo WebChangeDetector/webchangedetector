@@ -287,11 +287,12 @@ Update Detection
  ***************/
 
 .webchangedetector .sc_button {
-    width: calc(50% - 10px);
+    width: calc(33.33% - 10px);
     text-align: left;
     float: left;
     white-space: inherit;
-    margin-right: 20px;
+    margin-right: 10px;
+    line-height: 2;
 }
 .webchangedetector .sc_button.last {
     margin-right: 0;
@@ -299,11 +300,20 @@ Update Detection
 
 .webchangedetector .sc_button button  {
     white-space: inherit;
+    line-height: 2;
 }
 
 .webchangedetector .sc_button .button_headline  {
     font-size: 16px;
     font-weight: 700;
+}
+
+.webchangedetector .sc_button.no-click {
+    text-align: center;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+
+    width: calc(33.33% - 30px);
 }
 
 

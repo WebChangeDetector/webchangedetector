@@ -546,7 +546,6 @@ class WebChangeDetector_Admin
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
         $post_types = get_post_types();
-
         foreach ($post_types as $post_type) {
             if (! in_array($post_type, array('post', 'page'))) {
                 continue;
@@ -560,13 +559,17 @@ class WebChangeDetector_Admin
                 'orderby' => 'title'
             ));
 
-            if ($posts) {
-                ?>
+            if ($posts) { ?>
 
                 <div class="accordion">
                     <div class="mm_accordion_title">
                         <h3>
-                            <?= ucfirst($post_type) ?><br>
+                            <?= ucfirst($post_type) ?>s<br>
+                            <small>
+                                Selected URLs desktop: <strong><span id="selected-desktop-<?= $post_type ?>"></span></strong> |
+                                Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></strong></span>
+                            </small>
+                            <small class="currently-selected"></small>
                         </h3>
                         <div class="mm_accordion_content">
 
@@ -583,6 +586,10 @@ class WebChangeDetector_Admin
                                         <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
                                         <td></td>
                                     </tr>';
+                            $amount_active_posts = 0;
+                            $selected_mobile = 0;
+                            $selected_desktop = 0;
+
                             foreach ($posts as $post) {
                                 $url = get_permalink($post);
                                 $url_id = false;
@@ -612,9 +619,12 @@ class WebChangeDetector_Admin
 
                                             if ($url_details['pivot']['desktop']) {
                                                 $checked['desktop'] = 'checked';
+                                                $selected_mobile++;
+                                                $amount_active_posts++;
                                             }
                                             if ($url_details['pivot']['mobile']) {
                                                 $checked['mobile'] = 'checked';
+                                                $amount_active_posts++;
                                             }
                                         }
                                     }
@@ -642,12 +652,20 @@ class WebChangeDetector_Admin
                                 echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
                             }
                             echo '</table>';
+
+                            echo '<div class="selected-urls" style="display: none;" 
+                                    data-amount_selected="' . $amount_active_posts . '" 
+                                    data-amount_selected_desktop="' . $selected_desktop . '"
+                                    data-amount_selected_mobile="' . $selected_mobile . '"
+                                    data-post_type="' . $post_type . '"
+                                    ></div>';
                             } ?>
                         </div>
                     </div>
                 </div>
             <?php
         }
+
         echo '<input class="button" type="submit" value="Save" style="margin-bottom: 30px">';
         echo '</form>';
     }
@@ -678,7 +696,7 @@ class WebChangeDetector_Admin
 
         $website_details = $this->mm_api($args);
 
-        if (count($website_details) > 0) {
+        if ($website_details && count($website_details) > 0) {
             return $website_details[0];
         }
         return $website_details;

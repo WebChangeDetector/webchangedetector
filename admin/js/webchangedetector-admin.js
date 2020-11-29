@@ -1,6 +1,3 @@
-const MM_SERVER_TIME_OFFSET = -1;
-
-
 (function( $ ) {
     'use strict';
 
@@ -128,6 +125,14 @@ const MM_SERVER_TIME_OFFSET = -1;
             }
             $(".auto-setting").show();
         }
+        $(".selected-urls").each(function(index, item) {
+            var postType = $(item).data("post_type");
+            var selectedDesktop = ($(item).data("amount_selected_desktop"));
+            var selectedMobile = ($(item).data("amount_selected_mobile"));
+            $("#selected-desktop-"+postType).html(selectedDesktop);
+            $("#selected-mobile-"+postType).html(selectedMobile);
+        });
+
 
         // Show local time in dropdowns
         var localDate = new Date();

@@ -322,23 +322,37 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                         </span><br>
                         <?= $account_details['available_compares'] ?> available until renewal
                     </div>
-                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" class="sc_button">
-                        <input type="hidden" value="take_screenshots" name="wcd_action">
-                        <input type="hidden" name="sc_type" value="pre">
-                        <button type="submit" class="button">
-                            <span class="button_headline">Create Reference Screenshots</span><br>
-                            <span>Take screenshots <strong>before</strong> you do updates. The screenshots after the update will be compared with these screenshots.</span>
-                        </button>
-                    </form>
+                    <div class="sc_button">
+                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post">
+                            <input type="hidden" value="take_screenshots" name="wcd_action">
+                            <input type="hidden" name="sc_type" value="pre">
+                            <button type="submit" class="button">
+                                <span class="button_headline">1. Take Reference Screenshots</span><br>
+                                <span>Take screenshots <strong>before</strong> you do updates. The screenshots after the update will be compared with these screenshots.</span>
+                            </button>
+                        </form>
+                    </div>
 
-                    <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" class="sc_button last">
-                        <input type="hidden" value="take_screenshots" name="wcd_action">
-                        <input type="hidden" name="sc_type" value="post">
-                        <button type="submit" class="button">
-                            <span class="button_headline">Create Change Detections </span><br>
-                            <span>Take screenshots <strong>after</strong> you finished the updates and compare them with the reference screenshots.</span>
-                        </button>
-                    </form>
+                    <div class="sc_button no-click">
+                        <span class="button_headline">2. Update your website</span><br>
+                        <span>
+                            Install updates or make changes on your website. When you are finished,
+                            create change detections to see differences.
+                            <span class="link" onclick="showUpdates();">Show Updates</span>
+                        </span>
+
+                    </div>
+
+                    <div class="sc_button last">
+                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" >
+                            <input type="hidden" value="take_screenshots" name="wcd_action">
+                            <input type="hidden" name="sc_type" value="post">
+                            <button type="submit" class="button">
+                                <span class="button_headline">3. Create Change Detections </span><br>
+                                <span>Take screenshots <strong>after</strong> you finished the updates and compare them with the reference screenshots.</span>
+                            </button>
+                        </form>
+                    </div>
                     <div class="clear" style="margin-bottom: 30px;"></div>
 
                     <h2>Select Update Change Detection URLs</h2>
@@ -370,7 +384,6 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
                 $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
-                //var_dump($groups_and_urls);
                 $hour_of_day = $groups_and_urls['hour_of_day'];
                 $interval = $groups_and_urls['interval_in_h'];
 
@@ -582,18 +595,6 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              ***************/
             case 'show-compare':
                 echo $wcd->get_comparison_by_token($_GET['token']);
-            /*
-                include 'templates/show-change-detection.php';
-                echo '<h1>The Change Detection Images</h1>';
-                // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field
-                $public_link = $wcd->app_url() . 'show-change-detection/?token=' . sanitize_textarea_field($_GET['token']);
-                echo '<p>Public link: <a href="' . $public_link . '" target="_blank">' . $public_link . '</a></p>';
-                $back_button = '<a href="' . $_SERVER['HTTP_REFERER'] . '" class="button" style="margin: 10px 0;">Back</a><br>';
-                echo $back_button;
-                // [sic], see https://developer.wordpress.org/reference/functions/sanitize_textarea_field
-                echo $wcd->get_comparison_partial(sanitize_textarea_field($_GET['token']));
-                echo '<div class="clear"></div>';
-                echo $back_button;*/
             break;
             default:
                 // Should already be validated by VALID_WCD_ACTIONS
