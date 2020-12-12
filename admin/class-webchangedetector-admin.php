@@ -144,10 +144,60 @@ class WebChangeDetector_Admin
             'WCD',
             'manage_options',
             'webchangedetector',
-            'mm_wcd_webchangedetector_init',
+            'wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
+        
+        add_submenu_page(
+            'webchangedetector',
+            'Dashboard',
+            'Dashboard',
+            'manage_options',
+            'webchangedetector',
+            'wcd_webchangedetector_init'
+        );
+        add_submenu_page(
+            'webchangedetector',
+            'Change Detections',
+            'Change Detections',
+            'manage_options',
+            'webchangedetector-change-detections',
+            'wcd_webchangedetector_init'
+        );
+        add_submenu_page(
+            'webchangedetector',
+            'Update Settings',
+            'Update Settings',
+            'manage_options',
+            'webchangedetector-update-settings',
+            'wcd_webchangedetector_init'
+        );
+        add_submenu_page(
+            'webchangedetector',
+            'Auto Settings',
+            'Auto Settings',
+            'manage_options',
+            'webchangedetector-auto-settings',
+            'wcd_webchangedetector_init'
+        );
+        add_submenu_page(
+            'webchangedetector',
+            'Logs',
+            'Logs',
+            'manage_options',
+            'webchangedetector-logs',
+            'wcd_webchangedetector_init'
+        );
+        add_submenu_page(
+            'webchangedetector',
+            'Settings',
+            'Settings',
+            'manage_options',
+            'webchangedetector-settings',
+            'wcd_webchangedetector_init'
+        );
     }
+
 
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save($post_id, $post, $update)
@@ -203,6 +253,12 @@ class WebChangeDetector_Admin
         );
         return $this->mm_api($args);
     }
+
+    public function get_upgrade_url() {
+        $account_details = $this->account_details();
+        return $this->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'];
+    }
+
 
     /* Not needed anymore
     public function get_upgrade_options($plan_id)
@@ -329,7 +385,7 @@ class WebChangeDetector_Admin
                     </td>
                     <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>
-                        <a href="?page=webchangedetector&tab=show-compare&action=show_compare&token=<?= $compare['token'] ?>"
+                        <a href="?page=webchangedetector&tab=webchangedetector-show-compare&action=show_compare&token=<?= $compare['token'] ?>"
                            class="button">
                             Show
                         </a>
@@ -540,7 +596,7 @@ class WebChangeDetector_Admin
             $tab = 'auto-settings';
         }
 
-        echo '<form action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
+        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
@@ -624,7 +680,7 @@ class WebChangeDetector_Admin
                                             }
                                             if ($url_details['pivot']['mobile']) {
                                                 $checked['mobile'] = 'checked';
-                                                $selected_desktop++;
+                                                $selected_mobile++;
                                                 $amount_active_posts++;
                                             }
                                         }
@@ -697,7 +753,7 @@ class WebChangeDetector_Admin
 
         $website_details = $this->mm_api($args);
 
-        if ($website_details && count($website_details) > 0) {
+        if (is_array($website_details) && count($website_details) > 0) {
             return $website_details[0];
         }
         return $website_details;
@@ -707,28 +763,28 @@ class WebChangeDetector_Admin
     {
         $active_tab = 'dashboard'; // init
 
-        if (isset($_GET['tab'])) {
+        if (isset($_GET['page'])) {
             // sanitize: lower-case with "-"
-            $active_tab = sanitize_key($_GET['tab']);
+            $active_tab = sanitize_key($_GET['page']);
         } ?>
         <div class="wrap">
             <h2 class="nav-tab-wrapper">
-                <a href="?page=webchangedetector&tab=dashboard"
-                   class="nav-tab <?php echo $active_tab == 'dashboard' ? 'nav-tab-active' : ''; ?>">
+                <a href="?page=webchangedetector"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector' ? 'nav-tab-active' : ''; ?>">
                    Dashboard</a>
-                <a href="?page=webchangedetector&tab=change-detections"
-                   class="nav-tab <?php echo $active_tab == 'change-detections' ? 'nav-tab-active' : ''; ?>">
+                <a href="?page=webchangedetector-change-detections"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
                     Change Detections</a>
-                <a href="?page=webchangedetector&tab=update-settings"
-                   class="nav-tab <?php echo $active_tab == 'update-settings' ? 'nav-tab-active' : ''; ?>">
+                <a href="?page=webchangedetector-update-settings"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
                     Update Settings</a>
-                <a href="?page=webchangedetector&tab=auto-settings"
-                   class="nav-tab <?php echo $active_tab == 'auto-settings' ? 'nav-tab-active' : ''; ?>">
+                <a href="?page=webchangedetector-auto-settings"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
                     Auto Settings</a>
-                <a href="?page=webchangedetector&tab=logs"
-                   class="nav-tab <?php echo $active_tab == 'logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
-                <a href="?page=webchangedetector&tab=settings"
-                   class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
+                <a href="?page=webchangedetector-logs"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
+                <a href="?page=webchangedetector-settings"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
             </h2>
         </div>
 

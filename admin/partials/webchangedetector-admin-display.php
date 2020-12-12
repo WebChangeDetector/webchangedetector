@@ -13,8 +13,8 @@
  */
 
 
-if (! function_exists('mm_wcd_webchangedetector_init')) {
-    function mm_wcd_webchangedetector_init()
+if (! function_exists('wcd_webchangedetector_init')) {
+    function wcd_webchangedetector_init()
     {
         $wcd = new WebChangeDetector_Admin();
 
@@ -190,22 +190,46 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
 
         // Get updated account and website data
         $account_details = $wcd->account_details();
-        $website_details = $wcd->get_website_details();
+
+
+
+
+
 
         // Start view
         echo '<div class="wrap">';
         echo '<div class="webchangedetector">';
         echo '<h1>WebChangeDetector</h1>';
 
+
+
+        // Check for account status
+        if($account_details['status'] !== "active"){
+            $message = '<h3>Your account was ' . $account_details['status'] . '.</h3>
+                <p>Please <a href="' . $wcd->get_upgrade_url() . '">Upgrade</a> your account to re-activate your account.</p>
+                <p>To use a different account, please reset the API token.
+                    <form method="post">
+                        <input type="hidden" name="wcd_action" value="reset_api_token">
+                        <input type="submit" value="Reset API token">
+                    </form>
+                </p>';
+
+            echo '<div class="error notice">' . $message . '</div>';
+            return false;
+        }
+
         $wcd->tabs();
+
+        $tab = 'webchangedetector-dashboard'; // init
+        if (isset($_GET['page'])) {
+            // sanitize: lower-case with "-"
+            $tab = sanitize_key($_GET['page']);
+        }
+        $website_details = $wcd->get_website_details();
 
         echo '<div style="margin-top: 30px;"></div>';
 
-        $tab = 'dashboard'; // init
-        if (isset($_GET['tab'])) {
-            // sanitize: lower-case with "-"
-            $tab = sanitize_key($_GET['tab']);
-        }
+
 
         // Account credits
         $comp_usage = $account_details['usage'];
@@ -221,7 +245,12 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
         $renew_date = strtotime($account_details['renewal_at']);
 
         switch ($tab) {
-            case 'dashboard':
+
+            /********************
+             * Dashboard
+             ********************/
+
+            case 'webchangedetector':
             $wcd->get_dashboard_view($account_details, $group_id, $monitoring_group_id);
             break;
 
@@ -229,7 +258,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              * Change Detections
              ********************/
 
-            case 'change-detections':
+            case 'webchangedetector-change-detections':
                 echo '<h2>Latest Change Detections</h2>';
 
                 $limit_days = null;
@@ -304,7 +333,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              * Update Change Detections
             ****************************/
 
-            case 'update-settings':
+            case 'webchangedetector-update-settings':
                 if ($website_details['enable_limits'] && ! $website_details['allow_manual_detection']) {
                     echo 'Settings for Update Change detections are disabled by your API Token.';
                     break;
@@ -336,9 +365,9 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
                     <div class="sc_button no-click">
                         <span class="button_headline">2. Update your website</span><br>
                         <span>
-                            Install updates or make changes on your website. When you are finished,
+                            Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website. When you are finished,
                             create change detections to see differences.
-                            <span class="link" onclick="showUpdates();">Show Updates</span>
+
                         </span>
 
                     </div>
@@ -376,7 +405,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              * Auto Change Detections
              **************************/
 
-            case 'auto-settings':
+            case 'webchangedetector-auto-settings':
                 if ($website_details['enable_limits'] && ! $website_details['allow_auto_detection']) {
                     echo 'Settings for Update Change detections are disabled by your API Token.';
                     break;
@@ -514,7 +543,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              * Logs
              *********/
 
-            case 'logs':
+            case 'webchangedetector-logs':
                 // Show queued urls
                 $queues = $wcd->get_queue();
 
@@ -569,7 +598,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
              * Settings
              ***********/
 
-            case 'settings':
+            case 'webchangedetector-settings':
 
                 if (! $api_token) {
                     echo '<div class="error notice">
@@ -593,7 +622,7 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
             /***************
              * Show compare
              ***************/
-            case 'show-compare':
+            case 'webchangedetector-show-compare':
                 echo $wcd->get_comparison_by_token($_GET['token']);
             break;
             default:
@@ -602,5 +631,5 @@ if (! function_exists('mm_wcd_webchangedetector_init')) {
             echo '</div>'; // closing from div webchangedetector
             echo '</div>'; // closing wrap
         } // switch
-    } // mm_wcd_webchangedetector_init
+    } // wcd_webchangedetector_init
 } // function_exists

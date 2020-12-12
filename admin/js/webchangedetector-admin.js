@@ -91,6 +91,23 @@
             $(".accordion").last().accordion("option", "icons", true);
         }
 
+        // Confirm message on leaving without saving form
+        let formModified=0;
+        $('form.wcd-frm-settings').change(function(){
+            formModified=1;
+        });
+        window.onbeforeunload = confirmExit;
+
+        function confirmExit() {
+            if (formModified === 1) {
+                return "Changes were not save. Do you wish to leave the page without saving?";
+            }
+        }
+
+        $("input[type='submit']").click(function() {
+            formModified = 0;
+        });
+
         var diffTile = $(".comparison-diff-tile");
         var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
         diffTile.css("background", bgColor);
