@@ -115,6 +115,7 @@
         });
 
         // Confirm taking pre screenshots
+        $('#frm-take-pre-sc').submit(function() {
             return confirm( "Please confirm to take reference screenshots.");
         });
 

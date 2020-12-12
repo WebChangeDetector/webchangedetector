@@ -383,13 +383,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <span>
                             Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website. When you are finished,
                             create change detections to see differences.
-
                         </span>
-
                     </div>
 
                     <div class="sc_button last">
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
+                        <form id="frm-take-post-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="post">
                             <button type="submit" class="button">
