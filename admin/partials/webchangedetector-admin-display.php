@@ -132,6 +132,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 break;
 
+            case 'copy_url_settings':
+                $wcd->copy_url_settings($_POST['copy_from_group_id'],$_POST['copy_to_group_id']);
+                break;
+
             case 'post_urls':
                 // Get active posts from post data
                 $active_posts = array();
@@ -362,8 +366,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </span><br>
                         <?= $account_details['available_compares'] ?> available until renewal
                     </div>
+                    <div>
                     <div class="sc_button">
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
+                        <form id="frm-take-pre-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="pre">
                             <button type="submit" class="button">
@@ -394,9 +399,13 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </form>
                     </div>
                     <div class="clear" style="margin-bottom: 30px;"></div>
-
-                    <h2>Select Update Change Detection URLs</h2>
+                    </div>
                     <?php $wcd->get_url_settings($groups_and_urls); ?>
+                    <!-- Copy settings to auto detection -->
+                    <p>
+
+                    </p>
+                    <div class="clear"></div>
 
                 </div>
 
@@ -513,7 +522,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                             <?= $groups_and_urls['interval_in_h'] ?>
                                             <?= $groups_and_urls['interval_in_h'] === 1 ? " hour" : " hours"?>
                                         </strong> |
-                                        Notifications to: <strong><?= implode(", ", $groups_and_urls['alert_emails']) ?></strong>
+                                        Notifications to:
+                                        <strong>
+                                            <?= ! empty($groups_and_urls['alert_emails']) ? implode(", ", $groups_and_urls['alert_emails']) : "no email address set" ?>
+                                        </strong>
                                         <?php
                                     } else { ?>
                                         Currently: <strong>Not tracking</strong>
@@ -526,14 +538,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </div>
                     </div>
 
-                    <h2>Select Auto Change Detection URLs</h2>
-                    <p class="status_bar">
-                        Currently selected:
-                        <strong>
-                            <?= $groups_and_urls['amount_selected_urls'] ?>
-                            Change Detections
-                        </strong>
-                    </p>
+
                     <?php $wcd->get_url_settings($groups_and_urls, true); ?>
 
                 </div>

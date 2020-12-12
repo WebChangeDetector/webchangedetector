@@ -60,7 +60,7 @@
 
 .webchangedetector .status_bar {
     border: 1px solid #aaa;
-    background: #276dcc1c;
+    background: #6464641c;
     padding: 10px;
     color: #444;
     text-align: center;
@@ -273,6 +273,20 @@
     background: #ce8080;
 }
 
+.webchangedetector .wcd-select-urls-container {
+    border: 1px solid #aaa;
+    padding: 0 10px 10px;
+    background: #276dcc1c
+}
+
+.webchangedetector .wcd-select-urls-container h2 {
+    text-align: center;
+}
+
+.webchangedetector .wcd-frm-settings {
+    margin-bottom: 30px;
+}
+
 /**************
 Auto Detection
  **************/
@@ -312,10 +326,7 @@ Update Detection
     text-align: center;
     border: 1px solid #aaa;
     border-radius: 5px;
-
-    width: calc(33.33% - 30px);
 }
-
 
 /********
 Dashboard

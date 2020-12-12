@@ -38,6 +38,7 @@ class WebChangeDetector_Admin
         'logs',
         'settings',
         'show-compare',
+        'copy_url_settings',
     ];
 
     const VALID_SC_TYPES = [
@@ -587,17 +588,28 @@ class WebChangeDetector_Admin
 
     public function get_url_settings($groups_and_urls, $monitoring_group = false)
     {
-
         // Sync urls - post_types defined in function @TODO make settings for post_types to sync
         $synced_posts = $this->sync_posts();
 
         // Select URLS
         $tab = 'update-settings'; // init
+        $detection_type = "update";
         if ($monitoring_group) {
             $tab = 'auto-settings';
+            $detection_type = "auto";
         }
-
-        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector-' . $tab . '" method="post">';
+        echo '<div class="wcd-select-urls-container">';
+        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector-' . $tab . '" method="post" >';
+        echo '<h2>Select ' . ucfirst($detection_type) . ' Change Detection URLs</h2>';
+        ?>
+        <p style="text-align: center">
+            Currently selected:
+            <strong>
+                <?= $groups_and_urls['amount_selected_urls'] ?>
+                URLs
+            </strong>
+        </p>
+        <?php
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
@@ -624,7 +636,7 @@ class WebChangeDetector_Admin
                             <?= ucfirst($post_type) ?>s<br>
                             <small>
                                 Selected URLs desktop: <strong><span id="selected-desktop-<?= $post_type ?>"></span></strong> |
-                                Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></strong></span>
+                                Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></span></strong>
                             </small>
                             <small class="currently-selected"></small>
                         </h3>
@@ -676,7 +688,7 @@ class WebChangeDetector_Admin
 
                                             if ($url_details['pivot']['desktop']) {
                                                 $checked['desktop'] = 'checked';
-                                                $selected_mobile++;
+                                                $selected_desktop++;
                                                 $amount_active_posts++;
                                             }
                                             if ($url_details['pivot']['mobile']) {
@@ -724,8 +736,45 @@ class WebChangeDetector_Admin
             <?php
         }
 
-        echo '<input class="button" type="submit" value="Save" style="margin-bottom: 30px">';
+        echo '<input class="button" type="submit" value="Save settings">';
         echo '</form>';
+        echo '';
+
+        $website_details = $this->get_website_details();
+        $copy_to_group_id = $website_details['auto_detection_group_id'];
+        $copy_to_group_type = "auto";
+        if( $monitoring_group) {
+            $copy_to_group_id = $website_details['manual_detection_group_id'];
+            $copy_to_group_type = "update";
+        }
+
+        echo '<div style="text-align: right; margin-top: -60px;">
+                <form id="copy-url-settings" data-to_group_type="' . $copy_to_group_type . '" method="post" style="display: inline-block;">
+                    <input type="hidden" name="wcd_action" value="copy_url_settings">
+                    <input type="hidden" name="copy_from_group_id" value="' . $groups_and_urls['id'] . '">
+                    <input type="hidden" name="copy_to_group_id" value="' . $copy_to_group_id . '">
+                    <input type="submit" class="button" value="Copy settings to ' . $copy_to_group_type . ' detections">
+                </form>
+            </div>';
+
+        echo '</div>';
+
+    }
+
+    public function copy_url_settings($from_group_id, $to_group_id)
+    {
+        $urls = $this->get_urls_of_group($from_group_id);
+        $url_settings = [];
+        foreach($urls['urls'] as $url) {
+
+           $url_settings[] = [
+                'url_id' => $url['pivot']['url_id'],
+                'url' => $url['url'],
+                'desktop' => $url['pivot']['desktop'],
+                'mobile' => $url['pivot']['mobile'],
+            ];
+        }
+        $this->update_urls($to_group_id, $url_settings);
     }
 
     public function get_no_account_page($api_token = '')

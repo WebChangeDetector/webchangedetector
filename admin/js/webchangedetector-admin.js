@@ -92,7 +92,7 @@
         }
 
         // Confirm message on leaving without saving form
-        let formModified=0;
+        let formModified = 0;
         $('form.wcd-frm-settings').change(function(){
             formModified=1;
         });
@@ -108,6 +108,22 @@
             formModified = 0;
         });
 
+        // Confirm copy url settings
+        $("#copy-url-settings").submit(function() {
+            let type = $("#copy-url-settings").data("to_group_type");
+            return confirm( "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.");
+        });
+
+        // Confirm taking pre screenshots
+            return confirm( "Please confirm to take reference screenshots.");
+        });
+
+        // Confirm taking post screenshots
+        $('#frm-take-post-sc').submit(function() {
+            return confirm( "Please confirm to create change detections.");
+        });
+
+        // Change bg color of comparison percentages
         var diffTile = $(".comparison-diff-tile");
         var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
         diffTile.css("background", bgColor);
@@ -209,8 +225,7 @@
         var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
         if(availableCredits <= 0) {
             $("#next_sc_in").html("Not Tracking").css("color","#A00000");
-            $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>" +
-                "<a href='" + upgradeUrl + "'>Upgrade plan</a> or wait for renewal");
+            $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>");
         }
 
         // Calculate total auto sc until renewal
