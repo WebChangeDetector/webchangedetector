@@ -510,6 +510,7 @@ class WebChangeDetector_Admin
 
     public function get_api_token_form($api_token = false)
     {
+        $api_token_after_reset = isset($_POST['api_token']) ? sanitize_text_field($_POST['api_token']) : false;
         if ($api_token) {
             $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector-settings" method="post"
                         onsubmit="return confirm(\'Do you really want to reset the API Token?\nYour settings will get lost.\');">
@@ -524,7 +525,7 @@ class WebChangeDetector_Admin
                         <input type="hidden" name="wcd_action" value="save_api_token">
                         <h2>2. Your API Token</h2>
                         <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
-                        <input type="text" name="api_token" value="' . $api_token . '"
+                        <input type="text" name="api_token" value="' . $api_token_after_reset . '"
                             style="width: 550px;" >
                             <!--pattern="[a-z0-9]{20}"
                             oninvalid="this.setCustomValidity(\'Invalid format for api token.\')"

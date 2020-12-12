@@ -117,7 +117,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $results = $wcd->take_screenshot($group_id, $scType);
 
-                if (is_array($results) && count($results) > 1) {
+                if ($results && is_array($results) && count($results) > 1) {
                     if ($results[0] === 'error') {
                         echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
                     }
@@ -191,17 +191,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
         // Get updated account and website data
         $account_details = $wcd->account_details();
 
-
-
-
-
-
         // Start view
         echo '<div class="wrap">';
         echo '<div class="webchangedetector">';
         echo '<h1>WebChangeDetector</h1>';
-
-
 
         // Check for account status
         if($account_details['status'] !== "active"){
@@ -218,18 +211,36 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
-        $wcd->tabs();
-
+        // Get page to view
         $tab = 'webchangedetector-dashboard'; // init
         if (isset($_GET['page'])) {
             // sanitize: lower-case with "-"
             $tab = sanitize_key($_GET['page']);
         }
+
         $website_details = $wcd->get_website_details();
 
+        // Check if website details are available.
+        if( empty($website_details)) {
+            echo '<div class="error notice"><p>
+                    We couldn\'t find your website settings. Please reset the API token in 
+                    settings and re-add your website with your API Token.
+                    </p><p>
+                    Your current API token is: <strong>' . $api_token . '</strong>.
+                    </p>
+                     <form method="post">
+                        <input type="hidden" name="wcd_action" value="reset_api_token">
+                        <input type="hidden" name="api_token" value="' . $api_token . '">
+                        <input type="submit" value="Reset API token">
+                    </form>
+                    </p>
+                   </div>';
+            return false;
+        }
+
+        $wcd->tabs();
+
         echo '<div style="margin-top: 30px;"></div>';
-
-
 
         // Account credits
         $comp_usage = $account_details['usage'];
