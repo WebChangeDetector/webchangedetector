@@ -1,4 +1,4 @@
-<form class="wcd-frm-settings" action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=auto-settings" method="post" onsubmit="return mmValidateForm()">
+<form class="wcd-frm-settings" action="<?= admin_url() ?>/admin.php?page=webchangedetector-auto-settings" method="post" onsubmit="return mmValidateForm()">
     <p>
         <input type="hidden" name="wcd_action" value="update_monitoring_settings">
         <input type="hidden" name="monitoring" value="1">

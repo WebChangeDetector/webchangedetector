@@ -3,7 +3,7 @@
     Your Account
     <?php if (! $website_details['enable_limits']) { ?>
         <a class="button account"
-            href="<?= $wcd->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'] ?>"
+            href="<?= $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] ?>"
             target="_blank">
             Upgrade
         </a>

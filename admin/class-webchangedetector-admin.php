@@ -256,7 +256,7 @@ class WebChangeDetector_Admin
 
     public function get_upgrade_url() {
         $account_details = $this->account_details();
-        return $this->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'];
+        return $this->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'];
     }
 
 
@@ -385,7 +385,7 @@ class WebChangeDetector_Admin
                     </td>
                     <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>
-                        <a href="?page=webchangedetector&tab=webchangedetector-show-compare&action=show_compare&token=<?= $compare['token'] ?>"
+                        <a href="?page=webchangedetector-webchangedetector-show-compare&action=show_compare&token=<?= $compare['token'] ?>"
                            class="button">
                             Show
                         </a>
@@ -511,7 +511,7 @@ class WebChangeDetector_Admin
     public function get_api_token_form($api_token = false)
     {
         if ($api_token) {
-            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=settings" method="post"
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector-settings" method="post"
                         onsubmit="return confirm(\'Do you really want to reset the API Token?\nYour settings will get lost.\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <h2>API Token</h2>
@@ -520,7 +520,7 @@ class WebChangeDetector_Admin
                         <p><strong>ATTENTION: With resetting the API Token, all settings get lost and
                         the monitoring won\'t be continued!</strong></p>';
         } else {
-            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector&tab=settings" method="post">
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector-settings" method="post">
                         <input type="hidden" name="wcd_action" value="save_api_token">
                         <h2>2. Your API Token</h2>
                         <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
@@ -596,7 +596,7 @@ class WebChangeDetector_Admin
             $tab = 'auto-settings';
         }
 
-        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector&tab=' . $tab . '" method="post">';
+        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector-' . $tab . '" method="post">';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
@@ -761,7 +761,7 @@ class WebChangeDetector_Admin
 
     public function tabs()
     {
-        $active_tab = 'dashboard'; // init
+        $active_tab = 'webchangedetector'; // init
 
         if (isset($_GET['page'])) {
             // sanitize: lower-case with "-"
@@ -803,7 +803,7 @@ class WebChangeDetector_Admin
         <div class="dashboard">
             <div>
                 <div class="box-half no-border">
-                    <a class="box" href="?page=webchangedetector&tab=update-settings">
+                    <a class="box" href="?page=webchangedetector-update-settings">
                         <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
                             <?= $this->get_device_icon('update-group') ?>
                         </div>
@@ -813,7 +813,7 @@ class WebChangeDetector_Admin
                         </div>
                         <div class="clear"></div>
                     </a>
-                    <a class="box" href="?page=webchangedetector&tab=auto-settings">
+                    <a class="box" href="?page=webchangedetector-auto-settings">
                         <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
                             <?= $this->get_device_icon('auto-group') ?>
                         </div>
@@ -823,7 +823,7 @@ class WebChangeDetector_Admin
                         </div>
                         <div class="clear"></div>
                     </a>
-                    <a class="box" href="?page=webchangedetector&tab=change-detections">
+                    <a class="box" href="?page=webchangedetector-change-detections">
                         <div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
                             <?= $this->get_device_icon('change-detections') ?>
                         </div>
@@ -867,7 +867,7 @@ class WebChangeDetector_Admin
                 <?php
                 $this->compare_view($recent_comparisons);
         if (! empty($recent_comparisons)) { ?>
-                    <a class="button" href="?page=webchangedetector&tab=change-detections">Show Change Detections</a>
+                    <a class="button" href="?page=webchangedetector-change-detections">Show Change Detections</a>
                 <?php } ?>
             </div>
 

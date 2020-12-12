@@ -352,7 +352,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <?= $account_details['available_compares'] ?> available until renewal
                     </div>
                     <div class="sc_button">
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post">
+                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="pre">
                             <button type="submit" class="button">
@@ -373,7 +373,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     </div>
 
                     <div class="sc_button last">
-                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector&tab=update-settings" method="post" >
+                        <form action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="post">
                             <button type="submit" class="button">
@@ -612,7 +612,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
                     echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';
                     echo '<h2>Need more screenshots?</h2>';
-                    echo '<a class="button" href="' . $wcd->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
+                    echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
                     echo '<p>The new amount of compares will be available immediately. The renew date will not change with an upgrade.</p>';
                     //echo( $wcd->get_upgrade_options($account_details['plan_id']));
                 }
