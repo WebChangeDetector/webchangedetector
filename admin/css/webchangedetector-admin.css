@@ -35,6 +35,12 @@
     background-color: #fff;
 }
 
+.webchangedetector #currently-processing-spinner {
+    visibility: visible;
+    float: none;
+    margin: 0 5px 0 0;
+}
+
 .webchangedetector .pagination {
     text-align: center;
 }

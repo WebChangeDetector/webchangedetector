@@ -242,6 +242,17 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
+        $sc_processing = $wcd->get_processing_queue();
+        if($sc_processing) {
+            echo '<div class="notice-info notice">
+                    <p id="currently-processing-container">
+                    <span id="currently-processing-spinner" class="spinner"></span>
+                        Currently <strong>
+                        <span id="currently-processing">' . $sc_processing . '</span> screenshots</strong> are in progress. Check the Logs for more details.
+                    </p>
+                </div>';
+        }
+
         $wcd->tabs();
 
         echo '<div style="margin-top: 30px;"></div>';

@@ -158,6 +158,8 @@ class WebChangeDetector
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
         $this->loader->add_action('admin_menu', $plugin_admin, 'wcd_plugin_setup_menu');
         $this->loader->add_action('save_post', $plugin_admin, 'sync_post_after_save', 10, 3); // Sync all pages and posts when there is a new page or post published
+        $this->loader->add_action('wp_ajax_get_processing_queue', $plugin_admin, 'ajax_get_processing_queue');
+
     }
     /**
      * Register all of the hooks related to the public-facing functionality

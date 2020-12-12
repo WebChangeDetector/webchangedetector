@@ -242,6 +242,42 @@
             $("#sc_until_renew").addClass("exceeding");
             $("#sc_available_until_renew").addClass("exceeding");
         }
+
+        /**********
+         * AJAX
+         *********/
+        function currentlyProcessing() {
+            var currentlyProcessing = $('#currently-processing');
+            var currentlyProcessingContainer = $('#currently-processing-container');
+            var currentlyProcessingSpinner = $('#currently-processing-spinner');
+
+            // Only show currently processing if there is something to process and check every 10 sec then
+            if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0) {
+                let totalSc = parseInt(currentlyProcessing.html());
+                var processingInterval = setInterval(function() {
+
+                    //currentlyProcessingSpinner.show();
+                    var data = {
+                        action: 'get_processing_queue'
+                    };
+
+                    $.post(ajaxurl, data, function (response) {
+                        currentlyProcessing.html(response);
+
+                        // If the queue is done, show all done for 10 sec
+                        if (parseInt(response) === 0) {
+                            currentlyProcessingSpinner.hide(); // hide spinner
+
+                            // Stop the interval when everything is done.
+                            clearInterval(processingInterval);
+                        }
+                    });
+                }, 10000, currentlyProcessing)
+            }
+        }
+
+        // This needs to instantly be executed
+        currentlyProcessing();
     });
 
 })( jQuery );

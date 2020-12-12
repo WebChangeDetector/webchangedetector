@@ -221,6 +221,16 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
+    public function ajax_get_processing_queue() {
+        echo $this->get_processing_queue();
+        die();
+    }
+
+    public function get_processing_queue()
+    {
+        return $this->mm_api(['action' => 'get_not_closed_queue']);
+    }
+
     public function get_monitoring_settings($group_id)
     {
         $args = array(
