@@ -109,6 +109,8 @@ class WebChangeDetector_Admin
         wp_enqueue_style('jquery-ui-accordion');
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/webchangedetector-admin.css', array(), $this->version, 'all');
         wp_enqueue_style('twentytwenty-css', plugin_dir_url(__FILE__) . 'css/twentytwenty.css', array(), $this->version, 'all');
+        wp_enqueue_style('wp-codemirror');
+        wp_enqueue_style('codemirror-darcula', plugin_dir_url(__FILE__) . 'css/darcula.css', array(), $this->version, 'all');
     }
 
     /**
@@ -135,6 +137,14 @@ class WebChangeDetector_Admin
         wp_enqueue_script('jquery-ui-accordion');
         wp_enqueue_script('twentytwenty-js', plugin_dir_url(__FILE__) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false);
         wp_enqueue_script('twentytwenty-move-js', plugin_dir_url(__FILE__) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false);
+        // Load WP codemirror
+        $css_settings = array(
+                        'type' => 'text/css',
+                        'codemirror' => array('theme' =>'darcula')
+                    );
+        $cm_settings['codeEditor'] = wp_enqueue_code_editor($css_settings);
+        wp_localize_script('jquery', 'cm_settings', $cm_settings);
+        wp_enqueue_script('wp-theme-plugin-editor');
     }
 
     // Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
@@ -224,9 +234,17 @@ class WebChangeDetector_Admin
         $args = array_merge([
             'action' => 'create_free_account',
             ], $postdata);
-        //$api_token = $this->mm_api($args);
-        $api_token='mike@wp-mike.com';
-        $this->save_api_token($api_token);
+        $api_token = $this->mm_api($args, true);
+
+        // if we get an array it is an error message
+        if(is_array($api_token)) {
+            return '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
+        }
+
+        if($this->dev()) {
+            return $postdata['email'];
+        }
+        return $api_token;
     }
 
     public function save_api_token($api_token) {
@@ -316,6 +334,7 @@ class WebChangeDetector_Admin
             'enabled' => sanitize_key($postdata['enabled']),
             'alert_emails' => sanitize_textarea_field($postdata['alert_emails']),
             'name' => sanitize_textarea_field($postdata['group_name']),
+            'css' => sanitize_textarea_field($postdata['css']),
         );
         return $this->mm_api($args);
     }
@@ -852,28 +871,31 @@ class WebChangeDetector_Admin
     {
         delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
-        $output = '<div class="webchangedetector">
-		<h1>Web Change Detector</h1>
-		<hr>
-		<h2>1. Free Account</h2>
-		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
-		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<form class="frm_new_account" method="post">
-            <input type="hidden" name="wcd_action" value="create_free_account">
-            <input type="hidden" name="plan" value="free">
-            <label for="name_first">First Name</label><input type="text" name="name_first" placeholder="First Name" value="' . wp_get_current_user()->user_firstname . '">
-            <label for="name_last">Last Name</label><input type="text" name="name_last" placeholder="Last Name" value="' . wp_get_current_user()->user_lastname . '">
-            <label for="email">Email Address</label><input type="email" name="email" placeholder="Email" value="' . wp_get_current_user()->user_email . '">
-            <label for="password">Password</label><input type="password" name="password" placeholder="Password">
-            <input type="submit" class="button-primary" value="Create Free Account">
-		</form>
-		<!--<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>-->
-		<hr>
-		' . $this->get_api_token_form($api_token) . '
+        ob_start();
+        ?>
+        <div class="webchangedetector">
+            <h1>Web Change Detector</h1>
+            <hr>
+            <h2>1. Free Account</h2>
+            <p>
+                Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
+                If you already have an API Token, you can enter it below and start your Change Detections.
+            </p>
+            <form class="frm_new_account" method="post">
+                <input type="hidden" name="wcd_action" value="create_free_account">
+                <input type="hidden" name="plan_id" value="1">
+                <label for="name_first">First Name</label><input type="text" name="name_first" placeholder="First Name" value="<?= $_POST['name_first'] ?? wp_get_current_user()->user_firstname ?>">
+                <label for="name_last">Last Name</label><input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>">
+                <label for="email">Email Address</label><input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>">
+                <input type="submit" class="button-primary" value="Create Free Account">
+            </form>
+            <!--<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>-->
+            <hr>
+            <?= $this->get_api_token_form($api_token) ?>
 		</div>
-</form>';
 
-        return $output;
+        <?php
+        return ob_get_clean();
     }
 
     public function get_website_details()
@@ -1013,16 +1035,19 @@ class WebChangeDetector_Admin
     public function show_activate_account($error)
     {
         if ($error === 'activate account') { ?>
-            <div class="error notice"></span>
-                Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.
+            <div class="notice notice-info"></span>
+                <p>Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.</p>
                 <p>You cannot find the email? Please also check your spam folder.</p>
             </div>
         <?php
         }
 
         if ($error === 'unauthorized') { ?>
-            <div class="error notice"><span class="dashicons dashicons-warning"></span>
-                <p>The API token is not valid. Please reset the API token and enter a valid one.</p>
+            <div class="error notice">
+                <p>
+                    <span class="dashicons dashicons-warning"></span>
+                    The API token is not valid. Please reset the API token and enter a valid one.
+                </p>
             </div>
         <?php
         }
@@ -1061,22 +1086,30 @@ class WebChangeDetector_Admin
      * This is the only method left with mm_ for historical reasons
      *
      * @param array $post
+     * @param bool $isGet
      * @return string|array
      */
-    public function mm_api($post)
+    public function mm_api($post, $isGet = false)
     {
         $url = 'https://api.webchangedetector.com/api/v1/'; // init for production
+        $urlGet = 'https://api.webchangedetector.com/';
 
         // This is where it can be changed to a local/dev address
         if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
             $url = WCD_API_URL;
         }
 
+        // Overwrite $url if it is a get request
+        if ($isGet && defined('WCD_API_URL_GET') && is_string(WCD_API_URL_GET) && ! empty(WCD_API_URL_GET)) {
+            $urlGet = WCD_API_URL_GET;
+        }
+
         $url .= str_replace('_', '-', $post['action']); // add kebab action to url
+        $urlGet .= str_replace('_', '-', $post['action']); // add kebab action to url
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = $post['api_token'] ?? get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+        $api_token = $post['api_token'] ?? get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN) ?? null;
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case
@@ -1094,7 +1127,12 @@ class WebChangeDetector_Admin
             ),
         );
 
-        $response = wp_remote_post($url, $args);
+        if($isGet) {
+            $response = wp_remote_get($urlGet, $args);
+        } else {
+             $response = wp_remote_post($url, $args);
+        }
+
         $body = wp_remote_retrieve_body($response);
         $responseCode = (int) wp_remote_retrieve_response_code($response);
 

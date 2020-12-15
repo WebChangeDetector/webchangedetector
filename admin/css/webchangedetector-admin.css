@@ -240,9 +240,6 @@
     padding: 10px 20px;
 }
 
-.webchangedetector .ui-accordion .ui-accordion-header .ui-accordion-header-icon {
-}
-
 .webchangedetector .action-container {
     float: left;
     margin-right: 20px;
@@ -317,6 +314,23 @@
     text-align: right;
     margin-top: 20px;
 }
+
+.webchangedetector p.code-tags {
+    background: #2B2B2B !important;
+    color: #629755;
+    font-style: italic;
+    font-size: 14px;
+    padding: 5px 10px !important;
+    margin: 0;
+}
+
+.webchangedetector .frm-codearea {
+    margin: 20px 0;
+}
+.webchangedetector .frm-codearea textarea{
+    margin-bottom: 20px;
+}
+
 
 /**************
 Auto Detection

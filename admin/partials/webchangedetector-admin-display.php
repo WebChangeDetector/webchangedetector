@@ -30,7 +30,8 @@ if (! function_exists('wcd_webchangedetector_init')) {
         // Actions without API Token needed
         switch ($wcd_action) {
             case 'create_free_account':
-                $wcd->create_free_account($_POST);
+                $api_token = $wcd->create_free_account($_POST);
+                $wcd->save_api_token($api_token);
             break;
 
             case 'reset_api_token':
@@ -503,7 +504,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     <div class="accordion" style="margin-bottom: 40px;">
                         <div class="mm_accordion_title">
                             <h3>
-                                Settings for Auto Change Detection<br>
+                                Auto Detection Settings<br>
                                 <small>
                                     <?php
                                     $enabled = $groups_and_urls['enabled'];
@@ -530,7 +531,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             </div>
                         </div>
                     </div>
-
 
                     <?php $wcd->get_url_settings($groups_and_urls, true); ?>
 

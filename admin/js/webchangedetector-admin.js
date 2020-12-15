@@ -89,6 +89,10 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
     $( document ).ready(function() {
 
+        $(".codearea").each(function(index, item) {
+            wp.codeEditor.initialize(item);
+        });
+
         // Init accordions
         $(".accordion").each(function(index, item) {
             $(item).accordion({
@@ -99,9 +103,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                     "header": "dashicons dashicons-plus",
                     "activeHeader": "dashicons dashicons-minus"
                 },
-                //animate: "200"
             });
-            $(item).accordion( "option", "animate", 200 );
         });
 
         // Confirm message on leaving without saving form
@@ -342,6 +344,7 @@ function mmValidateForm() {
     // get all emails
     var emailsElement = document.getElementById("alert_emails");
     // split by comma
+    emailsElement.value.replace('\n',',');
     let emails = emailsElement.value.replace(/\s/g,'').split(",");
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
