@@ -4,7 +4,7 @@
         <input type="hidden" name="monitoring" value="1">
         <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
-        <label for="enabled">Enabled</label>
+        <label for="enabled">Auto Detection Enabled</label>
         <select name="enabled" id="auto-enabled">
             <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
                 Yes

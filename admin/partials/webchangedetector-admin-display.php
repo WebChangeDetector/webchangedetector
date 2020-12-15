@@ -29,6 +29,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // Actions without API Token needed
         switch ($wcd_action) {
+            case 'create_free_account':
+                $wcd->create_free_account($_POST);
+            break;
+
             case 'reset_api_token':
                 $wcd->delete_website();
                 delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
@@ -41,29 +45,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     return false;
                 }
 
-                $api_token = sanitize_textarea_field($_POST['api_token']);
-
-                if ($wcd->dev()) {
-                    // using emails as api_token to develop on localhost
-                    $api_token = sanitize_email($_POST['api_token']);
-                }
-
-                if (! is_string($api_token) || (! $wcd->dev() && strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH)) {
-                    echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
-                    echo $wcd->get_no_account_page();
-                    return false;
-                }
-
-                $website = $wcd->create_group($api_token);
-
-                if (empty($website)) {
-                    echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
-                    echo $wcd->get_no_account_page();
-                    return false;
-                }
-
-                update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token);
-                $wcd->sync_posts();
+                $wcd->save_api_token($_POST['api_token']);
 
             break;
         }
@@ -382,7 +364,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <form id="frm-take-pre-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="pre">
-                            <button type="submit" class="button">
+                            <button type="submit" class="button-primary">
                                 <span class="button_headline">1. Take Reference Screenshots</span><br>
                                 <span>Take screenshots <strong>before</strong> you do updates. The screenshots after the update will be compared with these screenshots.</span>
                             </button>
@@ -390,18 +372,20 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     </div>
 
                     <div class="sc_button no-click">
-                        <span class="button_headline">2. Update your website</span><br>
-                        <span>
-                            Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website. When you are finished,
-                            create change detections to see differences.
-                        </span>
+                        <div class="sc_button_inner">
+                            <span class="button_headline">2. Update your website</span><br>
+                            <span>
+                                Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website. When you are finished,
+                                create change detections to see differences.
+                            </span>
+                        </div>
                     </div>
 
                     <div class="sc_button last">
                         <form id="frm-take-post-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
                             <input type="hidden" value="take_screenshots" name="wcd_action">
                             <input type="hidden" name="sc_type" value="post">
-                            <button type="submit" class="button">
+                            <button type="submit" class="button-primary">
                                 <span class="button_headline">3. Create Change Detections </span><br>
                                 <span>Take screenshots <strong>after</strong> you finished the updates and compare them with the reference screenshots.</span>
                             </button>
@@ -453,12 +437,12 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 // Calculation for auto detections
                 $date_next_sc = false;
 
-                $next_possible_sc = mktime(date("H") + 1,0,0,date("m"),date("d"),date("Y"));
+                $next_possible_sc = gmmktime(gmdate("H") + 1,0,0, gmdate("m"), gmdate("d"), gmdate("Y"));
                 $amount_sc_per_day = (24 / $groups_and_urls['interval_in_h']);
 
                 // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
                 for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
-                    $time_take_sc = mktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, date( "m" ), date( "d" ) - 1, date( "Y" ) );
+                    $time_take_sc = gmmktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, gmdate( "m" ), gmdate( "d" ) - 1, gmdate( "Y" ) );
 
                     // If we don't have a date yet take the first which is in the future
                     // If we have a date we check if the current one is closer in the future
@@ -471,12 +455,12 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $date_next_renewal = strtotime( $account_details['renewal_at'] );
                 $total_sc_current_period = 0;
                 $date_next_sc = false;
-                $next_possible_sc = mktime( date( "H" ) + 1, 0, 0, date( "m" ), date( "d" ), date( "Y" ) );
+                $next_possible_sc = gmmktime( gmdate( "H" ) + 1, 0, 0, gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ) );
                 $amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
 
                 // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
                 for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
-                    $time_take_sc = mktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, date( "m" ), date( "d" ) - 1, date( "Y" ) );
+                    $time_take_sc = gmmktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, gmdate( "m" ), gmdate( "d" ) - 1, gmdate( "Y" ) );
 
                     // If we don't have a date yet take the first which is in the future
                     // If we have a date we check if the current one is closer in the future
@@ -593,12 +577,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                         <span class="url queue">URL: '.$queue['url']['url'] . '</span><br>
                                         ' . $group_type . '
                                 </td>';
-
-
                             echo '<td>' . $type_nice_name[$queue['sc_type']] . '</td>';
                             echo '<td>' . ucfirst($queue['status']) . '</td>';
-                            echo '<td class="local-time" data-date="' . strtotime($queue['created_at']) . '">' .  date('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
-                            echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  date('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
+                            echo '<td class="local-time" data-date="' . strtotime($queue['created_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
+                            echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
                             echo '</tr>';
                         }
                         echo '</table>';
@@ -632,7 +614,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 } elseif (! $website_details['enable_limits']) {
                     echo '<h2>Your credits</h2>';
                     echo 'Your current plan: <strong>' . esc_html($account_details['plan']['name']) . '</strong><br>';
-                    echo 'Next renew: ' . date('d/m/Y', $renew_date);
+                    echo 'Next renew: <span class="local-date">' . gmdate('d/m/Y', $renew_date) . '</span>';
                     echo '<p>Change detections in this period: ' . esc_html($limit) . '<br>';
                     echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
                     echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';
@@ -647,12 +629,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
             /***************
              * Show compare
              ***************/
-            case 'webchangedetector-show-compare':
+            case 'webchangedetector-show-detection':
                 echo $wcd->get_comparison_by_token($_GET['token']);
             break;
+
             default:
                 // Should already be validated by VALID_WCD_ACTIONS
             break;
+
             echo '</div>'; // closing from div webchangedetector
             echo '</div>'; // closing wrap
         } // switch

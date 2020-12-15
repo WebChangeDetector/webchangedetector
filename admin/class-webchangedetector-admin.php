@@ -39,6 +39,7 @@ class WebChangeDetector_Admin
         'settings',
         'show-compare',
         'copy_url_settings',
+        'create_free_account'
     ];
 
     const VALID_SC_TYPES = [
@@ -72,7 +73,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.1.6';
+    private $version = '1.2.0';
 
     /**
      * Initialize the class and set its properties.
@@ -105,7 +106,7 @@ class WebChangeDetector_Admin
          * between the defined hooks and the functions defined in this
          * class.
          */
-
+        wp_enqueue_style('jquery-ui-accordion');
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/webchangedetector-admin.css', array(), $this->version, 'all');
         wp_enqueue_style('twentytwenty-css', plugin_dir_url(__FILE__) . 'css/twentytwenty.css', array(), $this->version, 'all');
     }
@@ -148,7 +149,11 @@ class WebChangeDetector_Admin
             'wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
-        
+        /*if(! get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN) &&
+            (! empty($_POST['wcd_action']) && $_POST['wcd_action'] === 'reset_api_token' && $_POST['wcd_action'] !== 'save_api_token')) {
+            return;
+        }*/
+
         add_submenu_page(
             'webchangedetector',
             'Dashboard',
@@ -167,16 +172,16 @@ class WebChangeDetector_Admin
         );
         add_submenu_page(
             'webchangedetector',
-            'Update Settings',
-            'Update Settings',
+            'Update Detection',
+            'Update Detection',
             'manage_options',
             'webchangedetector-update-settings',
             'wcd_webchangedetector_init'
         );
         add_submenu_page(
             'webchangedetector',
-            'Auto Settings',
-            'Auto Settings',
+            'Auto Detection',
+            'Auto Detection',
             'manage_options',
             'webchangedetector-auto-settings',
             'wcd_webchangedetector_init'
@@ -197,8 +202,58 @@ class WebChangeDetector_Admin
             'webchangedetector-settings',
             'wcd_webchangedetector_init'
         );
+        add_submenu_page(
+            'webchangedetector',
+            'Upgrade Account',
+            'Upgrade Account',
+            'manage_options',
+             $this->get_upgrade_url()
+        );
+        add_submenu_page(
+            null,
+            'Show Change Detection',
+            'Show Change Detection',
+            'manage_options',
+            'webchangedetector-show-detection',
+            'wcd_webchangedetector_init'
+        );
+
     }
 
+    public function create_free_account($postdata) {
+        $args = array_merge([
+            'action' => 'create_free_account',
+            ], $postdata);
+        //$api_token = $this->mm_api($args);
+        $api_token='mike@wp-mike.com';
+        $this->save_api_token($api_token);
+    }
+
+    public function save_api_token($api_token) {
+        $api_token = sanitize_textarea_field($api_token);
+
+        if ($this->dev()) {
+            // using emails as api_token to develop on localhost
+            $api_token = sanitize_email($api_token);
+        }
+
+        if (! is_string($api_token) || (! $this->dev() && strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH)) {
+            echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+            echo $this->get_no_account_page();
+            return false;
+        }
+
+        $website = $this->create_group($api_token);
+
+        if (empty($website)) {
+            echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+            echo $this->get_no_account_page();
+            return false;
+        }
+
+        update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token);
+        $this->sync_posts();
+    }
 
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save($post_id, $post, $update)
@@ -267,7 +322,10 @@ class WebChangeDetector_Admin
 
     public function get_upgrade_url() {
         $account_details = $this->account_details();
-        return $this->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'];
+        if(! empty($account_details['whmcs_service_id'])) {
+            return $this->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] ;
+        }
+        return false;
     }
 
 
@@ -396,7 +454,7 @@ class WebChangeDetector_Admin
                     </td>
                     <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                     <td>
-                        <a href="?page=webchangedetector-webchangedetector-show-compare&action=show_compare&token=<?= $compare['token'] ?>"
+                        <a href="?page=webchangedetector-show-detection&action=show_compare&token=<?= $compare['token'] ?>"
                            class="button">
                             Show
                         </a>
@@ -523,7 +581,7 @@ class WebChangeDetector_Admin
     {
         $api_token_after_reset = isset($_POST['api_token']) ? sanitize_text_field($_POST['api_token']) : false;
         if ($api_token) {
-            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector-settings" method="post"
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
                         onsubmit="return confirm(\'Do you really want to reset the API Token?\nYour settings will get lost.\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <h2>API Token</h2>
@@ -532,7 +590,7 @@ class WebChangeDetector_Admin
                         <p><strong>ATTENTION: With resetting the API Token, all settings get lost and
                         the monitoring won\'t be continued!</strong></p>';
         } else {
-            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector-settings" method="post">
+            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
                         <input type="hidden" name="wcd_action" value="save_api_token">
                         <h2>2. Your API Token</h2>
                         <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
@@ -643,12 +701,14 @@ class WebChangeDetector_Admin
                 <div class="accordion">
                     <div class="mm_accordion_title">
                         <h3>
-                            <?= ucfirst($post_type) ?>s<br>
+                            <span class="accordion-title">
+                            <?= ucfirst($post_type) ?>s
                             <small>
                                 Selected URLs desktop: <strong><span id="selected-desktop-<?= $post_type ?>"></span></strong> |
                                 Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></span></strong>
                             </small>
-                            <small class="currently-selected"></small>
+                            </span>
+
                         </h3>
                         <div class="mm_accordion_content">
 
@@ -758,7 +818,10 @@ class WebChangeDetector_Admin
             $copy_to_group_type = "update";
         }
 
-        echo '<div style="text-align: right; margin-top: -60px;">
+
+
+        echo '</div>';
+        echo '<div class="btn-copy-url-settings">
                 <form id="copy-url-settings" data-to_group_type="' . $copy_to_group_type . '" method="post" style="display: inline-block;">
                     <input type="hidden" name="wcd_action" value="copy_url_settings">
                     <input type="hidden" name="copy_from_group_id" value="' . $groups_and_urls['id'] . '">
@@ -766,8 +829,6 @@ class WebChangeDetector_Admin
                     <input type="submit" class="button" value="Copy settings to ' . $copy_to_group_type . ' detections">
                 </form>
             </div>';
-
-        echo '</div>';
 
     }
 
@@ -797,10 +858,21 @@ class WebChangeDetector_Admin
 		<h2>1. Free Account</h2>
 		<p>Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
 		If you already have an API Token, you can enter it below and start your Change Detections.</p>
-		<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>
+		<form class="frm_new_account" method="post">
+            <input type="hidden" name="wcd_action" value="create_free_account">
+            <input type="hidden" name="plan" value="free">
+            <label for="name_first">First Name</label><input type="text" name="name_first" placeholder="First Name" value="' . wp_get_current_user()->user_firstname . '">
+            <label for="name_last">Last Name</label><input type="text" name="name_last" placeholder="Last Name" value="' . wp_get_current_user()->user_lastname . '">
+            <label for="email">Email Address</label><input type="email" name="email" placeholder="Email" value="' . wp_get_current_user()->user_email . '">
+            <label for="password">Password</label><input type="password" name="password" placeholder="Password">
+            <input type="submit" class="button-primary" value="Create Free Account">
+		</form>
+		<!--<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>-->
 		<hr>
 		' . $this->get_api_token_form($api_token) . '
-		</div>';
+		</div>
+</form>';
+
         return $output;
     }
 
@@ -837,14 +909,16 @@ class WebChangeDetector_Admin
                     Change Detections</a>
                 <a href="?page=webchangedetector-update-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
-                    Update Settings</a>
+                    Update Detection</a>
                 <a href="?page=webchangedetector-auto-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
-                    Auto Settings</a>
+                    Auto Detection</a>
                 <a href="?page=webchangedetector-logs"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
                 <a href="?page=webchangedetector-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
+               <a href="<?= $this->get_upgrade_url() ?>" target="_blank"
+                   class="nav-tab upgrade">Upgrade Account</a>
             </h2>
         </div>
 
@@ -868,7 +942,7 @@ class WebChangeDetector_Admin
                             <?= $this->get_device_icon('update-group') ?>
                         </div>
                         <div style="float: left; max-width: 350px;">
-                            <strong>Update Change Detection</strong><br>
+                            <strong>Update Detection</strong><br>
                             Create change detections manually
                         </div>
                         <div class="clear"></div>
@@ -878,7 +952,7 @@ class WebChangeDetector_Admin
                             <?= $this->get_device_icon('auto-group') ?>
                         </div>
                         <div style="float: left; max-width: 350px;">
-                            <strong>Auto Change Detection</strong><br>
+                            <strong>Auto Detection</strong><br>
                             Create automatic change detections
                         </div>
                         <div class="clear"></div>
@@ -914,9 +988,9 @@ class WebChangeDetector_Admin
                     <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
 
                     <p><strong>Auto change detections until renewal:</strong>
-                        <?= number_format($amount_auto_detection / MM_WCD_SECONDS_IN_MONTH * (date('U', strtotime($client_account['renewal_at'])) - date('U')), 0) ?></p>
+                        <?= number_format($amount_auto_detection / MM_WCD_SECONDS_IN_MONTH * (gmdate('U', strtotime($client_account['renewal_at'])) - gmdate('U')), 0) ?></p>
 
-                    <p><strong>Renewal on:</strong> <?= date('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
+                    <p><strong>Renewal on:</strong> <?= gmdate('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
                 </div>
                 <div class="clear"></div>
             </div>
@@ -948,7 +1022,7 @@ class WebChangeDetector_Admin
 
         if ($error === 'unauthorized') { ?>
             <div class="error notice"><span class="dashicons dashicons-warning"></span>
-                The API token is not valid. Please reset the API token and enter a valid one.
+                <p>The API token is not valid. Please reset the API token and enter a valid one.</p>
             </div>
         <?php
         }

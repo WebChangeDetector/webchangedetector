@@ -2,6 +2,14 @@
  * Global
  */
 
+#toplevel_page_webchangedetector .wp-submenu li:last-child a{
+    color: #3eb43e;
+}
+
+.webchangedetector .nav-tab.upgrade {
+    color: #389f38;
+}
+
 .webchangedetector {
     max-width: 98%;
 }
@@ -64,14 +72,28 @@
     margin-top: 20px;
 }
 
+.webchangedetector .sidebar {
+    border-left: 2px solid #aaa;
+}
+
+.webchangedetector .account-box,
+.webchangedetector .help-box {
+    padding-left: 20px;
+    margin-bottom: 30px;
+}
+
 .webchangedetector .status_bar {
     border: 1px solid #aaa;
     background: #6464641c;
     padding: 10px;
     color: #444;
-    text-align: center;
     margin-bottom: 20px;
 }
+
+.webchangedetector .status_bar {
+    text-align: center;
+}
+
 .webchangedetector .status_bar .big {
     font-size: 18px;
     font-weight: 700;
@@ -200,7 +222,6 @@
 .webchangedetector .ui-accordion .ui-accordion-header,
 .webchangedetector .ui-accordion .ui-accordion-content {
     background: none;
-    height: 100% !important;
 }
 
 .webchangedetector .ui-accordion .ui-accordion-header,
@@ -216,11 +237,10 @@
 }
 
 .webchangedetector .ui-accordion .ui-accordion-icons {
-    padding: 20px;
+    padding: 10px 20px;
 }
 
 .webchangedetector .ui-accordion .ui-accordion-header .ui-accordion-header-icon {
-    display: none;
 }
 
 .webchangedetector .action-container {
@@ -235,7 +255,7 @@
     width: 300px;
 }
 
-.webchangedetector .help-box,
+/*.webchangedetector .help-box,
 .webchangedetector .account-box {
     background: #276ECC;
     color: #fff;
@@ -259,7 +279,7 @@
 .webchangedetector .account-box a.account:hover{
     background: rgba( 255,255,255,0.7);
     border-color:#fff;
-}
+}*/
 
 .webchangedetector .help-box h3 {
     font-weight: 400;
@@ -276,7 +296,7 @@
     background: #E7F2E7;
 }
 .webchangedetector .queue-status-failed {
-    background: #ce8080;
+    background: rgba(252, 134, 134, 0.51);
 }
 
 .webchangedetector .wcd-select-urls-container {
@@ -291,6 +311,11 @@
 
 .webchangedetector .wcd-frm-settings {
     margin-bottom: 30px;
+}
+
+.webchangedetector .btn-copy-url-settings {
+    text-align: right;
+    margin-top: 20px;
 }
 
 /**************
@@ -311,7 +336,7 @@ Update Detection
     text-align: left;
     float: left;
     white-space: inherit;
-    margin-right: 10px;
+    margin-right: 15px;
     line-height: 2;
 }
 .webchangedetector .sc_button.last {
@@ -328,10 +353,10 @@ Update Detection
     font-weight: 700;
 }
 
-.webchangedetector .sc_button.no-click {
-    text-align: center;
+.webchangedetector .sc_button.no-click .sc_button_inner {
     border: 1px solid #aaa;
     border-radius: 5px;
+    text-align: center;
 }
 
 /********
@@ -406,4 +431,13 @@ Dashboard
     margin-bottom: 5px;
     border: 1px solid #ddd;
     border-bottom: 0;
+}
+
+/********
+Settings
+ *******/
+.webchangedetector .frm_new_account input {
+    display: block;
+    margin-bottom: 10px;
+    width: 400px;
 }

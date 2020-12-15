@@ -31,8 +31,8 @@
 
     <div class="comparison-tile comparison-date-tile">
         <strong>Screenshots</strong><br>
-        <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?= strtotime($compare['screenshot1']['updated_at']) ?>"><?= date('d/m/Y H:i.s', strtotime($compare['screenshot1']['updated_at']))?></div>
-        <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?= strtotime($compare['screenshot2']['updated_at']) ?>"><?= date('d/m/Y H:i.s', strtotime($compare['screenshot2']['updated_at']))?></div>
+        <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?= strtotime($compare['screenshot1']['updated_at']) ?>"><?= gmdate('d/m/Y H:i.s', strtotime($compare['screenshot1']['updated_at']))?></div>
+        <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?= strtotime($compare['screenshot2']['updated_at']) ?>"><?= gmdate('d/m/Y H:i.s', strtotime($compare['screenshot2']['updated_at']))?></div>
     </div>
 </div>
 <div class="clear"></div>

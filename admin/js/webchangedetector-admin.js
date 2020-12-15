@@ -1,3 +1,5 @@
+const MM_BG_COLOR_DARK_GREEN = '#006400';
+
 (function( $ ) {
     'use strict';
 
@@ -86,10 +88,21 @@
     }
 
     $( document ).ready(function() {
-        if($(".accordion").length) {
-            $(".accordion").accordion({header: "h3", collapsible: true, active: false});
-            $(".accordion").last().accordion("option", "icons", true);
-        }
+
+        // Init accordions
+        $(".accordion").each(function(index, item) {
+            $(item).accordion({
+                header: "h3",
+                collapsible: true,
+                active: false,
+                icons: {
+                    "header": "dashicons dashicons-plus",
+                    "activeHeader": "dashicons dashicons-minus"
+                },
+                //animate: "200"
+            });
+            $(item).accordion( "option", "animate", 200 );
+        });
 
         // Confirm message on leaving without saving form
         let formModified = 0;
