@@ -140,7 +140,6 @@ class WebChangeDetector_Admin
         // Load WP codemirror
         $css_settings = array(
                         'type' => 'text/css',
-                        'codemirror' => array('theme' =>'darcula')
                         //'codemirror' => array('theme' =>'darcula')
                     );
         $cm_settings['codeEditor'] = wp_enqueue_code_editor($css_settings);
