@@ -123,6 +123,11 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             formModified = 0;
         });
 
+        // Confirm deleting account
+        $('#delete-account').submit(function(){
+            return confirm( "Are you sure you want to reset your account? This cannot be undone.");
+        });
+
         // Confirm copy url settings
         $("#copy-url-settings").submit(function() {
             let type = $("#copy-url-settings").data("to_group_type");
@@ -343,21 +348,27 @@ function mmToggle(source, postType, column, groupId) {
 function mmValidateForm() {
     // get all emails
     var emailsElement = document.getElementById("alert_emails");
-    // split by comma
-    emailsElement.value.replace('\n',',');
-    let emails = emailsElement.value.replace(/\s/g,'').split(",");
+    // split by new line
+    let emails = emailsElement.value.split(/\r?\n/g);
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     // init border
     let border = '2px solid green';
 
     for (var i = 0; i < emails.length; i++) {
+        emails[i] = emails[i].trim();
+
+        // set border of `#alert_emails` element
+        emailsElement.style.border = border;
+
         if(emails[i] === "" || ! emailRegex.test(emails[i])){
             border = "2px solid red";
+            jQuery("#error-email-validation").css("display", "block");
+            return false;
         }
     }
-    // set border of `#alert_emails` element
-    emailsElement.style.border = border;
+    jQuery("#error-email-validation").hide();
+
     // see if border is still initialValue
     return border === '2px solid green';
 }

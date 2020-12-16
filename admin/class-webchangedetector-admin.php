@@ -110,7 +110,7 @@ class WebChangeDetector_Admin
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/webchangedetector-admin.css', array(), $this->version, 'all');
         wp_enqueue_style('twentytwenty-css', plugin_dir_url(__FILE__) . 'css/twentytwenty.css', array(), $this->version, 'all');
         wp_enqueue_style('wp-codemirror');
-        wp_enqueue_style('codemirror-darcula', plugin_dir_url(__FILE__) . 'css/darcula.css', array(), $this->version, 'all');
+        //wp_enqueue_style('codemirror-darcula', plugin_dir_url(__FILE__) . 'css/darcula.css', array(), $this->version, 'all');
     }
 
     /**
@@ -141,6 +141,7 @@ class WebChangeDetector_Admin
         $css_settings = array(
                         'type' => 'text/css',
                         'codemirror' => array('theme' =>'darcula')
+                        //'codemirror' => array('theme' =>'darcula')
                     );
         $cm_settings['codeEditor'] = wp_enqueue_code_editor($css_settings);
         wp_localize_script('jquery', 'cm_settings', $cm_settings);
@@ -232,7 +233,7 @@ class WebChangeDetector_Admin
 
     public function create_free_account($postdata) {
         $args = array_merge([
-            'action' => 'create_free_account',
+            'action' => 'add_free_account',
             ], $postdata);
         $api_token = $this->mm_api($args, true);
 
@@ -270,6 +271,7 @@ class WebChangeDetector_Admin
         }
 
         update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token);
+
         $this->sync_posts();
     }
 
@@ -325,6 +327,7 @@ class WebChangeDetector_Admin
 
     public function update_monitoring_settings($postdata, $monitoring_group_id)
     {
+
         $args = array(
             'action' => 'update_monitoring_settings',
             'group_id' => $monitoring_group_id,
@@ -334,7 +337,18 @@ class WebChangeDetector_Admin
             'enabled' => sanitize_key($postdata['enabled']),
             'alert_emails' => sanitize_textarea_field($postdata['alert_emails']),
             'name' => sanitize_textarea_field($postdata['group_name']),
-            'css' => sanitize_textarea_field($postdata['css']),
+            'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
+        );
+        return $this->mm_api($args);
+    }
+
+    public function update_settings($postdata, $update_group_id)
+    {
+
+        $args = array(
+            'action' => 'update_group',
+            'group_id' => $update_group_id,
+            'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
         );
         return $this->mm_api($args);
     }
@@ -400,6 +414,9 @@ class WebChangeDetector_Admin
         }
         if ($icon == 'update-group') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-camera"></span>';
+        }
+        if ($icon == 'trash') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
         }
 
         return '';
@@ -1036,9 +1053,41 @@ class WebChangeDetector_Admin
     {
         if ($error === 'activate account') { ?>
             <div class="notice notice-info"></span>
-                <p>Please <strong>activate</strong> your account by clicking the confirmation link in the email we sent you.</p>
-                <p>You cannot find the email? Please also check your spam folder.</p>
+                <p>Please <strong>activate</strong> your account.</p>
             </div>
+            <div class="activate-account" style="max-width: 600px; margin: 40px auto; text-align: center;">
+            <div style="  border: 1px solid #276ECC; padding: 20px; background: rgba(12,113,195,0.13)!important">
+                <h2>
+                    Activate account
+                </h2>
+                <p>
+                    We just sent you an activation mail.
+                </p>
+                <?php if(get_option(WCD_WP_OPTION_KEY_ACCOUNT_EMAIL)) { ?>
+                    <div style="margin: 0 auto; padding: 15px; border-radius: 5px;background: #5db85c; color: #fff; max-width: 400px;">
+                        <span id="activation_email" style="font-weight: 700;"><?= sanitize_email(get_option(WCD_WP_OPTION_KEY_ACCOUNT_EMAIL)) ?></span>
+                    </div>
+                <?php } ?>
+                <p>
+                    After clicking the activation link in the mail, your account is ready.
+                    Check your spam folder if you cannot find the activation mail in your inbox.
+                </p>
+            </div>
+            <div>
+                <h2>You didn't receive the email?</h2>
+                <p>
+                    Please contact us at <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>
+                    or use our live chat at <a href="https://www.webchangedetector.com">webchangedetector.com</a>.
+                    We are happy to help.
+                </p>
+                <p>To reset your account, please click the button below. </p>
+                <form id="delete-account" method="post">
+                     <input type="hidden" name="wcd_action" value="reset_api_token">
+                     <input type="submit" class="button-delete" value="Reset Account">
+                </form>
+
+            </div>
+        </div>
         <?php
         }
 
@@ -1052,7 +1101,7 @@ class WebChangeDetector_Admin
         <?php
         }
 
-        echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
+        //echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
         return true;
     }
 
@@ -1076,8 +1125,12 @@ class WebChangeDetector_Admin
      */
     public function dev()
     {
-        // if either .test or dev. can be found in the URL, we're developing
-        return strpos($this->app_url(), '.test') !== false || strpos($this->app_url(), 'dev.') !== false;
+        // if either .test or dev. can be found in the URL, we're developing -  wouldn't work if plugin client domain matches these criteria
+        // return strpos($this->app_url(), '.test') !== false;  || strpos($this->app_url(), 'dev.') !== false;
+        if(defined('WCD_DEV') && WCD_DEV === true) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1128,6 +1181,8 @@ class WebChangeDetector_Admin
         );
 
         if($isGet) {
+            echo $urlGet;
+            var_dump($args);
             $response = wp_remote_get($urlGet, $args);
         } else {
              $response = wp_remote_post($url, $args);
@@ -1205,6 +1260,11 @@ if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
     define('MM_WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
 
+// Option / UserMeta keys
+if (! defined('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL')) {
+    define('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL', 'webchangedetector_account_email');
+}
+
 // // Uncommented defines()
 // if (! defined('MM_WCD_HTTP_OK')) {
 //     define('MM_WCD_HTTP_OK', 200);
@@ -1213,25 +1273,25 @@ if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
 //     define('MM_WCD_HTTP_MULTIPLE_CHOICES', 300);
 // }
 
-// // Uncommented functions()
-// if (! function_exists('dd')) {
-//     /**
-//      * Dump and Die
-//      */
-//     function dd(... $output) // this is PHP 5.6+
-//     {
-//         echo '<pre>';
-//         foreach ($output as $o) {
-//             if (is_array($o) || is_object($o)) {
-//                 print_r($o);
-//                 continue;
-//             }
-//             echo $o;
-//         }
-//         echo '</pre>';
-//         die();
-//     }
-// }
+ // Uncommented functions()
+ if (! function_exists('dd') && defined('WCD_DEV') && WCD_DEV === true) {
+     /**
+      * Dump and Die
+      */
+     function dd(... $output) // this is PHP 5.6+
+     {
+         echo '<pre>';
+         foreach ($output as $o) {
+             if (is_array($o) || is_object($o)) {
+                 print_r($o);
+                 continue;
+             }
+             echo $o;
+         }
+         echo '</pre>';
+         die();
+     }
+ }
 
 // if (! function_exists('mm_wcd_http_successful')) {
 //     /**

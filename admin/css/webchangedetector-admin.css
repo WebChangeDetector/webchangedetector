@@ -43,6 +43,23 @@
     background-color: #fff;
 }
 
+.webchangedetector .button-delete {
+    background: #C83232;
+    border: 1px solid #A00000;
+    color: #fff;
+    border-radius: 3px;
+    padding: 5px 10px;
+}
+
+.webchangedetector .button-delete:before {
+    content: "\f182";
+}
+
+.webchangedetector .button-delete:hover {
+    background: #A00000;
+    cursor: pointer;
+}
+
 .webchangedetector #currently-processing-spinner {
     visibility: visible;
     float: none;
@@ -189,6 +206,10 @@
     padding: 0;
 }
 
+.webchangedetector .mm_accordion_title .mm_accordion_content {
+    cursor: default;
+}
+
 .webchangedetector .mm_accordion_title .mm_accordion_content.padding .button {
     margin: 10px;
 }
@@ -203,7 +224,7 @@
     display: block;
 }
 
-.webchangedetector .mm_accordion_title .mm_accordion_content.padding p:nth-of-type(odd) {
+.webchangedetector .mm_accordion_title .mm_accordion_content.padding p.toggle:nth-of-type(even) {
     background: #eee;
 }
 
@@ -315,9 +336,19 @@
     margin-top: 20px;
 }
 
+/* Darcula theme
 .webchangedetector p.code-tags {
     background: #2B2B2B !important;
     color: #629755;
+    font-style: italic;
+    font-size: 14px;
+    padding: 5px 10px !important;
+    margin: 0;
+} */
+
+.webchangedetector p.code-tags {
+    color: #d29305;
+    background: #f7f7f7;
     font-style: italic;
     font-size: 14px;
     padding: 5px 10px !important;

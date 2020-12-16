@@ -1,7 +1,8 @@
 <form class="wcd-frm-settings" action="<?= admin_url() ?>/admin.php?page=webchangedetector-auto-settings" method="post" onsubmit="return mmValidateForm()">
     <div style="width: 50%; float: left;">
         <div style=" padding: 10px;">
-            <p>
+            <p class="auto-settings">Make the settings for automatic change detections here.</p>
+            <p class="auto-setting toggle">
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
                 <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
@@ -16,7 +17,7 @@
                     </option>
                 </select>
             </p>
-            <p class="auto-setting">
+            <p class="auto-setting toggle">
                 <label for="hour_of_day" class="auto-setting">Hour of the day</label>
                 <select name="hour_of_day" class="auto-setting">
                     <?php
@@ -31,7 +32,7 @@
                     ?>
                 </select>
             </p>
-            <p class="auto-setting">
+            <p class="auto-setting toggle">
                 <label for="interval_in_h" class="auto-setting">Interval in hours</label>
                 <select name="interval_in_h" class="auto-setting">
                     <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 1 ? 'selected' : ''; ?>>
@@ -51,24 +52,21 @@
                     </option>
                 </select>
             </p>
-            <p class="auto-setting">
+            <div class="auto-setting toggle" style="margin-top: 20px;">
                 <label for="alert_emails" class="auto-setting">
-                    Alert email addresses
+                    Alert email addresses (One per line)
                 </label>
-                <textarea name="alert_emails" id="alert_emails" style="width: 100%; height: 100px;" class="auto-setting"><?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode('\n', $groups_and_urls['alert_emails'])) : '' ?></textarea>
-                <br>
-                <label for="alert_emails" class="auto-setting">
-                    (One per line)
-                </label>
-            </p>
+                <textarea name="alert_emails" id="alert_emails" style="width: 100%; height: 100px; " class="auto-setting"
+                ><?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode('\n', $groups_and_urls['alert_emails'])) : '' ?></textarea>
+                <span class="notice notice-error" id="error-email-validation" style="display: none;">
+                    <p class="default-bg">Please check your email address(es).</p>
+                </span>
+            </div>
         </div>
     </div>
     <div style="width: 50% ; float: left; ">
         <div style="border-left: 1px solid #aaa; padding: 10px;">
-            <p style="background: none !important">Hide dynamic elements or modify any other elements via CSS before taking screenshots.</p>
-            <p class="code-tags">&lt;style&gt;</p>
-            <textarea name="css" class="codearea" style="height:300px; width: 100%;"></textarea>
-            <p class="code-tags">&lt;/style&gt;</p>
+            <?php include("css-settings.php"); ?>
         </div>
     </div>
     <input type="submit" class="button" value="Save Settings">

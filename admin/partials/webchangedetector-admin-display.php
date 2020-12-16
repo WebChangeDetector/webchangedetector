@@ -16,6 +16,11 @@
 if (! function_exists('wcd_webchangedetector_init')) {
     function wcd_webchangedetector_init()
     {
+        // Start view
+        echo '<div class="wrap">';
+        echo '<div class="webchangedetector">';
+        echo '<h1>WebChangeDetector</h1>';
+
         $wcd = new WebChangeDetector_Admin();
 
         $wcd_action = null;
@@ -32,6 +37,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             case 'create_free_account':
                 $api_token = $wcd->create_free_account($_POST);
                 $wcd->save_api_token($api_token);
+                update_option(WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email($_POST['email']));
             break;
 
             case 'reset_api_token':
@@ -115,6 +121,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 break;
 
+            case 'update-settings':
+                $wcd->update_settings($_POST, $group_id);
+                break;
+
             case 'copy_url_settings':
                 $wcd->copy_url_settings($_POST['copy_from_group_id'],$_POST['copy_to_group_id']);
                 break;
@@ -178,10 +188,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
         // Get updated account and website data
         $account_details = $wcd->account_details();
 
-        // Start view
-        echo '<div class="wrap">';
-        echo '<div class="webchangedetector">';
-        echo '<h1>WebChangeDetector</h1>';
 
         // Check for account status
         if($account_details['status'] !== "active"){
@@ -393,6 +399,21 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </form>
                     </div>
                     <div class="clear" style="margin-bottom: 30px;"></div>
+                    <div class="accordion">
+                        <div class="mm_accordion_title">
+                            <h3>
+                                <span class="accordion-title">
+                                    Update Detection Settings
+                                </span>
+                            </h3>
+                            <div class="mm_accordion_content">
+                                <form method="post" style="padding: 20px;">
+                                    <input type="hidden" name="wcd_action" value="update-settings">
+                                    <?php include("templates/css-settings.php"); ?>
+                                    <input type="submit" class="button" value="Save">
+                                </form>
+                            </div>
+                        </div>
                     </div>
                     <?php $wcd->get_url_settings($groups_and_urls); ?>
                     <!-- Copy settings to auto detection -->
