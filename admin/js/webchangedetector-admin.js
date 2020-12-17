@@ -119,7 +119,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             }
         }
 
-        $("input[type='submit']").click(function() {
+        $("button[type='submit']").click(function() {
             formModified = 0;
         });
 

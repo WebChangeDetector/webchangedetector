@@ -35,7 +35,27 @@ if (! function_exists('wcd_webchangedetector_init')) {
         // Actions without API Token needed
         switch ($wcd_action) {
             case 'create_free_account':
+
+                // Validate if all required fields were sent
+                if(! ($_POST['name_first'] && $_POST['name_last'] && $_POST['email'])) {
+                    echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
+                    echo $wcd->get_no_account_page();
+                    return false;
+                }
                 $api_token = $wcd->create_free_account($_POST);
+
+                // if we get an array it is an error message
+                if(is_array($api_token)) {
+                    echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
+                    echo $wcd->get_no_account_page();
+                    return false;
+                }
+
+                // Save email address if it's dev
+                if($wcd->dev()) {
+                    $api_token = $_POST['email'];
+                }
+
                 $wcd->save_api_token($api_token);
                 update_option(WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email($_POST['email']));
             break;
@@ -47,11 +67,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
             case 'save_api_token':
 
-                if (! isset($_POST['api_token'])) {
-                    echo '<div class="error notice"><p>No API Token given.</p></div>';
+                if (empty($_POST['api_token'])) {
+                    echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
+                    echo $wcd->get_no_account_page();
                     return false;
                 }
-
                 $wcd->save_api_token($_POST['api_token']);
 
             break;
@@ -125,13 +145,20 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $wcd->update_settings($_POST, $group_id);
                 break;
 
+
+
             case 'copy_url_settings':
                 $wcd->copy_url_settings($_POST['copy_from_group_id'],$_POST['copy_to_group_id']);
                 break;
 
+            case 'post_urls_update_and_auto':
+                $wcd->post_urls($_POST, $website_details, true);
+                break;
+
             case 'post_urls':
+                $wcd->post_urls($_POST, $website_details, false);
                 // Get active posts from post data
-                $active_posts = array();
+                /*$active_posts = array();
                 $count_selected = 0;
                 foreach ($_POST as $key => $post_id) {
                     if (strpos($key, 'url_id') === 0) {
@@ -181,7 +208,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     // Update API URLs
                     $wcd->update_urls($group_id_website_details, $active_posts);
                     echo '<div class="updated notice"><p>Settings saved.</p></div>';
-                }
+                }*/
                 break;
         }
 
@@ -398,6 +425,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             </button>
                         </form>
                     </div>
+                    </div>
                     <div class="clear" style="margin-bottom: 30px;"></div>
                     <div class="accordion">
                         <div class="mm_accordion_title">
@@ -410,7 +438,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                 <form method="post" style="padding: 20px;">
                                     <input type="hidden" name="wcd_action" value="update-settings">
                                     <?php include("templates/css-settings.php"); ?>
-                                    <input type="submit" class="button" value="Save">
+                                    <input style="margin-top: 20px;" type="submit" class="button" value="Save">
                                 </form>
                             </div>
                         </div>

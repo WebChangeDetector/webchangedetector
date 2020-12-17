@@ -2,7 +2,7 @@
     <div style="width: 50%; float: left;">
         <div style=" padding: 10px;">
             <p class="auto-settings">Make the settings for automatic change detections here.</p>
-            <p class="auto-setting toggle">
+            <p class=" toggle">
                 <input type="hidden" name="wcd_action" value="update_monitoring_settings">
                 <input type="hidden" name="monitoring" value="1">
                 <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
@@ -69,5 +69,5 @@
             <?php include("css-settings.php"); ?>
         </div>
     </div>
-    <input type="submit" class="button" value="Save Settings">
+    <button type="submit" class="button button-primary">Save Settings</button>
 </form>

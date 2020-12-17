@@ -30,7 +30,9 @@ class WebChangeDetector_Admin
         'save_api_token',
         'take_screenshots',
         'update_monitoring_settings',
+        'update_monitoring_and_update_settings',
         'post_urls',
+        'post_urls_update_and_auto',
         'dashboard',
         'change-detections',
         'update-settings',
@@ -234,17 +236,7 @@ class WebChangeDetector_Admin
         $args = array_merge([
             'action' => 'add_free_account',
             ], $postdata);
-        $api_token = $this->mm_api($args, true);
-
-        // if we get an array it is an error message
-        if(is_array($api_token)) {
-            return '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
-        }
-
-        if($this->dev()) {
-            return $postdata['email'];
-        }
-        return $api_token;
+        return $this->mm_api($args, true);
     }
 
     public function save_api_token($api_token) {
@@ -264,7 +256,7 @@ class WebChangeDetector_Admin
         $website = $this->create_group($api_token);
 
         if (empty($website)) {
-            echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+            echo '<div class="error notice"><p>Something went wrong. Please contact us.</p></div>';
             echo $this->get_no_account_page();
             return false;
         }
@@ -448,62 +440,58 @@ class WebChangeDetector_Admin
     }
 
     public function compare_view($compares)
-    {
-        ?>
-            <table class="toggle" style="width: 100%">
-                <tr>
-                    <th width="auto">URL</th>
-                    <th width="150px">Compared Screenshots</th>
-                    <th width="50px">Difference</th>
-                    <th>Show</th>
-                </tr>
-            <?php
-        if (empty($compares)) {
-            ?>
+    { ?>
+        <table class="toggle" style="width: 100%">
+            <tr>
+                <th width="auto">URL</th>
+                <th width="150px">Compared Screenshots</th>
+                <th width="50px">Difference</th>
+                <th>Show</th>
+            </tr>
+        <?php if (empty($compares)) { ?>
             <tr>
                 <td colspan="4" style="text-align: center">
                     <strong>There are no change detections yet.</strong
                 </td>
             </tr>
-            <?php
-        } else {
+        <?php } else {
             foreach ($compares as $compare) {
                 $class = 'no-difference'; // init
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
                 } ?>
-                <tr>
-                    <td>
-                        <strong>
-                        <?php
-                        if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
-                            echo esc_html($compare['screenshot1']['queue']['url']['html_title']) . '<br>';
-                        } ?>
-                        </strong>
-                        <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
-                        <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
-                    </td>
-                    <td>
-                        <div class="local-time" data-date="<?= $compare['image1_timestamp'] ?>"></div>
-                        <div class="local-time" data-date="<?= $compare['image2_timestamp'] ?>"></div>
-                    </td>
-                    <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
-                    <td>
-                        <a href="?page=webchangedetector-show-detection&action=show_compare&token=<?= $compare['token'] ?>"
-                           class="button">
-                            Show
-                        </a>
-                    </td>
-                </tr>
-                <?php
+            <tr>
+                <td>
+                    <strong>
+                    <?php
+                    if (! empty($compare['screenshot1']['queue']['url']['html_title'])) {
+                        echo esc_html($compare['screenshot1']['queue']['url']['html_title']) . '<br>';
+                    } ?>
+                    </strong>
+                    <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
+                    <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
+                </td>
+                <td>
+                    <div class="local-time" data-date="<?= $compare['image1_timestamp'] ?>"></div>
+                    <div class="local-time" data-date="<?= $compare['image2_timestamp'] ?>"></div>
+                </td>
+                <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
+                <td>
+                    <a href="?page=webchangedetector-show-detection&action=show_compare&token=<?= $compare['token'] ?>"
+                       class="button">
+                        Show
+                    </a>
+                </td>
+            </tr>
+            <?php
             }
-        }
-        echo '</table>';
+        } ?>
+        </table>
+        <?php
     }
 
     function get_comparison_by_token($token, $hide_switch = false, $whitelabel = false)
     {
-
         if (! $token && ! empty($_GET['token'])) {
             $token = $_GET['token'];
         }
@@ -625,17 +613,16 @@ class WebChangeDetector_Admin
                         <p><strong>ATTENTION: With resetting the API Token, all settings get lost and
                         the monitoring won\'t be continued!</strong></p>';
         } else {
-            $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
-                        <input type="hidden" name="wcd_action" value="save_api_token">
-                        <h2>2. Your API Token</h2>
-                        <p>After creating your account, you get an API Token. Enter this API Token here and start your Change Detections.</p>
-                        <input type="text" name="api_token" value="' . $api_token_after_reset . '"
-                            style="width: 550px;" >
-                            <!--pattern="[a-z0-9]{20}"
-                            oninvalid="this.setCustomValidity(\'Invalid format for api token.\')"
-                            onchange="try{setCustomValidity(\'\')}catch(e){}"
-                            oninput="setCustomValidity(\' \')"-->
-                        <input type="submit" value="Save" class="button">';
+            $output = '<div class="highlight-container">
+                            <form class="frm_use_api_token highlight-inner no-bg" action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
+                                <input type="hidden" name="wcd_action" value="save_api_token">
+                                <h2>Use Existing API Token</h2>
+                                <p>Use the API token of your existing account. To get your API token, please login to your account at
+                                <a href="' . $this->app_url() . 'login" target="_blank">webchangedetector.com</a></p>
+                                <input type="text" name="api_token" value="' . $api_token_after_reset . '" required>
+                                <input type="submit" value="Save" class="button button-primary">
+                            </form>
+                        </div>';
         }
         $output .= '</form>';
         return $output;
@@ -714,7 +701,7 @@ class WebChangeDetector_Admin
         </p>
         <?php
         echo '<input type="hidden" value="webchangedetector" name="page">';
-        echo '<input type="hidden" value="post_urls" name="wcd_action">';
+        //echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
         $post_types = get_post_types();
@@ -840,31 +827,87 @@ class WebChangeDetector_Admin
                 </div>
             <?php
         }
-
-        echo '<input class="button" type="submit" value="Save settings">';
+        $other_group_type = $monitoring_group ? "Update" : "Auto";
+        echo '<button 
+                class="button button-primary" 
+                type="submit" 
+                name="wcd_action" 
+                value="post_urls" >
+                    Save Settings
+                </button>';
+        echo '<button class="button" 
+                type="submit" 
+                name="wcd_action" 
+                value="post_urls_update_and_auto"
+                style="margin-left: 10px;">
+                    Save Settings for ' . $other_group_type . ' detections too
+                </button>';
         echo '</form>';
-        echo '';
-
-        $website_details = $this->get_website_details();
-        $copy_to_group_id = $website_details['auto_detection_group_id'];
-        $copy_to_group_type = "auto";
-        if( $monitoring_group) {
-            $copy_to_group_id = $website_details['manual_detection_group_id'];
-            $copy_to_group_type = "update";
-        }
-
-
 
         echo '</div>';
-        echo '<div class="btn-copy-url-settings">
-                <form id="copy-url-settings" data-to_group_type="' . $copy_to_group_type . '" method="post" style="display: inline-block;">
-                    <input type="hidden" name="wcd_action" value="copy_url_settings">
-                    <input type="hidden" name="copy_from_group_id" value="' . $groups_and_urls['id'] . '">
-                    <input type="hidden" name="copy_to_group_id" value="' . $copy_to_group_id . '">
-                    <input type="submit" class="button" value="Copy settings to ' . $copy_to_group_type . ' detections">
-                </form>
-            </div>';
 
+
+    }
+
+    public function post_urls($postdata, $website_details, $save_both_groups) {
+        // Get active posts from post data
+        $active_posts = array();
+        $count_selected = 0;
+        foreach ($postdata as $key => $post_id) {
+            if (strpos($key, 'url_id') === 0) {
+
+                // sanitize before
+                $wpPostId = sanitize_key($postdata['post_id-'. $post_id]); // should be numeric
+                if (! is_numeric($wpPostId)) {
+                    continue; // just skip it
+                }
+                $permalink = get_permalink($wpPostId); // should return the whole link
+                $desktop = array_key_exists('desktop-'. $post_id, $postdata) ? sanitize_key($postdata['desktop-' . $post_id]) : 0;
+                $mobile = array_key_exists('mobile-'. $post_id, $postdata) ? sanitize_key($postdata['mobile-' . $post_id]) : 0;
+
+                $active_posts[] = array(
+                    'url_id' => $post_id,
+                    'url' => $permalink,
+                    'desktop' => $desktop,
+                    'mobile' => $mobile
+                );
+                if (isset($postdata['desktop-' . $post_id])) {
+                    $count_selected++;
+                }
+
+                if (isset($postdata['mobile-' . $post_id])) {
+                    $count_selected++;
+                }
+            }
+        }
+
+        $group_id_website_details = sanitize_key($postdata['group_id']);
+
+        // Check if there is a limit for selecting URLs
+        if ($website_details['enable_limits'] &&
+            $website_details['url_limit_manual_detection'] < $count_selected &&
+            $website_details['manual_detection_group_id'] == $group_id_website_details) {
+            echo '<div class="error notice"><p>The limit for selecting URLs is ' .
+                esc_html($website_details['url_limit_manual_detection']) . '.
+                        You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
+        } elseif ($website_details['enable_limits'] &&
+            isset($monitoring_group_settings) &&
+            $website_details['sc_limit'] < $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH &&
+            $website_details['auto_detection_group_id'] == $group_id_website_details) {
+            echo '<div class="error notice"><p>The limit for auto change detection is ' .
+                esc_html($website_details['sc_limit']) . '. per month.
+                            You selected ' . $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
+        } else {
+            if($save_both_groups) {
+                $this->update_urls($website_details['auto_detection_group_id'], $active_posts);
+                $this->update_urls($website_details['manual_detection_group_id'], $active_posts);
+            } else {
+                $this->update_urls($group_id_website_details, $active_posts);
+            }
+            // Update API URLs
+
+            echo '<div class="updated notice"><p>Settings saved.</p></div>';
+        }
     }
 
     public function copy_url_settings($from_group_id, $to_group_id)
@@ -889,25 +932,35 @@ class WebChangeDetector_Admin
 
         ob_start();
         ?>
-        <div class="webchangedetector">
-            <h1>Web Change Detector</h1>
-            <hr>
-            <h2>1. Free Account</h2>
-            <p>
-                Create your free account now and get <strong>50 Change Detections</strong> per month for free!<br>
-                If you already have an API Token, you can enter it below and start your Change Detections.
-            </p>
-            <form class="frm_new_account" method="post">
-                <input type="hidden" name="wcd_action" value="create_free_account">
-                <input type="hidden" name="plan_id" value="1">
-                <label for="name_first">First Name</label><input type="text" name="name_first" placeholder="First Name" value="<?= $_POST['name_first'] ?? wp_get_current_user()->user_firstname ?>">
-                <label for="name_last">Last Name</label><input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>">
-                <label for="email">Email Address</label><input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>">
-                <input type="submit" class="button-primary" value="Create Free Account">
-            </form>
-            <!--<a href="https://www.webchangedetector.com/create-free-account/" target="_blank" class="button">Create Free Account</a>-->
-            <hr>
-            <?= $this->get_api_token_form($api_token) ?>
+        <div class="no-account-page">
+            <div class="status_bar no-account" >
+                <h2>Get Started</h2>
+                With WebChangeDetector you can check your website before after installing updates. See all changes
+                highlighted in a screenshot and fix issues before anyone else see them. You can also monitor changes
+                on your website automatically and get notified when something changed.
+            </div>
+            <div class="highlight-wrapper">
+                <div class="highlight-container">
+                <div class="highlight-inner">
+                    <h2>Create Free Account</h2>
+                    <p>
+                        Create your free account now and use WebChangeDetector with <br><strong>50 screenshots</strong> per month for free.<br>
+                    </p>
+                    <form class="frm_new_account" method="post">
+                        <input type="hidden" name="wcd_action" value="create_free_account">
+                        <input type="hidden" name="plan_id" value="1">
+                        <!--<label for="name_first">First Name</label>--><input type="text" name="name_first" placeholder="First Name" value="<?= $_POST['name_first'] ?? wp_get_current_user()->user_firstname ?>" required>
+                        <!--<label for="name_last">Last Name</label>--><input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>" required>
+                        <!--<label for="email">Email Address</label>--><input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>" required>
+                        <input type="submit" class="button-primary" value="Create Free Account">
+                    </form>
+                </div>
+                </div>
+
+                 <?= $this->get_api_token_form($api_token) ?>
+
+                </div>
+            </div>
 		</div>
 
         <?php
@@ -1054,8 +1107,8 @@ class WebChangeDetector_Admin
             <div class="notice notice-info"></span>
                 <p>Please <strong>activate</strong> your account.</p>
             </div>
-            <div class="activate-account" style="max-width: 600px; margin: 40px auto; text-align: center;">
-            <div style="  border: 1px solid #276ECC; padding: 20px; background: rgba(12,113,195,0.13)!important">
+            <div class="activate-account highlight-container" >
+            <div class="highlight-inner">
                 <h2>
                     Activate account
                 </h2>
@@ -1093,11 +1146,11 @@ class WebChangeDetector_Admin
         if ($error === 'unauthorized') { ?>
             <div class="error notice">
                 <p>
-                    <span class="dashicons dashicons-warning"></span>
                     The API token is not valid. Please reset the API token and enter a valid one.
                 </p>
             </div>
         <?php
+        echo $this->get_no_account_page();
         }
 
         //echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
@@ -1180,8 +1233,6 @@ class WebChangeDetector_Admin
         );
 
         if($isGet) {
-            echo $urlGet;
-            var_dump($args);
             $response = wp_remote_get($urlGet, $args);
         } else {
              $response = wp_remote_post($url, $args);
