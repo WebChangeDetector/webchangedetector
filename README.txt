@@ -49,6 +49,7 @@ Track automatically changes on every page on your WordPress site. If something c
 * Improvement: Available screenshot overview
 * Improvement: User experience
 * Fix: Error handling when changing domain
+* Fix: Skip URL sync for other post types
 
 = 1.1.6 =
 * Fix comparison view

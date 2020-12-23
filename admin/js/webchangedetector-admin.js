@@ -349,7 +349,7 @@ function mmValidateForm() {
     // get all emails
     var emailsElement = document.getElementById("alert_emails");
     // split by new line
-    let emails = emailsElement.value.split(/\r?\n/g);
+    let emails = emailsElement.value.replace(/\r\n/g,"\n").split("\n");
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     // init border

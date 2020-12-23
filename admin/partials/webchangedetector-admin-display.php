@@ -42,6 +42,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo $wcd->get_no_account_page();
                     return false;
                 }
+
                 $api_token = $wcd->create_free_account($_POST);
 
                 // if we get an array it is an error message
@@ -55,15 +56,24 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 if($wcd->dev()) {
                     $api_token = $_POST['email'];
                 }
+                //update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
 
                 $wcd->save_api_token($api_token);
-                update_option(WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email($_POST['email']));
             break;
 
             case 'reset_api_token':
                 $wcd->delete_website();
                 delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
             break;
+
+            case 're-add-api-token':
+                $wcd->delete_website();
+                if(empty($_POST['api_token'])) {
+                    echo $wcd->get_no_account_page();
+                }
+                $api_token = $_POST['api_token'];
+                $wcd->save_api_token($api_token);
+                break;
 
             case 'save_api_token':
 
@@ -72,12 +82,16 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo $wcd->get_no_account_page();
                     return false;
                 }
+                $api_token = $_POST['api_token'];
                 $wcd->save_api_token($_POST['api_token']);
 
             break;
         }
 
-        $api_token = get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+        // If we have the api token already we don't need
+        if(empty($api_token)) {
+            $api_token = get_option( MM_WCD_WP_OPTION_KEY_API_TOKEN );
+        }
 
         // Change api token option name from V1.0.7
         if (! $api_token) {
@@ -94,24 +108,25 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
-        $account_details = $wcd->account_details();
+        $account_details = $wcd->account_details($api_token);
 
         // Check if account is activated and if the api key is authorized
-        if ($account_details === 'activate account' || $account_details === 'unauthorized') {
+        if (! is_array($account_details) && ($account_details === 'activate account' || $account_details === 'unauthorized')) {
             $wcd->show_activate_account($account_details);
             return false;
         }
 
         $website_details = $wcd->get_website_details();
 
+        // Create groups if they don't exists
+        if(empty($website_details)) {
+            $website_details = $wcd->create_group($api_token);
+        }
+
         $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
         $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
 
         $monitoring_group_settings = null;
-
-        if ($monitoring_group_id) {
-            $wcd->get_monitoring_settings($monitoring_group_id);
-        }
 
         // Perform actions
         switch ($wcd_action) {
@@ -145,7 +160,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $wcd->update_settings($_POST, $group_id);
                 break;
 
-
+            case 'update_monitoring_and_update_settings':
+                $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
+                $wcd->update_settings($_POST, $group_id);
+                break;
 
             case 'copy_url_settings':
                 $wcd->copy_url_settings($_POST['copy_from_group_id'],$_POST['copy_to_group_id']);
@@ -157,77 +175,42 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
             case 'post_urls':
                 $wcd->post_urls($_POST, $website_details, false);
-                // Get active posts from post data
-                /*$active_posts = array();
-                $count_selected = 0;
-                foreach ($_POST as $key => $post_id) {
-                    if (strpos($key, 'url_id') === 0) {
-
-                        // sanitize before
-                        $wpPostId = sanitize_key($_POST['post_id-'. $post_id]); // should be numeric
-                        if (! is_numeric($wpPostId)) {
-                            continue; // just skip it
-                        }
-                        $permalink = get_permalink($wpPostId); // should return the whole link
-                        $desktop = array_key_exists('desktop-'. $post_id, $_POST) ? sanitize_key($_POST['desktop-' . $post_id]) : 0;
-                        $mobile = array_key_exists('mobile-'. $post_id, $_POST) ? sanitize_key($_POST['mobile-' . $post_id]) : 0;
-
-                        $active_posts[] = array(
-                            'url_id' => $post_id,
-                            'url' => $permalink,
-                            'desktop' => $desktop,
-                            'mobile' => $mobile
-                        );
-                        if (isset($_POST['desktop-' . $post_id])) {
-                            $count_selected++;
-                        }
-
-                        if (isset($_POST['mobile-' . $post_id])) {
-                            $count_selected++;
-                        }
-                    }
-                }
-
-                $group_id_website_details = sanitize_key($_POST['group_id']);
-
-                // Check if there is a limit for selecting URLs
-                if ($website_details['enable_limits'] &&
-                    $website_details['url_limit_manual_detection'] < $count_selected &&
-                    $website_details['manual_detection_group_id'] == $group_id_website_details) {
-                    echo '<div class="error notice"><p>The limit for selecting URLs is ' .
-                        esc_html($website_details['url_limit_manual_detection']) . '.
-                        You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
-                } elseif ($website_details['enable_limits'] &&
-                    isset($monitoring_group_settings) &&
-                    $website_details['sc_limit'] < $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH &&
-                    $website_details['auto_detection_group_id'] == $group_id_website_details) {
-                    echo '<div class="error notice"><p>The limit for auto change detection is ' .
-                        esc_html($website_details['sc_limit']) . '. per month.
-                            You selected ' . $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
-                } else {
-                    // Update API URLs
-                    $wcd->update_urls($group_id_website_details, $active_posts);
-                    echo '<div class="updated notice"><p>Settings saved.</p></div>';
-                }*/
                 break;
         }
 
         // Get updated account and website data
         $account_details = $wcd->account_details();
 
+        // Error message if api didn't return account details.
+        if(empty($account_details['status'])) {
+            ?>
+            <div class="error notice">
+                <p>Ooops! Something went wrong. Please try again.</p>
+                <p>If the issue persists, please contact us.</p>
+            </div>
+            <?php
+            return false;
+        }
 
         // Check for account status
         if($account_details['status'] !== "active"){
-            $message = '<h3>Your account was ' . $account_details['status'] . '.</h3>
+
+            // Set error message
+            $err_msg = "cancelled";
+            if(! empty($account_details['status'])) {
+                $err_msg = $account_details['status'];
+            }
+            echo '
+            <div class="error notice">
+                <h3>Your account was ' . $err_msg . '.</h3>
                 <p>Please <a href="' . $wcd->get_upgrade_url() . '">Upgrade</a> your account to re-activate your account.</p>
                 <p>To use a different account, please reset the API token.
                     <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <input type="submit" value="Reset API token">
                     </form>
-                </p>';
-
-            echo '<div class="error notice">' . $message . '</div>';
+                </p>
+            </div>';
             return false;
         }
 
@@ -251,7 +234,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                      <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <input type="hidden" name="api_token" value="' . $api_token . '">
-                        <input type="submit" value="Reset API token">
+                        <input type="submit" class="button" value="Reset API token">
                     </form>
                     </p>
                    </div>';
@@ -436,9 +419,24 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             </h3>
                             <div class="mm_accordion_content">
                                 <form method="post" style="padding: 20px;">
-                                    <input type="hidden" name="wcd_action" value="update-settings">
+                                    <input type="hidden" name="wcd_action" value="">
                                     <?php include("templates/css-settings.php"); ?>
-                                    <input style="margin-top: 20px;" type="submit" class="button" value="Save">
+
+                                    <button
+                                        type="submit"
+                                        name="wcd_action"
+                                        value="update-settings"
+                                        class="button button-primary">
+                                            Save Settings
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        name="wcd_action"
+                                        value="update_monitoring_and_update_settings"
+                                        class="button"
+                                        style="margin-left: 10px;">
+                                        Save Settings to Auto Detection too
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -488,7 +486,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $date_next_sc = false;
 
                 $next_possible_sc = gmmktime(gmdate("H") + 1,0,0, gmdate("m"), gmdate("d"), gmdate("Y"));
-                $amount_sc_per_day = (24 / $groups_and_urls['interval_in_h']);
+                $amount_sc_per_day = (24 / $interval);
 
                 // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
                 for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
@@ -655,24 +653,36 @@ if (! function_exists('wcd_webchangedetector_init')) {
              ***********/
 
             case 'webchangedetector-settings':
+                ?>
+                <div class="action-container">
+                    <?php
+                    if (! $api_token) {
+                        echo '<div class="error notice">
+                        <p>Please enter a valid API Token.</p>
+                    </div>';
+                    } elseif (! $website_details['enable_limits']) {
+                        /*echo '<h2>Your credits</h2>';
+                        echo 'Your current plan: <strong>' . esc_html($account_details['plan']['name']) . '</strong><br>';
+                        echo 'Next renew: <span class="local-date">' . gmdate('d/m/Y', $renew_date) . '</span>';
+                        echo '<p>Change detections in this period: ' . esc_html($limit) . '<br>';
+                        echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
+                        echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';*/
+                        echo '<h2>Need more screenshots?</h2>';
+                        echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
+                        echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
+                        //echo( $wcd->get_upgrade_options($account_details['plan_id']));
+                    }
+                    echo $wcd->get_api_token_form($api_token);
+                    ?>
+                </div>
+                <div class="sidebar">
+                    <div class="account-box">
+                        <?php include 'templates/account.php'; ?>
+                </div>
 
-                if (! $api_token) {
-                    echo '<div class="error notice">
-                    <p>Please enter a valid API Token.</p>
-                </div>';
-                } elseif (! $website_details['enable_limits']) {
-                    echo '<h2>Your credits</h2>';
-                    echo 'Your current plan: <strong>' . esc_html($account_details['plan']['name']) . '</strong><br>';
-                    echo 'Next renew: <span class="local-date">' . gmdate('d/m/Y', $renew_date) . '</span>';
-                    echo '<p>Change detections in this period: ' . esc_html($limit) . '<br>';
-                    echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
-                    echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';
-                    echo '<h2>Need more screenshots?</h2>';
-                    echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
-                    echo '<p>The new amount of compares will be available immediately. The renew date will not change with an upgrade.</p>';
-                    //echo( $wcd->get_upgrade_options($account_details['plan_id']));
-                }
-                echo $wcd->get_api_token_form($api_token);
+                </div>
+                <div class="clear"></div>
+                <?php
                 break;
 
             /***************

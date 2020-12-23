@@ -27,6 +27,7 @@ class WebChangeDetector_Admin
 
     const VALID_WCD_ACTIONS = [
         'reset_api_token',
+        're-add-api-token',
         'save_api_token',
         'take_screenshots',
         'update_monitoring_settings',
@@ -253,36 +254,52 @@ class WebChangeDetector_Admin
             return false;
         }
 
+        // Save email address on account creation for showing on activate account page
+        if(! empty($_POST['email'])) {
+            update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( $_POST['email'] ), false );
+        }
+        update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
+
+        // Create auto and update groups if the don't exist already
         $website = $this->create_group($api_token);
 
-        if (empty($website)) {
-            echo '<div class="error notice"><p>Something went wrong. Please contact us.</p></div>';
+        // If groups creating failed, show error
+        if (! $website) {
+            echo '<div class="notice notice-error"><p>Something went wrong. Please contact us.</p></div>';
             echo $this->get_no_account_page();
             return false;
         }
 
-        update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token);
-
-        $this->sync_posts();
+        return $this->sync_posts();
     }
 
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save($post_id, $post, $update)
     {
+        // Only sync posts and pages @TODO
+        if(!empty($post->post_type) && !in_array($post->post_type, ['page','post'])) {
+            return false;
+        }
+
         if ($update) {
             $latest_revision = array_shift(wp_get_post_revisions($post_id));
             if ($latest_revision && get_permalink($latest_revision) !== get_permalink($post)) {
-                $this->sync_posts($post);
+               return $this->sync_posts($post);
             }
         } else {
-            $this->sync_posts($post);
+            return $this->sync_posts($post);
         }
+        return false;
     }
 
-    public function account_details()
+    public function account_details($api_token = false)
     {
+        if(! $api_token) {
+            $api_token = get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+        }
         $args = array(
             'action' => 'account_details',
+            'api_token' => $api_token,
         );
         return $this->mm_api($args);
     }
@@ -318,7 +335,6 @@ class WebChangeDetector_Admin
 
     public function update_monitoring_settings($postdata, $monitoring_group_id)
     {
-
         $args = array(
             'action' => 'update_monitoring_settings',
             'group_id' => $monitoring_group_id,
@@ -607,18 +623,27 @@ class WebChangeDetector_Admin
             $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
                         onsubmit="return confirm(\'Do you really want to reset the API Token?\nYour settings will get lost.\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
+                        <hr>
                         <h2>API Token</h2>
                         <p>Your API Token: <strong>' . $api_token . '</strong></p>
+                        <p>With resetting the API Token, auto detections still continue and your settings will 
+                        be still available when you use the same api token with this website again.</p>
                         <input type="submit" value="Reset API Token" class="button"><br>
-                        <p><strong>ATTENTION: With resetting the API Token, all settings get lost and
-                        the monitoring won\'t be continued!</strong></p>';
+                        
+                        <hr>
+                        <h2>Delete Account</h2>
+                        <p>To delete your account completely, please login to your account at 
+                        <a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.</p>';
+
         } else {
             $output = '<div class="highlight-container">
                             <form class="frm_use_api_token highlight-inner no-bg" action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
                                 <input type="hidden" name="wcd_action" value="save_api_token">
                                 <h2>Use Existing API Token</h2>
-                                <p>Use the API token of your existing account. To get your API token, please login to your account at
-                                <a href="' . $this->app_url() . 'login" target="_blank">webchangedetector.com</a></p>
+                                <p>
+                                    Use the API token of your existing account. To get your API token, please login to your account at
+                                    <a href="' . $this->app_url() . 'login" target="_blank">webchangedetector.com</a>
+                                </p>
                                 <input type="text" name="api_token" value="' . $api_token_after_reset . '" required>
                                 <input type="submit" value="Save" class="button button-primary">
                             </form>
@@ -928,7 +953,7 @@ class WebChangeDetector_Admin
 
     public function get_no_account_page($api_token = '')
     {
-        delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+        //delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
 
         ob_start();
         ?>
@@ -1149,8 +1174,8 @@ class WebChangeDetector_Admin
                     The API token is not valid. Please reset the API token and enter a valid one.
                 </p>
             </div>
-        <?php
-        echo $this->get_no_account_page();
+            <?php
+            echo $this->get_no_account_page();
         }
 
         //echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));

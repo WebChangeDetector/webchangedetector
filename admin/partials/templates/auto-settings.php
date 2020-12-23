@@ -69,5 +69,8 @@
             <?php include("css-settings.php"); ?>
         </div>
     </div>
-    <button type="submit" class="button button-primary">Save Settings</button>
+    <button type="submit" name="wcd_action" value="update_monitoring_settings" class="button button-primary">Save Settings</button>
+    <button type="submit" name="wcd_action" value="update_monitoring_and_update_settings" class="button" style="" >
+        Save Settings for Update Detection too
+    </button>
 </form>
