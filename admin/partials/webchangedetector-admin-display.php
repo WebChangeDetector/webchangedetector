@@ -116,7 +116,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // Create groups if they don't exists
         if(empty($website_details)) {
-            $website_details = $wcd->create_group($api_token);
+            ?>
+            <div class="notice notice-error">
+                <p>Ooops! We couldn't find your settings. Please try again.</p>
+                <p>If the issue persists, please contact us.</p>
+            </div>
+            <?php
+            return false;
+            //$website_details = $wcd->create_group($api_token);
         }
 
         $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;

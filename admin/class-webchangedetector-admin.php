@@ -294,14 +294,21 @@ class WebChangeDetector_Admin
 
     public function account_details($api_token = false)
     {
+        static $account_details;
+        if ($account_details) {
+            return $account_details;
+        }
+
         if(! $api_token) {
             $api_token = get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
         }
+
         $args = array(
             'action' => 'account_details',
             'api_token' => $api_token,
         );
-        return $this->mm_api($args);
+        $account_details = $this->mm_api($args);
+        return $account_details;
     }
 
     public function ajax_get_processing_queue() {
@@ -994,6 +1001,11 @@ class WebChangeDetector_Admin
 
     public function get_website_details()
     {
+        static $website_details;
+        if($website_details) {
+            return $website_details;
+        }
+
         $args = array(
             'action' => 'get_website_details',
             // domain sent at mm_api
@@ -1001,8 +1013,9 @@ class WebChangeDetector_Admin
 
         $website_details = $this->mm_api($args);
 
+        // Take the first website details or return error string
         if (is_array($website_details) && count($website_details) > 0) {
-            return $website_details[0];
+            $website_details = $website_details[0];
         }
         return $website_details;
     }
@@ -1257,7 +1270,6 @@ class WebChangeDetector_Admin
                 'Authorization' => 'Bearer ' . $api_token,
             ),
         );
-
 
         if($isGet) {
             $response = wp_remote_get($urlGet, $args);
