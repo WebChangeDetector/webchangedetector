@@ -56,15 +56,13 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 if($wcd->dev()) {
                     $api_token = $_POST['email'];
                 }
-                //update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
-
                 $wcd->save_api_token($api_token);
-            break;
+                break;
 
             case 'reset_api_token':
                 $wcd->delete_website();
                 delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
-            break;
+                break;
 
             case 're-add-api-token':
                 $wcd->delete_website();
@@ -76,7 +74,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'save_api_token':
-
                 if (empty($_POST['api_token'])) {
                     echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
                     echo $wcd->get_no_account_page();
@@ -84,8 +81,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 }
                 $api_token = $_POST['api_token'];
                 $wcd->save_api_token($_POST['api_token']);
-
-            break;
+                break;
         }
 
         // If we have the api token already we don't need
@@ -126,7 +122,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
         $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
         $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
 
-        $monitoring_group_settings = null;
+        $monitoring_group_settings = null; // @TODO Can be deleted?
 
         // Perform actions
         switch ($wcd_action) {

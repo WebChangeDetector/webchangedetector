@@ -342,7 +342,7 @@ class WebChangeDetector_Admin
             'interval_in_h' => sanitize_key($postdata['interval_in_h']),
             'monitoring' => sanitize_key($postdata['monitoring']),
             'enabled' => sanitize_key($postdata['enabled']),
-            'alert_emails' => sanitize_textarea_field($postdata['alert_emails']),
+            'alert_emails' => sanitize_textarea_field(str_replace("\n\r",",",$postdata['alert_emails'])),
             'name' => sanitize_textarea_field($postdata['group_name']),
             'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
         );
@@ -1247,6 +1247,7 @@ class WebChangeDetector_Admin
         $post['wp_plugin_version'] = $this->version; // API will check this to check compatability
         // there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;)
         $post['domain'] = $_SERVER['SERVER_NAME'];
+        $post['domain'] = $_SERVER['SERVER_NAME'];
         $post['wp_id'] = get_current_user_id();
 
         $args = array(
@@ -1256,6 +1257,7 @@ class WebChangeDetector_Admin
                 'Authorization' => 'Bearer ' . $api_token,
             ),
         );
+
 
         if($isGet) {
             $response = wp_remote_get($urlGet, $args);
@@ -1349,7 +1351,7 @@ if (! defined('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL')) {
 // }
 
  // Uncommented functions()
- if (! function_exists('dd') && defined('WCD_DEV') && WCD_DEV === true) {
+ if (! function_exists('dd') ) {
      /**
       * Dump and Die
       */

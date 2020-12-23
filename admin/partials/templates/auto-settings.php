@@ -57,7 +57,7 @@
                     Alert email addresses (One per line)
                 </label>
                 <textarea name="alert_emails" id="alert_emails" style="width: 100%; height: 100px; " class="auto-setting"
-                ><?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode('\n', $groups_and_urls['alert_emails'])) : '' ?></textarea>
+                ><?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode("\n", $groups_and_urls['alert_emails'])) : '' ?></textarea>
                 <span class="notice notice-error" id="error-email-validation" style="display: none;">
                     <p class="default-bg">Please check your email address(es).</p>
                 </span>
