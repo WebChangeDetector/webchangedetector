@@ -24,6 +24,7 @@ class WebChangeDetector_Admin
 {
     const API_TOKEN_LENGTH = 20;
     const PRODUCT_ID_FREE = 57;
+    const LIMIT_QUEUE_ROWS = 50;
 
     const VALID_WCD_ACTIONS = [
         'reset_api_token',
@@ -241,12 +242,6 @@ class WebChangeDetector_Admin
     }
 
     public function save_api_token($api_token) {
-        $api_token = sanitize_textarea_field($api_token);
-
-        if ($this->dev()) {
-            // using emails as api_token to develop on localhost
-            $api_token = sanitize_email($api_token);
-        }
 
         if (! is_string($api_token) || (! $this->dev() && strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH)) {
             echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
@@ -260,17 +255,21 @@ class WebChangeDetector_Admin
         }
         update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
 
+        /* Account has to be activated first
         // Create auto and update groups if the don't exist already
-        $website = $this->create_group($api_token);
+
+        $website = $this->create_website_and_groups($api_token);
 
         // If groups creating failed, show error
         if (! $website) {
             echo '<div class="notice notice-error"><p>Something went wrong. Please contact us.</p></div>';
             echo $this->get_no_account_page();
             return false;
-        }
+        }*/
 
-        return $this->sync_posts();
+        //return $this->sync_posts(); // Done later. Can't do it here as account has to be activated first
+
+        return true;
     }
 
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
@@ -295,7 +294,7 @@ class WebChangeDetector_Admin
     public function account_details($api_token = false)
     {
         static $account_details;
-        if ($account_details) {
+        if ($account_details && $account_details !== "unauthorized" && $account_details !== "activate account") {
             return $account_details;
         }
 
@@ -549,6 +548,8 @@ class WebChangeDetector_Admin
         $args = array(
             'action' => 'get_queue',
             'status' => json_encode(['open', 'done', 'processing', 'failed']),
+            'limit' => $_GET['limit'] ?? $this::LIMIT_QUEUE_ROWS,
+            'offset' => $_GET['offset'] ?? 0,
         );
         return $this->mm_api($args);
     }
@@ -628,7 +629,7 @@ class WebChangeDetector_Admin
         $api_token_after_reset = isset($_POST['api_token']) ? sanitize_text_field($_POST['api_token']) : false;
         if ($api_token) {
             $output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
-                        onsubmit="return confirm(\'Do you really want to reset the API Token?\nYour settings will get lost.\');">
+                        onsubmit="return confirm(\'Are sure you want to reset the API token?\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <hr>
                         <h2>API Token</h2>
@@ -668,7 +669,7 @@ class WebChangeDetector_Admin
      *
      * @param string $api_token
      */
-    public function create_group($api_token)
+    public function create_website_and_groups($api_token)
     {
         // Create group if it doesn't exist yet
         $args = array(
@@ -751,7 +752,6 @@ class WebChangeDetector_Admin
             ));
 
             if ($posts) { ?>
-
                 <div class="accordion">
                     <div class="mm_accordion_title">
                         <h3>
@@ -1182,7 +1182,7 @@ class WebChangeDetector_Admin
         }
 
         if ($error === 'unauthorized') { ?>
-            <div class="error notice">
+            <div class="notice notice-error">
                 <p>
                     The API token is not valid. Please reset the API token and enter a valid one.
                 </p>
@@ -1274,7 +1274,7 @@ class WebChangeDetector_Admin
         if($isGet) {
             $response = wp_remote_get($urlGet, $args);
         } else {
-             $response = wp_remote_post($url, $args);
+            $response = wp_remote_post($url, $args);
         }
 
         $body = wp_remote_retrieve_body($response);
