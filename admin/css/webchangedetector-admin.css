@@ -357,6 +357,10 @@
     font-weight: 400;
 }
 
+.webchangedetector table.queue {
+    margin-bottom: 20px;
+}
+
 .webchangedetector .queue-status-open {
     background: #eee;
 }

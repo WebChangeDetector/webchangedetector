@@ -27,7 +27,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
         if (isset($_POST['wcd_action'])) {
             $wcd_action = sanitize_key($_POST['wcd_action']);
             if (! is_string($wcd_action) || ! in_array($wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS)) {
-                echo '<div class="error notice"><p>Wrong wcd_action. Please contact developer.</p></div>';
+                echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
                 return false;
             }
         }
@@ -52,22 +52,19 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     return false;
                 }
 
-                // Save email address if it's dev
-                if($wcd->dev()) {
-                    $api_token = $_POST['email'];
-                }
                 $wcd->save_api_token($api_token);
                 break;
 
             case 'reset_api_token':
-                $wcd->delete_website();
+                //$wcd->delete_website();
                 delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
                 break;
 
             case 're-add-api-token':
-                $wcd->delete_website();
+                //$wcd->delete_website();
                 if(empty($_POST['api_token'])) {
                     echo $wcd->get_no_account_page();
+                    return true;
                 }
                 $api_token = $_POST['api_token'];
                 $wcd->save_api_token($api_token);
@@ -98,7 +95,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             }
         }
 
-        // The account doesn't have an api_token
+        // We still don't have an api_token
         if (! $api_token) {
             echo $wcd->get_no_account_page();
             return false;
@@ -114,16 +111,27 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         $website_details = $wcd->get_website_details();
 
-        // Create groups if they don't exists
+        // If we don't have websites details yet, we create them. This happens after account activation
+        if (! $website_details) {
+            $website_details = $wcd->create_website_and_groups($api_token);
+        }
+
+        // If we don't have the website for any reason we show an error message.
         if(empty($website_details)) {
             ?>
             <div class="notice notice-error">
-                <p>Ooops! We couldn't find your settings. Please try again.</p>
-                <p>If the issue persists, please contact us.</p>
+                <br>Ooops! We couldn't find your settings. If you changed your domain, please re-add your website.<br>
+                If the issue persists, please contact us.</p>
+                <p>
+                    <form method="post">
+                        <input type="hidden" name="wcd_action" value="re-add-api-token">
+                        <input type="submit" value="Re-add website" class="button-primary">
+                    </form>
+                </p>
+
             </div>
             <?php
             return false;
-            //$website_details = $wcd->create_group($api_token);
         }
 
         $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
@@ -615,9 +623,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 ?>
                 <div class="action-container">
                 <?php
+                echo '<table class="queue">';
+                echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
                     if (! empty($queues) && is_iterable($queues)) {
-                        echo '<table class="queue">';
-                        echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
+
                         foreach ($queues as $queue) {
                             $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
                             echo '<tr class="queue-status-' . $queue['status'] . '">';
@@ -633,11 +642,25 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
                             echo '</tr>';
                         }
-                        echo '</table>';
+
                     } else {
                         echo 'Nothing to show yet.';
                     }
+
+                ?>
+                    </table>
+                    <?php
+                    $offset = $_GET['offset'] ?? 0;
+                    $limit = $_GET['limit'] ?? $wcd::LIMIT_QUEUE_ROWS;
                     ?>
+                        <a class="button <?= ! $offset ? 'disabled' : ''?>"
+                            href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?= $offset - $limit ?>&limit=<?= $limit ?>"
+                        > < Newer
+                        </a>
+                        <a class="button <?= count($queues) != $limit ? 'disabled' : ''?>"
+                            href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?= $offset + $limit ?>&limit=<?= $limit ?>"
+                        > Older >
+                        </a>
                 </div>
                 <div class="sidebar">
                     <div class="account-box">

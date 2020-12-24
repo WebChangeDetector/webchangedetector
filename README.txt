@@ -42,10 +42,12 @@ Track automatically changes on every page on your WordPress site. If something c
 == Changelog ==
 
 = 1.2.0 =
+* Feature: Create account directly from plugin
 * Feature: Show browser time for next auto detections
 * Feature: Copy url settings to other detection type
 * Feature: Compare before and after screenshot with slider
 * Feature: Show live status when taking screenshots
+* Feature: Pagination for logs
 * Improvement: Available screenshot overview
 * Improvement: User experience
 * Fix: Error handling when changing domain
