@@ -231,6 +231,14 @@ class WebChangeDetector_Admin
             'webchangedetector-show-detection',
             'wcd_webchangedetector_init'
         );
+        add_submenu_page(
+            null,
+            'Show Screenshot',
+            'Show Screenshot',
+            'manage_options',
+            'webchangedetector-show-screenshot',
+            'wcd_webchangedetector_init'
+        );
 
     }
 
@@ -518,9 +526,6 @@ class WebChangeDetector_Admin
             $token = $_GET['token'];
         }
         if (isset($token)) {
-            //$wcd = new Wp_Compare();
-            //$compare = $wcd->get_comparison_by_token($token); // $compare will be used in partial
-
             $args = array(
                 'action' => 'get_comparison_by_token',
                 'token' => $token
@@ -541,6 +546,14 @@ class WebChangeDetector_Admin
             return ob_get_clean();
         }
         return 'Ooops! We didn\'t understand the request. Please contact us if the issue persists.';
+    }
+
+    function get_screenshot($url = false)
+    {
+        if (! $url) {
+            return '<p>Sorry, we couldn\'t find the screenshot</p>';
+        }
+        return '<div style="width: 100%"><img style="width: 100%" src="' .  $url . '"></div>';
     }
 
     public function get_queue()
@@ -1056,7 +1069,7 @@ class WebChangeDetector_Admin
 
     public function get_dashboard_view($client_account, $update_group_id, $auto_group_id)
     {
-        $recent_comparisons = $this->get_compares([$update_group_id, $auto_group_id], null, null, true, 10);
+        $recent_comparisons = $this->get_compares([$update_group_id, $auto_group_id], null, null, false, 10);
 
         $auto_group = $this->get_urls_of_group($auto_group_id);
         $amount_auto_detection = 0;

@@ -643,7 +643,15 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 <div class="action-container">
                 <?php
                 echo '<table class="queue">';
-                echo '<tr><th></th><th width="100%">Page & URL</th><th>Type</th><th>Status</th><th>Added</th><th>Last changed</th></tr>';
+                echo '<tr>
+                        <th></th>
+                        <th width="100%">Page & URL</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Added</th>
+                        <th>Last changed</th>
+                        <th>Show</th>
+                        </tr>';
                     if (! empty($queues) && is_iterable($queues)) {
 
                         foreach ($queues as $queue) {
@@ -659,6 +667,16 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             echo '<td>' . ucfirst($queue['status']) . '</td>';
                             echo '<td class="local-time" data-date="' . strtotime($queue['created_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
                             echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
+                            if(in_array($queue['sc_type'], ['pre', 'post', 'auto']) && $queue['status'] === 'done') {
+                                $link = $queue['screenshots'][0]['link'] ? get_admin_url() . 'admin.php?page=webchangedetector-show-screenshot&action=show_screenshot&url=' . urlencode($queue['screenshots'][0]['link']) : null;
+                            } elseif($queue['sc_type'] === 'compare' && $queue['status'] === 'done') {
+                                $link = $queue['comparisons'][0]['token'] ? get_admin_url() . 'admin.php?page=webchangedetector-show-detection&action=show_compare&token=' . $queue['comparisons'][0]['token'] : null;
+                            }
+                            echo '<td>';
+                            if(! empty($link)) {
+                                echo '<a class="button" href="' .  $link . '">Show</a>';
+                            }
+                            echo '</td>';
                             echo '</tr>';
                         }
 
@@ -728,7 +746,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
              ***************/
             case 'webchangedetector-show-detection':
                 echo $wcd->get_comparison_by_token($_GET['token']);
-            break;
+                break;
+
+            /***************
+             * Show screenshot
+             ***************/
+            case 'webchangedetector-show-screenshot':
+                echo $wcd->get_screenshot(urldecode($_GET['url']));
+                break;
 
             default:
                 // Should already be validated by VALID_WCD_ACTIONS

@@ -48,6 +48,7 @@ Track automatically changes on every page on your WordPress site. If something c
 * Feature: Compare before and after screenshot with slider
 * Feature: Show live status when taking screenshots
 * Feature: Pagination for logs
+* Feature: Show change detections and screenshots in logs
 * Improvement: Available screenshot overview
 * Improvement: User experience
 * Fix: Error handling when changing domain
