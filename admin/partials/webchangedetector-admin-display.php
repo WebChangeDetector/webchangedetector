@@ -23,6 +23,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         $wcd = new WebChangeDetector_Admin();
 
+        // Validate action
         $wcd_action = null;
         if (isset($_POST['wcd_action'])) {
             $wcd_action = sanitize_key($_POST['wcd_action']);
@@ -81,7 +82,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
         }
 
-        // If we have the api token already we don't need
+        // If we didn't get the api token from an action we take it from options
         if(empty($api_token)) {
             $api_token = get_option( MM_WCD_WP_OPTION_KEY_API_TOKEN );
         }
@@ -101,6 +102,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
+        // Get the account details
         $account_details = $wcd->account_details($api_token);
 
         // Check if account is activated and if the api key is authorized
@@ -109,6 +111,25 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
+        // Show low credits
+        $usage_percent = (int)($account_details['usage'] / $account_details['sc_limit'] * 100);
+        //dd($usage_percent);
+        if($usage_percent >= 100) {
+            if( $account_details['plan']['one_time'] ) { // Check for trial account ?>
+                <div class="notice notice-error">
+                    <p>You ran out of screenshots. Please upgrade your account to continue.</p>
+                </div>
+            <?php } else { ?>
+                <div class="notice notice-error">
+                    <p>You ran out of screenshots. Please upgrade your account to continue or wait for renewal.</p>
+                </div>
+            <?php }
+        } elseif($usage_percent > 70) { ?>
+            <div class="notice notice-warning"><p>You used <?= $usage_percent ?>% of your screenshots.</p></div>
+        <?php }
+        //dd($account_details);
+
+        // Get the website details
         $website_details = $wcd->get_website_details();
 
         // If we don't have websites details yet, we create them. This happens after account activation
@@ -117,10 +138,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
         }
 
         // If we don't have the website for any reason we show an error message.
-        if(empty($website_details)) {
-            ?>
+        if(empty($website_details)) { ?>
             <div class="notice notice-error">
-                <br>Ooops! We couldn't find your settings. If you changed your domain, please re-add your website.<br>
+                <br>Ooops! We couldn't find your settings. Please try reloading the page. <br>
                 If the issue persists, please contact us.</p>
                 <p>
                     <form method="post">
@@ -128,7 +148,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <input type="submit" value="Re-add website" class="button-primary">
                     </form>
                 </p>
-
             </div>
             <?php
             return false;
@@ -687,16 +706,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <p>Please enter a valid API Token.</p>
                     </div>';
                     } elseif (! $website_details['enable_limits']) {
-                        /*echo '<h2>Your credits</h2>';
-                        echo 'Your current plan: <strong>' . esc_html($account_details['plan']['name']) . '</strong><br>';
-                        echo 'Next renew: <span class="local-date">' . gmdate('d/m/Y', $renew_date) . '</span>';
-                        echo '<p>Change detections in this period: ' . esc_html($limit) . '<br>';
-                        echo 'Used change detections: ' . esc_html($comp_usage) . '<br>';
-                        echo 'Available change detections in this period: ' . esc_html($available_compares) . '</p>';*/
                         echo '<h2>Need more screenshots?</h2>';
                         echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
                         echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
-                        //echo( $wcd->get_upgrade_options($account_details['plan_id']));
                     }
                     echo $wcd->get_api_token_form($api_token);
                     ?>
@@ -722,8 +734,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 // Should already be validated by VALID_WCD_ACTIONS
             break;
 
-            echo '</div>'; // closing from div webchangedetector
-            echo '</div>'; // closing wrap
         } // switch
+
+        echo '</div>'; // closing from div webchangedetector
+        echo '</div>'; // closing wrap
     } // wcd_webchangedetector_init
 } // function_exists
