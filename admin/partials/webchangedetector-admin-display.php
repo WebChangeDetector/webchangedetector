@@ -354,14 +354,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </select>
 
                         <select name="group_type" >
-                            <option value="" <?= ! $group_type ? 'selected' : '' ?>>All Change Detections</option>
+                            <option value="" <?= ! $group_type ? 'selected' : '' ?>>Auto & Update Detections</option>
                             <option value="update" <?= $group_type === 'update' ? 'selected' : '' ?>>Only Update Change Detections</option>
                             <option value="auto" <?= $group_type === 'auto' ? 'selected' : '' ?>>Only Auto Change Detections</option>
                         </select>
 
                         <select name="difference_only" class="js-dropdown">
-                            <option value="1" <?= $difference_only ? 'selected' : '' ?>>With difference</option>
                             <option value="0" <?= ! $difference_only ? 'selected' : '' ?>>All detections</option>
+                            <option value="1" <?= $difference_only ? 'selected' : '' ?>>With difference</option>
                         </select>
 
                         <input class="button" type="submit" value="Filter">
@@ -745,7 +745,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
              * Show compare
              ***************/
             case 'webchangedetector-show-detection':
-                echo $wcd->get_comparison_by_token($_GET['token']);
+                echo $wcd->get_comparison_by_token($_POST);
                 break;
 
             /***************

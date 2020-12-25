@@ -77,7 +77,7 @@ class WebChangeDetector_Admin
      * @access   private
      * @var      string $version The current version of this plugin.
      */
-    private $version = '1.2.0';
+    private $version = '2.0.0';
 
     /**
      * Initialize the class and set its properties.
@@ -485,6 +485,11 @@ class WebChangeDetector_Admin
                 </td>
             </tr>
         <?php } else {
+            $all_tokens = [];
+            foreach($compares as $compare) {
+                $all_tokens[] = $compare['token'];
+
+            }
             foreach ($compares as $compare) {
                 $class = 'no-difference'; // init
                 if ($compare['difference_percent']) {
@@ -507,10 +512,11 @@ class WebChangeDetector_Admin
                 </td>
                 <td class="<?= $class ?> diff-tile" data-diff_percent="<?= $compare['difference_percent'] ?>"><?= $compare['difference_percent'] ?>%</td>
                 <td>
-                    <a href="?page=webchangedetector-show-detection&action=show_compare&token=<?= $compare['token'] ?>"
-                       class="button">
-                        Show
-                    </a>
+                    <form action="?page=webchangedetector-show-detection" method="post">
+                        <input type="hidden" name="token" value="<?= $compare['token'] ?>">
+                        <input type="hidden" name="all_tokens" value='<?= json_encode($all_tokens) ?>'>
+                        <input type="submit" value="Show" class="button">
+                    </form>
                 </td>
             </tr>
             <?php
@@ -520,8 +526,9 @@ class WebChangeDetector_Admin
         <?php
     }
 
-    function get_comparison_by_token($token, $hide_switch = false, $whitelabel = false)
+    function get_comparison_by_token($postdata, $hide_switch = false, $whitelabel = false)
     {
+        $token = $postdata['token'] ?? null;
         if (! $token && ! empty($_GET['token'])) {
             $token = $_GET['token'];
         }
@@ -532,7 +539,25 @@ class WebChangeDetector_Admin
             );
             $compare = $this->mm_api($args);
             $public_page = true;
+            $all_tokens = [];
+            if(! empty($postdata['all_tokens'])) {
+                $all_tokens = (json_decode(stripslashes($postdata['all_tokens']), true));
 
+                $before_current_token = [];
+                $after_current_token = [];
+                $is_after = false;
+                foreach($all_tokens as $current_token) {
+                    if($current_token !== $token) {
+                        if($is_after) {
+                            $after_current_token[] = $current_token;
+                        } else {
+                            $before_current_token[] = $current_token;
+                        }
+                    } else {
+                        $is_after = true;
+                    }
+                }
+            }
             ob_start();
             if(!$hide_switch) {
                 echo '<style>#comp-switch {display: none !important;}</style>';
@@ -541,11 +566,27 @@ class WebChangeDetector_Admin
             if (! $whitelabel) {
                 echo '<style>.public-detection-logo {display: none;}</style>';
             }
+            $before_token = ! empty($before_current_token) ? $before_current_token[max(array_keys($before_current_token))] : null;
+            $after_token = $after_current_token[0] ?? null;
+            ?>
+            <!-- Previous and next buttons -->
+            <div style="width: 100%; margin-bottom: 20px; text-align: center">
+                <form method="post" >
+                    <input type="hidden" name="all_tokens" value='<?= json_encode($all_tokens) ?>'>
+                    <button class="button" type="submit" name="token"
+                            value="<?= $before_token ?? null ?>" <?= ! $before_token ? 'disabled' : ''?>> < Previous </button>
+                    <button class="button" type="submit" name="token"
+                            value="<?= $after_token ?? null ?>" <?= ! $after_token ? 'disabled' : ''?>> Next > </button>
+                </form>
+            </div>
+            <?php
             include 'partials/templates/show-change-detection.php';
             echo '</div>';
             return ob_get_clean();
         }
-        return 'Ooops! We didn\'t understand the request. Please contact us if the issue persists.';
+        return '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
+                <a href="?page=webchangedetector-change-detections">Change Detections</a> and select a change detection
+                to show.</p>';
     }
 
     function get_screenshot($url = false)

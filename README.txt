@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot
 Requires at least: 5.2
 Tested up to: 5.6
-Stable tag: 1.2.0
+Stable tag: 2.0.0
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -41,8 +41,10 @@ Track automatically changes on every page on your WordPress site. If something c
 
 == Changelog ==
 
-= 1.2.0 =
+= 2.0.0 =
 * Feature: Create account directly from plugin
+* Feature: Slider for comparing screenshots
+* Feature: Navigate directly through change detections
 * Feature: Show browser time for next auto detections
 * Feature: Copy url settings to other detection type
 * Feature: Compare before and after screenshot with slider
