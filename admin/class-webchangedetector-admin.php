@@ -243,8 +243,17 @@ class WebChangeDetector_Admin
     }
 
     public function create_free_account($postdata) {
+
+        // Generate validation string
+        $validation_string = wp_generate_password(40);
+        update_option('webchangedetector_verify_secret', $validation_string, false);
+
         $args = array_merge([
             'action' => 'add_free_account',
+            'ip'=> $_SERVER['SERVER_ADDR'],
+            'domain' => $_SERVER['SERVER_NAME'],
+            'validation_string' => $validation_string,
+            'cms' => 'wp',
             ], $postdata);
         return $this->mm_api($args, true);
     }
@@ -1034,10 +1043,11 @@ class WebChangeDetector_Admin
                     </p>
                     <form class="frm_new_account" method="post">
                         <input type="hidden" name="wcd_action" value="create_free_account">
-                        <input type="hidden" name="plan_id" value="1">
-                        <!--<label for="name_first">First Name</label>--><input type="text" name="name_first" placeholder="First Name" value="<?= $_POST['name_first'] ?? wp_get_current_user()->user_firstname ?>" required>
-                        <!--<label for="name_last">Last Name</label>--><input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>" required>
-                        <!--<label for="email">Email Address</label>--><input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>" required>
+                        <input type="text" name="name_first" placeholder="First Name" value="<?= $_POST['name_first'] ?? wp_get_current_user()->user_firstname ?>" required>
+                        <input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>" required>
+                        <input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>" required>
+                        <input type="password" name="password" placeholder="Password" required>
+
                         <input type="submit" class="button-primary" value="Create Free Account">
                     </form>
                 </div>
@@ -1286,10 +1296,10 @@ class WebChangeDetector_Admin
      * @param bool $isGet
      * @return string|array
      */
-    public function mm_api($post, $isGet = false)
+    public function mm_api($post, $isWeb = false)
     {
         $url = 'https://api.webchangedetector.com/api/v1/'; // init for production
-        $urlGet = 'https://api.webchangedetector.com/';
+        $urlWeb = 'https://api.webchangedetector.com/';
 
         // This is where it can be changed to a local/dev address
         if (defined('WCD_API_URL') && is_string(WCD_API_URL) && ! empty(WCD_API_URL)) {
@@ -1297,12 +1307,12 @@ class WebChangeDetector_Admin
         }
 
         // Overwrite $url if it is a get request
-        if ($isGet && defined('WCD_API_URL_GET') && is_string(WCD_API_URL_GET) && ! empty(WCD_API_URL_GET)) {
-            $urlGet = WCD_API_URL_GET;
+        if ($isWeb && defined('WCD_API_URL_WEB') && is_string(WCD_API_URL_WEB) && ! empty(WCD_API_URL_WEB)) {
+            $urlWeb = WCD_API_URL_WEB;
         }
 
         $url .= str_replace('_', '-', $post['action']); // add kebab action to url
-        $urlGet .= str_replace('_', '-', $post['action']); // add kebab action to url
+        $urlWeb .= str_replace('_', '-', $post['action']); // add kebab action to url
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
@@ -1325,8 +1335,8 @@ class WebChangeDetector_Admin
             ),
         );
 
-        if($isGet) {
-            $response = wp_remote_get($urlGet, $args);
+        if($isWeb) {
+            $response = wp_remote_post($urlWeb, $args);
         } else {
             $response = wp_remote_post($url, $args);
         }

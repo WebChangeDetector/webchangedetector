@@ -79,7 +79,7 @@ class WebChangeDetector
         $this->load_dependencies();
         $this->set_locale();
         $this->define_admin_hooks();
-        //$this->define_public_hooks(); // Deactivated as we don't have a frontend in the plugin
+        $this->define_public_hooks(); 
     }
 
     /**

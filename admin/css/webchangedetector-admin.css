@@ -213,6 +213,15 @@
     width: 100%
 }
 
+.webchangedetector .twentytwenty-handle {
+    background: #aaa;
+}
+
+.webchangedetector .twentytwenty-after-label,
+.webchangedetector .twentytwenty-before-label {
+    display: none;
+}
+
 .webchangedetector .comparison-diff-tile {
     width: 100px;
 }

@@ -38,7 +38,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             case 'create_free_account':
 
                 // Validate if all required fields were sent
-                if(! ($_POST['name_first'] && $_POST['name_last'] && $_POST['email'])) {
+                if(! ($_POST['name_first'] && $_POST['name_last'] && $_POST['email'] && $_POST['password'])) {
                     echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
                     echo $wcd->get_no_account_page();
                     return false;
@@ -46,11 +46,19 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $api_token = $wcd->create_free_account($_POST);
 
+                delete_option('webchangedetector_verify_secret');
+
                 // if we get an array it is an error message
                 if(is_array($api_token)) {
-                    echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
-                    echo $wcd->get_no_account_page();
-                    return false;
+                    if($api_token[0] === 'error' && !empty($api_token[1])) {
+                        echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
+                        echo $wcd->get_no_account_page();
+                        return false;
+                    } else {
+                        echo '<div class="notice notice-error">
+                                <p>Something went wrong. Please try again. If the issue persists please contact us.</p>
+                                </div>';
+                    }
                 }
 
                 $wcd->save_api_token($api_token);
@@ -667,15 +675,29 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             echo '<td>' . ucfirst($queue['status']) . '</td>';
                             echo '<td class="local-time" data-date="' . strtotime($queue['created_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['created_at'])) . '</td>';
                             echo '<td class="local-time" data-date="' . strtotime($queue['updated_at']) . '">' .  gmdate('d/m/Y H:i:s', strtotime($queue['updated_at'])) . '</td>';
-                            if(in_array($queue['sc_type'], ['pre', 'post', 'auto']) && $queue['status'] === 'done') {
-                                $link = $queue['screenshots'][0]['link'] ? get_admin_url() . 'admin.php?page=webchangedetector-show-screenshot&action=show_screenshot&url=' . urlencode($queue['screenshots'][0]['link']) : null;
-                            } elseif($queue['sc_type'] === 'compare' && $queue['status'] === 'done') {
-                                $link = $queue['comparisons'][0]['token'] ? get_admin_url() . 'admin.php?page=webchangedetector-show-detection&action=show_compare&token=' . $queue['comparisons'][0]['token'] : null;
-                            }
                             echo '<td>';
-                            if(! empty($link)) {
-                                echo '<a class="button" href="' .  $link . '">Show</a>';
-                            }
+
+                            // Show screenshot button
+                            if(in_array($queue['sc_type'], ['pre', 'post', 'auto']) &&
+                                $queue['status'] === 'done' &&
+                                ! empty($queue['screenshots'][0]['link'])) { ?>
+
+                                    <form method="post" action="?page=webchangedetector-show-screenshot">
+                                        <button class="button" type="submit" name="img_url" value="<?= $queue['screenshots'][0]['link'] ?>">Show</button>
+                                    </form>
+
+                            <?php }
+                            // Show comparison
+                            elseif($queue['sc_type'] === 'compare' &&
+                                $queue['status'] === 'done' &&
+                                ! empty($queue['comparisons'][0]['token'])) { ?>
+
+                                    <form method="post" action="?page=webchangedetector-show-detection">
+                                        <button class="button" type="submit" name="token" value="<?= $queue['comparisons'][0]['token'] ?>">Show</button>
+                                    </form>
+
+                                <?php }
+
                             echo '</td>';
                             echo '</tr>';
                         }
@@ -752,7 +774,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
              * Show screenshot
              ***************/
             case 'webchangedetector-show-screenshot':
-                echo $wcd->get_screenshot(urldecode($_GET['url']));
+                echo $wcd->get_screenshot($_POST);
                 break;
 
             default:
