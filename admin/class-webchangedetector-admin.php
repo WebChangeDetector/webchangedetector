@@ -598,12 +598,13 @@ class WebChangeDetector_Admin
                 to show.</p>';
     }
 
-    function get_screenshot($url = false)
+    function get_screenshot($postdata = false)
     {
-        if (! $url) {
-            return '<p>Sorry, we couldn\'t find the screenshot</p>';
+        if (! isset($postdata['img_url'])) {
+            return '<p class="notice notice-error" style="padding: 10px;">
+                    Sorry, we couldn\'t find the screenshot. Please try again.</p>';
         }
-        return '<div style="width: 100%"><img style="width: 100%" src="' .  $url . '"></div>';
+        return '<div style="width: 100%"><img style="width: 100%" src="' .  $postdata['img_url'] . '"></div>';
     }
 
     public function get_queue()

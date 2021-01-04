@@ -46,6 +46,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $api_token = $wcd->create_free_account($_POST);
 
+                // Delete the temporary verification secret
                 delete_option('webchangedetector_verify_secret');
 
                 // if we get an array it is an error message
