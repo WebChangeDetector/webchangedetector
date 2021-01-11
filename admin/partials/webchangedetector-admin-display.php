@@ -53,13 +53,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 if(is_array($api_token)) {
                     if($api_token[0] === 'error' && !empty($api_token[1])) {
                         echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
-                        echo $wcd->get_no_account_page();
-                        return false;
+
                     } else {
                         echo '<div class="notice notice-error">
                                 <p>Something went wrong. Please try again. If the issue persists please contact us.</p>
                                 </div>';
                     }
+                    echo $wcd->get_no_account_page();
+                    return false;
                 }
 
                 $wcd->save_api_token($api_token);
@@ -184,10 +185,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     if ($results[0] === 'error') {
                         echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
                     }
-
-                    if ($results[0] === 'success') {
-                        echo '<div class="updated notice"><p>' . $results[1] . '</p></div>';
-                    }
                 }
                 break;
 
@@ -200,8 +197,12 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'update_monitoring_and_update_settings':
-                $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
-                $wcd->update_settings($_POST, $group_id);
+                if(! empty($_POST['wcd-update-settings'])) {
+                    $wcd->update_settings( $_POST, $monitoring_group_id ); // only saves css for monitoring group
+                } else {
+                    $wcd->update_monitoring_settings( $_POST, $monitoring_group_id ); // saves all monitoring settings
+                }
+                $wcd->update_settings( $_POST, $group_id ); // saves update settings (currently only css)
                 break;
 
             case 'copy_url_settings':
@@ -282,11 +283,13 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         $sc_processing = $wcd->get_processing_queue();
         if($sc_processing) {
-            echo '<div class="notice-info notice">
+            // @ToDo Replace with finished message when everything is done.
+            echo '<div id="wcd-currently-in-progress" class="notice-info notice">
                     <p id="currently-processing-container">
                     <span id="currently-processing-spinner" class="spinner"></span>
                         Currently <strong>
-                        <span id="currently-processing">' . $sc_processing . '</span> screenshots</strong> are in progress. Check the Logs for more details.
+                        <span id="currently-processing">' . $sc_processing . '</span> screenshots / change detections </strong> 
+                        are in progress. Check the Logs for more details.
                     </p>
                 </div>';
         }
@@ -458,7 +461,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             </h3>
                             <div class="mm_accordion_content">
                                 <form method="post" style="padding: 20px;">
-                                    <input type="hidden" name="wcd_action" value="">
+                                    <input type="hidden" name="wcd-update-settings" value="true">
                                     <?php include("templates/css-settings.php"); ?>
 
                                     <button
@@ -474,7 +477,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                         value="update_monitoring_and_update_settings"
                                         class="button"
                                         style="margin-left: 10px;">
-                                        Save Settings to Auto Detection too
+                                        Save Settings to auto detection too
                                     </button>
                                 </form>
                             </div>
@@ -596,7 +599,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                     $enabled = $groups_and_urls['enabled'];
                                     if($enabled) {
                                         ?>
-                                        Currently: <strong>Tracking</strong> |
+                                        Auto Detection: <strong style="color: green;">Enabled</strong> |
                                         Interval: <strong>
                                             every
                                             <?= $groups_and_urls['interval_in_h'] ?>
@@ -608,7 +611,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                                         </strong>
                                         <?php
                                     } else { ?>
-                                        Currently: <strong>Not tracking</strong>
+                                        Auto Detection: <strong style="color: red">Disabled</strong>
                                     <?php } ?>
                                 </small>
                             </h3>

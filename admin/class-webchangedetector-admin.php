@@ -360,7 +360,7 @@ class WebChangeDetector_Admin
     {
         $args = array(
             'action' => 'update_monitoring_settings',
-            'group_id' => $monitoring_group_id,
+            'group_id' => sanitize_key($monitoring_group_id),
             'hour_of_day' => sanitize_key($postdata['hour_of_day']),
             'interval_in_h' => sanitize_key($postdata['interval_in_h']),
             'monitoring' => sanitize_key($postdata['monitoring']),
@@ -372,12 +372,22 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
-    public function update_settings($postdata, $update_group_id)
+    public function update_monitoring_settings_css($postdata, $monitoring_group_id)
+    {
+        $args = array(
+            'action' => 'update_monitoring_settings',
+            'group_id' => sanitize_key($monitoring_group_id),
+            'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
+        );
+        return $this->mm_api($args);
+    }
+
+    public function update_settings($postdata, $group_id)
     {
 
         $args = array(
             'action' => 'update_group',
-            'group_id' => $update_group_id,
+            'group_id' => $group_id,
             'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
         );
         return $this->mm_api($args);
@@ -923,7 +933,7 @@ class WebChangeDetector_Admin
                 </div>
             <?php
         }
-        $other_group_type = $monitoring_group ? "Update" : "Auto";
+        $other_group_type = $monitoring_group ? "update" : "auto";
         echo '<button 
                 class="button button-primary" 
                 type="submit" 
@@ -936,7 +946,7 @@ class WebChangeDetector_Admin
                 name="wcd_action" 
                 value="post_urls_update_and_auto"
                 style="margin-left: 10px;">
-                    Save Settings for ' . $other_group_type . ' detections too
+                    Save settings for ' . $other_group_type . ' detections too
                 </button>';
         echo '</form>';
 

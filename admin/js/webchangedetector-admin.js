@@ -225,8 +225,9 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         var nextScDate = $("#next_sc_date").data("date");
         $("#txt_next_sc_in").html("Currently");
         $("#next_sc_date").html("");
+        var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
 
-        if(nextScDate && autoEnabled) {
+        if(nextScDate && autoEnabled && amountSelectedTotal > 0) {
             nextScIn = new Date(nextScDate * 1000);
             nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60));
             nextScIn = new Date(nextScIn - $.now());
@@ -243,7 +244,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         var scLimit = $("#wcd_account_details").data("sc_limit");
         var availableCredits = scLimit - scUsage;
         var scPerUrlUntilRenew = $("#sc_available_until_renew").data("auto_sc_per_url_until_renewal");
-        var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
+
         if(availableCredits <= 0) {
             $("#next_sc_in").html("Not Tracking").css("color","#A00000");
             $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>");
@@ -345,32 +346,34 @@ function mmToggle(source, postType, column, groupId) {
  * Validates comma separated emails in a form
  * Called `onsubmit=` in HTML
  */
-function mmValidateForm() {
+function wcdValidateFormAutoSettings() {
+
+    // Check if auto detection are enabled.
+    var autoDetectionEnabled = document.getElementById("auto-enabled").value;
+
+    if(! parseInt(autoDetectionEnabled)) {
+        return true;
+    }
     // get all emails
     var emailsElement = document.getElementById("alert_emails");
     // split by new line
     let emails = emailsElement.value.replace(/\r\n/g,"\n").split("\n");
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    // init border
-    let border = '2px solid green';
 
     for (var i = 0; i < emails.length; i++) {
         emails[i] = emails[i].trim();
 
-        // set border of `#alert_emails` element
-        emailsElement.style.border = border;
-
-        if(emails[i] === "" || ! emailRegex.test(emails[i])){
-            border = "2px solid red";
-            jQuery("#error-email-validation").css("display", "block");
-            return false;
+        // Validation failed
+        if(emails[i] === "" || ! emailRegex.test(emails[i]) ){
+            jQuery(emailsElement).css("border", "2px solid red");
+            jQuery("#error-email-validation").css("display", "inline-block");
+            return false;next_sc_in
         }
     }
-    jQuery("#error-email-validation").hide();
-
-    // see if border is still initialValue
-    return border === '2px solid green';
+    jQuery("#error-email-validation").css("display", "none");
+    jQuery(emailsElement).css("border", "2px solid green");
+    return true;
 }
 
 function showUpdates() {

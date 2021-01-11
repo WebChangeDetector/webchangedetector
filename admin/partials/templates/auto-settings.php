@@ -1,4 +1,4 @@
-<form class="wcd-frm-settings" action="<?= admin_url() ?>/admin.php?page=webchangedetector-auto-settings" method="post" onsubmit="return mmValidateForm()">
+<form class="wcd-frm-settings" action="<?= admin_url() ?>/admin.php?page=webchangedetector-auto-settings" method="post" onsubmit="return wcdValidateFormAutoSettings()">
     <div style="width: 50%; float: left;">
         <div style=" padding: 10px;">
             <p class="auto-settings">Make the settings for automatic change detections here.</p>
@@ -7,13 +7,13 @@
                 <input type="hidden" name="monitoring" value="1">
                 <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
-                <label for="enabled">Auto Detection Enabled</label>
+                <label for="enabled">Auto Detection </label>
                 <select name="enabled" id="auto-enabled">
                     <option value="1" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '1' ? 'selected' : ''; ?>>
-                        Yes
+                        Enabled
                     </option>
                     <option value="0" <?= isset($groups_and_urls['enabled']) && $groups_and_urls['enabled'] == '0' ? 'selected' : ''; ?>>
-                        No
+                        Disabled
                     </option>
                 </select>
             </p>
@@ -58,10 +58,11 @@
                 </label>
                 <textarea name="alert_emails" id="alert_emails" style="width: 100%; height: 100px; " class="auto-setting"
                 ><?= isset($groups_and_urls['alert_emails']) ? esc_attr(implode("\n", $groups_and_urls['alert_emails'])) : '' ?></textarea>
-                <span class="notice notice-error" id="error-email-validation" style="display: none;">
-                    <p class="default-bg">Please check your email address(es).</p>
-                </span>
+
             </div>
+            <span class="notice notice-error" id="error-email-validation" style="display: none;">
+                <p class="default-bg">Please check your email address(es).</p>
+            </span>
         </div>
     </div>
     <div style="width: 50% ; float: left; ">
@@ -71,6 +72,6 @@
     </div>
     <button type="submit" name="wcd_action" value="update_monitoring_settings" class="button button-primary">Save Settings</button>
     <button type="submit" name="wcd_action" value="update_monitoring_and_update_settings" class="button" style="" >
-        Save Settings for Update Detection too
+        Save settings for update detection too
     </button>
 </form>
