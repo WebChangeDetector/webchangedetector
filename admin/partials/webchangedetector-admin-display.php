@@ -283,7 +283,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         $sc_processing = $wcd->get_processing_queue();
         if($sc_processing) {
-            // @ToDo Replace with finished message when everything is done.
             echo '<div id="wcd-currently-in-progress" class="notice-info notice">
                     <p id="currently-processing-container">
                     <span id="currently-processing-spinner" class="spinner"></span>

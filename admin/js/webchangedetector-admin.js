@@ -289,6 +289,10 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                         if (parseInt(response) === 0) {
                             currentlyProcessingSpinner.hide(); // hide spinner
 
+                            // Replace message when everything is done
+                            $("#wcd-currently-in-progress").removeClass("notice-info").addClass("notice-success");
+                            $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> Check the status in the logs</p>");
+
                             // Stop the interval when everything is done.
                             clearInterval(processingInterval);
                         }
