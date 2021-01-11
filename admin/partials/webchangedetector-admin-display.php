@@ -51,7 +51,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 // if we get an array it is an error message
                 if(is_array($api_token)) {
-                    if($api_token[0] === 'error' && !empty($api_token[1])) {
+                    if(!empty($api_token[0]) && $api_token[0] === 'error' && !empty($api_token[1])) {
                         echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
 
                     } else {

@@ -291,7 +291,8 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
                             // Replace message when everything is done
                             $("#wcd-currently-in-progress").removeClass("notice-info").addClass("notice-success");
-                            $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> Check the status in the logs</p>");
+                            $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> " +
+                                "Check screenshots in the \"Logs\" or change detections at \"Change Detections\"</p>");
 
                             // Stop the interval when everything is done.
                             clearInterval(processingInterval);
