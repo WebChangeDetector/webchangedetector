@@ -260,7 +260,7 @@ class WebChangeDetector_Admin
 
     public function save_api_token($api_token) {
 
-        if (! is_string($api_token) || (! $this->dev() && strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH)) {
+        if (! is_string($api_token) || strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH) {
             echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
             echo $this->get_no_account_page();
             return false;
@@ -614,7 +614,7 @@ class WebChangeDetector_Admin
             return '<p class="notice notice-error" style="padding: 10px;">
                     Sorry, we couldn\'t find the screenshot. Please try again.</p>';
         }
-        return '<div style="width: 100%"><img style="width: 100%" src="' .  $postdata['img_url'] . '"></div>';
+        return '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' .  $postdata['img_url'] . '"></div>';
     }
 
     public function get_queue()

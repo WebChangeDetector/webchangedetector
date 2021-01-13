@@ -47,7 +47,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $api_token = $wcd->create_free_account($_POST);
 
                 // Delete the temporary verification secret
-                delete_option('webchangedetector_verify_secret');
+                //delete_option('webchangedetector_verify_secret');
 
                 // if we get an array it is an error message
                 if(is_array($api_token)) {
@@ -137,7 +137,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
         } elseif($usage_percent > 70) { ?>
             <div class="notice notice-warning"><p>You used <?= $usage_percent ?>% of your screenshots.</p></div>
         <?php }
-        //dd($account_details);
 
         // Get the website details
         $website_details = $wcd->get_website_details();
