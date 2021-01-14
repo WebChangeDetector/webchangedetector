@@ -9,7 +9,7 @@
             <?= $compare['screenshot1']['url'] ?>
         </a>
         <br>
-        <?php $public_link = $this->app_url() . 'show-change-detection/?token=' . $token; ?>
+        <?php $public_link = $this->app_url() . '/show-change-detection/?token=' . $token; ?>
         Public link: <a href="<?= $public_link ?>" target="_blank">
             <?= $public_link ?>
         </a>
