@@ -272,27 +272,13 @@ class WebChangeDetector_Admin
         }
         update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
 
-        /* Account has to be activated first
-        // Create auto and update groups if the don't exist already
-
-        $website = $this->create_website_and_groups($api_token);
-
-        // If groups creating failed, show error
-        if (! $website) {
-            echo '<div class="notice notice-error"><p>Something went wrong. Please contact us.</p></div>';
-            echo $this->get_no_account_page();
-            return false;
-        }*/
-
-        //return $this->sync_posts(); // Done later. Can't do it here as account has to be activated first
-
         return true;
     }
 
     // Sync Post if permalink changed. Called by hook in class-webchangedetector.php
     public function sync_post_after_save($post_id, $post, $update)
     {
-        // Only sync posts and pages @TODO
+        // Only sync posts and pages @TODO make setting to sync other posttypes
         if(!empty($post->post_type) && !in_array($post->post_type, ['page','post'])) {
             return false;
         }
@@ -337,7 +323,7 @@ class WebChangeDetector_Admin
         return $this->mm_api(['action' => 'get_not_closed_queue']);
     }
 
-    public function get_monitoring_settings($group_id)
+    public function get_monitoring_settings($group_id) // Deprecated
     {
         $args = array(
             'action' => 'get_monitoring_settings',
@@ -347,7 +333,7 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
-    public function get_comparison_partial($token)
+    public function get_comparison_partial($token) // Deprecated
     {
         $args = array(
             'action' => 'get_comparison_partial',
@@ -372,16 +358,6 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
-    public function update_monitoring_settings_css($postdata, $monitoring_group_id)
-    {
-        $args = array(
-            'action' => 'update_monitoring_settings',
-            'group_id' => sanitize_key($monitoring_group_id),
-            'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
-        );
-        return $this->mm_api($args);
-    }
-
     public function update_settings($postdata, $group_id)
     {
 
@@ -401,17 +377,6 @@ class WebChangeDetector_Admin
         return false;
     }
 
-
-    /* Not needed anymore
-    public function get_upgrade_options($plan_id)
-    {
-        $args = array(
-            'action' => 'get_upgrade_options',
-            'plan_id' => $plan_id,
-        );
-        return $this->mm_api($args);
-    }
-    */
     /**
      * `<span>` with icon
      *
@@ -556,8 +521,7 @@ class WebChangeDetector_Admin
                 'action' => 'get_comparison_by_token',
                 'token' => $token
             );
-            $compare = $this->mm_api($args);
-            $public_page = true;
+            $compare = $this->mm_api($args); // used in template
             $all_tokens = [];
             if(! empty($postdata['all_tokens'])) {
                 $all_tokens = (json_decode(stripslashes($postdata['all_tokens']), true));
@@ -742,6 +706,7 @@ class WebChangeDetector_Admin
      * at Website creation
      *
      * @param string $api_token
+     * @return array
      */
     public function create_website_and_groups($api_token)
     {
@@ -756,7 +721,7 @@ class WebChangeDetector_Admin
         return $this->mm_api($args);
     }
 
-    public function delete_website()
+    public function delete_website() // deprecated
     {
         $args = array(
             'action' => 'delete_website',
@@ -808,7 +773,6 @@ class WebChangeDetector_Admin
         </p>
         <?php
         echo '<input type="hidden" value="webchangedetector" name="page">';
-        //echo '<input type="hidden" value="post_urls" name="wcd_action">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
         $post_types = get_post_types();
@@ -951,8 +915,6 @@ class WebChangeDetector_Admin
         echo '</form>';
 
         echo '</div>';
-
-
     }
 
     public function post_urls($postdata, $website_details, $save_both_groups) {
@@ -1010,8 +972,6 @@ class WebChangeDetector_Admin
             } else {
                 $this->update_urls($group_id_website_details, $active_posts);
             }
-            // Update API URLs
-
             echo '<div class="updated notice"><p>Settings saved.</p></div>';
         }
     }
@@ -1034,8 +994,6 @@ class WebChangeDetector_Admin
 
     public function get_no_account_page($api_token = '')
     {
-        //delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
-
         ob_start();
         ?>
         <div class="no-account-page">
@@ -1266,7 +1224,6 @@ class WebChangeDetector_Admin
             echo $this->get_no_account_page();
         }
 
-        //echo $this->get_api_token_form(get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, true));
         return true;
     }
 
@@ -1291,7 +1248,6 @@ class WebChangeDetector_Admin
     public function dev()
     {
         // if either .test or dev. can be found in the URL, we're developing -  wouldn't work if plugin client domain matches these criteria
-        // return strpos($this->app_url(), '.test') !== false;  || strpos($this->app_url(), 'dev.') !== false;
         if(defined('WCD_DEV') && WCD_DEV === true) {
             return true;
         }

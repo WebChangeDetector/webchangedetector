@@ -46,9 +46,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $api_token = $wcd->create_free_account($_POST);
 
-                // Delete the temporary verification secret
-                //delete_option('webchangedetector_verify_secret');
-
                 // if we get an array it is an error message
                 if(is_array($api_token)) {
                     if(!empty($api_token[0]) && $api_token[0] === 'error' && !empty($api_token[1])) {
@@ -67,12 +64,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'reset_api_token':
-                //$wcd->delete_website();
                 delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
                 break;
 
             case 're-add-api-token':
-                //$wcd->delete_website();
                 if(empty($_POST['api_token'])) {
                     echo $wcd->get_no_account_page();
                     return true;
@@ -306,7 +301,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             $account_details['plan']['sc_limit'] = $limit; // used in dashboard
         }
 
-        // Renew date
+        // Renew date (used in template)
         $renew_date = strtotime($account_details['renewal_at']);
 
         switch ($tab) {
@@ -346,8 +341,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $difference_only = null;
                 if (isset($_POST['difference_only'])) {
                     $difference_only = sanitize_key($_POST['difference_only']);
-
-                    // difference_only can be any string/number
                 }
 
                 $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days, $group_type, $difference_only);
@@ -706,9 +699,8 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                     } else {
                         echo 'Nothing to show yet.';
-                    }
+                    } ?>
 
-                ?>
                     </table>
                     <?php
                     $offset = $_GET['offset'] ?? 0;

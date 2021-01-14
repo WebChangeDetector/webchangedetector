@@ -14,6 +14,3 @@
         <li>Middle: Image with all differences highlighted.</li>
     </ul>
     </p>
-
-
-<?php //include "help-contact-form.php";?>

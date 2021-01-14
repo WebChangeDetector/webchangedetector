@@ -8,9 +8,7 @@
         <a href="http://<?= $compare['screenshot1']['url'] ?>" target="_blank" >
             <?= $compare['screenshot1']['url'] ?>
         </a>
-
         <br>
-
         <?php $public_link = $this->app_url() . 'show-change-detection/?token=' . $token; ?>
         Public link: <a href="<?= $public_link ?>" target="_blank">
             <?= $public_link ?>
@@ -22,12 +20,6 @@
         <strong>Difference </strong><br>
         <span><?= $compare['difference_percent'] ?> %</span>
     </div>
-    <!--<div style="min-height: 102px; float: left; width: 30%; padding: 10px; background: #eee; border: 1px solid #aaa; border-right: none;" >
-        <strong><?= $compare['screenshot1']['queue']['url']['html_title'] ?></strong><br>
-        <a href="http://<?= $compare['screenshot1']['url'] ?>" target="_blank" >
-            <?= $compare['screenshot1']['url'] ?></a><br>
-
-    </div>-->
 
     <div class="comparison-tile comparison-date-tile">
         <strong>Screenshots</strong><br>

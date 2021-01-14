@@ -83,7 +83,6 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
         };
 
-        // this.style.background = 'rgb(' + [color.r, color.g, color.b].join(',');
         return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
     }
 
@@ -186,7 +185,6 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             $("#selected-desktop-"+postType).html(selectedDesktop);
             $("#selected-mobile-"+postType).html(selectedMobile);
         });
-
 
         // Show local time in dropdowns
         var localDate = new Date();
@@ -292,7 +290,8 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                             // Replace message when everything is done
                             $("#wcd-currently-in-progress").removeClass("notice-info").addClass("notice-success");
                             $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> " +
-                                "Check screenshots in the \"Logs\" or change detections at \"Change Detections\"</p>");
+                                "Check screenshots in the \"Logs\" or" +
+                                " change detections at \"Change Detections\"</p>");
 
                             // Stop the interval when everything is done.
                             clearInterval(processingInterval);

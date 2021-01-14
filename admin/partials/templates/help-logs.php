@@ -19,6 +19,3 @@
     <strong>Failed</strong><br>
     The change detection failed. Please contact us for more details.
 </p>
-
-
-<?php //include "help-contact-form.php";?>

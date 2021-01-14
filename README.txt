@@ -12,17 +12,17 @@ Check your website after updates to see if something broke. Check your website a
 intervals and get notified about any change.
 
 == Description ==
-**#1 Change Detector For WordPress**
+**The #1 Change Detector For WordPress**
 
-With WebChangeDetector you can check your website **before and after updates , installing new plugins or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
-
+With WebChangeDetector you can check your website **before and after updates , installing new plugins, pagespeed optimization or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
+Compare your website before and after the changes. We mark changes in a new screenshot. Next to the compare screenshot you can compare the before and after screenshot in a slider.
 Now you can make sure your website looks the way you want after changes – and fix anything that does not, before your visitors do.
 
 *   **Save troubles** with your visitors by letting us check your website after updates – for desktop and mobile.
 *   **Save time** with checking all pages yourself after some changes.
 *   **Don’t miss sales** because of overlooking issues on your site.
 
-Track automatically changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
+You can not only track changes manually. The Auto Change Detection enables you to automatically track changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
 
 *   Start for free with **50 change detections per month**.
 *   Run a change detection to see changes before and after updates at your website.
@@ -33,11 +33,11 @@ Track automatically changes on every page on your WordPress site. If something c
 
 == Installation ==
 
-1. Upload 'webchangedetector' to the `/wp-content/plugins/` directory
+1. Upload 'webchangedetector' to the `/wp-content/plugins/` directory or install it directly from your backend at "Install Plugin"
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Create a free account at https://www.webchangedetector.com
+3. Create a free account by filling the signup form
 4. Activate your account by clicking the 'Activate Account' button in the email we sent you
-5. Copy your API Token from your account. Paste the API Token on your website at 'WCD' in the menu
+5. Now you can track your webpages
 
 == Changelog ==
 

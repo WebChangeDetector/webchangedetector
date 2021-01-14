@@ -299,6 +299,11 @@
     font-weight: normal;
 }
 
+.webchangedetector .ui-icon {
+    display: inline;
+    vertical-align: middle;
+}
+
 .webchangedetector .accordion:hover {
     cursor: pointer;
 }

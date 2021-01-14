@@ -17,6 +17,3 @@
         </li>
 
     </ol>
-
-
-<?php //include "help-contact-form.php";?>
