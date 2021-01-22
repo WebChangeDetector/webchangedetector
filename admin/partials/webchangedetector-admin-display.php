@@ -399,78 +399,88 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 // Get amount selected Screenshots
                 $groups_and_urls = $wcd->get_urls_of_group($group_id);
-                ?>
+
+                // Show message if no urls are selected
+                if(! $groups_and_urls['amount_selected_urls']) {?>
+                    <div class="notice notice-warning"><p>Select URLs for update detection to get started.</p></div>
+                <?php } ?>
 
                 <div class="action-container">
-                    <div class="status_bar">Current settings require<br>
+                    <div class="status_bar">Currently selected<br>
                         <span class="big">
                             <?= $groups_and_urls['amount_selected_urls'] ?>
                             Screenshots
                         </span><br>
                         <?= $account_details['available_compares'] ?> available until renewal
                     </div>
-                    <div>
-                    <div class="sc_button">
-                        <form id="frm-take-pre-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
-                            <input type="hidden" value="take_screenshots" name="wcd_action">
-                            <input type="hidden" name="sc_type" value="pre">
-                            <button type="submit" class="button-primary">
-                                <span class="button_headline">1. Take Reference Screenshots</span><br>
-                                <span>Take screenshots <strong>before</strong> you do updates. The screenshots after the update will be compared with these screenshots.</span>
-                            </button>
-                        </form>
-                    </div>
 
-                    <div class="sc_button no-click">
-                        <div class="sc_button_inner">
-                            <span class="button_headline">2. Update your website</span><br>
-                            <span>
-                                Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website. When you are finished,
-                                create change detections to see differences.
-                            </span>
+                    <?php $disabled =  $groups_and_urls['amount_selected_urls'] ? '' : 'disabled'; ?>
+                    <div style="margin: 40px 0; overflow: hidden;">
+
+                        <div class="sc_button">
+                            <form id="frm-take-pre-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
+                                <input type="hidden" value="take_screenshots" name="wcd_action">
+                                <input type="hidden" name="sc_type" value="pre">
+                                <button type="submit" class="button-primary" style="width: 100%;" <?= $disabled ?> >
+                                    <span class="button_headline">1. Take Pre-Update Screenshots</span><br>
+                                    <span>Take screenshots <strong>before</strong> you install updates.</span>
+
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="sc_button no-click">
+                            <div class="sc_button_inner" style="width: 100%;" <?= $disabled ?>>
+                                <span class="button_headline">2. Update your website</span><br>
+                                <span>
+                                    Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website.
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="sc_button last">
+                            <form id="frm-take-post-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
+                                <input type="hidden" value="take_screenshots" name="wcd_action">
+                                <input type="hidden" name="sc_type" value="post">
+                                <button type="submit" class="button-primary" style="width: 100%;" <?= $disabled ?>>
+                                    <span class="button_headline">3. Create Change Detections </span><br>
+                                    <span>Take & compare screenshots <strong>after</strong> the updates.</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
+                    <div class="clear"></div>
+                    <div class="wcd-settings-container">
+                        <h2 style="text-align: center;">General settings for Update Detection</h2>
+                        <div class="accordion">
+                            <div class="mm_accordion_title">
+                                <h3>
+                                    <span class="accordion-title">
+                                        Update Detection Settings
+                                    </span>
+                                </h3>
+                                <div class="mm_accordion_content">
+                                    <form method="post" style="padding: 20px;">
+                                        <input type="hidden" name="wcd-update-settings" value="true">
+                                        <?php include("templates/css-settings.php"); ?>
 
-                    <div class="sc_button last">
-                        <form id="frm-take-post-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
-                            <input type="hidden" value="take_screenshots" name="wcd_action">
-                            <input type="hidden" name="sc_type" value="post">
-                            <button type="submit" class="button-primary">
-                                <span class="button_headline">3. Create Change Detections </span><br>
-                                <span>Take screenshots <strong>after</strong> you finished the updates and compare them with the reference screenshots.</span>
-                            </button>
-                        </form>
-                    </div>
-                    </div>
-                    <div class="clear" style="margin-bottom: 30px;"></div>
-                    <div class="accordion">
-                        <div class="mm_accordion_title">
-                            <h3>
-                                <span class="accordion-title">
-                                    Update Detection Settings
-                                </span>
-                            </h3>
-                            <div class="mm_accordion_content">
-                                <form method="post" style="padding: 20px;">
-                                    <input type="hidden" name="wcd-update-settings" value="true">
-                                    <?php include("templates/css-settings.php"); ?>
-
-                                    <button
-                                        type="submit"
-                                        name="wcd_action"
-                                        value="update-settings"
-                                        class="button button-primary">
-                                            Save Settings
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        name="wcd_action"
-                                        value="update_monitoring_and_update_settings"
-                                        class="button"
-                                        style="margin-left: 10px;">
-                                        Save Settings to auto detection too
-                                    </button>
-                                </form>
+                                        <button
+                                            type="submit"
+                                            name="wcd_action"
+                                            value="update-settings"
+                                            class="button button-primary">
+                                                Save Settings
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            name="wcd_action"
+                                            value="update_monitoring_and_update_settings"
+                                            class="button"
+                                            style="margin-left: 10px;">
+                                            Save Settings to auto detection too
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -389,10 +389,12 @@
     background: rgba(252, 134, 134, 0.51);
 }
 
-.webchangedetector .wcd-select-urls-container {
+.webchangedetector .wcd-select-urls-container,
+.webchangedetector .wcd-settings-container {
     border: 1px solid #aaa;
-    padding: 0 10px 10px;
-    background: #276dcc1c
+    padding: 10px 10px 10px;
+    background: #276dcc1c;
+    margin-bottom: 20px;
 }
 
 .webchangedetector .wcd-select-urls-container h2 {
@@ -472,6 +474,14 @@ Update Detection
     border: 1px solid #aaa;
     border-radius: 5px;
     text-align: center;
+}
+.webchangedetector .sc_button.no-click .sc_button_inner[disabled] {
+    color: #a0a5aa!important;
+    background: #f7f7f7!important;
+    border-color: #ddd!important;
+    box-shadow: none!important;
+    text-shadow: none!important;
+    cursor: default;
 }
 
 /********

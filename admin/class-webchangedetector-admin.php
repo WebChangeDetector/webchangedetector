@@ -762,16 +762,7 @@ class WebChangeDetector_Admin
         }
         echo '<div class="wcd-select-urls-container">';
         echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector-' . $tab . '" method="post" >';
-        echo '<h2>Select ' . ucfirst($detection_type) . ' Change Detection URLs</h2>';
-        ?>
-        <p style="text-align: center">
-            Currently selected:
-            <strong>
-                <?= $groups_and_urls['amount_selected_urls'] ?>
-                URLs
-            </strong>
-        </p>
-        <?php
+        echo '<h2>Select URLs for ' . ucfirst($detection_type) . ' Detection</h2>';
         echo '<input type="hidden" value="webchangedetector" name="page">';
         echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 

@@ -291,7 +291,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                             $("#wcd-currently-in-progress").removeClass("notice-info").addClass("notice-success");
                             $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> " +
                                 "Check screenshots in the \"Logs\" or" +
-                                " change detections at \"Change Detections\"</p>");
+                                " change detections at <a href=\"?page=webchangedetector-change-detections\">Change Detections</a></p>");
 
                             // Stop the interval when everything is done.
                             clearInterval(processingInterval);
