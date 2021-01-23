@@ -398,6 +398,10 @@
     margin-bottom: 20px;
 }
 
+.webchangedetector .wcd-highlight-bg.done {
+    background: #d5e4d5;
+}
+
 .webchangedetector .screenshots-done-icon {
     font-size: 18px;
     padding-right: 5px;
@@ -463,6 +467,12 @@ Update Detection
     border: 1px solid #aaa;
 }
 
+.webchangedetector .wcd-step-container {
+    max-width: 500px;
+    margin: 50px auto;
+    text-align: center;
+}
+
 .webchangedetector .update-status-container {
     margin-bottom: 20px;
 }
@@ -475,7 +485,8 @@ Update Detection
     text-align: center;
 }
 
-.webchangedetector #wcd-screenshots-done h2 {
+.webchangedetector #wcd-screenshots-done h2,
+.webchangedetector .wcd-step-container h2 {
     margin: 0;
 }
 

@@ -136,7 +136,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
         // Confirm taking pre screenshots
         $('#frm-take-pre-sc').submit(function() {
-            return confirm( "Please confirm to take reference screenshots.");
+            return confirm( "Please confirm taking pre-update screenshots.");
         });
 
         // Confirm taking post screenshots

@@ -500,7 +500,11 @@ class WebChangeDetector_Admin
                 $all_tokens[] = $compare['token'];
 
             }
+            $latest_batch_id = $compares[0]['screenshot1']['queue']['batch_id'];
             foreach ($compares as $compare) {
+                if($latest_batch && $compare['screenshot1']['queue']['batch_id'] != $latest_batch_id) {
+                    continue;
+                }
                 $class = 'no-difference'; // init
                 if ($compare['difference_percent']) {
                     $class = 'is-difference';
@@ -790,20 +794,6 @@ class WebChangeDetector_Admin
         <div class="wcd-select-urls-container">
             <form class="wcd-frm-settings" action="<?= admin_url() . "admin.php?page=webchangedetector-" . $tab ?>" method="post">
             <input type="hidden" name="step" value="pre-update">
-            <h2 style="text-align: center;">Settings</h2>
-            <div class="accordion">
-                <div class="mm_accordion_title">
-                    <h3>
-                    <span class="accordion-title">
-                        Update Detection Settings
-                    </span>
-                    </h3>
-                    <div class="mm_accordion_content">
-                        <input type="hidden" name="wcd-update-settings" value="true">
-                        <?php include( "partials/templates/css-settings.php" ); ?>
-                    </div>
-                </div>
-            </div>
             <?php
 
             echo '<h2>Select URLs for ' . ucfirst($detection_type) . ' Detection</h2>';
@@ -933,13 +923,29 @@ class WebChangeDetector_Admin
                 <?php
                 }
                 $other_group_type = $monitoring_group ? "update" : "auto";
-                ?>
+            if(! $monitoring_group) { ?>
+                <h2>Advanced settings</h2>
+                <div class="accordion">
+                    <div class="mm_accordion_title">
+                        <h3>
+                    <span class="accordion-title">
+                        Inject CSS before taking screenshots
+                    </span>
+                        </h3>
+                        <div class="mm_accordion_content">
+                            <input type="hidden" name="wcd-update-settings" value="true">
+                            <?php include( "partials/templates/css-settings.php" ); ?>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+
                 <button
                     class="button button-primary"
                     type="submit"
                     name="wcd_action"
                     value="post_urls" >
-                        <?= $monitoring_group ? 'Save' : 'Next >' ?>
+                        <?= $monitoring_group ? 'Save' : 'Save and continue >' ?>
                 </button>
 
                 <button class="button"
@@ -947,7 +953,7 @@ class WebChangeDetector_Admin
                     name="wcd_action"
                     value="post_urls_update_and_auto"
                     style="margin-left: 10px;">
-                        <?= $monitoring_group ? 'Save ' . $other_group_type . ' too' : 'Copy settings to' . $other_group_type . 'detections & continue >' ?>
+                        <?= $monitoring_group ? 'Save & copy to ' . $other_group_type . ' detection' : 'Copy settings to ' . $other_group_type . ' detections & continue >' ?>
                 </button>
             </form>
 

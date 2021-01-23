@@ -346,7 +346,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 }
 
                 $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days, $group_type, $difference_only);
-                //dd($compares);
                 ?>
                 <div class="action-container">
                     <form method="post">
@@ -486,33 +485,33 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     <?php
                     switch(get_option($wcd::OPTION_UPDATE_STEP_KEY)) {
                         case $wcd::OPTION_UPDATE_STEP_SETTINGS:
-                            include('templates/update-step-settings.php');
+                            include( 'templates/update-detection/update-step-settings.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_PRE:
-                            include('templates/update-step-pre-sc.php');
+                            include( 'templates/update-detection/update-step-pre-sc.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_PRE_STARTED:
                             $sc_processing = $wcd->get_processing_queue(); // used in template
-                            include('templates/update-step-pre-sc-started.php');
+                            include( 'templates/update-detection/update-step-pre-sc-started.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_MAKE_UPDATES:
-                            include('templates/update-step-make-updates.php');
+                            include( 'templates/update-detection/update-step-make-updates.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_POST:
-                            include('templates/update-step-post-sc.php');
+                            include( 'templates/update-detection/update-step-post-sc.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_POST_STARTED:
                             $sc_processing = $wcd->get_processing_queue(); // used in template
-                            include('templates/update-step-post-sc-started.php');
+                            include( 'templates/update-detection/update-step-post-sc-started.php' );
                             break;
 
                         case $wcd::OPTION_UPDATE_STEP_CHANGE_DETECTION:
-                            include('templates/update-step-change-detection.php');
+                            include( 'templates/update-detection/update-step-change-detection.php' );
                             break;
                     }
                     ?>
