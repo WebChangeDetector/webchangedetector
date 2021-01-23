@@ -479,8 +479,7 @@ class WebChangeDetector_Admin
         return $return;
     }
 
-    { ?>
-    public function compare_view($compares, $latest_batch = false)
+    public function compare_view($compares, $latest_batch = false) { ?>
         <table class="toggle" style="width: 100%">
             <tr>
                 <th width="auto">URL</th>
@@ -793,10 +792,46 @@ class WebChangeDetector_Admin
         ?>
         <div class="wcd-select-urls-container">
             <form class="wcd-frm-settings" action="<?= admin_url() . "admin.php?page=webchangedetector-" . $tab ?>" method="post">
-            <input type="hidden" name="step" value="pre-update">
-            <?php
 
-            echo '<h2>Select URLs for ' . ucfirst($detection_type) . ' Detection</h2>';
+            <?php
+            if(!$monitoring_group) { ?>
+                <input type="hidden" name="step" value="pre-update">
+            <?php } else { ?>
+                <!-- Auto Detection Settings -->
+                <h2>General Settings</h2>
+                <div class="accordion" style="margin-bottom: 40px;">
+                    <div class="mm_accordion_title">
+                        <h3>
+                            Auto Detection Settings<br>
+                            <small>
+                                <?php
+                                $enabled = $groups_and_urls['enabled'];
+                                if($enabled) {
+                                    ?>
+                                    Auto Detection: <strong style="color: green;">Enabled</strong> |
+                                                                                                   Interval: <strong>
+                                        every
+                                        <?= $groups_and_urls['interval_in_h'] ?>
+                                        <?= $groups_and_urls['interval_in_h'] === 1 ? " hour" : " hours"?>
+                                    </strong> |
+                                              Notifications to:
+                                    <strong>
+                                        <?= ! empty($groups_and_urls['alert_emails']) ? implode(", ", $groups_and_urls['alert_emails']) : "no email address set" ?>
+                                    </strong>
+                                    <?php
+                                } else { ?>
+                                    Auto Detection: <strong style="color: red">Disabled</strong>
+                                <?php } ?>
+                            </small>
+                        </h3>
+                        <div class="mm_accordion_content padding" style="background: #fff;">
+                            <?php include 'partials/templates/auto-settings.php'; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php }
+
+            echo '<h2>Select URLs</h2>';
             echo '<input type="hidden" value="webchangedetector" name="page">';
             echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
@@ -945,7 +980,7 @@ class WebChangeDetector_Admin
                     type="submit"
                     name="wcd_action"
                     value="post_urls" >
-                        <?= $monitoring_group ? 'Save' : 'Save and continue >' ?>
+                        <?= $monitoring_group ? 'Save' : 'Save & continue >' ?>
                 </button>
 
                 <button class="button"
@@ -953,7 +988,7 @@ class WebChangeDetector_Admin
                     name="wcd_action"
                     value="post_urls_update_and_auto"
                     style="margin-left: 10px;">
-                        <?= $monitoring_group ? 'Save & copy to ' . $other_group_type . ' detection' : 'Copy settings to ' . $other_group_type . ' detections & continue >' ?>
+                        <?= $monitoring_group ? 'Save & copy to ' . $other_group_type . ' detection' : 'Save & copy settings to ' . $other_group_type . ' detections & continue >' ?>
                 </button>
             </form>
 

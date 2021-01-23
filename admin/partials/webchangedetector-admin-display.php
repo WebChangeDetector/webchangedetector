@@ -215,13 +215,21 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
             case 'post_urls_update_and_auto':
                 $wcd->post_urls($_POST, $website_details, true);
+                $wcd->update_settings($_POST, $group_id);
+                $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 break;
 
             case 'post_urls':
                 $wcd->post_urls($_POST, $website_details, false);
-                $wcd->update_settings($_POST, $group_id);
-                if(! empty($_POST['step'])) {
-                    update_option('webchangedetector_update_detection_step', sanitize_key($_POST['step']));
+                if(! empty($_POST['monitoring']) && $_POST['monitoring']) {
+                    $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
+                } else {
+                    $wcd->update_settings( $_POST, $group_id );
+
+                    // Update step in update detection
+                    if(! empty($_POST['step'])) {
+                        update_option($wcd::OPTION_UPDATE_STEP_KEY, sanitize_key($_POST['step']));
+                    }
                 }
                 break;
         }
@@ -455,6 +463,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         $progress_post = 'done';
                         $progress_change_detection = 'active';
                         break;
+
+                    default:
+                        $progress_setting = 'disabled';
+                        $progress_pre = 'disabled';
+                        $progress_make_update = 'disabled';
+                        $progress_post = 'disabled';
+                        $progress_change_detection = 'disabled';
+                        break;
                 }
                 ?>
 
@@ -467,19 +483,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         <div class="update-status <?= $progress_make_update ?>">3. Updates</div>
                         <div class="update-status <?= $progress_post ?>">4. Post-Update</div>
                         <div class="update-status <?= $progress_change_detection ?>">5. Change Detections</div>
-                    <!--<form action="<?= admin_url() . $wcd::TAB_UPDATE ?>" method="post">
-                                <input type="hidden" name="wcd_action" value="update_detection_step">
-                                <input type="hidden" name="step" value="pre-update">
-                                <input class="step-button" type="submit" value="2. Pre-Update Screenshots" <?= $step == 'pre-update' ? 'style="font-weight: 700;"' : ''?>>
-                            </form>
-                        </div>
-                        <div style="display: inline-block; width: calc(33% - 2px); text-align: center">
-                            <form action="<?= admin_url() . $wcd::TAB_UPDATE ?>" method="post">
-                                <input type="hidden" name="wcd_action" value="update_detection_step">
-                                <input type="hidden" name="step" value="post-update">
-                                <input class="step-button" type="submit" value="3. Post-Update Screenshots" <?= $step == 'post-update' ? 'style="font-weight: 700;"' : ''?>>
-                            </form>
-                        </div>-->
                     </div>
 
                     <?php
@@ -612,38 +615,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             </div>
                         </div>
                         <div class="clear"></div>
-                    </div>
-
-                    <!-- Auto Detection Settings -->
-                    <div class="accordion" style="margin-bottom: 40px;">
-                        <div class="mm_accordion_title">
-                            <h3>
-                                Auto Detection Settings<br>
-                                <small>
-                                    <?php
-                                    $enabled = $groups_and_urls['enabled'];
-                                    if($enabled) {
-                                        ?>
-                                        Auto Detection: <strong style="color: green;">Enabled</strong> |
-                                        Interval: <strong>
-                                            every
-                                            <?= $groups_and_urls['interval_in_h'] ?>
-                                            <?= $groups_and_urls['interval_in_h'] === 1 ? " hour" : " hours"?>
-                                        </strong> |
-                                        Notifications to:
-                                        <strong>
-                                            <?= ! empty($groups_and_urls['alert_emails']) ? implode(", ", $groups_and_urls['alert_emails']) : "no email address set" ?>
-                                        </strong>
-                                        <?php
-                                    } else { ?>
-                                        Auto Detection: <strong style="color: red">Disabled</strong>
-                                    <?php } ?>
-                                </small>
-                            </h3>
-                            <div class="mm_accordion_content padding">
-                                <?php include 'templates/auto-settings.php'; ?>
-                            </div>
-                        </div>
                     </div>
 
                     <?php $wcd->get_url_settings($groups_and_urls, true); ?>

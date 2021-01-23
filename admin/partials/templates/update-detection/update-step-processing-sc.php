@@ -1,7 +1,8 @@
 <!-- Show processing -->
-<div id="wcd-currently-in-progress" class="wcd-highlight-bg wcd-step-container"
-     style="max-width: 500px; margin: 20px auto; padding: 20px; text-align: center; display: <?= $sc_processing ? 'block' : 'none'?>">
-    <!--<span id="currently-processing-spinner" class="spinner"></span>-->
+<div id="wcd-currently-in-progress"
+     class="wcd-highlight-bg wcd-step-container"
+     style=" display: <?= $sc_processing ? 'block' : 'none'?>">
+
     <div id="currently-processing-container" >
         <div id="currently-processing" style="font-size: 50px; line-height: 50px; font-weight: 700;"><?= $sc_processing ?></div>
         <p>Screenshot(s) in progress.</p>

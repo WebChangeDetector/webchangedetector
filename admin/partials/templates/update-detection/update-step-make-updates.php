@@ -18,5 +18,4 @@
         <input class="button button-primary" type="submit" value="Next >">
     </form>
     <?php include('update-step-cancel.php'); ?>
-
 </div>
