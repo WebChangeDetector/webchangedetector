@@ -164,6 +164,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // Perform actions
         switch ($wcd_action) {
+
+            case 'update_detection_step':
+                update_option('webchangedetector_update_detection_step', sanitize_key($_POST['step']));
+                break;
+
             case 'take_screenshots':
 
                 $scType = sanitize_key($_POST['sc_type']);
@@ -175,11 +180,16 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $results = $wcd->take_screenshot($group_id, $scType);
 
-                if ($results && is_array($results) && count($results) > 1) {
-                    if ($results[0] === 'error') {
-                        echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
+                if ($results && is_array($results) && count($results) > 1 && $results[0] === 'error') {
+                    echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
+                } else {
+                    if($scType === 'pre') {
+                        update_option( $wcd::OPTION_UPDATE_STEP_KEY, $wcd::OPTION_UPDATE_STEP_PRE_STARTED );
+                    } elseif($scType === 'post') {
+                        update_option( $wcd::OPTION_UPDATE_STEP_KEY, $wcd::OPTION_UPDATE_STEP_POST_STARTED );
                     }
                 }
+
                 break;
 
             case 'update_monitoring_settings':
@@ -209,6 +219,10 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
             case 'post_urls':
                 $wcd->post_urls($_POST, $website_details, false);
+                $wcd->update_settings($_POST, $group_id);
+                if(! empty($_POST['step'])) {
+                    update_option('webchangedetector_update_detection_step', sanitize_key($_POST['step']));
+                }
                 break;
         }
 
@@ -275,18 +289,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
-        $sc_processing = $wcd->get_processing_queue();
-        if($sc_processing) {
-            echo '<div id="wcd-currently-in-progress" class="notice-info notice">
-                    <p id="currently-processing-container">
-                    <span id="currently-processing-spinner" class="spinner"></span>
-                        Currently <strong>
-                        <span id="currently-processing">' . $sc_processing . '</span> screenshots / change detections </strong> 
-                        are in progress. Check the Logs for more details.
-                    </p>
-                </div>';
-        }
-
         $wcd->tabs();
 
         echo '<div style="margin-top: 30px;"></div>';
@@ -344,6 +346,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 }
 
                 $compares = $wcd->get_compares([$group_id, $monitoring_group_id], $limit_days, $group_type, $difference_only);
+                //dd($compares);
                 ?>
                 <div class="action-container">
                     <form method="post">
@@ -397,100 +400,122 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     break;
                 }
 
-                // Get amount selected Screenshots
+                // Get selected urls
                 $groups_and_urls = $wcd->get_urls_of_group($group_id);
 
                 // Show message if no urls are selected
                 if(! $groups_and_urls['amount_selected_urls']) {?>
                     <div class="notice notice-warning"><p>Select URLs for update detection to get started.</p></div>
-                <?php } ?>
+                <?php }
+
+                $step = get_option($wcd::OPTION_UPDATE_STEP_KEY);
+                if(empty($step)) {
+                    $step = $wcd::OPTION_UPDATE_STEP_SETTINGS;
+                    update_option($wcd::OPTION_UPDATE_STEP_KEY, sanitize_text_field($step), false);
+                }
+
+                switch ($step) {
+                    case $wcd::OPTION_UPDATE_STEP_SETTINGS:
+                        $progress_setting = 'active';
+                        $progress_pre = 'disabled';
+                        $progress_make_update = 'disabled';
+                        $progress_post = 'disabled';
+                        $progress_change_detection = 'disabled';
+                        break;
+
+                    case $wcd::OPTION_UPDATE_STEP_PRE:
+                    case $wcd::OPTION_UPDATE_STEP_PRE_STARTED:
+                        $progress_setting = 'done';
+                        $progress_pre = 'active';
+                        $progress_make_update = 'disabled';
+                        $progress_post = 'disabled';
+                        $progress_change_detection = 'disabled';
+                        break;
+
+                    case $wcd::OPTION_UPDATE_STEP_MAKE_UPDATES:
+                        $progress_setting = 'done';
+                        $progress_pre = 'done';
+                        $progress_make_update = 'active';
+                        $progress_post = 'disabled';
+                        $progress_change_detection = 'disabled';
+                        break;
+
+                    case $wcd::OPTION_UPDATE_STEP_POST:
+                    case $wcd::OPTION_UPDATE_STEP_POST_STARTED:
+                        $progress_setting = 'done';
+                        $progress_pre = 'done';
+                        $progress_make_update = 'done';
+                        $progress_post = 'active';
+                        $progress_change_detection = 'disabled';
+                        break;
+
+                    case $wcd::OPTION_UPDATE_STEP_CHANGE_DETECTION:
+                        $progress_setting = 'done';
+                        $progress_pre = 'done';
+                        $progress_make_update = 'done';
+                        $progress_post = 'done';
+                        $progress_change_detection = 'active';
+                        break;
+                }
+                ?>
 
                 <div class="action-container">
-                    <div class="status_bar">Currently selected<br>
-                        <span class="big">
-                            <?= $groups_and_urls['amount_selected_urls'] ?>
-                            Screenshots
-                        </span><br>
-                        <?= $account_details['available_compares'] ?> available until renewal
-                    </div>
 
-                    <?php $disabled =  $groups_and_urls['amount_selected_urls'] ? '' : 'disabled'; ?>
-                    <div style="margin: 40px 0; overflow: hidden;">
-
-                        <div class="sc_button">
-                            <form id="frm-take-pre-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post">
-                                <input type="hidden" value="take_screenshots" name="wcd_action">
-                                <input type="hidden" name="sc_type" value="pre">
-                                <button type="submit" class="button-primary" style="width: 100%;" <?= $disabled ?> >
-                                    <span class="button_headline">1. Take Pre-Update Screenshots</span><br>
-                                    <span>Take screenshots <strong>before</strong> you install updates.</span>
-
-                                </button>
+                    <!-- Steps -->
+                    <div class="update-status-container">
+                        <div class="update-status <?= $progress_setting ?>">1. Settings</div>
+                        <div class="update-status <?= $progress_pre ?>">2. Pre-Update</div>
+                        <div class="update-status <?= $progress_make_update ?>">3. Updates</div>
+                        <div class="update-status <?= $progress_post ?>">4. Post-Update</div>
+                        <div class="update-status <?= $progress_change_detection ?>">5. Change Detections</div>
+                    <!--<form action="<?= admin_url() . $wcd::TAB_UPDATE ?>" method="post">
+                                <input type="hidden" name="wcd_action" value="update_detection_step">
+                                <input type="hidden" name="step" value="pre-update">
+                                <input class="step-button" type="submit" value="2. Pre-Update Screenshots" <?= $step == 'pre-update' ? 'style="font-weight: 700;"' : ''?>>
                             </form>
                         </div>
-
-                        <div class="sc_button no-click">
-                            <div class="sc_button_inner" style="width: 100%;" <?= $disabled ?>>
-                                <span class="button_headline">2. Update your website</span><br>
-                                <span>
-                                    Install <a href="<?= get_admin_url() ?>update-core.php">updates</a> or make changes on your website.
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="sc_button last">
-                            <form id="frm-take-post-sc" action="<?= admin_url() ?>/admin.php?page=webchangedetector-update-settings" method="post" >
-                                <input type="hidden" value="take_screenshots" name="wcd_action">
-                                <input type="hidden" name="sc_type" value="post">
-                                <button type="submit" class="button-primary" style="width: 100%;" <?= $disabled ?>>
-                                    <span class="button_headline">3. Create Change Detections </span><br>
-                                    <span>Take & compare screenshots <strong>after</strong> the updates.</span>
-                                </button>
+                        <div style="display: inline-block; width: calc(33% - 2px); text-align: center">
+                            <form action="<?= admin_url() . $wcd::TAB_UPDATE ?>" method="post">
+                                <input type="hidden" name="wcd_action" value="update_detection_step">
+                                <input type="hidden" name="step" value="post-update">
+                                <input class="step-button" type="submit" value="3. Post-Update Screenshots" <?= $step == 'post-update' ? 'style="font-weight: 700;"' : ''?>>
                             </form>
-                        </div>
+                        </div>-->
                     </div>
-                    <div class="clear"></div>
-                    <div class="wcd-settings-container">
-                        <h2 style="text-align: center;">General settings for Update Detection</h2>
-                        <div class="accordion">
-                            <div class="mm_accordion_title">
-                                <h3>
-                                    <span class="accordion-title">
-                                        Update Detection Settings
-                                    </span>
-                                </h3>
-                                <div class="mm_accordion_content">
-                                    <form method="post" style="padding: 20px;">
-                                        <input type="hidden" name="wcd-update-settings" value="true">
-                                        <?php include("templates/css-settings.php"); ?>
 
-                                        <button
-                                            type="submit"
-                                            name="wcd_action"
-                                            value="update-settings"
-                                            class="button button-primary">
-                                                Save Settings
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            name="wcd_action"
-                                            value="update_monitoring_and_update_settings"
-                                            class="button"
-                                            style="margin-left: 10px;">
-                                            Save Settings to auto detection too
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php $wcd->get_url_settings($groups_and_urls); ?>
-                    <!-- Copy settings to auto detection -->
-                    <p>
+                    <?php
+                    switch(get_option($wcd::OPTION_UPDATE_STEP_KEY)) {
+                        case $wcd::OPTION_UPDATE_STEP_SETTINGS:
+                            include('templates/update-step-settings.php');
+                            break;
 
-                    </p>
-                    <div class="clear"></div>
+                        case $wcd::OPTION_UPDATE_STEP_PRE:
+                            include('templates/update-step-pre-sc.php');
+                            break;
 
+                        case $wcd::OPTION_UPDATE_STEP_PRE_STARTED:
+                            $sc_processing = $wcd->get_processing_queue(); // used in template
+                            include('templates/update-step-pre-sc-started.php');
+                            break;
+
+                        case $wcd::OPTION_UPDATE_STEP_MAKE_UPDATES:
+                            include('templates/update-step-make-updates.php');
+                            break;
+
+                        case $wcd::OPTION_UPDATE_STEP_POST:
+                            include('templates/update-step-post-sc.php');
+                            break;
+
+                        case $wcd::OPTION_UPDATE_STEP_POST_STARTED:
+                            $sc_processing = $wcd->get_processing_queue(); // used in template
+                            include('templates/update-step-post-sc-started.php');
+                            break;
+
+                        case $wcd::OPTION_UPDATE_STEP_CHANGE_DETECTION:
+                            include('templates/update-step-change-detection.php');
+                            break;
+                    }
+                    ?>
                 </div>
 
                 <div class="sidebar">

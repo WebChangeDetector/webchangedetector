@@ -95,6 +95,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         // Init accordions
         $(".accordion").each(function(index, item) {
             $(item).accordion({
+
                 header: "h3",
                 collapsible: true,
                 active: false,
@@ -288,11 +289,8 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                             currentlyProcessingSpinner.hide(); // hide spinner
 
                             // Replace message when everything is done
-                            $("#wcd-currently-in-progress").removeClass("notice-info").addClass("notice-success");
-                            $("#wcd-currently-in-progress").html("<p><strong>All done.</strong> " +
-                                "Check screenshots in the \"Logs\" or" +
-                                " change detections at <a href=\"?page=webchangedetector-change-detections\">Change Detections</a></p>");
-
+                            $("#wcd-currently-in-progress").hide();
+                            $("#wcd-screenshots-done").show();
                             // Stop the interval when everything is done.
                             clearInterval(processingInterval);
                         }

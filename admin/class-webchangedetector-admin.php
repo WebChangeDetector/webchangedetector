@@ -43,7 +43,8 @@ class WebChangeDetector_Admin
         'settings',
         'show-compare',
         'copy_url_settings',
-        'create_free_account'
+        'create_free_account',
+        'update_detection_step'
     ];
 
     const VALID_SC_TYPES = [
@@ -60,6 +61,24 @@ class WebChangeDetector_Admin
         'auto',
         'update',
     ];
+
+    const OPTION_UPDATE_STEP_KEY = 'webchangedetector_update_detection_step';
+    const OPTION_UPDATE_STEP_SETTINGS = 'settings';
+    const OPTION_UPDATE_STEP_PRE = 'pre-update';
+    const OPTION_UPDATE_STEP_PRE_STARTED = 'pre-update-started';
+    const OPTION_UPDATE_STEP_MAKE_UPDATES = 'make-update';
+    const OPTION_UPDATE_STEP_POST = 'post-update';
+    const OPTION_UPDATE_STEP_POST_STARTED = 'post-update-started';
+    const OPTION_UPDATE_STEP_CHANGE_DETECTION = 'change-detection';
+
+    const TAB_DASHBOARD = '/admin.php?page=webchangedetector-dashboard';
+    const TAB_UPDATE = '/admin.php?page=webchangedetector-update-settings';
+    const TAB_AUTO = '/admin.php?page=webchangedetector-auto-settings';
+    const TAB_CHANGE_DETECTION = '/admin.php?page=webchangedetector-change-detections';
+    const TAB_LOGS = '/admin.php?page=webchangedetector-logs';
+    const TAB_SETTINGS = '/admin.php?page=webchangedetector-settings';
+
+
 
     /**
      * The ID of this plugin.
@@ -242,6 +261,10 @@ class WebChangeDetector_Admin
 
     }
 
+    public function get_wcd_plugin_url() {
+        return plugin_dir_url(__FILE__) . '../';
+    }
+
     public function create_free_account($postdata) {
 
         // Generate validation string
@@ -422,6 +445,9 @@ class WebChangeDetector_Admin
         }
         if ($icon == 'trash') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
+        }
+        if ($icon == 'check') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
         }
 
         return '';
@@ -760,152 +786,173 @@ class WebChangeDetector_Admin
             $tab = 'auto-settings';
             $detection_type = "auto";
         }
-        echo '<div class="wcd-select-urls-container">';
-        echo '<form class="wcd-frm-settings" action="' . admin_url() . 'admin.php?page=webchangedetector-' . $tab . '" method="post" >';
-        echo '<h2>Select URLs for ' . ucfirst($detection_type) . ' Detection</h2>';
-        echo '<input type="hidden" value="webchangedetector" name="page">';
-        echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
+        ?>
+        <div class="wcd-select-urls-container">
+            <form class="wcd-frm-settings" action="<?= admin_url() . "admin.php?page=webchangedetector-" . $tab ?>" method="post">
+            <input type="hidden" name="step" value="pre-update">
+            <h2 style="text-align: center;">Settings</h2>
+            <div class="accordion">
+                <div class="mm_accordion_title">
+                    <h3>
+                    <span class="accordion-title">
+                        Update Detection Settings
+                    </span>
+                    </h3>
+                    <div class="mm_accordion_content">
+                        <input type="hidden" name="wcd-update-settings" value="true">
+                        <?php include( "partials/templates/css-settings.php" ); ?>
+                    </div>
+                </div>
+            </div>
+            <?php
 
-        $post_types = get_post_types();
-        foreach ($post_types as $post_type) {
-            if (! in_array($post_type, array('post', 'page'))) {
-                continue;
-            }
+            echo '<h2>Select URLs for ' . ucfirst($detection_type) . ' Detection</h2>';
+            echo '<input type="hidden" value="webchangedetector" name="page">';
+            echo '<input type="hidden" value="' . esc_html($groups_and_urls['id']) . '" name="group_id">';
 
-            $posts = get_posts(array(
-                'post_type' => $post_type,
-                'post_status' => 'publish',
-                'numberposts' => -1,
-                'order' => 'ASC',
-                'orderby' => 'title'
-            ));
+            $post_types = get_post_types();
+            foreach ($post_types as $post_type) {
+                if (! in_array($post_type, array('post', 'page'))) {
+                    continue;
+                }
 
-            if ($posts) { ?>
-                <div class="accordion">
-                    <div class="mm_accordion_title">
-                        <h3>
-                            <span class="accordion-title">
-                            <?= ucfirst($post_type) ?>s
-                            <small>
-                                Selected URLs desktop: <strong><span id="selected-desktop-<?= $post_type ?>"></span></strong> |
-                                Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></span></strong>
-                            </small>
-                            </span>
+                $posts = get_posts(array(
+                    'post_type' => $post_type,
+                    'post_status' => 'publish',
+                    'numberposts' => -1,
+                    'order' => 'ASC',
+                    'orderby' => 'title'
+                ));
 
-                        </h3>
-                        <div class="mm_accordion_content">
+                if ($posts) { ?>
+                    <div class="accordion">
+                        <div class="mm_accordion_title">
+                            <h3>
+                                <span class="accordion-title">
+                                <?= ucfirst($post_type) ?>s
+                                <small>
+                                    Selected URLs desktop: <strong><span id="selected-desktop-<?= $post_type ?>"></span></strong> |
+                                    Selected URLs mobile: <strong><span id="selected-mobile-<?= $post_type ?>"></span></strong>
+                                </small>
+                                </span>
 
-                            <table class="no-margin">
-                            <tr>
-                                <th><?= $this->get_device_icon('desktop') ?></th>
-                                <th><?= $this->get_device_icon('mobile') ?></th>
-                                <th width="100%">URL</th>
-                            </tr>
-                            <?php
-                            // Select all from same device
-                            echo '<tr class="even-tr-white" style="background: none; text-align: center">
-                                        <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                                        <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
-                                        <td></td>
-                                    </tr>';
-                            $amount_active_posts = 0;
-                            $selected_mobile = 0;
-                            $selected_desktop = 0;
+                            </h3>
+                            <div class="mm_accordion_content">
 
-                            foreach ($posts as $post) {
-                                $url = get_permalink($post);
-                                $url_id = false;
+                                <table class="no-margin">
+                                <tr>
+                                    <th><?= $this->get_device_icon('desktop') ?></th>
+                                    <th><?= $this->get_device_icon('mobile') ?></th>
+                                    <th width="100%">URL</th>
+                                </tr>
+                                <?php
+                                // Select all from same device
+                                echo '<tr class="even-tr-white" style="background: none; text-align: center">
+                                            <td><input type="checkbox" id="select-desktop-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-mobile-' . $post_type . '" onclick="mmToggle( this, \'' . $post_type . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
+                                            <td></td>
+                                        </tr>';
+                                $amount_active_posts = 0;
+                                $selected_mobile = 0;
+                                $selected_desktop = 0;
 
-                                // Check if current WP post ID is in synced_posts and get the url_id
-                                foreach ($synced_posts as $synced_post) {
-                                    if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
-                                        $url_id = $synced_post['url_id'];
+                                foreach ($posts as $post) {
+                                    $url = get_permalink($post);
+                                    $url_id = false;
+
+                                    // Check if current WP post ID is in synced_posts and get the url_id
+                                    foreach ($synced_posts as $synced_post) {
+                                        if (! empty($synced_post['cms_resource_id']) && $synced_post['cms_resource_id'] == $post->ID) {
+                                            $url_id = $synced_post['url_id'];
+                                        }
                                     }
-                                }
 
-                                // If we don't have the url_id, the url is not synced and we continue
-                                if (! $url_id) {
-                                    continue;
-                                }
+                                    // If we don't have the url_id, the url is not synced and we continue
+                                    if (! $url_id) {
+                                        continue;
+                                    }
 
-                                // init
-                                $checked = array(
-                                    'desktop' => '',
-                                    'mobile' => ''
-                                );
+                                    // init
+                                    $checked = array(
+                                        'desktop' => '',
+                                        'mobile' => ''
+                                    );
 
-                                if (! empty($groups_and_urls['urls'])) {
-                                    foreach ($groups_and_urls['urls'] as $url_details) {
-                                        if ($url_details['pivot']['url_id'] == $url_id) {
-                                            $checked['active'] = 'checked';
+                                    if (! empty($groups_and_urls['urls'])) {
+                                        foreach ($groups_and_urls['urls'] as $url_details) {
+                                            if ($url_details['pivot']['url_id'] == $url_id) {
+                                                $checked['active'] = 'checked';
 
-                                            if ($url_details['pivot']['desktop']) {
-                                                $checked['desktop'] = 'checked';
-                                                $selected_desktop++;
-                                                $amount_active_posts++;
-                                            }
-                                            if ($url_details['pivot']['mobile']) {
-                                                $checked['mobile'] = 'checked';
-                                                $selected_mobile++;
-                                                $amount_active_posts++;
+                                                if ($url_details['pivot']['desktop']) {
+                                                    $checked['desktop'] = 'checked';
+                                                    $selected_desktop++;
+                                                    $amount_active_posts++;
+                                                }
+                                                if ($url_details['pivot']['mobile']) {
+                                                    $checked['mobile'] = 'checked';
+                                                    $selected_mobile++;
+                                                    $amount_active_posts++;
+                                                }
                                             }
                                         }
                                     }
+
+                                    echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
+                                    echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
+                                    echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
+                                    echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
+
+                                    echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
+                                            <input type="hidden" value="0" name="desktop-' . $url_id . '">
+                                            <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
+                                            id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                    echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
+                                            <input type="hidden" value="0" name="mobile-' . $url_id . '">
+                                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
+                                            id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
+
+                                    echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
+                                    echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                                    echo '</tr>';
+
+                                    echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
                                 }
+                                echo '</table>';
 
-                                echo '<tr class="even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
-                                echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
-                                echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
-                                echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
-
-                                echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
-                                        <input type="hidden" value="0" name="desktop-' . $url_id . '">
-                                        <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
-                                        id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                                echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
-                                        <input type="hidden" value="0" name="mobile-' . $url_id . '">
-                                        <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
-                                        id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
-
-                                echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
-                                echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-                                echo '</tr>';
-
-                                echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
-                            }
-                            echo '</table>';
-
-                            echo '<div class="selected-urls" style="display: none;" 
-                                    data-amount_selected="' . $amount_active_posts . '" 
-                                    data-amount_selected_desktop="' . $selected_desktop . '"
-                                    data-amount_selected_mobile="' . $selected_mobile . '"
-                                    data-post_type="' . $post_type . '"
-                                    ></div>';
-                            } ?>
+                                echo '<div class="selected-urls" style="display: none;" 
+                                        data-amount_selected="' . $amount_active_posts . '" 
+                                        data-amount_selected_desktop="' . $selected_desktop . '"
+                                        data-amount_selected_mobile="' . $selected_mobile . '"
+                                        data-post_type="' . $post_type . '"
+                                        ></div>';
+                                } ?>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php
-        }
-        $other_group_type = $monitoring_group ? "update" : "auto";
-        echo '<button 
-                class="button button-primary" 
-                type="submit" 
-                name="wcd_action" 
-                value="post_urls" >
-                    Save Settings
-                </button>';
-        echo '<button class="button" 
-                type="submit" 
-                name="wcd_action" 
-                value="post_urls_update_and_auto"
-                style="margin-left: 10px;">
-                    Save settings for ' . $other_group_type . ' detections too
-                </button>';
-        echo '</form>';
+                <?php
+                }
+                $other_group_type = $monitoring_group ? "update" : "auto";
+                ?>
+                <button
+                    class="button button-primary"
+                    type="submit"
+                    name="wcd_action"
+                    value="post_urls" >
+                        <?= $monitoring_group ? 'Save' : 'Next >' ?>
+                </button>
 
-        echo '</div>';
+                <button class="button"
+                    type="submit"
+                    name="wcd_action"
+                    value="post_urls_update_and_auto"
+                    style="margin-left: 10px;">
+                        <?= $monitoring_group ? 'Save ' . $other_group_type . ' too' : 'Copy settings to' . $other_group_type . 'detections & continue >' ?>
+                </button>
+            </form>
+
+        </div>
+        <?php
     }
 
     public function post_urls($postdata, $website_details, $save_both_groups) {

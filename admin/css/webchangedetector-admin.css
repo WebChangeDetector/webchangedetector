@@ -390,11 +390,18 @@
 }
 
 .webchangedetector .wcd-select-urls-container,
-.webchangedetector .wcd-settings-container {
+.webchangedetector .wcd-settings-container,
+.webchangedetector .wcd-highlight-bg{
     border: 1px solid #aaa;
     padding: 10px 10px 10px;
     background: #276dcc1c;
     margin-bottom: 20px;
+}
+
+.webchangedetector .screenshots-done-icon {
+    font-size: 18px;
+    padding-right: 5px;
+    color: green;
 }
 
 .webchangedetector .wcd-select-urls-container h2 {
@@ -447,6 +454,49 @@ Auto Detection
 /***************
 Update Detection
  ***************/
+
+.webchangedetector .step-button {
+    padding: 10px;
+    background: #DCE3ED;
+    width: 100%;
+    font-size: 18px;
+    border: 1px solid #aaa;
+}
+
+.webchangedetector .update-status-container {
+    margin-bottom: 20px;
+}
+
+.webchangedetector .update-status {
+    padding: 10px 0;
+    width: calc(20% - 5px);
+    border: 1px solid #bbb;
+    display: inline-block;
+    text-align: center;
+}
+
+.webchangedetector #wcd-screenshots-done h2 {
+    margin: 0;
+}
+
+.webchangedetector .update-status.done {
+    background: #d5e4d5;
+}
+
+.webchangedetector .update-status.active {
+    background: #DCE3ED;
+    font-weight: 700;
+}
+.webchangedetector .update-status.disabled {
+    background: #e0e0e0;
+}
+
+/*.webchangedetector .update-status.done:before {
+    content: "\f12a";
+    font-family: dashicons;
+    color: green;
+    padding-right: 5px;
+}*/
 
 .webchangedetector .sc_button {
     width: calc(33.33% - 10px);
