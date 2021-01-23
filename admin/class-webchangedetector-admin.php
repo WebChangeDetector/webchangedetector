@@ -479,8 +479,8 @@ class WebChangeDetector_Admin
         return $return;
     }
 
-    public function compare_view($compares)
     { ?>
+    public function compare_view($compares, $latest_batch = false)
         <table class="toggle" style="width: 100%">
             <tr>
                 <th width="auto">URL</th>
