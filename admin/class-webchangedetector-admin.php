@@ -964,7 +964,7 @@ class WebChangeDetector_Admin
                     <div class="mm_accordion_title">
                         <h3>
                     <span class="accordion-title">
-                        Inject CSS before taking screenshots
+                        CSS injection
                     </span>
                         </h3>
                         <div class="mm_accordion_content">
