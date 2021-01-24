@@ -1,7 +1,7 @@
 <!-- Pre-Update started / finished -->
 <div id="wcd-make-updates" class="wcd-step-container"
      style="max-width: 500px; margin: 20px auto; text-align: center; ">
-    <div class="wcd-highlight-bg">
+    <div class="wcd-highlight-bg done">
         <h2><?= $wcd->get_device_icon("check", "screenshots-done-icon") ?>Pre-Update Screenshots</h2>
     </div>
     <div class="wcd-highlight-bg">
