@@ -144,6 +144,11 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             return confirm( "Please confirm to create change detections.");
         });
 
+        // Confirm cancel update detection
+        $('#frm-cancel-update-detection').submit(function() {
+            return confirm( "Are you sure you want to cancel the update detection?");
+        });
+
         // Change bg color of comparison percentages
         var diffTile = $(".comparison-diff-tile");
         var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
