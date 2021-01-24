@@ -62,24 +62,6 @@ class WebChangeDetector_Admin
         'update',
     ];
 
-    const OPTION_UPDATE_STEP_KEY = 'webchangedetector_update_detection_step';
-    const OPTION_UPDATE_STEP_SETTINGS = 'settings';
-    const OPTION_UPDATE_STEP_PRE = 'pre-update';
-    const OPTION_UPDATE_STEP_PRE_STARTED = 'pre-update-started';
-    const OPTION_UPDATE_STEP_MAKE_UPDATES = 'make-update';
-    const OPTION_UPDATE_STEP_POST = 'post-update';
-    const OPTION_UPDATE_STEP_POST_STARTED = 'post-update-started';
-    const OPTION_UPDATE_STEP_CHANGE_DETECTION = 'change-detection';
-
-    const TAB_DASHBOARD = '/admin.php?page=webchangedetector-dashboard';
-    const TAB_UPDATE = '/admin.php?page=webchangedetector-update-settings';
-    const TAB_AUTO = '/admin.php?page=webchangedetector-auto-settings';
-    const TAB_CHANGE_DETECTION = '/admin.php?page=webchangedetector-change-detections';
-    const TAB_LOGS = '/admin.php?page=webchangedetector-logs';
-    const TAB_SETTINGS = '/admin.php?page=webchangedetector-settings';
-
-
-
     /**
      * The ID of this plugin.
      *
@@ -182,7 +164,7 @@ class WebChangeDetector_Admin
             'wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
-        /*if(! get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN) &&
+        /*if(! get_option(WCD_WP_OPTION_KEY_API_TOKEN) &&
             (! empty($_POST['wcd_action']) && $_POST['wcd_action'] === 'reset_api_token' && $_POST['wcd_action'] !== 'save_api_token')) {
             return;
         }*/
@@ -293,7 +275,7 @@ class WebChangeDetector_Admin
         if(! empty($_POST['email'])) {
             update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( $_POST['email'] ), false );
         }
-        update_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
+        update_option(WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field($api_token), false);
 
         return true;
     }
@@ -325,7 +307,7 @@ class WebChangeDetector_Admin
         }
 
         if(! $api_token) {
-            $api_token = get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+            $api_token = get_option(WCD_WP_OPTION_KEY_API_TOKEN);
         }
 
         $args = array(
@@ -1039,11 +1021,11 @@ class WebChangeDetector_Admin
                         You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
         } elseif ($website_details['enable_limits'] &&
             isset($monitoring_group_settings) &&
-            $website_details['sc_limit'] < $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH &&
+            $website_details['sc_limit'] < $count_selected * (WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * WCD_DAYS_PER_MONTH &&
             $website_details['auto_detection_group_id'] == $group_id_website_details) {
             echo '<div class="error notice"><p>The limit for auto change detection is ' .
                 esc_html($website_details['sc_limit']) . '. per month.
-                            You selected ' . $count_selected * (MM_WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * MM_WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
+                            You selected ' . $count_selected * (WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
         } else {
             if($save_both_groups) {
                 $this->update_urls($website_details['auto_detection_group_id'], $active_posts);
@@ -1145,15 +1127,14 @@ class WebChangeDetector_Admin
                 <a href="?page=webchangedetector"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector' ? 'nav-tab-active' : ''; ?>">
                    Dashboard</a>
-                <a href="?page=webchangedetector-change-detections"
-                   class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
-                    Change Detections</a>
                 <a href="?page=webchangedetector-update-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
                     Update Detection</a>
                 <a href="?page=webchangedetector-auto-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
-                    Auto Detection</a>
+                    Auto Detection</a><a href="?page=webchangedetector-change-detections"
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
+                    Change Detections</a>
                 <a href="?page=webchangedetector-logs"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
                 <a href="?page=webchangedetector-settings"
@@ -1173,7 +1154,7 @@ class WebChangeDetector_Admin
         $auto_group = $this->get_urls_of_group($auto_group_id);
         $amount_auto_detection = 0;
         if ($auto_group['enabled']) {
-            $amount_auto_detection += MM_WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * MM_WCD_DAYS_PER_MONTH;
+            $amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * WCD_DAYS_PER_MONTH;
         } ?>
         <div class="dashboard">
             <div>
@@ -1229,7 +1210,7 @@ class WebChangeDetector_Admin
                     <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
 
                     <p><strong>Auto change detections until renewal:</strong>
-                        <?= number_format($amount_auto_detection / MM_WCD_SECONDS_IN_MONTH * (gmdate('U', strtotime($client_account['renewal_at'])) - gmdate('U')), 0) ?></p>
+                        <?= number_format($amount_auto_detection / WCD_SECONDS_IN_MONTH * (gmdate('U', strtotime($client_account['renewal_at'])) - gmdate('U')), 0) ?></p>
 
                     <p><strong>Renewal on:</strong> <?= gmdate('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
                 </div>
@@ -1362,7 +1343,7 @@ class WebChangeDetector_Admin
         $action = $post['action']; // For debugging
 
         // Get API Token from WP DB
-        $api_token = $post['api_token'] ?? get_option(MM_WCD_WP_OPTION_KEY_API_TOKEN) ?? null;
+        $api_token = $post['api_token'] ?? get_option(WCD_WP_OPTION_KEY_API_TOKEN) ?? null;
 
         unset($post['action']); // don't need to send as action as it's now the url
         unset($post['api_token']); // just in case
@@ -1393,7 +1374,7 @@ class WebChangeDetector_Admin
         $decodedBody = json_decode($body, (bool) JSON_OBJECT_AS_ARRAY);
 
         // `message` is part of the Laravel Stacktrace
-        if ($responseCode === MM_WCD_HTTP_BAD_REQUEST &&
+        if ($responseCode === WCD_HTTP_BAD_REQUEST &&
             is_array($decodedBody) &&
             array_key_exists('message', $decodedBody) &&
             $decodedBody['message'] === 'plugin_update_required') {
@@ -1404,11 +1385,11 @@ class WebChangeDetector_Admin
             die();
         }
 
-        if ($responseCode === MM_WCD_HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
+        if ($responseCode === WCD_HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details') {
             return 'activate account';
         }
 
-        if ($responseCode === MM_WCD_HTTP_UNAUTHORIZED) {
+        if ($responseCode === WCD_HTTP_UNAUTHORIZED) {
             return 'unauthorized';
         }
 
@@ -1428,48 +1409,96 @@ class WebChangeDetector_Admin
 }
 
 // HTTP Status Codes
-if (! defined('MM_WCD_HTTP_BAD_REQUEST')) {
-    define('MM_WCD_HTTP_BAD_REQUEST', 400);
+if (! defined('WCD_HTTP_BAD_REQUEST')) {
+    define('WCD_HTTP_BAD_REQUEST', 400);
 }
 
-if (! defined('MM_WCD_HTTP_UNAUTHORIZED')) {
-    define('MM_WCD_HTTP_UNAUTHORIZED', 401);
+if (! defined('WCD_HTTP_UNAUTHORIZED')) {
+    define('WCD_HTTP_UNAUTHORIZED', 401);
 }
 
-if (! defined('MM_WCD_HTTP_INTERNAL_SERVER_ERROR')) {
-    define('MM_WCD_HTTP_INTERNAL_SERVER_ERROR', 500);
+if (! defined('WCD_HTTP_INTERNAL_SERVER_ERROR')) {
+    define('WCD_HTTP_INTERNAL_SERVER_ERROR', 500);
 }
 
 // Time/Date Related
-if (! defined('MM_WCD_DAYS_PER_MONTH')) {
-    define('MM_WCD_DAYS_PER_MONTH', 30);
+if (! defined('WCD_DAYS_PER_MONTH')) {
+    define('WCD_DAYS_PER_MONTH', 30);
 }
 
-if (! defined('MM_WCD_HOURS_IN_DAY')) {
-    define('MM_WCD_HOURS_IN_DAY', 24);
+if (! defined('WCD_HOURS_IN_DAY')) {
+    define('WCD_HOURS_IN_DAY', 24);
 }
 
-if (! defined('MM_WCD_SECONDS_IN_MONTH')) {
+if (! defined('WCD_SECONDS_IN_MONTH')) {
     // 60 * 60 * 24 * 30
-    define('MM_WCD_SECONDS_IN_MONTH', 2592000);
+    define('WCD_SECONDS_IN_MONTH', 2592000);
 }
 
 // Option / UserMeta keys
-if (! defined('MM_WCD_WP_OPTION_KEY_API_TOKEN')) {
-    define('MM_WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
+if (! defined('WCD_WP_OPTION_KEY_API_TOKEN')) {
+    define('WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token');
 }
 
-// Option / UserMeta keys
+// Account email address
 if (! defined('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL')) {
     define('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL', 'webchangedetector_account_email');
 }
 
+// Steps in update change detection
+if (! defined('WCD_OPTION_UPDATE_STEP_KEY')) {
+    define('WCD_OPTION_UPDATE_STEP_KEY', 'webchangedetector_update_detection_step');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_SETTINGS')) {
+    define('WCD_OPTION_UPDATE_STEP_SETTINGS', 'settings');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_PRE')) {
+    define('WCD_OPTION_UPDATE_STEP_PRE', 'pre-update');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_PRE_STARTED')) {
+    define('WCD_OPTION_UPDATE_STEP_PRE_STARTED', 'pre-update-started');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_MAKE_UPDATES')) {
+    define('WCD_OPTION_UPDATE_STEP_MAKE_UPDATES', 'make-update');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_POST')) {
+    define('WCD_OPTION_UPDATE_STEP_POST', 'post-update');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_POST_STARTED')) {
+    define('WCD_OPTION_UPDATE_STEP_POST_STARTED', 'post-update-started');
+}
+if (! defined('WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION')) {
+    define('WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION', 'change-detection');
+}
+
+// WCD tabs
+if (! defined('WCD_TAB_DASHBOARD')) {
+    define('WCD_TAB_DASHBOARD', '/admin.php?page=webchangedetector-dashboard');
+}
+if (! defined('WCD_TAB_UPDATE')) {
+    define('WCD_TAB_UPDATE', '/admin.php?page=webchangedetector-update-settings');
+}
+if (! defined('WCD_TAB_AUTO')) {
+    define('WCD_TAB_AUTO', '/admin.php?page=webchangedetector-auto-settings');
+}
+if (! defined('WCD_TAB_CHANGE_DETECTION')) {
+    define('WCD_TAB_CHANGE_DETECTION', '/admin.php?page=webchangedetector-change-detections');
+}
+if (! defined('WCD_TAB_LOGS')) {
+    define('WCD_TAB_LOGS', '/admin.php?page=webchangedetector-logs');
+}
+if (! defined('WCD_TAB_SETTINGS')) {
+    define('WCD_TAB_SETTINGS', '/admin.php?page=webchangedetector-settings');
+}
+
+
+
 // // Uncommented defines()
-// if (! defined('MM_WCD_HTTP_OK')) {
-//     define('MM_WCD_HTTP_OK', 200);
+// if (! defined('WCD_HTTP_OK')) {
+//     define('WCD_HTTP_OK', 200);
 // }
-// if (! defined('MM_WCD_HTTP_MULTIPLE_CHOICES')) {
-//     define('MM_WCD_HTTP_MULTIPLE_CHOICES', 300);
+// if (! defined('WCD_HTTP_MULTIPLE_CHOICES')) {
+//     define('WCD_HTTP_MULTIPLE_CHOICES', 300);
 // }
 
  // Uncommented functions()
@@ -1501,6 +1530,6 @@ if (! defined('WCD_WP_OPTION_KEY_ACCOUNT_EMAIL')) {
 //      */
 //     function mm_wcd_http_successful($httpCode)
 //     {
-//         return ($httpCode >= MM_WCD_HTTP_OK) && ($httpCode < MM_WCD_HTTP_MULTIPLE_CHOICES);
+//         return ($httpCode >= WCD_HTTP_OK) && ($httpCode < WCD_HTTP_MULTIPLE_CHOICES);
 //     }
 // }

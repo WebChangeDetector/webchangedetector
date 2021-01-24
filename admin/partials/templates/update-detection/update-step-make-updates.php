@@ -1,3 +1,5 @@
+<?php include ('update-step-tiles.php'); ?>
+
 <!-- Pre-Update started / finished -->
 <div id="wcd-make-updates" class="wcd-step-container"
      style="max-width: 500px; margin: 20px auto; text-align: center; ">

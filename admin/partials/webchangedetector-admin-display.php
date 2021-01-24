@@ -64,7 +64,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'reset_api_token':
-                delete_option(MM_WCD_WP_OPTION_KEY_API_TOKEN);
+                delete_option(WCD_WP_OPTION_KEY_API_TOKEN);
                 break;
 
             case 're-add-api-token':
@@ -89,7 +89,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // If we didn't get the api token from an action we take it from options
         if(empty($api_token)) {
-            $api_token = get_option( MM_WCD_WP_OPTION_KEY_API_TOKEN );
+            $api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
         }
 
         // Change api token option name from V1.0.7
@@ -97,7 +97,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             $api_token = get_option('webchangedetector_api_key');
             if ($api_token) {
                 delete_option('webchangedetector_api_key');
-                add_option(MM_WCD_WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
+                add_option(WCD_WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
             }
         }
 
@@ -184,9 +184,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
                 } else {
                     if($scType === 'pre') {
-                        update_option( $wcd::OPTION_UPDATE_STEP_KEY, $wcd::OPTION_UPDATE_STEP_PRE_STARTED );
+                        update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
                     } elseif($scType === 'post') {
-                        update_option( $wcd::OPTION_UPDATE_STEP_KEY, $wcd::OPTION_UPDATE_STEP_POST_STARTED );
+                        update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
                     }
                 }
 
@@ -228,7 +228,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                     // Update step in update detection
                     if(! empty($_POST['step'])) {
-                        update_option($wcd::OPTION_UPDATE_STEP_KEY, sanitize_key($_POST['step']));
+                        update_option(WCD_OPTION_UPDATE_STEP_KEY, sanitize_key($_POST['step']));
                     }
                 }
                 break;
@@ -413,111 +413,83 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 // Show message if no urls are selected
                 if(! $groups_and_urls['amount_selected_urls']) {?>
                     <div class="notice notice-warning"><p>Select URLs for update detection to get started.</p></div>
-                <?php }
-
-                $step = get_option($wcd::OPTION_UPDATE_STEP_KEY);
-                if(empty($step)) {
-                    $step = $wcd::OPTION_UPDATE_STEP_SETTINGS;
-                    update_option($wcd::OPTION_UPDATE_STEP_KEY, sanitize_text_field($step), false);
-                }
-
-                switch ($step) {
-                    case $wcd::OPTION_UPDATE_STEP_SETTINGS:
-                        $progress_setting = 'active';
-                        $progress_pre = 'disabled';
-                        $progress_make_update = 'disabled';
-                        $progress_post = 'disabled';
-                        $progress_change_detection = 'disabled';
-                        break;
-
-                    case $wcd::OPTION_UPDATE_STEP_PRE:
-                    case $wcd::OPTION_UPDATE_STEP_PRE_STARTED:
-                        $progress_setting = 'done';
-                        $progress_pre = 'active';
-                        $progress_make_update = 'disabled';
-                        $progress_post = 'disabled';
-                        $progress_change_detection = 'disabled';
-                        break;
-
-                    case $wcd::OPTION_UPDATE_STEP_MAKE_UPDATES:
-                        $progress_setting = 'done';
-                        $progress_pre = 'done';
-                        $progress_make_update = 'active';
-                        $progress_post = 'disabled';
-                        $progress_change_detection = 'disabled';
-                        break;
-
-                    case $wcd::OPTION_UPDATE_STEP_POST:
-                    case $wcd::OPTION_UPDATE_STEP_POST_STARTED:
-                        $progress_setting = 'done';
-                        $progress_pre = 'done';
-                        $progress_make_update = 'done';
-                        $progress_post = 'active';
-                        $progress_change_detection = 'disabled';
-                        break;
-
-                    case $wcd::OPTION_UPDATE_STEP_CHANGE_DETECTION:
-                        $progress_setting = 'done';
-                        $progress_pre = 'done';
-                        $progress_make_update = 'done';
-                        $progress_post = 'done';
-                        $progress_change_detection = 'active';
-                        break;
-
-                    default:
-                        $progress_setting = 'disabled';
-                        $progress_pre = 'disabled';
-                        $progress_make_update = 'disabled';
-                        $progress_post = 'disabled';
-                        $progress_change_detection = 'disabled';
-                        break;
-                }
-                ?>
+                <?php } ?>
 
                 <div class="action-container">
 
-                    <!-- Steps -->
-                    <div class="update-status-container">
-                        <div class="update-status <?= $progress_setting ?>">1. Settings</div>
-                        <div class="update-status <?= $progress_pre ?>">2. Pre-Update</div>
-                        <div class="update-status <?= $progress_make_update ?>">3. Updates</div>
-                        <div class="update-status <?= $progress_post ?>">4. Post-Update</div>
-                        <div class="update-status <?= $progress_change_detection ?>">5. Change Detections</div>
-                    </div>
-
                     <?php
-                    switch(get_option($wcd::OPTION_UPDATE_STEP_KEY)) {
-                        case $wcd::OPTION_UPDATE_STEP_SETTINGS:
+                    $step = get_option(WCD_OPTION_UPDATE_STEP_KEY);
+                    if(empty($step)) {
+                        $step = WCD_OPTION_UPDATE_STEP_SETTINGS;
+                        update_option(WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field($step), false);
+                    }
+
+                    switch($step) {
+                        case WCD_OPTION_UPDATE_STEP_SETTINGS:
+                            $progress_setting = 'active';
+                            $progress_pre = 'disabled';
+                            $progress_make_update = 'disabled';
+                            $progress_post = 'disabled';
+                            $progress_change_detection = 'disabled';
                             include( 'templates/update-detection/update-step-settings.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_PRE:
+                        case WCD_OPTION_UPDATE_STEP_PRE:
+                            $progress_setting = 'done';
+                            $progress_pre = 'active';
+                            $progress_make_update = 'disabled';
+                            $progress_post = 'disabled';
+                            $progress_change_detection = 'disabled';
                             include( 'templates/update-detection/update-step-pre-sc.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_PRE_STARTED:
+                        case WCD_OPTION_UPDATE_STEP_PRE_STARTED:
+                            $progress_setting = 'done';
+                            $progress_pre = 'active';
+                            $progress_make_update = 'disabled';
+                            $progress_post = 'disabled';
+                            $progress_change_detection = 'disabled';
                             $sc_processing = $wcd->get_processing_queue(); // used in template
                             include( 'templates/update-detection/update-step-pre-sc-started.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_MAKE_UPDATES:
+                        case WCD_OPTION_UPDATE_STEP_MAKE_UPDATES:
+                            $progress_setting = 'done';
+                            $progress_pre = 'done';
+                            $progress_make_update = 'active';
+                            $progress_post = 'disabled';
+                            $progress_change_detection = 'disabled';
                             include( 'templates/update-detection/update-step-make-updates.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_POST:
+                        case WCD_OPTION_UPDATE_STEP_POST:
+                            $progress_setting = 'done';
+                            $progress_pre = 'done';
+                            $progress_make_update = 'done';
+                            $progress_post = 'active';
+                            $progress_change_detection = 'disabled';
                             include( 'templates/update-detection/update-step-post-sc.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_POST_STARTED:
+                        case WCD_OPTION_UPDATE_STEP_POST_STARTED:
+                            $progress_setting = 'done';
+                            $progress_pre = 'done';
+                            $progress_make_update = 'done';
+                            $progress_post = 'active';
+                            $progress_change_detection = 'disabled';
                             $sc_processing = $wcd->get_processing_queue(); // used in template
                             include( 'templates/update-detection/update-step-post-sc-started.php' );
                             break;
 
-                        case $wcd::OPTION_UPDATE_STEP_CHANGE_DETECTION:
+                        case WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION:
+                            $progress_setting = 'done';
+                            $progress_pre = 'done';
+                            $progress_make_update = 'done';
+                            $progress_post = 'done';
+                            $progress_change_detection = 'active';
                             include( 'templates/update-detection/update-step-change-detection.php' );
                             break;
-                    }
-                    ?>
+                    } ?>
                 </div>
 
                 <div class="sidebar">

@@ -1,3 +1,4 @@
+<?php include ('update-step-tiles.php'); ?>
 <form method="post" style="display: inline; margin-right: 10px;">
     <input type="hidden" name="wcd_action" value="update_detection_step">
     <input type="hidden" name="step" value="settings">

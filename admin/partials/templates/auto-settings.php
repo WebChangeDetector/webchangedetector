@@ -20,7 +20,7 @@
             <label for="hour_of_day" class="auto-setting">Hour of the day</label>
             <select name="hour_of_day" class="auto-setting">
                 <?php
-                for ($i = 0; $i < MM_WCD_HOURS_IN_DAY; $i++) {
+                for ($i = 0; $i < WCD_HOURS_IN_DAY; $i++) {
                     if (isset($groups_and_urls['hour_of_day']) && $groups_and_urls['hour_of_day'] == $i) {
                         $selected = 'selected';
                     } else {

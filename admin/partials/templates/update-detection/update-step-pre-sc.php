@@ -1,3 +1,5 @@
+<?php include ('update-step-tiles.php'); ?>
+
 <!-- Pre Update -->
 <div class="wcd-step-container">
     <div class="wcd-highlight-bg done">
@@ -15,7 +17,7 @@
         <div class="wcd-highlight-bg">
             <h2>Pre-Update Screenshots</h2>
             <p>Start the Update Change Detection by taking screenshots before making updates or other changes on your website.</p>
-            <form id="frm-take-pre-sc" action="<?= admin_url() . $wcd::TAB_UPDATE ?>" method="post">
+            <form id="frm-take-pre-sc" action="<?= admin_url() . WCD_TAB_UPDATE ?>" method="post">
                 <input type="hidden" value="take_screenshots" name="wcd_action">
                 <input type="hidden" name="sc_type" value="pre">
                 <button type="submit" class="button-primary" style="" <?= $disabled ?> >

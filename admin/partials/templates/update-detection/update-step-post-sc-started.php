@@ -1,3 +1,5 @@
+<?php include ('update-step-tiles.php'); ?>
+
 <?php include('update-step-processing-sc.php'); ?>
 
 <!-- Pre-Update started / finished -->
