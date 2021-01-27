@@ -58,11 +58,13 @@
 }
 
 .webchangedetector .highlight-container {
-    width: 500px;
+    width: 490px;
     margin: 0 auto;
     text-align: center;
     float: left;
-
+}
+.webchangedetector .highlight-container:first-child {
+    margin-right: 20px;
 }
 
 .webchangedetector .activate-account.highlight-container {
