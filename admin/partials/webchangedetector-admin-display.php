@@ -46,21 +46,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $api_token = $wcd->create_free_account($_POST);
 
-                // if we get an array it is an error message
-                /* Don't need this as we check this in save_api_token
-                if(is_array($api_token)) {
-                    if(!empty($api_token[0]) && $api_token[0] === 'error' && !empty($api_token[1])) {
-                        echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
-
-                    } else {
-                        echo '<div class="notice notice-error">
-                                <p>Something went wrong. Please try again. If the issue persists please contact us.</p>
-                                </div>';
-                    }
-                    echo $wcd->get_no_account_page();
-                    return false;
-                }*/
-
                 $success = $wcd->save_api_token($api_token);
                 if(!$success) {
                     return false;

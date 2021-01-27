@@ -266,7 +266,13 @@ class WebChangeDetector_Admin
     public function save_api_token($api_token) {
 
         if (! is_string($api_token) || strlen($api_token) < WebChangeDetector_Admin::API_TOKEN_LENGTH) {
-            echo '<div class="error notice"><p>The API Token is invalid. Please try again.</p></div>';
+            if(is_array($api_token) && $api_token[0] === 'error' && !empty($api_token[1])) {
+                echo '<div class="notice notice-error"><p>' . $api_token[1] . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error">
+                        <p>The API Token is invalid. Please try again or contact us if the error persists</p>
+                        </div>';
+            }
             echo $this->get_no_account_page();
             return false;
         }
