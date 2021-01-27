@@ -2,7 +2,6 @@
     <div style=" padding: 10px;">
         <p class="auto-settings">Make the settings for automatic change detections here.</p>
         <p class=" toggle">
-            <input type="hidden" name="wcd_action" value="update_monitoring_settings">
             <input type="hidden" name="monitoring" value="1">
             <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
@@ -60,7 +59,7 @@
 
         </div>
         <span class="notice notice-error" id="error-email-validation" style="display: none;">
-            <p class="default-bg">Please check your email address(es).</p>
+            <span style="padding: 10px; display: block;" class="default-bg">Please check your email address(es).</span>
         </span>
     </div>
 </div>

@@ -45,8 +45,8 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 }
 
                 $api_token = $wcd->create_free_account($_POST);
-
                 $success = $wcd->save_api_token($api_token);
+
                 if(!$success) {
                     return false;
                 }
@@ -178,28 +178,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
                     }
                 }
-
-                break;
-
-            case 'update_monitoring_settings':
-                $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
-                break;
-
-            case 'update-settings':
-                $wcd->update_settings($_POST, $group_id);
-                break;
-
-            case 'update_monitoring_and_update_settings':
-                if(! empty($_POST['wcd-update-settings'])) {
-                    $wcd->update_settings( $_POST, $monitoring_group_id ); // only saves css for monitoring group
-                } else {
-                    $wcd->update_monitoring_settings( $_POST, $monitoring_group_id ); // saves all monitoring settings
-                }
-                $wcd->update_settings( $_POST, $group_id ); // saves update settings (currently only css)
-                break;
-
-            case 'copy_url_settings':
-                $wcd->copy_url_settings($_POST['copy_from_group_id'],$_POST['copy_to_group_id']);
                 break;
 
             case 'post_urls_update_and_auto':
@@ -214,11 +192,16 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 } else {
                     $wcd->update_settings( $_POST, $group_id );
+                }
+                break;
 
-                    // Update step in update detection
-                    if(! empty($_POST['step'])) {
-                        update_option(WCD_OPTION_UPDATE_STEP_KEY, sanitize_key($_POST['step']));
-                    }
+            case 'save_update_settings_and_continue':
+                $wcd->post_urls($_POST, $website_details, false);
+                $wcd->update_settings( $_POST, $group_id );
+
+                // Update step in update detection
+                if(! empty($_POST['step'])) {
+                    update_option(WCD_OPTION_UPDATE_STEP_KEY, sanitize_key($_POST['step']));
                 }
                 break;
         }
@@ -301,7 +284,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
         }
 
         // Renew date (used in template)
-        $renew_date = strtotime($account_details['renewal_at']);
+        $renew_date = strtotime($account_details['renewal_at']); // used in account template
 
         switch ($tab) {
 

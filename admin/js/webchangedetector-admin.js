@@ -374,11 +374,13 @@ function wcdValidateFormAutoSettings() {
         // Validation failed
         if(emails[i] === "" || ! emailRegex.test(emails[i]) ){
             jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "inline-block");
-            return false;next_sc_in
+            jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
+            jQuery("#error-email-validation").css("display", "block");
+            return false;
         }
     }
     jQuery("#error-email-validation").css("display", "none");
+    jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
     jQuery(emailsElement).css("border", "2px solid green");
     return true;
 }

@@ -31,20 +31,17 @@ class WebChangeDetector_Admin
         're-add-api-token',
         'save_api_token',
         'take_screenshots',
-        'update_monitoring_settings',
-        'update_monitoring_and_update_settings',
         'post_urls',
         'post_urls_update_and_auto',
         'dashboard',
         'change-detections',
-        'update-settings',
         'auto-settings',
         'logs',
         'settings',
         'show-compare',
-        'copy_url_settings',
         'create_free_account',
-        'update_detection_step'
+        'update_detection_step',
+        'save_update_settings_and_continue'
     ];
 
     const VALID_SC_TYPES = [
@@ -355,28 +352,38 @@ class WebChangeDetector_Admin
 
     public function update_monitoring_settings($postdata, $monitoring_group_id)
     {
+
+        $monitoring_settings = $this->get_monitoring_settings($monitoring_group_id);
+
         $args = array(
             'action' => 'update_monitoring_settings',
             'group_id' => sanitize_key($monitoring_group_id),
-            'hour_of_day' => sanitize_key($postdata['hour_of_day']),
-            'interval_in_h' => sanitize_key($postdata['interval_in_h']),
-            'monitoring' => sanitize_key($postdata['monitoring']),
-            'enabled' => sanitize_key($postdata['enabled']),
-            'alert_emails' => sanitize_textarea_field(str_replace("\n\r",",",$postdata['alert_emails'])),
-            'name' => sanitize_textarea_field($postdata['group_name']),
-            'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
+            'hour_of_day' => ! isset($postdata['hour_of_day']) ? $monitoring_settings['hour_of_day'] : sanitize_key($postdata['hour_of_day']),
+            'interval_in_h' => ! isset($postdata['interval_in_h']) ? $monitoring_settings['interval_in_h'] : sanitize_key($postdata['interval_in_h']),
+            'monitoring' => 1,
+            'enabled' => ! isset($postdata['enabled']) ? $monitoring_settings['enabled'] : sanitize_key($postdata['enabled']),
+            'alert_emails' => ! isset($postdata['alert_emails']) ? $monitoring_settings['alert_emails'] : sanitize_textarea_field($postdata['alert_emails']),
+            'name' => ! isset($postdata['name']) ? $monitoring_settings['name'] : sanitize_text_field($postdata['name']),
+            'css' => ! isset($postdata['css']) ? $monitoring_settings['css'] : sanitize_textarea_field($postdata['css']),
+
         );
         return $this->mm_api($args);
     }
 
     public function update_settings($postdata, $group_id)
     {
-
         $args = array(
             'action' => 'update_group',
             'group_id' => $group_id,
             'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
         );
+        if(! empty($postdata['hour_of_day'])) $args['hour_of_day'] = sanitize_key($postdata['hour_of_day']);
+        if(! empty($postdata['interval_in_h'])) $args['interval_in_h'] = sanitize_key($postdata['interval_in_h']);
+        if(! empty($postdata['monitoring'])) $args['monitoring'] = sanitize_key($postdata['monitoring']);
+        if(! empty($postdata['enabled'])) $args['enabled'] = sanitize_key($postdata['enabled']);
+        if(! empty($postdata['alert_emails'])) $args['alert_emails'] = sanitize_key($postdata['alert_emails']);
+        if(! empty($postdata['name'])) $args['name'] = sanitize_key($postdata['name']);
+
         return $this->mm_api($args);
     }
 
@@ -788,7 +795,7 @@ class WebChangeDetector_Admin
                 <!-- Auto Detection Settings -->
                 <h2>General Settings</h2>
                 <div class="accordion" style="margin-bottom: 40px;">
-                    <div class="mm_accordion_title">
+                    <div class="mm_accordion_title" id="accordion-auto-detection-settings">
                         <h3>
                             Auto Detection Settings<br>
                             <small>
@@ -945,8 +952,8 @@ class WebChangeDetector_Admin
                     </div>
                 <?php
                 }
-                $other_group_type = $monitoring_group ? "update" : "auto";
-            if(! $monitoring_group) { ?>
+
+                if(! $monitoring_group) { ?>
                 <h2>Advanced settings</h2>
                 <div class="accordion">
                     <div class="mm_accordion_title">
@@ -961,23 +968,51 @@ class WebChangeDetector_Admin
                         </div>
                     </div>
                 </div>
+                <?php }
+                if($monitoring_group) { ?>
+                    <button
+                            class="button button-primary"
+                            type="submit"
+                            name="wcd_action"
+                            value="post_urls"
+                            onclick="return wcdValidateFormAutoSettings()">
+                        Save
+                    </button>
+                    <button class="button"
+                            type="submit"
+                            name="wcd_action"
+                            value="post_urls_update_and_auto"
+                            style="margin-left: 10px;"
+                            onclick="return wcdValidateFormAutoSettings()">
+                        Save & copy to update detection
+                    </button>
+                <?php } else { ?>
+                    <button
+                            class="button button-primary"
+                            type="submit"
+                            name="wcd_action"
+                            value="save_update_settings_and_continue" >
+                        Save and continue >
+                    </button>
+                    <button
+                            class="button"
+                            type="submit"
+                            name="wcd_action"
+                            value="post_urls"
+                            style="margin-left: 10px;">
+                        Only save
+                    </button>
+                    <button class="button"
+                            type="submit"
+                            name="wcd_action"
+                            value="post_urls_update_and_auto"
+                            style="margin-left: 10px;">
+                        Save & copy to auto detection
+                    </button>
                 <?php } ?>
 
-                <button
-                    class="button button-primary"
-                    type="submit"
-                    name="wcd_action"
-                    value="post_urls" >
-                        <?= $monitoring_group ? 'Save' : 'Save & continue >' ?>
-                </button>
 
-                <button class="button"
-                    type="submit"
-                    name="wcd_action"
-                    value="post_urls_update_and_auto"
-                    style="margin-left: 10px;">
-                        <?= $monitoring_group ? 'Save & copy to ' . $other_group_type . ' detection' : 'Save & copy settings to ' . $other_group_type . ' detections & continue >' ?>
-                </button>
+
             </form>
 
         </div>
@@ -1041,22 +1076,6 @@ class WebChangeDetector_Admin
             }
             echo '<div class="updated notice"><p>Settings saved.</p></div>';
         }
-    }
-
-    public function copy_url_settings($from_group_id, $to_group_id)
-    {
-        $urls = $this->get_urls_of_group($from_group_id);
-        $url_settings = [];
-        foreach($urls['urls'] as $url) {
-
-           $url_settings[] = [
-                'url_id' => $url['pivot']['url_id'],
-                'url' => $url['url'],
-                'desktop' => $url['pivot']['desktop'],
-                'mobile' => $url['pivot']['mobile'],
-            ];
-        }
-        $this->update_urls($to_group_id, $url_settings);
     }
 
     public function get_no_account_page($api_token = '')
