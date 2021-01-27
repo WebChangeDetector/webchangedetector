@@ -24,7 +24,7 @@
             Check the Change Detections for differences between the pre- and post-update screenshots.
         </li>
         <li>
-            If something broke during the update, you see and fix it now. To verify the fix, you can start the
+            If something broke during the update, you will see it now and you can fix it. To verify the fix, you can start the
             Change Detection again. The new post-update screenshots will be compared against the pre-update screenshots.
         </li>
     </ol>
