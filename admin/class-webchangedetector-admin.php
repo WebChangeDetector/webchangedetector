@@ -1354,7 +1354,14 @@ class WebChangeDetector_Admin
         $post['domain'] = $_SERVER['SERVER_NAME'];
         $post['wp_id'] = get_current_user_id();
 
+        // Increase timeout for php.ini
+
+        if ( ! ini_get( 'safe_mode' ) ){
+            set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
+        }
+
         $args = array(
+            'timeout' => WCD_REQUEST_TIMEOUT,
             'body'  => $post,
             'headers' => array(
                 'Accept' => 'application/json',
@@ -1489,6 +1496,10 @@ if (! defined('WCD_TAB_LOGS')) {
 }
 if (! defined('WCD_TAB_SETTINGS')) {
     define('WCD_TAB_SETTINGS', '/admin.php?page=webchangedetector-settings');
+}
+
+if (! defined('WCD_REQUEST_TIMEOUT')) {
+    define('WCD_REQUEST_TIMEOUT', 30);
 }
 
 
