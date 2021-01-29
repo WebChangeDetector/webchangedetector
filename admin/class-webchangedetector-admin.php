@@ -991,14 +991,17 @@ class WebChangeDetector_Admin
                             onclick="return wcdValidateFormAutoSettings()">
                         Save & copy to update detection
                     </button>
-                <?php } else { ?>
-                    <button
-                            class="button button-primary"
-                            type="submit"
-                            name="wcd_action"
-                            value="save_update_settings_and_continue" >
-                        Save and continue >
-                    </button>
+                <?php } else {
+                    $website_details = $this->get_website_details();
+                    if($website_details['allow_manual_detection']) { ?>
+                        <button
+                                class="button button-primary"
+                                type="submit"
+                                name="wcd_action"
+                                value="save_update_settings_and_continue" >
+                            Save and continue >
+                        </button>
+                    <?php } ?>
                     <button
                             class="button"
                             type="submit"
