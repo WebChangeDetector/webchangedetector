@@ -13,14 +13,15 @@
         $insufficient_screenshots = true;
     }
 
-    $disabled = $insufficient_screenshots ? 'disabled' : ''; ?>
+    $disabled = $insufficient_screenshots ? 'disabled' : '';
+    ?>
         <div class="wcd-highlight-bg">
             <h2>Pre-Update Screenshots</h2>
             <p>Start the Update Change Detection by taking screenshots before making updates or other changes on your website.</p>
             <form id="frm-take-pre-sc" action="<?= admin_url() . WCD_TAB_UPDATE ?>" method="post">
                 <input type="hidden" value="take_screenshots" name="wcd_action">
                 <input type="hidden" name="sc_type" value="pre">
-                <button type="submit" class="button-primary" style="" <?= $disabled ?> >
+                <button type="submit" class="button-primary" <?= $disabled ?> >
                     Take Pre-Update Screenshots
                 </button>
                 <?php if($insufficient_screenshots) { ?>

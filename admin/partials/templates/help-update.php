@@ -8,7 +8,7 @@
     <p>The wizard takes you step by step through the process:</p>
     <ol>
         <li>
-            Select the URLs and screensizes (desktop and / or mobile) you want to check before and after the updates.
+            Select the URLs and screen sizes (desktop and / or mobile) you want to check before and after the updates.
         </li>
         <li>
             Create the pre-update screenshots. While the screenshots are in progress, you can leave the page and come

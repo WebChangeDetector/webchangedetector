@@ -444,6 +444,10 @@ class WebChangeDetector_Admin
         if ($icon == 'check') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
         }
+        if ($icon == 'upgrade') {
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-cart
+"></span>';
+        }
 
         return '';
     }
@@ -694,8 +698,9 @@ class WebChangeDetector_Admin
                         onsubmit="return confirm(\'Are sure you want to reset the API token?\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <hr>
-                        <h2>API Token</h2>
-                        <p>Your API Token: <strong>' . $api_token . '</strong></p>
+                        <h2> Account</h2>
+                        <p>Your email address: <strong>' . $this->account_details()['email'] . '</strong><br>
+                        Your API Token: <strong>' . $api_token . '</strong></p>
                         <p>With resetting the API Token, auto detections still continue and your settings will 
                         be still available when you use the same api token with this website again.</p>
                         <input type="submit" value="Reset API Token" class="button"><br>
@@ -1151,21 +1156,32 @@ class WebChangeDetector_Admin
             <h2 class="nav-tab-wrapper">
                 <a href="?page=webchangedetector"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector' ? 'nav-tab-active' : ''; ?>">
-                   Dashboard</a>
+                    <?= $this->get_device_icon('dashboard') ?> Dashboard
+                </a>
                 <a href="?page=webchangedetector-update-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
-                    Update Detection</a>
+                    <?= $this->get_device_icon('update-group') ?> Update Detection
+                </a>
                 <a href="?page=webchangedetector-auto-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
-                    Auto Detection</a><a href="?page=webchangedetector-change-detections"
+                    <?= $this->get_device_icon('auto-group') ?> Auto Detection
+                </a>
+                <a href="?page=webchangedetector-change-detections"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
-                    Change Detections</a>
+                    <?= $this->get_device_icon('change-detections') ?> Change Detections
+                </a>
                 <a href="?page=webchangedetector-logs"
-                   class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">Logs</a>
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">
+                    <?= $this->get_device_icon('logs') ?> Logs
+                </a>
                 <a href="?page=webchangedetector-settings"
-                   class="nav-tab <?php echo $active_tab == 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
+                   class="nav-tab <?php echo $active_tab == 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">
+                    <?= $this->get_device_icon('settings') ?> Settings
+                </a>
                <a href="<?= $this->get_upgrade_url() ?>" target="_blank"
-                   class="nav-tab upgrade">Upgrade Account</a>
+                   class="nav-tab upgrade">
+                   <?= $this->get_device_icon('upgrade') ?> Upgrade Account
+               </a>
             </h2>
         </div>
 
