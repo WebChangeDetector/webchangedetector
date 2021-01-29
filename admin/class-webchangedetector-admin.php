@@ -1267,7 +1267,7 @@ class WebChangeDetector_Admin
                 <?php
                 $this->compare_view($recent_comparisons);
         if (! empty($recent_comparisons)) { ?>
-                    <a class="button" href="?page=webchangedetector-change-detections">Show Change Detections</a>
+                    <p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
                 <?php } ?>
             </div>
 
