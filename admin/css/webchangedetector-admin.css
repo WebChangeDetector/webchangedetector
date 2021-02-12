@@ -289,7 +289,7 @@
     display: block;
 }
 
-.webchangedetector .mm_accordion_title .mm_accordion_content.padding p.toggle:nth-of-type(even) {
+.webchangedetector .mm_accordion_title .mm_accordion_content .toggle:nth-of-type(odd) {
     background: #eee;
 }
 

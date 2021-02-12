@@ -1,7 +1,7 @@
 <div style="width: 50%; float: left;">
     <div style=" padding: 10px;">
         <p class="auto-settings">Make the settings for automatic change detections here.</p>
-        <p class=" toggle">
+        <p class="toggle">
             <input type="hidden" name="monitoring" value="1">
             <input type="hidden" name="group_name" value="<?= $groups_and_urls['name'] ?>">
 
@@ -50,7 +50,11 @@
                 </option>
             </select>
         </p>
-        <div class="auto-setting toggle" style="margin-top: 20px;">
+        <p class="auto-setting toggle">
+            <label for="threshold" class="auto-setting">Threshold</label>
+            <input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?= $groups_and_urls['threshold'] ?>"> %
+        </p>
+        <div class="auto-setting " style="margin-top: 20px;">
             <label for="alert_emails" class="auto-setting">
                 Alert email addresses (One per line)
             </label>

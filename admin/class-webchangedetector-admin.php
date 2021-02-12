@@ -365,7 +365,7 @@ class WebChangeDetector_Admin
             'alert_emails' => ! isset($postdata['alert_emails']) ? $monitoring_settings['alert_emails'] : sanitize_textarea_field($postdata['alert_emails']),
             'name' => ! isset($postdata['name']) ? $monitoring_settings['name'] : sanitize_text_field($postdata['name']),
             'css' => ! isset($postdata['css']) ? $monitoring_settings['css'] : sanitize_textarea_field($postdata['css']),
-
+            'threshold' => ! isset($postdata['threshold']) ? $monitoring_settings['threshold'] : sanitize_text_field($postdata['threshold']),
         );
         return $this->mm_api($args);
     }
@@ -376,13 +376,8 @@ class WebChangeDetector_Admin
             'action' => 'update_group',
             'group_id' => $group_id,
             'css' => sanitize_textarea_field($postdata['css']), // there is no css sanitation
+            'threshold' => sanitize_text_field($postdata['threshold'])
         );
-        if(! empty($postdata['hour_of_day'])) $args['hour_of_day'] = sanitize_key($postdata['hour_of_day']);
-        if(! empty($postdata['interval_in_h'])) $args['interval_in_h'] = sanitize_key($postdata['interval_in_h']);
-        if(! empty($postdata['monitoring'])) $args['monitoring'] = sanitize_key($postdata['monitoring']);
-        if(! empty($postdata['enabled'])) $args['enabled'] = sanitize_key($postdata['enabled']);
-        if(! empty($postdata['alert_emails'])) $args['alert_emails'] = sanitize_key($postdata['alert_emails']);
-        if(! empty($postdata['name'])) $args['name'] = sanitize_key($postdata['name']);
 
         return $this->mm_api($args);
     }
@@ -796,6 +791,23 @@ class WebChangeDetector_Admin
             <?php
             if(!$monitoring_group) { ?>
                 <input type="hidden" name="step" value="pre-update">
+                <h2>General Settings</h2>
+                <div class="accordion">
+                    <div class="mm_accordion_title">
+                        <h3>
+                            Update Detection Settings<br>
+                            <small>
+                                Threshold: <strong><?= $groups_and_urls['threshold'] ?> %</strong>
+                                | CSS injection: <strong><?= $groups_and_urls['css'] ? 'yes' : 'no' ?></strong>
+                            </small>
+                        </h3>
+                        <div class="mm_accordion_content">
+                            <input type="hidden" name="wcd-update-settings" value="true">
+                            <?php include( "partials/templates/update-settings.php" ); ?>
+                        </div>
+                    </div>
+                </div>
+
             <?php } else { ?>
                 <!-- Auto Detection Settings -->
                 <h2>General Settings</h2>
@@ -808,13 +820,17 @@ class WebChangeDetector_Admin
                                 $enabled = $groups_and_urls['enabled'];
                                 if($enabled) {
                                     ?>
-                                    Auto Detection: <strong style="color: green;">Enabled</strong> |
-                                                                                                   Interval: <strong>
+                                    Auto Detection: <strong style="color: green;">Enabled</strong>
+                                    | Interval: <strong>
                                         every
                                         <?= $groups_and_urls['interval_in_h'] ?>
                                         <?= $groups_and_urls['interval_in_h'] === 1 ? " hour" : " hours"?>
-                                    </strong> |
-                                              Notifications to:
+                                    </strong>
+
+                                    | Threshold: <strong><?= $groups_and_urls['threshold'] ?> %</strong>
+                                    | CSS injection: <strong><?= $groups_and_urls['css'] ? 'yes' : 'no' ?></strong>
+                                    <br>
+                                    Notifications to:
                                     <strong>
                                         <?= ! empty($groups_and_urls['alert_emails']) ? implode(", ", $groups_and_urls['alert_emails']) : "no email address set" ?>
                                     </strong>
@@ -958,22 +974,7 @@ class WebChangeDetector_Admin
                 <?php
                 }
 
-                if(! $monitoring_group) { ?>
-                <h2>Advanced settings</h2>
-                <div class="accordion">
-                    <div class="mm_accordion_title">
-                        <h3>
-                    <span class="accordion-title">
-                        CSS injection
-                    </span>
-                        </h3>
-                        <div class="mm_accordion_content">
-                            <input type="hidden" name="wcd-update-settings" value="true">
-                            <?php include( "partials/templates/css-settings.php" ); ?>
-                        </div>
-                    </div>
-                </div>
-                <?php }
+
                 if($monitoring_group) { ?>
                     <button
                             class="button button-primary"
