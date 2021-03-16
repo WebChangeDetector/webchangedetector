@@ -189,7 +189,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
             case 'post_urls_update_and_auto':
                 $wcd->post_urls($_POST, $website_details, true);
+
+                // Get the depending group names before saving to avoid group name changes in webapp
+                $manual_group_name = $wcd->get_urls_of_group($website_details['manual_detection_group_id'])['name'];
+                $_POST['group_name'] = $manual_group_name;
                 $wcd->update_settings($_POST, $group_id);
+
+                $auto_group_name = $wcd->get_urls_of_group($website_details['auto_detection_group_id'])['name'];
+                $_POST['group_name'] = $auto_group_name;
                 $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 break;
 
