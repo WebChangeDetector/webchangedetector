@@ -10,7 +10,8 @@
         <h2>Time For Updates</h2>
         <p>
             You can leave this page and make updates or other changes on your website. When your are done, come back and
-            continue with the button below.
+            continue with the button below. <br>
+            <a href="<?= admin_url() ?>update-core.php" class="button button-secondary">Updates</a>
         </p>
     </div>
 

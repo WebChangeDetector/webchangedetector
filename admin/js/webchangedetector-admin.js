@@ -88,6 +88,17 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
     $( document ).ready(function() {
 
+        // Filter URL tables
+        let filterTables = $(".group_urls_container");
+        $.each(filterTables, function(i,e) {
+            $(e).find(".filter-url-table").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $(e).find('table tr.live-filter-row').filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+
         $(".codearea").each(function(index, item) {
             wp.codeEditor.initialize(item);
         });

@@ -391,6 +391,12 @@
     background: rgba(252, 134, 134, 0.51);
 }
 
+.webchangedetector .filter-url-table {
+    float: right;
+    margin: 10px;
+    width: 300px;
+}
+
 .webchangedetector .wcd-select-urls-container,
 .webchangedetector .wcd-settings-container,
 .webchangedetector .wcd-highlight-bg{

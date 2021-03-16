@@ -99,11 +99,19 @@ if (! function_exists('wcd_webchangedetector_init')) {
         // Get the account details
         $account_details = $wcd->account_details($api_token);
 
+        // Check if plugin has to be updated
+        if($account_details === 'update plugin') {
+            echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
+            WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
+            wp_die();
+        }
+
         // Check if account is activated and if the api key is authorized
         if (! is_array($account_details) && ($account_details === 'activate account' || $account_details === 'unauthorized')) {
             $wcd->show_activate_account($account_details);
             return false;
         }
+
 
         // Show low credits
         $usage_percent = (int)($account_details['usage'] / $account_details['sc_limit'] * 100);
@@ -124,7 +132,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // Get the website details
         $website_details = $wcd->get_website_details();
-
         // If we don't have websites details yet, we create them. This happens after account activation
         if (! $website_details) {
             $website_details = $wcd->create_website_and_groups($api_token);
