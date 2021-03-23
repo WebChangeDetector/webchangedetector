@@ -912,7 +912,7 @@ class WebChangeDetector_Admin
                                     $amount_active_posts = 0;
                                     $selected_mobile = 0;
                                     $selected_desktop = 0;
-
+                                    $append_rows = "";
                                     foreach ($posts as $post) {
                                         $url = get_permalink($post);
                                         $url_id = false;
@@ -954,27 +954,34 @@ class WebChangeDetector_Admin
                                             }
                                         }
 
-                                        echo '<tr class="live-filter-row even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
-                                        echo '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
-                                        echo '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
-                                        echo '<input type="hidden" name="active-' . $url_id . ' value="1">';
+                                        $row = '<tr class="live-filter-row even-tr-white post_id_' . $groups_and_urls['id'] . '" id="' . $url_id . '" >';
+                                        $row .= '<input type="hidden" name="post_id-' . $url_id . '" value="' . $post->ID . '">';
+                                        $row .= '<input type="hidden" name="url_id-' . $url_id . '" value="' . $url_id . '">';
+                                        $row .= '<input type="hidden" name="active-' . $url_id . ' value="1">';
 
-                                        echo '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
+                                        $row .= '<td class="checkbox-desktop-' . $post_type . '" style="text-align: center;">
                                                 <input type="hidden" value="0" name="desktop-' . $url_id . '">
                                                 <input type="checkbox" name="desktop-' . $url_id . '" value="1" ' . $checked['desktop'] . '
                                                 id="desktop-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
-                                        echo '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
+                                        $row .= '<td class="checkbox-mobile-' . $post_type . '" style="text-align: center;">
                                                 <input type="hidden" value="0" name="mobile-' . $url_id . '">
                                                 <input type="checkbox" name="mobile-' . $url_id . '" value="1" ' . $checked['mobile'] . '
                                                 id="mobile-' . $url_id . '" onclick="mmMarkRows(\'' . $url_id . '\')" ></td>';
 
-                                        echo '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
-                                        echo '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
-                                        echo '</tr>';
+                                        $row .= '<td style="text-align: left;"><strong>' . $post->post_title . '</strong><br>';
+                                        $row .= '<a href="' . $url . '" target="_blank">' . $url . '</a></td>';
+                                        $row .= '</tr>';
 
-                                        echo '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
+                                        $row .= '<script> mmMarkRows(\'' . $url_id . '\'); </script>';
+
+                                        if($checked['desktop'] || $checked['mobile']) {
+                                            echo $row;
+                                        } else {
+                                            $append_rows .= $row;
+                                        }
                                     }
+                                    echo $append_rows;
                                     echo '</table>';
 
                                     echo '<div class="selected-urls" style="display: none;" 
