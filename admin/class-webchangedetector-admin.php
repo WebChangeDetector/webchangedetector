@@ -619,7 +619,7 @@ class WebChangeDetector_Admin
     public function sync_posts($post_obj = false)
     {
         $array = array(); // init
-
+        $url_types = array();
         // Sync single post
         if ($post_obj) {
             $save_post_types = ['post', 'page']; // @TODO Make this a setting
@@ -634,7 +634,7 @@ class WebChangeDetector_Admin
                     'html_title' => $post_obj->post_title,
                     'cms_resource_id' => $post_obj->ID,
                     'url_type' => 'types',
-                    'url_category' => $post_obj->labels->name,
+                    'url_category' => $post_obj->label,
                 );
             }
         } else {
@@ -647,20 +647,22 @@ class WebChangeDetector_Admin
             );
         }
 
-        foreach ($url_types as $url_type => $url_categories) {
-            foreach ($url_categories as $url_category_name => $url_category_posts) {
-                if (! empty($url_category_posts) && is_iterable($url_category_posts)) {
-                    foreach ($url_category_posts as $post) {
-                        $post_type_obj = get_post_type_object($post->post_type);
-                        $url = get_permalink($post);
-                        $url = substr($url, strpos($url, '//') + 2);
-                        $array[] = array(
-                            'url' => $url,
-                            'html_title' => $post->post_title,
-                            'cms_resource_id' => $post->ID,
-                            'url_type' => $url_type,
-                            'url_category' => $post_type_obj->labels->name,
-                        );
+        if(is_iterable($url_types)) {
+            foreach( $url_types as $url_type => $url_categories ) {
+                foreach( $url_categories as $url_category_name => $url_category_posts ) {
+                    if( !empty( $url_category_posts ) && is_iterable( $url_category_posts ) ) {
+                        foreach( $url_category_posts as $post ) {
+                            $post_type_obj = get_post_type_object( $post->post_type );
+                            $url = get_permalink( $post );
+                            $url = substr( $url, strpos( $url, '//' ) + 2 );
+                            $array[] = array(
+                                'url' => $url,
+                                'html_title' => $post->post_title,
+                                'cms_resource_id' => $post->ID,
+                                'url_type' => $url_type,
+                                'url_category' => $post_type_obj->labels->name,
+                            );
+                        }
                     }
                 }
             }
