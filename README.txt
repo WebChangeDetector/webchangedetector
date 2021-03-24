@@ -46,6 +46,7 @@ You can not only track changes manually. The Auto Change Detection enables you t
 * Testing  compatibility for WP 5.7
 * Filter for urls
 * Compatibility fixes for api requests
+* Show selected URLs on top
 
 = 2.1.0 =
 * Feature: Add threshold setting for change detections
