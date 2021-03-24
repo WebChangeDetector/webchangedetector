@@ -396,6 +396,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 // Get selected urls
                 $groups_and_urls = $wcd->get_urls_of_group($group_id);
 
+                $step = false;
                 // Show message if no urls are selected
                 if(! $groups_and_urls['amount_selected_urls']) {
                     $step = WCD_OPTION_UPDATE_STEP_SETTINGS
@@ -406,7 +407,15 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 <div class="action-container">
 
                 <?php
-                $step = $step ?? get_option(WCD_OPTION_UPDATE_STEP_KEY) ?? WCD_OPTION_UPDATE_STEP_SETTINGS;
+                // Check if we have a step in the db
+                if(!$step) {
+                    $step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
+                }
+
+                // Default step
+                if(!$step) {
+                    $step = WCD_OPTION_UPDATE_STEP_SETTINGS;
+                }
                 update_option(WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field($step), false);
 
                 switch($step) {
