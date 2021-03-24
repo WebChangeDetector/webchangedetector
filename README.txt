@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
 Tested up to: 5.7
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -41,6 +41,9 @@ You can not only track changes manually. The Auto Change Detection enables you t
 5. Now you can start checking your webpages
 
 == Changelog ==
+
+= 2.1.2 =
+* Fix: Update Detection not shown
 
 = 2.1.1 =
 * Testing  compatibility for WP 5.7
