@@ -42,6 +42,10 @@ You can not only track changes manually. The Auto Change Detection enables you t
 
 == Changelog ==
 
+= 2.2.0 =
+* Fix: Bulk select in tables
+* Improvement: Simplify update detection wizard
+
 = 2.1.2 =
 * Fix: Update Detection not shown
 
