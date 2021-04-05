@@ -106,7 +106,6 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         // Init accordions
         $(".accordion").each(function(index, item) {
             $(item).accordion({
-
                 header: "h3",
                 collapsible: true,
                 active: false,
@@ -312,6 +311,8 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                         }
                     });
                 }, 10000, currentlyProcessing)
+            } else {
+                $("#wcd-screenshots-done").show();
             }
         }
 

@@ -487,10 +487,14 @@ Update Detection
 
 .webchangedetector .update-status {
     padding: 10px 0;
-    width: calc(20% - 5px);
-    border: 1px solid #bbb;
-    display: inline-block;
+    width: calc(25% - 2px);
+    border-left: 1px solid #bbb;
+    float: left;
     text-align: center;
+}
+
+.webchangedetector .update-status:first-child {
+    border-left: none;
 }
 
 .webchangedetector #wcd-screenshots-done h2,

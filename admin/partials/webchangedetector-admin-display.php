@@ -447,15 +447,6 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         include( 'templates/update-detection/update-step-pre-sc-started.php' );
                         break;
 
-                    case WCD_OPTION_UPDATE_STEP_MAKE_UPDATES:
-                        $progress_setting = 'done';
-                        $progress_pre = 'done';
-                        $progress_make_update = 'active';
-                        $progress_post = 'disabled';
-                        $progress_change_detection = 'disabled';
-                        include( 'templates/update-detection/update-step-make-updates.php' );
-                        break;
-
                     case WCD_OPTION_UPDATE_STEP_POST:
                         $progress_setting = 'done';
                         $progress_pre = 'done';

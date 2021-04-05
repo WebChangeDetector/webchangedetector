@@ -146,7 +146,7 @@ class WebChangeDetector_Admin
                     );
         $cm_settings['codeEditor'] = wp_enqueue_code_editor($css_settings);
         wp_localize_script('jquery', 'cm_settings', $cm_settings);
-        wp_enqueue_script('wp-theme-plugin-editor');
+        //wp_enqueue_script('wp-theme-plugin-editor');
     }
 
     // Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
@@ -161,10 +161,6 @@ class WebChangeDetector_Admin
             'wcd_webchangedetector_init',
             plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg'
         );
-        /*if(! get_option(WCD_WP_OPTION_KEY_API_TOKEN) &&
-            (! empty($_POST['wcd_action']) && $_POST['wcd_action'] === 'reset_api_token' && $_POST['wcd_action'] !== 'save_api_token')) {
-            return;
-        }*/
 
         add_submenu_page(
             'webchangedetector',
@@ -237,7 +233,6 @@ class WebChangeDetector_Admin
             'webchangedetector-show-screenshot',
             'wcd_webchangedetector_init'
         );
-
     }
 
     public function get_wcd_plugin_url() {
@@ -441,8 +436,7 @@ class WebChangeDetector_Admin
             return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
         }
         if ($icon == 'upgrade') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons-cart
-"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-cart"></span>';
         }
 
         return '';
@@ -1074,11 +1068,11 @@ class WebChangeDetector_Admin
                     'desktop' => $desktop,
                     'mobile' => $mobile
                 );
-                if (isset($postdata['desktop-' . $post_id])) {
+                if (isset($postdata['desktop-' . $post_id]) && $postdata['desktop-' . $post_id] == 1) {
                     $count_selected++;
                 }
 
-                if (isset($postdata['mobile-' . $post_id])) {
+                if (isset($postdata['mobile-' . $post_id]) && $postdata['mobile-' . $post_id] == 1) {
                     $count_selected++;
                 }
             }

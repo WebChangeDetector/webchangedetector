@@ -3,8 +3,10 @@
 <!-- Pre Update -->
 <div class="wcd-step-container">
     <div class="wcd-highlight-bg done">
-        <h2><?= $wcd->get_device_icon("check", "screenshots-done-icon") ?> Settings saved</h2>
-        <p>Selected: <strong><?= $groups_and_urls['amount_selected_urls'] ?></strong> URLs</p>
+        <h2>
+            <?= $wcd->get_device_icon("check", "screenshots-done-icon") ?>
+            <strong><?= $groups_and_urls['amount_selected_urls'] ?></strong> URL(s) selected
+        </h2>
     </div>
 
     <?php
