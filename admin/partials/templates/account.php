@@ -6,7 +6,7 @@
    data-sc_usage="<?= $comp_usage?>"
    data-sc_limit="<?= $limit ?>"
 >
-<?php if (! $website_details['enable_limits']) { ?>
+<?php if (! $wcd->website_details['enable_limits']) { ?>
     Your plan: <strong><?= $account_details['plan']['name'] ?></strong><br>
 <?php } ?>
 Used screenshots: <strong><?= $comp_usage ?> / <?= $limit ?></strong><br>

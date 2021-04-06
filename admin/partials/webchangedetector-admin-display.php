@@ -131,14 +131,14 @@ if (! function_exists('wcd_webchangedetector_init')) {
         <?php }
 
         // Get the website details
-        $website_details = $wcd->get_website_details();
+        $wcd->website_details = $wcd->get_website_details();
         // If we don't have websites details yet, we create them. This happens after account activation
-        if (! $website_details) {
-            $website_details = $wcd->create_website_and_groups($api_token);
+        if (! $wcd->website_details) {
+            $wcd->website_details = $wcd->create_website_and_groups($api_token);
         }
 
         // If we don't have the website for any reason we show an error message.
-        if(empty($website_details)) { ?>
+        if(empty($wcd->website_details)) { ?>
             <div class="notice notice-error">
                 <br>Ooops! We couldn't find your settings. Please try reloading the page. <br>
                 If the issue persists, please contact us.</p>
@@ -153,13 +153,18 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
-        $group_id = ! empty($website_details['manual_detection_group_id']) ? $website_details['manual_detection_group_id'] : null;
-        $monitoring_group_id = ! empty($website_details['auto_detection_group_id']) ? $website_details['auto_detection_group_id'] : null;
+        $group_id = ! empty($wcd->website_details['manual_detection_group_id']) ? $wcd->website_details['manual_detection_group_id'] : null;
+        $monitoring_group_id = ! empty($wcd->website_details['auto_detection_group_id']) ? $wcd->website_details['auto_detection_group_id'] : null;
 
         $monitoring_group_settings = null; // @TODO Can be deleted?
 
         // Perform actions
         switch ($wcd_action) {
+
+            case 'add_post_type':
+                $wcd->add_post_type($_POST);
+                $wcd->sync_posts();
+                break;
 
             case 'update_detection_step':
                 update_option('webchangedetector_update_detection_step', sanitize_key($_POST['step']));
@@ -188,20 +193,20 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'post_urls_update_and_auto':
-                $wcd->post_urls($_POST, $website_details, true);
+                $wcd->post_urls($_POST, $wcd->website_details, true);
 
                 // Get the depending group names before saving to avoid group name changes in webapp
-                $manual_group_name = $wcd->get_urls_of_group($website_details['manual_detection_group_id'])['name'];
+                $manual_group_name = $wcd->get_urls_of_group($wcd->website_details['manual_detection_group_id'])['name'];
                 $_POST['group_name'] = $manual_group_name;
                 $wcd->update_settings($_POST, $group_id);
 
-                $auto_group_name = $wcd->get_urls_of_group($website_details['auto_detection_group_id'])['name'];
+                $auto_group_name = $wcd->get_urls_of_group($wcd->website_details['auto_detection_group_id'])['name'];
                 $_POST['group_name'] = $auto_group_name;
                 $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 break;
 
             case 'post_urls':
-                $wcd->post_urls($_POST, $website_details, false);
+                $wcd->post_urls($_POST, $wcd->website_details, false);
                 if(! empty($_POST['monitoring']) && $_POST['monitoring']) {
                     $wcd->update_monitoring_settings($_POST, $monitoring_group_id);
                 } else {
@@ -210,7 +215,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 break;
 
             case 'save_update_settings_and_continue':
-                $wcd->post_urls($_POST, $website_details, false);
+                $wcd->post_urls($_POST, $wcd->website_details, false);
                 $wcd->update_settings( $_POST, $group_id );
 
                 // Update step in update detection
@@ -263,10 +268,8 @@ if (! function_exists('wcd_webchangedetector_init')) {
             $tab = sanitize_key($_GET['page']);
         }
 
-        $website_details = $wcd->get_website_details();
-
         // Check if website details are available.
-        if( empty($website_details)) {
+        if( empty($wcd->website_details)) {
             echo '<div class="error notice"><p>
                     We couldn\'t find your website settings. Please reset the API token in 
                     settings and re-add your website with your API Token.
@@ -292,7 +295,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
         $limit = $account_details['sc_limit'];
         $available_compares = $account_details['available_compares'];
 
-        if ($website_details['enable_limits']) {
+        if ($wcd->website_details['enable_limits']) {
             $account_details['usage'] = $comp_usage; // used in dashboard
             $account_details['plan']['sc_limit'] = $limit; // used in dashboard
         }
@@ -388,7 +391,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             ****************************/
 
             case 'webchangedetector-update-settings':
-                if ($website_details['enable_limits'] && ! $website_details['allow_manual_detection']) {
+                if ($wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection']) {
                     echo 'Settings for Update Change detections are disabled by your API Token.';
                     break;
                 }
@@ -494,7 +497,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
              **************************/
 
             case 'webchangedetector-auto-settings':
-                if ($website_details['enable_limits'] && ! $website_details['allow_auto_detection']) {
+                if ($wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_auto_detection']) {
                     echo 'Settings for Update Change detections are disabled by your API Token.';
                     break;
                 }
@@ -701,7 +704,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-                    } elseif (! $website_details['enable_limits']) {
+                    } elseif (! $wcd->website_details['enable_limits']) {
                         echo '<h2>Need more screenshots?</h2>';
                         echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
                         echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
