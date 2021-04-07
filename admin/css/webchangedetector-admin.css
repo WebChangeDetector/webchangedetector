@@ -6,6 +6,10 @@
     color: #3eb43e;
 }
 
+.webchangedetector .nav-tab-wrapper .group_icon:before {
+    font-size: 17px;
+}
+
 .webchangedetector .nav-tab.upgrade {
     color: #389f38;
 }
@@ -287,6 +291,10 @@
 .webchangedetector .mm_accordion_title small {
     padding-top: 10px;
     display: block;
+}
+.webchangedetector .accordion-post-types-url-amount {
+    float: right;
+    font-size: 16px;
 }
 
 .webchangedetector .mm_accordion_title .mm_accordion_content .toggle:nth-of-type(odd) {

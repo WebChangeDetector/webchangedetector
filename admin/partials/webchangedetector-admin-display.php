@@ -699,7 +699,82 @@ if (! function_exists('wcd_webchangedetector_init')) {
             case 'webchangedetector-settings':
                 ?>
                 <div class="action-container">
+                    <h2>Add Post Types</h2>
                     <?php
+                    $post_types = get_post_types(['public' => true],'objects');
+
+                    $available_post_types = [];
+                    foreach ($post_types as $post_type) {
+
+                        $show_type = false;
+                            foreach( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+                            if( $sync_url_type['post_type_slug'] == $post_type->rest_base ) {
+                                $show_type = true;
+                            }
+                        }
+                        if( !$show_type ) {
+                            $available_post_types[] = $post_type;
+                        }
+                    }
+                    if(!empty($available_post_types)) { ?>
+                        <form method="post">
+                            <input type="hidden" name="wcd_action" value="add_post_type">
+                            <select name="post_type">
+                        <?php
+                        foreach($available_post_types as $available_post_type) {
+                            $add_post_type = json_encode([
+                                [
+                                    "url_type_slug" =>"types",
+                                    "url_type_name" => "Post Types",
+                                    "post_type_slug" => $available_post_type->rest_base,
+                                    "post_type_name" => $available_post_type->label,
+                                ]
+                            ]); ?>
+                            <option value='<?= $add_post_type ?>'><?= $available_post_type->label ?></option>
+                        <?php } ?>
+                            </select>
+                            <input type="submit" class="button" value="Add">
+                        </form>
+                        <?php
+                    } ?>
+
+                    <h2>Add Taxonomies</h2>
+                    <?php
+                    $taxonomies = get_taxonomies(['public' => true],'objects');
+                    foreach ($taxonomies as $taxonomy) {
+
+                        $show_taxonomy = false;
+                        foreach( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+                            if( $sync_url_type['post_type_slug'] == $taxonomy->rest_base ) {
+                                $show_taxonomy = true;
+                            }
+                        }
+                        if( !$show_taxonomy ) {
+                            $available_taxonomies[] = $taxonomy;
+                        }
+                    }
+                    if(!empty($available_taxonomies)) { ?>
+                        <form method="post">
+                            <input type="hidden" name="wcd_action" value="add_post_type">
+                            <select name="post_type">
+                                <?php
+                                foreach($available_taxonomies as $available_taxonomy) {
+                                    $add_post_type = json_encode([
+                                        [
+                                            "url_type_slug" =>"taxonomies",
+                                            "url_type_name" => "Taxonomies",
+                                            "post_type_slug" => $available_taxonomy->rest_base,
+                                            "post_type_name" => $available_taxonomy->label,
+                                        ]
+                                    ]); ?>
+                                    <option value='<?= $add_post_type ?>'><?= $available_taxonomy->label ?></option>
+                                <?php } ?>
+                            </select>
+                            <input type="submit" class="button" value="Add">
+                        </form>
+                        <?php
+                    }
+
                     if (! $api_token) {
                         echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
@@ -715,8 +790,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 <div class="sidebar">
                     <div class="account-box">
                         <?php include 'templates/account.php'; ?>
-                </div>
-
+                    </div>
                 </div>
                 <div class="clear"></div>
                 <?php
