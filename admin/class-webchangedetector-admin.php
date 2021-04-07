@@ -644,6 +644,14 @@ class WebChangeDetector_Admin
                     'url_category' => $post_obj->label,
                 );
             }
+            if (! empty($array)) {
+                $args = array(
+                    'action' => 'sync_urls',
+                    'delete_missing_urls' => false,
+                    'posts' => json_encode($array),
+                );
+                return $this->mm_api($args);
+            }
         } else {
             // Get Post Types
             $post_types = get_post_types([], 'objects');
@@ -671,6 +679,7 @@ class WebChangeDetector_Admin
                         $args = [
                             'number' => '0',
                             'taxonomy' => $taxonomy->name,
+                            'hide_empty' => false,
                             //'post_status' => ['publish','inherit']
                         ];
                         //dd(get_terms($args));
@@ -728,8 +737,11 @@ class WebChangeDetector_Admin
                 }
             }
             if(!get_option("page_on_front")) {
+                $url = get_option("home");
+                $url = substr($url, strpos($url, "//") + 2);
+
                 $array[] = array(
-                    'url' => get_option("home"),
+                    'url' => $url,
                     'html_title' => "Home",
                     'cms_resource_id' => 0,
                     'url_type' => "frontpage",
@@ -952,6 +964,7 @@ class WebChangeDetector_Admin
             <?php } ?>
 
             <h2 style="margin-top: 50px;">Select URLs</h2>
+            <p style="text-align: center;">Add other post types and taxonomies at <a href="?page=webchangedetector-settings">Settings</a></p>
             <input type="hidden" value="webchangedetector" name="page">
             <input type="hidden" value="<?= esc_html($groups_and_urls['id']) ?>" name="group_id">
             <?php

@@ -696,11 +696,12 @@ if (! function_exists('wcd_webchangedetector_init')) {
              * Settings
              ***********/
 
-            case 'webchangedetector-settings':
-                ?>
-                <div class="action-container">
+            case 'webchangedetector-settings': ?>
+                <div class="action-container" style="text-align: center">
                     <h2>Add Post Types</h2>
                     <?php
+
+                    // Add post types
                     $post_types = get_post_types(['public' => true],'objects');
 
                     $available_post_types = [];
@@ -736,10 +737,16 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             <input type="submit" class="button" value="Add">
                         </form>
                         <?php
-                    } ?>
+                    } else { ?>
+                        <p>No more post types found</p>
+                    <?php } ?>
+
+                    <hr>
 
                     <h2>Add Taxonomies</h2>
                     <?php
+
+                    // Add Taxonomies
                     $taxonomies = get_taxonomies(['public' => true],'objects');
                     foreach ($taxonomies as $taxonomy) {
 
@@ -773,7 +780,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
                             <input type="submit" class="button" value="Add">
                         </form>
                         <?php
-                    }
+                    } else { ?>
+                        <p>No more taxonomies found</p>
+                    <?php } ?>
+                    <hr>
+                    <?php
 
                     if (! $api_token) {
                         echo '<div class="error notice">
