@@ -895,7 +895,6 @@ class WebChangeDetector_Admin
             <?php
             if(!$monitoring_group) { ?>
                 <input type="hidden" name="step" value="pre-update">
-                <h2>General Settings</h2>
                 <h2>Settings</h2>
                 <div class="accordion">
                     <div class="mm_accordion_title">
