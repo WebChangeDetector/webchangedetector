@@ -622,6 +622,41 @@ class WebChangeDetector_Admin
         $this->mm_api(array_merge(['action' => 'save_user_website'], $this->website_details));
     }
 
+    public function get_posts($posttype) {
+        $args = [
+            'post_type' => $posttype,
+            'post_status' => [ 'publish', 'inherit' ],
+            'numberposts' => -1,
+            'order' => 'ASC',
+            'orderby' => 'title'
+        ];
+        return get_posts($args);
+    }
+    public function get_terms($taxonomy) {
+        $args = [
+            'number' => '0',
+            'taxonomy' => $taxonomy,
+            'hide_empty' => false,
+            'wpml_language' => 'de'
+        ];
+
+        // Get terms for all languages if WPML is enabled
+        if (class_exists('SitePress')) {
+            $languages = apply_filters( 'wpml_active_languages', NULL);
+            $terms = [];
+            $current_language = apply_filters( 'wpml_current_language', null );
+            foreach($languages as $language) {
+                do_action( 'wpml_switch_language', $language['code']);
+                $terms = array_merge($terms, get_terms($args));
+            }
+            do_action( 'wpml_switch_language', $current_language);
+        } else {
+            $terms = get_terms($args);
+        }
+
+        return $terms;
+    }
+
     public function sync_posts($post_obj = false)
     {
         $array = array(); // init
@@ -659,31 +694,20 @@ class WebChangeDetector_Admin
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
                     if($sync_url_type['post_type_slug'] == $post_type->rest_base) {
 
-                        $args = [
-                            'numberposts' => '-1',
-                            'post_type' => $post_type->name,
-                            'post_status' => ['publish','inherit']
-                        ];
-                        $url_types['types'][$post_type->rest_base] = get_posts($args);
+                        $url_types['types'][$post_type->rest_base] = $this->get_posts($post_type->name);
+
                     }
                 }
             }
 
             // Get Taxonomies
             $taxonomies = get_taxonomies([], 'objects');
+
             foreach($taxonomies as $taxonomy) {
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
                     //dd($sync_url_type['post_type_slug'] . $taxonomy->rest_base);
                     if($sync_url_type['post_type_slug'] == $taxonomy->rest_base) {
-
-                        $args = [
-                            'number' => '0',
-                            'taxonomy' => $taxonomy->name,
-                            'hide_empty' => false,
-                            //'post_status' => ['publish','inherit']
-                        ];
-                        //dd(get_terms($args));
-                        $url_types['taxonomies'][$taxonomy->rest_base] = get_terms($args);
+                        $url_types['taxonomies'][$taxonomy->rest_base] = $this->get_terms($taxonomy->name);
                     }
                 }
             }
@@ -742,7 +766,7 @@ class WebChangeDetector_Admin
 
                 $array[] = array(
                     'url' => $url,
-                    'html_title' => "Home",
+                    'html_title' => get_option("blogname") . " - " . get_option("blogdescription"),
                     'cms_resource_id' => 0,
                     'url_type' => "frontpage",
                     'url_category' => "Frontpage",
@@ -1071,22 +1095,11 @@ class WebChangeDetector_Admin
                     }
                     switch($url_type) {
                         case 'types':
-                            $posts = get_posts( array(
-                                'post_type' => $url_category->name,
-                                'post_status' => [ 'publish', 'inherit' ],
-                                'numberposts' => -1,
-                                'order' => 'ASC',
-                                'orderby' => 'title'
-                            ) );
+                            $posts = $this->get_posts($url_category->name);
                             break;
 
                         case 'taxonomies':
-                            $args = [
-                                'number' => '0',
-                                'taxonomy' => $url_category->name,
-                                //'post_status' => ['publish','inherit']
-                            ];
-                            $posts = get_terms($args);
+                            $posts = $this->get_terms($url_category->name);
                             break;
 
                         default:
@@ -1244,7 +1257,6 @@ class WebChangeDetector_Admin
                     <?php
                 }
             }
-
                 if($monitoring_group) { ?>
                     <button
                             class="button button-primary"
