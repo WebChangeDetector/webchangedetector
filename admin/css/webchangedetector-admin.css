@@ -102,7 +102,7 @@
     border: 1px solid #A00000;
     color: #fff;
     border-radius: 3px;
-    padding: 5px 10px;
+    padding: 0px 10px;
 }
 
 .webchangedetector .button-delete:before {
@@ -111,6 +111,7 @@
 
 .webchangedetector .button-delete:hover {
     background: #A00000;
+    color: #fff;
     cursor: pointer;
 }
 

@@ -153,6 +153,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
             case 'add_post_type':
                 $wcd->add_post_type($_POST);
                 $wcd->sync_posts();
+                echo '<div class="notice notice-success"><p>' . json_decode(stripslashes($_POST['post_type']), true)[0]['post_type_name'] . ' added.</p></div>';
                 break;
 
             case 'update_detection_step':

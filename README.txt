@@ -45,6 +45,7 @@ You can not only track changes manually. The Auto Change Detection enables you t
 = 2.2.0 =
 * Fix: Bulk select in tables
 * Improvement: Simplify update detection wizard
+* Feature: Sync additional post types and taxonomies
 
 = 2.1.2 =
 * Fix: Update Detection not shown

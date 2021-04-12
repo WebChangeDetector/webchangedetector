@@ -11,16 +11,17 @@
     <div class="wcd-highlight-bg">
         <h2>Time For Updates</h2>
         <p>
-            You can leave this page and make updates or other changes on your website. When your are done, come back and
+            You can leave this page and make <a href="<?= admin_url() ?>update-core.php" >Updates</a> or other changes on your website. When your are done, come back and
             continue with the button below. <br>
-            <a href="<?= admin_url() ?>update-core.php" class="button button-secondary">Updates</a>
+
         </p>
+        <form method="post" >
+            <input type="hidden" name="wcd_action" value="update_detection_step">
+            <input type="hidden" name="step" value="post-update">
+            <input class="button button-primary" type="submit" value="Next >">
+        </form>
     </div>
 
-    <form method="post" style="margin-bottom: 30px;">
-        <input type="hidden" name="wcd_action" value="update_detection_step">
-        <input type="hidden" name="step" value="post-update">
-        <input class="button button-primary" type="submit" value="Next >">
-    </form>
+
     <?php include('update-step-cancel.php'); ?>
 </div>
