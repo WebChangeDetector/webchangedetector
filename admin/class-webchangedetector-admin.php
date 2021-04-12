@@ -300,20 +300,15 @@ class WebChangeDetector_Admin
         return false;
     }
 
-    public function account_details($api_token = false)
+    public function account_details()
     {
         static $account_details;
         if ($account_details && $account_details !== "unauthorized" && $account_details !== "activate account") {
             return $account_details;
         }
 
-        if(! $api_token) {
-            $api_token = get_option(WCD_WP_OPTION_KEY_API_TOKEN);
-        }
-
         $args = array(
             'action' => 'account_details',
-            'api_token' => $api_token,
         );
         $account_details = $this->mm_api($args);
         return $account_details;
@@ -853,16 +848,14 @@ class WebChangeDetector_Admin
      * @param string $api_token
      * @return array
      */
-    public function create_website_and_groups($api_token)
+    public function create_website_and_groups()
     {
         // Create group if it doesn't exist yet
         $args = array(
             'action' => 'add_website_groups',
             'cms' => 'wordpress',
-            'api_token' => $api_token
             // domain sent at mm_api
         );
-
         return $this->mm_api($args);
     }
 
@@ -1406,26 +1399,28 @@ class WebChangeDetector_Admin
         return ob_get_clean();
     }
 
-    public function get_website_details($skip_static = false)
+    public function set_website_details()
     {
-
         $args = array(
             'action' => 'get_website_details',
             // domain sent at mm_api
         );
-
         $this->website_details = $this->mm_api($args);
+
+        // If we don't have websites details yet, we create them. This happens after account activation
+        if (empty($this->website_details)) {
+            $this->create_website_and_groups();
+            $this->website_details = $this->mm_api($args);
+        }
 
         // Take the first website details or return error string
         if (is_array($this->website_details) && count($this->website_details) > 0) {
             $this->website_details = $this->website_details[0];
+
+            // Set default sync types if they are empty
+            $this->set_default_sync_types();
+            $this->website_details['sync_url_types'] = json_decode($this->website_details['sync_url_types'], true);
         }
-
-        // Set default sync types if they are empty
-        $this->set_default_sync_types();
-        $this->website_details['sync_url_types'] = json_decode($this->website_details['sync_url_types'], true);
-
-        return $this->website_details;
     }
 
     public function tabs()
@@ -1676,7 +1671,6 @@ class WebChangeDetector_Admin
 
         $post['wp_plugin_version'] = WebChangeDetector_VERSION; // API will check this to check compatability
         // there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;)
-        $post['domain'] = $_SERVER['SERVER_NAME'];
         $post['domain'] = $_SERVER['SERVER_NAME'];
         $post['wp_id'] = get_current_user_id();
 

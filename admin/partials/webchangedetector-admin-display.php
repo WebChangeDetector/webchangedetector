@@ -61,8 +61,8 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo $wcd->get_no_account_page();
                     return true;
                 }
-                $api_token = $_POST['api_token'];
-                $wcd->save_api_token($api_token);
+
+                $wcd->save_api_token($_POST['api_token']);
                 break;
 
             case 'save_api_token':
@@ -71,33 +71,25 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     echo $wcd->get_no_account_page();
                     return false;
                 }
-                $api_token = $_POST['api_token'];
+
                 $wcd->save_api_token($_POST['api_token']);
                 break;
         }
 
-        // If we didn't get the api token from an action we take it from options
-        if(empty($api_token)) {
-            $api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
-        }
-
         // Change api token option name from V1.0.7
-        if (! $api_token) {
-            $api_token = get_option('webchangedetector_api_key');
-            if ($api_token) {
-                delete_option('webchangedetector_api_key');
-                add_option(WCD_WP_OPTION_KEY_API_TOKEN, $api_token, '', false);
-            }
+        if (! get_option(WCD_WP_OPTION_KEY_API_TOKEN) && get_option('webchangedetector_api_key')) {
+            add_option(WCD_WP_OPTION_KEY_API_TOKEN, get_option('webchangedetector_api_key'), '', false);
+            delete_option('webchangedetector_api_key');
         }
 
         // We still don't have an api_token
-        if (! $api_token) {
+        if (! get_option(WCD_WP_OPTION_KEY_API_TOKEN)) {
             echo $wcd->get_no_account_page();
             return false;
         }
 
         // Get the account details
-        $account_details = $wcd->account_details($api_token);
+        $account_details = $wcd->account_details();
 
         // Check if plugin has to be updated
         if($account_details === 'update plugin') {
@@ -115,7 +107,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
         // Show low credits
         $usage_percent = (int)($account_details['usage'] / $account_details['sc_limit'] * 100);
-        //dd($usage_percent);
+
         if($usage_percent >= 100) {
             if( $account_details['plan']['one_time'] ) { // Check for trial account ?>
                 <div class="notice notice-error">
@@ -130,12 +122,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
             <div class="notice notice-warning"><p>You used <?= $usage_percent ?>% of your screenshots.</p></div>
         <?php }
 
-        // Get the website details
-        $wcd->website_details = $wcd->get_website_details();
-        // If we don't have websites details yet, we create them. This happens after account activation
-        if (! $wcd->website_details) {
-            $wcd->website_details = $wcd->create_website_and_groups($api_token);
-        }
+        // Set the website details class object
+        $wcd->set_website_details();
+
 
         // If we don't have the website for any reason we show an error message.
         if(empty($wcd->website_details)) { ?>
@@ -274,11 +263,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     We couldn\'t find your website settings. Please reset the API token in 
                     settings and re-add your website with your API Token.
                     </p><p>
-                    Your current API token is: <strong>' . $api_token . '</strong>.
+                    Your current API token is: <strong>' . get_option(WCD_WP_OPTION_KEY_API_TOKEN) . '</strong>.
                     </p>
                      <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
-                        <input type="hidden" name="api_token" value="' . $api_token . '">
+                        <input type="hidden" name="api_token" value="' . get_option(WCD_WP_OPTION_KEY_API_TOKEN) . '">
                         <input type="submit" class="button" value="Reset API token">
                     </form>
                     </p>
@@ -786,7 +775,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     <hr>
                     <?php
 
-                    if (! $api_token) {
+                    if (! get_option(WCD_WP_OPTION_KEY_API_TOKEN)) {
                         echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
@@ -795,7 +784,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
                         echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
                     }
-                    echo $wcd->get_api_token_form($api_token);
+                    echo $wcd->get_api_token_form(get_option(WCD_WP_OPTION_KEY_API_TOKEN));
                     ?>
                 </div>
                 <div class="sidebar">
