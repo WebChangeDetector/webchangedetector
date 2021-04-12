@@ -814,7 +814,7 @@ class WebChangeDetector_Admin
                         Your API Token: <strong>' . $api_token . '</strong></p>
                         <p>With resetting the API Token, auto detections still continue and your settings will 
                         be still available when you use the same api token with this website again.</p>
-                        <input type="submit" value="Reset API Token" class="button"><br>
+                        <input type="submit" value="Reset API Token" class="button button-delete"><br>
                         
                         <hr>
                         <h2>Delete Account</h2>

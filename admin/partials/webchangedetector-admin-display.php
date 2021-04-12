@@ -244,7 +244,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 <p>To use a different account, please reset the API token.
                     <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
-                        <input type="submit" value="Reset API token">
+                        <input type="submit" value="Reset API token" class="button button-delete">
                     </form>
                 </p>
             </div>';
@@ -269,7 +269,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                      <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         <input type="hidden" name="api_token" value="' . get_option(WCD_WP_OPTION_KEY_API_TOKEN) . '">
-                        <input type="submit" class="button" value="Reset API token">
+                        <input type="submit" class="button" value="Reset API token" class="button button-delete">
                     </form>
                     </p>
                    </div>';
