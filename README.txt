@@ -43,7 +43,7 @@ You can not only track changes manually. The Auto Change Detection enables you t
 == Changelog ==
 
 = 2.2.1 =
-* Fix: Sync post_types 
+* Fix: Sync post_types
 
 = 2.2.0 =
 * Fix: Bulk select in tables
