@@ -686,6 +686,12 @@ class WebChangeDetector_Admin
             // Get Post Types
             $post_types = get_post_types(['public' => true], 'objects');
             foreach($post_types as $post_type) {
+
+                // if rest_base is not set we use post_name (wp default)
+                if(!$post_type->rest_base) {
+                    $post_type->rest_base = $post_type->name;
+                }
+
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
                     if($post_type->rest_base &&$sync_url_type['post_type_slug'] == $post_type->rest_base) {
                         $url_types['types'][$post_type->rest_base] = $this->get_posts($post_type->name);
@@ -697,6 +703,11 @@ class WebChangeDetector_Admin
             $taxonomies = get_taxonomies([], 'objects');
 
             foreach($taxonomies as $taxonomy) {
+
+                // if rest_base is not set we use post_name (wp default)
+                if(!$taxonomy->rest_base) {
+                }
+
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
                     if($sync_url_type['post_type_slug'] == $taxonomy->rest_base) {
                         $url_types['taxonomies'][$taxonomy->rest_base] = $this->get_terms($taxonomy->name);
@@ -1075,6 +1086,11 @@ class WebChangeDetector_Admin
 
             foreach($url_types as $url_type => $url_categories) {
                 foreach( $url_categories as $url_category ) {
+
+                    // if rest_base is not set we use post_name (wp default)
+                    if(!$url_category->rest_base) {
+                        $url_category->rest_base = $url_category->name;
+                    }
 
                     $show_type = false;
                     foreach( $this->website_details['sync_url_types'] as $sync_url_type ) {
