@@ -685,13 +685,10 @@ class WebChangeDetector_Admin
         } else {
             // Get Post Types
             $post_types = get_post_types(['public' => true], 'objects');
-            //dd($post_types);
             foreach($post_types as $post_type) {
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
                     if($post_type->rest_base &&$sync_url_type['post_type_slug'] == $post_type->rest_base) {
-
                         $url_types['types'][$post_type->rest_base] = $this->get_posts($post_type->name);
-
                     }
                 }
             }
@@ -701,7 +698,6 @@ class WebChangeDetector_Admin
 
             foreach($taxonomies as $taxonomy) {
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
-                    //dd($sync_url_type['post_type_slug'] . $taxonomy->rest_base);
                     if($sync_url_type['post_type_slug'] == $taxonomy->rest_base) {
                         $url_types['taxonomies'][$taxonomy->rest_base] = $this->get_terms($taxonomy->name);
                     }
@@ -1084,7 +1080,6 @@ class WebChangeDetector_Admin
                     foreach( $this->website_details['sync_url_types'] as $sync_url_type ) {
                         if( $url_category->rest_base && $sync_url_type['post_type_slug'] == $url_category->rest_base ) {
                             $show_type = true;
-                            //echo "api: " . $sync_url_type['post_type_slug']  . " | WP: " . $url_category->rest_base . "<br>";
                         }
                     }
                     if( !$show_type ) {
