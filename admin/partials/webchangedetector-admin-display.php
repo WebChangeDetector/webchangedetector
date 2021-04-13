@@ -699,11 +699,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                         $show_type = false;
                             foreach( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-                            if( $sync_url_type['post_type_slug'] == $post_type->rest_base ) {
+                            if( $post_type->rest_base && $sync_url_type['post_type_slug'] == $post_type->rest_base ) {
                                 $show_type = true;
                             }
                         }
-                        if( !$show_type ) {
+                        if( $post_type->rest_base && !$show_type ) {
                             $available_post_types[] = $post_type;
                         }
                     }
@@ -742,11 +742,11 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                         $show_taxonomy = false;
                         foreach( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-                            if( $sync_url_type['post_type_slug'] == $taxonomy->rest_base ) {
+                            if( $taxonomy->rest_base && $sync_url_type['post_type_slug'] == $taxonomy->rest_base ) {
                                 $show_taxonomy = true;
                             }
                         }
-                        if( !$show_taxonomy ) {
+                        if( $taxonomy->rest_base && !$show_taxonomy ) {
                             $available_taxonomies[] = $taxonomy;
                         }
                     }

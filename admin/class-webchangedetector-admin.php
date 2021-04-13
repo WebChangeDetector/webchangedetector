@@ -684,10 +684,11 @@ class WebChangeDetector_Admin
             }
         } else {
             // Get Post Types
-            $post_types = get_post_types([], 'objects');
+            $post_types = get_post_types(['public' => true], 'objects');
+            //dd($post_types);
             foreach($post_types as $post_type) {
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
-                    if($sync_url_type['post_type_slug'] == $post_type->rest_base) {
+                    if($post_type->rest_base &&$sync_url_type['post_type_slug'] == $post_type->rest_base) {
 
                         $url_types['types'][$post_type->rest_base] = $this->get_posts($post_type->name);
 
@@ -986,8 +987,10 @@ class WebChangeDetector_Admin
             <input type="hidden" value="<?= esc_html($groups_and_urls['id']) ?>" name="group_id">
             <?php
 
+            // Get WP types and taxonomomies
             $url_types['types'] = get_post_types(['public' => true],'objects');
             $url_types['taxonomies'] = get_taxonomies(['public' => true],'objects');
+
             if(!get_option("page_on_front")){
 
                 // Check if current WP post ID is in synced_posts and get the url_id
@@ -1079,8 +1082,9 @@ class WebChangeDetector_Admin
 
                     $show_type = false;
                     foreach( $this->website_details['sync_url_types'] as $sync_url_type ) {
-                        if( $sync_url_type['post_type_slug'] == $url_category->rest_base ) {
+                        if( $url_category->rest_base && $sync_url_type['post_type_slug'] == $url_category->rest_base ) {
                             $show_type = true;
+                            //echo "api: " . $sync_url_type['post_type_slug']  . " | WP: " . $url_category->rest_base . "<br>";
                         }
                     }
                     if( !$show_type ) {
