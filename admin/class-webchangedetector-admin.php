@@ -706,6 +706,7 @@ class WebChangeDetector_Admin
 
                 // if rest_base is not set we use post_name (wp default)
                 if(!$taxonomy->rest_base) {
+                    $taxonomy->rest_base = $taxonomy->name;
                 }
 
                 foreach($this->website_details['sync_url_types'] as $sync_url_type ) {
