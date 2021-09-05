@@ -204,9 +204,8 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
         // Show local time in dropdowns
         var localDate = new Date();
+        var timeDiff = localDate.getTimezoneOffset() / 60;
 
-        var timeDiff = localDate.getTimezoneOffset();
-        timeDiff = (timeDiff / 60) ;
         $(".select-time").each( function(i, e) {
             let utcHour = parseInt($(this).val());
             let newDate = localDate.setHours(utcHour - timeDiff, 0);
@@ -226,7 +225,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         });
 
         // Replace date with local date
-        $(".local-date").each( function() {
+        $(".local-date").each( function(i,e) {
             if($(this).data("date")) {
                 $(this).text(getLocalDate($(this).data("date")));
             }
@@ -235,23 +234,24 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         // Set time until next screenshots
         var autoEnabled = parseInt($("#auto-enabled").val());
         var txtNextScIn = "No trackings active";
-        var nextScIn = false;
+        var nextScIn;
         var nextScDate = $("#next_sc_date").data("date");
-        $("#txt_next_sc_in").html("Currently");
-        $("#next_sc_date").html("");
         var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
 
+        $("#txt_next_sc_in").html("Currently");
+        $("#next_sc_date").html("");
+
         if(nextScDate && autoEnabled && amountSelectedTotal > 0) {
-            nextScIn = new Date(nextScDate * 1000);
-            nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60));
-            nextScIn = new Date(nextScIn - $.now());
+            let now = new Date($.now()); // summer/winter - time
+            nextScIn = new Date(nextScDate * 1000); // summer/winter - time
+            nextScIn = new Date(nextScIn - now); // normal time
+            nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60)); // add timezone offset to normal time
             var minutes = nextScIn.getMinutes() == 1 ? " Minute " : " Minutes ";
             var hours = nextScIn.getHours() == 1 ? " Hour " : " Hours ";
             txtNextScIn = nextScIn.getHours() + hours + nextScIn.getMinutes() + minutes;
             $("#next_sc_date").html(getLocalDateTime(nextScDate));
             $("#txt_next_sc_in").html("Next change detections in ");
         }
-
         $("#next_sc_in").html(txtNextScIn);
 
         var scUsage = $("#wcd_account_details").data("sc_usage");
@@ -300,7 +300,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                         currentlyProcessing.html(response);
 
                         // If the queue is done, show all done for 10 sec
-                        if (parseInt(response) === 0) {
+                        if (parseInt(response) === 0 || !response) {
                             currentlyProcessingSpinner.hide(); // hide spinner
 
                             // Replace message when everything is done

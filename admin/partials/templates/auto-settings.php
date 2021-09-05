@@ -31,8 +31,25 @@
             </select>
         </p>
         <p class="auto-setting toggle">
+            <?php $account_details = $this->account_details();
+            $show_minute_intervals = false;
+            if($account_details['plan']['id'] > 2 && $account_details['plan_id'] !== 8) {
+                $show_minute_intervals = true;
+            } ?>
             <label for="interval_in_h" class="auto-setting">Interval in hours</label>
             <select name="interval_in_h" class="auto-setting">
+                <option value="0.25"
+                    <?= !$show_minute_intervals ?'disabled ' : '' ?>
+                    <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '0.25' ? 'selected' : ''; ?>
+                    <?= ! isset($groups_and_urls['interval_in_h']) ? 'selected' : '' ?>>
+                    Every 15 minutes <?= !$show_minute_intervals ?'("Freelancer" plan or higher)' : '' ?>
+                </option>
+                <option value="0.5"
+                    <?= !$show_minute_intervals ?'disabled ' : '' ?>
+                    <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == '0.5' ? 'selected' : ''; ?>
+                    <?= ! isset($groups_and_urls['interval_in_h']) ? 'selected' : '' ?>>
+                    Every 30 minutes <?= !$show_minute_intervals ?'("Freelancer" plan or higher)' : '' ?>
+                </option>
                 <option value="1" <?= isset($groups_and_urls['interval_in_h']) && $groups_and_urls['interval_in_h'] == 1 ? 'selected' : ''; ?>>
                     Every 1 hour
                 </option>

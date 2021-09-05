@@ -2,7 +2,7 @@
 Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
-Tested up to: 5.7
+Tested up to: 5.8
 Stable tag: 2.2.1
 Requires PHP: 7.0
 License: GPLv2 or later
@@ -41,6 +41,10 @@ You can not only track changes manually. The Auto Change Detection enables you t
 5. Now you can start checking your webpages
 
 == Changelog ==
+
+= 2.2.2 =
+* Feature: Intervals of 15min and 30 min
+* Fix: Finish update change detections
 
 = 2.2.1 =
 * Fix: Sync post_types

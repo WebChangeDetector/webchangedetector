@@ -494,54 +494,86 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
-                $hour_of_day = $groups_and_urls['hour_of_day'];
-                $interval = $groups_and_urls['interval_in_h'];
-
-                for($i=0; $i < 24/$interval; $i++) {
-                    $current_hour = $hour_of_day + $i * $interval;
-                    $sc_hours[] = $current_hour > 23 ? $current_hour - 24 : $current_hour;
-                }
-
                 // Calculation for auto detections
                 $date_next_sc = false;
+                $next_sc_in = false;
+                if($groups_and_urls['monitoring']) {
 
-                $next_possible_sc = gmmktime(gmdate("H") + 1,0,0, gmdate("m"), gmdate("d"), gmdate("Y"));
-                $amount_sc_per_day = (24 / $interval);
+                    $amount_sc_per_day = 0;
+                    // Check for intervals >= 1h
+                    if($groups_and_urls['interval_in_h'] >= 1) {
+                        $next_possible_sc = gmmktime(gmdate("H")+1,0,0,gmdate("m"),gmdate("d"),gmdate("Y"));
+                        $amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
+                        $possible_hours = [];
+                        // Get possible tracking hours
+                        for ($i = 0; $i <= $amount_sc_per_day * 2; $i++) {
+                            $possible_hour = $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'];
+                            $possible_hours[] = $possible_hour >= 24 ? $possible_hour - 24 : $possible_hour;
+                        }
+                        sort($possible_hours);
 
-                // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
-                for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
-                    $time_take_sc = gmmktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, gmdate( "m" ), gmdate( "d" ) - 1, gmdate( "Y" ) );
+                        // Check for today and tomorrow
+                        for ($ii = 0; $ii <= 1; $ii++) { // Do 2 loops for today and tomorrow
+                            for ($i = 0; $i <= $amount_sc_per_day * 2; $i++) {
+                                $possible_time = gmmktime($possible_hours[$i], 0, 0, gmdate("m"), gmdate("d") + $ii, gmdate("Y"));
 
-                    // If we don't have a date yet take the first which is in the future
-                    // If we have a date we check if the current one is closer in the future
-                    if( ( !$date_next_sc && $time_take_sc >= $next_possible_sc ) || ( $date_next_sc > $time_take_sc && $time_take_sc >= $next_possible_sc ) ) {
-                        $date_next_sc = $time_take_sc;
+                                if ($possible_time >= $next_possible_sc) {
+                                    $date_next_sc = $possible_time; // This is the next possible time. So we break here.
+                                    break;
+                                }
+                            }
+                            // Dont check for tomorrow if we found the next date today
+                            if ($date_next_sc) {
+                                break;
+                            }
+                        }
                     }
-                }
 
-                // Calculate total change detections
-                $date_next_renewal = strtotime( $account_details['renewal_at'] );
-                $total_sc_current_period = 0;
-                $date_next_sc = false;
-                $next_possible_sc = gmmktime( gmdate( "H" ) + 1, 0, 0, gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ) );
-                $amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
-
-                // We check all dates from selected start hour yesterday until tomorrow (amount_sc_per_day * 3)
-                for( $i = 0; $i <= $amount_sc_per_day * 3; $i++ ) {
-                    $time_take_sc = gmmktime( $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'], 0, 0, gmdate( "m" ), gmdate( "d" ) - 1, gmdate( "Y" ) );
-
-                    // If we don't have a date yet take the first which is in the future
-                    // If we have a date we check if the current one is closer in the future
-                    if( ( !$date_next_sc && $time_take_sc >= $next_possible_sc ) ) {
-                        $date_next_sc = $time_take_sc;
+                    // Check for 30 min intervals
+                    if($groups_and_urls['interval_in_h'] === 0.5) {
+                        $amount_sc_per_day = 48;
+                        if( gmdate("i") < 30) {
+                            $date_next_sc = gmmktime(gmdate("H"),30,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
+                        } else {
+                            $date_next_sc = gmmktime(gmdate("H") +1,0,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
+                        }
                     }
-                }
+                    // Check for 15 min intervals
+                    if($groups_and_urls['interval_in_h'] === 0.25) {
+                        $amount_sc_per_day = 96;
+                        if( gmdate("i") < 15) {
+                            $date_next_sc = gmmktime(gmdate("H"),15,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
+                        } elseif(gmdate("i") < 30) {
+                            $date_next_sc = gmmktime(gmdate("H"),30,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
+                        } elseif(gmdate("i") < 45) {
+                            $date_next_sc = gmmktime(gmdate("H"),45,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
+                        } else {
+                            $date_next_sc = gmmktime(gmdate("H") + 1,0,0,gmdate( "m" ), gmdate( "d" ), gmdate( "Y" ));
 
-                // Calculate total screenshots until renewal
-                $total_date_next_sc = $date_next_sc;
-                while( $date_next_renewal >= $total_date_next_sc ) {
-                    $total_sc_current_period++;
-                    $total_date_next_sc = $total_date_next_sc + $groups_and_urls['interval_in_h'] * 3600;
+                        }
+                    }
+
+                    // Calculate screenshots until renewal
+                    $account = $wcd->account_details();
+
+                    $days_until_renewal = date("d", date("U", strtotime($account['renewal_at'])) - date("U"));
+                    $amount_group_sc_per_day = $groups_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
+
+                    // Get first detection hour
+                    $first_hour_of_interval = $groups_and_urls['hour_of_day'];
+                    while($first_hour_of_interval - $groups_and_urls['interval_in_h'] >= 0) {
+                        $first_hour_of_interval = $first_hour_of_interval - $groups_and_urls['interval_in_h'];
+                    }
+
+                    // Count up in interval_in_h to current hour
+                    $skip_sc_count_today = 0;
+                    while($first_hour_of_interval + $groups_and_urls['interval_in_h'] <= date("H")) {
+                        $first_hour_of_interval = $first_hour_of_interval + $groups_and_urls['interval_in_h'];
+                        $skip_sc_count_today++;
+                    }
+
+                    // Subtract screenshots already taken today
+                    $total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $groups_and_urls['amount_selected_urls'];
                 }
                 ?>
 

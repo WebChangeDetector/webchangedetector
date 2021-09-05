@@ -349,10 +349,10 @@ class WebChangeDetector_Admin
         $monitoring_settings = $this->get_monitoring_settings($monitoring_group_id);
 
         $args = array(
-            'action' => 'update_monitoring_settings',
+            'action' => 'update_group',
             'group_id' => sanitize_key($monitoring_group_id),
             'hour_of_day' => ! isset($postdata['hour_of_day']) ? $monitoring_settings['hour_of_day'] : sanitize_key($postdata['hour_of_day']),
-            'interval_in_h' => ! isset($postdata['interval_in_h']) ? $monitoring_settings['interval_in_h'] : sanitize_key($postdata['interval_in_h']),
+            'interval_in_h' => ! isset($postdata['interval_in_h']) ? $monitoring_settings['interval_in_h'] : sanitize_text_field($postdata['interval_in_h']),
             'monitoring' => 1,
             'enabled' => ! isset($postdata['enabled']) ? $monitoring_settings['enabled'] : sanitize_key($postdata['enabled']),
             'alert_emails' => ! isset($postdata['alert_emails']) ? $monitoring_settings['alert_emails'] : sanitize_textarea_field($postdata['alert_emails']),
