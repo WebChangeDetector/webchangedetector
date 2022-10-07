@@ -378,10 +378,12 @@ class WebChangeDetector_Admin
 
     public function get_upgrade_url() {
         $account_details = $this->account_details();
-        if(! empty($account_details['whmcs_service_id'])) {
-            return $this->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] ;
+
+        if(empty($account_details['whmcs_service_id'])) {
+            return false; //@TODO error message for missing whmcs_service_id
         }
-        return false;
+
+        return $this->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'] ;
     }
 
     /**
@@ -1618,7 +1620,7 @@ class WebChangeDetector_Admin
                 </p>
             </div>
             <?php
-            //echo $this->get_no_account_page();
+            echo $this->get_no_account_page();
         }
 
         return false;

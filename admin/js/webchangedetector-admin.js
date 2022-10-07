@@ -243,7 +243,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
         if(nextScDate && autoEnabled && amountSelectedTotal > 0) {
             let now = new Date($.now()); // summer/winter - time
-            nextScIn = new Date(nextScDate * 1000); // summer/winter - time
+            nextScIn = new Date(nextScDate * 1000); // format time
             nextScIn = new Date(nextScIn - now); // normal time
             nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60)); // add timezone offset to normal time
             var minutes = nextScIn.getMinutes() == 1 ? " Minute " : " Minutes ";

@@ -823,7 +823,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     } elseif (! $wcd->website_details['enable_limits']) {
                         echo '<h2>Need more screenshots?</h2>';
                         echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
-                        echo '<a class="button" href="' . $wcd->app_url() . '/upgrade/?id=' . $account_details['whmcs_service_id'] . '">Upgrade</a>';
+                        echo '<a class="button" href="' . $wcd->get_upgrade_url() . '">Upgrade</a>';
                     }
                     echo $wcd->get_api_token_form(get_option(WCD_WP_OPTION_KEY_API_TOKEN));
                     ?>
