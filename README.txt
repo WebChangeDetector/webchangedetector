@@ -8,29 +8,41 @@ Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Check your website after updates to see if something broke. Check your website automatically in
+Check your website after updates to see if something broke with visual regression tests. Or monitor your website in
 intervals and get notified about any change.
 
 == Description ==
-**The #1 Change Detector For WordPress**
+**The #1 Visual Regression Test Tool For WordPress**
 
-With WebChangeDetector you can check your website **before and after updates , installing new plugins, pagespeed optimization or doing other customisations like CSS changes**. See all differences **marked in a screenshot**.
-Compare your website before and after the changes. We mark changes in a new screenshot. Next to the compare screenshot you can compare the before and after screenshot in a slider.
-Now you can make sure your website looks the way you want after changes – and fix anything that does not, before your visitors do.
+With WebChangeDetector you can find any difference on your website
+*   after installing updates,
+*   after installing new plugins,
+*   after pagespeed optimization,
+*   after CSS changes or
+*   any other customization on your WordPress website.
 
-*   **Save troubles** with your visitors by letting us check your website after updates – for desktop and mobile screen sizes.
+See all differences **highlighted in a new screenshot** to easily compare your website before and after the changes.
+With our visual regression tests for WordPress you can make sure your website looks like it should, and fix anything which looks wrong, before your visitors see the issues.
+
+** Why You Should Use WebChangeDetector **
+*   **Save trouble** by letting us check your website for changes after installing updates.
 *   **Save time** with checking all pages yourself after some changes.
 *   **Don’t miss sales** because of overlooking issues on your site.
 
-You can not only track changes manually. The Auto Change Detection enables you to automatically track changes on every page on your WordPress site. If something changes, we will send you a notification so you can make sure everything looks at it should.
-
-*   Start for free with **50 change detections per month**.
+** What You Can Do With Visual Regression Tests of WebChangeDetector **
 *   Run a change detection to see changes before and after updates at your website.
-*   Set **automatic trackings** in intervals, from 1 hour up to 24 hours.
+*   Set **Monitorings** in intervals which automatically detects changes.
+*   Receive **email alerts** for visual regression test results and check the changes.
 *   Check **desktop and mobile** screen sizes.
-*   Receive an **email alerts** for change detections and check the changes.
-*   Send only alert emails when changes above the threshold settings are detected.
+*   Set a threshold for how much
 *   **Share the change detection link** with your web designer to fix issues.
+
+** Free Plan Limitations **
+*   Get **50 screenshots per month** for the visual regression tests.
+*   Monitoring only works in 24h intervals.
+
+** Premium Plans **
+Get more screenshots and lower monitoring intervals with our premium plans. You find them at [www.webchangedetector.com/pricing/](https://www.webchangedetector.com/pricing/ "WebChangeDetector Pricing").
 
 == Installation ==
 
@@ -38,7 +50,7 @@ You can not only track changes manually. The Auto Change Detection enables you t
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Create a free account by filling the signup form
 4. Activate your account by clicking the 'Activate Account' button in the email we sent you
-5. Now you can start checking your webpages
+5. Now you can start your visual regression tests
 
 == Changelog ==
 
