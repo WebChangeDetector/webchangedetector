@@ -346,9 +346,9 @@ if (! function_exists('wcd_webchangedetector_init')) {
                         </select>
 
                         <select name="group_type" >
-                            <option value="" <?= ! $group_type ? 'selected' : '' ?>>Auto & Update Detections</option>
-                            <option value="update" <?= $group_type === 'update' ? 'selected' : '' ?>>Only Update Change Detections</option>
-                            <option value="auto" <?= $group_type === 'auto' ? 'selected' : '' ?>>Only Auto Change Detections</option>
+                            <option value="" <?= ! $group_type ? 'selected' : '' ?>>Monitoring & Manual Checks</option>
+                            <option value="update" <?= $group_type === 'update' ? 'selected' : '' ?>>Only Manual Checks</option>
+                            <option value="auto" <?= $group_type === 'auto' ? 'selected' : '' ?>>Only Monitoring</option>
                         </select>
 
                         <select name="difference_only" class="js-dropdown">
@@ -394,7 +394,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 if(! $groups_and_urls['amount_selected_urls']) {
                     $step = WCD_OPTION_UPDATE_STEP_SETTINGS
                     ?>
-                    <div class="notice notice-warning"><p>Select URLs for update detection to get started.</p></div>
+                    <div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
                 <?php } ?>
 
                 <div class="action-container">
@@ -494,7 +494,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 $groups_and_urls = $wcd->get_urls_of_group($monitoring_group_id);
 
-                // Calculation for auto detections
+                // Calculation for monitoring
                 $date_next_sc = false;
                 $next_sc_in = false;
                 if($groups_and_urls['monitoring']) {
@@ -626,7 +626,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                 $type_nice_name = array(
                     'pre' => 'Reference Screenshot',
                     'post' => 'Compare Screenshot',
-                    'auto' => 'Auto Detection',
+                    'auto' => 'Monitoring',
                     'compare' => 'Change Detection',
                 );
                 ?>
@@ -645,7 +645,7 @@ if (! function_exists('wcd_webchangedetector_init')) {
                     if (! empty($queues) && is_iterable($queues)) {
 
                         foreach ($queues as $queue) {
-                            $group_type = $queue['monitoring'] ? 'Auto Change Detection' : 'Update Change Detection';
+                            $group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
                             echo '<tr class="queue-status-' . $queue['status'] . '">';
                             echo '<td>' . $wcd->get_device_icon($queue['device']) . '</td>';
                             echo '<td>

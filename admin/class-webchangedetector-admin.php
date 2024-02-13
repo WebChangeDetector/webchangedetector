@@ -183,16 +183,16 @@ class WebChangeDetector_Admin
         );
         add_submenu_page(
             'webchangedetector',
-            'Update Detection',
-            'Update Detection',
+            'Manual Checks',
+            'Manual Checks',
             'manage_options',
             'webchangedetector-update-settings',
             'wcd_webchangedetector_init'
         );
         add_submenu_page(
             'webchangedetector',
-            'Auto Detection',
-            'Auto Detection',
+            'Monitoring',
+            'Monitoring',
             'manage_options',
             'webchangedetector-auto-settings',
             'wcd_webchangedetector_init'
@@ -378,12 +378,7 @@ class WebChangeDetector_Admin
 
     public function get_upgrade_url() {
         $account_details = $this->account_details();
-
-        if(empty($account_details['whmcs_service_id'])) {
-            return false; //@TODO error message for missing whmcs_service_id
-        }
-
-        return $this->app_url() . 'account/upgrade/?type=package&id=' . $account_details['whmcs_service_id'] ;
+        return $this->billing_url() . '?secret=' . $account_details["magic_login_secret"] ;
     }
 
     /**
@@ -424,10 +419,10 @@ class WebChangeDetector_Admin
             return '<span class="group_icon ' . $class . ' dashicons dashicons-editor-help"></span>';
         }
         if ($icon == 'auto-group') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons-video-alt"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-clock"></span>';
         }
         if ($icon == 'update-group') {
-            return '<span class="group_icon ' . $class . ' dashicons dashicons-camera"></span>';
+            return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-page"></span>';
         }
         if ($icon == 'trash') {
             return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
@@ -506,7 +501,7 @@ class WebChangeDetector_Admin
                     } ?>
                     </strong>
                     <?= $this->get_device_icon($compare['screenshot1']['device']) . $compare['screenshot1']['url'] ?><br>
-                    <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Auto Detection' : $this->get_device_icon('update-group') . 'Update Detection'?>
+                    <?= $compare['screenshot2']['sc_type'] === 'auto' ? $this->get_device_icon('auto-group') . 'Monitoring' : $this->get_device_icon('update-group') . 'Manual Checks'?>
                 </td>
                 <td>
                     <div class="local-time" data-date="<?= $compare['image1_timestamp'] ?>"></div>
@@ -939,7 +934,7 @@ class WebChangeDetector_Admin
                 <div class="accordion">
                     <div class="mm_accordion_title">
                         <h3>
-                            Update Detection Settings<br>
+                            Manual Checks Settings<br>
                             <small>
                                 Threshold: <strong><?= $groups_and_urls['threshold'] ?> %</strong>
                                 | CSS injection: <strong><?= $groups_and_urls['css'] ? 'yes' : 'no' ?></strong>
@@ -953,18 +948,18 @@ class WebChangeDetector_Admin
                 </div>
 
             <?php } else { ?>
-                <!-- Auto Detection Settings -->
+                <!-- Monitoring Settings -->
                 <h2>Settings</h2>
                 <div class="accordion" style="margin-bottom: 40px;">
                     <div class="mm_accordion_title" id="accordion-auto-detection-settings">
                         <h3>
-                            Auto Detection Settings<br>
+                            Monitoring Settings<br>
                             <small>
                                 <?php
                                 $enabled = $groups_and_urls['enabled'];
                                 if($enabled) {
                                     ?>
-                                    Auto Detection: <strong style="color: green;">Enabled</strong>
+                                    Monitoring: <strong style="color: green;">Enabled</strong>
                                     | Interval: <strong>
                                         every
                                         <?= $groups_and_urls['interval_in_h'] ?>
@@ -980,7 +975,7 @@ class WebChangeDetector_Admin
                                     </strong>
                                     <?php
                                 } else { ?>
-                                    Auto Detection: <strong style="color: red">Disabled</strong>
+                                    Monitoring: <strong style="color: red">Disabled</strong>
                                 <?php } ?>
                             </small>
                         </h3>
@@ -1283,7 +1278,7 @@ class WebChangeDetector_Admin
                             value="post_urls_update_and_auto"
                             style="margin-left: 10px;"
                             onclick="return wcdValidateFormAutoSettings()">
-                        Save & copy to update detection
+                        Save & copy to manual checks
                     </button>
                 <?php } else {
 
@@ -1309,7 +1304,7 @@ class WebChangeDetector_Admin
                             name="wcd_action"
                             value="post_urls_update_and_auto"
                             style="margin-left: 10px;">
-                        Save & copy to auto detection
+                        Save & copy to monitoring
                     </button>
                 <?php } ?>
             </form>
@@ -1363,7 +1358,7 @@ class WebChangeDetector_Admin
             isset($monitoring_group_settings) &&
             $website_details['sc_limit'] < $count_selected * (WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * WCD_DAYS_PER_MONTH &&
             $website_details['auto_detection_group_id'] == $group_id_website_details) {
-            echo '<div class="error notice"><p>The limit for auto change detection is ' .
+            echo '<div class="error notice"><p>The limit for monitorings is ' .
                 esc_html($website_details['sc_limit']) . '. per month.
                             You selected ' . $count_selected * (WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h']) * WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
         } else {
@@ -1401,6 +1396,7 @@ class WebChangeDetector_Admin
                         <input type="text" name="name_last" placeholder="Last Name" value="<?= $_POST['name_last'] ?? wp_get_current_user()->user_lastname ?>" required>
                         <input type="email" name="email" placeholder="Email" value="<?= $_POST['email'] ?? wp_get_current_user()->user_email ?>" required>
                         <input type="password" name="password" placeholder="Password" required>
+                        <input type="checkbox" name="marketingoptin" checked style="width: 10px; display: inline-block;"> Send me news about WebChangeDetector
 
                         <input type="submit" class="button-primary" value="Create Free Account">
                     </form>
@@ -1457,11 +1453,11 @@ class WebChangeDetector_Admin
                 </a>
                 <a href="?page=webchangedetector-update-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
-                    <?= $this->get_device_icon('update-group') ?> Update Detection
+                    <?= $this->get_device_icon('update-group') ?> Manual Checks
                 </a>
                 <a href="?page=webchangedetector-auto-settings"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
-                    <?= $this->get_device_icon('auto-group') ?> Auto Detection
+                    <?= $this->get_device_icon('auto-group') ?> Monitoring
                 </a>
                 <a href="?page=webchangedetector-change-detections"
                    class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
@@ -1502,7 +1498,7 @@ class WebChangeDetector_Admin
                             <?= $this->get_device_icon('update-group') ?>
                         </div>
                         <div style="float: left; max-width: 350px;">
-                            <strong>Update Detection</strong><br>
+                            <strong>Manual Checks</strong><br>
                             Create change detections manually
                         </div>
                         <div class="clear"></div>
@@ -1512,7 +1508,7 @@ class WebChangeDetector_Admin
                             <?= $this->get_device_icon('auto-group') ?>
                         </div>
                         <div style="float: left; max-width: 350px;">
-                            <strong>Auto Detection</strong><br>
+                            <strong>Monitoring</strong><br>
                             Create automatic change detections
                         </div>
                         <div class="clear"></div>
@@ -1637,6 +1633,19 @@ class WebChangeDetector_Admin
             return WCD_APP_DOMAIN;
         }
         return 'https://www.webchangedetector.com/';
+    }
+
+    /**
+     * App Domain can be set outside this plugin for development
+     *
+     * @return string
+     */
+    public function billing_url()
+    {
+        if (defined('WCD_BILLING_DOMAIN') && is_string(WCD_BILLING_DOMAIN) && ! empty(WCD_BILLING_DOMAIN)) {
+            return WCD_BILLING_DOMAIN;
+        }
+        return $this->app_url() . 'billing/';
     }
 
     /**

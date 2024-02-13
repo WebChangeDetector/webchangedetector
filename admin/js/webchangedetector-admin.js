@@ -154,9 +154,9 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             return confirm( "Please confirm to create change detections.");
         });
 
-        // Confirm cancel update detection
+        // Confirm cancel manual checks
         $('#frm-cancel-update-detection').submit(function() {
-            return confirm( "Are you sure you want to cancel the update detection?");
+            return confirm( "Are you sure you want to cancel the manual checks?");
         });
 
         // Change bg color of comparison percentages
@@ -367,7 +367,7 @@ function mmToggle(source, postType, column, groupId) {
  */
 function wcdValidateFormAutoSettings() {
 
-    // Check if auto detection are enabled.
+    // Check if monitoring is enabled.
     var autoDetectionEnabled = document.getElementById("auto-enabled").value;
 
     if(! parseInt(autoDetectionEnabled)) {

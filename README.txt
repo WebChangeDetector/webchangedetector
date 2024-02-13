@@ -2,8 +2,8 @@
 Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
-Tested up to: 6.2
-Stable tag: 2.2.3
+Tested up to: 6.4.3
+Stable tag: 2.3.0
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -41,6 +41,12 @@ You can not only track changes manually. The Auto Change Detection enables you t
 5. Now you can start checking your webpages
 
 == Changelog ==
+
+= 2.3.0 =
+* Improvement: Integration of new account structure
+* Improvement: Changed names for screenshot types
+* Test: Current WordPress Version
+* Test: Current PHP Version
 
 = 2.2.3 =
 * Fix: Upgrade Link
@@ -150,12 +156,12 @@ You can not only track changes manually. The Auto Change Detection enables you t
 == Screenshots ==
 1. Show Change Detection: Check the changes before and after updates
 2. Dashboard:  Show the latest change detections and account information
-3. Update Detection: Select the pages to check and inject CSS for e.g. to hide dynamic content
-4. Update Detection: Start the pre-update screenshots of the selected pages
-5. Update Detection: Taking screenshots is in progress
-6. Update Detection: Make Updates or other changes on the website
-7. Update Detection: Create post-update screenshots and compare them with the pre-update screenshots
-8. Update Detection: Overview of all changed pages during the update detection
+3. Manual Checks: Select the pages to check and inject CSS for e.g. to hide dynamic content
+4. Manual Checks: Start the pre-update screenshots of the selected pages
+5. Manual Checks: Taking screenshots is in progress
+6. Manual Checks: Make Updates or other changes on the website
+7. Manual Checks: Create post-update screenshots and compare them with the pre-update screenshots
+8. Manual Checks: Overview of all changed pages during the update detection
 9. Change Detections: Overview of all change detections with filter options
-10. Auto Detection: Select pages to check automatically in intervals from 1h up to 24h
+10. Monitoring: Select pages to check automatically in intervals from 1h up to 24h
 11. Logs: See all screenshots and change detections which were created

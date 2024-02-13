@@ -464,7 +464,7 @@
 
 
 /**************
-Auto Detection
+Monitoring
  **************/
 .webchangedetector .status_bar #sc_until_renew.exceeding,
 .webchangedetector .status_bar #sc_available_until_renew.exceeding,
@@ -473,7 +473,7 @@ Auto Detection
 }
 
 /***************
-Update Detection
+Manual Checks
  ***************/
 
 .webchangedetector .step-button {
