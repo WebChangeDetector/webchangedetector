@@ -378,6 +378,9 @@ class WebChangeDetector_Admin
 
     public function get_upgrade_url() {
         $account_details = $this->account_details();
+        if(!is_array($account_details)) {
+            return false;
+        }
         return $this->billing_url() . '?secret=' . $account_details["magic_login_secret"] ;
     }
 

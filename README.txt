@@ -2,19 +2,18 @@
 Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
-Tested up to: 6.4.3
-Stable tag: 2.3.0
+Tested up to: 6.5.2
+Stable tag: 2.3.1
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Check your website after updates to see if something broke with visual regression tests. Or monitor your website in
-intervals and get notified about any change.
-
 == Description ==
-**The #1 Visual Regression Test Tool For WordPress**
+## The #1 Visual Regression Test Tool For WordPress
 
+Check your website after updates to see if something broke with visual regression tests. Or monitor your website in intervals and get notified about any change.
 With WebChangeDetector you can find any difference on your website
+
 *   after installing updates,
 *   after installing new plugins,
 *   after pagespeed optimization,
@@ -24,12 +23,12 @@ With WebChangeDetector you can find any difference on your website
 See all differences **highlighted in a new screenshot** to easily compare your website before and after the changes.
 With our visual regression tests for WordPress you can make sure your website looks like it should, and fix anything which looks wrong, before your visitors see the issues.
 
-** Why You Should Use WebChangeDetector **
+### Why You Should Use WebChangeDetector
 *   **Save trouble** by letting us check your website for changes after installing updates.
 *   **Save time** with checking all pages yourself after some changes.
 *   **Don’t miss sales** because of overlooking issues on your site.
 
-** What You Can Do With Visual Regression Tests of WebChangeDetector **
+### What You Can Do With Visual Regression Tests of WebChangeDetector
 *   Run a change detection to see changes before and after updates at your website.
 *   Set **Monitorings** in intervals which automatically detects changes.
 *   Receive **email alerts** for visual regression test results and check the changes.
@@ -37,11 +36,11 @@ With our visual regression tests for WordPress you can make sure your website lo
 *   Set a threshold for how much
 *   **Share the change detection link** with your web designer to fix issues.
 
-** Free Plan Limitations **
+### Free Plan Limitations
 *   Get **50 screenshots per month** for the visual regression tests.
 *   Monitoring only works in 24h intervals.
 
-** Premium Plans **
+### Premium Plans
 Get more screenshots and lower monitoring intervals with our premium plans. You find them at [www.webchangedetector.com/pricing/](https://www.webchangedetector.com/pricing/ "WebChangeDetector Pricing").
 
 == Installation ==
@@ -53,6 +52,10 @@ Get more screenshots and lower monitoring intervals with our premium plans. You 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 2.3.1 =
+* Fix: Signup process
+* Test: Current WordPress version
 
 = 2.3.0 =
 * Improvement: Integration of new account structure
