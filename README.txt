@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
 Tested up to: 6.5.2
-Stable tag: 2.3.1
+Stable tag: 2.3.3
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,13 @@ Get more screenshots and lower monitoring intervals with our premium plans. You 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 2.3.3 =
+* Show updated pricing calculations
+* Fix when API is down
+
+= 2.3.2 =
+* Fix: Activating mobile pages
 
 = 2.3.1 =
 * Fix: Signup process
@@ -147,7 +154,7 @@ Get more screenshots and lower monitoring intervals with our premium plans. You 
 * Improvement: Only show change detections with differences
 * Improvement: Show icons for devices
 * Feature: Show queue for currently processing urls and already processed ones
-* Feature: Pre- and post update change detections for less unnecessary compares
+* Feature: Pre- and post-update change detections for less unnecessary compares
 * Feature: Filter showing change detections by days
 
 = 1.0.5 =

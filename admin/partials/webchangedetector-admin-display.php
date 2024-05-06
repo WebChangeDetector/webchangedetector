@@ -104,6 +104,15 @@ if (! function_exists('wcd_webchangedetector_init')) {
             return false;
         }
 
+        // Show error message if we didn't get response from API
+        if(empty($account_details)) {
+            echo "<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
+                    <h1>Oooops!</h1>
+                    <p>Something went wrong. We're already working on the issue. <br>
+                    Please check again later.</p>
+                  </div>";
+            exit;
+        }
 
         // Show low credits
         $usage_percent = (int)($account_details['usage'] / $account_details['sc_limit'] * 100);
@@ -111,15 +120,15 @@ if (! function_exists('wcd_webchangedetector_init')) {
         if($usage_percent >= 100) {
             if( $account_details['plan']['one_time'] ) { // Check for trial account ?>
                 <div class="notice notice-error">
-                    <p>You ran out of screenshots. Please upgrade your account to continue.</p>
+                    <p>You ran out of checks. Please upgrade your account to continue.</p>
                 </div>
             <?php } else { ?>
                 <div class="notice notice-error">
-                    <p>You ran out of screenshots. Please upgrade your account to continue or wait for renewal.</p>
+                    <p>You ran out of checks. Please upgrade your account to continue or wait for renewal.</p>
                 </div>
             <?php }
         } elseif($usage_percent > 70) { ?>
-            <div class="notice notice-warning"><p>You used <?= $usage_percent ?>% of your screenshots.</p></div>
+            <div class="notice notice-warning"><p>You used <?= $usage_percent ?>% of your checks.</p></div>
         <?php }
 
         // Set the website details class object
@@ -579,15 +588,17 @@ if (! function_exists('wcd_webchangedetector_init')) {
 
                 <div class="action-container">
                     <div class="status_bar">
-                        <div class="box half">
+                        <div class="box full">
                             <div id="txt_next_sc_in">Next change detections in</div>
                             <div id="next_sc_in" class="big"></div>
                             <div id="next_sc_date" class="local-time" data-date="<?= $date_next_sc ?>"></div>
                         </div>
-                        <div class="box half">
+
+                        <!-- @TODO: Calculation is wrong and hidden. Replace this with the one from the dashboard -->
+                        <div class="box half" style="display: none;">
                             Current settings require
                             <div id="sc_until_renew" class="big">
-                                <span id="ajax_amount_total_sc"></span> Screenshots
+                                <span id="ajax_amount_total_sc"></span> Checks
                             </div>
                             <div id="sc_available_until_renew"
                                  data-amount_selected_urls="<?= $groups_and_urls['amount_selected_urls'] ?>"

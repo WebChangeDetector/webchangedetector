@@ -1063,7 +1063,7 @@ class WebChangeDetector_Admin
 
                                         <td class="checkbox-mobile-Frontpage" style="text-align: center;">
                                             <input type="hidden" value="0" name="mobile-<?= $url_id ?>">
-                                            <input type="checkbox" name="mobile-' . $url_id . '" value="1" <?= $checked['mobile'] ?>
+                                            <input type="checkbox" name="mobile-<?= $url_id ?>" value="1" <?= $checked['mobile'] ?>
                                             id="mobile-<?= $url_id ?>" onclick="mmMarkRows('<?= $url_id ?>')" ></td>
 
                                         <td style="text-align: left;"><strong><?= get_option("blogname") . " - " . get_option("blogdescription") ?></strong><br>
@@ -1391,7 +1391,7 @@ class WebChangeDetector_Admin
                 <div class="highlight-inner">
                     <h2>Create Free Account</h2>
                     <p>
-                        Create your free account now and use WebChangeDetector with <br><strong>50 screenshots</strong> per month for free.<br>
+                        Create your free account now and use WebChangeDetector with <br><strong>50 checks</strong> per month for free.<br>
                     </p>
                     <form class="frm_new_account" method="post">
                         <input type="hidden" name="wcd_action" value="create_free_account">
@@ -1542,11 +1542,11 @@ class WebChangeDetector_Admin
                         </strong>
                     </h2>
                     <hr>
-                    <p style="margin-top: 20px;"><strong>Used credits:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
+                    <p style="margin-top: 20px;"><strong>Used checks:</strong> <?= $client_account['usage'] ?> / <?= $client_account['sc_limit'] ?></p>
 
-                    <p><strong>Auto change detections / month:</strong> <?= $amount_auto_detection ?></p>
+                    <p><strong>Active monitoring checks / month:</strong> <?= $amount_auto_detection ?></p>
 
-                    <p><strong>Auto change detections until renewal:</strong>
+                    <p><strong>Active monitoring checks until renewal:</strong>
                         <?= number_format($amount_auto_detection / WCD_SECONDS_IN_MONTH * (gmdate('U', strtotime($client_account['renewal_at'])) - gmdate('U')), 0) ?></p>
 
                     <p><strong>Renewal on:</strong> <?= gmdate('d/m/Y', strtotime($client_account['renewal_at'])) ?></p>
