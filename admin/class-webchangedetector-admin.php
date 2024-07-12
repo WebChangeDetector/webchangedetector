@@ -288,7 +288,7 @@ class WebChangeDetector_Admin {
 		}
 
 		if ( $update ) {
-			$latest_revision = array_shift( wp_get_post_revisions( &$post_id ) );
+			$latest_revision = array_shift( wp_get_post_revisions( $post_id ) );
 			if ( $latest_revision && get_permalink( $latest_revision ) !== get_permalink( $post ) ) {
 				return $this->sync_posts( $post );
 			}
