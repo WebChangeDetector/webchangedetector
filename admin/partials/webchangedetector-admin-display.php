@@ -105,7 +105,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			return false;
 		}
 
-		// Show error message if we didn't get response from API
+		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) {
 			echo "<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
                     <h1>Oooops!</h1>
@@ -115,7 +115,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			exit;
 		}
 
-		// Show low credits
+		// Show low credits.
 		$usage_percent = (int) ( $account_details['usage'] / $account_details['sc_limit'] * 100 );
 
 		if ( $usage_percent >= 100 ) {
@@ -135,7 +135,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			<?php
 		}
 
-		// Set the website details class object
+		// Set the website details class object.
 		$wcd->set_website_details();
 
 		// If we don't have the website for any reason we show an error message.
@@ -160,7 +160,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		$monitoring_group_settings = null; // @TODO Can be deleted?
 
-		// Perform actions
+		// Perform actions.
 		switch ( $wcd_action ) {
 
 			case 'add_post_type':
@@ -195,7 +195,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			case 'post_urls_update_and_auto':
 				$wcd->post_urls( $_POST, $wcd->website_details, true );
 
-				// Get the depending group names before saving to avoid group name changes in webapp
+				// Get the depending group names before saving to avoid group name changes in webapp.
 				$manual_group_name   = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
 				$_POST['group_name'] = $manual_group_name;
 				$wcd->update_settings( $_POST, $group_id );
@@ -218,14 +218,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$wcd->post_urls( $_POST, $wcd->website_details, false );
 				$wcd->update_settings( $_POST, $group_id );
 
-				// Update step in update detection
+				// Update step in update detection.
 				if ( ! empty( $_POST['step'] ) ) {
 					update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_key( $_POST['step'] ) );
 				}
 				break;
 		}
 
-		// Get updated account and website data
+		// Get updated account and website data.
 		$account_details = $wcd->account_details();
 
 		// Error message if api didn't return account details.
@@ -239,10 +239,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			return false;
 		}
 
-		// Check for account status
+		// Check for account status.
 		if ( $account_details['status'] !== 'active' ) {
 
-			// Set error message
+			// Set error message.
 			$err_msg = 'cancelled';
 			if ( ! empty( $account_details['status'] ) ) {
 				$err_msg = $account_details['status'];
@@ -261,10 +261,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			return false;
 		}
 
-		// Get page to view
-		$tab = 'webchangedetector-dashboard'; // init
+		// Get page to view.
+		$tab = 'webchangedetector-dashboard'; // init.
 		if ( isset( $_GET['page'] ) ) {
-			// sanitize: lower-case with "-"
+			// sanitize: lower-case with "-".
 			$tab = sanitize_key( $_GET['page'] );
 		}
 
@@ -290,18 +290,18 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '<div style="margin-top: 30px;"></div>';
 
-		// Account credits
+		// Account credits.
 		$comp_usage         = $account_details['usage'];
 		$limit              = $account_details['sc_limit'];
 		$available_compares = $account_details['available_compares'];
 
 		if ( $wcd->website_details['enable_limits'] ) {
-			$account_details['usage']            = $comp_usage; // used in dashboard
-			$account_details['plan']['sc_limit'] = $limit; // used in dashboard
+			$account_details['usage']            = $comp_usage; // used in dashboard.
+			$account_details['plan']['sc_limit'] = $limit; // used in dashboard.
 		}
 
-		// Renew date (used in template)
-		$renew_date = strtotime( $account_details['renewal_at'] ); // used in account template
+		// Renew date (used in template).
+		$renew_date = strtotime( $account_details['renewal_at'] ); // used in account template.
 
 		switch ( $tab ) {
 
@@ -396,11 +396,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-				// Get selected urls
+				// Get selected urls.
 				$groups_and_urls = $wcd->get_urls_of_group( $group_id );
 
 				$step = false;
-				// Show message if no urls are selected
+				// Show message if no urls are selected.
 				if ( ! $groups_and_urls['amount_selected_urls'] ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS
 					?>
@@ -410,12 +410,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 
 				<?php
-				// Check if we have a step in the db
+				// Check if we have a step in the db.
 				if ( ! $step ) {
 					$step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
 				}
 
-				// Default step
+				// Default step.
 				if ( ! $step ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS;
 				}
@@ -446,7 +446,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$progress_make_update      = 'disabled';
 						$progress_post             = 'disabled';
 						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue(); // used in template
+						$sc_processing             = $wcd->get_processing_queue(); // used in template.
 						include 'templates/update-detection/update-step-pre-sc-started.php';
 						break;
 
@@ -465,7 +465,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$progress_make_update      = 'done';
 						$progress_post             = 'active';
 						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue(); // used in template
+						$sc_processing             = $wcd->get_processing_queue(); // used in template.
 						include 'templates/update-detection/update-step-post-sc-started.php';
 						break;
 
@@ -505,26 +505,26 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				$groups_and_urls = $wcd->get_urls_of_group( $monitoring_group_id );
 
-				// Calculation for monitoring
+				// Calculation for monitoring.
 				$date_next_sc = false;
 				$next_sc_in   = false;
 				if ( $groups_and_urls['monitoring'] ) {
 
 					$amount_sc_per_day = 0;
-					// Check for intervals >= 1h
+					// Check for intervals >= 1h.
 					if ( $groups_and_urls['interval_in_h'] >= 1 ) {
 						$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
 						$amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
 						$possible_hours    = array();
-						// Get possible tracking hours
+						// Get possible tracking hours.
 						for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
 							$possible_hour    = $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'];
 							$possible_hours[] = $possible_hour >= 24 ? $possible_hour - 24 : $possible_hour;
 						}
 						sort( $possible_hours );
 
-						// Check for today and tomorrow
-						for ( $ii = 0; $ii <= 1; $ii++ ) { // Do 2 loops for today and tomorrow
+						// Check for today and tomorrow.
+						for ( $ii = 0; $ii <= 1; $ii++ ) { // Do 2 loops for today and tomorrow.
 							for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
 								$possible_time = gmmktime( $possible_hours[ $i ], 0, 0, gmdate( 'm' ), gmdate( 'd' ) + $ii, gmdate( 'Y' ) );
 
@@ -533,14 +533,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									break;
 								}
 							}
-							// Dont check for tomorrow if we found the next date today
+							// Dont check for tomorrow if we found the next date today.
 							if ( $date_next_sc ) {
 								break;
 							}
 						}
 					}
 
-					// Check for 30 min intervals
+					// Check for 30 min intervals.
 					if ( $groups_and_urls['interval_in_h'] === 0.5 ) {
 						$amount_sc_per_day = 48;
 						if ( gmdate( 'i' ) < 30 ) {
@@ -549,7 +549,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
 						}
 					}
-					// Check for 15 min intervals
+					// Check for 15 min intervals.
 					if ( $groups_and_urls['interval_in_h'] === 0.25 ) {
 						$amount_sc_per_day = 96;
 						if ( gmdate( 'i' ) < 15 ) {
@@ -564,26 +564,26 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 					}
 
-					// Calculate screenshots until renewal
+					// Calculate screenshots until renewal.
 					$account = $wcd->account_details();
 
 					$days_until_renewal      = date( 'd', date( 'U', strtotime( $account['renewal_at'] ) ) - date( 'U' ) );
 					$amount_group_sc_per_day = $groups_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
 
-					// Get first detection hour
+					// Get first detection hour.
 					$first_hour_of_interval = $groups_and_urls['hour_of_day'];
 					while ( $first_hour_of_interval - $groups_and_urls['interval_in_h'] >= 0 ) {
 						$first_hour_of_interval = $first_hour_of_interval - $groups_and_urls['interval_in_h'];
 					}
 
-					// Count up in interval_in_h to current hour
+					// Count up in interval_in_h to current hour.
 					$skip_sc_count_today = 0;
 					while ( $first_hour_of_interval + $groups_and_urls['interval_in_h'] <= date( 'H' ) ) {
 						$first_hour_of_interval = $first_hour_of_interval + $groups_and_urls['interval_in_h'];
 						++$skip_sc_count_today;
 					}
 
-					// Subtract screenshots already taken today
+					// Subtract screenshots already taken today.
 					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $groups_and_urls['amount_selected_urls'];
 				}
 				?>
@@ -633,7 +633,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-logs':
-				// Show queued urls
+				// Show queued urls.
 				$queues = $wcd->get_queue();
 
 				$type_nice_name = array(
@@ -672,7 +672,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						echo '<td class="local-time" data-date="' . strtotime( $queue['updated_at'] ) . '">' . gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) . '</td>';
 						echo '<td>';
 
-						// Show screenshot button
+						// Show screenshot button.
 						if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto' ) ) &&
 							$queue['status'] === 'done' &&
 							! empty( $queue['screenshots'][0]['link'] ) ) {
@@ -684,7 +684,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 							<?php
 						}
-						// Show comparison
+						// Show comparison.
 						elseif ( $queue['sc_type'] === 'compare' &&
 							$queue['status'] === 'done' &&
 							! empty( $queue['comparisons'][0]['token'] ) ) {
@@ -741,13 +741,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<h2>Add Post Types</h2>
 					<?php
 
-					// Add post types
+					// Add post types.
 					$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
 					$available_post_types = array();
 					foreach ( $post_types as $post_type ) {
 
-						// if rest_base is not set we use post_name (wp default)
+						// if rest_base is not set we use post_name (wp default).
 						if ( ! $post_type->rest_base ) {
 							$post_type->rest_base = $post_type->name;
 						}
@@ -795,7 +795,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<h2>Add Taxonomies</h2>
 					<?php
 
-					// Add Taxonomies
+					// Add Taxonomies.
 					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 					foreach ( $taxonomies as $taxonomy ) {
 
@@ -880,12 +880,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			default:
-				// Should already be validated by VALID_WCD_ACTIONS
+				// Should already be validated by VALID_WCD_ACTIONS.
 				break;
 
 		} // switch
 
-		echo '</div>'; // closing from div webchangedetector
-		echo '</div>'; // closing wrap
-	} // wcd_webchangedetector_init
-} // function_exists
+		echo '</div>'; // closing from div webchangedetector.
+		echo '</div>'; // closing wrap.
+	} // wcd_webchangedetector_init.
+} // function_exists.
