@@ -53,9 +53,9 @@ class WebChangeDetector_Admin {
 	);
 
 	const VALID_GROUP_TYPES = array(
-		'all', // filter
-		'generic', // filter
-		'wordpress', // filter
+		'all', // filter.
+		'generic', // filter.
+		'wordpress', // filter.
 		'auto',
 		'update',
 	);
@@ -137,7 +137,7 @@ class WebChangeDetector_Admin {
 		wp_enqueue_script( 'jquery-ui-accordion' );
 		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-		// Load WP codemirror
+		// Load WP codemirror.
 		$css_settings = array(
 			'type' => 'text/css',
 						// 'codemirror' => array('theme' =>'darcula')
@@ -149,7 +149,7 @@ class WebChangeDetector_Admin {
 
 	public $website_details;
 
-	// Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php)
+	// Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php).
 	public function wcd_plugin_setup_menu() {
 		require_once 'partials/webchangedetector-admin-display.php';
 		add_menu_page(
@@ -240,7 +240,7 @@ class WebChangeDetector_Admin {
 
 	public function create_free_account( $postdata ) {
 
-		// Generate validation string
+		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
 		update_option( 'webchangedetector_verify_secret', $validation_string, false );
 
@@ -271,7 +271,7 @@ class WebChangeDetector_Admin {
 			return false;
 		}
 
-		// Save email address on account creation for showing on activate account page
+		// Save email address on account creation for showing on activate account page.
 		if ( ! empty( $_POST['email'] ) ) {
 			update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( $_POST['email'] ), false );
 		}
@@ -280,9 +280,9 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
-	// Sync Post if permalink changed. Called by hook in class-webchangedetector.php
+	// Sync Post if permalink changed. Called by hook in class-webchangedetector.php.
 	public function sync_post_after_save( $post_id, $post, $update ) {
-		// Only sync posts and pages @TODO make setting to sync other posttypes
+		// Only sync posts and pages @TODO make setting to sync other posttypes.
 		if ( ! empty( $post->post_type ) && ! in_array( $post->post_type, array( 'page', 'post' ) ) ) {
 			return false;
 		}
@@ -321,7 +321,7 @@ class WebChangeDetector_Admin {
 	}
 
 	public function get_monitoring_settings( $group_id ) {
-		// Deprecated
+		// Deprecated.
 		$args = array(
 			'action'   => 'get_monitoring_settings',
 			'group_id' => $group_id,
@@ -331,10 +331,10 @@ class WebChangeDetector_Admin {
 	}
 
 	public function get_comparison_partial( $token ) {
-		// Deprecated
+		// Deprecated.
 		$args = array(
 			'action' => 'get_comparison_partial',
-			'token'  => $token, // token for comparison partial, not api_token
+			'token'  => $token, // token for comparison partial, not api_token.
 		);
 		return $this->mm_api( $args );
 	}
@@ -363,7 +363,7 @@ class WebChangeDetector_Admin {
 			'action'    => 'update_group',
 			'group_id'  => $group_id,
 			'name'      => $postdata['group_name'],
-			'css'       => sanitize_textarea_field( $postdata['css'] ), // there is no css sanitation
+			'css'       => sanitize_textarea_field( $postdata['css'] ), // there is no css sanitation.
 			'threshold' => sanitize_text_field( $postdata['threshold'] ),
 		);
 
@@ -488,7 +488,7 @@ class WebChangeDetector_Admin {
 				if ( $latest_batch && $compare['screenshot1']['queue']['batch_id'] !== $latest_batch_id ) {
 					continue;
 				}
-				$class = 'no-difference'; // init
+				$class = 'no-difference'; // init.
 				if ( $compare['difference_percent'] ) {
 					$class = 'is-difference';
 				}
@@ -536,7 +536,7 @@ class WebChangeDetector_Admin {
 				'action' => 'get_comparison_by_token',
 				'token'  => $token,
 			);
-			$compare    = $this->mm_api( $args ); // used in template
+			$compare    = $this->mm_api( $args ); // used in template.
 			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
@@ -632,7 +632,7 @@ class WebChangeDetector_Admin {
 			'wpml_language' => 'de',
 		);
 
-		// Get terms for all languages if WPML is enabled
+		// Get terms for all languages if WPML is enabled.
 		if ( class_exists( 'SitePress' ) ) {
 			$languages        = apply_filters( 'wpml_active_languages', null );
 			$terms            = array();
@@ -650,16 +650,16 @@ class WebChangeDetector_Admin {
 	}
 
 	public function sync_posts( $post_obj = false ) {
-		$array     = array(); // init
+		$array     = array(); // init.
 		$url_types = array();
 
-		// Sync single post
+		// Sync single post.
 		if ( $post_obj ) {
-			$save_post_types = array( 'post', 'page' ); // @TODO Make this a setting
+			$save_post_types = array( 'post', 'page' ); // @TODO Make this a setting.
 			if ( in_array( $post_obj->post_type, $save_post_types ) && get_post_status( $post_obj ) === 'publish' ) {
 				$url           = get_permalink( $post_obj );
 				$start         = strpos( $url, '//' ) + strlen( '//' );
-				$url           = substr( $url, $start ); // remove evertyhing after http[s]://
+				$url           = substr( $url, $start ); // remove evertyhing after http[s]://.
 				$post_type_obj = get_post_type_object( $post_obj->post_type );
 
 				$array[] = array(
@@ -679,11 +679,11 @@ class WebChangeDetector_Admin {
 				return $this->mm_api( $args );
 			}
 		} else {
-			// Get Post Types
+			// Get Post Types.
 			$post_types = get_post_types( array( 'public' => true ), 'objects' );
 			foreach ( $post_types as $post_type ) {
 
-				// if rest_base is not set we use post_name (wp default)
+				// if rest_base is not set we use post_name (wp default).
 				if ( ! $post_type->rest_base ) {
 					$post_type->rest_base = $post_type->name;
 				}
@@ -695,12 +695,12 @@ class WebChangeDetector_Admin {
 				}
 			}
 
-			// Get Taxonomies
+			// Get Taxonomies.
 			$taxonomies = get_taxonomies( array(), 'objects' );
 
 			foreach ( $taxonomies as $taxonomy ) {
 
-				// if rest_base is not set we use post_name (wp default)
+				// if rest_base is not set we use post_name (wp default).
 				if ( ! $taxonomy->rest_base ) {
 					$taxonomy->rest_base = $taxonomy->name;
 				}
@@ -711,7 +711,7 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
-			// Sync all posts
+			// Sync all posts.
 			/*
 			$url_types = array(
 				'types' => array (
@@ -851,20 +851,20 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function create_website_and_groups() {
-		// Create group if it doesn't exist yet
+		// Create group if it doesn't exist yet.
 		$args = array(
 			'action' => 'add_website_groups',
 			'cms'    => 'wordpress',
-			// domain sent at mm_api
+			// domain sent at mm_api.
 		);
 		return $this->mm_api( $args );
 	}
 
 	public function delete_website() {
-		// deprecated
+		// deprecated.
 		$args = array(
 			'action' => 'delete_website',
-			// domain sent at mm_api
+			// domain sent at mm_api.
 		);
 		$this->mm_api( $args );
 	}
@@ -876,7 +876,8 @@ class WebChangeDetector_Admin {
 			'group_id' => $group_id,
 		);
 
-		// We only get one group as we send the group_id
+		// We only get one group as we send the group_id.
+
 		$response = $this->mm_api( $args );
 
 		if ( array_key_exists( 0, $response ) ) {
@@ -909,11 +910,11 @@ class WebChangeDetector_Admin {
 	}
 
 	public function get_url_settings( $groups_and_urls, $monitoring_group = false ) {
-		// Sync urls - post_types defined in function @TODO make settings for post_types to sync
+		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 		$synced_posts = $this->sync_posts();
 
-		// Select URLS
-		$tab            = 'update-settings'; // init
+		// Select URLS.
+		$tab            = 'update-settings'; // init.
 		$detection_type = 'update';
 		if ( $monitoring_group ) {
 			$tab            = 'auto-settings';
@@ -990,13 +991,13 @@ class WebChangeDetector_Admin {
 			<input type="hidden" value="<?php echo esc_html( $groups_and_urls['id'] ); ?>" name="group_id">
 			<?php
 
-			// Get WP types and taxonomomies
+			// Get WP types and taxonomomies.
 			$url_types['types']      = get_post_types( array( 'public' => true ), 'objects' );
 			$url_types['taxonomies'] = get_taxonomies( array( 'public' => true ), 'objects' );
 
 			if ( ! get_option( 'page_on_front' ) ) {
 
-				// Check if current WP post ID is in synced_posts and get the url_id
+				// Check if current WP post ID is in synced_posts and get the url_id.
 				foreach ( $synced_posts as $synced_post ) {
 					if ( isset( $synced_post['cms_resource_id'] )
 						&& $synced_post['cms_resource_id'] === 0
@@ -1084,7 +1085,7 @@ class WebChangeDetector_Admin {
 			foreach ( $url_types as $url_type => $url_categories ) {
 				foreach ( $url_categories as $url_category ) {
 
-					// if rest_base is not set we use post_name (wp default)
+					// if rest_base is not set we use post_name (wp default).
 					if ( ! $url_category->rest_base ) {
 						$url_category->rest_base = $url_category->name;
 					}
@@ -1139,7 +1140,7 @@ class WebChangeDetector_Admin {
 							<th width="100%">URL</th>
 						</tr>
 						<?php
-						// Select all from same device
+						// Select all from same device.
 						echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
                                     <td><input type="checkbox" id="select-desktop-' . $url_category->label . '" onclick="mmToggle( this, \'' . $url_category->label . '\', \'desktop\', \'' . $groups_and_urls['id'] . '\' )" /></td>
                                     <td><input type="checkbox" id="select-mobile-' . $url_category->label . '" onclick="mmToggle( this, \'' . $url_category->label . '\', \'mobile\', \'' . $groups_and_urls['id'] . '\' )" /></td>
@@ -1174,7 +1175,7 @@ class WebChangeDetector_Admin {
 
 								$url_id = false;
 
-								// Check if current WP post ID is in synced_posts and get the url_id
+								// Check if current WP post ID is in synced_posts and get the url_id.
 								foreach ( $synced_posts as $synced_post ) {
 									if ( ! empty( $synced_post['cms_resource_id'] )
 										&& $synced_post['cms_resource_id'] === $post_id
@@ -1183,12 +1184,12 @@ class WebChangeDetector_Admin {
 									}
 								}
 
-								// If we don't have the url_id, the url is not synced and we continue
+								// If we don't have the url_id, the url is not synced and we continue.
 								if ( ! $url_id ) {
 									continue;
 								}
 
-								// init
+								// init.
 								$checked = array(
 									'desktop' => '',
 									'mobile'  => '',
@@ -1319,18 +1320,18 @@ class WebChangeDetector_Admin {
 	}
 
 	public function post_urls( $postdata, $website_details, $save_both_groups ) {
-		// Get active posts from post data
+		// Get active posts from post data.
 		$active_posts   = array();
 		$count_selected = 0;
 		foreach ( $postdata as $key => $post_id ) {
 			if ( strpos( $key, 'url_id' ) === 0 ) {
 
-				// sanitize before
-				$wpPostId = sanitize_key( $postdata[ 'post_id-' . $post_id ] ); // should be numeric
+				// sanitize before.
+				$wpPostId = sanitize_key( $postdata[ 'post_id-' . $post_id ] ); // should be numeric.
 				if ( ! is_numeric( $wpPostId ) ) {
-					continue; // just skip it
+					continue; // just skip it.
 				}
-				$permalink = get_permalink( $wpPostId ); // should return the whole link
+				$permalink = get_permalink( $wpPostId ); // should return the whole link.
 				$desktop   = array_key_exists( 'desktop-' . $post_id, $postdata ) ? sanitize_key( $postdata[ 'desktop-' . $post_id ] ) : 0;
 				$mobile    = array_key_exists( 'mobile-' . $post_id, $postdata ) ? sanitize_key( $postdata[ 'mobile-' . $post_id ] ) : 0;
 
@@ -1352,7 +1353,7 @@ class WebChangeDetector_Admin {
 
 		$group_id_website_details = sanitize_key( $postdata['group_id'] );
 
-		// Check if there is a limit for selecting URLs
+		// Check if there is a limit for selecting URLs.
 		if ( $website_details['enable_limits'] &&
 			$website_details['url_limit_manual_detection'] < $count_selected &&
 			$website_details['manual_detection_group_id'] === $group_id_website_details ) {
@@ -1420,31 +1421,31 @@ class WebChangeDetector_Admin {
 	public function set_website_details() {
 		$args = array(
 			'action' => 'get_website_details',
-			// domain sent at mm_api
+			// domain sent at mm_api.
 		);
 		$this->website_details = $this->mm_api( $args );
 
-		// If we don't have websites details yet, we create them. This happens after account activation
+		// If we don't have websites details yet, we create them. This happens after account activation.
 		if ( empty( $this->website_details ) ) {
 			$this->create_website_and_groups();
 			$this->website_details = $this->mm_api( $args );
 		}
 
-		// Take the first website details or return error string
+		// Take the first website details or return error string.
 		if ( is_array( $this->website_details ) && count( $this->website_details ) > 0 ) {
 			$this->website_details = $this->website_details[0];
 
-			// Set default sync types if they are empty
+			// Set default sync types if they are empty.
 			$this->set_default_sync_types();
 			$this->website_details['sync_url_types'] = json_decode( $this->website_details['sync_url_types'], true );
 		}
 	}
 
 	public function tabs() {
-		$active_tab = 'webchangedetector'; // init
+		$active_tab = 'webchangedetector'; // init.
 
 		if ( isset( $_GET['page'] ) ) {
-			// sanitize: lower-case with "-"
+			// sanitize: lower-case with "-".
 			$active_tab = sanitize_key( $_GET['page'] );
 		}
 		?>
@@ -1658,7 +1659,7 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function dev() {
-		// if either .test or dev. can be found in the URL, we're developing -  wouldn't work if plugin client domain matches these criteria
+		// if either .test or dev. can be found in the URL, we're developing -  wouldn't work if plugin client domain matches these criteria.
 		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
 			return true;
 		}
@@ -1675,31 +1676,31 @@ class WebChangeDetector_Admin {
 	 * @return string|array
 	 */
 	public function mm_api( $post, $isWeb = false ) {
-		$url    = 'https://api.webchangedetector.com/api/v1/'; // init for production
+		$url    = 'https://api.webchangedetector.com/api/v1/'; // init for production.
 		$urlWeb = 'https://api.webchangedetector.com/';
 
-		// This is where it can be changed to a local/dev address
+		// This is where it can be changed to a local/dev address.
 		if ( defined( 'WCD_API_URL' ) && is_string( WCD_API_URL ) && ! empty( WCD_API_URL ) ) {
 			$url = WCD_API_URL;
 		}
 
-		// Overwrite $url if it is a get request
+		// Overwrite $url if it is a get request.
 		if ( $isWeb && defined( 'WCD_API_URL_WEB' ) && is_string( WCD_API_URL_WEB ) && ! empty( WCD_API_URL_WEB ) ) {
 			$urlWeb = WCD_API_URL_WEB;
 		}
 
-		$url    .= str_replace( '_', '-', $post['action'] ); // add kebab action to url
-		$urlWeb .= str_replace( '_', '-', $post['action'] ); // add kebab action to url
-		$action  = $post['action']; // For debugging
+		$url    .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$urlWeb .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$action  = $post['action']; // For debugging.
 
-		// Get API Token from WP DB
+		// Get API Token from WP DB.
 		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
 
-		unset( $post['action'] ); // don't need to send as action as it's now the url
-		unset( $post['api_token'] ); // just in case
+		unset( $post['action'] ); // don't need to send as action as it's now the url.
+		unset( $post['api_token'] ); // just in case.
 
-		$post['wp_plugin_version'] = WebChangeDetector_VERSION; // API will check this to check compatability
-		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;)
+		$post['wp_plugin_version'] = WebChangeDetector_VERSION; // API will check this to check compatability.
+		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
 		$post['domain'] = $_SERVER['SERVER_NAME'];
 		$post['wp_id']  = get_current_user_id();
 
@@ -1729,7 +1730,7 @@ class WebChangeDetector_Admin {
 
 		$decodedBody = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 
-		// `message` is part of the Laravel Stacktrace
+		// `message` is part of the Laravel Stacktrace.
 		if ( $responseCode === WCD_HTTP_BAD_REQUEST &&
 			is_array( $decodedBody ) &&
 			array_key_exists( 'message', $decodedBody ) &&
@@ -1745,13 +1746,7 @@ class WebChangeDetector_Admin {
 			return 'unauthorized';
 		}
 
-		// if (! mm_wcd_http_successful($responseCode)) {
-		// if ($this->dev()) {
-		// dd($response, $action, $responseCode, $body);
-		// }
-		// }
-
-		// if parsing JSON into $decodedBody was without error
+		// if parsing JSON into $decodedBody was without error.
 		if ( json_last_error() === JSON_ERROR_NONE ) {
 			return $decodedBody;
 		}
@@ -1760,7 +1755,7 @@ class WebChangeDetector_Admin {
 	}
 }
 
-// HTTP Status Codes
+// HTTP Status Codes.
 if ( ! defined( 'WCD_HTTP_BAD_REQUEST' ) ) {
 	define( 'WCD_HTTP_BAD_REQUEST', 400 );
 }
@@ -1773,7 +1768,7 @@ if ( ! defined( 'WCD_HTTP_INTERNAL_SERVER_ERROR' ) ) {
 	define( 'WCD_HTTP_INTERNAL_SERVER_ERROR', 500 );
 }
 
-// Time/Date Related
+// Time/Date Related.
 if ( ! defined( 'WCD_DAYS_PER_MONTH' ) ) {
 	define( 'WCD_DAYS_PER_MONTH', 30 );
 }
@@ -1783,21 +1778,21 @@ if ( ! defined( 'WCD_HOURS_IN_DAY' ) ) {
 }
 
 if ( ! defined( 'WCD_SECONDS_IN_MONTH' ) ) {
-	// 60 * 60 * 24 * 30
+	// 60 * 60 * 24 * 30.
 	define( 'WCD_SECONDS_IN_MONTH', 2592000 );
 }
 
-// Option / UserMeta keys
+// Option / UserMeta keys.
 if ( ! defined( 'WCD_WP_OPTION_KEY_API_TOKEN' ) ) {
 	define( 'WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token' );
 }
 
-// Account email address
+// Account email address.
 if ( ! defined( 'WCD_WP_OPTION_KEY_ACCOUNT_EMAIL' ) ) {
 	define( 'WCD_WP_OPTION_KEY_ACCOUNT_EMAIL', 'webchangedetector_account_email' );
 }
 
-// Steps in update change detection
+// Steps in update change detection.
 if ( ! defined( 'WCD_OPTION_UPDATE_STEP_KEY' ) ) {
 	define( 'WCD_OPTION_UPDATE_STEP_KEY', 'webchangedetector_update_detection_step' );
 }
@@ -1823,7 +1818,7 @@ if ( ! defined( 'WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION' ) ) {
 	define( 'WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION', 'change-detection' );
 }
 
-// WCD tabs
+// WCD tabs.
 if ( ! defined( 'WCD_TAB_DASHBOARD' ) ) {
 	define( 'WCD_TAB_DASHBOARD', '/admin.php?page=webchangedetector-dashboard' );
 }
@@ -1847,17 +1842,7 @@ if ( ! defined( 'WCD_REQUEST_TIMEOUT' ) ) {
 	define( 'WCD_REQUEST_TIMEOUT', 30 );
 }
 
-
-
-// // Uncommented defines()
-// if (! defined('WCD_HTTP_OK')) {
-// define('WCD_HTTP_OK', 200);
-// }
-// if (! defined('WCD_HTTP_MULTIPLE_CHOICES')) {
-// define('WCD_HTTP_MULTIPLE_CHOICES', 300);
-// }
-
-// Uncommented functions()
+// Uncommented functions().
 if ( ! function_exists( 'dd' ) ) {
 	/**
 	 * Dump and Die
@@ -1876,16 +1861,3 @@ if ( ! function_exists( 'dd' ) ) {
 		die();
 	}
 }
-
-// if (! function_exists('mm_wcd_http_successful')) {
-// **
-// * HTTP Response Code in between 200 (incl) and 300
-// *
-// * @param int $httpCode
-// * @return bool
-// */
-// function mm_wcd_http_successful($httpCode)
-// {
-// return ($httpCode >= WCD_HTTP_OK) && ($httpCode < WCD_HTTP_MULTIPLE_CHOICES);
-// }
-// }
