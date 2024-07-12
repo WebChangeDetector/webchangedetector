@@ -386,12 +386,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			/***************************
-			 * Update Change Detections
+			 * Manual Checks
 			*/
 
 			case 'webchangedetector-update-settings':
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
-					echo 'Settings for Update Change detections are disabled by your API Token.';
+					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
 
@@ -493,12 +493,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			/**************************
-			 * Auto Change Detections
+			 * Monitoring
 			 */
 
 			case 'webchangedetector-auto-settings':
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_auto_detection'] ) {
-					echo 'Settings for Update Change detections are disabled by your API Token.';
+					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
 

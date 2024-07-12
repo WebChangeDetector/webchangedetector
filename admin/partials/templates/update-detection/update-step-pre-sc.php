@@ -19,7 +19,7 @@
 	?>
 		<div class="wcd-highlight-bg">
 			<h2>Pre-Update Screenshots</h2>
-			<p>Start the Update Change Detection by taking screenshots before making updates or other changes on your website.</p>
+			<p>Start the Manual Checks by taking screenshots before making updates or other changes on your website.</p>
 			<form id="frm-take-pre-sc" action="<?php echo admin_url() . WCD_TAB_UPDATE; ?>" method="post">
 				<input type="hidden" value="take_screenshots" name="wcd_action">
 				<input type="hidden" name="sc_type" value="pre">

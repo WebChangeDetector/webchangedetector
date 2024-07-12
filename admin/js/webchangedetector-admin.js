@@ -173,7 +173,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             }
         });
 
-        // Enable / disable settings for auto change detection
+        // Enable / disable settings for monitoring
         showAutoSettings();
         $("#diff-container").twentytwenty();
 
