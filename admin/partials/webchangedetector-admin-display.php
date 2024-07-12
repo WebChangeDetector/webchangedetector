@@ -347,12 +347,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 					<form method="post">
 						<select name="limit_days">
-							<option value="" <?php echo $limit_days == null ? 'selected' : ''; ?>> Show all</option>
-							<option value="3" <?php echo $limit_days == 3 ? 'selected' : ''; ?>>Last 3 days</option>
-							<option value="7" <?php echo $limit_days == 7 ? 'selected' : ''; ?>>Last 7 days</option>
-							<option value="14" <?php echo $limit_days == 14 ? 'selected' : ''; ?>>Last 14 days</option>
-							<option value="30"<?php echo $limit_days == 30 ? 'selected' : ''; ?>>Last 30 days</option>
-							<option value="60"<?php echo $limit_days == 60 ? 'selected' : ''; ?>>Last 60 days</option>
+							<option value="" <?php echo $limit_days === null ? 'selected' : ''; ?>> Show all</option>
+							<option value="3" <?php echo $limit_days === 3 ? 'selected' : ''; ?>>Last 3 days</option>
+							<option value="7" <?php echo $limit_days === 7 ? 'selected' : ''; ?>>Last 7 days</option>
+							<option value="14" <?php echo $limit_days === 14 ? 'selected' : ''; ?>>Last 14 days</option>
+							<option value="30"<?php echo $limit_days === 30 ? 'selected' : ''; ?>>Last 30 days</option>
+							<option value="60"<?php echo $limit_days === 60 ? 'selected' : ''; ?>>Last 60 days</option>
 						</select>
 
 						<select name="group_type" >
@@ -714,7 +714,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?php echo $offset - $limit; ?>&limit=<?php echo $limit; ?>"
 						> < Newer
 						</a>
-						<a class="button <?php echo count( $queues ) != $limit ? 'disabled' : ''; ?>"
+						<a class="button <?php echo count( $queues ) !== $limit ? 'disabled' : ''; ?>"
 							href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?php echo $offset + $limit; ?>&limit=<?php echo $limit; ?>"
 						> Older >
 						</a>
@@ -753,7 +753,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 						$show_type = false;
 						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $post_type->rest_base && $sync_url_type['post_type_slug'] == $post_type->rest_base ) {
+							if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
 								$show_type = true;
 							}
 						}
@@ -805,7 +805,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 						$show_taxonomy = false;
 						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $taxonomy->rest_base && $sync_url_type['post_type_slug'] == $taxonomy->rest_base ) {
+							if ( $taxonomy->rest_base && $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
 								$show_taxonomy = true;
 							}
 						}

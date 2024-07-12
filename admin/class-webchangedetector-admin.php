@@ -384,49 +384,49 @@ class WebChangeDetector_Admin {
 	 * TODO make switch-case
 	 */
 	public function get_device_icon( $icon, $class = '' ) {
-		if ( $icon == 'thumbnail' ) {
+		if ( $icon === 'thumbnail' ) {
 			return '<span class="dashicons dashicons-camera-alt"></span>';
 		}
-		if ( $icon == 'desktop' ) {
+		if ( $icon === 'desktop' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-laptop"></span>';
 		}
-		if ( $icon == 'mobile' ) {
+		if ( $icon === 'mobile' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-smartphone"></span>';
 		}
-		if ( $icon == 'page' ) {
+		if ( $icon === 'page' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-media-default"></span>';
 		}
-		if ( $icon == 'change-detections' ) {
+		if ( $icon === 'change-detections' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-view-site"></span>';
 		}
-		if ( $icon == 'dashboard' ) {
+		if ( $icon === 'dashboard' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-home"></span>';
 		}
-		if ( $icon == 'logs' ) {
+		if ( $icon === 'logs' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-menu-alt"></span>';
 		}
-		if ( $icon == 'settings' ) {
+		if ( $icon === 'settings' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-generic"></span>';
 		}
-		if ( $icon == 'website-settings' ) {
+		if ( $icon === 'website-settings' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-widgets-menus"></span>';
 		}
-		if ( $icon == 'help' ) {
+		if ( $icon === 'help' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-editor-help"></span>';
 		}
-		if ( $icon == 'auto-group' ) {
+		if ( $icon === 'auto-group' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-clock"></span>';
 		}
-		if ( $icon == 'update-group' ) {
+		if ( $icon === 'update-group' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-page"></span>';
 		}
-		if ( $icon == 'trash' ) {
+		if ( $icon === 'trash' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
 		}
-		if ( $icon == 'check' ) {
+		if ( $icon === 'check' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
 		}
-		if ( $icon == 'upgrade' ) {
+		if ( $icon === 'upgrade' ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-cart"></span>';
 		}
 
@@ -485,7 +485,7 @@ class WebChangeDetector_Admin {
 			}
 			$latest_batch_id = $compares[0]['screenshot1']['queue']['batch_id'];
 			foreach ( $compares as $compare ) {
-				if ( $latest_batch && $compare['screenshot1']['queue']['batch_id'] != $latest_batch_id ) {
+				if ( $latest_batch && $compare['screenshot1']['queue']['batch_id'] !== $latest_batch_id ) {
 					continue;
 				}
 				$class = 'no-difference'; // init
@@ -689,7 +689,7 @@ class WebChangeDetector_Admin {
 				}
 
 				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $post_type->rest_base && $sync_url_type['post_type_slug'] == $post_type->rest_base ) {
+					if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
 						$url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
 					}
 				}
@@ -706,7 +706,7 @@ class WebChangeDetector_Admin {
 				}
 
 				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] == $taxonomy->rest_base ) {
+					if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
 						$url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
 					}
 				}
@@ -999,8 +999,8 @@ class WebChangeDetector_Admin {
 				// Check if current WP post ID is in synced_posts and get the url_id
 				foreach ( $synced_posts as $synced_post ) {
 					if ( isset( $synced_post['cms_resource_id'] )
-						&& $synced_post['cms_resource_id'] == 0
-						&& $synced_post['url_type'] == 'frontpage' ) {
+						&& $synced_post['cms_resource_id'] === 0
+						&& $synced_post['url_type'] === 'frontpage' ) {
 						$url_id = $synced_post['url_id'];
 					}
 				}
@@ -1010,7 +1010,7 @@ class WebChangeDetector_Admin {
 				$selected_mobile    = 0;
 				if ( ! empty( $groups_and_urls['urls'] ) ) {
 					foreach ( $groups_and_urls['urls'] as $url_details ) {
-						if ( $url_details['pivot']['url_id'] == $url_id ) {
+						if ( $url_details['pivot']['url_id'] === $url_id ) {
 							if ( $url_details['pivot']['desktop'] ) {
 								$checked['desktop'] = 'checked';
 								++$selected_desktop;
@@ -1091,7 +1091,7 @@ class WebChangeDetector_Admin {
 
 					$show_type = false;
 					foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-						if ( $url_category->rest_base && $sync_url_type['post_type_slug'] == $url_category->rest_base ) {
+						if ( $url_category->rest_base && $sync_url_type['post_type_slug'] === $url_category->rest_base ) {
 							$show_type = true;
 						}
 					}
@@ -1177,8 +1177,8 @@ class WebChangeDetector_Admin {
 								// Check if current WP post ID is in synced_posts and get the url_id
 								foreach ( $synced_posts as $synced_post ) {
 									if ( ! empty( $synced_post['cms_resource_id'] )
-										&& $synced_post['cms_resource_id'] == $post_id
-										&& $synced_post['url_type'] == $url_type ) {
+										&& $synced_post['cms_resource_id'] === $post_id
+										&& $synced_post['url_type'] === $url_type ) {
 										$url_id = $synced_post['url_id'];
 									}
 								}
@@ -1196,7 +1196,7 @@ class WebChangeDetector_Admin {
 
 								if ( ! empty( $groups_and_urls['urls'] ) ) {
 									foreach ( $groups_and_urls['urls'] as $url_details ) {
-										if ( $url_details['pivot']['url_id'] == $url_id ) {
+										if ( $url_details['pivot']['url_id'] === $url_id ) {
 											$checked['active'] = 'checked';
 
 											if ( $url_details['pivot']['desktop'] ) {
@@ -1340,11 +1340,11 @@ class WebChangeDetector_Admin {
 					'desktop' => $desktop,
 					'mobile'  => $mobile,
 				);
-				if ( isset( $postdata[ 'desktop-' . $post_id ] ) && $postdata[ 'desktop-' . $post_id ] == 1 ) {
+				if ( isset( $postdata[ 'desktop-' . $post_id ] ) && $postdata[ 'desktop-' . $post_id ] === 1 ) {
 					++$count_selected;
 				}
 
-				if ( isset( $postdata[ 'mobile-' . $post_id ] ) && $postdata[ 'mobile-' . $post_id ] == 1 ) {
+				if ( isset( $postdata[ 'mobile-' . $post_id ] ) && $postdata[ 'mobile-' . $post_id ] === 1 ) {
 					++$count_selected;
 				}
 			}
@@ -1355,14 +1355,14 @@ class WebChangeDetector_Admin {
 		// Check if there is a limit for selecting URLs
 		if ( $website_details['enable_limits'] &&
 			$website_details['url_limit_manual_detection'] < $count_selected &&
-			$website_details['manual_detection_group_id'] == $group_id_website_details ) {
+			$website_details['manual_detection_group_id'] === $group_id_website_details ) {
 			echo '<div class="error notice"><p>The limit for selecting URLs is ' .
 				esc_html( $website_details['url_limit_manual_detection'] ) . '.
                         You selected ' . $count_selected . ' URLs. The settings were not saved.</p></div>';
 		} elseif ( $website_details['enable_limits'] &&
 			isset( $monitoring_group_settings ) &&
 			$website_details['sc_limit'] < $count_selected * ( WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h'] ) * WCD_DAYS_PER_MONTH &&
-			$website_details['auto_detection_group_id'] == $group_id_website_details ) {
+			$website_details['auto_detection_group_id'] === $group_id_website_details ) {
 			echo '<div class="error notice"><p>The limit for monitorings is ' .
 				esc_html( $website_details['sc_limit'] ) . '. per month.
                             You selected ' . $count_selected * ( WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h'] ) * WCD_DAYS_PER_MONTH . ' change detections. The settings were not saved.</p></div>';
@@ -1451,27 +1451,27 @@ class WebChangeDetector_Admin {
 		<div class="wrap">
 			<h2 class="nav-tab-wrapper">
 				<a href="?page=webchangedetector"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'dashboard' ); ?> Dashboard
 				</a>
 				<a href="?page=webchangedetector-update-settings"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector-update-settings' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'update-group' ); ?> Manual Checks
 				</a>
 				<a href="?page=webchangedetector-auto-settings"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector-auto-settings' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'auto-group' ); ?> Monitoring
 				</a>
 				<a href="?page=webchangedetector-change-detections"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector-change-detections' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'change-detections' ); ?> Change Detections
 				</a>
 				<a href="?page=webchangedetector-logs"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector-logs' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'logs' ); ?> Logs
 				</a>
 				<a href="?page=webchangedetector-settings"
-					class="nav-tab <?php echo $active_tab == 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">
+					class="nav-tab <?php echo $active_tab === 'webchangedetector-settings' ? 'nav-tab-active' : ''; ?>">
 					<?php echo $this->get_device_icon( 'settings' ); ?> Settings
 				</a>
 				<a href="<?php echo $this->get_upgrade_url(); ?>" target="_blank"
