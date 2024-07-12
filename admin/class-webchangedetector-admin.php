@@ -288,7 +288,7 @@ class WebChangeDetector_Admin {
 		}
 
 		if ( $update ) {
-			$latest_revision = array_shift( wp_get_post_revisions( $post_id ) );
+			$latest_revision = array_shift( wp_get_post_revisions( &$post_id ) );
 			if ( $latest_revision && get_permalink( $latest_revision ) !== get_permalink( $post ) ) {
 				return $this->sync_posts( $post );
 			}
@@ -384,49 +384,49 @@ class WebChangeDetector_Admin {
 	 * TODO make switch-case
 	 */
 	public function get_device_icon( $icon, $class = '' ) {
-		if ( $icon === 'thumbnail' ) {
+		if ( 'thumbnail' === $icon ) {
 			return '<span class="dashicons dashicons-camera-alt"></span>';
 		}
-		if ( $icon === 'desktop' ) {
+		if ( 'desktop' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-laptop"></span>';
 		}
-		if ( $icon === 'mobile' ) {
+		if ( 'mobile' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-smartphone"></span>';
 		}
-		if ( $icon === 'page' ) {
+		if ( 'page' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-media-default"></span>';
 		}
-		if ( $icon === 'change-detections' ) {
+		if ( 'change-detections' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-view-site"></span>';
 		}
-		if ( $icon === 'dashboard' ) {
+		if ( 'dashboard' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-home"></span>';
 		}
-		if ( $icon === 'logs' ) {
+		if ( 'logs' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-menu-alt"></span>';
 		}
-		if ( $icon === 'settings' ) {
+		if ( 'settings' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-generic"></span>';
 		}
-		if ( $icon === 'website-settings' ) {
+		if ( 'website-settings' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-welcome-widgets-menus"></span>';
 		}
-		if ( $icon === 'help' ) {
+		if ( 'help' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-editor-help"></span>';
 		}
-		if ( $icon === 'auto-group' ) {
+		if ( 'auto-group' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-clock"></span>';
 		}
-		if ( $icon === 'update-group' ) {
+		if ( 'update-group' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-admin-page"></span>';
 		}
-		if ( $icon === 'trash' ) {
+		if ( 'trash' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
 		}
-		if ( $icon === 'check' ) {
+		if ( 'check' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
 		}
-		if ( $icon === 'upgrade' ) {
+		if ( 'upgrade' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-cart"></span>';
 		}
 
