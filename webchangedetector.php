@@ -15,7 +15,7 @@
  * Plugin Name:       WebChangeDetector
  * Plugin URI:        webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
- * Version:           2.3.3
+ * Version:           2.4.0
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Rename this for your plugin and update it as you release new versions.
  */
 
-define( 'WebChangeDetector_VERSION', '2.3.3' );
+define( 'WEBCHANGEDETECTOR_VERSION', '2.4.0' );
 
 /**
  * The code that runs during plugin activation.

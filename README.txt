@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
 Tested up to: 6.5.2
-Stable tag: 2.3.3
+Stable tag: 2.4.0
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -37,11 +37,11 @@ With our visual regression tests for WordPress you can make sure your website lo
 *   **Share the change detection link** with your web designer to fix issues.
 
 ### Free Plan Limitations
-*   Get **50 screenshots per month** for the visual regression tests.
+*   Get **50 checks per month** for the visual regression tests.
 *   Monitoring only works in 24h intervals.
 
 ### Premium Plans
-Get more screenshots and lower monitoring intervals with our premium plans. You find them at [www.webchangedetector.com/pricing/](https://www.webchangedetector.com/pricing/ "WebChangeDetector Pricing").
+Get more checks and lower monitoring intervals with our premium plans. You find them at [www.webchangedetector.com/pricing/](https://www.webchangedetector.com/pricing/ "WebChangeDetector Pricing").
 
 == Installation ==
 
@@ -52,6 +52,9 @@ Get more screenshots and lower monitoring intervals with our premium plans. You 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 2.4.0 =
+* Checks at WP auto updates
 
 = 2.3.3 =
 * Show updated pricing calculations

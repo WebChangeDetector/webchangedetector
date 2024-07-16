@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The admin-specific functionality of the plugin.
  *
@@ -69,6 +68,42 @@ class WebChangeDetector_Admin {
 	 */
 	private $plugin_name;
 
+    /**
+	 * The manual checks group.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      int $group_id The manual checks group id.
+	 */
+    public $group_id;
+
+	/**
+	 * The monitoring checks group uuid.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      int $monitoring_group_uuid The manual checks group uuid.
+	 */
+    public $monitoring_group_uuid;
+
+	/**
+	 * The manual checks group uuid.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      int $manual_group_uuid The manual checks group uuid.
+	 */
+	public $manual_group_uuid;
+
+	/**
+	 * The auto checks group id.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      int $group_id The manual checks group id.
+	 */
+    public $monitoring_group_id;
+
 	/**
 	 * The version of this plugin.
 	 *
@@ -76,7 +111,7 @@ class WebChangeDetector_Admin {
 	 * @access   private
 	 * @var      string $version The current version of this plugin.
 	 */
-	private $version = WebChangeDetector_VERSION;
+	private $version = WEBCHANGEDETECTOR_VERSION;
 
 	/**
 	 * Initialize the class and set its properties.
@@ -87,6 +122,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
+        $this->set_website_details();
+		$this->monitoring_group_uuid = ! empty( $this->website_details['auto_detection_group']['uuid'] ) ? $this->website_details['auto_detection_group']['uuid'] : null;
+		$this->manual_group_uuid = ! empty( $this->website_details['manual_detection_group']['uuid'] ) ? $this->website_details['manual_detection_group']['uuid'] : null;
 	}
 
 	/**
@@ -433,7 +471,7 @@ class WebChangeDetector_Admin {
 		return '';
 	}
 
-	public function get_compares( $group_ids, $limit_days = null, $group_type = null, $difference_only = null, $limit_compares = null ) {
+	public function get_compares( $group_ids, $limit_days = null, $group_type = null, $difference_only = null, $limit_compares = null, $batch_id = null ) {
 		$args     = array(
 			'action'          => 'get_compares_by_group_ids',
 			'limit_days'      => $limit_days,
@@ -441,6 +479,7 @@ class WebChangeDetector_Admin {
 			'difference_only' => $difference_only,
 			'limit_compares'  => $limit_compares,
 			'group_ids'       => json_encode( array( $group_ids ) ),
+            'batch_id'        => $batch_id
 		);
 		$compares = $this->mm_api( $args );
 
@@ -905,7 +944,7 @@ class WebChangeDetector_Admin {
 					),
 				)
 			);
-			$this->website_details                   = $this->mm_api( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+			$this->website_details   = $this->mm_api( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
 	}
 
@@ -1675,8 +1714,8 @@ class WebChangeDetector_Admin {
 	 * @param bool  $isGet
 	 * @return string|array
 	 */
-	public function mm_api( $post, $isWeb = false ) {
-		$url    = 'https://api.webchangedetector.com/api/v1/'; // init for production.
+	public function mm_api( $post, $isWeb = false, $version = 1) {
+		$url    = "https://api.webchangedetector.com/api/v$version/"; // init for production.
 		$urlWeb = 'https://api.webchangedetector.com/';
 
 		// This is where it can be changed to a local/dev address.
@@ -1699,7 +1738,7 @@ class WebChangeDetector_Admin {
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.
 
-		$post['wp_plugin_version'] = WebChangeDetector_VERSION; // API will check this to check compatability.
+		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
 		$post['domain'] = $_SERVER['SERVER_NAME'];
 		$post['wp_id']  = get_current_user_id();
@@ -1753,6 +1792,131 @@ class WebChangeDetector_Admin {
 
 		return $body;
 	}
+
+
+	public function mm_api_v2( $post, $method = 'POST', $isWeb = false, ) {
+		$url    = "https://api.webchangedetector.com/api/v2/"; // init for production.
+		$urlWeb = 'https://api.webchangedetector.com/';
+
+		// This is where it can be changed to a local/dev address.
+		if ( defined( 'WCD_API_URL_V2' ) && is_string( WCD_API_URL_V2 ) && ! empty( WCD_API_URL_V2 ) ) {
+			$url = WCD_API_URL_V2;
+		}
+
+		// Overwrite $url if it is a get request.
+		if ( $isWeb && defined( 'WCD_API_URL_WEB' ) && is_string( WCD_API_URL_WEB ) && ! empty( WCD_API_URL_WEB ) ) {
+			$urlWeb = WCD_API_URL_WEB;
+		}
+
+		$url    .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$urlWeb .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$action = $post['action']; // For debugging.
+
+		// Get API Token from WP DB.
+		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
+
+		unset( $post['action'] ); // don't need to send as action as it's now the url.
+		unset( $post['api_token'] ); // just in case.
+
+		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
+		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
+		$post['domain'] = $_SERVER['SERVER_NAME'];
+		$post['wp_id']  = get_current_user_id();
+
+		// Increase timeout for php.ini
+
+		if ( ! ini_get( 'safe_mode' ) ) {
+			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
+		}
+
+		$args = array(
+			'timeout' => WCD_REQUEST_TIMEOUT,
+			'body'    => $post,
+            'method'  => $method,
+			'headers' => array(
+				'Accept'        => 'application/json',
+				'Authorization' => 'Bearer ' . $api_token,
+			),
+		);
+
+		error_log("Sending API V2 request: " . json_encode($args));
+		if ( $isWeb ) {
+			$response = wp_remote_request( $urlWeb, $args );
+		} else {
+			$response = wp_remote_request( $url, $args );
+		}
+
+		$body         = wp_remote_retrieve_body( $response );
+		$responseCode = (int) wp_remote_retrieve_response_code( $response );
+
+		$decodedBody = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
+
+		// `message` is part of the Laravel Stacktrace.
+		if ( $responseCode === WCD_HTTP_BAD_REQUEST &&
+		     is_array( $decodedBody ) &&
+		     array_key_exists( 'message', $decodedBody ) &&
+		     $decodedBody['message'] === 'plugin_update_required' ) {
+			return 'update plugin';
+		}
+
+		if ( $responseCode === WCD_HTTP_INTERNAL_SERVER_ERROR && $action === 'account_details' ) {
+			return 'activate account';
+		}
+
+		if ( $responseCode === WCD_HTTP_UNAUTHORIZED ) {
+			return 'unauthorized';
+		}
+
+		// if parsing JSON into $decodedBody was without error.
+		if ( json_last_error() === JSON_ERROR_NONE ) {
+			return $decodedBody;
+		}
+
+		return $body;
+	}
+
+	public function take_screenshot_v2( $group_ids, $sc_type ) {
+        if(! is_array($group_ids)) {
+            $group_ids = [$group_ids];
+		}
+		$args = array(
+			'action'   => 'screenshots/take',
+			'sc_type'  => $sc_type,
+			'group_ids' => $group_ids,
+		);
+
+		return $this->mm_api_v2( $args );
+	}
+
+	public function get_comparisons_v2( $filters = [] ) {
+		$url = 'comparisons';
+        if(!empty($filters)) {
+            $url = $url . '?' . build_query($filters);
+        }
+
+		$args = [
+			'action'   => $url,
+		];
+
+		return $this->mm_api_v2( $args, 'GET' );
+	}
+
+	public function get_queue_v2( $batch_id = false, $status = false) {
+		$args = [];
+        if($batch_id) {
+			$args['batch'] = $batch_id;
+		}
+		if($status) {
+			$args['status'] = $status;
+		}
+
+		$args = array(
+			'action'   => 'queues?' . build_query($args),
+		);
+
+		return $this->mm_api_v2( $args, 'GET' );
+	}
+
 }
 
 // HTTP Status Codes.

@@ -154,8 +154,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			return false;
 		}
 
-		$group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
-		$monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
+
+		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
+		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
+
 
 		$monitoring_group_settings = null; // @TODO Can be deleted?
 
@@ -180,7 +182,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$results = $wcd->take_screenshot( $group_id, $scType );
+				$results = $wcd->take_screenshot( $wcd->group_id, $scType );
 
 				if ( $results && is_array( $results ) && count( $results ) > 1 && $results[0] === 'error' ) {
 					echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
@@ -197,25 +199,25 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				// Get the depending group names before saving to avoid group name changes in webapp.
 				$manual_group_name   = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
 				$_POST['group_name'] = $manual_group_name;
-				$wcd->update_settings( $_POST, $group_id );
+				$wcd->update_settings( $_POST, $wcd->group_id );
 
 				$auto_group_name     = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
 				$_POST['group_name'] = $auto_group_name;
-				$wcd->update_monitoring_settings( $_POST, $monitoring_group_id );
+				$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
 				break;
 
 			case 'post_urls':
 				$wcd->post_urls( $_POST, $wcd->website_details, false );
 				if ( ! empty( $_POST['monitoring'] ) && $_POST['monitoring'] ) {
-					$wcd->update_monitoring_settings( $_POST, $monitoring_group_id );
+					$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
 				} else {
-					$wcd->update_settings( $_POST, $group_id );
+					$wcd->update_settings( $_POST, $wcd->group_id );
 				}
 				break;
 
 			case 'save_update_settings_and_continue':
 				$wcd->post_urls( $_POST, $wcd->website_details, false );
-				$wcd->update_settings( $_POST, $group_id );
+				$wcd->update_settings( $_POST, $wcd->group_id );
 
 				// Update step in update detection.
 				if ( ! empty( $_POST['step'] ) ) {
@@ -309,7 +311,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				$wcd->get_dashboard_view( $account_details, $group_id, $monitoring_group_id );
+				$wcd->get_dashboard_view( $account_details, $wcd->group_id, $wcd->monitoring_group_id );
 				break;
 
 			/********************
@@ -341,7 +343,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$difference_only = sanitize_key( $_POST['difference_only'] );
 				}
 
-				$compares = $wcd->get_compares( array( $group_id, $monitoring_group_id ), $limit_days, $group_type, $difference_only );
+				$compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
 				?>
 				<div class="action-container">
 					<form method="post">
@@ -396,7 +398,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 
 				// Get selected urls.
-				$groups_and_urls = $wcd->get_urls_of_group( $group_id );
+				$groups_and_urls = $wcd->get_urls_of_group( $wcd->group_id );
 
 				$step = false;
 				// Show message if no urls are selected.
@@ -502,7 +504,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-				$groups_and_urls = $wcd->get_urls_of_group( $monitoring_group_id );
+				$groups_and_urls = $wcd->get_urls_of_group( $wcd->monitoring_group_id );
 
 				// Calculation for monitoring.
 				$date_next_sc = false;

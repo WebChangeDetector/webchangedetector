@@ -67,8 +67,8 @@ class WebChangeDetector {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( defined( 'WebChangeDetector_VERSION' ) ) {
-			$this->version = WebChangeDetector_VERSION;
+		if ( defined( 'WEBCHANGEDETECTOR_VERSION' ) ) {
+			$this->version = WEBCHANGEDETECTOR_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
@@ -114,6 +114,7 @@ class WebChangeDetector {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
