@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: compare, changedetector, screenshot, check, change, updates
 Requires at least: 5.2
 Tested up to: 6.5.2
-Stable tag: 2.3.3
+Stable tag: 2.4.0
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -54,6 +54,9 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Changelog ==
 = 2.4.0 =
 * Feature: Checks on WP auto updates
+
+= 2.4.0 =
+* Checks at WP auto updates
 
 = 2.3.3 =
 * Show updated pricing calculations

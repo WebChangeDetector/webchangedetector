@@ -1854,6 +1854,7 @@ class WebChangeDetector_Admin {
 		);
 
 		error_log("Sending API V2 request: " . $url . " | args: " . json_encode($args));
+
 		if ( $isWeb ) {
 			$response = wp_remote_request( $urlWeb, $args );
 		} else {
@@ -1931,6 +1932,7 @@ class WebChangeDetector_Admin {
 		return $this->mm_api_v2( $args, 'GET' );
 	}
 
+
     public function add_webhook_v2($url, $event) {
         $args = [
             "action" => "webhooks",
@@ -1949,7 +1951,6 @@ class WebChangeDetector_Admin {
         ];
 	    return $this->mm_api_v2( $args, 'DELETE' );
     }
-
 }
 
 // HTTP Status Codes.

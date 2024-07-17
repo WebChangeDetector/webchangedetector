@@ -157,8 +157,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
 		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 
-
-
 		$monitoring_group_settings = null; // @TODO Can be deleted?
 
 		// Perform actions.
