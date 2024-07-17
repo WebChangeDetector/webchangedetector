@@ -91,8 +91,12 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Add items to update to option wcd_updated_items.
+		// If there were updates which we didn't start, we skip from here.
+		if(! get_option('wcd_pre_auto_update') || ! get_option('wcd_updating_items')) {
+			return;
+		}
 
+		// Add items to update to option wcd_updated_items.
 		$updated_items = get_option( 'wcd_updated_items' );
 		if ( ! $updated_items ) {
 			$updated_items = array();
