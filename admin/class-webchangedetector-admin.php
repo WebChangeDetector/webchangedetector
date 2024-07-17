@@ -68,14 +68,14 @@ class WebChangeDetector_Admin {
 	 */
 	private $plugin_name;
 
-    /**
+	/**
 	 * The manual checks group.
 	 *
 	 * @since    1.0.0
 	 * @access   public
 	 * @var      int $group_id The manual checks group id.
 	 */
-    public $group_id;
+	public $group_id;
 
 	/**
 	 * The monitoring checks group uuid.
@@ -84,7 +84,7 @@ class WebChangeDetector_Admin {
 	 * @access   public
 	 * @var      int $monitoring_group_uuid The manual checks group uuid.
 	 */
-    public $monitoring_group_uuid;
+	public $monitoring_group_uuid;
 
 	/**
 	 * The manual checks group uuid.
@@ -102,7 +102,7 @@ class WebChangeDetector_Admin {
 	 * @access   public
 	 * @var      int $group_id The manual checks group id.
 	 */
-    public $monitoring_group_id;
+	public $monitoring_group_id;
 
 	/**
 	 * The version of this plugin.
@@ -122,9 +122,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
-        $this->set_website_details();
+		$this->set_website_details();
 		$this->monitoring_group_uuid = ! empty( $this->website_details['auto_detection_group']['uuid'] ) ? $this->website_details['auto_detection_group']['uuid'] : null;
-		$this->manual_group_uuid = ! empty( $this->website_details['manual_detection_group']['uuid'] ) ? $this->website_details['manual_detection_group']['uuid'] : null;
+		$this->manual_group_uuid     = ! empty( $this->website_details['manual_detection_group']['uuid'] ) ? $this->website_details['manual_detection_group']['uuid'] : null;
 	}
 
 	/**
@@ -405,14 +405,14 @@ class WebChangeDetector_Admin {
 			'threshold' => sanitize_text_field( $postdata['threshold'] ),
 		);
 
-        error_log(json_encode($postdata));
-        $auto_update_settings = [];
-        foreach($postdata as $key => $value ) {
-            if(0 === strpos($key,"auto_update_checks_") ) {
-                $auto_update_settings[$key] = $value;
-            }
-        }
-        update_option('wcd_auto_update_settings', $auto_update_settings);
+		error_log( json_encode( $postdata ) );
+		$auto_update_settings = array();
+		foreach ( $postdata as $key => $value ) {
+			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
+				$auto_update_settings[ $key ] = $value;
+			}
+		}
+		update_option( 'wcd_auto_update_settings', $auto_update_settings );
 		return $this->mm_api( $args );
 	}
 
@@ -487,7 +487,7 @@ class WebChangeDetector_Admin {
 			'difference_only' => $difference_only,
 			'limit_compares'  => $limit_compares,
 			'group_ids'       => json_encode( array( $group_ids ) ),
-            'batch_id'        => $batch_id
+			'batch_id'        => $batch_id,
 		);
 		$compares = $this->mm_api( $args );
 
@@ -952,7 +952,7 @@ class WebChangeDetector_Admin {
 					),
 				)
 			);
-			$this->website_details   = $this->mm_api( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+			$this->website_details                   = $this->mm_api( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
 	}
 
@@ -973,11 +973,11 @@ class WebChangeDetector_Admin {
 
 			<?php
 			if ( ! $monitoring_group ) {
-                $auto_update_settings = get_option('wcd_auto_update_settings');
-                $auto_update_checks_enabled = '<span style="color: green">On</span>';
-                if(!$auto_update_settings || !array_key_exists('auto_update_checks_enabled', $auto_update_settings)) {
-                    $auto_update_checks_enabled = '<span style="color: red">Off</span>';
-                }
+				$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
+				$auto_update_checks_enabled = '<span style="color: green">On</span>';
+				if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
+					$auto_update_checks_enabled = '<span style="color: red">Off</span>';
+				}
 				?>
 				<input type="hidden" name="step" value="pre-update">
 				<h2>Settings</h2>
@@ -986,8 +986,8 @@ class WebChangeDetector_Admin {
 						<h3>
 							Manual Checks Settings<br>
 							<small>
-								Auto update checks: <strong><?= $auto_update_checks_enabled?></strong>
-                                | Threshold: <strong><?php echo $groups_and_urls['threshold']; ?> %</strong>
+								Auto update checks: <strong><?php echo $auto_update_checks_enabled; ?></strong>
+								| Threshold: <strong><?php echo $groups_and_urls['threshold']; ?> %</strong>
 								| CSS injection: <strong><?php echo $groups_and_urls['css'] ? 'yes' : 'no'; ?></strong>
 							</small>
 						</h3>
@@ -1728,7 +1728,7 @@ class WebChangeDetector_Admin {
 	 * @param bool  $isGet
 	 * @return string|array
 	 */
-	public function mm_api( $post, $isWeb = false, $version = 1) {
+	public function mm_api( $post, $isWeb = false, $version = 1 ) {
 		$url    = "https://api.webchangedetector.com/api/v$version/"; // init for production.
 		$urlWeb = 'https://api.webchangedetector.com/';
 
@@ -1809,7 +1809,7 @@ class WebChangeDetector_Admin {
 
 
 	public function mm_api_v2( $post, $method = 'POST', $isWeb = false, ) {
-		$url    = "https://api.webchangedetector.com/api/v2/"; // init for production.
+		$url    = 'https://api.webchangedetector.com/api/v2/'; // init for production.
 		$urlWeb = 'https://api.webchangedetector.com/';
 
 		// This is where it can be changed to a local/dev address.
@@ -1824,7 +1824,7 @@ class WebChangeDetector_Admin {
 
 		$url    .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
 		$urlWeb .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
-		$action = $post['action']; // For debugging.
+		$action  = $post['action']; // For debugging.
 
 		// Get API Token from WP DB.
 		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
@@ -1846,14 +1846,14 @@ class WebChangeDetector_Admin {
 		$args = array(
 			'timeout' => WCD_REQUEST_TIMEOUT,
 			'body'    => $post,
-            'method'  => $method,
+			'method'  => $method,
 			'headers' => array(
 				'Accept'        => 'application/json',
 				'Authorization' => 'Bearer ' . $api_token,
 			),
 		);
 
-		error_log("Sending API V2 request: " . $url . " | args: " . json_encode($args));
+		error_log( 'Sending API V2 request: ' . $url . ' | args: ' . json_encode( $args ) );
 
 		if ( $isWeb ) {
 			$response = wp_remote_request( $urlWeb, $args );
@@ -1868,9 +1868,9 @@ class WebChangeDetector_Admin {
 
 		// `message` is part of the Laravel Stacktrace.
 		if ( $responseCode === WCD_HTTP_BAD_REQUEST &&
-		     is_array( $decodedBody ) &&
-		     array_key_exists( 'message', $decodedBody ) &&
-		     $decodedBody['message'] === 'plugin_update_required' ) {
+			is_array( $decodedBody ) &&
+			array_key_exists( 'message', $decodedBody ) &&
+			$decodedBody['message'] === 'plugin_update_required' ) {
 			return 'update plugin';
 		}
 
@@ -1891,66 +1891,66 @@ class WebChangeDetector_Admin {
 	}
 
 	public function take_screenshot_v2( $group_ids, $sc_type ) {
-        if(! is_array($group_ids)) {
-            $group_ids = [$group_ids];
+		if ( ! is_array( $group_ids ) ) {
+			$group_ids = array( $group_ids );
 		}
 		$args = array(
-			'action'   => 'screenshots/take',
-			'sc_type'  => $sc_type,
+			'action'    => 'screenshots/take',
+			'sc_type'   => $sc_type,
 			'group_ids' => $group_ids,
 		);
 
 		return $this->mm_api_v2( $args );
 	}
 
-	public function get_comparisons_v2( $filters = [] ) {
+	public function get_comparisons_v2( $filters = array() ) {
 		$url = 'comparisons';
-        if(!empty($filters)) {
-            $url = $url . '?' . build_query($filters);
-        }
+		if ( ! empty( $filters ) ) {
+			$url = $url . '?' . build_query( $filters );
+		}
 
-		$args = [
-			'action'   => $url,
-		];
+		$args = array(
+			'action' => $url,
+		);
 
 		return $this->mm_api_v2( $args, 'GET' );
 	}
 
-	public function get_queue_v2( $batch_id = false, $status = false) {
-		$args = [];
-        if($batch_id) {
+	public function get_queue_v2( $batch_id = false, $status = false ) {
+		$args = array();
+		if ( $batch_id ) {
 			$args['batch'] = $batch_id;
 		}
-		if($status) {
+		if ( $status ) {
 			$args['status'] = $status;
 		}
 
 		$args = array(
-			'action'   => 'queues?' . build_query($args),
+			'action' => 'queues?' . build_query( $args ),
 		);
 
 		return $this->mm_api_v2( $args, 'GET' );
 	}
 
 
-    public function add_webhook_v2($url, $event) {
-        $args = [
-            "action" => "webhooks",
-            "url" => $url,
-            "event" => $event
-        ];
-	    return $this->mm_api_v2( $args );
-    }
+	public function add_webhook_v2( $url, $event ) {
+		$args = array(
+			'action' => 'webhooks',
+			'url'    => $url,
+			'event'  => $event,
+		);
+		return $this->mm_api_v2( $args );
+	}
 
-    public function delete_webhook($id) {
-        if($id) {
-            return false;
-        }
-        $args = [
-            "action" => 'webhooks/' . $id
-        ];
-	    return $this->mm_api_v2( $args, 'DELETE' );
-    }
+	public function delete_webhook( $id ) {
+		if ( $id ) {
+			return false;
+		}
+		$args = array(
+			'action' => 'webhooks/' . $id,
+		);
+		return $this->mm_api_v2( $args, 'DELETE' );
+	}
 }
 
 // HTTP Status Codes.
