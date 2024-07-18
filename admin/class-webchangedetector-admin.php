@@ -91,7 +91,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      int $manual_group_uuid The manual checks group uuid.
+	 * @var      string $manual_group_uuid The manual checks group uuid.
 	 */
 	public $manual_group_uuid;
 
@@ -123,8 +123,22 @@ class WebChangeDetector_Admin {
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
 		$this->set_website_details();
+
 		$this->monitoring_group_uuid = ! empty( $this->website_details['auto_detection_group']['uuid'] ) ? $this->website_details['auto_detection_group']['uuid'] : null;
 		$this->manual_group_uuid     = ! empty( $this->website_details['manual_detection_group']['uuid'] ) ? $this->website_details['manual_detection_group']['uuid'] : null;
+
+		// If we (for whatever reason) don't get the uuids, take them from wp_option.
+		if ( is_null( $this->monitoring_group_uuid ) || is_null( $this->manual_group_uuid ) ) {
+			$group_uuids = get_option( 'wcd_website_groups' );
+			if ( $group_uuids && $group_uuids['auto_detection_group'] && $group_uuids['manual_detection_group'] ) {
+				$this->monitoring_group_uuid = $group_uuids['auto_detection_group'];
+				$this->manual_group_uuid     = $group_uuids['manual_detection_group'];
+			}
+		}
+
+		// TODO Replace those with V2
+		$this->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
+		$this->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 	}
 
 	/**
@@ -412,6 +426,9 @@ class WebChangeDetector_Admin {
 				$auto_update_settings[ $key ] = $value;
 			}
 		}
+
+		do_action( 'wcd_save_update_group_settings', $postdata );
+
 		update_option( 'wcd_auto_update_settings', $auto_update_settings );
 		return $this->mm_api( $args );
 	}
@@ -1482,6 +1499,17 @@ class WebChangeDetector_Admin {
 		if ( empty( $this->website_details ) ) {
 			$this->create_website_and_groups();
 			$this->website_details = $this->mm_api( $args );
+		}
+
+		// Save group uuids. If website_details request fails, we have at least those.
+		if ( ! empty( $this->website_details['auto_detection_group']['uuid'] ) &&
+			! empty( $this->website_details['manual_detection_group']['uuid'] )
+		) {
+			$groups = array(
+				'auto_detection_group'   => $this->website_details['auto_detection_group']['uuid'],
+				'manual_detection_group' => $this->website_details['auto_detection_group']['uuid'],
+			);
+			update_option( 'wcd_website_groups', $groups );
 		}
 
 		// Take the first website details or return error string.

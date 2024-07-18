@@ -135,7 +135,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Set the website details class object.
-		$wcd->set_website_details();
+		// $wcd->set_website_details();
 
 		// If we don't have the website for any reason we show an error message.
 		if ( empty( $wcd->website_details ) ) {
@@ -153,9 +153,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			<?php
 			return false;
 		}
-
-		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
-		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 
 		$monitoring_group_settings = null; // @TODO Can be deleted?
 
