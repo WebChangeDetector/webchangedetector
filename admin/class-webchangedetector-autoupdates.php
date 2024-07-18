@@ -45,10 +45,11 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'upgrader_process_complete', array( $this, 'upgrader_process_complete' ), 10, 2 );
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
 
-		//add_action( 'admin_init', array( $this, 'admin_init' ) );
-
 		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
 		$this->wcd = new WebChangeDetector_Admin();
+
+		// Only for debugging. Reset auto_update_transients
+		add_action( 'admin_init', array( $this, 'reset_transients_for_manually_start_auto_updates' ) );
 	}
 
 	/**
@@ -66,28 +67,7 @@ class WebChangeDetector_Autoupdates {
 		// add_action('pre_auto_update', array($this, 'pre_auto_update'), 10, 3);
 	}
 
-	/* Delete this one. Only for debugging
 
-	 public function admin_init() {
-		/* $this->reschedule_wp_version_check_cron();
-		// error_log("Function: admin_init");
-		$core_transient    = get_site_transient( 'update_core' );
-		$themes_transient  = get_site_transient( 'update_themes' );
-		$plugins_transient = get_site_transient( 'update_plugins' );
-
-		$new_time                        = strtotime( '-13 hours' );
-		$core_transient->last_checked    = $new_time;
-		$themes_transient->last_checked  = $new_time;
-		$plugins_transient->last_checked = $new_time;
-
-		set_site_transient( 'update_core', $core_transient );
-		set_site_transient( 'update_themes', $themes_transient );
-		set_site_transient( 'update_plugins', $plugins_transient );
-		// $plugins_transient = get_site_transient('update_plugins');
-		// error_log("Plugins last checked: " . date("d.m.Y H:i",$plugins_transient->last_checked));
-
-	}
-*/
 
 	/**
 	 * Fires when the update process is finished (for each plugin/theme/core).
@@ -507,4 +487,27 @@ class WebChangeDetector_Autoupdates {
 	public function auto_update_core( $update, $item ) {
 		return $this->auto_update( $update, $item, 'core' );
 	}
+
+	// Delete this one. Only for debugging
+
+	 public function reset_transients_for_manually_start_auto_updates() {
+
+		// error_log("Function: admin_init");
+		$core_transient    = get_site_transient( 'update_core' );
+		$themes_transient  = get_site_transient( 'update_themes' );
+		$plugins_transient = get_site_transient( 'update_plugins' );
+
+		$new_time                        = strtotime( '-13 hours' );
+		$core_transient->last_checked    = $new_time;
+		$themes_transient->last_checked  = $new_time;
+		$plugins_transient->last_checked = $new_time;
+
+		set_site_transient( 'update_core', $core_transient );
+		set_site_transient( 'update_themes', $themes_transient );
+		set_site_transient( 'update_plugins', $plugins_transient );
+		// $plugins_transient = get_site_transient('update_plugins');
+		// error_log("Plugins last checked: " . date("d.m.Y H:i",$plugins_transient->last_checked));
+
+	}
+
 }
