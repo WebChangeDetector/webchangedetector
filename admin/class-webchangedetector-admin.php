@@ -82,7 +82,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      int $monitoring_group_uuid The manual checks group uuid.
+	 * @var      string $monitoring_group_uuid The manual checks group uuid.
 	 */
 	public $monitoring_group_uuid;
 
