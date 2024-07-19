@@ -28,6 +28,14 @@ class WebChangeDetector_Autoupdates {
 	public object $wcd;
 
 	/**
+	* @var WebChangeDetector_API_V2
+	 */
+	public $api;
+	public string $update_group_id;
+
+	public string $monitoring_group_id;
+
+	/**
 	 * Plugin constructor
 	 */
 	public function __construct() {
@@ -45,11 +53,67 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'upgrader_process_complete', array( $this, 'upgrader_process_complete' ), 10, 2 );
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
 
+		add_action(' automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
+
 		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
-		$this->wcd = new WebChangeDetector_Admin();
+
+		$this->api = new WebChangeDetector_API_V2();
 
 		// Only for debugging. Reset auto_update_transients
 		add_action( 'admin_init', array( $this, 'reset_transients_for_manually_start_auto_updates' ) );
+
+		if(get_option('wcd_website_groups')) {
+			$this->update_group_id = get_option('wcd_website_groups')['manual_detection_group'];
+			$this->monitoring_group_id = get_option('wcd_website_groups')['auto_detection_group'];
+		} else {
+
+			$url = get_site_url();
+
+			// Create manual check group.
+			$update_group_data = array(
+				'name' => 'Manual Checks - ' . $url,
+				'monitoring' => false,
+				'enabled' => true,
+			);
+			$update_group_arr = $this->api->create_group_v2($update_group_data);
+
+			// Create monitoring group.
+			$monitoring_group_data = array(
+				'name' => 'Monitoring - ' . $url,
+				'monitoring' => true,
+				'enabled' => false,
+				'hour_of_day' => current_time("H"),
+				'interval_in_h' => 24,
+				'alert_emails' => get_bloginfo('admin_email'),
+			);
+			$monitoring_group_arr = $this->api->create_group_v2($monitoring_group_data);
+
+			// Save groups to option.
+			$wcd_website_groups = [
+					'manual_detection_group' => $update_group_arr['uuid'],
+					'auto_detection_group' => $monitoring_group_arr['uuid']
+			];
+
+			update_option('wcd_website_groups', $wcd_website_groups);
+
+			$this->update_group_id = $update_group_arr['uuid'];
+			$this->monitoring_group_id = $monitoring_group_arr['uuid'];
+
+			// Add URL
+			$url_arr = $this->api->add_url($url);
+
+			// Add URL to groups
+			$add_url_to_group[] = array(
+				'id' => $url_arr['uuid'],
+				'desktop' => true,
+				'mobile' => true
+			);
+
+			$this->api->add_urls_to_group($update_group_arr['uuid'], $add_url_to_group);
+			$this->api->add_urls_to_group($monitoring_group_arr['uuid'], $add_url_to_group);
+		}
+
+
 	}
 
 	/**
@@ -63,11 +127,14 @@ class WebChangeDetector_Autoupdates {
 		add_filter( 'auto_update_plugin', array( $this, 'auto_update_plugin' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_theme', array( $this, 'auto_update_theme' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_core', array( $this, 'auto_update_core' ), PHP_INT_MAX, 2 );
-
+		add_action(' automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
 		// add_action('pre_auto_update', array($this, 'pre_auto_update'), 10, 3);
 	}
 
-
+	public function automatic_updates_complete($results) {
+		error_log("Triggered hook automatic_updates_complete");
+		error_log("Results: " . json_encode($results));
+	}
 
 	/**
 	 * Fires when the update process is finished (for each plugin/theme/core).
@@ -116,7 +183,7 @@ class WebChangeDetector_Autoupdates {
 		// Check if Updates are complete and start post-update sc and comparisons
 		if ( count( $updating_items ) === count( $updated_items ) ) {
 			error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
-			$response = $this->wcd->take_screenshot_v2( $this->wcd->manual_group_uuid, 'post' );
+			$response = $this->api->take_screenshot_v2( $this->wcd->manual_group_uuid, 'post' );
 			error_log( 'Post-Screenshot Response: ' . json_encode( $response ) );
 			add_option(
 				'wcd_post_auto_update',
@@ -133,11 +200,11 @@ class WebChangeDetector_Autoupdates {
 
 	public function wcd_cron_check_post_queues() {
 		$post_sc_option = get_option( 'wcd_post_auto_update' );
-		$response       = $this->wcd->get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
+		$response       = $this->api->get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
 
 		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
 		if ( count( $response['data'] ) === 0 ) {
-			$comparisons = $this->wcd->get_comparisons_v2( array( 'batch' => $post_sc_option['batch_id'] ) );
+			$comparisons = $this->api->get_comparisons_v2( array( 'batch' => $post_sc_option['batch_id'] ) );
 			$mail_body   = '<style>
 								table {
 									border: 1px solid #ccc;
@@ -221,7 +288,7 @@ class WebChangeDetector_Autoupdates {
 			wp_mail( $to, $subject, $mail_body, $headers );
 
 			// We don't need the webhook anymore
-			$this->wcd->delete_webhook( get_option( 'wcd_wordpress_cron' ) );
+			$this->api->delete_webhook( get_option( 'wcd_wordpress_cron' ) );
 
 			// Cleanup wp_options and cron webhook.
 			delete_option( 'wcd_wordpress_cron' );
@@ -238,7 +305,7 @@ class WebChangeDetector_Autoupdates {
 	public function wcd_wp_maybe_auto_update() {
 		error_log( 'Checking if sc are ready' );
 		$pre_sc_option = get_option( 'wcd_pre_auto_update' );
-		$response      = $this->wcd->get_queue_v2( $pre_sc_option['batch_id'], 'open,processing' );
+		$response      = $this->api->get_queue_v2( $pre_sc_option['batch_id'], 'open,processing' );
 
 		error_log( 'Queue: ' . json_encode( $response ) );
 		// If we don't have open or processing queues of the batch anymore, we can do auto-updates.
@@ -406,7 +473,7 @@ class WebChangeDetector_Autoupdates {
 		$wcd_update_option = get_option( 'wcd_pre_auto_update' );
 
 		if ( false === get_option( 'wcd_wordpress_cron' ) ) {
-			$result = $this->wcd->add_webhook_v2( get_site_url(), 'wordpress_cron' );
+			$result = $this->api->add_webhook_v2( get_site_url(), 'wordpress_cron' );
 			error_log( 'Webhook result: ' . json_encode( $result ) );
 			if ( is_array( $result ) && array_key_exists( 'data', $result ) ) {
 				add_option( 'wcd_wordpress_cron', $result['data']['id'] );
@@ -414,7 +481,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( false === $wcd_update_option ) { // We don't have an wp_option yet. So we start screenshots
 			error_log( 'Manual Group UUID: ' . $this->wcd->manual_group_uuid );
-			$sc_response = $this->wcd->take_screenshot_v2( $this->wcd->manual_group_uuid, 'pre' );
+			$sc_response = $this->api->take_screenshot_v2( $this->wcd->manual_group_uuid, 'pre' );
 			error_log( 'Pre update SC data: ' . json_encode( $sc_response ) );
 			$transientData = array(
 				'status'   => 'processing',

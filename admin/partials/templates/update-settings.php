@@ -34,12 +34,12 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 		<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo $groups_and_urls['threshold']; ?>"> %<br>
 	</div>
 	<div style="padding: 10px;" class="auto-setting">
-		<label for="auto_update_checks_enabled" >Checks on Auto Updates</label>
+		<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
 		<input id="auto_update_checks_enabled" name="auto_update_checks_enabled" type="checkbox" <?php echo $auto_update_settings['auto_update_checks_enabled']; ?> class="auto_update_checks_enabled">
 	</div>
 	<div id="auto_update_checks_settings">
 		<div style="padding: 10px; " class="auto-setting toggle">
-			<label for="auto_update_checks_from" >Auto Update Times from </label>
+			<label for="auto_update_checks_from" >Auto update times from </label>
 			<input name="auto_update_checks_from" value="<?php echo $auto_update_settings['auto_update_checks_from']; ?>" type="time" class="auto_update_checks_from">
 			<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
 			<input name="auto_update_checks_to" value="<?php echo $auto_update_settings['auto_update_checks_to']; ?>" type="time" class="auto_update_checks_to">
