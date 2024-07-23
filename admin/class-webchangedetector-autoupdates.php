@@ -32,6 +32,7 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public function __construct() {
 
+		$this->set_defines();
 		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
 
 		// Hooks into JetPack's remote updater (manual updates performed from the wordpress.com console)
@@ -50,12 +51,12 @@ class WebChangeDetector_Autoupdates {
 		// Only for debugging. Reset auto_update_transients
 		add_action( 'admin_init', array( $this, 'reset_transients_for_manually_start_auto_updates' ) );
 
-		try {
-			$this->manual_group_id     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ];
-			$this->monitoring_group_id = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ];
-		} catch ( Exception $e ) {
-			error_log( 'Manual check group not found: ' . $e );
+		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
+		if(!$wcd_groups) {
+			return;
 		}
+		$this->manual_group_id     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 	}
 
 	/**
@@ -516,35 +517,38 @@ class WebChangeDetector_Autoupdates {
 		// $plugins_transient = get_site_transient('update_plugins');
 		// error_log("Plugins last checked: " . date("d.m.Y H:i",$plugins_transient->last_checked));
 	}
-}
 
-if ( ! defined( 'WCD_WEBSITE_GROUPS' ) ) {
-	define( 'WCD_WEBSITE_GROUPS', 'wcd_website_groups' );
-}
-if ( ! defined( 'WCD_MANUAL_DETECTION_GROUP' ) ) {
-	define( 'WCD_MANUAL_DETECTION_GROUP', 'manual_detection_group' );
-}
-if ( ! defined( 'WCD_AUTO_DETECTION_GROUP' ) ) {
-	define( 'WCD_AUTO_DETECTION_GROUP', 'auto_detection_group' );
-}
-if ( ! defined( 'WCD_UPDATED_ITEMS' ) ) {
-	define( 'WCD_UPDATED_ITEMS', 'wcd_updated_items' );
-}
-if ( ! defined( 'WCD_UPDATING_ITEMS' ) ) {
-	define( 'WCD_UPDATING_ITEMS', 'wcd_updating_items' );
-}
-if ( ! defined( 'WCD_WORDPRESS_CRON' ) ) {
-	define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );
-}
-if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
-	define( 'WCD_PRE_AUTO_UPDATE', 'wcd_pre_auto_update' );
-}
-if ( ! defined( 'WCD_POST_AUTO_UPDATE' ) ) {
-	define( 'WCD_POST_AUTO_UPDATE', 'wcd_post_auto_update' );
-}
-if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
-	define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
-}
-if ( ! defined( 'WCD_AUTO_UPDATE_LOCK' ) ) {
-	define( 'WCD_AUTO_UPDATE_LOCK', 'wcd_auto_update_lock' );
+	private function set_defines() {
+
+		if ( ! defined( 'WCD_WEBSITE_GROUPS' ) ) {
+			define( 'WCD_WEBSITE_GROUPS', 'wcd_website_groups' );
+		}
+		if ( ! defined( 'WCD_MANUAL_DETECTION_GROUP' ) ) {
+			define( 'WCD_MANUAL_DETECTION_GROUP', 'manual_detection_group' );
+		}
+		if ( ! defined( 'WCD_AUTO_DETECTION_GROUP' ) ) {
+			define( 'WCD_AUTO_DETECTION_GROUP', 'auto_detection_group' );
+		}
+		if ( ! defined( 'WCD_UPDATED_ITEMS' ) ) {
+			define( 'WCD_UPDATED_ITEMS', 'wcd_updated_items' );
+		}
+		if ( ! defined( 'WCD_UPDATING_ITEMS' ) ) {
+			define( 'WCD_UPDATING_ITEMS', 'wcd_updating_items' );
+		}
+		if ( ! defined( 'WCD_WORDPRESS_CRON' ) ) {
+			define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );
+		}
+		if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
+			define( 'WCD_PRE_AUTO_UPDATE', 'wcd_pre_auto_update' );
+		}
+		if ( ! defined( 'WCD_POST_AUTO_UPDATE' ) ) {
+			define( 'WCD_POST_AUTO_UPDATE', 'wcd_post_auto_update' );
+		}
+		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
+			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
+		}
+		if ( ! defined( 'WCD_AUTO_UPDATE_LOCK' ) ) {
+			define( 'WCD_AUTO_UPDATE_LOCK', 'wcd_auto_update_lock' );
+		}
+	}
 }
