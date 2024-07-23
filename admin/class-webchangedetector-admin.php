@@ -1500,6 +1500,14 @@ class WebChangeDetector_Admin {
 			$this->create_website_and_groups();
 			$this->website_details = $this->mm_api( $args );
 		}
+		// Take the first website details or return error string.
+		if ( is_array( $this->website_details ) && ! empty( $this->website_details ) ) {
+			$this->website_details = $this->website_details[0];
+
+			// Set default sync types if they are empty.
+			$this->set_default_sync_types();
+			$this->website_details['sync_url_types'] = json_decode( $this->website_details['sync_url_types'], true );
+		}
 
 		// Save group uuids. If website_details request fails, we have at least those.
 		if ( ! empty( $this->website_details['auto_detection_group']['uuid'] ) &&
@@ -1510,15 +1518,6 @@ class WebChangeDetector_Admin {
 				'manual_detection_group' => $this->website_details['manual_detection_group']['uuid'],
 			);
 			update_option( 'wcd_website_groups', $groups );
-		}
-
-		// Take the first website details or return error string.
-		if ( is_array( $this->website_details ) && count( $this->website_details ) > 0 ) {
-			$this->website_details = $this->website_details[0];
-
-			// Set default sync types if they are empty.
-			$this->set_default_sync_types();
-			$this->website_details['sync_url_types'] = json_decode( $this->website_details['sync_url_types'], true );
 		}
 	}
 
