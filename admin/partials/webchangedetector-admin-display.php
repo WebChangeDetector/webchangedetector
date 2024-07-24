@@ -135,7 +135,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Set the website details class object.
-        $wcd->set_website_details();
+		$wcd->set_website_details();
 
 		$wcd->monitoring_group_uuid = ! empty( $wcd->website_details['auto_detection_group']['uuid'] ) ? $wcd->website_details['auto_detection_group']['uuid'] : null;
 		$wcd->manual_group_uuid     = ! empty( $wcd->website_details['manual_detection_group']['uuid'] ) ? $wcd->website_details['manual_detection_group']['uuid'] : null;

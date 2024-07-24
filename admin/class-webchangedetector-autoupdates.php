@@ -53,7 +53,7 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
-		if(!$wcd_groups) {
+		if ( ! $wcd_groups ) {
 			return;
 		}
 		$this->manual_group_id     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
@@ -71,7 +71,7 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	public function automatic_updates_complete() {
-		error_log("Function: Automatic Updates Complete");
+		error_log( 'Function: Automatic Updates Complete' );
 
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
@@ -217,8 +217,8 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Remove the lock, just in case it is still locked somehow.
-		delete_option($this->lock_name);
-		delete_option(WCD_AUTO_UPDATE_LOCK);
+		delete_option( $this->lock_name );
+		delete_option( WCD_AUTO_UPDATE_LOCK );
 
 		// Start the auto-updates.
 		wp_maybe_auto_update();
@@ -230,11 +230,11 @@ class WebChangeDetector_Autoupdates {
 
 		// If there was no lock yet, we add it.
 		$lock_added = add_option( $this->lock_name, $time );
-		if( $lock_added ) {
+		if ( $lock_added ) {
 			// To know that it was ours, we create a second option with the same timestamp.
 			update_option( WCD_AUTO_UPDATE_LOCK, $time );
 			// We only want to prevent  auto-updates for this run. So we release the lock in 1 min.
-			wp_schedule_single_event(strtotime('+1 minute'), 'wcd_release_lock');
+			wp_schedule_single_event( strtotime( '+1 minute' ), 'wcd_release_lock' );
 		}
 	}
 
@@ -272,7 +272,7 @@ class WebChangeDetector_Autoupdates {
 
 		$should_next_run_gmt = get_gmt_from_date( date( 'Y-m-d H:i:s', $should_next_run ), 'U' );
 
-		$now_gmt             = get_gmt_from_date( current_time( 'Y-m-d H:i:s' ), 'U' );
+		$now_gmt = get_gmt_from_date( current_time( 'Y-m-d H:i:s' ), 'U' );
 
 		// Add a day if we passed the auto_update_checks_from time already.
 		if ( $now_gmt > $should_next_run_gmt ) {

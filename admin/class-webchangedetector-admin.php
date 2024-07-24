@@ -343,8 +343,8 @@ class WebChangeDetector_Admin {
 			'action' => 'account_details',
 		);
 		$account_details = $this->mm_api( $args );
-		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-        update_option('wcd_upgrade_url', $upgrade_url, false);
+		$upgrade_url     = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+		update_option( 'wcd_upgrade_url', $upgrade_url, false );
 		return $account_details;
 	}
 
@@ -398,7 +398,7 @@ class WebChangeDetector_Admin {
 	public function update_settings( $postdata, $group_id ) {
 
 		// Saving auto update settings.
-		error_log( "Saving Manual Checks settings: " . json_encode( $postdata ) );
+		error_log( 'Saving Manual Checks settings: ' . json_encode( $postdata ) );
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
@@ -409,7 +409,7 @@ class WebChangeDetector_Admin {
 		update_option( 'wcd_auto_update_settings', $auto_update_settings );
 		do_action( 'wcd_save_update_group_settings', $postdata );
 
-        // Update group settings in api
+		// Update group settings in api
 		$args = array(
 			'action'    => 'update_group',
 			'group_id'  => $group_id,
@@ -422,16 +422,16 @@ class WebChangeDetector_Admin {
 	}
 
 	public function get_upgrade_url() {
-        $upgrade_url = get_option('wcd_upgrade_url');
-        if(! $upgrade_url) {
-            $account_details = $this->account_details();
-            if ( ! is_array( $account_details ) ) {
-                return false;
-            }
-            $upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-            update_option('wcd_upgrade_url', $upgrade_url);
-        }
-        return $upgrade_url;
+		$upgrade_url = get_option( 'wcd_upgrade_url' );
+		if ( ! $upgrade_url ) {
+			$account_details = $this->account_details();
+			if ( ! is_array( $account_details ) ) {
+				return false;
+			}
+			$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+			update_option( 'wcd_upgrade_url', $upgrade_url );
+		}
+		return $upgrade_url;
 	}
 
 	/**
@@ -708,46 +708,46 @@ class WebChangeDetector_Admin {
 
 	public function sync_posts() {
 
-        // Return synced_posts from transient if available
-        $synced_posts = get_transient('wcd_synced_posts');
-        if($synced_posts) {
-            return $synced_posts;
-        }
+		// Return synced_posts from transient if available
+		$synced_posts = get_transient( 'wcd_synced_posts' );
+		if ( $synced_posts ) {
+			return $synced_posts;
+		}
 
 		$array     = array(); // init.
 		$url_types = array();
 
-        // Get Post Types.
-        $post_types = get_post_types( array( 'public' => true ), 'objects' );
-        foreach ( $post_types as $post_type ) {
+		// Get Post Types.
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		foreach ( $post_types as $post_type ) {
 
-            // if rest_base is not set we use post_name (wp default).
-            if ( ! $post_type->rest_base ) {
-                $post_type->rest_base = $post_type->name;
-            }
+			// if rest_base is not set we use post_name (wp default).
+			if ( ! $post_type->rest_base ) {
+				$post_type->rest_base = $post_type->name;
+			}
 
-            foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-                if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
-                    $url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
-                }
-            }
-        }
+			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+				if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
+					$url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
+				}
+			}
+		}
 
-        // Get Taxonomies.
-        $taxonomies = get_taxonomies( array(), 'objects' );
+		// Get Taxonomies.
+		$taxonomies = get_taxonomies( array(), 'objects' );
 
-        foreach ( $taxonomies as $taxonomy ) {
-            // if rest_base is not set we use post_name (wp default).
-            if ( ! $taxonomy->rest_base ) {
-                $taxonomy->rest_base = $taxonomy->name;
-            }
+		foreach ( $taxonomies as $taxonomy ) {
+			// if rest_base is not set we use post_name (wp default).
+			if ( ! $taxonomy->rest_base ) {
+				$taxonomy->rest_base = $taxonomy->name;
+			}
 
-            foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-                if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
-                    $url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
-                }
-            }
-        }
+			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+				if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
+					$url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
+				}
+			}
+		}
 
 		if ( is_iterable( $url_types ) ) {
 			foreach ( $url_types as $url_type => $url_categories ) {
@@ -810,8 +810,8 @@ class WebChangeDetector_Admin {
 			);
 
 			$synced_posts = $this->mm_api( $args );
-            set_transient('wcd_synced_posts', $synced_posts, 3600);
-            return $synced_posts;
+			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
+			return $synced_posts;
 		}
 		return false;
 	}
@@ -1765,7 +1765,7 @@ class WebChangeDetector_Admin {
 			),
 		);
 
-        error_log("API V1 request: " . $url . " | Args: " . json_encode($args));
+		error_log( 'API V1 request: ' . $url . ' | Args: ' . json_encode( $args ) );
 		if ( $isWeb ) {
 			$response = wp_remote_post( $urlWeb, $args );
 		} else {

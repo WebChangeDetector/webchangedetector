@@ -101,7 +101,7 @@ class WebChangeDetector_API_V2 {
 	}
 
 	public static function delete_webhook_v2( $id ) {
-		if (! $id ) {
+		if ( ! $id ) {
 			return false;
 		}
 		$args = array(
@@ -112,9 +112,7 @@ class WebChangeDetector_API_V2 {
 
 	private static function api_v2( $post, $method = 'POST', $isWeb = false, ) {
 		$api_token = get_option( 'webchangedetector_api_token' );
-		if ( ! $api_token ) {
-			$new_sub_account = self::create_sub_account_v2();
-		}
+
 		$url    = 'https://api.webchangedetector.com/api/v2/'; // init for production.
 		$urlWeb = 'https://api.webchangedetector.com/';
 
