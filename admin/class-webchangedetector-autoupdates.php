@@ -47,9 +47,7 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
 
 		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
-
-		// Only for debugging. Reset auto_update_transients
-		add_action( 'admin_init', array( $this, 'reset_transients_for_manually_start_auto_updates' ) );
+		add_action( 'wcd_release_lock', array( $this, 'wcd_release_lock' ) );
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
 		if(!$wcd_groups) {
@@ -70,8 +68,12 @@ class WebChangeDetector_Autoupdates {
 		add_filter( 'auto_update_plugin', array( $this, 'auto_update_plugin' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_theme', array( $this, 'auto_update_theme' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_core', array( $this, 'auto_update_core' ), PHP_INT_MAX, 2 );
-		add_action( ' automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
+		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
 		// add_action('pre_auto_update', array($this, 'pre_auto_update'), 10, 3);
+	}
+
+	public function automatic_updates_complete() {
+		error_log("Function: Automatic Updates Complete");
 	}
 
 	/**
@@ -271,20 +273,29 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	public function set_lock() {
-		$time = time();
 		error_log( 'Setting Lock' );
-		update_option( WCD_AUTO_UPDATE_LOCK, $time );
-		update_option( $this->lock_name, $time );
+		$time = time();
+
+		// If there was no lock yet, we add it.
+		$lock_added = add_option( $this->lock_name, $time );
+		if( $lock_added ) {
+			// To know that it was ours, we create a second option with the same timestamp.
+			update_option( WCD_AUTO_UPDATE_LOCK, $time );
+			// We only want to prevent  auto-updates for this run. So we release the lock in 1 min.
+			wp_schedule_single_event(strtotime('+1 minute'), 'wcd_release_lock');
+		}
 	}
 
-	public function release_lock() {
+	public function wcd_release_lock() {
 		$wcd_lock = get_option( WCD_AUTO_UPDATE_LOCK );
 		$wp_lock  = get_option( $this->lock_name );
+		// We delete the lock only if it was from us. So we check the timestamp against our lock option.
 		if ( $wcd_lock && $wp_lock && $wcd_lock === $wp_lock ) {
 			error_log( 'Releasing Lock' );
 			delete_option( $this->lock_name );
-			delete_option( WCD_AUTO_UPDATE_LOCK );
 		}
+		// We delete our lock value anyway.
+		delete_option( WCD_AUTO_UPDATE_LOCK );
 	}
 
 	/** Reset next cron run of wp_version_check to our auto_update_checks_from.
@@ -308,6 +319,7 @@ class WebChangeDetector_Autoupdates {
 		$should_next_run = date( 'U', strtotime( $auto_update_checks_from ) );
 
 		$should_next_run_gmt = get_gmt_from_date( date( 'Y-m-d H:i:s', $should_next_run ), 'U' );
+
 		$now_gmt             = get_gmt_from_date( current_time( 'Y-m-d H:i:s' ), 'U' );
 
 		// Add a day if we passed the auto_update_checks_from time already.
@@ -317,7 +329,14 @@ class WebChangeDetector_Autoupdates {
 
 		// Finally clear current hook and create a new one.
 		wp_clear_scheduled_hook( 'wp_version_check' );
-		error_log( wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' ) );
+		wp_clear_scheduled_hook( 'wp_update_plugins' );
+		wp_clear_scheduled_hook( 'wp_update_themes' );
+		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
+		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_plugins' );
+		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_themes' );
+
+		// Reset transients 'last_checked' to 12h ago.
+		//$this->reset_transients_for_manually_start_auto_updates();
 	}
 
 	/**
@@ -332,12 +351,15 @@ class WebChangeDetector_Autoupdates {
 	public function auto_update( $update, $item, $type ) {
 
 		error_log( 'Function: auto_update ' . $update );
-		$this->release_lock();
+		//$plugins_transient = get_site_transient( 'update_plugins' );
+		//error_log("Last updated plugins: " . date("d.m.Y H:i" , $plugins_transient->last_updated));
+		$this->wcd_release_lock();
 
 		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 
 		// We don't have auto-update settings yet or the manual checks group is not set. So, go the wp way.
 		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
+			error_log( 'Don\'t have  an group_id. Exiting' );
 			return $update;
 		}
 
@@ -351,6 +373,7 @@ class WebChangeDetector_Autoupdates {
 		if ( ! array_key_exists( 'auto_update_checks_' . strtolower( current_time( 'l' ) ), $auto_update_settings ) ) {
 			error_log( 'Canceling auto updates: ' . strtolower( current_time( 'l' ) ) . ' is disabled.' );
 			$this->set_lock();
+			return $update;
 		}
 
 		// Check if we do updates at current times.
@@ -362,6 +385,7 @@ class WebChangeDetector_Autoupdates {
 						' and ' . $auto_update_settings['auto_update_checks_to']
 			);
 			$this->set_lock();
+			return $update;
 		}
 
 		// Early returns
@@ -497,20 +521,20 @@ class WebChangeDetector_Autoupdates {
 		return $this->auto_update( $update, $item, 'core' );
 	}
 
-	// Delete this one. Only for debugging
-
+	// TODO Delete this one. Only for debugging
 	public function reset_transients_for_manually_start_auto_updates() {
 
-		// error_log("Function: admin_init");
+		error_log("Reset last-checked site transients");
 		$core_transient    = get_site_transient( 'update_core' );
 		$themes_transient  = get_site_transient( 'update_themes' );
 		$plugins_transient = get_site_transient( 'update_plugins' );
 
-		$new_time                        = strtotime( '-13 hours' );
+		$new_time                        = strtotime( '-12 hours' );
 		$core_transient->last_checked    = $new_time;
 		$themes_transient->last_checked  = $new_time;
 		$plugins_transient->last_checked = $new_time;
 
+		error_log( "New Plugin Transient: " . json_encode($plugins_transient));
 		set_site_transient( 'update_core', $core_transient );
 		set_site_transient( 'update_themes', $themes_transient );
 		set_site_transient( 'update_plugins', $plugins_transient );

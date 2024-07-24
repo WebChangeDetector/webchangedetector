@@ -135,7 +135,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Set the website details class object.
-		// $wcd->set_website_details();
+        $wcd->set_website_details();
+
+		$wcd->monitoring_group_uuid = ! empty( $wcd->website_details['auto_detection_group']['uuid'] ) ? $wcd->website_details['auto_detection_group']['uuid'] : null;
+		$wcd->manual_group_uuid     = ! empty( $wcd->website_details['manual_detection_group']['uuid'] ) ? $wcd->website_details['manual_detection_group']['uuid'] : null;
+
+		// If we (for whatever reason) don't get the uuids, take them from wp_option.
+		if ( is_null( $wcd->monitoring_group_uuid ) || is_null( $wcd->manual_group_uuid ) ) {
+			$group_uuids = get_option( 'wcd_website_groups' );
+			if ( $group_uuids && $group_uuids['auto_detection_group'] && $group_uuids['manual_detection_group'] ) {
+				$wcd->monitoring_group_uuid = $group_uuids['auto_detection_group'];
+				$wcd->manual_group_uuid     = $group_uuids['manual_detection_group'];
+			}
+		}
+
+		// TODO Replace those with V2
+		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
+		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 
 		// If we don't have the website for any reason we show an error message.
 		if ( empty( $wcd->website_details ) ) {

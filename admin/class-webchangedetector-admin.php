@@ -122,23 +122,6 @@ class WebChangeDetector_Admin {
 	 */
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
-		$this->set_website_details();
-
-		$this->monitoring_group_uuid = ! empty( $this->website_details['auto_detection_group']['uuid'] ) ? $this->website_details['auto_detection_group']['uuid'] : null;
-		$this->manual_group_uuid     = ! empty( $this->website_details['manual_detection_group']['uuid'] ) ? $this->website_details['manual_detection_group']['uuid'] : null;
-
-		// If we (for whatever reason) don't get the uuids, take them from wp_option.
-		if ( is_null( $this->monitoring_group_uuid ) || is_null( $this->manual_group_uuid ) ) {
-			$group_uuids = get_option( 'wcd_website_groups' );
-			if ( $group_uuids && $group_uuids['auto_detection_group'] && $group_uuids['manual_detection_group'] ) {
-				$this->monitoring_group_uuid = $group_uuids['auto_detection_group'];
-				$this->manual_group_uuid     = $group_uuids['manual_detection_group'];
-			}
-		}
-
-		// TODO Replace those with V2
-		$this->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
-		$this->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 	}
 
 	/**
@@ -332,7 +315,7 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
-	// Sync Post if permalink changed. Called by hook in class-webchangedetector.php.
+	// Sync Post if permalink changed. Deactivated.
 	public function sync_post_after_save( $post_id, $post, $update ) {
 		// Only sync posts and pages @TODO make setting to sync other posttypes.
 		if ( ! empty( $post->post_type ) && ! in_array( $post->post_type, array( 'page', 'post' ) ) ) {
@@ -360,6 +343,8 @@ class WebChangeDetector_Admin {
 			'action' => 'account_details',
 		);
 		$account_details = $this->mm_api( $args );
+		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+        update_option('wcd_upgrade_url', $upgrade_url);
 		return $account_details;
 	}
 
@@ -411,6 +396,20 @@ class WebChangeDetector_Admin {
 	}
 
 	public function update_settings( $postdata, $group_id ) {
+
+		// Saving auto update settings.
+		error_log( "Saving Manual Checks settings: " . json_encode( $postdata ) );
+		$auto_update_settings = array();
+		foreach ( $postdata as $key => $value ) {
+			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
+				$auto_update_settings[ $key ] = $value;
+			}
+		}
+
+		update_option( 'wcd_auto_update_settings', $auto_update_settings );
+		do_action( 'wcd_save_update_group_settings', $postdata );
+
+        // Update group settings in api
 		$args = array(
 			'action'    => 'update_group',
 			'group_id'  => $group_id,
@@ -419,26 +418,20 @@ class WebChangeDetector_Admin {
 			'threshold' => sanitize_text_field( $postdata['threshold'] ),
 		);
 
-		error_log( json_encode( $postdata ) );
-		$auto_update_settings = array();
-		foreach ( $postdata as $key => $value ) {
-			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
-				$auto_update_settings[ $key ] = $value;
-			}
-		}
-
-		do_action( 'wcd_save_update_group_settings', $postdata );
-
-		update_option( 'wcd_auto_update_settings', $auto_update_settings );
 		return $this->mm_api( $args );
 	}
 
 	public function get_upgrade_url() {
-		$account_details = $this->account_details();
-		if ( ! is_array( $account_details ) ) {
-			return false;
-		}
-		return $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+        $upgrade_url = get_option('wcd_upgrade_url');
+        if(! $upgrade_url) {
+            $account_details = $this->account_details();
+            if ( ! is_array( $account_details ) ) {
+                return false;
+            }
+            $upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+            update_option('wcd_upgrade_url', $upgrade_url);
+        }
+        return $upgrade_url;
 	}
 
 	/**
@@ -713,77 +706,48 @@ class WebChangeDetector_Admin {
 		return $terms;
 	}
 
-	public function sync_posts( $post_obj = false ) {
+	public function sync_posts() {
+
+        // Return synced_posts from transient if available
+        $synced_posts = get_transient('wcd_synced_posts');
+        if($synced_posts) {
+            return $synced_posts;
+        }
+
 		$array     = array(); // init.
 		$url_types = array();
 
-		// Sync single post.
-		if ( $post_obj ) {
-			$save_post_types = array( 'post', 'page' ); // @TODO Make this a setting.
-			if ( in_array( $post_obj->post_type, $save_post_types ) && get_post_status( $post_obj ) === 'publish' ) {
-				$url           = get_permalink( $post_obj );
-				$start         = strpos( $url, '//' ) + strlen( '//' );
-				$url           = substr( $url, $start ); // remove evertyhing after http[s]://.
-				$post_type_obj = get_post_type_object( $post_obj->post_type );
+        // Get Post Types.
+        $post_types = get_post_types( array( 'public' => true ), 'objects' );
+        foreach ( $post_types as $post_type ) {
 
-				$array[] = array(
-					'url'             => $url,
-					'html_title'      => $post_obj->post_title,
-					'cms_resource_id' => $post_obj->ID,
-					'url_type'        => 'types',
-					'url_category'    => $post_obj->label,
-				);
-			}
-			if ( ! empty( $array ) ) {
-				$args = array(
-					'action'              => 'sync_urls',
-					'delete_missing_urls' => false,
-					'posts'               => json_encode( $array ),
-				);
-				return $this->mm_api( $args );
-			}
-		} else {
-			// Get Post Types.
-			$post_types = get_post_types( array( 'public' => true ), 'objects' );
-			foreach ( $post_types as $post_type ) {
+            // if rest_base is not set we use post_name (wp default).
+            if ( ! $post_type->rest_base ) {
+                $post_type->rest_base = $post_type->name;
+            }
 
-				// if rest_base is not set we use post_name (wp default).
-				if ( ! $post_type->rest_base ) {
-					$post_type->rest_base = $post_type->name;
-				}
+            foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+                if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
+                    $url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
+                }
+            }
+        }
 
-				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
-						$url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
-					}
-				}
-			}
+        // Get Taxonomies.
+        $taxonomies = get_taxonomies( array(), 'objects' );
 
-			// Get Taxonomies.
-			$taxonomies = get_taxonomies( array(), 'objects' );
+        foreach ( $taxonomies as $taxonomy ) {
+            // if rest_base is not set we use post_name (wp default).
+            if ( ! $taxonomy->rest_base ) {
+                $taxonomy->rest_base = $taxonomy->name;
+            }
 
-			foreach ( $taxonomies as $taxonomy ) {
-
-				// if rest_base is not set we use post_name (wp default).
-				if ( ! $taxonomy->rest_base ) {
-					$taxonomy->rest_base = $taxonomy->name;
-				}
-
-				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
-						$url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
-					}
-				}
-			}
-			// Sync all posts.
-			/*
-			$url_types = array(
-				'types' => array (
-					'pages' => get_pages(),
-					'posts' => get_posts(array('numberposts' => '-1' )),
-				)
-			);*/
-		}
+            foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+                if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
+                    $url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
+                }
+            }
+        }
 
 		if ( is_iterable( $url_types ) ) {
 			foreach ( $url_types as $url_type => $url_categories ) {
@@ -845,7 +809,9 @@ class WebChangeDetector_Admin {
 				'posts'               => json_encode( $array ),
 			);
 
-			return $this->mm_api( $args );
+			$synced_posts = $this->mm_api( $args );
+            set_transient('wcd_synced_posts', $synced_posts, 3600);
+            return $synced_posts;
 		}
 		return false;
 	}
@@ -1799,6 +1765,7 @@ class WebChangeDetector_Admin {
 			),
 		);
 
+        error_log("API V1 request: " . $url . " | Args: " . json_encode($args));
 		if ( $isWeb ) {
 			$response = wp_remote_post( $urlWeb, $args );
 		} else {
