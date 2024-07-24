@@ -33,21 +33,24 @@ class WebChangeDetector_Autoupdates {
 	public function __construct() {
 
 		$this->set_defines();
-		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
 
 		// Hooks into JetPack's remote updater (manual updates performed from the wordpress.com console)
 		add_action( 'jetpack_pre_plugin_upgrade', array( $this, 'jetpack_pre_plugin_upgrade' ), 10, 3 );
 		add_action( 'jetpack_pre_theme_upgrade', array( $this, 'jetpack_pre_theme_upgrade' ), 10, 2 );
 		add_action( 'jetpack_pre_core_upgrade', array( $this, 'jetpack_pre_core_upgrade' ) );
 
+		// When auto-update magic happens
 		add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ) );
 
-		// Post updates
-		add_action( 'upgrader_process_complete', array( $this, 'upgrader_process_complete' ), 10, 2 );
+		// Post updates.
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
 
+		// Saving settings
 		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
+
+		// Cron jobs.
 		add_action( 'wcd_release_lock', array( $this, 'wcd_release_lock' ) );
+		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
 		if(!$wcd_groups) {
@@ -61,93 +64,46 @@ class WebChangeDetector_Autoupdates {
 	 * We start here, when plugins are loaded.
 	 */
 	public function plugins_loaded() {
-
-		// Action added in WP 4.4. So we are not compatible before 4.4 (which was launched 2015).
-		// error_log("Function: plugins_loaded");
-
 		add_filter( 'auto_update_plugin', array( $this, 'auto_update_plugin' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_theme', array( $this, 'auto_update_theme' ), PHP_INT_MAX, 2 );
 		add_filter( 'auto_update_core', array( $this, 'auto_update_core' ), PHP_INT_MAX, 2 );
 		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
-		// add_action('pre_auto_update', array($this, 'pre_auto_update'), 10, 3);
 	}
 
 	public function automatic_updates_complete() {
 		error_log("Function: Automatic Updates Complete");
-	}
 
-	/**
-	 * Fires when the update process is finished (for each plugin/theme/core).
-	 */
-	public function upgrader_process_complete( $upgrader, $hook_extra ) {
-		error_log( 'Function: upgrader_process_complete' );
-		// error_log("Upgrade complete data: " . json_encode($hook_extra));
-
-		// Early return if we don't have the group_id.
-		if ( ! $this->manual_group_id ) {
-			return;
-		}
-
-		// We don't do anything here if we didn't start checks.
+		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
-			error_log( 'Skipping after update stuff as checks are disabled.' );
+		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || ! get_option( WCD_PRE_AUTO_UPDATE ) ) {
+			error_log( 'Skipping after update stuff as checks are disabled or we don\'t have pre-update checks.' );
 			return;
 		}
 
-		// If there were updates which we didn't start, we skip from here.
-		if ( ! get_option( WCD_PRE_AUTO_UPDATE ) || ! get_option( WCD_UPDATING_ITEMS ) ) {
-			return;
-		}
-
-		// Add items to update to option wcd_updated_items.
-		$updated_items = get_option( WCD_UPDATED_ITEMS );
-		if ( ! $updated_items ) {
-			$updated_items = array();
-		}
-		switch ( $hook_extra['type'] ) {
-			case 'core':
-				$updated_items[] = array( 'core' => 'core' );
-				break;
-
-			case 'plugin':
-				$updated_items[] = array( 'plugin' => $hook_extra['plugin'] );
-				break;
-
-			case 'theme':
-				$updated_items[] = array( 'theme' => $hook_extra['theme'] );
-				break;
-		}
-
-		error_log( 'Saving updated items: ' . json_encode( $updated_items ) );
-		update_option( WCD_UPDATED_ITEMS, $updated_items );
-
-		$updating_items = get_option( WCD_UPDATING_ITEMS );
-
-		// Check if Updates are complete and start post-update sc and comparisons
-		if ( count( $updating_items ) === count( $updated_items ) ) {
-			error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
-			$response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
-			error_log( 'Post-Screenshot Response: ' . json_encode( $response ) );
-			add_option(
-				WCD_POST_AUTO_UPDATE,
-				array(
-					'status'   => 'processing',
-					'batch_id' => $response['batch'],
-				)
-			);
-			$this->wcd_cron_check_post_queues();
-
-			$this->reschedule( $this->one_minute_in_seconds, 'wcd_cron_check_post_queues' );
-		}
+		// Start the post-update screenshots
+		error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
+		$response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
+		error_log( 'Post-Screenshot Response: ' . json_encode( $response ) );
+		add_option(
+			WCD_POST_AUTO_UPDATE,
+			array(
+				'status'   => 'processing',
+				'batch_id' => $response['batch'],
+			)
+		);
+		$this->wcd_cron_check_post_queues();
 	}
 
 	public function wcd_cron_check_post_queues() {
 		$post_sc_option = get_option( WCD_POST_AUTO_UPDATE );
 		$response       = WebChangeDetector_API_V2::get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
 
-		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-		if ( count( $response['data'] ) === 0 ) {
+		// Check if the batch is done.
+		if ( count( $response['data'] ) > 0 ) {
+			// There are still open or processing queues. So we check again in a minute.
+			$this->reschedule( $this->one_minute_in_seconds, 'wcd_cron_check_post_queues' );
+		} else {
+			// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
 			$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batch' => $post_sc_option['batch_id'] ) );
 			$mail_body   = '<style>
 								table {
@@ -236,13 +192,8 @@ class WebChangeDetector_Autoupdates {
 
 			// Cleanup wp_options and cron webhook.
 			delete_option( WCD_WORDPRESS_CRON );
-			delete_option( WCD_UPDATED_ITEMS );
-			delete_option( WCD_UPDATING_ITEMS );
 			delete_option( WCD_PRE_AUTO_UPDATE );
 			delete_option( WCD_POST_AUTO_UPDATE );
-
-		} else { // check in a minute again
-			$this->reschedule( $this->one_minute_in_seconds, 'wcd_cron_check_post_queues' );
 		}
 	}
 
@@ -265,8 +216,9 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Remove the lock, to allow the WP updater to claim it and proceed.
-		// delete_option($this->lock_name);
+		// Remove the lock, just in case it is still locked somehow.
+		delete_option($this->lock_name);
+		delete_option(WCD_AUTO_UPDATE_LOCK);
 
 		// Start the auto-updates.
 		wp_maybe_auto_update();
@@ -416,28 +368,10 @@ class WebChangeDetector_Autoupdates {
 			}
 		}
 
-		// Add items to update to option wcd_updating_items.
-		// error_log("Item: " . json_encode($item));
-		$updating_items = get_option( WCD_UPDATING_ITEMS );
-		if ( ! $updating_items ) {
-			$updating_items = array();
-		}
-		if ( isset( $item->theme ) ) {
-			$updating_items[] = array( 'theme' => $item->theme );
-		} elseif ( isset( $item->plugin ) ) {
-			$updating_items[] = array( 'plugin' => $item->plugin );
-		} elseif ( isset( $item->response ) && 'autoupdate' === $item->response ) {
-			$updating_items[] = array( 'core' => 'core' );
-		}
-		error_log( 'Saving updating items: ' . json_encode( $updating_items ) );
-		update_option( WCD_UPDATING_ITEMS, $updating_items );
-
 		error_log( 'Checking status of Screenshots' );
 		error_log( 'Update type: ' . json_encode( $type ) );
 
-		// Do the WCD Magic and start pre-update screenshots
-		$wcd_update_option = get_option( WCD_PRE_AUTO_UPDATE );
-
+		// Create external cron at wcd api to make sure the wp cron is triggered every minute
 		if ( false === get_option( WCD_WORDPRESS_CRON ) ) {
 			$result = WebChangeDetector_API_V2::add_webhook_v2( get_site_url(), 'wordpress_cron' );
 			error_log( 'Webhook result: ' . json_encode( $result ) );
@@ -445,7 +379,10 @@ class WebChangeDetector_Autoupdates {
 				add_option( WCD_WORDPRESS_CRON, $result['data']['id'] );
 			}
 		}
-		if ( false === $wcd_update_option ) { // We don't have an wp_option yet. So we start screenshots
+
+		// Do the WCD Magic and start pre-update screenshots
+		$wcd_pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+		if ( false === $wcd_pre_update_data ) { // We don't have an wp_option yet. So we start screenshots
 			error_log( 'Manual Group UUID: ' . $this->manual_group_id );
 			$sc_response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'pre' );
 			error_log( 'Pre update SC data: ' . json_encode( $sc_response ) );
@@ -458,7 +395,8 @@ class WebChangeDetector_Autoupdates {
 			add_option( WCD_PRE_AUTO_UPDATE, $transientData );
 			$this->reschedule( $this->one_minute_in_seconds, 'wcd_wp_maybe_auto_update' );
 			return false;
-		} elseif ( 'done' !== $wcd_update_option['status'] ) { // SC are not done yet. Reschedule updates
+
+		} elseif ( 'done' !== $wcd_pre_update_data['status'] ) { // SC are not done yet. Reschedule updates
 			error_log( "Rescheduling cron 'wcd_wp_maybe_auto_update'..." );
 			$this->reschedule( $this->one_minute_in_seconds, 'wcd_wp_maybe_auto_update' );
 			return false;
@@ -469,7 +407,7 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Reschedule the automatic update check event
+	 * Reschedule a single event
 	 *
 	 * @param Integer $how_long - how many seconds in the future from now to reschedule for
 	 * @return void

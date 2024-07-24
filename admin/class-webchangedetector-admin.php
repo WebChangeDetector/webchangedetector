@@ -344,7 +344,7 @@ class WebChangeDetector_Admin {
 		);
 		$account_details = $this->mm_api( $args );
 		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-        update_option('wcd_upgrade_url', $upgrade_url);
+        update_option('wcd_upgrade_url', $upgrade_url, false);
 		return $account_details;
 	}
 
