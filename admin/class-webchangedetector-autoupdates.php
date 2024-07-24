@@ -83,7 +83,7 @@ class WebChangeDetector_Autoupdates {
 		// Start the post-update screenshots
 		error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
 		$response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
-		error_log( 'Post-Screenshot Response: ' . json_encode( $response ) );
+		error_log( 'Post-Screenshot Response: ' . wp_json_encode( $response ) );
 		add_option(
 			WCD_POST_AUTO_UPDATE,
 			array(
@@ -202,7 +202,7 @@ class WebChangeDetector_Autoupdates {
 		$pre_sc_option = get_option( WCD_PRE_AUTO_UPDATE );
 		$response      = WebChangeDetector_API_V2::get_queue_v2( $pre_sc_option['batch_id'], 'open,processing' );
 
-		error_log( 'Queue: ' . json_encode( $response ) );
+		error_log( 'Queue: ' . wp_json_encode( $response ) );
 		// If we don't have open or processing queues of the batch anymore, we can do auto-updates.
 		if ( count( $response['data'] ) === 0 ) {
 			$pre_sc_option['status'] = 'done';
@@ -363,12 +363,12 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		error_log( 'Checking status of Screenshots' );
-		error_log( 'Update type: ' . json_encode( $type ) );
+		error_log( 'Update type: ' . wp_json_encode( $type ) );
 
 		// Create external cron at wcd api to make sure the wp cron is triggered every minute
 		if ( false === get_option( WCD_WORDPRESS_CRON ) ) {
 			$result = WebChangeDetector_API_V2::add_webhook_v2( get_site_url(), 'wordpress_cron' );
-			error_log( 'Webhook result: ' . json_encode( $result ) );
+			error_log( 'Webhook result: ' . wp_json_encode( $result ) );
 			if ( is_array( $result ) && array_key_exists( 'data', $result ) ) {
 				add_option( WCD_WORDPRESS_CRON, $result['data']['id'] );
 			}
@@ -379,7 +379,7 @@ class WebChangeDetector_Autoupdates {
 		if ( false === $wcd_pre_update_data ) { // We don't have an wp_option yet. So we start screenshots
 			error_log( 'Manual Group UUID: ' . $this->manual_group_id );
 			$sc_response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'pre' );
-			error_log( 'Pre update SC data: ' . json_encode( $sc_response ) );
+			error_log( 'Pre update SC data: ' . wp_json_encode( $sc_response ) );
 			$transientData = array(
 				'status'   => 'processing',
 				'batch_id' => esc_html( $sc_response['batch'] ),

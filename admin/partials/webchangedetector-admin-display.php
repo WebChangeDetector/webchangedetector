@@ -32,6 +32,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
 				return false;
 			}
+
+			// Verify nonce
+			if ( ! $_POST['_wpnonce'] ) {
+				echo 'Nonce Failed.';
+				// die();
+			}
+
+			( check_admin_referer( $_POST['wcd_action'] ) );
+
 		}
 
 		// Actions without API Token needed
@@ -162,6 +171,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<p>
 					<form method="post">
 						<input type="hidden" name="wcd_action" value="re-add-api-token">
+						<?php wp_nonce_field( 're-add-api-token' ); ?>
 						<input type="submit" value="Re-add website" class="button-primary">
 					</form>
 				</p>
@@ -204,37 +214,40 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 				break;
 
-			case 'post_urls_update_and_auto':
-				$wcd->post_urls( $_POST, $wcd->website_details, true );
+			case 'save_group_settings':
+				switch ( $_POST['save_settings'] ) {
+					case 'post_urls_update_and_auto':
+						$wcd->post_urls( $_POST, $wcd->website_details, true );
 
-				// Get the depending group names before saving to avoid group name changes in webapp.
-				$manual_group_name   = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
-				$_POST['group_name'] = $manual_group_name;
-				$wcd->update_settings( $_POST, $wcd->group_id );
+						// Get the depending group names before saving to avoid group name changes in webapp.
+						$manual_group_name   = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
+						$_POST['group_name'] = $manual_group_name;
+						$wcd->update_settings( $_POST, $wcd->group_id );
 
-				$auto_group_name     = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
-				$_POST['group_name'] = $auto_group_name;
-				$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
-				break;
+						$auto_group_name     = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
+						$_POST['group_name'] = $auto_group_name;
+						$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
+						break;
 
-			case 'post_urls':
-				$wcd->post_urls( $_POST, $wcd->website_details, false );
-				if ( ! empty( $_POST['monitoring'] ) && $_POST['monitoring'] ) {
-					$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
-				} else {
-					$wcd->update_settings( $_POST, $wcd->group_id );
+					case 'post_urls':
+						$wcd->post_urls( $_POST, $wcd->website_details, false );
+						if ( ! empty( $_POST['monitoring'] ) && $_POST['monitoring'] ) {
+							$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
+						} else {
+							$wcd->update_settings( $_POST, $wcd->group_id );
+						}
+						break;
+
+					case 'save_update_settings_and_continue':
+						$wcd->post_urls( $_POST, $wcd->website_details, false );
+						$wcd->update_settings( $_POST, $wcd->group_id );
+
+						// Update step in update detection.
+						if ( ! empty( $_POST['step'] ) ) {
+							update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_key( $_POST['step'] ) );
+						}
+						break;
 				}
-				break;
-
-			case 'save_update_settings_and_continue':
-				$wcd->post_urls( $_POST, $wcd->website_details, false );
-				$wcd->update_settings( $_POST, $wcd->group_id );
-
-				// Update step in update detection.
-				if ( ! empty( $_POST['step'] ) ) {
-					update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_key( $_POST['step'] ) );
-				}
-				break;
 		}
 
 		// Get updated account and website data.
@@ -266,6 +279,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                 <p>To use a different account, please reset the API token.
                     <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
+                        ' . wp_nonce_field( 'reset_api_token' ) . '
                         <input type="submit" value="Reset API token" class="button button-delete">
                     </form>
                 </p>
@@ -290,6 +304,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                     </p>
                      <form method="post">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
+                        ' . wp_nonce_field( 'reset_api_token' ) . '
                         <input type="hidden" name="api_token" value="' . get_option( WCD_WP_OPTION_KEY_API_TOKEN ) . '">
                         <input type="submit" class="button" value="Reset API token" class="button button-delete">
                     </form>
@@ -777,10 +792,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						?>
 						<form method="post">
 							<input type="hidden" name="wcd_action" value="add_post_type">
+							<?php wp_nonce_field( 'add_post_type' ); ?>
 							<select name="post_type">
 						<?php
 						foreach ( $available_post_types as $available_post_type ) {
-							$add_post_type = json_encode(
+							$add_post_type = wp_json_encode(
 								array(
 									array(
 										'url_type_slug'  => 'types',
@@ -829,10 +845,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						?>
 						<form method="post">
 							<input type="hidden" name="wcd_action" value="add_post_type">
+							<?php wp_nonce_field( 'add_post_type' ); ?>
 							<select name="post_type">
 								<?php
 								foreach ( $available_taxonomies as $available_taxonomy ) {
-									$add_post_type = json_encode(
+									$add_post_type = wp_json_encode(
 										array(
 											array(
 												'url_type_slug' => 'taxonomies',

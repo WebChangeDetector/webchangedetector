@@ -7,10 +7,10 @@
 
 			<label for="enabled">Monitoring </label>
 			<select name="enabled" id="auto-enabled">
-				<option value="1" <?php echo isset( $groups_and_urls['enabled'] ) && $groups_and_urls['enabled'] === '1' ? 'selected' : ''; ?>>
+				<option value="1" <?php echo isset( $groups_and_urls['enabled'] ) && '1' === $groups_and_urls['enabled'] ? 'selected' : ''; ?>>
 					Enabled
 				</option>
-				<option value="0" <?php echo isset( $groups_and_urls['enabled'] ) && $groups_and_urls['enabled'] === '0' ? 'selected' : ''; ?>>
+				<option value="0" <?php echo isset( $groups_and_urls['enabled'] ) && '0' === $groups_and_urls['enabled']  ? 'selected' : ''; ?>>
 					Disabled
 				</option>
 			</select>
@@ -34,7 +34,7 @@
 			<?php
 			$account_details       = $this->account_details();
 			$show_minute_intervals = false;
-			if ( $account_details['plan']['id'] > 2 && $account_details['plan_id'] !== 8 ) {
+			if ( 2 < $account_details['plan']['id']  && 8 !== $account_details['plan_id'] ) {
 				$show_minute_intervals = true;
 			}
 			?>
@@ -42,29 +42,29 @@
 			<select name="interval_in_h" class="auto-setting">
 				<option value="0.25"
 					<?php echo ! $show_minute_intervals ? 'disabled ' : ''; ?>
-					<?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === '0.25' ? 'selected' : ''; ?>
+					<?php echo isset( $groups_and_urls['interval_in_h'] ) && '0.25' === $groups_and_urls['interval_in_h']  ? 'selected' : ''; ?>
 					<?php echo ! isset( $groups_and_urls['interval_in_h'] ) ? 'selected' : ''; ?>>
 					Every 15 minutes <?php echo ! $show_minute_intervals ? '("Freelancer" plan or higher)' : ''; ?>
 				</option>
 				<option value="0.5"
 					<?php echo ! $show_minute_intervals ? 'disabled ' : ''; ?>
-					<?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === '0.5' ? 'selected' : ''; ?>
+					<?php echo isset( $groups_and_urls['interval_in_h'] ) && '0.5' === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>
 					<?php echo ! isset( $groups_and_urls['interval_in_h'] ) ? 'selected' : ''; ?>>
 					Every 30 minutes <?php echo ! $show_minute_intervals ? '("Freelancer" plan or higher)' : ''; ?>
 				</option>
-				<option value="1" <?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === 1 ? 'selected' : ''; ?>>
+				<option value="1" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 1 === $groups_and_urls['interval_in_h']  ? 'selected' : ''; ?>>
 					Every 1 hour
 				</option>
-				<option value="3" <?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === 3 ? 'selected' : ''; ?>>
+				<option value="3" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 3 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>
 					Every 3 hours
 				</option>
-				<option value="6" <?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === 6 ? 'selected' : ''; ?>>
+				<option value="6" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 6 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>
 					Every 6 hours
 				</option>
-				<option value="12" <?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === 12 ? 'selected' : ''; ?>>
+				<option value="12" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 12 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>
 					Every 12 hours
 				</option>
-				<option value="24" <?php echo isset( $groups_and_urls['interval_in_h'] ) && $groups_and_urls['interval_in_h'] === 24 ? 'selected' : ''; ?>>
+				<option value="24" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 24 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>
 					Every 24 hours
 				</option>
 			</select>

@@ -15,6 +15,7 @@
 	</div>
 	<form method="post">
 		<input type="hidden" name="wcd_action" value="update_detection_step">
+		<?php wp_nonce_field( 'update_detection_step' ); ?>
 		<input type="hidden" name="step" value="change-detection">
 		<input class="button button-primary" type="submit" value="Check Change Detections >">
 	</form>

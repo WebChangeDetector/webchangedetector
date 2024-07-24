@@ -30,8 +30,7 @@ class WebChangeDetector_Admin {
 		're-add-api-token',
 		'save_api_token',
 		'take_screenshots',
-		'post_urls',
-		'post_urls_update_and_auto',
+		'save_group_settings',
 		'dashboard',
 		'change-detections',
 		'auto-settings',
@@ -40,7 +39,6 @@ class WebChangeDetector_Admin {
 		'show-compare',
 		'create_free_account',
 		'update_detection_step',
-		'save_update_settings_and_continue',
 		'add_post_type',
 	);
 
@@ -398,7 +396,7 @@ class WebChangeDetector_Admin {
 	public function update_settings( $postdata, $group_id ) {
 
 		// Saving auto update settings.
-		error_log( 'Saving Manual Checks settings: ' . json_encode( $postdata ) );
+		error_log( 'Saving Manual Checks settings: ' . wp_json_encode( $postdata ) );
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
@@ -496,7 +494,7 @@ class WebChangeDetector_Admin {
 			'group_type'      => $group_type,
 			'difference_only' => $difference_only,
 			'limit_compares'  => $limit_compares,
-			'group_ids'       => json_encode( array( $group_ids ) ),
+			'group_ids'       => wp_json_encode( array( $group_ids ) ),
 			'batch_id'        => $batch_id,
 		);
 		$compares = $this->mm_api( $args );
@@ -570,7 +568,7 @@ class WebChangeDetector_Admin {
 				<td>
 					<form action="?page=webchangedetector-show-detection" method="post">
 						<input type="hidden" name="token" value="<?php echo $compare['token']; ?>">
-						<input type="hidden" name="all_tokens" value='<?php echo json_encode( $all_tokens ); ?>'>
+						<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 						<input type="submit" value="Show" class="button">
 					</form>
 				</td>
@@ -627,7 +625,7 @@ class WebChangeDetector_Admin {
 			<!-- Previous and next buttons -->
 			<div style="width: 100%; margin-bottom: 20px; text-align: center">
 				<form method="post" >
-					<input type="hidden" name="all_tokens" value='<?php echo json_encode( $all_tokens ); ?>'>
+					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo $before_token ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> < Previous </button>
 					<button class="button" type="submit" name="token"
@@ -655,7 +653,7 @@ class WebChangeDetector_Admin {
 	public function get_queue() {
 		$args = array(
 			'action' => 'get_queue',
-			'status' => json_encode( array( 'open', 'done', 'processing', 'failed' ) ),
+			'status' => wp_json_encode( array( 'open', 'done', 'processing', 'failed' ) ),
 			'limit'  => $_GET['limit'] ?? $this::LIMIT_QUEUE_ROWS,
 			'offset' => $_GET['offset'] ?? 0,
 		);
@@ -806,7 +804,7 @@ class WebChangeDetector_Admin {
 			$args = array(
 				'action'              => 'sync_urls',
 				'delete_missing_urls' => true,
-				'posts'               => json_encode( $array ),
+				'posts'               => wp_json_encode( $array ),
 			);
 
 			$synced_posts = $this->mm_api( $args );
@@ -820,7 +818,7 @@ class WebChangeDetector_Admin {
 		$args = array(
 			'action'   => 'update_urls',
 			'group_id' => $group_id,
-			'posts'    => json_encode( $active_posts ),
+			'posts'    => wp_json_encode( $active_posts ),
 		);
 		return $this->mm_api( $args );
 	}
@@ -840,6 +838,7 @@ class WebChangeDetector_Admin {
 			$output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
                         onsubmit="return confirm(\'Are sure you want to reset the API token?\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
+                        ' . wp_nonce_field( 'reset_api_token' ) . '
                         <hr>
                         <h2> Account</h2>
                         <p>Your email address: <strong>' . $this->account_details()['email'] . '</strong><br>
@@ -857,6 +856,7 @@ class WebChangeDetector_Admin {
 			$output = '<div class="highlight-container">
                             <form class="frm_use_api_token highlight-inner no-bg" action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
                                 <input type="hidden" name="wcd_action" value="save_api_token">
+                                ' . wp_nonce_field( 'save_api_token' ) . '
                                 <h2>Use Existing API Token</h2>
                                 <p>
                                     Use the API token of your existing account. To get your API token, please login to your account at
@@ -919,7 +919,7 @@ class WebChangeDetector_Admin {
 
 	public function set_default_sync_types() {
 		if ( empty( $this->website_details['sync_url_types'] ) ) {
-			$this->website_details['sync_url_types'] = json_encode(
+			$this->website_details['sync_url_types'] = wp_json_encode(
 				array(
 					array(
 						'url_type_slug'  => 'types',
@@ -953,15 +953,17 @@ class WebChangeDetector_Admin {
 		?>
 		<div class="wcd-select-urls-container">
 			<form class="wcd-frm-settings" action="<?php echo admin_url() . 'admin.php?page=webchangedetector-' . $tab; ?>" method="post">
+				<input type="hidden" name="wcd_action" value="save_group_settings">
+				<?php
+				wp_nonce_field( 'save_group_settings' );
 
-			<?php
-			if ( ! $monitoring_group ) {
-				$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
-				$auto_update_checks_enabled = '<span style="color: green">On</span>';
-				if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
-					$auto_update_checks_enabled = '<span style="color: red">Off</span>';
-				}
-				?>
+				if ( ! $monitoring_group ) {
+					$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
+					$auto_update_checks_enabled = '<span style="color: green">On</span>';
+					if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
+						$auto_update_checks_enabled = '<span style="color: red">Off</span>';
+					}
+					?>
 				<input type="hidden" name="step" value="pre-update">
 				<h2>Settings</h2>
 				<div class="accordion">
@@ -1300,22 +1302,25 @@ class WebChangeDetector_Admin {
 					</div>
 					</div>
 					</div>
+
 					<?php
+
 				}
 			}
+
 			if ( $monitoring_group ) {
 				?>
 					<button
 							class="button button-primary"
 							type="submit"
-							name="wcd_action"
+							name="save_settings"
 							value="post_urls"
 							onclick="return wcdValidateFormAutoSettings()">
 						Save
 					</button>
 					<button class="button"
 							type="submit"
-							name="wcd_action"
+							name="save_settings"
 							value="post_urls_update_and_auto"
 							style="margin-left: 10px;"
 							onclick="return wcdValidateFormAutoSettings()">
@@ -1329,7 +1334,7 @@ class WebChangeDetector_Admin {
 						<button
 							class="button button-primary"
 							type="submit"
-							name="wcd_action"
+							name="save_settings"
 							value="save_update_settings_and_continue" >
 							Save and continue >
 						</button>
@@ -1337,14 +1342,14 @@ class WebChangeDetector_Admin {
 					<button
 							class="button"
 							type="submit"
-							name="wcd_action"
+							name="save_settings"
 							value="post_urls"
 							style="margin-left: 10px;">
 						Only save
 					</button>
 					<button class="button"
 							type="submit"
-							name="wcd_action"
+							name="save_settings"
 							value="post_urls_update_and_auto"
 							style="margin-left: 10px;">
 						Save & copy to monitoring
@@ -1433,6 +1438,7 @@ class WebChangeDetector_Admin {
 					</p>
 					<form class="frm_new_account" method="post">
 						<input type="hidden" name="wcd_action" value="create_free_account">
+						<?php wp_create_nonce( 'create_free_account' ); ?>
 						<input type="text" name="name_first" placeholder="First Name" value="<?php echo $_POST['name_first'] ?? wp_get_current_user()->user_firstname; ?>" required>
 						<input type="text" name="name_last" placeholder="Last Name" value="<?php echo $_POST['name_last'] ?? wp_get_current_user()->user_lastname; ?>" required>
 						<input type="email" name="email" placeholder="Email" value="<?php echo $_POST['email'] ?? wp_get_current_user()->user_email; ?>" required>
@@ -1653,6 +1659,7 @@ class WebChangeDetector_Admin {
 				<p>To reset your account, please click the button below. </p>
 				<form id="delete-account" method="post">
 					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
 					<input type="submit" class="button-delete" value="Reset Account">
 				</form>
 
@@ -1765,7 +1772,7 @@ class WebChangeDetector_Admin {
 			),
 		);
 
-		error_log( 'API V1 request: ' . $url . ' | Args: ' . json_encode( $args ) );
+		error_log( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
 		if ( $isWeb ) {
 			$response = wp_remote_post( $urlWeb, $args );
 		} else {
@@ -1847,7 +1854,7 @@ class WebChangeDetector_Admin {
 			),
 		);
 
-		error_log( 'Sending API V2 request: ' . $url . ' | args: ' . json_encode( $args ) );
+		error_log( 'Sending API V2 request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
 
 		if ( $isWeb ) {
 			$response = wp_remote_request( $urlWeb, $args );

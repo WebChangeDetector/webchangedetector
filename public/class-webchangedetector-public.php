@@ -51,7 +51,7 @@ class WebChangeDetector_Public {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 
-		// Verify website
+		// Verify website.
 		$this->verify_website();
 	}
 
@@ -75,12 +75,16 @@ class WebChangeDetector_Public {
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-public.js', array( 'jquery' ), $this->version, false );
 	}
 
+	/** Verify website secret
+	 *
+	 * @return void
+	 */
 	public function verify_website() {
 
 		$verify_string = get_option( 'webchangedetector_verify_secret' );
 
 		if ( ! empty( $_GET['wcd-verify'] ) && ! empty( $verify_string ) ) {
-			echo json_encode( $verify_string );
+			echo wp_json_encode( $verify_string );
 			die();
 		}
 	}

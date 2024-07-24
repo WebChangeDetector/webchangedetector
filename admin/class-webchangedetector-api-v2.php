@@ -157,7 +157,7 @@ class WebChangeDetector_API_V2 {
 			),
 		);
 
-		error_log( 'Sending API V2 request: ' . $url . ' | args: ' . json_encode( $args ) );
+		error_log( 'Sending API V2 request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
 
 		if ( $isWeb ) {
 			$response = wp_remote_request( $urlWeb, $args );
