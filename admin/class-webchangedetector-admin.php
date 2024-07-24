@@ -439,7 +439,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_device_icon( $icon, $class = '' ) {
 		if ( 'thumbnail' === $icon ) {
-			return '<span class="dashicons dashicons-camera-alt"></span>';
+			return wp_kses( '<span class="dashicons dashicons-camera-alt"></span>', array( 'span' => array( 'class' => array() ) ) );
 		}
 		if ( 'desktop' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-laptop"></span>';
@@ -478,7 +478,7 @@ class WebChangeDetector_Admin {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-trash"></span>';
 		}
 		if ( 'check' === $icon ) {
-			return '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>';
+			return wp_kses( '<span class="group_icon ' . $class . ' dashicons dashicons-yes-alt"></span>', array( 'span' => array( 'class' => array() ) ) );
 		}
 		if ( 'upgrade' === $icon ) {
 			return '<span class="group_icon ' . $class . ' dashicons dashicons-cart"></span>';

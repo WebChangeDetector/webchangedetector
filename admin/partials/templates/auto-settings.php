@@ -10,7 +10,7 @@
 				<option value="1" <?php echo isset( $groups_and_urls['enabled'] ) && '1' === $groups_and_urls['enabled'] ? 'selected' : ''; ?>>
 					Enabled
 				</option>
-				<option value="0" <?php echo isset( $groups_and_urls['enabled'] ) && '0' === $groups_and_urls['enabled']  ? 'selected' : ''; ?>>
+				<option value="0" <?php echo isset( $groups_and_urls['enabled'] ) && '0' === $groups_and_urls['enabled'] ? 'selected' : ''; ?>>
 					Disabled
 				</option>
 			</select>
@@ -34,7 +34,7 @@
 			<?php
 			$account_details       = $this->account_details();
 			$show_minute_intervals = false;
-			if ( 2 < $account_details['plan']['id']  && 8 !== $account_details['plan_id'] ) {
+			if ( 2 < $account_details['plan']['id'] && 8 !== $account_details['plan_id'] ) {
 				$show_minute_intervals = true;
 			}
 			?>
@@ -42,7 +42,7 @@
 			<select name="interval_in_h" class="auto-setting">
 				<option value="0.25"
 					<?php echo ! $show_minute_intervals ? 'disabled ' : ''; ?>
-					<?php echo isset( $groups_and_urls['interval_in_h'] ) && '0.25' === $groups_and_urls['interval_in_h']  ? 'selected' : ''; ?>
+					<?php echo isset( $groups_and_urls['interval_in_h'] ) && '0.25' === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>
 					<?php echo ! isset( $groups_and_urls['interval_in_h'] ) ? 'selected' : ''; ?>>
 					Every 15 minutes <?php echo ! $show_minute_intervals ? '("Freelancer" plan or higher)' : ''; ?>
 				</option>
@@ -52,7 +52,7 @@
 					<?php echo ! isset( $groups_and_urls['interval_in_h'] ) ? 'selected' : ''; ?>>
 					Every 30 minutes <?php echo ! $show_minute_intervals ? '("Freelancer" plan or higher)' : ''; ?>
 				</option>
-				<option value="1" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 1 === $groups_and_urls['interval_in_h']  ? 'selected' : ''; ?>>
+				<option value="1" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 1 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>
 					Every 1 hour
 				</option>
 				<option value="3" <?php echo isset( $groups_and_urls['interval_in_h'] ) && 3 === $groups_and_urls['interval_in_h'] ? 'selected' : ''; ?>>

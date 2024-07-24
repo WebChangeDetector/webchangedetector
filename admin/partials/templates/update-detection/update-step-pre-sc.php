@@ -4,8 +4,8 @@
 <div class="wcd-step-container">
 	<div class="wcd-highlight-bg done">
 		<h2>
-			<?php echo $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>
-			<strong><?php echo $groups_and_urls['amount_selected_urls']; ?></strong> URL(s) selected
+			<?php echo wp_kses( $wcd->get_device_icon( 'check', 'screenshots-done-icon' ), array( 'span' => array( 'class' => array() ) ) ); ?>
+			<strong><?php echo esc_html( $groups_and_urls['amount_selected_urls'] ); ?></strong> URL(s) selected
 		</h2>
 	</div>
 
