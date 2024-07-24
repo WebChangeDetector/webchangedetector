@@ -286,9 +286,6 @@ class WebChangeDetector_Autoupdates {
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_plugins' );
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_themes' );
-
-		// Reset transients 'last_checked' to 12h ago.
-		//$this->reset_transients_for_manually_start_auto_updates();
 	}
 
 	/**
@@ -301,10 +298,7 @@ class WebChangeDetector_Autoupdates {
 	 * @return string
 	 */
 	public function auto_update( $update, $item, $type ) {
-
 		error_log( 'Function: auto_update ' . $update );
-		//$plugins_transient = get_site_transient( 'update_plugins' );
-		//error_log("Last updated plugins: " . date("d.m.Y H:i" , $plugins_transient->last_updated));
 		$this->wcd_release_lock();
 
 		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
@@ -459,27 +453,6 @@ class WebChangeDetector_Autoupdates {
 		return $this->auto_update( $update, $item, 'core' );
 	}
 
-	// TODO Delete this one. Only for debugging
-	public function reset_transients_for_manually_start_auto_updates() {
-
-		error_log("Reset last-checked site transients");
-		$core_transient    = get_site_transient( 'update_core' );
-		$themes_transient  = get_site_transient( 'update_themes' );
-		$plugins_transient = get_site_transient( 'update_plugins' );
-
-		$new_time                        = strtotime( '-12 hours' );
-		$core_transient->last_checked    = $new_time;
-		$themes_transient->last_checked  = $new_time;
-		$plugins_transient->last_checked = $new_time;
-
-		error_log( "New Plugin Transient: " . json_encode($plugins_transient));
-		set_site_transient( 'update_core', $core_transient );
-		set_site_transient( 'update_themes', $themes_transient );
-		set_site_transient( 'update_plugins', $plugins_transient );
-		// $plugins_transient = get_site_transient('update_plugins');
-		// error_log("Plugins last checked: " . date("d.m.Y H:i",$plugins_transient->last_checked));
-	}
-
 	private function set_defines() {
 
 		if ( ! defined( 'WCD_WEBSITE_GROUPS' ) ) {
@@ -490,12 +463,6 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_AUTO_DETECTION_GROUP' ) ) {
 			define( 'WCD_AUTO_DETECTION_GROUP', 'auto_detection_group' );
-		}
-		if ( ! defined( 'WCD_UPDATED_ITEMS' ) ) {
-			define( 'WCD_UPDATED_ITEMS', 'wcd_updated_items' );
-		}
-		if ( ! defined( 'WCD_UPDATING_ITEMS' ) ) {
-			define( 'WCD_UPDATING_ITEMS', 'wcd_updating_items' );
 		}
 		if ( ! defined( 'WCD_WORDPRESS_CRON' ) ) {
 			define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );

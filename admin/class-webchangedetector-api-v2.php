@@ -101,7 +101,7 @@ class WebChangeDetector_API_V2 {
 	}
 
 	public static function delete_webhook_v2( $id ) {
-		if ( $id ) {
+		if (! $id ) {
 			return false;
 		}
 		$args = array(
