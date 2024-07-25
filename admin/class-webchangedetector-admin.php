@@ -1093,7 +1093,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_url_settings( $groups_and_urls, $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
-		$synced_posts = $this->sync_posts();
+		$wcd_posts = $this->sync_posts();
 
 		// Select URLS.
 		$tab            = 'update-settings'; // init.
@@ -1111,9 +1111,9 @@ class WebChangeDetector_Admin {
 
 				if ( ! $monitoring_group ) {
 					$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
-					$auto_update_checks_enabled = '<span style="color: green">On</span>';
+					$auto_update_checks_enabled = true;
 					if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
-						$auto_update_checks_enabled = '<span style="color: red">Off</span>';
+						$auto_update_checks_enabled = false;
 					}
 					?>
 				<input type="hidden" name="step" value="pre-update">
@@ -1123,7 +1123,12 @@ class WebChangeDetector_Admin {
 						<h3>
 							Manual Checks Settings<br>
 							<small>
-								Auto update checks: <strong><?php echo esc_html( $auto_update_checks_enabled ); ?></strong>
+								Auto update checks:
+								<strong>
+									<span style="color: <?php echo $auto_update_checks_enabled ? 'green' : 'red'; ?>">
+										<?php echo $auto_update_checks_enabled ? 'On' : 'Off'; ?>
+									</span>
+								</strong>
 								| Threshold: <strong><?php echo esc_html( $groups_and_urls['threshold'] ); ?> %</strong>
 								| CSS injection: <strong><?php echo $groups_and_urls['css'] ? 'yes' : 'no'; ?></strong>
 							</small>
@@ -1187,12 +1192,12 @@ class WebChangeDetector_Admin {
 
 			if ( ! get_option( 'page_on_front' ) ) {
 
-				// Check if current WP post ID is in synced_posts and get the url_id.
-				foreach ( $synced_posts as $synced_post ) {
-					if ( isset( $synced_post['cms_resource_id'] )
-						&& 0 === $synced_post['cms_resource_id']
-						&& 'frontpage' === $synced_post['url_type'] ) {
-						$url_id = $synced_post['url_id'];
+				// Check if current WP wp_post ID is in wcd_posts and get the url_id.
+				foreach ( $wcd_posts as $wcd_post ) {
+					if ( isset( $wcd_post['cms_resource_id'] )
+						&& 0 === $wcd_post['cms_resource_id']
+						&& 'frontpage' === $wcd_post['url_type'] ) {
+						$url_id = $wcd_post['url_id'];
 					}
 				}
 				$checked['desktop'] = false;
@@ -1291,18 +1296,18 @@ class WebChangeDetector_Admin {
 					}
 					switch ( $url_type ) {
 						case 'types':
-							$posts = $this->get_posts( $url_category->name );
+							$wp_posts = $this->get_posts( $url_category->name );
 							break;
 
 						case 'taxonomies':
-							$posts = $this->get_terms( $url_category->name );
+							$wp_posts = $this->get_terms( $url_category->name );
 							break;
 
 						default:
-							$posts = false;
+							$wp_posts = false;
 					}
 
-					if ( is_iterable( $posts ) ) {
+					if ( is_iterable( $wp_posts ) ) {
 						?>
 						<div class="accordion">
 						<div class="mm_accordion_title">
@@ -1342,20 +1347,42 @@ class WebChangeDetector_Admin {
 						$selected_desktop    = 0;
 						$append_rows         = '';
 
-						if ( is_iterable( $posts ) && count( $posts ) > 0 ) {
+						if ( is_iterable( $wp_posts ) && count( $wp_posts ) > 0 ) {
 
-							foreach ( $posts as $post ) {
+							$inactive_posts = array();
+							$active_posts   = array();
+
+							// Re-order posts to have active ones on top.
+							foreach ( $wp_posts as $wp_post ) {
+								foreach ( $groups_and_urls['urls'] as $group_url ) {
+									if ( ! empty( $group_url['cms_resource_id'] ) &&
+										$group_url['url_type'] === $url_type &&
+										$wp_post->ID === $group_url['cms_resource_id']
+									) {
+										if ( $group_url['pivot']['desktop'] || $group_url['pivot']['mobile'] ) {
+											$active_posts[] = $wp_post;
+										} else {
+											$inactive_posts[] = $wp_post;
+										}
+									}
+								}
+							}
+
+							// This way the wp_posts should be sorted the right way.
+							$wp_posts = array_merge( $active_posts, $inactive_posts );
+
+							foreach ( $wp_posts as $wp_post ) {
 								switch ( $url_type ) {
 									case 'types':
-										$url        = get_permalink( $post );
-										$post_title = $post->post_title;
-										$post_id    = $post->ID;
+										$url        = get_permalink( $wp_post );
+										$post_title = $wp_post->post_title;
+										$post_id    = $wp_post->ID;
 										break;
 
 									case 'taxonomies':
-										$url        = get_term_link( $post );
-										$post_title = $post->name;
-										$post_id    = $post->term_id;
+										$url        = get_term_link( $wp_post );
+										$post_title = $wp_post->name;
+										$post_id    = $wp_post->term_id;
 										break;
 
 									default:
@@ -1366,12 +1393,12 @@ class WebChangeDetector_Admin {
 
 								$url_id = false;
 
-								// Check if current WP post ID is in synced_posts and get the url_id.
-								foreach ( $synced_posts as $synced_post ) {
-									if ( ! empty( $synced_post['cms_resource_id'] )
-										&& $synced_post['cms_resource_id'] === $post_id
-										&& $synced_post['url_type'] === $url_type ) {
-										$url_id = $synced_post['url_id'];
+								// Check if current WP wp_post ID is in wcd_posts and get the url_id.
+								foreach ( $wcd_posts as $wcd_post ) {
+									if ( ! empty( $wcd_post['cms_resource_id'] )
+										&& $wcd_post['cms_resource_id'] === $post_id
+										&& $wcd_post['url_type'] === $url_type ) {
+										$url_id = $wcd_post['url_id'];
 									}
 								}
 
@@ -1405,37 +1432,31 @@ class WebChangeDetector_Admin {
 									}
 								}
 
-								$row  = '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $groups_and_urls['id'] ) . '" id="' . esc_html( $url_id ) . '" >';
-								$row .= '<input type="hidden" name="post_id-' . esc_html( $url_id ) . '" value="' . esc_html( $post_id ) . '">';
-								$row .= '<input type="hidden" name="url_id-' . esc_html( $url_id ) . '" value="' . esc_html( $url_id ) . '">';
-								$row .= '<input type="hidden" name="active-' . esc_html( $url_id ) . ' value="1">';
+								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $groups_and_urls['id'] ) . '" id="' . esc_html( $url_id ) . '" >';
+								echo '<input type="hidden" name="post_id-' . esc_html( $url_id ) . '" value="' . esc_html( $post_id ) . '">';
+								echo '<input type="hidden" name="url_id-' . esc_html( $url_id ) . '" value="' . esc_html( $url_id ) . '">';
+								echo '<input type="hidden" name="active-' . esc_html( $url_id ) . ' value="1">';
 
-								$row .= '<td class="checkbox-desktop-' . esc_html( $url_category->label ) . '" style="text-align: center;">
+								echo '<td class="checkbox-desktop-' . esc_html( $url_category->label ) . '" style="text-align: center;">
                                             <input type="hidden" value="0" name="desktop-' . esc_html( $url_id ) . '">
                                             <input type="checkbox" name="desktop-' . esc_html( $url_id ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
                                             id="desktop-' . esc_html( $url_id ) . '" onclick="mmMarkRows(\'' . esc_html( $url_id ) . '\')" ></td>';
 
-								$row .= '<td class="checkbox-mobile-' . esc_html( $url_category->label ) . '" style="text-align: center;">
+								echo '<td class="checkbox-mobile-' . esc_html( $url_category->label ) . '" style="text-align: center;">
                                             <input type="hidden" value="0" name="mobile-' . esc_html( $url_id ) . '">
                                             <input type="checkbox" name="mobile-' . esc_html( $url_id ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
                                             id="mobile-' . esc_html( $url_id ) . '" onclick="mmMarkRows(\'' . esc_html( $url_id ) . '\')" ></td>';
 
-								$row .= '<td style="text-align: left;"><strong>' . esc_html( $post_title ) . '</strong><br>';
-								$row .= '<a href="' . esc_html( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></td>';
-								$row .= '</tr>';
+								echo '<td style="text-align: left;"><strong>' . esc_html( $post_title ) . '</strong><br>';
+								echo '<a href="' . esc_html( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></td>';
+								echo '</tr>';
 
-								$row .= '<script> mmMarkRows(\'' . esc_html( $url_id ) . '\'); </script>';
-
-								if ( $checked['desktop'] || $checked['mobile'] ) {
-									echo $row;
-								} else {
-									$append_rows .= $row;
-								}
+								echo '<script> mmMarkRows(\'' . esc_html( $url_id ) . '\'); </script>';
 							}
 						}
-						echo $append_rows;
+
 						echo '</table>';
-						if ( ! count( $posts ) ) {
+						if ( ! count( $wp_posts ) ) {
 							?>
 							<div style="text-align: center; font-weight: 700; padding: 20px 0;">
 								No Posts in this post type
