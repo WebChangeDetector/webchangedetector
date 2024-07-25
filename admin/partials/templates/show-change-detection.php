@@ -22,7 +22,6 @@
 		Public link: <a href="<?php echo esc_url( $public_link ); ?>" target="_blank">
 			<?php echo esc_url( $public_link ); ?>
 		</a>
-
 	</div>
 
 	<div class="comparison-tile comparison-diff-tile" data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">

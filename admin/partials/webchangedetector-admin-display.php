@@ -20,7 +20,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 */
 	function wcd_webchangedetector_init() {
 		// Add a nonce for security and authentication.
-		$nonce = wp_create_nonce( 'wcd_nonce_field' );
 
 		// Start view.
 		echo '<div class="wrap">';
@@ -29,31 +28,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		$wcd = new WebChangeDetector_Admin();
 
-		// Validate action.
+		// Validate wcd_action and nonce.
 		$wcd_action = null;
+		$postdata   = array();
 		if ( isset( $_POST['wcd_action'] ) ) {
-			$wcd_action = sanitize_key( $_POST['wcd_action'] );
+			check_admin_referer( wp_unslash( sanitize_key( $_POST['wcd_action'] ) ) );
+			$wcd_action = wp_unslash( sanitize_key( $_POST['wcd_action'] ) );
 			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
 				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
-
 				return false;
 			}
 		}
 
 		// Unslash postdata.
-		$postdata = array();
 		foreach ( $_POST as $key => $post ) {
 			$key              = wp_unslash( $key );
 			$post             = wp_unslash( $post );
 			$postdata[ $key ] = $post;
-		}
-
-		// Verify nonce.
-		if ( isset( $postdata['wcd_action'] ) ) {
-			if ( ! isset( $postdata['_wpnonce'] ) ) {
-				wp_die( 'Nonce missing' );
-			}
-			check_admin_referer( $postdata['wcd_action'] );
 		}
 
 		// Actions without API Token needed.
@@ -729,10 +720,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['screenshots'][0]['link'] ); ?>">Show</button>
 							</form>
 							<?php
-						}
 
-						// Show comparison.
-						elseif ( 'compare' === $queue['sc_type'] &&
+							// Show comparison.
+						} elseif ( 'compare' === $queue['sc_type'] &&
 								'done' === $queue['status'] &&
 								! empty( $queue['comparisons'][0]['token'] ) ) {
 							?>
