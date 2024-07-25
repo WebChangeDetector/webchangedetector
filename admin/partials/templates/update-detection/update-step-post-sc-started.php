@@ -1,8 +1,13 @@
 <?php
 /**
  * Manual checks - post sc started
+ *
+ *   @package    webchangedetector
  */
 
+/**
+ * Include manual check tiles
+ */
 require 'update-step-tiles.php';
 ?>
 
@@ -11,13 +16,13 @@ require 'update-step-tiles.php';
 <!-- Pre-Update started / finished -->
 <div id="wcd-screenshots-done" class="wcd-step-container" style="display: <?php echo $sc_processing ? 'none' : 'block'; ?>;">
 	<div class="wcd-highlight-bg done">
-		<h2><?php echo $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
+		<h2><?php echo wp_kses( $wcd->get_device_icon( 'check', 'screenshots-done-icon' ), array( 'span' => array( 'class' => array() ) ) ); ?>Pre-Update Screenshots</h2>
 	</div>
 	<div class="wcd-highlight-bg done">
-		<h2><?php echo $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Updates and Changes</h2>
+		<h2><?php echo wp_kses( $wcd->get_device_icon( 'check', 'screenshots-done-icon' ), array( 'span' => array( 'class' => array() ) ) ); ?>Updates and Changes</h2>
 	</div>
 	<div class="wcd-highlight-bg done">
-		<h2><?php echo $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Post-Update Screenshots & Change detections</h2>
+		<h2><?php echo wp_kses( $wcd->get_device_icon( 'check', 'screenshots-done-icon' ), array( 'span' => array( 'class' => array() ) ) ); ?>Post-Update Screenshots & Change detections</h2>
 	</div>
 	<form method="post">
 		<input type="hidden" name="wcd_action" value="update_detection_step">

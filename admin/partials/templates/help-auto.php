@@ -1,9 +1,19 @@
-<?php require 'help-headline.php'; ?>
+<?php
+/**
+ * Help - auto checks
+ *
+ *  @package    webchangedetector
+ */
+
+/**
+ * Require headline
+ */
+require 'help-headline.php'; ?>
 	<p>
 		Automatically detect changes on your website and receive alert emails on change detections.
 	</p>
 
-	<h3></span>Step by step</h3>
+	<h3>Step by step</h3>
 	<ol>
 		<li>
 			Select the device(s) for the URLs you want to monitor.

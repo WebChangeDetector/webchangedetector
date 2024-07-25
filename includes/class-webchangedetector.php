@@ -77,7 +77,7 @@ class WebChangeDetector {
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
-		$this->define_public_hooks();
+		// $this->define_public_hooks();
 	}
 
 	/**
@@ -121,7 +121,7 @@ class WebChangeDetector {
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( __DIR__ ) . 'public/class-webchangedetector-public.php';
+		// require_once plugin_dir_path( __DIR__ ) . 'public/class-webchangedetector-public.php';
 
 		$this->loader = new WebChangeDetector_Loader();
 	}
@@ -157,19 +157,6 @@ class WebChangeDetector {
 		// $this->loader->add_action( 'save_post', $plugin_admin, 'sync_post_after_save', 10, 3 ); // Sync all pages and posts when there is a new page or post published
 		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_admin, 'ajax_get_processing_queue' );
 	}
-	/**
-	 * Register all of the hooks related to the public-facing functionality
-	 * of the plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 */
-	private function define_public_hooks() {
-		$plugin_public = new WebChangeDetector_Public( $this->get_plugin_name(), $this->get_version() );
-
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-	}
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
@@ -189,16 +176,6 @@ class WebChangeDetector {
 	 */
 	public function get_plugin_name() {
 		return $this->plugin_name;
-	}
-
-	/**
-	 * The reference to the class that orchestrates the hooks with the plugin.
-	 *
-	 * @since     1.0.0
-	 * @return    WebChangeDetector_Loader    Orchestrates the hooks of the plugin.
-	 */
-	public function get_loader() {
-		return $this->loader;
 	}
 
 	/**

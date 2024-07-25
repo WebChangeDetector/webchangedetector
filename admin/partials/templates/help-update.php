@@ -1,4 +1,16 @@
-<?php require 'help-headline.php'; ?>
+<?php
+/**
+ * Help - manual checks
+ *
+ *  @package    WebChangeDetector
+ *  @author     Mike Miler <mike@wp-mike.com>
+ */
+
+/**
+ * Require headline
+ */
+require 'help-headline.php';
+?>
 	<p>
 		Compare your website by taking and comparing screenshots before and after updates.
 		You can see the exact difference between the screenshots in the Change Detections.

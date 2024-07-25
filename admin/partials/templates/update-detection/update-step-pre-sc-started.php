@@ -1,8 +1,13 @@
 <?php
 /**
  * Manual checks - pre-sc started
+ *
+ *   @package    webchangedetector
  */
 
+/**
+ * Include manual check tiles
+ */
 require 'update-step-tiles.php';
 ?>
 
@@ -12,12 +17,12 @@ require 'update-step-tiles.php';
 <div id="wcd-screenshots-done" class="wcd-step-container"
 		style="max-width: 500px; margin: 20px auto; text-align: center; display: none;">
 	<div class="wcd-highlight-bg done">
-		<h2><?php echo $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
+		<h2><?php echo wp_kses( $wcd->get_device_icon( 'check', 'screenshots-done-icon' ), array( 'span' => array( 'class' => array() ) ) ); ?>Pre-Update Screenshots</h2>
 	</div>
 	<div class="wcd-highlight-bg">
 		<h2>Time For Updates</h2>
 		<p>
-			You can leave this page and make <a href="<?php echo admin_url(); ?>update-core.php" >Updates</a> or other changes on your website. When your are done, come back and
+			You can leave this page and make <a href="<?php echo esc_url( admin_url() ); ?>update-core.php" >Updates</a> or other changes on your website. When your are done, come back and
 			continue with the button below. <br>
 
 		</p>

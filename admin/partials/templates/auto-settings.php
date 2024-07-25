@@ -1,9 +1,17 @@
+<?php
+/**
+ * Auto Checks
+ *
+ * @package    webchangedetector
+ */
+
+?>
 <div style="width: 50%; float: left;">
 	<div style=" padding: 10px;">
 		<p class="auto-settings">Make the settings for automatic change detections here.</p>
 		<p class="toggle">
 			<input type="hidden" name="monitoring" value="1">
-			<input type="hidden" name="group_name" value="<?php echo $groups_and_urls['name']; ?>">
+			<input type="hidden" name="group_name" value="<?php echo esc_html( $groups_and_urls['name'] ); ?>">
 
 			<label for="enabled">Monitoring </label>
 			<select name="enabled" id="auto-enabled">
@@ -25,7 +33,7 @@
 					} else {
 						$selected = '';
 					}
-					echo '<option class="select-time" value="' . $i . '" ' . $selected . '>' . $i . ':00</option>';
+					echo '<option class="select-time" value="' . esc_html( $i ) . '" ' . esc_html( $selected ) . '>' . esc_html( $i ) . ':00</option>';
 				}
 				?>
 			</select>
@@ -71,7 +79,7 @@
 		</p>
 		<p class="auto-setting toggle">
 			<label for="threshold" class="auto-setting">Threshold</label>
-			<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo $groups_and_urls['threshold']; ?>"> %
+			<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $groups_and_urls['threshold'] ); ?>"> %
 		</p>
 		<div class="auto-setting " style="margin-top: 20px;">
 			<label for="alert_emails" class="auto-setting">

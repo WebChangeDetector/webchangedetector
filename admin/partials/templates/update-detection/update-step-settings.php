@@ -1,8 +1,13 @@
 <?php
 /**
  * Manual checks - step settings
+ *
+ *   @package    webchangedetector
  */
 
+/**
+ * Include manual check tiles
+ */
 require 'update-step-tiles.php';
 ?>
 

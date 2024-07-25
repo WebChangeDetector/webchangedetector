@@ -1,6 +1,8 @@
 <?php
 /**
  * Manual checks - cancel
+ *
+ *   @package    webchangedetector
  */
 
 ?>

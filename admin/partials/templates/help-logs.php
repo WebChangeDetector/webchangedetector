@@ -1,4 +1,14 @@
-<?php require 'help-headline.php'; ?>
+<?php
+/**
+ * Help - Logs
+ *
+ *  @package    webchangedetector
+ */
+
+/**
+ * Require headline
+ */
+require 'help-headline.php'; ?>
 <p>
 	Here you can see the status of all your requested change detections and performed screenshots.
 </p>

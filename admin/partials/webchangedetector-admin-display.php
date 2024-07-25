@@ -11,49 +11,62 @@
  * @subpackage WebChangeDetector/admin/partials
  */
 
-
 if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
+
+	/**
+	 * Init for plugin view
+	 *
+	 * @return bool|void
+	 */
 	function wcd_webchangedetector_init() {
 		// Add a nonce for security and authentication.
 		$nonce = wp_create_nonce( 'wcd_nonce_field' );
 
-		// Start view
+		// Start view.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
 		echo '<h1>WebChangeDetector</h1>';
 
 		$wcd = new WebChangeDetector_Admin();
 
-		// Validate action
+		// Validate action.
 		$wcd_action = null;
 		if ( isset( $_POST['wcd_action'] ) ) {
 			$wcd_action = sanitize_key( $_POST['wcd_action'] );
-			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS ) ) {
+			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
 				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
+
 				return false;
 			}
-
-			// Verify nonce
-			if ( ! $_POST['_wpnonce'] ) {
-				echo 'Nonce Failed.';
-				// die();
-			}
-
-			( check_admin_referer( $_POST['wcd_action'] ) );
-
 		}
 
-		// Actions without API Token needed
+		// Unslash postdata.
+		$postdata = array();
+		foreach ( $_POST as $key => $post ) {
+			$key              = wp_unslash( $key );
+			$post             = wp_unslash( $post );
+			$postdata[ $key ] = $post;
+		}
+
+		// Verify nonce.
+		if ( isset( $postdata['wcd_action'] ) ) {
+			if ( ! isset( $postdata['_wpnonce'] ) ) {
+				wp_die( 'Nonce missing' );
+			}
+			check_admin_referer( $postdata['wcd_action'] );
+		}
+
+		// Actions without API Token needed.
 		switch ( $wcd_action ) {
 			case 'create_free_account':
-				// Validate if all required fields were sent
-				if ( ! ( $_POST['name_first'] && $_POST['name_last'] && $_POST['email'] && $_POST['password'] ) ) {
+				// Validate if all required fields were sent.
+				if ( ! ( isset( $postdata['name_first'] ) && isset( $postdata['name_last'] ) && isset( $postdata['email'] ) && isset( $postdata['password'] ) ) ) {
 					echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
-					echo $wcd->get_no_account_page();
+					$wcd->get_no_account_page();
 					return false;
 				}
 
-				$api_token = $wcd->create_free_account( $_POST );
+				$api_token = $wcd->create_free_account( $postdata );
 				$success   = $wcd->save_api_token( $api_token );
 
 				if ( ! $success ) {
@@ -66,49 +79,49 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 're-add-api-token':
-				if ( empty( $_POST['api_token'] ) ) {
-					echo $wcd->get_no_account_page();
+				if ( empty( $postdata['api_token'] ) ) {
+					$wcd->get_no_account_page();
 					return true;
 				}
 
-				$wcd->save_api_token( $_POST['api_token'] );
+				$wcd->save_api_token( $postdata['api_token'] );
 				break;
 
 			case 'save_api_token':
-				if ( empty( $_POST['api_token'] ) ) {
+				if ( empty( $postdata['api_token'] ) ) {
 					echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
-					echo $wcd->get_no_account_page();
+					$wcd->get_no_account_page();
 					return false;
 				}
 
-				$wcd->save_api_token( $_POST['api_token'] );
+				$wcd->save_api_token( $postdata['api_token'] );
 				break;
 		}
 
-		// Change api token option name from V1.0.7
+		// Change api token option name from V1.0.7.
 		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) && get_option( 'webchangedetector_api_key' ) ) {
 			add_option( WCD_WP_OPTION_KEY_API_TOKEN, get_option( 'webchangedetector_api_key' ), '', false );
 			delete_option( 'webchangedetector_api_key' );
 		}
 
-		// We still don't have an api_token
+		// We still don't have an api_token.
 		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
-			echo $wcd->get_no_account_page();
+			$wcd->get_no_account_page();
 			return false;
 		}
 
-		// Get the account details
+		// Get the account details.
 		$account_details = $wcd->account_details();
 
-		// Check if plugin has to be updated
-		if ( $account_details === 'update plugin' ) {
+		// Check if plugin has to be updated.
+		if ( 'update plugin' === $account_details ) {
 			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
             WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
 			wp_die();
 		}
 
-		// Check if account is activated and if the api key is authorized
-		if ( ! is_array( $account_details ) && ( $account_details === 'activate account' || $account_details === 'unauthorized' ) ) {
+		// Check if account is activated and if the api key is authorized.
+		if ( ! is_array( $account_details ) && ( 'activate account' === $account_details || 'unauthorized' === $account_details ) ) {
 			$wcd->show_activate_account( $account_details );
 			return false;
 		}
@@ -127,7 +140,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$usage_percent = (int) ( $account_details['usage'] / $account_details['sc_limit'] * 100 );
 
 		if ( $usage_percent >= 100 ) {
-			if ( $account_details['plan']['one_time'] ) { // Check for trial account ?>
+			if ( $account_details['plan']['one_time'] ) { // Check for trial account.
+				?>
 				<div class="notice notice-error">
 					<p>You ran out of checks. Please upgrade your account to continue.</p>
 				</div>
@@ -139,7 +153,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 		} elseif ( $usage_percent > 70 ) {
 			?>
-			<div class="notice notice-warning"><p>You used <?php echo $usage_percent; ?>% of your checks.</p></div>
+			<div class="notice notice-warning"><p>You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
 			<?php
 		}
 
@@ -158,7 +172,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 		}
 
-		// TODO Replace those with V2
+		// TODO Replace those with V2.
 		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
 		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 
@@ -186,55 +200,56 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		switch ( $wcd_action ) {
 
 			case 'add_post_type':
-				$wcd->add_post_type( $_POST );
+				$wcd->add_post_type( $postdata );
 				$wcd->sync_posts();
-				echo '<div class="notice notice-success"><p>' . json_decode( stripslashes( $_POST['post_type'] ), true )[0]['post_type_name'] . ' added.</p></div>';
+				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
+				echo '<div class="notice notice-success"><p>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
 
 			case 'update_detection_step':
-				update_option( 'webchangedetector_update_detection_step', sanitize_key( $_POST['step'] ) );
+				update_option( 'webchangedetector_update_detection_step', sanitize_key( $postdata['step'] ) );
 				break;
 
 			case 'take_screenshots':
-				$scType = sanitize_key( $_POST['sc_type'] );
+				$sc_type = sanitize_key( $postdata['sc_type'] );
 
-				if ( ! in_array( $scType, WebChangeDetector_Admin::VALID_SC_TYPES ) ) {
+				if ( ! in_array( $sc_type, WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
 					echo '<div class="error notice"><p>Wrong Screenshot type.</p></div>';
 					return false;
 				}
 
-				$results = $wcd->take_screenshot( $wcd->group_id, $scType );
+				$results = $wcd->take_screenshot( $wcd->group_id, $sc_type );
 
-				if ( $results && is_array( $results ) && count( $results ) > 1 && $results[0] === 'error' ) {
-					echo '<div class="error notice"><p>' . $results[1] . '</p></div>';
-				} elseif ( $scType === 'pre' ) {
+				if ( $results && is_array( $results ) && 1 < count( $results ) && 'error' === $results[0] ) {
+					echo '<div class="error notice"><p>' . esc_html( $results[1] ) . '</p></div>';
+				} elseif ( 'pre' === $sc_type ) {
 						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
-				} elseif ( $scType === 'post' ) {
+				} elseif ( 'post' === $sc_type ) {
 					update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
 				}
 				break;
 
 			case 'save_group_settings':
-				switch ( $_POST['save_settings'] ) {
+				switch ( $postdata['save_settings'] ) {
 					case 'post_urls_update_and_auto':
-						$wcd->post_urls( $_POST, $wcd->website_details, true );
+						$wcd->post_urls( $postdata, $wcd->website_details, true );
 
 						// Get the depending group names before saving to avoid group name changes in webapp.
-						$manual_group_name   = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
-						$_POST['group_name'] = $manual_group_name;
-						$wcd->update_settings( $_POST, $wcd->group_id );
+						$manual_group_name      = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
+						$postdata['group_name'] = $manual_group_name;
+						$wcd->update_settings( $postdata, $wcd->group_id );
 
-						$auto_group_name     = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
-						$_POST['group_name'] = $auto_group_name;
-						$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
+						$auto_group_name             = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
+						$postdata['group_name_auto'] = $auto_group_name;
+						$wcd->update_monitoring_settings( $postdata, $wcd->monitoring_group_id );
 						break;
 
 					case 'post_urls':
-						$wcd->post_urls( $_POST, $wcd->website_details, false );
-						if ( ! empty( $_POST['monitoring'] ) && $_POST['monitoring'] ) {
-							$wcd->update_monitoring_settings( $_POST, $wcd->monitoring_group_id );
+						$wcd->post_urls( $postdata, $wcd->website_details, false );
+						if ( ! empty( $postdata['monitoring'] ) && $postdata['monitoring'] ) {
+							$wcd->update_monitoring_settings( $postdata, $wcd->monitoring_group_id );
 						} else {
-							$wcd->update_settings( $_POST, $wcd->group_id );
+							$wcd->update_settings( $postdata, $wcd->group_id );
 						}
 						break;
 
@@ -265,25 +280,26 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Check for account status.
-		if ( $account_details['status'] !== 'active' ) {
+		if ( 'active' !== $account_details['status'] ) {
 
 			// Set error message.
 			$err_msg = 'cancelled';
 			if ( ! empty( $account_details['status'] ) ) {
 				$err_msg = $account_details['status'];
 			}
-			echo '
-            <div class="error notice">
-                <h3>Your account was ' . $err_msg . '.</h3>
-                <p>Please <a href="' . $wcd->get_upgrade_url() . '">Upgrade</a> your account to re-activate your account.</p>
-                <p>To use a different account, please reset the API token.
-                    <form method="post">
-                        <input type="hidden" name="wcd_action" value="reset_api_token">
-                        ' . wp_nonce_field( 'reset_api_token' ) . '
-                        <input type="submit" value="Reset API token" class="button button-delete">
-                    </form>
-                </p>
-            </div>';
+			?>
+			<div class="error notice">
+				<h3>Your account was <?php echo esc_html( $err_msg ); ?></h3>
+				<p>Please <a href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>">Upgrade</a> to re-activate your account.</p>
+				<p>To use a different account, please reset the API token.
+					<form method="post">
+						<input type="hidden" name="wcd_action" value="reset_api_token">
+						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<input type="submit" value="Reset API token" class="button button-delete">
+					</form>
+				</p>
+			</div>
+			<?php
 			return false;
 		}
 
@@ -296,20 +312,24 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Check if website details are available.
 		if ( empty( $wcd->website_details ) ) {
-			echo '<div class="error notice"><p>
-                    We couldn\'t find your website settings. Please reset the API token in 
-                    settings and re-add your website with your API Token.
-                    </p><p>
-                    Your current API token is: <strong>' . get_option( WCD_WP_OPTION_KEY_API_TOKEN ) . '</strong>.
-                    </p>
-                     <form method="post">
-                        <input type="hidden" name="wcd_action" value="reset_api_token">
-                        ' . wp_nonce_field( 'reset_api_token' ) . '
-                        <input type="hidden" name="api_token" value="' . get_option( WCD_WP_OPTION_KEY_API_TOKEN ) . '">
-                        <input type="submit" class="button" value="Reset API token" class="button button-delete">
-                    </form>
-                    </p>
-                   </div>';
+			?>
+			<div class="error notice">
+				<p>
+					We couldn't find your website settings. Please reset the API token in
+					settings and re-add your website with your API Token.
+				</p><p>
+					Your current API token is: <strong><?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?></strong>.
+				</p>
+				<p>
+					<form method="post">
+						<input type="hidden" name="wcd_action" value="reset_api_token">
+						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<input type="hidden" name="api_token" value="<?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?>">
+						<input type="submit" value="Reset API token" class="button button-delete">
+					</form>
+				</p>
+			</div>
+			<?php
 			return false;
 		}
 
@@ -358,7 +378,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$group_type = null;
 				if ( isset( $_POST['group_type'] ) ) {
 					$group_type = sanitize_key( $_POST['group_type'] );
-					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES ) ) {
+					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
 						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
 						return false;
 					}
@@ -374,18 +394,18 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 					<form method="post">
 						<select name="limit_days">
-							<option value="" <?php echo $limit_days === null ? 'selected' : ''; ?>> Show all</option>
-							<option value="3" <?php echo $limit_days === 3 ? 'selected' : ''; ?>>Last 3 days</option>
-							<option value="7" <?php echo $limit_days === 7 ? 'selected' : ''; ?>>Last 7 days</option>
-							<option value="14" <?php echo $limit_days === 14 ? 'selected' : ''; ?>>Last 14 days</option>
-							<option value="30"<?php echo $limit_days === 30 ? 'selected' : ''; ?>>Last 30 days</option>
-							<option value="60"<?php echo $limit_days === 60 ? 'selected' : ''; ?>>Last 60 days</option>
+							<option value="" <?php echo null === $limit_days ? 'selected' : ''; ?>> Show all</option>
+							<option value="3" <?php echo 3 === $limit_days ? 'selected' : ''; ?>>Last 3 days</option>
+							<option value="7" <?php echo 7 === $limit_days ? 'selected' : ''; ?>>Last 7 days</option>
+							<option value="14" <?php echo 14 === $limit_days ? 'selected' : ''; ?>>Last 14 days</option>
+							<option value="30" <?php echo 30 === $limit_days ? 'selected' : ''; ?>>Last 30 days</option>
+							<option value="60" <?php echo 60 === $limit_days ? 'selected' : ''; ?>>Last 60 days</option>
 						</select>
 
 						<select name="group_type" >
 							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>Monitoring & Manual Checks</option>
-							<option value="update" <?php echo $group_type === 'update' ? 'selected' : ''; ?>>Only Manual Checks</option>
-							<option value="auto" <?php echo $group_type === 'auto' ? 'selected' : ''; ?>>Only Monitoring</option>
+							<option value="update" <?php echo 'update' === $group_type ? 'selected' : ''; ?>>Only Manual Checks</option>
+							<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Only Monitoring</option>
 						</select>
 
 						<select name="difference_only" class="js-dropdown">
@@ -568,7 +588,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Check for 30 min intervals.
-					if ( $groups_and_urls['interval_in_h'] === 0.5 ) {
+					if ( 0.5 === $groups_and_urls['interval_in_h'] ) {
 						$amount_sc_per_day = 48;
 						if ( gmdate( 'i' ) < 30 ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -577,7 +597,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 					}
 					// Check for 15 min intervals.
-					if ( $groups_and_urls['interval_in_h'] === 0.25 ) {
+					if ( 0.25 === $groups_and_urls['interval_in_h'] ) {
 						$amount_sc_per_day = 96;
 						if ( gmdate( 'i' ) < 15 ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ), 15, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -587,14 +607,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ), 45, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
 						} else {
 							$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-
 						}
 					}
 
 					// Calculate screenshots until renewal.
 					$account = $wcd->account_details();
 
-					$days_until_renewal      = date( 'd', date( 'U', strtotime( $account['renewal_at'] ) ) - date( 'U' ) );
+					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account['renewal_at'] ) ) - gmdate( 'U' ) );
 					$amount_group_sc_per_day = $groups_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
 
 					// Get first detection hour.
@@ -605,7 +624,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 					// Count up in interval_in_h to current hour.
 					$skip_sc_count_today = 0;
-					while ( $first_hour_of_interval + $groups_and_urls['interval_in_h'] <= date( 'H' ) ) {
+					while ( $first_hour_of_interval + $groups_and_urls['interval_in_h'] <= gmdate( 'H' ) ) {
 						$first_hour_of_interval = $first_hour_of_interval + $groups_and_urls['interval_in_h'];
 						++$skip_sc_count_today;
 					}
@@ -620,7 +639,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="box full">
 							<div id="txt_next_sc_in">Next change detections in</div>
 							<div id="next_sc_in" class="big"></div>
-							<div id="next_sc_date" class="local-time" data-date="<?php echo $date_next_sc; ?>"></div>
+							<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 						</div>
 
 						<!-- @TODO: Calculation is wrong and hidden. Replace this with the one from the dashboard -->
@@ -630,10 +649,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<span id="ajax_amount_total_sc"></span> Checks
 							</div>
 							<div id="sc_available_until_renew"
-								data-amount_selected_urls="<?php echo $groups_and_urls['amount_selected_urls']; ?>"
-								data-auto_sc_per_url_until_renewal="<?php echo $total_sc_current_period; ?>"
+								data-amount_selected_urls="<?php echo esc_html( $groups_and_urls['amount_selected_urls'] ); ?>"
+								data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"
 							>
-								<?php echo $account_details['available_compares']; ?> available until renewal
+								<?php echo esc_html( $account_details['available_compares'] ); ?> available until renewal
 							</div>
 						</div>
 						<div class="clear"></div>
@@ -686,42 +705,41 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 					foreach ( $queues as $queue ) {
 						$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
-						echo '<tr class="queue-status-' . $queue['status'] . '">';
-						echo '<td>' . $wcd->get_device_icon( $queue['device'] ) . '</td>';
+						echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
+						echo '<td>' . wp_kses( $wcd->get_device_icon( $queue['device'] ), array( 'span' => array( 'class' => array() ) ) ) . '</td>';
 						echo '<td>
-                                        <span class="html-title queue"> ' . $queue['url']['html_title'] . '</span><br>
-                                        <span class="url queue">URL: ' . $queue['url']['url'] . '</span><br>
-                                        ' . $group_type . '
+                                        <span class="html-title queue"> ' . esc_html( $queue['url']['html_title'] ) . '</span><br>
+                                        <span class="url queue">URL: ' . esc_url( $queue['url']['url'] ) . '</span><br>
+                                        ' . esc_html( $group_type ) . '
                                 </td>';
-						echo '<td>' . $type_nice_name[ $queue['sc_type'] ] . '</td>';
-						echo '<td>' . ucfirst( $queue['status'] ) . '</td>';
-						echo '<td class="local-time" data-date="' . strtotime( $queue['created_at'] ) . '">' . gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) . '</td>';
-						echo '<td class="local-time" data-date="' . strtotime( $queue['updated_at'] ) . '">' . gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) . '</td>';
+						echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
+						echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
+						echo '<td class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
+							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</td>';
+						echo '<td class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
+							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</td>';
 						echo '<td>';
 
 						// Show screenshot button.
-						if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto' ) ) &&
-							$queue['status'] === 'done' &&
+						if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto' ), true ) &&
+							'done' === $queue['status'] &&
 							! empty( $queue['screenshots'][0]['link'] ) ) {
 							?>
-
-									<form method="post" action="?page=webchangedetector-show-screenshot">
-										<button class="button" type="submit" name="img_url" value="<?php echo $queue['screenshots'][0]['link']; ?>">Show</button>
-									</form>
-
+							<form method="post" action="?page=webchangedetector-show-screenshot">
+								<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['screenshots'][0]['link'] ); ?>">Show</button>
+							</form>
 							<?php
 						}
+
 						// Show comparison.
-						elseif ( $queue['sc_type'] === 'compare' &&
-							$queue['status'] === 'done' &&
-							! empty( $queue['comparisons'][0]['token'] ) ) {
+						elseif ( 'compare' === $queue['sc_type'] &&
+								'done' === $queue['status'] &&
+								! empty( $queue['comparisons'][0]['token'] ) ) {
 							?>
-
-									<form method="post" action="?page=webchangedetector-show-detection">
-										<button class="button" type="submit" name="token" value="<?php echo $queue['comparisons'][0]['token']; ?>">Show</button>
-									</form>
-
-								<?php
+							<form method="post" action="?page=webchangedetector-show-detection">
+								<button class="button" type="submit" name="token" value="<?php echo esc_html( $queue['comparisons'][0]['token'] ); ?>">Show</button>
+							</form>
+							<?php
 						}
 
 						echo '</td>';
@@ -731,20 +749,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					echo '<tr><td colspan="7" style="text-align: center; font-weight: 700; background-color: #fff;">Nothing to show yet.</td></tr>';
 				}
 				?>
-
 					</table>
 					<?php
-					$offset = $_GET['offset'] ?? 0;
-					$limit  = $_GET['limit'] ?? $wcd::LIMIT_QUEUE_ROWS;
+					$offset = isset( $_GET['offset'] ) ? wp_unslash( sanitize_key( $_GET['offset'] ) ) : 0;
+					$limit  = isset( $_GET['limit'] ) ? wp_unslash( sanitize_key( $_GET['limit'] ) ) : $wcd::LIMIT_QUEUE_ROWS;
 					?>
-						<a class="button <?php echo ! $offset ? 'disabled' : ''; ?>"
-							href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?php echo $offset - $limit; ?>&limit=<?php echo $limit; ?>"
-						> < Newer
-						</a>
-						<a class="button <?php echo count( $queues ) !== $limit ? 'disabled' : ''; ?>"
-							href="/wp-admin/admin.php?page=webchangedetector-logs&offset=<?php echo $offset + $limit; ?>&limit=<?php echo $limit; ?>"
-						> Older >
-						</a>
+					<a class="button <?php echo ! $offset ? 'disabled' : ''; ?>"
+						href="/wp-admin/admin.php?page=webchangedetector-logs
+						&offset=<?php echo esc_html( $offset - $limit ); ?>
+						&limit=<?php echo esc_html( $limit ); ?>"
+					> < Newer
+					</a>
+					<a class="button <?php echo count( $queues ) !== $limit ? 'disabled' : ''; ?>"
+						href="/wp-admin/admin.php?page=webchangedetector-logs
+						&offset=<?php echo esc_html( $offset + $limit ); ?>
+						&limit=<?php echo esc_html( $limit ); ?>"
+					> Older >
+					</a>
 				</div>
 				<div class="sidebar">
 					<div class="account-box">
@@ -807,7 +828,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								)
 							);
 							?>
-							<option value='<?php echo $add_post_type; ?>'><?php echo $available_post_type->label; ?></option>
+							<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
 						<?php } ?>
 							</select>
 							<input type="submit" class="button" value="Add">
@@ -827,7 +848,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 					foreach ( $taxonomies as $taxonomy ) {
 
-						// if rest_base is not set we use post_name (wp default)
+						// if rest_base is not set we use post_name (wp default).
 						if ( ! $taxonomy->rest_base ) {
 							$taxonomy->rest_base = $taxonomy->name;
 						}
@@ -860,7 +881,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 										)
 									);
 									?>
-									<option value='<?php echo $add_post_type; ?>'><?php echo $available_taxonomy->label; ?></option>
+									<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
 								<?php } ?>
 							</select>
 							<input type="submit" class="button" value="Add">
@@ -880,9 +901,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					} elseif ( ! $wcd->website_details['enable_limits'] ) {
 						echo '<h2>Need more screenshots?</h2>';
 						echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
-						echo '<a class="button" href="' . $wcd->get_upgrade_url() . '">Upgrade</a>';
+						echo '<a class="button" href="' . esc_url( $wcd->get_upgrade_url() ) . '">Upgrade</a>';
 					}
-					echo $wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
+					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 					?>
 				</div>
 				<div class="sidebar">
@@ -898,14 +919,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 * Show compare
 			 */
 			case 'webchangedetector-show-detection':
-				echo $wcd->get_comparison_by_token( $_POST );
+				$wcd->get_comparison_by_token( $postdata );
 				break;
 
 			/***************
 			 * Show screenshot
 			 */
 			case 'webchangedetector-show-screenshot':
-				echo $wcd->get_screenshot( $_POST );
+				$wcd->get_screenshot( $postdata );
 				break;
 
 			default:

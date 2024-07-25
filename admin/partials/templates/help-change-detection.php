@@ -1,4 +1,14 @@
-<?php require 'help-headline.php'; ?>
+<?php
+/**
+ * Help - change detection
+ *
+ *  @package    webchangedetector
+ */
+
+/**
+ * Require headline
+ */
+require 'help-headline.php'; ?>
 	<p>
 		Here you find all change detections created for your websites and use filters to navigate easier.
 	</p>

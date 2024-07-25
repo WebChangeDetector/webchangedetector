@@ -1,9 +1,15 @@
 <?php
 /**
  * Manual checks - change detection
+ *
+ *   @package    webchangedetector
  */
 
-require 'update-step-tiles.php'; ?>
+/**
+ * Include manual check tiles
+ */
+require 'update-step-tiles.php';
+?>
 <form method="post" style="display: inline; margin-right: 10px;">
 	<input type="hidden" name="wcd_action" value="update_detection_step">
 	<?php wp_nonce_field( 'update_detection_step' ); ?>

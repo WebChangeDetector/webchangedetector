@@ -2,16 +2,6 @@
 /**
  * The admin-specific functionality of the plugin.
  *
- * @link       wp-mike.com
- * @since      1.0.0
- *
- * @package    WebChangeDetector
- * @subpackage WebChangeDetector/admin
- */
-
-/**
- * The admin-specific functionality of the plugin.
- *
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
@@ -300,7 +290,7 @@ class WebChangeDetector_Admin {
                         <p>The API Token is invalid. Please try again or contact us if the error persists</p>
                         </div>';
 			}
-			echo $this->get_no_account_page();
+			$this->get_no_account_page();
 			return false;
 		}
 
@@ -386,7 +376,7 @@ class WebChangeDetector_Admin {
 			'monitoring'    => 1,
 			'enabled'       => ! isset( $postdata['enabled'] ) ? $monitoring_settings['enabled'] : sanitize_key( $postdata['enabled'] ),
 			'alert_emails'  => ! isset( $postdata['alert_emails'] ) ? $monitoring_settings['alert_emails'] : sanitize_textarea_field( $postdata['alert_emails'] ),
-			'name'          => ! isset( $postdata['name'] ) ? $monitoring_settings['name'] : sanitize_text_field( $postdata['name'] ),
+			'name'          => ! isset( $postdata['group_name_auto'] ) ? $monitoring_settings['name'] : sanitize_text_field( $postdata['group_name_auto'] ),
 			'css'           => ! isset( $postdata['css'] ) ? $monitoring_settings['css'] : sanitize_textarea_field( $postdata['css'] ),
 			'threshold'     => ! isset( $postdata['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $postdata['threshold'] ),
 		);
@@ -611,7 +601,7 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
-			ob_start();
+
 			if ( ! $hide_switch ) {
 				echo '<style>#comp-switch {display: none !important;}</style>';
 			}
@@ -635,19 +625,19 @@ class WebChangeDetector_Admin {
 			<?php
 			include 'partials/templates/show-change-detection.php';
 			echo '</div>';
-			return ob_get_clean();
+
 		}
-		return '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
+		echo '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
                 <a href="?page=webchangedetector-change-detections">Change Detections</a> and select a change detection
                 to show.</p>';
 	}
 
 	function get_screenshot( $postdata = false ) {
 		if ( ! isset( $postdata['img_url'] ) ) {
-			return '<p class="notice notice-error" style="padding: 10px;">
+			echo '<p class="notice notice-error" style="padding: 10px;">
                     Sorry, we couldn\'t find the screenshot. Please try again.</p>';
 		}
-		return '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . $postdata['img_url'] . '"></div>';
+		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . $postdata['img_url'] . '"></div>';
 	}
 
 	public function get_queue() {
@@ -835,7 +825,7 @@ class WebChangeDetector_Admin {
 	public function get_api_token_form( $api_token = false ) {
 		$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( $_POST['api_token'] ) : false;
 		if ( $api_token ) {
-			$output = '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
+			echo '<form action="' . admin_url() . '/admin.php?page=webchangedetector" method="post"
                         onsubmit="return confirm(\'Are sure you want to reset the API token?\');">
                         <input type="hidden" name="wcd_action" value="reset_api_token">
                         ' . wp_nonce_field( 'reset_api_token' ) . '
@@ -846,29 +836,27 @@ class WebChangeDetector_Admin {
                         <p>With resetting the API Token, auto detections still continue and your settings will 
                         be still available when you use the same api token with this website again.</p>
                         <input type="submit" value="Reset API Token" class="button button-delete"><br>
-                        
                         <hr>
                         <h2>Delete Account</h2>
                         <p>To delete your account completely, please login to your account at 
-                        <a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.</p>';
-
+                            <a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.
+                        </p>
+                    </form>';
 		} else {
-			$output = '<div class="highlight-container">
-                            <form class="frm_use_api_token highlight-inner no-bg" action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
-                                <input type="hidden" name="wcd_action" value="save_api_token">
-                                ' . wp_nonce_field( 'save_api_token' ) . '
-                                <h2>Use Existing API Token</h2>
-                                <p>
-                                    Use the API token of your existing account. To get your API token, please login to your account at
-                                    <a href="' . $this->app_url() . 'login" target="_blank">webchangedetector.com</a>
-                                </p>
-                                <input type="text" name="api_token" value="' . $api_token_after_reset . '" required>
-                                <input type="submit" value="Save" class="button button-primary">
-                            </form>
-                        </div>';
+			echo '<div class="highlight-container">
+                        <form class="frm_use_api_token highlight-inner no-bg" action="' . admin_url() . '/admin.php?page=webchangedetector" method="post">
+                            <input type="hidden" name="wcd_action" value="save_api_token">
+                            ' . wp_nonce_field( 'save_api_token' ) . '
+                            <h2>Use Existing API Token</h2>
+                            <p>
+                                Use the API token of your existing account. To get your API token, please login to your account at
+                                <a href="' . $this->app_url() . 'login" target="_blank">webchangedetector.com</a>
+                            </p>
+                            <input type="text" name="api_token" value="' . $api_token_after_reset . '" required>
+                            <input type="submit" value="Save" class="button button-primary">
+                        </form>
+                    </div>';
 		}
-		$output .= '</form>';
-		return $output;
 	}
 
 	/**
@@ -1450,14 +1438,14 @@ class WebChangeDetector_Admin {
 				</div>
 				</div>
 
-				<?php echo $this->get_api_token_form( $api_token ); ?>
+				<?php $this->get_api_token_form( $api_token ); ?>
 
 				</div>
 			</div>
 		</div>
 
 		<?php
-		return ob_get_clean();
+		echo ob_get_clean();
 	}
 
 	public function set_website_details() {
@@ -1676,7 +1664,7 @@ class WebChangeDetector_Admin {
 				</p>
 			</div>
 			<?php
-			echo $this->get_no_account_page();
+			$this->get_no_account_page();
 		}
 
 		return false;
