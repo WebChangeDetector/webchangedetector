@@ -1,4 +1,10 @@
-<?php require 'update-step-tiles.php'; ?>
+<?php
+/**
+ * Manual checks - pre-sc started
+ */
+
+require 'update-step-tiles.php';
+?>
 
 <?php require 'update-step-processing-sc.php'; ?>
 

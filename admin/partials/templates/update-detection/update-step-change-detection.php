@@ -1,4 +1,9 @@
-<?php require 'update-step-tiles.php'; ?>
+<?php
+/**
+ * Manual checks - change detection
+ */
+
+require 'update-step-tiles.php'; ?>
 <form method="post" style="display: inline; margin-right: 10px;">
 	<input type="hidden" name="wcd_action" value="update_detection_step">
 	<?php wp_nonce_field( 'update_detection_step' ); ?>

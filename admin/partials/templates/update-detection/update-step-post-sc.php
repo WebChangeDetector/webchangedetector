@@ -1,4 +1,10 @@
-<?php require 'update-step-tiles.php'; ?>
+<?php
+/**
+ * Manual checks - step tiles
+ */
+
+require 'update-step-tiles.php';
+?>
 
 <div class="wcd-step-container">
 	<div class="wcd-highlight-bg done">

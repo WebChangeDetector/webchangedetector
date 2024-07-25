@@ -1,4 +1,9 @@
-<!-- Show processing -->
+<?php
+/**
+ * Manual checks - processing-sc
+ */
+
+?>
 <div id="wcd-currently-in-progress"
 	class="wcd-highlight-bg wcd-step-container"
 	style=" display: <?php echo $sc_processing ? 'block' : 'none'; ?>">

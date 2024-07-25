@@ -1,4 +1,10 @@
-<?php require 'update-step-tiles.php'; ?>
+<?php
+/**
+ * Manual checks - step settings
+ */
+
+require 'update-step-tiles.php';
+?>
 
 <!-- Settings -->
 <div class="wcd-update-step settings" <?php echo 'settings' !== $step ? 'style="display: none"' : ''; ?>>
