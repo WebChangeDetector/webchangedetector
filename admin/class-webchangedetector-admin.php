@@ -719,10 +719,11 @@ class WebChangeDetector_Admin {
 			include 'partials/templates/show-change-detection.php';
 			echo '</div>';
 
-		}
-		echo '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
+		} else {
+			echo '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
                 <a href="?page=webchangedetector-change-detections">Change Detections</a> and select a change detection
                 to show.</p>';
+		}
 	}
 
 	/** Get screenshot
