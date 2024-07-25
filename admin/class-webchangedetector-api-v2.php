@@ -198,7 +198,7 @@ class WebChangeDetector_API_V2 {
 
 		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
-		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? wp_unslash( sanitize_key( $_SERVER['SERVER_NAME'] ) ) : '';
+		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? wp_unslash( sanitize_text_field( $_SERVER['SERVER_NAME'] ) ) : '';
 		$post['wp_id']  = get_current_user_id();
 
 		// Increase timeout for php.ini.

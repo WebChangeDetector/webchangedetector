@@ -1545,13 +1545,13 @@ class WebChangeDetector_Admin {
 			if ( strpos( $key, 'url_id' ) === 0 ) {
 
 				// sanitize before.
-				$wp_post_id = sanitize_key( $postdata[ 'post_id-' . $post_id ] ); // should be numeric.
+				$wp_post_id = sanitize_text_field( $postdata[ 'post_id-' . $post_id ] ); // should be numeric.
 				if ( ! is_numeric( $wp_post_id ) ) {
 					continue; // just skip it.
 				}
 				$permalink = get_permalink( $wp_post_id ); // should return the whole link.
-				$desktop   = array_key_exists( 'desktop-' . $post_id, $postdata ) ? sanitize_key( $postdata[ 'desktop-' . $post_id ] ) : 0;
-				$mobile    = array_key_exists( 'mobile-' . $post_id, $postdata ) ? sanitize_key( $postdata[ 'mobile-' . $post_id ] ) : 0;
+				$desktop   = array_key_exists( 'desktop-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'desktop-' . $post_id ] ) : 0;
+				$mobile    = array_key_exists( 'mobile-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'mobile-' . $post_id ] ) : 0;
 
 				$active_posts[] = array(
 					'url_id'  => $post_id,
@@ -1688,7 +1688,7 @@ class WebChangeDetector_Admin {
 
 		if ( isset( $_GET['page'] ) ) {
 			// sanitize: lower-case with "-".
-			$active_tab = sanitize_key( $_GET['page'] );
+			$active_tab = sanitize_text_field( $_GET['page'] );
 		}
 		?>
 		<div class="wrap">

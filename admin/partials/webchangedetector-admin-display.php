@@ -32,8 +32,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$wcd_action = null;
 		$postdata   = array();
 		if ( isset( $_POST['wcd_action'] ) ) {
-			check_admin_referer( wp_unslash( sanitize_key( $_POST['wcd_action'] ) ) );
-			$wcd_action = wp_unslash( sanitize_key( $_POST['wcd_action'] ) );
+			check_admin_referer( wp_unslash( sanitize_text_field( $_POST['wcd_action'] ) ) );
+			$wcd_action = wp_unslash( sanitize_text_field( $_POST['wcd_action'] ) );
 			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
 				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
 				return false;
@@ -199,11 +199,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'update_detection_step':
-				update_option( 'webchangedetector_update_detection_step', sanitize_key( $postdata['step'] ) );
+				update_option( 'webchangedetector_update_detection_step', sanitize_text_field( $postdata['step'] ) );
 				break;
 
 			case 'take_screenshots':
-				$sc_type = sanitize_key( $postdata['sc_type'] );
+				$sc_type = sanitize_text_field( $postdata['sc_type'] );
 
 				if ( ! in_array( $sc_type, WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
 					echo '<div class="error notice"><p>Wrong Screenshot type.</p></div>';
@@ -251,7 +251,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						// Update step in update detection.
 						if ( ! empty( $_POST['step'] ) ) {
-							update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_key( $_POST['step'] ) );
+							update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $_POST['step'] ) );
 						}
 						break;
 				}
@@ -299,7 +299,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$tab = 'webchangedetector-dashboard'; // init.
 		if ( isset( $_GET['page'] ) ) {
 			// sanitize: lower-case with "-".
-			$tab = sanitize_key( $_GET['page'] );
+			$tab = sanitize_text_field( $_GET['page'] );
 		}
 
 		// Check if website details are available.
@@ -361,7 +361,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				$limit_days = null;
 				if ( isset( $_POST['limit_days'] ) ) {
-					$limit_days = sanitize_key( $_POST['limit_days'] );
+					$limit_days = sanitize_text_field( $_POST['limit_days'] );
 					if ( ! empty( $limit_days ) && ! is_numeric( $limit_days ) ) {
 						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
 						return false;
@@ -369,7 +369,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 				$group_type = null;
 				if ( isset( $_POST['group_type'] ) ) {
-					$group_type = sanitize_key( $_POST['group_type'] );
+					$group_type = sanitize_text_field( $_POST['group_type'] );
 					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
 						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
 						return false;
@@ -378,7 +378,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				$difference_only = null;
 				if ( isset( $_POST['difference_only'] ) ) {
-					$difference_only = sanitize_key( $_POST['difference_only'] );
+					$difference_only = sanitize_text_field( $_POST['difference_only'] );
 				}
 
 				$compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
