@@ -1892,6 +1892,17 @@ class WebChangeDetector_Admin {
 		return $this->mm_api_v2( $args );
 	}
 
+	/**
+	 * Debug logging for dev
+	 *
+	 * @param string $log The log message.
+	 */
+	public static function error_log( $log ) {
+		if ( defined( WCD_DEV ) && WCD_DEV ) {
+			error_log( $log );
+		}
+	}
+
 	public function get_comparisons_v2( $filters = array() ) {
 		$url = 'comparisons';
 		if ( ! empty( $filters ) ) {
