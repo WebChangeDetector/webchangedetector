@@ -77,7 +77,6 @@ class WebChangeDetector {
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
-		// $this->define_public_hooks();
 	}
 
 	/**
@@ -121,7 +120,6 @@ class WebChangeDetector {
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		// require_once plugin_dir_path( __DIR__ ) . 'public/class-webchangedetector-public.php';
 
 		$this->loader = new WebChangeDetector_Loader();
 	}
@@ -136,7 +134,7 @@ class WebChangeDetector {
 	 * @access   private
 	 */
 	private function set_locale() {
-		$plugin_i18n = new WebChangeDetector_i18n();
+		$plugin_i18n = new WebChangeDetector_I18n();
 
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 	}
@@ -154,7 +152,7 @@ class WebChangeDetector {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'wcd_plugin_setup_menu' );
-		// $this->loader->add_action( 'save_post', $plugin_admin, 'sync_post_after_save', 10, 3 ); // Sync all pages and posts when there is a new page or post published
+		// $this->loader->add_action( 'save_post', $plugin_admin, 'sync_post_after_save', 10, 3 ); // Sync all pages and posts when there is a new page or post published.
 		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_admin, 'ajax_get_processing_queue' );
 	}
 

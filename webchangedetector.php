@@ -79,4 +79,28 @@ function run_webchangedetector() {
 	$plugin->run();
 }
 
+
+if ( ! function_exists( 'dd' ) ) {
+	/**
+	 * Dump and die function.
+	 *
+	 * @param mixed ...$output The output.
+	 *
+	 * @return void
+	 */
+	function dd( ...$output ) {
+		// this is PHP 5.6+.
+		echo '<pre>';
+		foreach ( $output as $o ) {
+			if ( is_array( $o ) || is_object( $o ) ) {
+				print_r( $o );
+				continue;
+			}
+			echo esc_html( $o );
+		}
+		echo '</pre>';
+		die();
+	}
+}
+
 run_webchangedetector();

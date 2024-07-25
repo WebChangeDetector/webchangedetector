@@ -23,7 +23,7 @@
  * @subpackage WebChangeDetector/includes
  * @author     Mike Miler <mike@wp-mike.com>
  */
-class WebChangeDetector_i18n {
+class WebChangeDetector_I18n {
 
 
 	/**

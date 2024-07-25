@@ -58,7 +58,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 
 				$api_token = $wcd->create_free_account( $postdata );
-				$success   = $wcd->save_api_token( $api_token );
+
+				$success = $wcd->save_api_token( $postdata, $api_token );
 
 				if ( ! $success ) {
 					return false;
@@ -75,7 +76,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return true;
 				}
 
-				$wcd->save_api_token( $postdata['api_token'] );
+				$wcd->save_api_token( $postdata, $postdata['api_token'] );
 				break;
 
 			case 'save_api_token':
@@ -85,7 +86,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$wcd->save_api_token( $postdata['api_token'] );
+				$wcd->save_api_token( $postdata, $postdata['api_token'] );
 				break;
 		}
 
@@ -697,7 +698,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					foreach ( $queues as $queue ) {
 						$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
 						echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
-						echo '<td>' . wp_kses( $wcd->get_device_icon( $queue['device'] ), array( 'span' => array( 'class' => array() ) ) ) . '</td>';
+						echo '<td>';
+						$wcd->get_device_icon( $queue['device'] );
+						echo '</td>';
 						echo '<td>
                                         <span class="html-title queue"> ' . esc_html( $queue['url']['html_title'] ) . '</span><br>
                                         <span class="url queue">URL: ' . esc_url( $queue['url']['url'] ) . '</span><br>
