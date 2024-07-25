@@ -1756,7 +1756,7 @@ class WebChangeDetector_Admin {
 				<div class="box-half no-border">
 					<a class="box" href="?page=webchangedetector-update-settings">
 						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php echo wp_kses( $this->get_device_icon( 'update-group' ), array( 'span' => array( 'class' => array() ) ) ); ?>
+							<?php $this->get_device_icon( 'update-group' ); ?>
 						</div>
 						<div style="float: left; max-width: 350px;">
 							<strong>Manual Checks</strong><br>
@@ -1766,7 +1766,7 @@ class WebChangeDetector_Admin {
 					</a>
 					<a class="box" href="?page=webchangedetector-auto-settings">
 						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php echo wp_kses( $this->get_device_icon( 'auto-group' ), array( 'span' => array( 'class' => array() ) ) ); ?>
+							<?php $this->get_device_icon( 'auto-group' ); ?>
 						</div>
 						<div style="float: left; max-width: 350px;">
 							<strong>Monitoring</strong><br>
@@ -1776,7 +1776,7 @@ class WebChangeDetector_Admin {
 					</a>
 					<a class="box" href="?page=webchangedetector-change-detections">
 						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php echo wp_kses( $this->get_device_icon( 'change-detections' ), array( 'span' => array( 'class' => array() ) ) ); ?>
+							<?php $this->get_device_icon( 'change-detections' ); ?>
 						</div>
 						<div style="float: left; max-width: 350px;">
 							<strong>Show Change Detections</strong><br>
