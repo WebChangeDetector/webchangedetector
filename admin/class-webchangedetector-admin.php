@@ -968,7 +968,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function get_api_token_form( $api_token = false ) {
-		$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
+
 		if ( $api_token ) {
 			?>
 			<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
@@ -994,6 +994,10 @@ class WebChangeDetector_Admin {
 			</form>
 			<?php
 		} else {
+			if ( isset( $_POST['wcd_action'] ) && 'save_api_token' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
+				check_admin_referer( 'save_api_token' );
+			}
+			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
 			?>
 			<div class="highlight-container">
 				<form class="frm_use_api_token highlight-inner no-bg" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
@@ -1341,14 +1345,12 @@ class WebChangeDetector_Admin {
 						$amount_active_posts = 0;
 						$selected_mobile     = 0;
 						$selected_desktop    = 0;
-						$append_rows         = '';
 
 						if ( is_iterable( $wp_posts ) && count( $wp_posts ) > 0 ) {
 
+							// Re-order posts to have active ones on top.
 							$inactive_posts = array();
 							$active_posts   = array();
-
-							// Re-order posts to have active ones on top.
 							foreach ( $wp_posts as $wp_post ) {
 								foreach ( $groups_and_urls['urls'] as $group_url ) {
 									if ( ! empty( $group_url['cms_resource_id'] ) &&
@@ -1605,6 +1607,11 @@ class WebChangeDetector_Admin {
 	 * @param string $api_token The api token.
 	 */
 	public function get_no_account_page( $api_token = '' ) {
+
+		if ( isset( $_POST['wcd_action'] ) && 'create_free_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
+			check_admin_referer( 'create_free_account' );
+		}
+
 		$first_name = isset( $_POST['name_first'] ) ? sanitize_text_field( wp_unslash( $_POST['name_first'] ) ) : wp_get_current_user()->user_firstname;
 		$last_name  = isset( $_POST['name_last'] ) ? sanitize_text_field( wp_unslash( $_POST['name_last'] ) ) : wp_get_current_user()->user_lastname;
 		$email      = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : wp_get_current_user()->user_email;
@@ -1689,7 +1696,7 @@ class WebChangeDetector_Admin {
 
 		if ( isset( $_GET['page'] ) ) {
 			// sanitize: lower-case with "-".
-			$active_tab = sanitize_text_field( $_GET['page'] );
+			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 		}
 		?>
 		<div class="wrap">
@@ -1966,7 +1973,7 @@ class WebChangeDetector_Admin {
 
 		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
-		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? wp_unslash( sanitize_text_field( $_SERVER['SERVER_NAME'] ) ) : '';
+		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
 		$post['wp_id']  = get_current_user_id();
 
 		// Increase timeout for php.ini.

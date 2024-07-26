@@ -44,7 +44,7 @@
 <div id="comp-slider" style="width: 49%; float: left;">
 	<h2>Screenshots</h2>
 	<div id="diff-container"
-		data-token="<?php echo isset( $_GET['token'] ) ? esc_html( wp_unslash( sanitize_text_field( $_GET['token'] ) ) ) : esc_html( $compare['token'] ); ?>"
+		data-token="<?php echo isset( $_GET['token'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['token'] ) ) ) : esc_html( $compare['token'] ); ?>"
 		style="width: 100%; ">
 
 		<img class="comp-img" style="padding: 0;" src="<?php echo esc_url( $compare['screenshot1']['link'] ); ?>">
