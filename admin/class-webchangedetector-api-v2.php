@@ -166,6 +166,30 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'DELETE' );
 	}
 
+	/** Update comparison.
+	 *
+	 * @param string $id The comparison id.
+	 * @param string $status The status (new, ok, to_fix, false_positive).
+	 * @return mixed|string
+	 */
+	public static function update_comparison_v2( $id, $status ) {
+		$possible_status = array(
+			'new',
+			'ok',
+			'to_fix',
+			'false_positive',
+		);
+		if ( ! in_array( $status, $possible_status ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'comparisons/' . esc_html( $id ),
+			'status' => esc_html( $status ),
+		);
+		return self::api_v2( $args, 'PATCH' );
+	}
+
 	/** Call the WCD api.
 	 *
 	 * @param array  $post All params for the request.

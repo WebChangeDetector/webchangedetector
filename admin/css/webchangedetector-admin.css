@@ -210,6 +210,27 @@
     border-right: none;
 }
 
+.webchangedetector .comparison_status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #fff;
+    display: block;
+    text-align: center;
+}
+
+.webchangedetector .comparison_status.comparison_status_ok {
+    background: green;
+}
+.webchangedetector .comparison_status.comparison_status_new {
+    background: grey;
+}
+.webchangedetector .comparison_status.comparison_status_to_fix {
+    background: darkred;
+}
+.webchangedetector .comparison_status.comparison_status_false_positive {
+    background: orange;
+}
+
 .webchangedetector .comparison-url-tile {
     width: -moz-available;          /* WebKit-based browsers will ignore this. */
     width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
@@ -231,6 +252,25 @@
 
 .webchangedetector .comparison-diff-tile {
     width: 100px;
+}
+.webchangedetector .comparison-status-tile {
+    width: 180px;
+    border-right: 1px solid #aaa;
+}
+.webchangedetector .comparison-status-tile:hover .change_status {
+    display: block !important;
+    z-index: 100;
+}
+
+.webchangedetector .comparison-status-tile .change_status button {
+    margin-bottom: 5px;
+    width: 100%;
+    border: 1px;
+}
+
+.webchangedetector .comparison-status-tile .change_status button:hover {
+    opacity: 0.9;
+    cursor: pointer;
 }
 
 .webchangedetector .comparison-date-tile {

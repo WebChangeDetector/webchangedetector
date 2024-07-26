@@ -36,6 +36,7 @@ class WebChangeDetector_Admin {
 		'update_detection_step',
 		'add_post_type',
 		'filter_change_detections',
+		'change_comparison_status',
 	);
 
 	const VALID_SC_TYPES = array(
@@ -582,6 +583,24 @@ class WebChangeDetector_Admin {
 		return $return;
 	}
 
+	/** Nice names for comparison status
+	 *
+	 * @param string $status The status.
+	 * @return string
+	 */
+	public function comparison_status_nice_name( $status ) {
+		switch ( $status ) {
+			case 'ok':
+				return 'Ok';
+			case 'to_fix':
+				return 'To Fix';
+			case 'false_positive':
+				return 'False Positive';
+			default:
+				return 'new';
+		}
+	}
+
 	/** Comparison overview.
 	 *
 	 * @param array $compares The comparisons.
@@ -593,6 +612,7 @@ class WebChangeDetector_Admin {
 		?>
 		<table class="toggle" style="width: 100%">
 			<tr>
+				<th style="width: 120px;">Status</th>
 				<th style="width: auto">URL</th>
 				<th style="width: 150px">Compared Screenshots</th>
 				<th style="width: 50px">Difference</th>
@@ -609,7 +629,6 @@ class WebChangeDetector_Admin {
 			$all_tokens = array();
 			foreach ( $compares as $compare ) {
 				$all_tokens[] = $compare['token'];
-
 			}
 			$latest_batch_id = $compares[0]['screenshot1']['queue']['batch_id'];
 			foreach ( $compares as $compare ) {
@@ -620,8 +639,14 @@ class WebChangeDetector_Admin {
 				if ( $compare['difference_percent'] ) {
 					$class = 'is-difference';
 				}
+
 				?>
 			<tr>
+				<td>
+					<span class="comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+						<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+					</span>
+				</td>
 				<td>
 					<strong>
 					<?php

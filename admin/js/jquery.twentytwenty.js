@@ -7,8 +7,8 @@
       before_label: 'Before',
       after_label: 'After',
       no_overlay: false,
-      move_slider_on_hover: false,
-      move_with_handle_only: true,
+      move_slider_on_hover: true,
+      move_with_handle_only: false,
       click_to_move: false
     }, options);
 

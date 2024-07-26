@@ -190,6 +190,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Perform actions.
 		switch ( $wcd_action ) {
+			case 'change_comparison_status':
+				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_uuid'], $postdata['status'] );
+				break;
 
 			case 'add_post_type':
 				$wcd->add_post_type( $postdata );
