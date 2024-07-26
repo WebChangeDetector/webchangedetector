@@ -26,19 +26,19 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		echo '<div class="webchangedetector">';
 		echo '<h1>WebChangeDetector</h1>';
 
-		$wcd = new WebChangeDetector_Admin();
-
 		// Validate wcd_action and nonce.
 		$wcd_action = null;
 		$postdata   = array();
 		if ( isset( $_POST['wcd_action'] ) ) {
-			check_admin_referer( sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) );
 			$wcd_action = sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) );
+			check_admin_referer( $wcd_action );
 			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
 				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
 				return;
 			}
 		}
+
+		$wcd = new WebChangeDetector_Admin();
 
 		// Unslash postdata.
 		foreach ( $_POST as $key => $post ) {
@@ -381,10 +381,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$difference_only = sanitize_text_field( wp_unslash( $_POST['difference_only'] ) );
 				}
 
-				$compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
 				?>
 				<div class="action-container">
 					<form method="post">
+						<input type="hidden" name="wcd_action" value="filter_change_detections">
+						<?php wp_nonce_field( 'filter_change_detections' ); ?>
 						<select name="limit_days">
 							<option value="" <?php echo null === $limit_days ? 'selected' : ''; ?>> Show all</option>
 							<option value="3" <?php echo 3 === $limit_days ? 'selected' : ''; ?>>Last 3 days</option>
@@ -408,7 +409,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<input class="button" type="submit" value="Filter">
 					</form>
 					<?php
-
+					$compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
 					$wcd->compare_view( $compares );
 					?>
 				</div>

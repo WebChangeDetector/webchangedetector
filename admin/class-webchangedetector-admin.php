@@ -35,6 +35,7 @@ class WebChangeDetector_Admin {
 		'create_free_account',
 		'update_detection_step',
 		'add_post_type',
+		'filter_change_detections',
 	);
 
 	const VALID_SC_TYPES = array(
@@ -592,9 +593,9 @@ class WebChangeDetector_Admin {
 		?>
 		<table class="toggle" style="width: 100%">
 			<tr>
-				<th width="auto">URL</th>
-				<th width="150px">Compared Screenshots</th>
-				<th width="50px">Difference</th>
+				<th style="width: auto">URL</th>
+				<th style="width: 150px">Compared Screenshots</th>
+				<th style="width: 50px">Difference</th>
 				<th>Show</th>
 			</tr>
 		<?php if ( empty( $compares ) ) { ?>
@@ -629,8 +630,18 @@ class WebChangeDetector_Admin {
 					}
 					?>
 					</strong>
-					<?php $this->get_device_icon( $compare['screenshot1']['device'] ) . $compare['screenshot1']['url']; ?><br>
-					<?php 'auto' === $compare['screenshot2']['sc_type'] ? $this->get_device_icon( 'auto-group' ) . 'Monitoring' : $this->get_device_icon( 'update-group' ) . 'Manual Checks'; ?>
+					<?php
+					$this->get_device_icon( $compare['screenshot1']['device'] );
+					echo esc_url( $compare['screenshot1']['url'] );
+					echo '<br>';
+					if ( 'auto' === $compare['screenshot2']['sc_type'] ) {
+						$this->get_device_icon( 'auto-group' );
+						echo 'Monitoring';
+					} else {
+						$this->get_device_icon( 'update-group' );
+						echo 'Manual Checks';
+					}
+					?>
 				</td>
 				<td>
 					<div class="local-time" data-date="<?php echo esc_html( $compare['image1_timestamp'] ); ?>"></div>
@@ -666,15 +677,17 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_comparison_by_token( $postdata, $hide_switch = false, $whitelabel = false ) {
 		$token = $postdata['token'] ?? null;
+
 		if ( ! $token && ! empty( $_GET['token'] ) ) {
 			$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
 		}
 		if ( isset( $token ) ) {
-			$args       = array(
+			$args    = array(
 				'action' => 'get_comparison_by_token',
 				'token'  => $token,
 			);
-			$compare    = $this->api_v1( $args ); // used in template.
+			$compare = $this->api_v1( $args ); // used in template.
+
 			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
@@ -747,8 +760,8 @@ class WebChangeDetector_Admin {
 		$args = array(
 			'action' => 'get_queue',
 			'status' => wp_json_encode( array( 'open', 'done', 'processing', 'failed' ) ),
-			'limit'  => isset( $_GET['limit'] ) ? sanitize_key( $_GET['limit'] ) : $this::LIMIT_QUEUE_ROWS,
-			'offset' => isset( $_GET['offset'] ) ? sanitize_key( $_GET['offset'] ) : 0,
+			'limit'  => isset( $_GET['limit'] ) ? sanitize_key( (int) $_GET['limit'] ) : $this::LIMIT_QUEUE_ROWS,
+			'offset' => isset( $_GET['offset'] ) ? sanitize_key( (int) $_GET['offset'] ) : 0,
 		);
 		return $this->api_v1( $args );
 	}
