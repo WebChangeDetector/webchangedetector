@@ -416,7 +416,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					// Show comparisons.
 					$filters = array(
 						'from'            => gmdate( 'Y-m-d H:i:s', strtotime( '- ' . $limit_days . ' days' ) ),
-						'to'              => gmdate( 'Y-m-d H:i:s', current_time() ),
+						'to'              => gmdate( 'Y-m-d H:i:s' ),
 						'above_threshold' => $difference_only,
 						// TODO group_type.
 					);

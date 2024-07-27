@@ -885,7 +885,7 @@ class WebChangeDetector_Admin {
 								?>
 								<br>
 								<small>
-									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batches[0]['created_at'] ) ) ) ); ?> ago
+									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
 								</small>
 							</div>
 							<div class="clear"></div>
