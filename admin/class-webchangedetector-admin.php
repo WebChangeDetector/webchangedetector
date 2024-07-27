@@ -605,11 +605,17 @@ class WebChangeDetector_Admin {
 		return $return;
 	}
 
+	/** Update comparison status.
+	 *
+	 * @param string $id The comparison uuid.
+	 * @param string $status One of new, ok, to_fix or false_positive.
+	 * @return false|mixed|string
+	 */
 	public function update_comparison_status( $id, $status ) {
 		return WebChangeDetector_API_V2::update_comparison_v2( $id, $status );
 	}
 
-	/** Nice names for comparison status
+	/** Nice names for comparison status.
 	 *
 	 * @param string $status The status.
 	 * @return string
@@ -657,7 +663,7 @@ class WebChangeDetector_Admin {
 		$all_tokens        = array();
 		$compares_by_batch = array();
 
-		foreach ( $compares as $key => $compare ) {
+		foreach ( $compares as $compare ) {
 
 			$all_tokens[] = $compare['token'];
 
@@ -668,12 +674,9 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		// $latest_batch_id = $compares[0]['screenshot2']['queue']['batch_id'];
-
 		$auto_update_batches = get_option( 'wcd_comparison_batches' );
 		$latest_batch_id     = false;
 		foreach ( $compares_by_batch as $batch_id => $compares ) {
-			// Get the batch_uuid
 			?>
 			<div class="accordion accordion-batch">
 				<div class="mm_accordion_title">
@@ -692,7 +695,7 @@ class WebChangeDetector_Admin {
 							</div>
 							<div class="accordion-batch-title-tile">
 							<?php
-							echo ( $compares[0]['uuid'] . ' - ' . json_encode( $auto_update_batches ) ) . '<br>';
+
 							if ( $compares[0]['screenshot2']['queue']['monitoring'] ) {
 								echo 'Monitoring Checks';
 							} elseif ( is_array( $auto_update_batches ) && in_array( $compares[0]['uuid'], $auto_update_batches, true ) ) {
@@ -742,21 +745,21 @@ class WebChangeDetector_Admin {
 							<button name="status"
 									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
 									data-status="ok"
-									data-nonce="<?php echo $nonce; ?>"
+									data-nonce="<?php echo esc_html( $nonce ); ?>"
 									value="ok"
 									class=" ajax_update_comparison_status comparison_status comparison_status_ok"
 									onclick="return false;">Ok</button>
 							<button name="status"
 									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
 									data-status="to_fix"
-									data-nonce="<?php echo $nonce; ?>"
+									data-nonce="<?php echo esc_html( $nonce ); ?>"
 									value="to_fix"
 									class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
 									onclick="return false;">To Fix</button>
 							<button name="status"
 									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
 									data-status="false_positive"
-									data-nonce="<?php echo $nonce; ?>"
+									data-nonce="<?php echo esc_html( $nonce ); ?>"
 									value="false_positive"
 									class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
 									onclick="return false;">False Positive</button>
@@ -812,7 +815,12 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-	public function compare_view_v2( $compares, $latest_batch = false ) {
+	/** View of comparison overview.
+	 *
+	 * @param array $compares the compares.
+	 * @return void
+	 */
+	public function compare_view_v2( $compares ) {
 		if ( empty( $compares ) ) {
 			?>
 			<table class="toggle" style="width: 100%">
@@ -835,7 +843,7 @@ class WebChangeDetector_Admin {
 
 		$all_tokens          = array();
 		$compares_in_batches = array();
-		// dd($compares);
+
 		foreach ( $compares['data'] as $key => $compare ) {
 
 			$all_tokens[] = $compare['token'];
@@ -847,12 +855,7 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		unset( $compare );
-
-		// $latest_batch_id = $compares[0]['screenshot2']['queue']['batch_id'];
-
 		$auto_update_batches = get_option( 'wcd_comparison_batches' );
-		$latest_batch_id     = false;
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 			?>
 			<div class="accordion accordion-batch">
@@ -872,7 +875,6 @@ class WebChangeDetector_Admin {
 							</div>
 							<div class="accordion-batch-title-tile">
 								<?php
-								// echo ($batch_id . ' - ' . json_encode($auto_update_batches)) . '<br>';
 								if ( $compares_in_batches[0]['group'] === $this->monitoring_group_uuid ) {
 									echo 'Monitoring Checks';
 								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
@@ -926,21 +928,21 @@ class WebChangeDetector_Admin {
 												<button name="status"
 														data-id="<?php echo esc_html( $compare['id'] ); ?>"
 														data-status="ok"
-														data-nonce="<?php echo $nonce; ?>"
+														data-nonce="<?php echo esc_html( $nonce ); ?>"
 														value="ok"
 														class=" ajax_update_comparison_status comparison_status comparison_status_ok"
 														onclick="return false;">Ok</button>
 												<button name="status"
 														data-id="<?php echo esc_html( $compare['id'] ); ?>"
 														data-status="to_fix"
-														data-nonce="<?php echo $nonce; ?>"
+														data-nonce="<?php echo esc_html( $nonce ); ?>"
 														value="to_fix"
 														class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
 														onclick="return false;">To Fix</button>
 												<button name="status"
 														data-id="<?php echo esc_html( $compare['id'] ); ?>"
 														data-status="false_positive"
-														data-nonce="<?php echo $nonce; ?>"
+														data-nonce="<?php echo esc_html( $nonce ); ?>"
 														value="false_positive"
 														class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
 														onclick="return false;">False Positive</button>

@@ -412,16 +412,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<input class="button" type="submit" value="Filter">
 					</form>
 					<?php
-					// Old version.
-					// $compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
-					// $wcd->compare_view( $compares );
 
 					// Show comparisons.
 					$filters = array(
-						'from'            => date( 'Y-m-d H:i:s', strtotime( '- ' . $limit_days . ' days' ) ),
-						'to'              => date( 'Y-m-d H:i:s', current_time( 'U' ) ),
+						'from'            => gmdate( 'Y-m-d H:i:s', strtotime( '- ' . $limit_days . ' days' ) ),
+						'to'              => gmdate( 'Y-m-d H:i:s', current_time() ),
 						'above_threshold' => $difference_only,
-						// TODO group_type
+						// TODO group_type.
 					);
 					$compares_v2 = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
 					$wcd->compare_view_v2( $compares_v2 );

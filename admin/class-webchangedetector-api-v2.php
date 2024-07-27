@@ -179,7 +179,7 @@ class WebChangeDetector_API_V2 {
 			'to_fix',
 			'false_positive',
 		);
-		if ( ! in_array( $status, $possible_status ) ) {
+		if ( ! in_array( $status, $possible_status, true ) ) {
 			return false;
 		}
 
