@@ -886,6 +886,7 @@ class WebChangeDetector_Admin {
 								<br>
 								<small>
 									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
+									(<?php echo esc_html( get_date_from_gmt( ( $compares_in_batch[0]['created_at'] ) ) ); ?> )
 								</small>
 							</div>
 							<div class="clear"></div>
@@ -2090,7 +2091,6 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function get_dashboard_view( $client_account, $update_group_id, $auto_group_id ) {
-		$recent_comparisons = $this->get_compares( array( $update_group_id, $auto_group_id ), null, null, false, 10 );
 
 		$auto_group            = $this->get_urls_of_group( $auto_group_id );
 		$amount_auto_detection = 0;
@@ -2174,7 +2174,8 @@ class WebChangeDetector_Admin {
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
-				$this->compare_view( $recent_comparisons );
+				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2();
+				$this->compare_view_v2( $recent_comparisons );
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
