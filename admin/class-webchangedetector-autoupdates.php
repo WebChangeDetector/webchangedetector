@@ -110,6 +110,15 @@ class WebChangeDetector_Autoupdates {
 				'batch_id' => $response['batch'],
 			)
 		);
+
+		// Save the auto update batch id.
+		$comparison_batches = get_option( 'wcd_comparison_batches' );
+		if ( ! $comparison_batches ) {
+			$comparison_batches = array();
+		}
+		$comparison_batches[] = $response['batch'];
+		update_option( 'wcd_comparison_batches', $comparison_batches );
+
 		$this->wcd_cron_check_post_queues();
 	}
 

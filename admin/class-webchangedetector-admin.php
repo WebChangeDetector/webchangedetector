@@ -384,6 +384,25 @@ class WebChangeDetector_Admin {
 		die();
 	}
 
+	/** Ajax update comparison status
+	 *
+	 * @return void
+	 */
+	public function ajax_update_comparison_status() {
+		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['status'] ) || ! isset( $_POST['nonce'] ) ) {
+			echo 'POST Params missing';
+			die();
+		}
+
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			echo 'Nonce verify failed';
+			die( 'Busted!' );
+		}
+
+		echo esc_html( $this->update_comparison_status( sanitize_key( wp_unslash( $_POST['id'] ) ), sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
+		die();
+	}
+
 	/** Get processing queue.
 	 *
 	 * @return array|string
@@ -535,6 +554,9 @@ class WebChangeDetector_Admin {
 		if ( 'check' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
 		}
+		if ( 'fail' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
+		}
 		if ( 'upgrade' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
 		}
@@ -583,6 +605,10 @@ class WebChangeDetector_Admin {
 		return $return;
 	}
 
+	public function update_comparison_status( $id, $status ) {
+		return WebChangeDetector_API_V2::update_comparison_v2( $id, $status );
+	}
+
 	/** Nice names for comparison status
 	 *
 	 * @param string $status The status.
@@ -609,43 +635,133 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function compare_view( $compares, $latest_batch = false ) {
-		?>
-		<table class="toggle" style="width: 100%">
-			<tr>
-				<th style="width: 120px;">Status</th>
-				<th style="width: auto">URL</th>
-				<th style="width: 150px">Compared Screenshots</th>
-				<th style="width: 50px">Difference</th>
-				<th>Show</th>
-			</tr>
-		<?php if ( empty( $compares ) ) { ?>
-			<tr>
-				<td colspan="4" style="text-align: center">
-					<strong>There are no change detections yet.</strong
-				</td>
-			</tr>
+		if ( empty( $compares ) ) { ?>
+			<table class="toggle" style="width: 100%">
+				<tr>
+					<th style="width: 120px;">Status</th>
+					<th style="width: auto">URL</th>
+					<th style="width: 150px">Compared Screenshots</th>
+					<th style="width: 50px">Difference</th>
+					<th>Show</th>
+				</tr>
+				<tr>
+					<td colspan="4" style="text-align: center">
+						<strong>There are no change detections yet.</strong
+					</td>
+				</tr>
+			</table>
 			<?php
-		} else {
-			$all_tokens = array();
-			foreach ( $compares as $compare ) {
-				$all_tokens[] = $compare['token'];
+			return;
+		}
+
+		$all_tokens        = array();
+		$compares_by_batch = array();
+
+		foreach ( $compares as $key => $compare ) {
+
+			$all_tokens[] = $compare['token'];
+
+			// Sort comparisons by batches.
+			$compares_by_batch[ $compare['screenshot2']['queue']['batch_id'] ][] = $compare;
+			if ( 'ok' !== $compare['status'] ) {
+				$compares_by_batch[ $compare['screenshot2']['queue']['batch_id'] ]['needs_attention'] = true;
 			}
-			$latest_batch_id = $compares[0]['screenshot1']['queue']['batch_id'];
+		}
+
+		// $latest_batch_id = $compares[0]['screenshot2']['queue']['batch_id'];
+
+		$auto_update_batches = get_option( 'wcd_comparison_batches' );
+		$latest_batch_id     = false;
+		foreach ( $compares_by_batch as $batch_id => $compares ) {
+			// Get the batch_uuid
+			?>
+			<div class="accordion accordion-batch">
+				<div class="mm_accordion_title">
+					<h3>
+						<div>
+							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
+							<?php
+							if ( array_key_exists( 'needs_attention', $compares_by_batch[ $batch_id ] ) ) {
+								$this->get_device_icon( 'fail', 'batch_needs_attention' );
+								echo '<small>Needs Attention</small>';
+							} else {
+								$this->get_device_icon( 'check', 'batch_is_ok' );
+								echo '<small>All Good</small>';
+							}
+							?>
+							</div>
+							<div class="accordion-batch-title-tile">
+							<?php
+							echo ( $compares[0]['uuid'] . ' - ' . json_encode( $auto_update_batches ) ) . '<br>';
+							if ( $compares[0]['screenshot2']['queue']['monitoring'] ) {
+								echo 'Monitoring Checks';
+							} elseif ( is_array( $auto_update_batches ) && in_array( $compares[0]['uuid'], $auto_update_batches, true ) ) {
+								echo 'Auto Update Checks';
+							} else {
+								echo 'Manual Checks';
+							}
+							?>
+							<br>
+							<small>
+								<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares[0]['screenshot1']['queue']['created_at'] ) ) ) ); ?> ago
+							</small>
+							</div>
+							<div class="clear"></div>
+						</div>
+					</h3>
+					<div class="mm_accordion_content">
+						<table class="toggle" style="width: 100%">
+							<tr>
+								<th style="width: 120px;">Status</th>
+								<th style="width: auto">URL</th>
+								<th style="width: 150px">Compared Screenshots</th>
+								<th style="width: 50px">Difference</th>
+								<th>Show</th>
+							</tr>
+
+			<?php
 			foreach ( $compares as $compare ) {
-				if ( $latest_batch && $compare['screenshot1']['queue']['batch_id'] !== $latest_batch_id ) {
+				if ( $latest_batch && $compare['screenshot2']['queue']['batch_id'] !== $latest_batch_id ) {
 					continue;
 				}
+
 				$class = 'no-difference'; // init.
 				if ( $compare['difference_percent'] ) {
 					$class = 'is-difference';
 				}
-
 				?>
 			<tr>
 				<td>
-					<span class="comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-						<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
-					</span>
+					<div class="comparison_status_container">
+						<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+							<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+						</span>
+						<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
+							<strong>Change Status to:</strong><br>
+							<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+							<button name="status"
+									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+									data-status="ok"
+									data-nonce="<?php echo $nonce; ?>"
+									value="ok"
+									class=" ajax_update_comparison_status comparison_status comparison_status_ok"
+									onclick="return false;">Ok</button>
+							<button name="status"
+									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+									data-status="to_fix"
+									data-nonce="<?php echo $nonce; ?>"
+									value="to_fix"
+									class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
+									onclick="return false;">To Fix</button>
+							<button name="status"
+									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+									data-status="false_positive"
+									data-nonce="<?php echo $nonce; ?>"
+									value="false_positive"
+									class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+									onclick="return false;">False Positive</button>
+						</div>
+					</div>
 				</td>
 				<td>
 					<strong>
@@ -685,11 +801,201 @@ class WebChangeDetector_Admin {
 				</td>
 			</tr>
 				<?php
+				$latest_batch_id = $batch_id;
+			}
+			?>
+						</table>
+					</div>
+				</div>
+			</div>
+			<?php
+		}
+	}
+
+	public function compare_view_v2( $compares, $latest_batch = false ) {
+		if ( empty( $compares ) ) {
+			?>
+			<table class="toggle" style="width: 100%">
+				<tr>
+					<th style="width: 120px;">Status</th>
+					<th style="width: auto">URL</th>
+					<th style="width: 150px">Compared Screenshots</th>
+					<th style="width: 50px">Difference</th>
+					<th>Show</th>
+				</tr>
+				<tr>
+					<td colspan="4" style="text-align: center">
+						<strong>There are no change detections yet.</strong
+					</td>
+				</tr>
+			</table>
+			<?php
+			return;
+		}
+
+		$all_tokens          = array();
+		$compares_in_batches = array();
+		// dd($compares);
+		foreach ( $compares['data'] as $key => $compare ) {
+
+			$all_tokens[] = $compare['token'];
+
+			// Sort comparisons by batches.
+			$compares_in_batches[ $compare['batch'] ][] = $compare;
+			if ( 'ok' !== $compare['status'] ) {
+				$compares_in_batches[ $compare['batch'] ]['needs_attention'] = true;
 			}
 		}
-		?>
-		</table>
-		<?php
+
+		unset( $compare );
+
+		// $latest_batch_id = $compares[0]['screenshot2']['queue']['batch_id'];
+
+		$auto_update_batches = get_option( 'wcd_comparison_batches' );
+		$latest_batch_id     = false;
+		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
+			?>
+			<div class="accordion accordion-batch">
+				<div class="mm_accordion_title">
+					<h3>
+						<div>
+							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
+								<?php
+								if ( array_key_exists( 'needs_attention', $compares_in_batches[ $batch_id ] ) ) {
+									$this->get_device_icon( 'fail', 'batch_needs_attention' );
+									echo '<small>Needs Attention</small>';
+								} else {
+									$this->get_device_icon( 'check', 'batch_is_ok' );
+									echo '<small>All Good</small>';
+								}
+								?>
+							</div>
+							<div class="accordion-batch-title-tile">
+								<?php
+								// echo ($batch_id . ' - ' . json_encode($auto_update_batches)) . '<br>';
+								if ( $compares_in_batches[0]['group'] === $this->monitoring_group_uuid ) {
+									echo 'Monitoring Checks';
+								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
+									echo 'Auto Update Checks';
+								} else {
+									echo 'Manual Checks';
+								}
+								?>
+								<br>
+								<small>
+									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batches[0]['created_at'] ) ) ) ); ?> ago
+								</small>
+							</div>
+							<div class="clear"></div>
+						</div>
+					</h3>
+					<div class="mm_accordion_content">
+						<table class="toggle" style="width: 100%">
+							<tr>
+								<th style="width: 120px;">Status</th>
+								<th style="width: auto">URL</th>
+								<th style="width: 150px">Compared Screenshots</th>
+								<th style="width: 50px">Difference</th>
+								<th>Show</th>
+							</tr>
+
+							<?php
+
+							foreach ( $compares_in_batch as $key => $compare ) {
+								if ( 'needs_attention' === $key ) {
+									continue;
+								}
+								if ( empty( $compare['status'] ) ) {
+									$compare['status'] = 'new';
+								}
+
+								$class = 'no-difference'; // init.
+								if ( $compare['difference_percent'] ) {
+									$class = 'is-difference';
+								}
+								?>
+								<tr>
+									<td>
+										<div class="comparison_status_container">
+											<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+												<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+											</span>
+											<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
+												<strong>Change Status to:</strong><br>
+												<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+												<button name="status"
+														data-id="<?php echo esc_html( $compare['id'] ); ?>"
+														data-status="ok"
+														data-nonce="<?php echo $nonce; ?>"
+														value="ok"
+														class=" ajax_update_comparison_status comparison_status comparison_status_ok"
+														onclick="return false;">Ok</button>
+												<button name="status"
+														data-id="<?php echo esc_html( $compare['id'] ); ?>"
+														data-status="to_fix"
+														data-nonce="<?php echo $nonce; ?>"
+														value="to_fix"
+														class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
+														onclick="return false;">To Fix</button>
+												<button name="status"
+														data-id="<?php echo esc_html( $compare['id'] ); ?>"
+														data-status="false_positive"
+														data-nonce="<?php echo $nonce; ?>"
+														value="false_positive"
+														class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+														onclick="return false;">False Positive</button>
+											</div>
+										</div>
+									</td>
+									<td>
+										<strong>
+											<?php
+
+											if ( ! empty( $compare['html_title'] ) ) {
+												echo esc_html( $compare['html_title'] ) . '<br>';
+											}
+											?>
+										</strong>
+										<?php
+
+										$this->get_device_icon( $compare['device'] );
+										echo esc_url( $compare['url'] );
+										echo '<br>';
+										if ( 'auto' === $compare['sc_type'] ) {
+											$this->get_device_icon( 'auto-group' );
+											echo 'Monitoring';
+										} else {
+											$this->get_device_icon( 'update-group' );
+											echo 'Manual Checks';
+										}
+										?>
+									</td>
+									<td>
+										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
+										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
+									</td>
+									<td class="<?php echo esc_html( $class ); ?> diff-tile"
+										data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
+										<?php echo esc_html( $compare['difference_percent'] ); ?>%
+									</td>
+									<td>
+										<form action="?page=webchangedetector-show-detection" method="post">
+											<input type="hidden" name="token" value="<?php echo esc_html( $compare['token'] ); ?>">
+											<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+											<input type="submit" value="Show" class="button">
+										</form>
+									</td>
+								</tr>
+								<?php
+								$latest_batch_id = $batch_id;
+							}
+							?>
+						</table>
+					</div>
+				</div>
+			</div>
+			<?php
+		}
 	}
 
 	/** Get comparison.

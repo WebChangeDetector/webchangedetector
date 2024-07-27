@@ -386,7 +386,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				?>
 				<div class="action-container">
-					<form method="post">
+					<form method="post" style="margin-bottom: 20px;">
 						<input type="hidden" name="wcd_action" value="filter_change_detections">
 						<?php wp_nonce_field( 'filter_change_detections' ); ?>
 						<select name="limit_days">
@@ -412,8 +412,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<input class="button" type="submit" value="Filter">
 					</form>
 					<?php
-					$compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
-					$wcd->compare_view( $compares );
+					// Old version.
+					// $compares = $wcd->get_compares( array( $wcd->group_id, $wcd->monitoring_group_id ), $limit_days, $group_type, $difference_only );
+					// $wcd->compare_view( $compares );
+
+					// Show comparisons.
+					$filters = array(
+						'from'            => date( 'Y-m-d H:i:s', strtotime( '- ' . $limit_days . ' days' ) ),
+						'to'              => date( 'Y-m-d H:i:s', current_time( 'U' ) ),
+						'above_threshold' => $difference_only,
+						// TODO group_type
+					);
+					$compares_v2 = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+					$wcd->compare_view_v2( $compares_v2 );
+
 					?>
 				</div>
 				<div class="sidebar">
@@ -690,7 +702,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				echo '<table class="queue">';
 				echo '<tr>
                         <th></th>
-                        <th width="100%">Page & URL</th>
+                        <th style="width: 100%">Page & URL</th>
                         <th>Type</th>
                         <th>Status</th>
                         <th>Added</th>

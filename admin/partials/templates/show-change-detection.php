@@ -7,24 +7,35 @@
 
 ?>
 <div class="comparison-tiles">
-	<div class="comparison-tile comparison-status-tile">
+	<div class="comparison_status_container comparison-tile comparison-status-tile">
 		<strong>Status</strong>
-		<span class="comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+		<span id="current_comparison_status" class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
 			<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
 		</span>
 		<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
-			Change Status to:<br>
-			<form action="?page=webchangedetector-show-detection" method="post">
-				<input type="hidden" name="wcd_action" value="change_comparison_status">
-				<input type="hidden" name="comparison_uuid" value="<?php echo esc_html( $compare['uuid'] ); ?>">
-				<input type="hidden" name="token" value="<?php echo esc_html( $compare['token'] ); ?>">
-				<input type="hidden" name="all_tokens" value="<?php echo esc_html( $postdata['all_tokens'] ?? null ); ?>">
-
-				<?php wp_nonce_field( 'change_comparison_status' ); ?>
-				<button name="status" value="ok" class="comparison_status comparison_status_ok" style="<?php echo 'ok' === $compare['status'] ? 'display: none;' : ''; ?>">Ok</button>
-				<button name="status" value="to_fix" class="comparison_status comparison_status_to_fix" style="<?php echo 'to_fix' === $compare['status'] ? 'display: none;' : ''; ?>">To Fix</button>
-				<button name="status" value="false_positive" class="comparison_status comparison_status_false_positive" style="<?php echo 'false_positive' === $compare['status'] ? 'display: none;' : ''; ?>">False Positive</button>
-			</form>
+			<strong>Change Status to:</strong><br>
+			<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+			<button name="status"
+					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-status="ok"
+					data-nonce="<?php echo $nonce; ?>"
+					value="ok"
+					class=" ajax_update_comparison_status comparison_status comparison_status_ok"
+					onclick="return false;">Ok</button>
+			<button name="status"
+					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-status="to_fix"
+					data-nonce="<?php echo $nonce; ?>"
+					value="to_fix"
+					class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
+					onclick="return false;">To Fix</button>
+			<button name="status"
+					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-status="false_positive"
+					data-nonce="<?php echo $nonce; ?>"
+					value="false_positive"
+					class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+					onclick="return false;">False Positive</button>
 		</div>
 	</div>
 	<div class="comparison-tile comparison-url-tile">

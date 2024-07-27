@@ -310,14 +310,46 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                             clearInterval(processingInterval);
                         }
                     });
-                }, 10000, currentlyProcessing)
+                }, 3000, currentlyProcessing)
             } else {
                 $("#wcd-screenshots-done").show();
             }
         }
-
         // This needs to instantly be executed
         currentlyProcessing();
+
+
+        $(".ajax_update_comparison_status").click(function() {
+            let e = $(this);
+            let status = $(this).data('status');
+            var data = {
+                action: 'update_comparison_status',
+                nonce: $(this).data('nonce'),
+                id: $(this).data('id'),
+                status: status
+            };
+
+            $.post(ajaxurl, data, function (response) {
+
+                    console.log("ajax response: "+response)
+
+               let status_nice_name;
+                if( 'ok' === status) {
+                    status_nice_name = 'Ok';
+                } else if ('to_fix' === status) {
+                    status_nice_name = 'To Fix';
+                } else if ('false_positive' === status) {
+                    status_nice_name = 'False Positive';
+                }
+                $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
+                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_new");
+                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
+                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
+                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
+                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_"+status);
+            });
+
+        })
     });
 
 })( jQuery );
