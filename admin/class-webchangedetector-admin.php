@@ -1565,309 +1565,139 @@ class WebChangeDetector_Admin {
 			$url_types['types']      = get_post_types( array( 'public' => true ), 'objects' );
 			$url_types['taxonomies'] = get_taxonomies( array( 'public' => true ), 'objects' );
 
-			// If we have the blog as start page.
-			if ( ! get_option( 'page_on_front' ) ) {
-				?>
-
-			<div class="accordion post-type-accordion">
-				<div class="mm_accordion_title">
-					<h3>
-						<span class="accordion-title">
-							Frontpage
-							<div class="accordion-post-types-url-amount">
-								<?php $this->get_device_icon( 'desktop' ); ?>
-								<strong><span id="selected-desktop-Frontpage"></span></strong> |
-								<?php $this->get_device_icon( 'mobile' ); ?>
-								<strong><span id="selected-mobile-Frontpage"></span></strong>
-							</div>
-							<div class="clear"></div>
-
-						</span>
-
-					</h3>
-					<div class="mm_accordion_content">
-						<div class="group_urls_container">
-							<table>
-								<tr>
-									<th><?php $this->get_device_icon( 'desktop' ); ?></th>
-									<th><?php $this->get_device_icon( 'mobile' ); ?></th>
-									<th style="width: 100%">URL</th>
-								</tr>
-				<?php
-
-				// Check if current WP wp_post ID is in wcd_posts and get the url_id.
-				$selected_desktop = 0;
-				$selected_mobile  = 0;
-				foreach ( $wcd_posts as $wcd_post ) {
-
-					if ( isset( $wcd_post['cms_resource_id'] )
-						&& 'frontpage' === $wcd_post['url_type'] ) {
-						$url_id = $wcd_post['url_id'];
-
-						$checked['desktop'] = false;
-						$checked['mobile']  = false;
-
-						if ( ! empty( $group_and_urls['urls'] ) ) {
-							foreach ( $group_and_urls['urls'] as $url_details ) {
-								if ( $url_details['id'] === $url_id ) {
-									$link = $url_details['url'];
-									if ( $url_details['pivot']['desktop'] ) {
-
-										$checked['desktop'] = 'checked';
-										++$selected_desktop;
-									}
-									if ( $url_details['pivot']['mobile'] ) {
-										$checked['mobile'] = 'checked';
-										++$selected_mobile;
-									}
-								}
-							}
-						}
-						?>
-								<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_url( $url_id ); ?>" >
-									<input type="hidden" name="post_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
-									<input type="hidden" name="url_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
-									<input type="hidden" name="active-<?php echo esc_html( $url_id ); ?>" value="1">
-
-									<td class="checkbox-desktop-Frontpage" style="text-align: center;">
-										<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url_id ); ?>">
-										<input type="checkbox" name="desktop-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['desktop'] ); ?>
-												id="desktop-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
-
-									<td class="checkbox-mobile-Frontpage" style="text-align: center;">
-										<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url_id ); ?>">
-										<input type="checkbox" name="mobile-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['mobile'] ); ?>
-										id="mobile-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
-
-									<td style="text-align: left;"><strong><?php echo esc_html( get_option( 'blogname' ) ) . ' - ' . esc_html( get_option( 'blogdescription' ) ); ?></strong><br>
-									<a href="<?php echo esc_html( get_option( 'home' ) ); ?>" target="_blank"><?php echo esc_url( $link ); ?></a></td>
-								</tr>
-						<?php
-					}
-					?>
-					<script> mmMarkRows('<?php echo esc_html( $url_id ); ?>'); </script>
-					<?php
-				}
-				?>
-				</table>
-							</div>
-						</div>
-					</div>
-				</div>
 
 
-				<?php
-				echo '<div class="selected-urls" style="display: none;" 
-                            data-amount_selected="1" 
-                            data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
-                            data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
-                            data-post_type="Frontpage"
-                            ></div>';
-			}
+            foreach($group_and_urls['urls'] as $wcd_group_url){
+                foreach($wcd_posts as $wcd_website_url) {
+                    if($wcd_website_url['url_id'] === $wcd_group_url['id']) {
+                        $merged_url_details[$wcd_website_url['url_category']][] = array_merge($wcd_group_url, $wcd_website_url);
 
-			foreach ( $url_types as $url_type => $url_categories ) {
-				foreach ( $url_categories as $url_category ) {
+                    }
+                }
+            }
+            //dd($merged_url_details);
 
-					// if rest_base is not set we use post_name (wp default).
-					if ( ! $url_category->rest_base ) {
-						$url_category->rest_base = $url_category->name;
-					}
+			foreach ( $merged_url_details as $url_type => $urls ) {
 
-					$show_type = false;
-					foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-						if ( $url_category->rest_base && $sync_url_type['post_type_slug'] === $url_category->rest_base ) {
-							$show_type = true;
-						}
-					}
-					if ( ! $show_type ) {
-						continue;
-					}
-					switch ( $url_type ) {
-						case 'types':
-							$wp_posts = $this->get_posts( $url_category->name );
-							break;
-
-						case 'taxonomies':
-							$wp_posts = $this->get_terms( $url_category->name );
-							break;
-
-						default:
-							$wp_posts = false;
-					}
-
-					if ( is_iterable( $wp_posts ) ) {
-						?>
-						<div class="accordion">
-						<div class="mm_accordion_title">
-						<h3>
+				if ( is_iterable( $merged_url_details ) ) { ?>
+                    <div class="accordion">
+                        <div class="mm_accordion_title">
+                            <h3>
 							<span class="accordion-title">
-								<?php echo esc_html( ucfirst( $url_category->label ) ); ?>
+								<?php echo esc_html( ucfirst( $url_type ) ); ?>
 								<div class="accordion-post-types-url-amount">
 									<?php $this->get_device_icon( 'desktop' ); ?>
-									<strong><span id="selected-desktop-<?php echo esc_html( $url_category->label ); ?>"></span></strong> |
+									<strong><span id="selected-desktop-<?php echo esc_html( lcfirst($url_type) ); ?>"></span></strong> |
 
 									<?php $this->get_device_icon( 'mobile' ); ?>
-									<strong><span id="selected-mobile-<?php echo esc_html( $url_category->label ); ?>"></span></strong>
+									<strong><span id="selected-mobile-<?php echo esc_html( lcfirst($url_type)); ?>"></span></strong>
 								</div>
 								<div class="clear"></div>
 							</span>
 
-						</h3>
-						<div class="mm_accordion_content">
-						<div class="group_urls_container">
-						<input class="filter-url-table" type="text" placeholder="Filter">
-						<div class="clear"></div>
-						<table class="no-margin filter-table">
-						<tr>
-							<th><?php $this->get_device_icon( 'desktop' ); ?></th>
-							<th><?php $this->get_device_icon( 'mobile' ); ?></th>
-							<th width="100%">URL</th>
-						</tr>
-						<?php
-						// Select all from same device.
-						echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
-                                    <td><input type="checkbox" id="select-desktop-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'desktop\', \'' . esc_html( $group_and_urls['id'] ) . '\' )" /></td>
-                                    <td><input type="checkbox" id="select-mobile-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'mobile\', \'' . esc_html( $group_and_urls['id'] ) . '\' )" /></td>
+                            </h3>
+                            <div class="mm_accordion_content">
+                                <div class="group_urls_container">
+                                    <input class="filter-url-table" type="text" placeholder="Filter">
+                                    <div class="clear"></div>
+                                    <table class="no-margin filter-table">
+                                        <tr>
+                                            <th><?php $this->get_device_icon( 'desktop' ); ?></th>
+                                            <th><?php $this->get_device_icon( 'mobile' ); ?></th>
+                                            <th width="100%">URL</th>
+                                        </tr>
+										<?php
+										// Select all from same device.
+										echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
+                                    <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst($url_type) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst($url_type) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
+                                    <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst($url_type) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst($url_type) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
                                     <td></td>
                                 </tr>';
-						$amount_active_posts = 0;
-						$selected_mobile     = 0;
-						$selected_desktop    = 0;
+                                $amount_active_posts = 0;
+                                $selected_mobile     = 0;
+                                $selected_desktop    = 0;
+				    }
 
-						if ( is_iterable( $wp_posts ) && count( $wp_posts ) > 0 ) {
-							// Re-order posts to have active ones on top.
-							$inactive_posts = array();
-							$active_posts   = array();
-							foreach ( $wp_posts as $wp_post ) {
-								foreach ( $group_and_urls['urls'] as $group_url ) {
 
-									if ( ! empty( $group_url['cms_resource_id'] ) &&
-										$group_url['url_type'] === $url_type &&
-										(string) $wp_post->ID === $group_url['cms_resource_id']
-									) {
-										if ( $group_url['pivot']['desktop'] || $group_url['pivot']['mobile'] ) {
-											$active_posts[] = $wp_post;
-										} else {
-											$inactive_posts[] = $wp_post;
-										}
-									}
-								}
-							}
+					if ( is_iterable( $urls ) && count( $urls ) > 0 ) {
 
-							// This way the wp_posts should be sorted the right way.
-							$wp_posts = array_merge( $active_posts, $inactive_posts );
+                        // Re-order posts to have active ones on top.
+                        $inactive_posts = array();
+                        $active_posts   = array();
+                        foreach ( $urls as $url ) {
+                            if ( $url['pivot']['desktop'] || $url['pivot']['mobile'] ) {
+                                $active_posts[] = $url;
+                            } else {
+                                $inactive_posts[] = $url;
+                            }
+                        }
 
-							foreach ( $wp_posts as $wp_post ) {
-								switch ( $url_type ) {
-									case 'types':
-										$url        = get_permalink( $wp_post );
-										$post_title = $wp_post->post_title;
-										$post_id    = $wp_post->ID;
-										break;
+                        // This way the wp_posts should be sorted the right way.
+                        $urls = array_merge( $active_posts, $inactive_posts );
 
-									case 'taxonomies':
-										$url        = get_term_link( $wp_post );
-										$post_title = $wp_post->name;
-										$post_id    = $wp_post->term_id;
-										break;
+                        foreach($urls as $url ) {
+                            // init.
+                            $checked = array(
+                                'desktop' => '',
+                                'mobile'  => '',
+                            );
+                            if ( $url['pivot']['desktop'] ) {
+                                $checked['desktop'] = 'checked';
+                                ++$selected_desktop;
+                                ++$amount_active_posts;
+                            }
+                            if ( $url['pivot']['mobile'] ) {
+                                $checked['mobile'] = 'checked';
+                                ++$selected_mobile;
+                                ++$amount_active_posts;
+                            }
+                            //dd($url);
+                            echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url['id'] ) . '" >';
+                            echo '<input type="hidden" name="post_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
+                            echo '<input type="hidden" name="url_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
+                            echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . ' value="1">';
 
-									default:
-										$url        = false;
-										$post_title = false;
-										$post_id    = false;
-								}
+                            echo '<td class="checkbox-desktop-' . esc_html( lcfirst($url_type) ) . '" style="text-align: center;">
+                                            <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">
+                                            <input type="checkbox" name="desktop-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
+                                            id="desktop-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
 
-								$url_id = false;
+                            echo '<td class="checkbox-mobile-' .  esc_html( lcfirst($url_type) ) . '" style="text-align: center;">
+                                            <input type="hidden" value="0" name="mobile-' . esc_html( $url['id'] ) . '">
+                                            <input type="checkbox" name="mobile-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
+                                            id="mobile-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
 
-								// Check if current WP wp_post ID is in wcd_posts and get the url_id.
-								foreach ( $wcd_posts as $wcd_post ) {
-									if ( ! empty( $wcd_post['cms_resource_id'] )
-										&& $wcd_post['cms_resource_id'] === $post_id
-										&& $wcd_post['url_type'] === $url_type ) {
-										$url_id = $wcd_post['url_id'];
-									}
-								}
+                            echo '<td style="text-align: left;"><strong>' . esc_html( $url['html_title'] ) . '</strong><br>';
+                            echo '<a href="' . esc_html( $url['url'] ) . '" target="_blank">' . esc_html( $url['url'] ) . '</a></td>';
+                            echo '</tr>';
 
-								// If we don't have the url_id, the url is not synced and we continue.
-								if ( ! $url_id ) {
-									continue;
-								}
+                            echo '<script> mmMarkRows(\'' . esc_html( $url['id'] ) . '\'); </script>';
+                        }
+                    }
+                    echo '</table>';
 
-								// init.
-								$checked = array(
-									'desktop' => '',
-									'mobile'  => '',
-								);
+                    if ( ! count( $urls ) ) {
+                        ?>
+                        <div style="text-align: center; font-weight: 700; padding: 20px 0;">
+                            No Posts in this post type
+                        </div>
+                        <?php
+                    }
 
-								if ( ! empty( $group_and_urls['urls'] ) ) {
-									foreach ( $group_and_urls['urls'] as $url_details ) {
-										if ( $url_details['pivot']['url_id'] === $url_id ) {
-											$checked['active'] = 'checked';
+                    echo '<div class="selected-urls" style="display: none;" 
+                                data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
+                                data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
+                                data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
+                                data-post_type="' . esc_html( lcfirst($url_type) ) . '"
+                                ></div>';
 
-											if ( $url_details['pivot']['desktop'] ) {
-												$checked['desktop'] = 'checked';
-												++$selected_desktop;
-												++$amount_active_posts;
-											}
-											if ( $url_details['pivot']['mobile'] ) {
-												$checked['mobile'] = 'checked';
-												++$selected_mobile;
-												++$amount_active_posts;
-											}
-										}
-									}
-								}
-
-								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url_id ) . '" >';
-								echo '<input type="hidden" name="post_id-' . esc_html( $url_id ) . '" value="' . esc_html( $post_id ) . '">';
-								echo '<input type="hidden" name="url_id-' . esc_html( $url_id ) . '" value="' . esc_html( $url_id ) . '">';
-								echo '<input type="hidden" name="active-' . esc_html( $url_id ) . ' value="1">';
-
-								echo '<td class="checkbox-desktop-' . esc_html( $url_category->label ) . '" style="text-align: center;">
-                                            <input type="hidden" value="0" name="desktop-' . esc_html( $url_id ) . '">
-                                            <input type="checkbox" name="desktop-' . esc_html( $url_id ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
-                                            id="desktop-' . esc_html( $url_id ) . '" onclick="mmMarkRows(\'' . esc_html( $url_id ) . '\')" ></td>';
-
-								echo '<td class="checkbox-mobile-' . esc_html( $url_category->label ) . '" style="text-align: center;">
-                                            <input type="hidden" value="0" name="mobile-' . esc_html( $url_id ) . '">
-                                            <input type="checkbox" name="mobile-' . esc_html( $url_id ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
-                                            id="mobile-' . esc_html( $url_id ) . '" onclick="mmMarkRows(\'' . esc_html( $url_id ) . '\')" ></td>';
-
-								echo '<td style="text-align: left;"><strong>' . esc_html( $post_title ) . '</strong><br>';
-								echo '<a href="' . esc_html( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></td>';
-								echo '</tr>';
-
-								echo '<script> mmMarkRows(\'' . esc_html( $url_id ) . '\'); </script>';
-							}
-						}
-
-						echo '</table>';
-						if ( ! count( $wp_posts ) ) {
-							?>
-							<div style="text-align: center; font-weight: 700; padding: 20px 0;">
-								No Posts in this post type
-							</div>
-							<?php
-						}
-
-						echo '<div class="selected-urls" style="display: none;" 
-                                    data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
-                                    data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
-                                    data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
-                                    data-post_type="' . esc_html( $url_category->label ) . '"
-                                    ></div>';
-					}
-					?>
-					</div>
-					</div>
-					</div>
-					</div>
-
-					<?php
-
-				}
-			}
-
+                    ?>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    <?php
+                }
 			if ( $monitoring_group ) {
 				?>
 					<button
