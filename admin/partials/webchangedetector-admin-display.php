@@ -449,11 +449,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 
 				// Get selected urls.
-				$groups_and_urls = $wcd->get_urls_of_group( $wcd->group_id );
+				$group_and_urls = $wcd->get_urls_of_group( $wcd->group_id );
 
 				$step = false;
 				// Show message if no urls are selected.
-				if ( ! $groups_and_urls['amount_selected_urls'] ) {
+				if ( ! $group_and_urls['amount_selected_urls'] ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS
 					?>
 					<div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
@@ -555,22 +555,22 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-				$groups_and_urls = $wcd->get_urls_of_group( $wcd->monitoring_group_id );
+				$group_and_urls = $wcd->get_urls_of_group( $wcd->monitoring_group_id );
 
 				// Calculation for monitoring.
 				$date_next_sc = false;
 				$next_sc_in   = false;
-				if ( $groups_and_urls['monitoring'] ) {
+				if ( $group_and_urls['monitoring'] ) {
 
 					$amount_sc_per_day = 0;
 					// Check for intervals >= 1h.
-					if ( $groups_and_urls['interval_in_h'] >= 1 ) {
+					if ( $group_and_urls['interval_in_h'] >= 1 ) {
 						$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						$amount_sc_per_day = ( 24 / $groups_and_urls['interval_in_h'] );
+						$amount_sc_per_day = ( 24 / $group_and_urls['interval_in_h'] );
 						$possible_hours    = array();
 						// Get possible tracking hours.
 						for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
-							$possible_hour    = $groups_and_urls['hour_of_day'] + $i * $groups_and_urls['interval_in_h'];
+							$possible_hour    = $group_and_urls['hour_of_day'] + $i * $group_and_urls['interval_in_h'];
 							$possible_hours[] = $possible_hour >= 24 ? $possible_hour - 24 : $possible_hour;
 						}
 						sort( $possible_hours );
@@ -593,7 +593,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Check for 30 min intervals.
-					if ( 0.5 === $groups_and_urls['interval_in_h'] ) {
+					if ( 0.5 === $group_and_urls['interval_in_h'] ) {
 						$amount_sc_per_day = 48;
 						if ( gmdate( 'i' ) < 30 ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -602,7 +602,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 					}
 					// Check for 15 min intervals.
-					if ( 0.25 === $groups_and_urls['interval_in_h'] ) {
+					if ( 0.25 === $group_and_urls['interval_in_h'] ) {
 						$amount_sc_per_day = 96;
 						if ( gmdate( 'i' ) < 15 ) {
 							$date_next_sc = gmmktime( gmdate( 'H' ), 15, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -619,23 +619,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$account = $wcd->account_details();
 
 					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account['renewal_at'] ) ) - gmdate( 'U' ) );
-					$amount_group_sc_per_day = $groups_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
+					$amount_group_sc_per_day = $group_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
 
 					// Get first detection hour.
-					$first_hour_of_interval = $groups_and_urls['hour_of_day'];
-					while ( $first_hour_of_interval - $groups_and_urls['interval_in_h'] >= 0 ) {
-						$first_hour_of_interval = $first_hour_of_interval - $groups_and_urls['interval_in_h'];
+					$first_hour_of_interval = $group_and_urls['hour_of_day'];
+					while ( $first_hour_of_interval - $group_and_urls['interval_in_h'] >= 0 ) {
+						$first_hour_of_interval = $first_hour_of_interval - $group_and_urls['interval_in_h'];
 					}
 
 					// Count up in interval_in_h to current hour.
 					$skip_sc_count_today = 0;
-					while ( $first_hour_of_interval + $groups_and_urls['interval_in_h'] <= gmdate( 'H' ) ) {
-						$first_hour_of_interval = $first_hour_of_interval + $groups_and_urls['interval_in_h'];
+					while ( $first_hour_of_interval + $group_and_urls['interval_in_h'] <= gmdate( 'H' ) ) {
+						$first_hour_of_interval = $first_hour_of_interval + $group_and_urls['interval_in_h'];
 						++$skip_sc_count_today;
 					}
 
 					// Subtract screenshots already taken today.
-					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $groups_and_urls['amount_selected_urls'];
+					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group_and_urls['amount_selected_urls'];
 				}
 				?>
 
@@ -654,7 +654,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<span id="ajax_amount_total_sc"></span> Checks
 							</div>
 							<div id="sc_available_until_renew"
-								data-amount_selected_urls="<?php echo esc_html( $groups_and_urls['amount_selected_urls'] ); ?>"
+								data-amount_selected_urls="<?php echo esc_html( $group_and_urls['amount_selected_urls'] ); ?>"
 								data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"
 							>
 								<?php echo esc_html( $account_details['available_compares'] ); ?> available until renewal
@@ -663,7 +663,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="clear"></div>
 					</div>
 
-					<?php $wcd->get_url_settings( $groups_and_urls, true ); ?>
+					<?php $wcd->get_url_settings( $group_and_urls, true ); ?>
 
 				</div>
 

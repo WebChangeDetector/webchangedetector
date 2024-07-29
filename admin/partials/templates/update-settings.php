@@ -37,7 +37,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 <div style="width: 50%; float: left;">
 	<div style="padding: 10px; margin-top: 20px;" class="auto-setting toggle">
 		<label for="threshold" >Threshold</label>
-		<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $groups_and_urls['threshold'] ); ?>"> %<br>
+		<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %<br>
 	</div>
 	<div style="padding: 10px;" class="auto-setting">
 		<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
@@ -74,7 +74,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			<input name="auto_update_checks_emails" style="width: calc(100% - 160px)" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
 		</div>
 	</div>
-	<input type="hidden" name="group_name" value="<?php echo esc_html( $groups_and_urls['name'] ); ?>">
+	<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ); ?>">
 </div>
 <script>
 	function show_auto_update_settings() {

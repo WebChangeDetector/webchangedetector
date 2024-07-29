@@ -333,27 +333,11 @@ class WebChangeDetector_Admin {
 
 	/** Sync Post if permalink changed. Currently deactivated.
 	 *
-	 * @param int    $post_id The post id.
-	 * @param object $post The post.
-	 * @param bool   $update if post was updated.
-	 *
 	 * @return array|false|mixed|string
 	 */
-	public function sync_post_after_save( $post_id, $post, $update ) {
-		// Only sync posts and pages @TODO make setting to sync other posttypes.
-		if ( ! empty( $post->post_type ) && ! in_array( $post->post_type, array( 'page', 'post' ), true ) ) {
-			return false;
-		}
-
-		if ( $update ) {
-			$latest_revision = array_shift( wp_get_post_revisions( $post_id ) );
-			if ( $latest_revision && get_permalink( $latest_revision ) !== get_permalink( $post ) ) {
-				return $this->sync_posts( $post );
-			}
-		} else {
-			return $this->sync_posts( $post );
-		}
-		return false;
+	public function wcd_sync_post_after_save() {
+		$this->sync_posts( true );
+		return true;
 	}
 
 	/** Get the account details.
@@ -1164,14 +1148,17 @@ class WebChangeDetector_Admin {
 
 	/** Sync posts with api.
 	 *
+	 * @param bool $force_sync Skip cache and force sync.
 	 * @return array|false|mixed|string
 	 */
-	public function sync_posts() {
+	public function sync_posts( $force_sync = false ) {
 
-		// Return synced_posts from transient if available.
-		$synced_posts = get_transient( 'wcd_synced_posts' );
-		if ( $synced_posts ) {
-			return $synced_posts;
+		// Return synced_posts from transient if available unless we have forced_sync.
+		if ( ( defined( WCD_DEV ) && ! WCD_DEV ) && false === $force_sync ) {
+			$synced_posts = get_transient( 'wcd_synced_posts' );
+			if ( $synced_posts ) {
+				return $synced_posts;
+			}
 		}
 
 		$array     = array(); // init.
@@ -1179,6 +1166,7 @@ class WebChangeDetector_Admin {
 
 		// Get Post Types.
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+
 		foreach ( $post_types as $post_type ) {
 
 			// if rest_base is not set we use post_name (wp default).
@@ -1248,17 +1236,57 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
-			if ( ! get_option( 'page_on_front' ) ) {
-				$url = get_option( 'home' );
-				$url = substr( $url, strpos( $url, '//' ) + 2 );
 
-				$array[] = array(
-					'url'             => $url,
-					'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
-					'cms_resource_id' => 0,
-					'url_type'        => 'frontpage',
-					'url_category'    => 'Frontpage',
-				);
+			// If we don't have posts here, we can exit.
+			if ( empty( $array ) ) {
+				return false;
+			}
+
+			// If blog is set as home page.
+			if ( ! get_option( 'page_on_front' ) ) {
+
+				// WPML fix.
+				if ( function_exists( 'icl_get_languages' ) ) {
+					$languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
+
+					if ( ! empty( $languages ) ) {
+						foreach ( $languages as $lang_code => $lang ) {
+							// Store the home URL for each language.
+							$array[] = array(
+								'url'             => $lang['url'],
+								'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
+								'cms_resource_id' => '0_' . $lang_code,
+								'url_type'        => 'frontpage',
+								'url_category'    => 'Frontpage',
+							);
+						}
+					}
+
+					// Polylang fix.
+				} elseif ( function_exists( 'pll_the_languages' ) ) {
+
+					$translations = pll_the_languages( array( 'raw' => 1 ) );
+					foreach ( $translations as $lang_code => $translation ) {
+						$array[] = array(
+							'url'             => pll_home_url( $lang_code ),
+							'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
+							'cms_resource_id' => '0_' . $lang_code,
+							'url_type'        => 'frontpage',
+							'url_category'    => 'Frontpage',
+						);
+					}
+				} else {
+					$url = get_option( 'home' );
+					$url = substr( $url, strpos( $url, '//' ) + 2 );
+
+					$array[] = array(
+						'url'             => $url,
+						'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
+						'cms_resource_id' => 0,
+						'url_type'        => 'frontpage',
+						'url_category'    => 'Frontpage',
+					);
+				}
 			}
 		}
 
@@ -1433,12 +1461,12 @@ class WebChangeDetector_Admin {
 
 	/** Group url view.
 	 *
-	 * @param array $groups_and_urls The urls of a group.
+	 * @param array $group_and_urls The groups and their urls.
 	 * @param bool  $monitoring_group Is it a monitoring group.
 	 *
 	 * @return void
 	 */
-	public function get_url_settings( $groups_and_urls, $monitoring_group = false ) {
+	public function get_url_settings( $group_and_urls, $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 		$wcd_posts = $this->sync_posts();
 
@@ -1476,8 +1504,8 @@ class WebChangeDetector_Admin {
 										<?php echo $auto_update_checks_enabled ? 'On' : 'Off'; ?>
 									</span>
 								</strong>
-								| Threshold: <strong><?php echo esc_html( $groups_and_urls['threshold'] ); ?> %</strong>
-								| CSS injection: <strong><?php echo $groups_and_urls['css'] ? 'yes' : 'no'; ?></strong>
+								| Threshold: <strong><?php echo esc_html( $group_and_urls['threshold'] ); ?> %</strong>
+								| CSS injection: <strong><?php echo $group_and_urls['css'] ? 'yes' : 'no'; ?></strong>
 							</small>
 						</h3>
 						<div class="mm_accordion_content">
@@ -1496,22 +1524,22 @@ class WebChangeDetector_Admin {
 							Monitoring Settings<br>
 							<small>
 								<?php
-								$enabled = $groups_and_urls['enabled'];
+								$enabled = $group_and_urls['enabled'];
 								if ( $enabled ) {
 									?>
 									Monitoring: <strong style="color: green;">Enabled</strong>
 									| Interval: <strong>
 										every
-										<?php echo esc_html( $groups_and_urls['interval_in_h'] ); ?>
-										<?php echo 1 === $groups_and_urls['interval_in_h'] ? ' hour' : ' hours'; ?>
+										<?php echo esc_html( $group_and_urls['interval_in_h'] ); ?>
+										<?php echo 1 === $group_and_urls['interval_in_h'] ? ' hour' : ' hours'; ?>
 									</strong>
 
-									| Threshold: <strong><?php echo esc_html( $groups_and_urls['threshold'] ); ?> %</strong>
-									| CSS injection: <strong><?php echo $groups_and_urls['css'] ? 'yes' : 'no'; ?></strong>
+									| Threshold: <strong><?php echo esc_html( $group_and_urls['threshold'] ); ?> %</strong>
+									| CSS injection: <strong><?php echo $group_and_urls['css'] ? 'yes' : 'no'; ?></strong>
 									<br>
 									Notifications to:
 									<strong>
-										<?php echo ! empty( $groups_and_urls['alert_emails'] ) ? esc_html( implode( ', ', $groups_and_urls['alert_emails'] ) ) : 'no email address set'; ?>
+										<?php echo ! empty( $group_and_urls['alert_emails'] ) ? esc_html( implode( ', ', $group_and_urls['alert_emails'] ) ) : 'no email address set'; ?>
 									</strong>
 									<?php
 								} else {
@@ -1530,91 +1558,104 @@ class WebChangeDetector_Admin {
 			<h2 style="margin-top: 50px;">Select URLs</h2>
 			<p style="text-align: center;">Add other post types and taxonomies at <a href="?page=webchangedetector-settings">Settings</a></p>
 			<input type="hidden" value="webchangedetector" name="page">
-			<input type="hidden" value="<?php echo esc_html( $groups_and_urls['id'] ); ?>" name="group_id">
+			<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
 			<?php
 
 			// Get WP types and taxonomomies.
 			$url_types['types']      = get_post_types( array( 'public' => true ), 'objects' );
 			$url_types['taxonomies'] = get_taxonomies( array( 'public' => true ), 'objects' );
 
+			// If we have the blog as start page.
 			if ( ! get_option( 'page_on_front' ) ) {
+				?>
+
+			<div class="accordion post-type-accordion">
+				<div class="mm_accordion_title">
+					<h3>
+						<span class="accordion-title">
+							Frontpage
+							<div class="accordion-post-types-url-amount">
+								<?php $this->get_device_icon( 'desktop' ); ?>
+								<strong><span id="selected-desktop-Frontpage"></span></strong> |
+								<?php $this->get_device_icon( 'mobile' ); ?>
+								<strong><span id="selected-mobile-Frontpage"></span></strong>
+							</div>
+							<div class="clear"></div>
+
+						</span>
+
+					</h3>
+					<div class="mm_accordion_content">
+						<div class="group_urls_container">
+							<table>
+								<tr>
+									<th><?php $this->get_device_icon( 'desktop' ); ?></th>
+									<th><?php $this->get_device_icon( 'mobile' ); ?></th>
+									<th style="width: 100%">URL</th>
+								</tr>
+				<?php
 
 				// Check if current WP wp_post ID is in wcd_posts and get the url_id.
+				$selected_desktop = 0;
+				$selected_mobile  = 0;
 				foreach ( $wcd_posts as $wcd_post ) {
+
 					if ( isset( $wcd_post['cms_resource_id'] )
-						&& 0 === $wcd_post['cms_resource_id']
 						&& 'frontpage' === $wcd_post['url_type'] ) {
 						$url_id = $wcd_post['url_id'];
-					}
-				}
-				$checked['desktop'] = false;
-				$checked['mobile']  = false;
-				$selected_desktop   = 0;
-				$selected_mobile    = 0;
-				if ( ! empty( $groups_and_urls['urls'] ) ) {
-					foreach ( $groups_and_urls['urls'] as $url_details ) {
-						if ( $url_details['pivot']['url_id'] === $url_id ) {
-							if ( $url_details['pivot']['desktop'] ) {
-								$checked['desktop'] = 'checked';
-								++$selected_desktop;
-							}
-							if ( $url_details['pivot']['mobile'] ) {
-								$checked['mobile'] = 'checked';
-								++$selected_mobile;
+
+						$checked['desktop'] = false;
+						$checked['mobile']  = false;
+
+						if ( ! empty( $group_and_urls['urls'] ) ) {
+							foreach ( $group_and_urls['urls'] as $url_details ) {
+								if ( $url_details['id'] === $url_id ) {
+									$link = $url_details['url'];
+									if ( $url_details['pivot']['desktop'] ) {
+
+										$checked['desktop'] = 'checked';
+										++$selected_desktop;
+									}
+									if ( $url_details['pivot']['mobile'] ) {
+										$checked['mobile'] = 'checked';
+										++$selected_mobile;
+									}
+								}
 							}
 						}
+						?>
+								<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_url( $url_id ); ?>" >
+									<input type="hidden" name="post_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
+									<input type="hidden" name="url_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
+									<input type="hidden" name="active-<?php echo esc_html( $url_id ); ?>" value="1">
+
+									<td class="checkbox-desktop-Frontpage" style="text-align: center;">
+										<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url_id ); ?>">
+										<input type="checkbox" name="desktop-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['desktop'] ); ?>
+												id="desktop-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
+
+									<td class="checkbox-mobile-Frontpage" style="text-align: center;">
+										<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url_id ); ?>">
+										<input type="checkbox" name="mobile-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['mobile'] ); ?>
+										id="mobile-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
+
+									<td style="text-align: left;"><strong><?php echo esc_html( get_option( 'blogname' ) ) . ' - ' . esc_html( get_option( 'blogdescription' ) ); ?></strong><br>
+									<a href="<?php echo esc_html( get_option( 'home' ) ); ?>" target="_blank"><?php echo esc_url( $link ); ?></a></td>
+								</tr>
+						<?php
 					}
+					?>
+					<script> mmMarkRows('<?php echo esc_html( $url_id ); ?>'); </script>
+					<?php
 				}
 				?>
-				<div class="accordion post-type-accordion">
-					<div class="mm_accordion_title">
-						<h3>
-							<span class="accordion-title">
-								Frontpage
-								<div class="accordion-post-types-url-amount">
-									<?php $this->get_device_icon( 'desktop' ); ?>
-									<strong><span id="selected-desktop-Frontpage"></span></strong> |
-									<?php $this->get_device_icon( 'mobile' ); ?>
-									<strong><span id="selected-mobile-Frontpage"></span></strong>
-								</div>
-								<div class="clear"></div>
-
-							</span>
-
-						</h3>
-						<div class="mm_accordion_content">
-							<div class="group_urls_container">
-								<table>
-									<tr>
-										<th><?php $this->get_device_icon( 'desktop' ); ?></th>
-										<th><?php $this->get_device_icon( 'mobile' ); ?></th>
-										<th width="100%">URL</th>
-									</tr>
-									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $groups_and_urls['id'] ); ?>" id="<?php echo esc_url( $url_id ); ?>" >
-										<input type="hidden" name="post_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
-										<input type="hidden" name="url_id-<?php echo esc_html( $url_id ); ?>" value="<?php echo esc_html( $url_id ); ?>">
-										<input type="hidden" name="active-<?php echo esc_html( $url_id ); ?>" value="1">
-
-										<td class="checkbox-desktop-Frontpage" style="text-align: center;">
-											<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url_id ); ?>">
-											<input type="checkbox" name="desktop-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['desktop'] ); ?>
-													id="desktop-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
-
-										<td class="checkbox-mobile-Frontpage" style="text-align: center;">
-											<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url_id ); ?>">
-											<input type="checkbox" name="mobile-<?php echo esc_html( $url_id ); ?>" value="1" <?php echo esc_html( $checked['mobile'] ); ?>
-											id="mobile-<?php echo esc_html( $url_id ); ?>" onclick="mmMarkRows('<?php echo esc_html( $url_id ); ?>')" ></td>
-
-										<td style="text-align: left;"><strong><?php echo esc_html( get_option( 'blogname' ) ) . ' - ' . esc_html( get_option( 'blogdescription' ) ); ?></strong><br>
-										<a href="<?php echo esc_html( get_option( 'home' ) ); ?>" target="_blank"><?php echo esc_html( get_option( 'home' ) ); ?></a></td>
-									</tr>
-								</table>
+				</table>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<script> mmMarkRows('<?php echo esc_html( $url_id ); ?>'); </script>
+
 				<?php
 				echo '<div class="selected-urls" style="display: none;" 
                             data-amount_selected="1" 
@@ -1685,8 +1726,8 @@ class WebChangeDetector_Admin {
 						<?php
 						// Select all from same device.
 						echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
-                                    <td><input type="checkbox" id="select-desktop-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'desktop\', \'' . esc_html( $groups_and_urls['id'] ) . '\' )" /></td>
-                                    <td><input type="checkbox" id="select-mobile-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'mobile\', \'' . esc_html( $groups_and_urls['id'] ) . '\' )" /></td>
+                                    <td><input type="checkbox" id="select-desktop-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'desktop\', \'' . esc_html( $group_and_urls['id'] ) . '\' )" /></td>
+                                    <td><input type="checkbox" id="select-mobile-' . esc_html( $url_category->label ) . '" onclick="mmToggle( this, \'' . esc_html( $url_category->label ) . '\', \'mobile\', \'' . esc_html( $group_and_urls['id'] ) . '\' )" /></td>
                                     <td></td>
                                 </tr>';
 						$amount_active_posts = 0;
@@ -1694,15 +1735,15 @@ class WebChangeDetector_Admin {
 						$selected_desktop    = 0;
 
 						if ( is_iterable( $wp_posts ) && count( $wp_posts ) > 0 ) {
-
 							// Re-order posts to have active ones on top.
 							$inactive_posts = array();
 							$active_posts   = array();
 							foreach ( $wp_posts as $wp_post ) {
-								foreach ( $groups_and_urls['urls'] as $group_url ) {
+								foreach ( $group_and_urls['urls'] as $group_url ) {
+
 									if ( ! empty( $group_url['cms_resource_id'] ) &&
 										$group_url['url_type'] === $url_type &&
-										$wp_post->ID === $group_url['cms_resource_id']
+										(string) $wp_post->ID === $group_url['cms_resource_id']
 									) {
 										if ( $group_url['pivot']['desktop'] || $group_url['pivot']['mobile'] ) {
 											$active_posts[] = $wp_post;
@@ -1758,8 +1799,8 @@ class WebChangeDetector_Admin {
 									'mobile'  => '',
 								);
 
-								if ( ! empty( $groups_and_urls['urls'] ) ) {
-									foreach ( $groups_and_urls['urls'] as $url_details ) {
+								if ( ! empty( $group_and_urls['urls'] ) ) {
+									foreach ( $group_and_urls['urls'] as $url_details ) {
 										if ( $url_details['pivot']['url_id'] === $url_id ) {
 											$checked['active'] = 'checked';
 
@@ -1777,7 +1818,7 @@ class WebChangeDetector_Admin {
 									}
 								}
 
-								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $groups_and_urls['id'] ) . '" id="' . esc_html( $url_id ) . '" >';
+								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url_id ) . '" >';
 								echo '<input type="hidden" name="post_id-' . esc_html( $url_id ) . '" value="' . esc_html( $post_id ) . '">';
 								echo '<input type="hidden" name="url_id-' . esc_html( $url_id ) . '" value="' . esc_html( $url_id ) . '">';
 								echo '<input type="hidden" name="active-' . esc_html( $url_id ) . ' value="1">';
