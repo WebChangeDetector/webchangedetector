@@ -104,13 +104,13 @@ class WebChangeDetector_Autoupdates {
 		WebChangeDetector_Admin::error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
 		$response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
 		WebChangeDetector_Admin::error_log( 'Post-Screenshot Response: ' . wp_json_encode( $response ) );
-			set_transient(
+		set_transient(
 			WCD_POST_AUTO_UPDATE,
 			array(
 				'status'   => 'processing',
 				'batch_id' => $response['batch'],
 			),
-				WCD_HOUR_IN_SECONDS
+			WCD_HOUR_IN_SECONDS
 		);
 
 		// Save the auto update batch id.
@@ -240,7 +240,7 @@ class WebChangeDetector_Autoupdates {
 	public function wcd_wp_maybe_auto_update() {
 		WebChangeDetector_Admin::error_log( 'Checking if sc are ready' );
 		$pre_sc_transient = get_transient( WCD_PRE_AUTO_UPDATE );
-		$response      = WebChangeDetector_API_V2::get_queue_v2( $pre_sc_transient['batch_id'], 'open,processing' );
+		$response         = WebChangeDetector_API_V2::get_queue_v2( $pre_sc_transient['batch_id'], 'open,processing' );
 
 		WebChangeDetector_Admin::error_log( 'Queue: ' . wp_json_encode( $response ) );
 		// If we don't have open or processing queues of the batch anymore, we can do auto-updates.
@@ -436,7 +436,7 @@ class WebChangeDetector_Autoupdates {
 			);
 
 			WebChangeDetector_Admin::error_log( 'Started taking screenshots and setting transients' );
-			set_transient( WCD_PRE_AUTO_UPDATE, $transient_data , HOUR_IN_SECONDS);
+			set_transient( WCD_PRE_AUTO_UPDATE, $transient_data, HOUR_IN_SECONDS );
 			$this->reschedule( $this->one_minute_in_seconds, 'wcd_wp_maybe_auto_update' );
 			return false;
 
