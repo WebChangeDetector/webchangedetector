@@ -1468,7 +1468,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_url_settings( $group_and_urls, $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
-		$wcd_posts = $this->sync_posts();
+		$wcd_website_urls = $this->sync_posts();
 
 		// Select URLS.
 		$tab            = 'update-settings'; // init.
@@ -1478,12 +1478,14 @@ class WebChangeDetector_Admin {
 			$detection_type = 'auto';
 		}
 		?>
+
 		<div class="wcd-select-urls-container">
 			<form class="wcd-frm-settings" action="<?php echo esc_url( admin_url() . 'admin.php?page=webchangedetector-' . $tab ); ?>" method="post">
 				<input type="hidden" name="wcd_action" value="save_group_settings">
 				<?php
 				wp_nonce_field( 'save_group_settings' );
 
+				// Manual check settings.
 				if ( ! $monitoring_group ) {
 					$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
 					$auto_update_checks_enabled = true;
@@ -1491,259 +1493,260 @@ class WebChangeDetector_Admin {
 						$auto_update_checks_enabled = false;
 					}
 					?>
-				<input type="hidden" name="step" value="pre-update">
-				<h2>Settings</h2>
-				<div class="accordion">
-					<div class="mm_accordion_title">
-						<h3>
-							Manual Checks Settings<br>
-							<small>
-								Auto update checks:
-								<strong>
-									<span style="color: <?php echo $auto_update_checks_enabled ? 'green' : 'red'; ?>">
-										<?php echo $auto_update_checks_enabled ? 'On' : 'Off'; ?>
-									</span>
-								</strong>
-								| Threshold: <strong><?php echo esc_html( $group_and_urls['threshold'] ); ?> %</strong>
-								| CSS injection: <strong><?php echo $group_and_urls['css'] ? 'yes' : 'no'; ?></strong>
-							</small>
-						</h3>
-						<div class="mm_accordion_content">
-							<input type="hidden" name="wcd-update-settings" value="true">
-							<?php include 'partials/templates/update-settings.php'; ?>
-						</div>
-					</div>
-				</div>
 
-			<?php } else { ?>
-				<!-- Monitoring Settings -->
-				<h2>Settings</h2>
-				<div class="accordion" style="margin-bottom: 40px;">
-					<div class="mm_accordion_title" id="accordion-auto-detection-settings">
-						<h3>
-							Monitoring Settings<br>
-							<small>
-								<?php
-								$enabled = $group_and_urls['enabled'];
-								if ( $enabled ) {
-									?>
-									Monitoring: <strong style="color: green;">Enabled</strong>
-									| Interval: <strong>
-										every
-										<?php echo esc_html( $group_and_urls['interval_in_h'] ); ?>
-										<?php echo 1 === $group_and_urls['interval_in_h'] ? ' hour' : ' hours'; ?>
+					<input type="hidden" name="step" value="pre-update">
+					<h2>Settings</h2>
+					<div class="accordion">
+						<div class="mm_accordion_title">
+							<h3>
+								Manual Checks Settings<br>
+								<small>
+									Auto update checks:
+									<strong>
+										<span style="color: <?php echo $auto_update_checks_enabled ? 'green' : 'red'; ?>">
+											<?php echo $auto_update_checks_enabled ? 'On' : 'Off'; ?>
+										</span>
 									</strong>
-
 									| Threshold: <strong><?php echo esc_html( $group_and_urls['threshold'] ); ?> %</strong>
 									| CSS injection: <strong><?php echo $group_and_urls['css'] ? 'yes' : 'no'; ?></strong>
-									<br>
-									Notifications to:
-									<strong>
-										<?php echo ! empty( $group_and_urls['alert_emails'] ) ? esc_html( implode( ', ', $group_and_urls['alert_emails'] ) ) : 'no email address set'; ?>
-									</strong>
-									<?php
-								} else {
-									?>
-									Monitoring: <strong style="color: red">Disabled</strong>
-								<?php } ?>
-							</small>
-						</h3>
-						<div class="mm_accordion_content padding" style="background: #fff;">
-							<?php include 'partials/templates/auto-settings.php'; ?>
+								</small>
+							</h3>
+							<div class="mm_accordion_content">
+								<input type="hidden" name="wcd-update-settings" value="true">
+								<?php include 'partials/templates/update-settings.php'; ?>
+							</div>
 						</div>
 					</div>
-				</div>
-			<?php } ?>
 
-			<h2 style="margin-top: 50px;">Select URLs</h2>
-			<p style="text-align: center;">Add other post types and taxonomies at <a href="?page=webchangedetector-settings">Settings</a></p>
-			<input type="hidden" value="webchangedetector" name="page">
-			<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
-			<?php
+				<?php } else { ?>
 
-			// Get WP types and taxonomomies.
-			$url_types['types']      = get_post_types( array( 'public' => true ), 'objects' );
-			$url_types['taxonomies'] = get_taxonomies( array( 'public' => true ), 'objects' );
+					<!-- Monitoring settings -->
+					<h2>Settings</h2>
+					<div class="accordion" style="margin-bottom: 40px;">
+						<div class="mm_accordion_title" id="accordion-auto-detection-settings">
+							<h3>
+								Monitoring Settings<br>
+								<small>
+									<?php
+									$enabled = $group_and_urls['enabled'];
+									if ( $enabled ) {
+										?>
+										Monitoring: <strong style="color: green;">Enabled</strong>
+										| Interval: <strong>
+											every
+											<?php echo esc_html( $group_and_urls['interval_in_h'] ); ?>
+											<?php echo 1 === $group_and_urls['interval_in_h'] ? ' hour' : ' hours'; ?>
+										</strong>
 
-
-
-            foreach($group_and_urls['urls'] as $wcd_group_url){
-                foreach($wcd_posts as $wcd_website_url) {
-                    if($wcd_website_url['url_id'] === $wcd_group_url['id']) {
-                        $merged_url_details[$wcd_website_url['url_category']][] = array_merge($wcd_group_url, $wcd_website_url);
-
-                    }
-                }
-            }
-            //dd($merged_url_details);
-
-			foreach ( $merged_url_details as $url_type => $urls ) {
-
-				if ( is_iterable( $merged_url_details ) ) { ?>
-                    <div class="accordion">
-                        <div class="mm_accordion_title">
-                            <h3>
-							<span class="accordion-title">
-								<?php echo esc_html( ucfirst( $url_type ) ); ?>
-								<div class="accordion-post-types-url-amount">
-									<?php $this->get_device_icon( 'desktop' ); ?>
-									<strong><span id="selected-desktop-<?php echo esc_html( lcfirst($url_type) ); ?>"></span></strong> |
-
-									<?php $this->get_device_icon( 'mobile' ); ?>
-									<strong><span id="selected-mobile-<?php echo esc_html( lcfirst($url_type)); ?>"></span></strong>
-								</div>
-								<div class="clear"></div>
-							</span>
-
-                            </h3>
-                            <div class="mm_accordion_content">
-                                <div class="group_urls_container">
-                                    <input class="filter-url-table" type="text" placeholder="Filter">
-                                    <div class="clear"></div>
-                                    <table class="no-margin filter-table">
-                                        <tr>
-                                            <th><?php $this->get_device_icon( 'desktop' ); ?></th>
-                                            <th><?php $this->get_device_icon( 'mobile' ); ?></th>
-                                            <th width="100%">URL</th>
-                                        </tr>
+										| Threshold: <strong><?php echo esc_html( $group_and_urls['threshold'] ); ?> %</strong>
+										| CSS injection: <strong><?php echo $group_and_urls['css'] ? 'yes' : 'no'; ?></strong>
+										<br>
+										Notifications to:
+										<strong>
+											<?php echo ! empty( $group_and_urls['alert_emails'] ) ? esc_html( implode( ', ', $group_and_urls['alert_emails'] ) ) : 'no email address set'; ?>
+										</strong>
 										<?php
-										// Select all from same device.
-										echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
-                                    <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst($url_type) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst($url_type) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
-                                    <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst($url_type) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst($url_type) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
-                                    <td></td>
-                                </tr>';
-                                $amount_active_posts = 0;
-                                $selected_mobile     = 0;
-                                $selected_desktop    = 0;
-				    }
-
-
-					if ( is_iterable( $urls ) && count( $urls ) > 0 ) {
-
-                        // Re-order posts to have active ones on top.
-                        $inactive_posts = array();
-                        $active_posts   = array();
-                        foreach ( $urls as $url ) {
-                            if ( $url['pivot']['desktop'] || $url['pivot']['mobile'] ) {
-                                $active_posts[] = $url;
-                            } else {
-                                $inactive_posts[] = $url;
-                            }
-                        }
-
-                        // This way the wp_posts should be sorted the right way.
-                        $urls = array_merge( $active_posts, $inactive_posts );
-
-                        foreach($urls as $url ) {
-                            // init.
-                            $checked = array(
-                                'desktop' => '',
-                                'mobile'  => '',
-                            );
-                            if ( $url['pivot']['desktop'] ) {
-                                $checked['desktop'] = 'checked';
-                                ++$selected_desktop;
-                                ++$amount_active_posts;
-                            }
-                            if ( $url['pivot']['mobile'] ) {
-                                $checked['mobile'] = 'checked';
-                                ++$selected_mobile;
-                                ++$amount_active_posts;
-                            }
-                            //dd($url);
-                            echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url['id'] ) . '" >';
-                            echo '<input type="hidden" name="post_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
-                            echo '<input type="hidden" name="url_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
-                            echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . ' value="1">';
-
-                            echo '<td class="checkbox-desktop-' . esc_html( lcfirst($url_type) ) . '" style="text-align: center;">
-                                            <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">
-                                            <input type="checkbox" name="desktop-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
-                                            id="desktop-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
-
-                            echo '<td class="checkbox-mobile-' .  esc_html( lcfirst($url_type) ) . '" style="text-align: center;">
-                                            <input type="hidden" value="0" name="mobile-' . esc_html( $url['id'] ) . '">
-                                            <input type="checkbox" name="mobile-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
-                                            id="mobile-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
-
-                            echo '<td style="text-align: left;"><strong>' . esc_html( $url['html_title'] ) . '</strong><br>';
-                            echo '<a href="' . esc_html( $url['url'] ) . '" target="_blank">' . esc_html( $url['url'] ) . '</a></td>';
-                            echo '</tr>';
-
-                            echo '<script> mmMarkRows(\'' . esc_html( $url['id'] ) . '\'); </script>';
-                        }
-                    }
-                    echo '</table>';
-
-                    if ( ! count( $urls ) ) {
-                        ?>
-                        <div style="text-align: center; font-weight: 700; padding: 20px 0;">
-                            No Posts in this post type
-                        </div>
-                        <?php
-                    }
-
-                    echo '<div class="selected-urls" style="display: none;" 
-                                data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
-                                data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
-                                data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
-                                data-post_type="' . esc_html( lcfirst($url_type) ) . '"
-                                ></div>';
-
-                    ?>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
-                    <?php
-                }
-			if ( $monitoring_group ) {
-				?>
-					<button
-							class="button button-primary"
-							type="submit"
-							name="save_settings"
-							value="post_urls"
-							onclick="return wcdValidateFormAutoSettings()">
-						Save
-					</button>
-					<button class="button"
-							type="submit"
-							name="save_settings"
-							value="post_urls_update_and_auto"
-							style="margin-left: 10px;"
-							onclick="return wcdValidateFormAutoSettings()">
-						Save & copy to manual checks
-					</button>
-				<?php
-			} else {
-
-				if ( $this->website_details['allow_manual_detection'] ) {
-					?>
-						<button
-							class="button button-primary"
-							type="submit"
-							name="save_settings"
-							value="save_update_settings_and_continue" >
-							Save and continue >
-						</button>
+									} else {
+										?>
+										Monitoring: <strong style="color: red">Disabled</strong>
+									<?php } ?>
+								</small>
+							</h3>
+							<div class="mm_accordion_content padding" style="background: #fff;">
+								<?php include 'partials/templates/auto-settings.php'; ?>
+							</div>
+						</div>
+					</div>
 					<?php } ?>
+
+					<h2 style="margin-top: 50px;">Select URLs</h2>
+					<p style="text-align: center;">Add other post types and taxonomies at
+						<a href="?page=webchangedetector-settings">Settings</a>
+					</p>
+					<input type="hidden" value="webchangedetector" name="page">
+					<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
+
+					<?php
+					$merged_url_details = array();
+					foreach ( $group_and_urls['urls'] as $wcd_group_url ) {
+						foreach ( $wcd_website_urls as $wcd_website_url ) {
+							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] ) {
+								$merged_url_details[ $wcd_website_url['url_category'] ][] = array_merge( $wcd_group_url, $wcd_website_url );
+							}
+						}
+					}
+
+					foreach ( $merged_url_details as $url_type => $urls ) {
+						if ( is_iterable( $merged_url_details ) ) {
+							?>
+							<div class="accordion">
+								<div class="mm_accordion_title">
+									<h3>
+									<span class="accordion-title">
+										<?php echo esc_html( ucfirst( $url_type ) ); ?><br>
+										<small>
+											Selected URLs: <strong>
+												<span style="margin: 0 10px;"> </span>
+											<?php $this->get_device_icon( 'desktop' ); ?> Desktop:
+											<strong><span id="selected-desktop-<?php echo esc_html( lcfirst( $url_type ) ); ?>"></span></strong>
+											<span style="margin: 0 10px;"> </span>
+											<?php $this->get_device_icon( 'mobile' ); ?> Mobile:
+											<strong><span id="selected-mobile-<?php echo esc_html( lcfirst( $url_type ) ); ?>"></span></strong>
+												</strong>
+										</small>
+										<div class="accordion-post-types-url-amount">
+
+										</div>
+										<div class="clear"></div>
+									</span>
+									</h3>
+
+									<div class="mm_accordion_content">
+										<div class="group_urls_container">
+											<input class="filter-url-table" type="text" placeholder="Filter">
+											<div class="clear"></div>
+											<table class="no-margin filter-table">
+												<tr>
+													<th><?php $this->get_device_icon( 'desktop' ); ?></th>
+													<th><?php $this->get_device_icon( 'mobile' ); ?></th>
+													<th width="100%">URL</th>
+												</tr>
+												<?php
+												// Select all from same device.
+												echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
+                                            <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
+                                            <td></td>
+                                        </tr>';
+												$amount_active_posts = 0;
+												$selected_mobile     = 0;
+												$selected_desktop    = 0;
+						}
+
+						if ( is_iterable( $urls ) && count( $urls ) > 0 ) {
+
+							// Re-order posts to have active ones on top.
+							$inactive_posts = array();
+							$active_posts   = array();
+							foreach ( $urls as $url ) {
+								if ( $url['pivot']['desktop'] || $url['pivot']['mobile'] ) {
+									$active_posts[] = $url;
+								} else {
+									$inactive_posts[] = $url;
+								}
+							}
+
+							// This way the wp_posts should be sorted the right way.
+							$urls = array_merge( $active_posts, $inactive_posts );
+
+							foreach ( $urls as $url ) {
+								// init.
+								$checked = array(
+									'desktop' => '',
+									'mobile'  => '',
+								);
+								if ( $url['pivot']['desktop'] ) {
+									$checked['desktop'] = 'checked';
+									++$selected_desktop;
+									++$amount_active_posts;
+								}
+								if ( $url['pivot']['mobile'] ) {
+									$checked['mobile'] = 'checked';
+									++$selected_mobile;
+									++$amount_active_posts;
+								}
+
+								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url['id'] ) . '" >';
+								echo '<input type="hidden" name="post_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
+								echo '<input type="hidden" name="url_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
+								echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . ' value="1">';
+
+								echo '<td class="checkbox-desktop-' . esc_html( lcfirst( $url_type ) ) . '" style="text-align: center;">
+                                                    <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">
+                                                    <input type="checkbox" name="desktop-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
+                                                    id="desktop-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
+
+								echo '<td class="checkbox-mobile-' . esc_html( lcfirst( $url_type ) ) . '" style="text-align: center;">
+                                                    <input type="hidden" value="0" name="mobile-' . esc_html( $url['id'] ) . '">
+                                                    <input type="checkbox" name="mobile-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
+                                                    id="mobile-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
+
+								echo '<td style="text-align: left;"><strong>' . esc_html( $url['html_title'] ) . '</strong><br>';
+								echo '<a href="' . esc_html( $url['url'] ) . '" target="_blank">' . esc_html( $url['url'] ) . '</a></td>';
+								echo '</tr>';
+
+								echo '<script> mmMarkRows(\'' . esc_html( $url['id'] ) . '\'); </script>';
+							}
+						}
+							echo '</table>';
+
+						if ( ! count( $urls ) ) {
+							?>
+								<div style="text-align: center; font-weight: 700; padding: 20px 0;">
+									No Posts in this post type
+								</div>
+							<?php
+						}
+
+							echo '<div class="selected-urls" style="display: none;" 
+                                        data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
+                                        data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
+                                        data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
+                                        data-post_type="' . esc_html( lcfirst( $url_type ) ) . '"
+                                        ></div>';
+						?>
+									</div>
+								</div>
+							</div>
+						</div>
+						<?php
+					}
+
+					if ( $monitoring_group ) {
+						?>
+				<button
+						class="button button-primary"
+						type="submit"
+						name="save_settings"
+						value="post_urls"
+						onclick="return wcdValidateFormAutoSettings()">
+					Save
+				</button>
+				<button class="button"
+						type="submit"
+						name="save_settings"
+						value="post_urls_update_and_auto"
+						style="margin-left: 10px;"
+						onclick="return wcdValidateFormAutoSettings()">
+					Save & copy to manual checks
+				</button>
+						<?php
+					} else {
+						if ( $this->website_details['allow_manual_detection'] ) {
+							?>
 					<button
-							class="button"
-							type="submit"
-							name="save_settings"
-							value="post_urls"
-							style="margin-left: 10px;">
-						Only save
+						class="button button-primary"
+						type="submit"
+						name="save_settings"
+						value="save_update_settings_and_continue" >
+						Save and continue >
 					</button>
-					<button class="button"
-							type="submit"
-							name="save_settings"
-							value="post_urls_update_and_auto"
-							style="margin-left: 10px;">
-						Save & copy to monitoring
-					</button>
+						<?php } ?>
+				<button
+						class="button"
+						type="submit"
+						name="save_settings"
+						value="post_urls"
+						style="margin-left: 10px;">
+					Only save
+				</button>
+				<button class="button"
+						type="submit"
+						name="save_settings"
+						value="post_urls_update_and_auto"
+						style="margin-left: 10px;">
+					Save & copy to monitoring
+				</button>
 				<?php } ?>
 			</form>
 		</div>
@@ -2342,8 +2345,3 @@ if ( ! defined( 'WCD_TAB_SETTINGS' ) ) {
 if ( ! defined( 'WCD_REQUEST_TIMEOUT' ) ) {
 	define( 'WCD_REQUEST_TIMEOUT', 30 );
 }
-
-
-
-
-
