@@ -360,12 +360,27 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-change-detections':
-				echo '<h2>Latest Change Detections</h2>';
-
 				$limit_days = null;
 				if ( isset( $_POST['limit_days'] ) ) {
 					$limit_days = sanitize_text_field( wp_unslash( $_POST['limit_days'] ) );
 					if ( ! empty( $limit_days ) && ! is_numeric( $limit_days ) ) {
+						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
+						return false;
+					}
+				}
+				$from = gmdate( 'Y-m-d', strtotime( '- 7 days' ) );
+				if ( isset( $_POST['from'] ) ) {
+					$from = sanitize_text_field( wp_unslash( $_POST['from'] ) );
+
+					if ( empty( $from ) ) {
+						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
+						return false;
+					}
+				}
+				$to = current_time( 'Y-m-d' );
+				if ( isset( $_POST['to'] ) ) {
+					$to = sanitize_text_field( wp_unslash( $_POST['to'] ) );
+					if ( empty( $to ) ) {
 						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
 						return false;
 					}
@@ -389,6 +404,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<form method="post" style="margin-bottom: 20px;">
 						<input type="hidden" name="wcd_action" value="filter_change_detections">
 						<?php wp_nonce_field( 'filter_change_detections' ); ?>
+
+						from <input name="from" value="<?php echo esc_html( $from ); ?>" type="date">
+						to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
 						<select name="limit_days">
 							<option value="" <?php echo null === $limit_days ? 'selected' : ''; ?>> Show all</option>
 							<option value="3" <?php echo 3 === $limit_days ? 'selected' : ''; ?>>Last 3 days</option>
@@ -414,14 +432,27 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<?php
 
 					// Show comparisons.
-					$filters = array(
-						'from'            => gmdate( 'Y-m-d H:i:s', strtotime( '- ' . $limit_days . ' days' ) ),
-						'to'              => gmdate( 'Y-m-d H:i:s' ),
-						'above_threshold' => $difference_only,
-						// TODO group_type.
-					);
-					$compares_v2 = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
-					$wcd->compare_view_v2( $compares_v2 );
+
+					$batches     = WebChangeDetector_API_V2::get_batches();
+					$batches     = array_slice( $batches['data'], 0, 10 );
+					$comparisons = array();
+
+					// TODO Limit to X batches.
+					foreach ( $batches as $batch ) {
+						$filters = array(
+							'from'            => gmdate( 'Y-m-d H:i:s', strtotime( $from ) ),
+							'to'              => gmdate( 'Y-m-d H:i:s', strtotime( $to ) + 86400 - 1 ), // + 1 day - 1 second.
+							'above_threshold' => $difference_only,
+							'batch'           => $batch['id'],
+							// TODO group_type.
+						);
+
+						$comparisons_of_batch = WebChangeDetector_API_V2::get_comparisons_v2( $filters )['data'];
+						if ( ! empty( $comparisons_of_batch ) ) {
+							$comparisons = array_merge( $comparisons, $comparisons_of_batch );
+						}
+					}
+					$wcd->compare_view_v2( $comparisons );
 
 					?>
 				</div>

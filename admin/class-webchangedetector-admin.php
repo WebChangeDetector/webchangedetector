@@ -541,6 +541,9 @@ class WebChangeDetector_Admin {
 		if ( 'fail' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
 		}
+		if ( 'warning' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
+		}
 		if ( 'upgrade' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
 		}
@@ -669,7 +672,7 @@ class WebChangeDetector_Admin {
 							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 							<?php
 							if ( array_key_exists( 'needs_attention', $compares_by_batch[ $batch_id ] ) ) {
-								$this->get_device_icon( 'fail', 'batch_needs_attention' );
+								$this->get_device_icon( 'warning', 'batch_needs_attention' );
 								echo '<small>Needs Attention</small>';
 							} else {
 								$this->get_device_icon( 'check', 'batch_is_ok' );
@@ -828,7 +831,7 @@ class WebChangeDetector_Admin {
 		$all_tokens          = array();
 		$compares_in_batches = array();
 
-		foreach ( $compares['data'] as $key => $compare ) {
+		foreach ( $compares as $key => $compare ) {
 
 			$all_tokens[] = $compare['token'];
 
@@ -845,11 +848,11 @@ class WebChangeDetector_Admin {
 			<div class="accordion accordion-batch">
 				<div class="mm_accordion_title">
 					<h3>
-						<div>
+						<div style="display: inline-block;">
 							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 								<?php
 								if ( array_key_exists( 'needs_attention', $compares_in_batches[ $batch_id ] ) ) {
-									$this->get_device_icon( 'fail', 'batch_needs_attention' );
+									$this->get_device_icon( 'warning', 'batch_needs_attention' );
 									echo '<small>Needs Attention</small>';
 								} else {
 									$this->get_device_icon( 'check', 'batch_is_ok' );
@@ -1568,6 +1571,7 @@ class WebChangeDetector_Admin {
 
 					<?php
 					$merged_url_details = array();
+
 					foreach ( $group_and_urls['urls'] as $wcd_group_url ) {
 						foreach ( $wcd_website_urls as $wcd_website_url ) {
 							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] ) {
@@ -1577,7 +1581,7 @@ class WebChangeDetector_Admin {
 					}
 
 					foreach ( $merged_url_details as $url_type => $urls ) {
-						if ( is_iterable( $merged_url_details ) ) {
+						if ( is_iterable( $urls ) ) {
 							?>
 							<div class="accordion">
 								<div class="mm_accordion_title">
@@ -1688,12 +1692,12 @@ class WebChangeDetector_Admin {
 							<?php
 						}
 
-							echo '<div class="selected-urls" style="display: none;" 
-                                        data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
-                                        data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
-                                        data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
-                                        data-post_type="' . esc_html( lcfirst( $url_type ) ) . '"
-                                        ></div>';
+						echo '<div class="selected-urls" style="display: none;" 
+                                    data-amount_selected="' . esc_html( $amount_active_posts ) . '" 
+                                    data-amount_selected_desktop="' . esc_html( $selected_desktop ) . '"
+                                    data-amount_selected_mobile="' . esc_html( $selected_mobile ) . '"
+                                    data-post_type="' . esc_html( lcfirst( $url_type ) ) . '"
+                                    ></div>';
 						?>
 									</div>
 								</div>
@@ -2043,13 +2047,13 @@ class WebChangeDetector_Admin {
 				</div>
 				<div class="clear"></div>
 			</div>
-
-
+            
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
+				// TODO Limit to X batches.
 				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2();
-				$this->compare_view_v2( $recent_comparisons );
+				$this->compare_view_v2( $recent_comparisons['data'] );
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>

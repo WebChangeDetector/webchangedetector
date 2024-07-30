@@ -166,6 +166,17 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'DELETE' );
 	}
 
+	/** Get batches.
+	 *
+	 * @return mixed|string
+	 */
+	public static function get_batches() {
+		$args = array(
+			'action' => 'batches',
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
 	/** Update comparison.
 	 *
 	 * @param string $id The comparison id.
