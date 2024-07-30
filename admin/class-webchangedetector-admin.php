@@ -629,17 +629,10 @@ class WebChangeDetector_Admin {
 	 */
 	public function compare_view( $compares, $latest_batch = false ) {
 		if ( empty( $compares ) ) { ?>
-			<table class="toggle" style="width: 100%">
+			<table style="width: 100%">
 				<tr>
-					<th style="width: 120px;">Status</th>
-					<th style="width: auto">URL</th>
-					<th style="width: 150px">Compared Screenshots</th>
-					<th style="width: 50px">Difference</th>
-					<th>Show</th>
-				</tr>
-				<tr>
-					<td colspan="4" style="text-align: center">
-						<strong>There are no change detections yet.</strong
+					<td colspan="5" style="text-align: center; background: #fff;">
+						<strong>There are no change detections to show.</strong
 					</td>
 				</tr>
 			</table>
@@ -810,17 +803,10 @@ class WebChangeDetector_Admin {
 	public function compare_view_v2( $compares ) {
 		if ( empty( $compares ) ) {
 			?>
-			<table class="toggle" style="width: 100%">
+			<table style="width: 100%">
 				<tr>
-					<th style="width: 120px;">Status</th>
-					<th style="width: auto">URL</th>
-					<th style="width: 150px">Compared Screenshots</th>
-					<th style="width: 50px">Difference</th>
-					<th>Show</th>
-				</tr>
-				<tr>
-					<td colspan="4" style="text-align: center">
-						<strong>There are no change detections yet.</strong
+					<td colspan="5" style="text-align: center; background: #fff;">
+						<strong>There are no change detections to show.</strong
 					</td>
 				</tr>
 			</table>
@@ -2047,7 +2033,7 @@ class WebChangeDetector_Admin {
 				</div>
 				<div class="clear"></div>
 			</div>
-            
+
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
@@ -2057,7 +2043,7 @@ class WebChangeDetector_Admin {
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
-						<?php } ?>
+                <?php } ?>
 			</div>
 
 			<div class="clear"></div>
