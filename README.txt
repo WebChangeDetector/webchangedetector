@@ -54,9 +54,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Changelog ==
 = 2.4.0 =
 * Feature: Checks on WP auto updates
-
-= 2.4.0 =
-* Checks at WP auto updates
+* Feature: Set status for change detections
+* Improvement: Group change detections
+* Fix: Calculation of available checks
+* Fix: Compatibility with WPML and Polylang
 
 = 2.3.3 =
 * Show updated pricing calculations

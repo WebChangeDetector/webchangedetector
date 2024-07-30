@@ -135,17 +135,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			if ( $account_details['plan']['one_time'] ) { // Check for trial account.
 				?>
 				<div class="notice notice-error">
-					<p>You ran out of checks. Please upgrade your account to continue.</p>
+					<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.</p>
 				</div>
 			<?php } else { ?>
 				<div class="notice notice-error">
-					<p>You ran out of checks. Please upgrade your account to continue or wait for renewal.</p>
+					<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue or wait for renewal.</p>
 				</div>
 				<?php
 			}
 		} elseif ( $usage_percent > 70 ) {
 			?>
-			<div class="notice notice-warning"><p>You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
+			<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
 			<?php
 		}
 
@@ -616,7 +616,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									break;
 								}
 							}
-							// Dont check for tomorrow if we found the next date today.
+							// Don't check for tomorrow if we found the next date today.
 							if ( $date_next_sc ) {
 								break;
 							}
