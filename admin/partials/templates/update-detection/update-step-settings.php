@@ -8,7 +8,7 @@
 /**
  * Include manual check tiles
  */
-require 'update-step-tiles.php';
+
 ?>
 
 <!-- Settings -->

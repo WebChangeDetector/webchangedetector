@@ -831,7 +831,7 @@ class WebChangeDetector_Admin {
 		$auto_update_batches = get_option( 'wcd_comparison_batches' );
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 			?>
-			<div class="accordion accordion-batch">
+			<div class="accordion accordion-batch" style="margin-top: 20px;">
 				<div class="mm_accordion_title">
 					<h3>
 						<div style="display: inline-block;">
@@ -926,24 +926,15 @@ class WebChangeDetector_Admin {
 									<td>
 										<strong>
 											<?php
-
 											if ( ! empty( $compare['html_title'] ) ) {
 												echo esc_html( $compare['html_title'] ) . '<br>';
 											}
 											?>
 										</strong>
 										<?php
-
+										echo esc_url( $compare['url'] ) . '<br>';
 										$this->get_device_icon( $compare['device'] );
-										echo esc_url( $compare['url'] );
-										echo '<br>';
-										if ( 'auto' === $compare['sc_type'] ) {
-											$this->get_device_icon( 'auto-group' );
-											echo 'Monitoring';
-										} else {
-											$this->get_device_icon( 'update-group' );
-											echo 'Manual Checks';
-										}
+										echo esc_html( ucfirst( $compare['device'] ) );
 										?>
 									</td>
 									<td>
@@ -962,15 +953,15 @@ class WebChangeDetector_Admin {
 										</form>
 									</td>
 								</tr>
-								<?php
-								$latest_batch_id = $batch_id;
-							}
-							?>
+							<?php } ?>
 						</table>
 					</div>
 				</div>
 			</div>
 			<?php
+			if ( 1 === count( $compares_in_batches ) ) {
+				echo '<script>jQuery(document).ready(function() {jQuery(".accordion h3").click();});</script>';
+			}
 		}
 	}
 
@@ -1719,7 +1710,7 @@ class WebChangeDetector_Admin {
 						type="submit"
 						name="save_settings"
 						value="save_update_settings_and_continue" >
-						Save and continue >
+						Save & start manual checks >
 					</button>
 						<?php } ?>
 				<button
@@ -1735,7 +1726,7 @@ class WebChangeDetector_Admin {
 						name="save_settings"
 						value="post_urls_update_and_auto"
 						style="margin-left: 10px;">
-					Save & copy to monitoring
+					Save & copy settingsto monitoring
 				</button>
 				<?php } ?>
 			</form>
@@ -2043,7 +2034,7 @@ class WebChangeDetector_Admin {
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
-                <?php } ?>
+				<?php } ?>
 			</div>
 
 			<div class="clear"></div>

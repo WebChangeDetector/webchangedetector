@@ -24,6 +24,15 @@ require 'update-step-tiles.php';
 </form>
 
 <?php
-$change_detections = $wcd->get_compares( $group_id );
-$wcd->compare_view( $change_detections, true );
-?>
+	$batches     = WebChangeDetector_API_V2::get_batches();
+	$batch       = array_slice( $batches['data'], 0, 1 );
+	$comparisons = array();
+
+	// TODO Limit to X batches.
+	$filters = array(
+		'batch' => $batch[0]['id'],
+	);
+
+	$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters )['data'];
+	$wcd->compare_view_v2( $comparisons );
+	?>

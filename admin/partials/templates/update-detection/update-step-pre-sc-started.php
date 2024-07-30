@@ -24,7 +24,6 @@ require 'update-step-tiles.php';
 		<p>
 			You can leave this page and make <a href="<?php echo esc_url( admin_url() ); ?>update-core.php" >Updates</a> or other changes on your website. When your are done, come back and
 			continue with the button below. <br>
-
 		</p>
 		<form method="post" >
 			<input type="hidden" name="wcd_action" value="update_detection_step">

@@ -310,7 +310,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                             clearInterval(processingInterval);
                         }
                     });
-                }, 3000, currentlyProcessing)
+                }, 5000, currentlyProcessing)
             } else {
                 $("#wcd-screenshots-done").show();
             }

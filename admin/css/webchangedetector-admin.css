@@ -493,6 +493,13 @@
     color: green;
 }
 
+.webchangedetector .screenshots-done-icon-big {
+    font-size: 36px;
+    height: 40px;
+    padding-right: 15px;
+    color: green;
+}
+
 .webchangedetector .wcd-select-urls-container h2 {
     text-align: center;
 }
@@ -563,15 +570,15 @@ Manual Checks
 }
 
 .webchangedetector .update-status {
-    padding: 10px 0;
-    width: calc(25% - 2px);
-    border-left: 1px solid #bbb;
+    padding: 20px 0;
+    width: calc(33% - 2px);
+    border: 1px solid #bbb;
     float: left;
     text-align: center;
 }
 
 .webchangedetector .update-status:first-child {
-    border-left: none;
+
 }
 
 .webchangedetector #wcd-screenshots-done h2,
