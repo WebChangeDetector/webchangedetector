@@ -18,7 +18,7 @@
 <?php if ( ! $wcd->website_details['enable_limits'] ) { ?>
 	Your plan: <strong><?php echo esc_html( $account_details['plan']['name'] ); ?></strong><br>
 <?php } ?>
-Used screenshots: <strong><?php echo esc_html( $comp_usage ); ?> / <?php echo esc_html( $limit ); ?></strong><br>
+Used checks: <strong><?php echo esc_html( $comp_usage ); ?> / <?php echo esc_html( $limit ); ?></strong><br>
 Next renew: <strong><?php echo esc_html( gmdate( 'd/m/Y', $renew_date ) ); ?></strong>
 </p>
 

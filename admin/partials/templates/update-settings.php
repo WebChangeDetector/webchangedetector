@@ -42,6 +42,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 	<div style="padding: 10px;" class="auto-setting">
 		<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
 		<input id="auto_update_checks_enabled" name="auto_update_checks_enabled" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_enabled'] ); ?> class="auto_update_checks_enabled">
+        <small> WP auto updates have to be enabled. This option only enables checks during auto updates.</small>
 	</div>
 	<div id="auto_update_checks_settings">
 		<div style="padding: 10px; " class="auto-setting toggle">

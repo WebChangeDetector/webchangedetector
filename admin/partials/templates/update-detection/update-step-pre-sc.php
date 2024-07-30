@@ -22,7 +22,7 @@ require 'update-step-tiles.php';
 
 	<?php
 	$insufficient_screenshots = false;
-	if ( $group_and_urls['amount_selected_urls'] * 2 > $account_details['available_compares'] ) {
+	if ( $group_and_urls['amount_selected_urls'] > $account_details['available_compares'] ) {
 		$insufficient_screenshots = true;
 	}
 
