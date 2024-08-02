@@ -250,6 +250,12 @@
     display: none;
 }
 
+.webchangedetector .tablenav-pages-navspan.button {
+    margin-left: 10px;
+    font-size: 13px;
+    line-height: 2;
+}
+
 .webchangedetector .comparison-diff-tile {
     width: 100px;
 }

@@ -14,6 +14,24 @@
  */
 class WebChangeDetector_API_V2 {
 
+	/** Sync urls.
+	 *
+	 * @param array $posts The posts to sync.
+	 * @return false|mixed|string
+	 */
+	public static function sync_urls( $posts ) {
+		if ( ! is_array( $posts ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'urls/sync',
+			'urls'   => ( $posts ),
+		);
+
+		return self::api_v2( $args );
+	}
+
 	/** Take screenshots.
 	 *
 	 * @param array  $group_ids Array with group_ids.
@@ -105,7 +123,7 @@ class WebChangeDetector_API_V2 {
 	public static function get_comparisons_v2( $filters = array() ) {
 		$url = 'comparisons';
 		if ( ! empty( $filters ) ) {
-			$url = $url . '?' . (build_query($filters) );
+			$url = $url . '?' . ( build_query( $filters ) );
 		}
 
 		$args = array(
@@ -169,11 +187,12 @@ class WebChangeDetector_API_V2 {
 
 	/** Get batches.
 	 *
+	 * @param array $filter Filters for the batches.
 	 * @return mixed|string
 	 */
-	public static function get_batches($filter = array()) {
+	public static function get_batches( $filter = array() ) {
 		$args = array(
-			'action' => 'batches?' . build_query($filter),
+			'action' => 'batches?' . build_query( $filter ),
 		);
 		return self::api_v2( $args, 'GET' );
 	}
@@ -225,8 +244,8 @@ class WebChangeDetector_API_V2 {
 			$url_web = WCD_API_URL_WEB;
 		}
 
-		$url     .= $post['action'] ; // add kebab action to url.
-		$url_web .= $post['action'] ; // add kebab action to url.
+		$url     .= $post['action']; // add kebab action to url.
+		$url_web .= $post['action']; // add kebab action to url.
 		$action   = $post['action']; // For debugging.
 
 		unset( $post['action'] ); // don't need to send as action as it's now the url.

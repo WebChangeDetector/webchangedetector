@@ -51,8 +51,17 @@ class WebChangeDetector_Admin {
 		'generic', // filter.
 		'wordpress', // filter.
 		'auto',
+		'post',
 		'update',
-        'auto-update'
+		'auto-update',
+	);
+
+	const VALID_COMPARISON_STATUS = array(
+		'new',
+		'ok',
+		'to_fix',
+		'false_positive',
+
 	);
 
 	/**
@@ -560,7 +569,7 @@ class WebChangeDetector_Admin {
 	 * @param bool   $difference_only Only with differences.
 	 * @param int    $limit_compares Limit number of comparisons.
 	 * @param int    $batch_id A specific batch.
-     * @depecated
+	 * @depecated
 	 *
 	 * @return array
 	 */
@@ -671,7 +680,7 @@ class WebChangeDetector_Admin {
 								echo '<small>Needs Attention</small>';
 							} else {
 								$this->get_device_icon( 'check', 'batch_is_ok' );
-								echo '<small>All Good</small>';
+								echo '<small>Looks Good</small>';
 							}
 							?>
 							</div>
@@ -762,15 +771,15 @@ class WebChangeDetector_Admin {
 					echo esc_url( $compare['screenshot1']['url'] );
 					echo '<br>';
 
-                    $auto_update_batches = get_option('wcd_auto_update_batches');
+					$auto_update_batches = get_option( 'wcd_auto_update_batches' );
 					if ( 'auto' === $compare['screenshot2']['sc_type'] ) {
 						$this->get_device_icon( 'auto-group' );
 						echo 'Monitoring';
-					} elseif( $auto_update_batches && in_array( $batch_id , $auto_update_batches, true)) {
+					} elseif ( $auto_update_batches && in_array( $batch_id, $auto_update_batches, true ) ) {
 						$this->get_device_icon( 'update-group' );
 						echo 'Auto Update Checks';
 					} else {
-                        echo 'Manual Checks';
+						echo 'Manual Checks';
 					}
 					?>
 				</td>
@@ -843,18 +852,18 @@ class WebChangeDetector_Admin {
 						<div style="display: inline-block;">
 							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 								<?php
-								if ( array_key_exists( 'needs_attention', $compares_in_batches[ $batch_id ] ) ) {
+								if ( array_key_exists( 'needs_attention', $compares_in_batch ) ) {
 									$this->get_device_icon( 'warning', 'batch_needs_attention' );
 									echo '<small>Needs Attention</small>';
 								} else {
 									$this->get_device_icon( 'check', 'batch_is_ok' );
-									echo '<small>All Good</small>';
+									echo '<small>Looks Good</small>';
 								}
 								?>
 							</div>
 							<div class="accordion-batch-title-tile">
 								<?php
-								if ( $compares_in_batches[0]['group'] === $this->monitoring_group_uuid ) {
+								if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
 									echo 'Monitoring Checks';
 								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
 									echo 'Auto Update Checks';
@@ -1239,7 +1248,7 @@ class WebChangeDetector_Admin {
 						foreach ( $languages as $lang_code => $lang ) {
 							// Store the home URL for each language.
 							$array[] = array(
-								'url'             => self::remove_url_protocol( $lang['url']),
+								'url'             => self::remove_url_protocol( $lang['url'] ),
 								'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 								'cms_resource_id' => '0_' . $lang_code,
 								'url_type'        => 'frontpage',
@@ -1254,7 +1263,7 @@ class WebChangeDetector_Admin {
 					$translations = pll_the_languages( array( 'raw' => 1 ) );
 					foreach ( $translations as $lang_code => $translation ) {
 						$array[] = array(
-							'url'             => self::remove_url_protocol(pll_home_url( $lang_code )),
+							'url'             => self::remove_url_protocol( pll_home_url( $lang_code ) ),
 							'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 							'cms_resource_id' => '0_' . $lang_code,
 							'url_type'        => 'frontpage',
@@ -1263,7 +1272,7 @@ class WebChangeDetector_Admin {
 					}
 				} else {
 					$array[] = array(
-						'url'             => self::remove_url_protocol(get_option( 'home' )),
+						'url'             => self::remove_url_protocol( get_option( 'home' ) ),
 						'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 						'cms_resource_id' => 0,
 						'url_type'        => 'frontpage',
@@ -1274,22 +1283,22 @@ class WebChangeDetector_Admin {
 		}
 
 		if ( ! empty( $array ) ) {
-			$args = array(
-				'action'              => 'sync_urls',
-				'delete_missing_urls' => true,
-				'posts'               => wp_json_encode( $array ),
-			);
-
-			$synced_posts = $this->api_v1( $args );
+			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
 			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
+
 			return $synced_posts;
 		}
 		return false;
 	}
 
-    public function remove_url_protocol($url) {
-	    return substr( $url, strpos( $url, '//' ) + 2 );
-    }
+	/** Remove the protocol from an url.
+	 *
+	 * @param string $url The URL.
+	 * @return string
+	 */
+	public function remove_url_protocol( $url ) {
+		return substr( $url, strpos( $url, '//' ) + 2 );
+	}
 
 	/** Update urls.
 	 *
@@ -2035,9 +2044,21 @@ class WebChangeDetector_Admin {
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
-				// TODO Limit to X batches.
-				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2();
+				$filter_batches = array(
+					'queue_type' => 'post,auto',
+					'per_page'   => 3,
+				);
+
+				$batches = WebChangeDetector_API_V2::get_batches( $filter_batches )['data'];
+
+				$filter_batches = array();
+				foreach ( $batches as $batch ) {
+					$filter_batches[] = $batch['id'];
+				}
+
+				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
 				$this->compare_view_v2( $recent_comparisons['data'] );
+
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>

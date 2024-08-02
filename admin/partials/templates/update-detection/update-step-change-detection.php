@@ -30,9 +30,9 @@ require 'update-step-tiles.php';
 
 	// TODO Limit to X batches.
 
-	$filters = array(
-		'batches' => $batch[0]['id'],
-        'per_page' => 999999
+	$filters     = array(
+		'batches'  => $batch[0]['id'],
+		'per_page' => 999999,
 	);
 	$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters )['data'];
 	$wcd->compare_view_v2( $comparisons );

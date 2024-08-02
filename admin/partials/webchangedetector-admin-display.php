@@ -360,69 +360,69 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-change-detections':
-				$limit_days = null;
-				if ( isset( $_POST['limit_days'] ) ) {
-					$limit_days = sanitize_text_field( wp_unslash( $_POST['limit_days'] ) );
-					if ( ! empty( $limit_days ) && ! is_numeric( $limit_days ) ) {
-						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
-						return false;
-					}
-				}
 				$from = gmdate( 'Y-m-d', strtotime( '- 7 days' ) );
-				if ( isset( $_POST['from'] ) ) {
-					$from = sanitize_text_field( wp_unslash( $_POST['from'] ) );
-
+				if ( isset( $_GET['from'] ) ) {
+					$from = sanitize_text_field( wp_unslash( $_GET['from'] ) );
 					if ( empty( $from ) ) {
 						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
 						return false;
 					}
 				}
+
 				$to = current_time( 'Y-m-d' );
-				if ( isset( $_POST['to'] ) ) {
-					$to = sanitize_text_field( wp_unslash( $_POST['to'] ) );
+				if ( isset( $_GET['to'] ) ) {
+					$to = sanitize_text_field( wp_unslash( $_GET['to'] ) );
 					if ( empty( $to ) ) {
 						echo '<div class="error notice"><p>Wrong limit_days.</p></div>';
 						return false;
 					}
 				}
-				$group_type = null;
-				if ( isset( $_POST['group_type'] ) ) {
-					$group_type = sanitize_text_field( wp_unslash( $_POST['group_type'] ) );
+
+				$group_type = false;
+				if ( isset( $_GET['group_type'] ) ) {
+					$group_type = sanitize_text_field( wp_unslash( $_GET['group_type'] ) );
 					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
 						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
 						return false;
 					}
 				}
 
-				$difference_only = null;
-				if ( isset( $_POST['difference_only'] ) ) {
-					$difference_only = sanitize_text_field( wp_unslash( $_POST['difference_only'] ) );
+				$status = false;
+				if ( isset( $_GET['status'] ) ) {
+					$status = sanitize_text_field( wp_unslash( $_GET['status'] ) );
+					if ( ! empty( $status ) && ! in_array( $status, WebChangeDetector_Admin::VALID_COMPARISON_STATUS, true ) ) {
+						echo '<div class="error notice"><p>Invalid status.</p></div>';
+						return false;
+					}
+				}
+
+				$difference_only = false;
+				if ( isset( $_GET['difference_only'] ) ) {
+					$difference_only = sanitize_text_field( wp_unslash( $_GET['difference_only'] ) );
 				}
 
 				?>
 				<div class="action-container">
-					<form method="post" style="margin-bottom: 20px;">
-						<input type="hidden" name="wcd_action" value="filter_change_detections">
-						<?php wp_nonce_field( 'filter_change_detections' ); ?>
+					<form method="get" style="margin-bottom: 20px;">
+						<input type="hidden" name="page" value="webchangedetector-change-detections">
+
+
 
 						from <input name="from" value="<?php echo esc_html( $from ); ?>" type="date">
 						to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
-						<!--<select name="limit_days">
-							<option value="" <?php echo null === $limit_days ? 'selected' : ''; ?>> Show all</option>
-							<option value="3" <?php echo 3 === $limit_days ? 'selected' : ''; ?>>Last 3 days</option>
-							<option value="7" <?php echo 7 === $limit_days ? 'selected' : ''; ?>>Last 7 days</option>
-							<option value="14" <?php echo 14 === $limit_days ? 'selected' : ''; ?>>Last 14 days</option>
-							<option value="30" <?php echo 30 === $limit_days ? 'selected' : ''; ?>>Last 30 days</option>
-							<option value="60" <?php echo 60 === $limit_days ? 'selected' : ''; ?>>Last 60 days</option>
-						</select>-->
 
 						<select name="group_type" >
 							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
-							<option value="update" <?php echo 'update' === $group_type ? 'selected' : ''; ?>>Manual Checks</option>
-                            <option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
-                            <option value="auto-update" <?php echo 'auto-update' === $group_type ? 'selected' : ''; ?>>Auto-Update Checks</option>
+							<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Manual- & Auto Update Checks</option>
+							<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
 						</select>
-
+						<select name="status" class="js-dropdown">
+							<option value="" <?php echo ! $status ? 'selected' : ''; ?>>All Status</option>
+							<option value="new" <?php echo 'new' === $status ? 'selected' : ''; ?>>New</option>
+							<option value="ok" <?php echo 'ok' === $status ? 'selected' : ''; ?>>Ok</option>
+							<option value="to_fix" <?php echo 'to_fix' === $status ? 'selected' : ''; ?>>To Fix</option>
+							<option value="false_positive" <?php echo 'false_positive' === $status ? 'selected' : ''; ?>>False Positive</option>
+						</select>
 						<select name="difference_only" class="js-dropdown">
 							<option value="0" <?php echo ! $difference_only ? 'selected' : ''; ?>>All detections</option>
 							<option value="1" <?php echo $difference_only ? 'selected' : ''; ?>>With difference</option>
@@ -432,36 +432,74 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					</form>
 					<?php
 
-					// Show comparisons.
-					$batches     = WebChangeDetector_API_V2::get_batches();
-                   // dd($batches);
-					$batches     = array_slice( $batches['data'], 0, 10 );
+					$extra_filters          = array();
+					$extra_filters['paged'] = isset( $_GET['paged'] ) ? sanitize_key( wp_unslash( $_GET['paged'] ) ) : 1;
 
-					// TODO Limit to X batches.
-                    $filter_batches = [];
-					foreach ( $batches as $batch ) {
-						$filter_batches[] = $batch['id'];
+					// Show comparisons.
+					$filter_batches = array(
+						'page'     => $extra_filters['paged'],
+						'per_page' => 5,
+						'from'     => gmdate( 'Y-m-d', strtotime( $from ) ),
+						'to'       => gmdate( 'Y-m-d', strtotime( $to ) ),
+					);
+
+					if ( $group_type ) {
+						$extra_filters['queue_type'] = $group_type;
+					} else {
+						$extra_filters['queue_type'] = 'post,auto';
 					}
 
-                    $filters = array(
-	                    'from'            => gmdate( 'Y-m-d', strtotime( $from ) ),
-	                    'to'              => gmdate( 'Y-m-d', strtotime( $to ) ),
-	                    //'batches'           => implode(",", $filter_batches),
-	                    // TODO are we keeping batches? Or will it be batch?
-	                    'above_threshold' => $difference_only,
-	                    'per_page' => 999,
-                    );
+					if ( $status ) {
+						$extra_filters['status'] = $status;
+					}
+					if ( $difference_only ) {
+						$extra_filters['above_threshold'] = (bool) $difference_only;
+					}
 
-                    $comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+					$batches = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+
+					$filter_batches_in_comparisons = array();
+					foreach ( $batches['data'] as $batch ) {
+						$filter_batches_in_comparisons[] = $batch['id'];
+					}
+
+					$filters_comparisons = array(
+						'batches'  => implode( ',', $filter_batches_in_comparisons ),
+						'per_page' => 999999,
+					);
+
+					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 					$wcd->compare_view_v2( $comparisons['data'] );
 
-                    $pagination = $comparisons['meta'];
-                    if($pagination['from'] !== $pagination['last_page']) {
-                        // Todo Building pagination.
-
-                    }
+					// Prepare pagination.
+					unset( $extra_filters['paged'] );
+					unset( $filter_batches['page'] );
+					$pagination_filters = array_merge( $filter_batches, $extra_filters );
+					$pagination         = $batches['meta'];
 					?>
-
+					<!-- Pagination -->
+					<div class="tablenav">
+						<div class="tablenav-pages">
+							<span class="displaying-num"><?php echo esc_html( $pagination['total'] ); ?> items</span>
+							<span class="pagination-links">
+								<?php
+								foreach ( $pagination['links'] as $link ) {
+									$url_components = wp_parse_url( $link['url'] );
+									parse_str( $url_components['query'], $params );
+									$class = ! $link['url'] || $link['active'] ? 'disabled' : '';
+									?>
+									<a class="tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
+										href="?page=webchangedetector-change-detections&
+										paged=<?php echo esc_html( $params['page'] ); ?>&
+										<?php echo esc_html( build_query( $pagination_filters ) ); ?>" >
+											<?php echo esc_html( $link['label'] ); ?>
+									</a>
+									<?php
+								}
+								?>
+							</span>
+						</div>
+					</div>
 				</div>
 				<div class="sidebar">
 					<div class="account-box">
