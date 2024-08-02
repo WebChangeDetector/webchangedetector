@@ -407,19 +407,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						from <input name="from" value="<?php echo esc_html( $from ); ?>" type="date">
 						to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
-						<select name="limit_days">
+						<!--<select name="limit_days">
 							<option value="" <?php echo null === $limit_days ? 'selected' : ''; ?>> Show all</option>
 							<option value="3" <?php echo 3 === $limit_days ? 'selected' : ''; ?>>Last 3 days</option>
 							<option value="7" <?php echo 7 === $limit_days ? 'selected' : ''; ?>>Last 7 days</option>
 							<option value="14" <?php echo 14 === $limit_days ? 'selected' : ''; ?>>Last 14 days</option>
 							<option value="30" <?php echo 30 === $limit_days ? 'selected' : ''; ?>>Last 30 days</option>
 							<option value="60" <?php echo 60 === $limit_days ? 'selected' : ''; ?>>Last 60 days</option>
-						</select>
+						</select>-->
 
 						<select name="group_type" >
-							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>Monitoring & Manual Checks</option>
-							<option value="update" <?php echo 'update' === $group_type ? 'selected' : ''; ?>>Only Manual Checks</option>
-							<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Only Monitoring</option>
+							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
+							<option value="update" <?php echo 'update' === $group_type ? 'selected' : ''; ?>>Manual Checks</option>
+                            <option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
+                            <option value="auto-update" <?php echo 'auto-update' === $group_type ? 'selected' : ''; ?>>Auto-Update Checks</option>
 						</select>
 
 						<select name="difference_only" class="js-dropdown">
@@ -432,29 +433,35 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<?php
 
 					// Show comparisons.
-
 					$batches     = WebChangeDetector_API_V2::get_batches();
+                   // dd($batches);
 					$batches     = array_slice( $batches['data'], 0, 10 );
-					$comparisons = array();
 
 					// TODO Limit to X batches.
+                    $filter_batches = [];
 					foreach ( $batches as $batch ) {
-						$filters = array(
-							'from'            => gmdate( 'Y-m-d H:i:s', strtotime( $from ) ),
-							'to'              => gmdate( 'Y-m-d H:i:s', strtotime( $to ) + 86400 - 1 ), // + 1 day - 1 second.
-							'above_threshold' => $difference_only,
-							'batch'           => $batch['id'],
-							// TODO group_type.
-						);
-
-						$comparisons_of_batch = WebChangeDetector_API_V2::get_comparisons_v2( $filters )['data'];
-						if ( ! empty( $comparisons_of_batch ) ) {
-							$comparisons = array_merge( $comparisons, $comparisons_of_batch );
-						}
+						$filter_batches[] = $batch['id'];
 					}
-					$wcd->compare_view_v2( $comparisons );
 
+                    $filters = array(
+	                    'from'            => gmdate( 'Y-m-d', strtotime( $from ) ),
+	                    'to'              => gmdate( 'Y-m-d', strtotime( $to ) ),
+	                    //'batches'           => implode(",", $filter_batches),
+	                    // TODO are we keeping batches? Or will it be batch?
+	                    'above_threshold' => $difference_only,
+	                    'per_page' => 999,
+                    );
+
+                    $comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+					$wcd->compare_view_v2( $comparisons['data'] );
+
+                    $pagination = $comparisons['meta'];
+                    if($pagination['from'] !== $pagination['last_page']) {
+                        // Todo Building pagination.
+
+                    }
 					?>
+
 				</div>
 				<div class="sidebar">
 					<div class="account-box">
@@ -719,9 +726,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$queues = $wcd->get_queue();
 
 				$type_nice_name = array(
-					'pre'     => 'Reference Screenshot',
-					'post'    => 'Compare Screenshot',
-					'auto'    => 'Monitoring',
+					'pre'     => 'Pre-update Screenshot',
+					'post'    => 'Post-update Screenshot',
+					'auto'    => 'Monitoring Screenshot',
 					'compare' => 'Change Detection',
 				);
 				?>
@@ -740,6 +747,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 
 					foreach ( $queues as $queue ) {
+
 						$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
 						echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
 						echo '<td>';

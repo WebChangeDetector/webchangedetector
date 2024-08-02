@@ -1,8 +1,8 @@
 === WebChangeDetector ===
 Contributors: Mike.Miler,Repat
-Tags: compare, changedetector, screenshot, check, change, updates
+Tags: vrt, visual regression test, visual check, screenshots, auto-updates
 Requires at least: 5.2
-Tested up to: 6.5.2
+Tested up to: 6.6.1
 Stable tag: 2.4.0
 Requires PHP: 7.0
 License: GPLv2 or later

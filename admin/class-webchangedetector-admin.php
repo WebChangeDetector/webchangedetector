@@ -52,6 +52,7 @@ class WebChangeDetector_Admin {
 		'wordpress', // filter.
 		'auto',
 		'update',
+        'auto-update'
 	);
 
 	/**
@@ -559,6 +560,7 @@ class WebChangeDetector_Admin {
 	 * @param bool   $difference_only Only with differences.
 	 * @param int    $limit_compares Limit number of comparisons.
 	 * @param int    $batch_id A specific batch.
+     * @depecated
 	 *
 	 * @return array
 	 */
@@ -654,7 +656,7 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		$auto_update_batches = get_option( 'wcd_comparison_batches' );
+		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 		$latest_batch_id     = false;
 		foreach ( $compares_by_batch as $batch_id => $compares ) {
 			?>
@@ -754,16 +756,21 @@ class WebChangeDetector_Admin {
 					}
 					?>
 					</strong>
+
 					<?php
 					$this->get_device_icon( $compare['screenshot1']['device'] );
 					echo esc_url( $compare['screenshot1']['url'] );
 					echo '<br>';
+
+                    $auto_update_batches = get_option('wcd_auto_update_batches');
 					if ( 'auto' === $compare['screenshot2']['sc_type'] ) {
 						$this->get_device_icon( 'auto-group' );
 						echo 'Monitoring';
-					} else {
+					} elseif( $auto_update_batches && in_array( $batch_id , $auto_update_batches, true)) {
 						$this->get_device_icon( 'update-group' );
-						echo 'Manual Checks';
+						echo 'Auto Update Checks';
+					} else {
+                        echo 'Manual Checks';
 					}
 					?>
 				</td>
@@ -827,8 +834,7 @@ class WebChangeDetector_Admin {
 				$compares_in_batches[ $compare['batch'] ]['needs_attention'] = true;
 			}
 		}
-
-		$auto_update_batches = get_option( 'wcd_comparison_batches' );
+		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 			?>
 			<div class="accordion accordion-batch" style="margin-top: 20px;">
@@ -868,10 +874,10 @@ class WebChangeDetector_Admin {
 					<div class="mm_accordion_content">
 						<table class="toggle" style="width: 100%">
 							<tr>
-								<th style="width: 120px;">Status</th>
-								<th style="width: auto">URL</th>
-								<th style="width: 150px">Compared Screenshots</th>
-								<th style="width: 50px">Difference</th>
+								<th style="min-width: 120px;">Status</th>
+								<th style="width: 100%">URL</th>
+								<th style="min-width: 150px">Compared Screenshots</th>
+								<th style="min-width: 50px">Difference</th>
 								<th>Show</th>
 							</tr>
 
@@ -1233,7 +1239,7 @@ class WebChangeDetector_Admin {
 						foreach ( $languages as $lang_code => $lang ) {
 							// Store the home URL for each language.
 							$array[] = array(
-								'url'             => $lang['url'],
+								'url'             => self::remove_url_protocol( $lang['url']),
 								'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 								'cms_resource_id' => '0_' . $lang_code,
 								'url_type'        => 'frontpage',
@@ -1248,7 +1254,7 @@ class WebChangeDetector_Admin {
 					$translations = pll_the_languages( array( 'raw' => 1 ) );
 					foreach ( $translations as $lang_code => $translation ) {
 						$array[] = array(
-							'url'             => pll_home_url( $lang_code ),
+							'url'             => self::remove_url_protocol(pll_home_url( $lang_code )),
 							'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 							'cms_resource_id' => '0_' . $lang_code,
 							'url_type'        => 'frontpage',
@@ -1256,11 +1262,8 @@ class WebChangeDetector_Admin {
 						);
 					}
 				} else {
-					$url = get_option( 'home' );
-					$url = substr( $url, strpos( $url, '//' ) + 2 );
-
 					$array[] = array(
-						'url'             => $url,
+						'url'             => self::remove_url_protocol(get_option( 'home' )),
 						'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 						'cms_resource_id' => 0,
 						'url_type'        => 'frontpage',
@@ -1283,6 +1286,10 @@ class WebChangeDetector_Admin {
 		}
 		return false;
 	}
+
+    public function remove_url_protocol($url) {
+	    return substr( $url, strpos( $url, '//' ) + 2 );
+    }
 
 	/** Update urls.
 	 *
@@ -1710,7 +1717,7 @@ class WebChangeDetector_Admin {
 						type="submit"
 						name="save_settings"
 						value="save_update_settings_and_continue" >
-						Save & start manual checks >
+						Start manual checks >
 					</button>
 						<?php } ?>
 				<button
@@ -1719,14 +1726,14 @@ class WebChangeDetector_Admin {
 						name="save_settings"
 						value="post_urls"
 						style="margin-left: 10px;">
-					Only save
+					Save
 				</button>
 				<button class="button"
 						type="submit"
 						name="save_settings"
 						value="post_urls_update_and_auto"
 						style="margin-left: 10px;">
-					Save & copy settingsto monitoring
+					Save & copy settings to monitoring
 				</button>
 				<?php } ?>
 			</form>

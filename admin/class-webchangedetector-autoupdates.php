@@ -114,12 +114,12 @@ class WebChangeDetector_Autoupdates {
 		);
 
 		// Save the auto update batch id.
-		$comparison_batches = get_option( 'wcd_comparison_batches' );
+		$comparison_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 		if ( ! $comparison_batches ) {
 			$comparison_batches = array();
 		}
 		$comparison_batches[] = $response['batch'];
-		set_transient( 'wcd_comparison_batches', $comparison_batches, WCD_HOUR_IN_SECONDS );
+		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
 
 		$this->wcd_cron_check_post_queues();
 	}
@@ -139,7 +139,7 @@ class WebChangeDetector_Autoupdates {
 			$this->reschedule( $this->one_minute_in_seconds, 'wcd_cron_check_post_queues' );
 		} else {
 			// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-			$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batch' => $post_sc_option['batch_id'] ) );
+			$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
 			$mail_body   = '<style>
 								table {
 									border: 1px solid #ccc;
@@ -536,6 +536,9 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_HOUR_IN_SECONDS' ) ) {
 			define( 'WCD_HOUR_IN_SECONDS', 3600 );
+		}
+		if ( ! defined( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES' ) ) {
+			define( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES', 'wcd_auto_update_comparison_batches' );
 		}
 	}
 }
