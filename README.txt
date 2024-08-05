@@ -1,4 +1,4 @@
-=== WebChangeDetector ===
+=== WebChange Detector ===
 Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates
 Requires at least: 5.2
@@ -12,7 +12,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 ## The #1 Visual Regression Test Tool For WordPress
 
 Check your website after updates to see if something broke with visual regression tests. Or monitor your website in intervals and get notified about any change.
-With WebChangeDetector you can find any difference on your website
+With WebChange Detector you can find any difference on your website
 
 *   after installing updates,
 *   after installing new plugins,
@@ -23,12 +23,12 @@ With WebChangeDetector you can find any difference on your website
 See all differences **highlighted in a new screenshot** to easily compare your website before and after the changes.
 With our visual regression tests for WordPress you can make sure your website looks like it should, and fix anything which looks wrong, before your visitors see the issues.
 
-### Why You Should Use WebChangeDetector
+### Why You Should Use WebChange Detector
 *   **Save trouble** by letting us check your website for changes after installing updates.
 *   **Save time** with checking all pages yourself after some changes.
 *   **Don’t miss sales** because of overlooking issues on your site.
 
-### What You Can Do With Visual Regression Tests of WebChangeDetector
+### What You Can Do With Visual Regression Tests of WebChange Detector
 *   Run a change detection to see changes before and after updates at your website.
 *   Set **Monitorings** in intervals which automatically detects changes.
 *   Receive **email alerts** for visual regression test results and check the changes.

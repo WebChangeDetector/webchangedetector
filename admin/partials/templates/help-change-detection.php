@@ -19,8 +19,7 @@ require 'help-headline.php'; ?>
 	<p>
 		By clicking "Show", you can see the screenshots.
 	<ul>
-		<li>Left: The reference screenshot.</li>
-		<li>Right: The new screenshot.</li>
-		<li>Middle: Image with all differences highlighted.</li>
+		<li>Left side: before- and after images with slider</li>
+		<li>Right side: Image with all differences highlighted.</li>
 	</ul>
 	</p>

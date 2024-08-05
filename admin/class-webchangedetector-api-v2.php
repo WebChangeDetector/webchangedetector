@@ -17,16 +17,18 @@ class WebChangeDetector_API_V2 {
 	/** Sync urls.
 	 *
 	 * @param array $posts The posts to sync.
+	 * @param bool  $delete_missing_urls Delete missing urls or not.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts ) {
+	public static function sync_urls( $posts, $delete_missing_urls = false ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
 
 		$args = array(
-			'action' => 'urls/sync',
-			'urls'   => ( $posts ),
+			'action'              => 'urls/sync',
+			'urls'                => ( $posts ),
+			'delete_missing_urls' => $delete_missing_urls,
 		);
 
 		return self::api_v2( $args );

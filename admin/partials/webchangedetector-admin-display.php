@@ -24,7 +24,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Start view.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
-		echo '<h1>WebChangeDetector</h1>';
+		echo '<h1>WebChange Detector</h1>';
 
 		// Validate wcd_action and nonce.
 		$wcd_action = null;

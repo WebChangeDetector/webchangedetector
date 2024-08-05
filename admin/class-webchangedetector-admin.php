@@ -197,8 +197,8 @@ class WebChangeDetector_Admin {
 	public function wcd_plugin_setup_menu() {
 		require_once 'partials/webchangedetector-admin-display.php';
 		add_menu_page(
-			'WebChangeDetector',
-			'WCD',
+			'WebChange Detector',
+			'WebChange Detector',
 			'manage_options',
 			'webchangedetector',
 			'wcd_webchangedetector_init',
@@ -1148,8 +1148,8 @@ class WebChangeDetector_Admin {
 	 */
 	public function sync_posts( $force_sync = false ) {
 
-		// Return synced_posts from transient if available unless we have forced_sync.
-		if ( ( defined( WCD_DEV ) && ! WCD_DEV ) && false === $force_sync ) {
+		// Return synced_posts from transient if available unless we have forced_sync and we are not in DEV mode.
+		if ( ! ( defined( 'WCD_DEV' ) && WCD_DEV ) && false === $force_sync ) {
 			$synced_posts = get_transient( 'wcd_synced_posts' );
 			if ( $synced_posts ) {
 				return $synced_posts;
@@ -1248,9 +1248,9 @@ class WebChangeDetector_Admin {
 						foreach ( $languages as $lang_code => $lang ) {
 							// Store the home URL for each language.
 							$array[] = array(
-								'url'             => self::remove_url_protocol( $lang['url'] ),
+								'url'             => rtrim( self::remove_url_protocol( $lang['url'] ), '/' ),
 								'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
-								'cms_resource_id' => '0_' . $lang_code,
+								'cms_resource_id' => 0,
 								'url_type'        => 'frontpage',
 								'url_category'    => 'Frontpage',
 							);
@@ -1263,16 +1263,16 @@ class WebChangeDetector_Admin {
 					$translations = pll_the_languages( array( 'raw' => 1 ) );
 					foreach ( $translations as $lang_code => $translation ) {
 						$array[] = array(
-							'url'             => self::remove_url_protocol( pll_home_url( $lang_code ) ),
+							'url'             => rtrim( self::remove_url_protocol( pll_home_url( $lang_code ) ), '/' ),
 							'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
-							'cms_resource_id' => '0_' . $lang_code,
+							'cms_resource_id' => 0,
 							'url_type'        => 'frontpage',
 							'url_category'    => 'Frontpage',
 						);
 					}
 				} else {
 					$array[] = array(
-						'url'             => self::remove_url_protocol( get_option( 'home' ) ),
+						'url'             => rtrim( self::remove_url_protocol( get_option( 'home' ) ), '/' ),
 						'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
 						'cms_resource_id' => 0,
 						'url_type'        => 'frontpage',
@@ -1495,7 +1495,7 @@ class WebChangeDetector_Admin {
 					<div class="accordion">
 						<div class="mm_accordion_title">
 							<h3>
-								Manual Checks Settings<br>
+								Manual- & Auto Update Checks Settings<br>
 								<small>
 									Auto update checks:
 									<strong>
@@ -1925,7 +1925,7 @@ class WebChangeDetector_Admin {
 				</a>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'update-group' ); ?> Manual Checks
+					<?php $this->get_device_icon( 'update-group' ); ?> Manual- & Auto Update Checks
 				</a>
 				<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
