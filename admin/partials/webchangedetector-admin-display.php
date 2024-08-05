@@ -382,7 +382,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				if ( isset( $_GET['group_type'] ) ) {
 					$group_type = sanitize_text_field( wp_unslash( $_GET['group_type'] ) );
 					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
-						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
+						echo '<div class="error   notice"><p>Invalid group_type.</p></div>';
 						return false;
 					}
 				}
@@ -390,7 +390,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$status = false;
 				if ( isset( $_GET['status'] ) ) {
 					$status = sanitize_text_field( wp_unslash( $_GET['status'] ) );
-					if ( ! empty( $status ) && ! in_array( $status, WebChangeDetector_Admin::VALID_COMPARISON_STATUS, true ) ) {
+					if ( ! empty( $status ) && ! empty( array_diff( explode( ',', $status ), WebChangeDetector_Admin::VALID_COMPARISON_STATUS ) ) ) {
 						echo '<div class="error notice"><p>Invalid status.</p></div>';
 						return false;
 					}
@@ -405,8 +405,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 					<form method="get" style="margin-bottom: 20px;">
 						<input type="hidden" name="page" value="webchangedetector-change-detections">
-
-
 
 						from <input name="from" value="<?php echo esc_html( $from ); ?>" type="date">
 						to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
@@ -451,13 +449,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 					if ( $status ) {
 						$extra_filters['status'] = $status;
+					} else {
+						$extra_filters['status'] = 'new,ok,to_fix,false_positive';
 					}
 					if ( $difference_only ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$batches = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
-
+					$batches                       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					$filter_batches_in_comparisons = array();
 					foreach ( $batches['data'] as $batch ) {
 						$filter_batches_in_comparisons[] = $batch['id'];
@@ -469,7 +468,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					);
 
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
-					$wcd->compare_view_v2( $comparisons['data'] );
+					$wcd->compare_view_v2( $comparisons['data'], $batches );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
