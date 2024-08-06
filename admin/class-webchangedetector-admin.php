@@ -220,8 +220,8 @@ class WebChangeDetector_Admin {
 		);
 		add_submenu_page(
 			'webchangedetector',
-			'Manual Checks',
-			'Manual Checks',
+			'Manual Checks & Auto Update Checks',
+			'Manual Checks & Auto Update Checks',
 			'manage_options',
 			'webchangedetector-update-settings',
 			'wcd_webchangedetector_init'
@@ -338,6 +338,16 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
+	/** Get account details.
+	 *
+	 * @return array
+	 */
+	public function get_account() {
+		$account_details                 = WebChangeDetector_API_V2::get_account_v2()['data'];
+		$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
+		return $account_details;
+	}
+
 	/** Sync Post if permalink changed. Currently deactivated.
 	 *
 	 * @return array|false|mixed|string
@@ -350,6 +360,7 @@ class WebChangeDetector_Admin {
 	/** Get the account details.
 	 *
 	 * @return array|mixed|string
+	 * @depecated
 	 */
 	public function account_details() {
 		static $account_details;
@@ -420,28 +431,28 @@ class WebChangeDetector_Admin {
 
 	/** Update monitoring group settings.
 	 *
-	 * @param array $postdata The postdata.
-	 * @param int   $monitoring_group_id The monitoring group id.
+	 * @param array $group_data The postdata.
 	 *
 	 * @return array|string
 	 */
-	public function update_monitoring_settings( $postdata, $monitoring_group_id ) {
+	public function update_monitoring_settings( $group_data ) {
 
-		$monitoring_settings = $this->get_monitoring_settings( $monitoring_group_id );
-
-		$args = array(
-			'action'        => 'update_group',
-			'group_id'      => sanitize_key( $monitoring_group_id ),
-			'hour_of_day'   => ! isset( $postdata['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $postdata['hour_of_day'] ),
-			'interval_in_h' => ! isset( $postdata['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $postdata['interval_in_h'] ),
-			'monitoring'    => 1,
-			'enabled'       => ! isset( $postdata['enabled'] ) ? $monitoring_settings['enabled'] : sanitize_key( $postdata['enabled'] ),
-			'alert_emails'  => ! isset( $postdata['alert_emails'] ) ? $monitoring_settings['alert_emails'] : sanitize_textarea_field( $postdata['alert_emails'] ),
-			'name'          => ! isset( $postdata['group_name_auto'] ) ? $monitoring_settings['name'] : sanitize_text_field( $postdata['group_name_auto'] ),
-			'css'           => ! isset( $postdata['css'] ) ? $monitoring_settings['css'] : sanitize_textarea_field( $postdata['css'] ),
-			'threshold'     => ! isset( $postdata['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $postdata['threshold'] ),
+		$monitoring_settings = $this->get_monitoring_settings( $this->monitoring_group_uuid );
+		$args                = array(
+			'monitoring'    => true,
+			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
+			'interval_in_h' => ! isset( $group_data['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $group_data['interval_in_h'] ),
+			'enabled'       => ( isset( $group_data['enabled'] ) && 'on' === $group_data['enabled'] ) ? 1 : 0,
+			'alert_emails'  => ! isset( $group_data['alert_emails'] ) ? $monitoring_settings['alert_emails'] : explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ),
+			'name'          => ! isset( $group_data['group_name'] ) ? $monitoring_settings['name'] : sanitize_text_field( $group_data['group_name'] ),
+			'threshold'     => ! isset( $group_data['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $group_data['threshold'] ),
 		);
-		return $this->api_v1( $args );
+
+		if ( ! empty( $group_data['css'] ) ) {
+			$args['css'] = sanitize_textarea_field( $group_data['css'] );
+		}
+
+		return WebChangeDetector_API_V2::update_group( $this->monitoring_group_uuid, $args );
 	}
 
 	/** Update group settings
@@ -484,7 +495,7 @@ class WebChangeDetector_Admin {
 	public function get_upgrade_url() {
 		$upgrade_url = get_option( 'wcd_upgrade_url' );
 		if ( ! $upgrade_url ) {
-			$account_details = $this->account_details();
+			$account_details = $this->get_account();
 			if ( ! is_array( $account_details ) ) {
 				return false;
 			}
@@ -561,48 +572,6 @@ class WebChangeDetector_Admin {
 		echo wp_kses( $output, array( 'span' => array( 'class' => array() ) ) );
 	}
 
-	/** Get comparisons from api.
-	 *
-	 * @param array  $group_ids The group ids.
-	 * @param int    $limit_days Comparisons of the last days.
-	 * @param string $group_type The group type.
-	 * @param bool   $difference_only Only with differences.
-	 * @param int    $limit_compares Limit number of comparisons.
-	 * @param int    $batch_id A specific batch.
-	 * @depecated
-	 *
-	 * @return array
-	 */
-	public function get_compares( $group_ids, $limit_days = null, $group_type = null, $difference_only = null, $limit_compares = null, $batch_id = null ) {
-		$args     = array(
-			'action'          => 'get_compares_by_group_ids',
-			'limit_days'      => $limit_days,
-			'group_type'      => $group_type,
-			'difference_only' => $difference_only,
-			'limit_compares'  => $limit_compares,
-			'group_ids'       => wp_json_encode( array( $group_ids ) ),
-			'batch_id'        => $batch_id,
-		);
-		$compares = $this->api_v1( $args );
-
-		$return = array();
-		if ( ! array_key_exists( 0, $compares ) ) {
-			return $return;
-		}
-
-		foreach ( array_filter(
-			$compares,
-			function ( $compare ) {
-				// Make sure to only show urls from the website. Shouldn't come from the API anyway.
-				$server_name = isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
-				return strpos( $compare['screenshot1']['url'], $server_name ) !== false;
-			}
-		) as $compare ) {
-			$return[] = $compare;
-		}
-		return $return;
-	}
-
 	/** Update comparison status.
 	 *
 	 * @param string $id The comparison uuid.
@@ -628,186 +597,6 @@ class WebChangeDetector_Admin {
 				return 'False Positive';
 			default:
 				return 'new';
-		}
-	}
-
-	/** Comparison overview.
-	 *
-	 * @param array $compares The comparisons.
-	 * @param bool  $latest_batch If only latest batch is viewed.
-	 *
-	 * @return void
-	 */
-	public function compare_view( $compares, $latest_batch = false ) {
-		if ( empty( $compares ) ) { ?>
-			<table style="width: 100%">
-				<tr>
-					<td colspan="5" style="text-align: center; background: #fff;">
-						<strong>There are no change detections to show.</strong
-					</td>
-				</tr>
-			</table>
-			<?php
-			return;
-		}
-
-		$all_tokens        = array();
-		$compares_by_batch = array();
-
-		foreach ( $compares as $compare ) {
-
-			$all_tokens[] = $compare['token'];
-
-			// Sort comparisons by batches.
-			$compares_by_batch[ $compare['screenshot2']['queue']['batch_id'] ][] = $compare;
-			if ( 'ok' !== $compare['status'] ) {
-				$compares_by_batch[ $compare['screenshot2']['queue']['batch_id'] ]['needs_attention'] = true;
-			}
-		}
-
-		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
-		$latest_batch_id     = false;
-		foreach ( $compares_by_batch as $batch_id => $compares ) {
-			?>
-			<div class="accordion accordion-batch">
-				<div class="mm_accordion_title">
-					<h3>
-						<div>
-							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
-							<?php
-							if ( array_key_exists( 'needs_attention', $compares_by_batch[ $batch_id ] ) ) {
-								$this->get_device_icon( 'warning', 'batch_needs_attention' );
-								echo '<small>Needs Attention</small>';
-							} else {
-								$this->get_device_icon( 'check', 'batch_is_ok' );
-								echo '<small>Looks Good</small>';
-							}
-							?>
-							</div>
-							<div class="accordion-batch-title-tile">
-							<?php
-
-							if ( $compares[0]['screenshot2']['queue']['monitoring'] ) {
-								echo 'Monitoring Checks';
-							} elseif ( is_array( $auto_update_batches ) && in_array( $compares[0]['uuid'], $auto_update_batches, true ) ) {
-								echo 'Auto Update Checks';
-							} else {
-								echo 'Manual Checks';
-							}
-							?>
-							<br>
-							<small>
-								<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares[0]['screenshot1']['queue']['created_at'] ) ) ) ); ?> ago
-							</small>
-							</div>
-							<div class="clear"></div>
-						</div>
-					</h3>
-					<div class="mm_accordion_content">
-						<table class="toggle" style="width: 100%">
-							<tr>
-								<th style="width: 120px;">Status</th>
-								<th style="width: auto">URL</th>
-								<th style="width: 150px">Compared Screenshots</th>
-								<th style="width: 50px">Difference</th>
-								<th>Show</th>
-							</tr>
-
-			<?php
-			foreach ( $compares as $compare ) {
-				if ( $latest_batch && $compare['screenshot2']['queue']['batch_id'] !== $latest_batch_id ) {
-					continue;
-				}
-
-				$class = 'no-difference'; // init.
-				if ( $compare['difference_percent'] ) {
-					$class = 'is-difference';
-				}
-				?>
-			<tr>
-				<td>
-					<div class="comparison_status_container">
-						<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-							<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
-						</span>
-						<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
-							<strong>Change Status to:</strong><br>
-							<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
-							<button name="status"
-									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
-									data-status="ok"
-									data-nonce="<?php echo esc_html( $nonce ); ?>"
-									value="ok"
-									class=" ajax_update_comparison_status comparison_status comparison_status_ok"
-									onclick="return false;">Ok</button>
-							<button name="status"
-									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
-									data-status="to_fix"
-									data-nonce="<?php echo esc_html( $nonce ); ?>"
-									value="to_fix"
-									class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
-									onclick="return false;">To Fix</button>
-							<button name="status"
-									data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
-									data-status="false_positive"
-									data-nonce="<?php echo esc_html( $nonce ); ?>"
-									value="false_positive"
-									class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
-									onclick="return false;">False Positive</button>
-						</div>
-					</div>
-				</td>
-				<td>
-					<strong>
-					<?php
-					if ( ! empty( $compare['screenshot1']['queue']['url']['html_title'] ) ) {
-						echo esc_html( $compare['screenshot1']['queue']['url']['html_title'] ) . '<br>';
-					}
-					?>
-					</strong>
-
-					<?php
-					$this->get_device_icon( $compare['screenshot1']['device'] );
-					echo esc_url( $compare['screenshot1']['url'] );
-					echo '<br>';
-
-					$auto_update_batches = get_option( 'wcd_auto_update_batches' );
-					if ( 'auto' === $compare['screenshot2']['sc_type'] ) {
-						$this->get_device_icon( 'auto-group' );
-						echo 'Monitoring';
-					} elseif ( $auto_update_batches && in_array( $batch_id, $auto_update_batches, true ) ) {
-						$this->get_device_icon( 'update-group' );
-						echo 'Auto Update Checks';
-					} else {
-						echo 'Manual Checks';
-					}
-					?>
-				</td>
-				<td>
-					<div class="local-time" data-date="<?php echo esc_html( $compare['image1_timestamp'] ); ?>"></div>
-					<div class="local-time" data-date="<?php echo esc_html( $compare['image2_timestamp'] ); ?>"></div>
-				</td>
-				<td class="<?php echo esc_html( $class ); ?> diff-tile"
-					data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
-					<?php echo esc_html( $compare['difference_percent'] ); ?>%
-				</td>
-				<td>
-					<form action="?page=webchangedetector-show-detection" method="post">
-						<input type="hidden" name="token" value="<?php echo esc_html( $compare['token'] ); ?>">
-						<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-						<input type="submit" value="Show" class="button">
-					</form>
-				</td>
-			</tr>
-				<?php
-				$latest_batch_id = $batch_id;
-			}
-			?>
-						</table>
-					</div>
-				</div>
-			</div>
-			<?php
 		}
 	}
 
@@ -1352,7 +1141,7 @@ class WebChangeDetector_Admin {
 				<hr>
 				<h2> Account</h2>
 				<p>
-					Your email address: <strong><?php echo esc_html( $this->account_details()['email'] ); ?></strong><br>
+					Your email address: <strong><?php echo esc_html( $this->get_account()['email'] ); ?></strong><br>
 					Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
 				</p>
 				<p>
@@ -1530,7 +1319,7 @@ class WebChangeDetector_Admin {
 									$enabled = $group_and_urls['enabled'];
 									if ( $enabled ) {
 										?>
-										Monitoring: <strong style="color: green;">Enabled</strong>
+										Monitoring: <strong style="color: green;">On</strong>
 										| Interval: <strong>
 											every
 											<?php echo esc_html( $group_and_urls['interval_in_h'] ); ?>
@@ -1547,7 +1336,7 @@ class WebChangeDetector_Admin {
 										<?php
 									} else {
 										?>
-										Monitoring: <strong style="color: red">Disabled</strong>
+										Monitoring: <strong style="color: red">Off</strong>
 									<?php } ?>
 								</small>
 							</h3>
@@ -1939,7 +1728,7 @@ class WebChangeDetector_Admin {
 				</a>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'update-group' ); ?> Manual- & Auto Update Checks
+					<?php $this->get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
 				</a>
 				<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
@@ -1991,8 +1780,9 @@ class WebChangeDetector_Admin {
 							<?php $this->get_device_icon( 'update-group' ); ?>
 						</div>
 						<div style="float: left; max-width: 350px;">
-							<strong>Manual Checks</strong><br>
-							Create change detections manually
+							<strong>Manual Checks & Auto Update Checks</strong><br>
+							Check webpages at WP auto updates or manually
+
 						</div>
 						<div class="clear"></div>
 					</a>
@@ -2002,7 +1792,7 @@ class WebChangeDetector_Admin {
 						</div>
 						<div style="float: left; max-width: 350px;">
 							<strong>Monitoring</strong><br>
-							Create automatic change detections
+							Monitor webpages and get notified on changes
 						</div>
 						<div class="clear"></div>
 					</a>
@@ -2023,8 +1813,8 @@ class WebChangeDetector_Admin {
 					<h2>
 						<strong>
 							<?php
-							if ( ! empty( $client_account['sc_limit'] ) ) {
-								echo number_format( esc_html( $client_account['usage'] / $client_account['sc_limit'] * 100 ), 1 );
+							if ( ! empty( $client_account['checks_limit'] ) ) {
+								echo number_format( esc_html( $client_account['checks_done'] / $client_account['checks_limit'] * 100 ), 1 );
 							} else {
 								echo 0;
 							}
@@ -2034,8 +1824,8 @@ class WebChangeDetector_Admin {
 					</h2>
 					<hr>
 					<p style="margin-top: 20px;"><strong>Used checks:</strong>
-						<?php echo esc_html( $client_account['usage'] ); ?> /
-						<?php echo esc_html( $client_account['sc_limit'] ); ?>
+						<?php echo esc_html( $client_account['checks_done'] ); ?> /
+						<?php echo esc_html( $client_account['checks_limit'] ); ?>
 					</p>
 
 					<p><strong>Active monitoring checks / month:</strong> <?php echo esc_html( $amount_auto_detection ); ?></p>
@@ -2184,6 +1974,27 @@ class WebChangeDetector_Admin {
 		return false;
 	}
 
+	/** Get group details and its urls.
+	 *
+	 * @param string $group_id The group id.
+	 * @param array  $url_filter Filters for the urls.
+	 * @return mixed
+	 */
+	public function get_group_and_urls( $group_id, $url_filter = array() ) {
+
+		$group_and_urls         = WebChangeDetector_API_V2::get_group_v2( $group_id )['data'];
+		$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter )['data'];
+
+		$amount_selected_urls = 0;
+		foreach ( $group_and_urls['urls'] as $url ) {
+			if ( $url['desktop'] || $url['mobile'] ) {
+				++$amount_selected_urls;
+			}
+		}
+		$group_and_urls['amount_selected_urls'] = $amount_selected_urls;
+		return $group_and_urls;
+	}
+
 	/**
 	 * Call to V1 API.
 	 *
@@ -2276,8 +2087,10 @@ class WebChangeDetector_Admin {
 	 * @param string $log The log message.
 	 */
 	public static function error_log( $log ) {
-		if ( defined( 'WCD_DEV' ) && WCD_DEV ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true && defined( 'WCD_DEV' ) && WCD_DEV ) {
+			// phpcs:disable WordPress.PHP.DevelopmentFunctions
 			error_log( $log );
+			// phpcs:enable
 		}
 	}
 }

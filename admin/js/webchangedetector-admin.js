@@ -173,27 +173,12 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             }
         });
 
-        // Enable / disable settings for monitoring
-        showAutoSettings();
         $("#diff-container").twentytwenty();
 
         $("#diff-container .comp-img").load( function() {
             $("#diff-container").twentytwenty();
         });
 
-
-        $("#auto-enabled").change(function() {
-            showAutoSettings();
-        });
-
-        function showAutoSettings() {
-            const enabledSelect = $("#auto-enabled");
-            if(enabledSelect.val() === "0") {
-                $(".auto-setting").hide();
-                return;
-            }
-            $(".auto-setting").show();
-        }
         $(".selected-urls").each(function(index, item) {
             var postType = $(item).data("post_type");
             var selectedDesktop = ($(item).data("amount_selected_desktop"));

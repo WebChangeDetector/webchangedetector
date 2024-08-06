@@ -58,8 +58,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 
 				$api_token = $wcd->create_free_account( $postdata );
-
-				$success = $wcd->save_api_token( $postdata, $api_token );
+				$success   = $wcd->save_api_token( $postdata, $api_token );
 
 				if ( ! $success ) {
 					return false;
@@ -103,7 +102,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get the account details.
-		$account_details = $wcd->account_details();
+		$account_details = $wcd->get_account();
 
 		// Check if plugin has to be updated.
 		if ( 'update plugin' === $account_details ) {
@@ -129,22 +128,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Show low credits.
-		$usage_percent = (int) ( $account_details['usage'] / $account_details['sc_limit'] * 100 );
 
-		if ( $usage_percent >= 100 ) {
-			if ( $account_details['plan']['one_time'] ) { // Check for trial account.
-				?>
-				<div class="notice notice-error">
-					<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.</p>
-				</div>
-			<?php } else { ?>
-				<div class="notice notice-error">
-					<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue or wait for renewal.</p>
-				</div>
-				<?php
-			}
-		} elseif ( $usage_percent > 70 ) {
-			?>
+		$usage_percent = (int) ( $account_details['checks_done'] / $account_details['checks_limit'] * 100 );
+
+		if ( $usage_percent >= 100 ) {?>
+			<div class="notice notice-error">
+				<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.</p>
+			</div>
+		<?php } elseif ( $usage_percent > 70 ) { ?>
 			<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
 			<?php
 		}
@@ -172,7 +163,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		if ( empty( $wcd->website_details ) ) {
 			?>
 			<div class="notice notice-error">
-				<br>Ooops! We couldn't find your settings. Please try reloading the page. <br>
+				<p>Ooops! We couldn't find your settings. Please try reloading the page.
 				If the issue persists, please contact us.</p>
 				<p>
 					<form method="post">
@@ -236,13 +227,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						$auto_group_name             = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
 						$postdata['group_name_auto'] = $auto_group_name;
-						$wcd->update_monitoring_settings( $postdata, $wcd->monitoring_group_id );
+						$wcd->update_monitoring_settings( $postdata );
 						break;
 
 					case 'post_urls':
 						$wcd->post_urls( $postdata, $wcd->website_details, false );
 						if ( ! empty( $postdata['monitoring'] ) && $postdata['monitoring'] ) {
-							$wcd->update_monitoring_settings( $postdata, $wcd->monitoring_group_id );
+							$wcd->update_monitoring_settings( $postdata );
 						} else {
 							$wcd->update_settings( $postdata, $wcd->group_id );
 						}
@@ -261,9 +252,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get updated account and website data.
-		$account_details = $wcd->account_details();
+		$account_details = $wcd->get_account();
 
 		// Error message if api didn't return account details.
+
 		if ( empty( $account_details['status'] ) ) {
 			?>
 			<div class="error notice">
@@ -333,9 +325,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		echo '<div style="margin-top: 30px;"></div>';
 
 		// Account credits.
-		$comp_usage         = $account_details['usage'];
-		$limit              = $account_details['sc_limit'];
-		$available_compares = $account_details['available_compares'];
+		$comp_usage         = $account_details['checks_done'];
+		$limit              = $account_details['checks_limit'];
+		$available_compares = $account_details['checks_left'];
 
 		if ( $wcd->website_details['enable_limits'] ) {
 			$account_details['usage']            = $comp_usage; // used in dashboard.
@@ -411,7 +403,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						<select name="group_type" >
 							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
-							<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Manual- & Auto Update Checks</option>
+							<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Manual Checks & Auto Update Checks</option>
 							<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
 						</select>
 						<select name="status" class="js-dropdown">
@@ -538,6 +530,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 				}
 
+				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, array( 'per_page' => 999999 ) );
+
 				$step = false;
 				// Show message if no urls are selected.
 				if ( ! $group_and_urls['amount_selected_urls'] ) {
@@ -641,9 +635,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
-
-				$group_and_urls         = WebChangeDetector_API_V2::get_group_v2( $wcd->monitoring_group_uuid )['data'];
-				$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $wcd->monitoring_group_uuid )['data'];
+				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid );
 
 				// Calculation for monitoring.
 				$date_next_sc = false;
@@ -705,7 +697,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Calculate screenshots until renewal.
-					$account = $wcd->account_details();
+					$account = $wcd->get_account();
 
 					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account['renewal_at'] ) ) - gmdate( 'U' ) );
 					$amount_group_sc_per_day = $group_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;

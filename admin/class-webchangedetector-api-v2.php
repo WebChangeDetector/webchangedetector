@@ -14,6 +14,14 @@
  */
 class WebChangeDetector_API_V2 {
 
+	/** Get account details.
+	 *
+	 * @return mixed|string
+	 */
+	public static function get_account_v2() {
+		return self::api_v2( array( 'action' => 'account' ), 'GET' );
+	}
+
 	/** Sync urls.
 	 *
 	 * @param array $posts The posts to sync.
@@ -33,6 +41,20 @@ class WebChangeDetector_API_V2 {
 		);
 
 		return self::api_v2( $args );
+	}
+	/** Update group settings.
+	 *
+	 * @param string $group_id The group id.
+	 * @param array  $group_settings Group settings to save.
+	 * @return mixed|string
+	 */
+	public static function update_group( $group_id, $group_settings ) {
+		$args = array(
+			'action' => 'groups/' . $group_id,
+		);
+		$args = array_merge( $args, $group_settings );
+
+		return self::api_v2( $args, 'PATCH' );
 	}
 
 	/** Update urls.

@@ -89,6 +89,14 @@
     width: calc(50% - 10px);
     float: left;
 }
+.webchangedetector .box-one-third {
+    width: calc(33.33% - 10px);
+    float: left;
+}
+.webchangedetector .box-two-third {
+    width: calc(66.66% - 10px);
+    float: left;
+}
 .webchangedetector .box-half:last-child {
     margin-left: 10px;
 }
@@ -328,7 +336,7 @@
 
 .webchangedetector label {
     display: inline-block;
-    min-width: 150px;
+    min-width: 180px;
 }
 
 .webchangedetector ul li {

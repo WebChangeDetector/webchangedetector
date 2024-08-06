@@ -93,7 +93,9 @@ if ( ! function_exists( 'dd' ) ) {
 		echo '<pre>';
 		foreach ( $output as $o ) {
 			if ( is_array( $o ) || is_object( $o ) ) {
+				// phpcs:disable WordPress.PHP.DevelopmentFunctions
 				print_r( $o );
+				// phpcs:enable
 				continue;
 			}
 			echo esc_html( $o );

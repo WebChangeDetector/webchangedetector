@@ -16,7 +16,7 @@
 	data-sc_limit="<?php echo esc_html( $limit ); ?>"
 >
 <?php if ( ! $wcd->website_details['enable_limits'] ) { ?>
-	Your plan: <strong><?php echo esc_html( $account_details['plan']['name'] ); ?></strong><br>
+	Your plan: <strong><?php echo esc_html( $account_details['plan_name'] ); ?></strong><br>
 <?php } ?>
 Used checks: <strong><?php echo esc_html( $comp_usage ); ?> / <?php echo esc_html( $limit ); ?></strong><br>
 Next renew: <strong><?php echo esc_html( gmdate( 'd/m/Y', $renew_date ) ); ?></strong>

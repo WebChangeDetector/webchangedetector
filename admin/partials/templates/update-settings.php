@@ -35,17 +35,17 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 }
 ?>
 <div style="width: 50%; float: left;">
-	<div style="padding: 10px; margin-top: 20px;" class="auto-setting toggle">
+	<div style="padding: 10px; margin-top: 20px;" class="toggle">
 		<label for="threshold" >Threshold</label>
 		<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %<br>
 	</div>
-	<div style="padding: 10px;" class="auto-setting">
+	<div style="padding: 10px;" class="">
 		<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
 		<input id="auto_update_checks_enabled" name="auto_update_checks_enabled" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_enabled'] ); ?> class="auto_update_checks_enabled">
 		<small> WP auto updates have to be enabled. This option only enables checks during auto updates.</small>
 	</div>
 	<div id="auto_update_checks_settings">
-		<div style="padding: 10px; " class="auto-setting toggle">
+		<div style="padding: 10px; " class="toggle">
 			<label for="auto_update_checks_from" >Auto update times from </label>
 			<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ); ?>" type="time" class="auto_update_checks_from">
 			<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
@@ -54,7 +54,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 		<span class="notice notice-error" id="error-from-to-validation" style="display: none;">
 			<span style="padding: 10px; display: block;" class="default-bg">The time window is invalid. The "to" time must be greater than "from" time.</span>
 		</span>
-		<div style="padding: 10px; " class="auto-setting toggle">
+		<div style="padding: 10px; " class="toggle">
 			<label for="auto_update_checks_weekdays" style="vertical-align:top;">On days</label>
 			<div id="auto_update_checks_weekday_container" style="display: inline-block">
 				<input name="auto_update_checks_monday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ); ?> class="auto_update_checks_monday">
@@ -76,9 +76,9 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 				<span style="padding: 10px; display: block;" class="default-bg">At least one weekday has to be selected.</span>
 			</span>
 		</div>
-		<div style="padding: 10px; " class="auto-setting toggle" >
-			<label for="auto_update_checks_emails" >Notification email to</label>
-			<input name="auto_update_checks_emails" style="width: calc(100% - 160px)" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
+		<div style="padding: 10px; " class="toggle" >
+			<label for="auto_update_checks_emails" >Notification email to (comma separated)</label>
+			<input name="auto_update_checks_emails" style="width: 100%" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
 		</div>
 	</div>
 	<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ); ?>">
