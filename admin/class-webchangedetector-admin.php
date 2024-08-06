@@ -539,6 +539,9 @@ class WebChangeDetector_Admin {
 		if ( 'update-group' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
 		}
+		if ( 'auto-update-group' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
+		}
 		if ( 'trash' === $icon ) {
 			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
 		}
@@ -861,11 +864,14 @@ class WebChangeDetector_Admin {
 							<div class="accordion-batch-title-tile">
 								<?php
 								if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
-									echo 'Monitoring Checks';
+									$this->get_device_icon( 'auto-group' );
+									echo ' Monitoring Checks';
 								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
-									echo 'Auto Update Checks';
+									$this->get_device_icon( 'auto-update-group' );
+									echo ' Auto Update Checks';
 								} else {
-									echo 'Manual Checks';
+									$this->get_device_icon( 'update-group' );
+									echo ' Manual Checks';
 								}
 								?>
 								<br>

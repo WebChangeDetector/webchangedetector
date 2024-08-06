@@ -468,7 +468,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					);
 
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
-					$wcd->compare_view_v2( $comparisons['data'], $batches );
+					$wcd->compare_view_v2( $comparisons['data'] );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
@@ -483,13 +483,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<span class="pagination-links">
 								<?php
 								foreach ( $pagination['links'] as $link ) {
-									$url_components = wp_parse_url( $link['url'] );
-									parse_str( $url_components['query'], $params );
+									if ( ! empty( $link['url'] ) ) {
+										$url_components = wp_parse_url( $link['url'] );
+										parse_str( $url_components['query'], $params );
+									}
 									$class = ! $link['url'] || $link['active'] ? 'disabled' : '';
 									?>
 									<a class="tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
 										href="?page=webchangedetector-change-detections&
-										paged=<?php echo esc_html( $params['page'] ); ?>&
+										paged=<?php echo esc_html( $params['page'] ?? 1 ); ?>&
 										<?php echo esc_html( build_query( $pagination_filters ) ); ?>" >
 											<?php echo esc_html( $link['label'] ); ?>
 									</a>
