@@ -83,11 +83,10 @@
 		</p>
 		<div class="auto-setting " style="margin-top: 20px;">
 			<label for="alert_emails" class="auto-setting">
-				Alert email addresses (One per line)
+				Alert email addresses (comma separated)
 			</label>
-			<textarea name="alert_emails" id="alert_emails" style="width: 100%; height: 100px; " class="auto-setting"
-			><?php echo isset( $group_and_urls['alert_emails'] ) ? esc_attr( implode( "\n", $group_and_urls['alert_emails'] ) ) : ''; ?></textarea>
-
+			<input type="text" name="alert_emails" id="alert_emails" style="width: 100%;" class="auto-setting"
+			value="<?php echo isset( $group_and_urls['alert_emails'] ) ? esc_attr( $group_and_urls['alert_emails'] ) : ''; ?>">
 		</div>
 		<span class="notice notice-error" id="error-email-validation" style="display: none;">
 			<span style="padding: 10px; display: block;" class="default-bg">Please check your email address(es).</span>

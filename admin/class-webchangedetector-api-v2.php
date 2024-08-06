@@ -27,6 +27,7 @@ class WebChangeDetector_API_V2 {
 
 		$args = array(
 			'action'              => 'urls/sync',
+			'domain'              => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
 			'urls'                => ( $posts ),
 			'delete_missing_urls' => $delete_missing_urls,
 		);
@@ -34,26 +35,44 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
-	/** Get group details.
-* @param $group_id
-* @return mixed|string
+	/** Update urls.
+	 *
+	 * @param int   $group_id The group id.
+	 * @param array $active_posts All active posts.
+	 *
+	 * @return array|string
 	 */
-	public static function get_group_v2 ($group_id) {
+	public static function update_urls_in_group_v2( $group_id, $active_posts = array() ) {
 		$args = array(
-			'action' => 'groups/'.$group_id
+			'action' => 'groups/' . $group_id . '/urls',
+			'urls'   => $active_posts,
 		);
-		return self::api_v2($args, 'GET' );
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
+	/** Get group details.
+	 *
+	 * @param string $group_id The group id.
+	 * @return mixed|string
+	 */
+	public static function get_group_v2( $group_id ) {
+		$args = array(
+			'action' => 'groups/' . $group_id,
+		);
+		return self::api_v2( $args, 'GET' );
 	}
 
 	/** Get urls of a group.
 	 *
-	 * @param int $group_id The group id.
+	 * @param int   $group_id The group id.
+	 * @param array $filters Filters for group urls.
 	 *
 	 * @return array|mixed|string
 	 */
-	public static function get_group_urls_v2( $group_id, $filters = [] ) {
+	public static function get_group_urls_v2( $group_id, $filters = array() ) {
 		$args = array(
-			'action'   => 'groups/'.$group_id . '/urls?' . build_query($filters),
+			'action' => 'groups/' . $group_id . '/urls?' . build_query( $filters ),
 		);
 
 		return self::api_v2( $args, 'GET' );
@@ -278,11 +297,6 @@ class WebChangeDetector_API_V2 {
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.
 
-		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
-		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
-		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
-		$post['wp_id']  = get_current_user_id();
-
 		// Increase timeout for php.ini.
 		if ( ! ini_get( 'safe_mode' ) ) {
 			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
@@ -295,10 +309,13 @@ class WebChangeDetector_API_V2 {
 			'headers' => array(
 				'Accept'        => 'application/json',
 				'Authorization' => 'Bearer ' . $api_token,
+				'x-wcd-domain'  => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
+				'x-wcd-wp-id'   => get_current_user_id(),
+				'x-wcd-plugin'  => WEBCHANGEDETECTOR_VERSION,
 			),
 		);
 
-		WebChangeDetector_Admin::error_log( 'Sending API V2 request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
+		WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
 
 		if ( $is_web ) {
 			$response = wp_remote_request( $url_web, $args );
@@ -308,7 +325,8 @@ class WebChangeDetector_API_V2 {
 
 		$body          = wp_remote_retrieve_body( $response );
 		$response_code = (int) wp_remote_retrieve_response_code( $response );
-		$decoded_body  = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
+		WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
+		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 
 		// `message` is part of the Laravel Stacktrace.
 		if ( WCD_HTTP_BAD_REQUEST === $response_code &&

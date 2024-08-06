@@ -1282,10 +1282,10 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-        // TODO: Filter duplicate urls. Shouldn't, but could happen.
+		// TODO: Filter duplicate urls. Shouldn't, but could happen.
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
-            //dd($synced_posts);
+			// dd($synced_posts);
 			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
 
 			return $synced_posts;
@@ -1468,7 +1468,6 @@ class WebChangeDetector_Admin {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 		$wcd_website_urls = $this->sync_posts();
 
-
 		// Select URLS.
 		$tab            = 'update-settings'; // init.
 		$detection_type = 'update';
@@ -1542,7 +1541,7 @@ class WebChangeDetector_Admin {
 										<br>
 										Notifications to:
 										<strong>
-											<?php echo ! empty( $group_and_urls['alert_emails'] ) ? esc_html( implode( ', ', $group_and_urls['alert_emails'] ) ) : 'no email address set'; ?>
+											<?php echo ! empty( $group_and_urls['alert_emails'] ) ? esc_html( $group_and_urls['alert_emails'] ) : 'no email address set'; ?>
 										</strong>
 										<?php
 									} else {
@@ -1554,9 +1553,8 @@ class WebChangeDetector_Admin {
 							<div class="mm_accordion_content padding" style="background: #fff;">
 								<?php include 'partials/templates/auto-settings.php'; ?>
 							</div>
-						</div>
+                        </div>
 					</div>
-                    <script> jQuery(".accordion").accordion( "option", "active", 2 );</script>
 					<?php } ?>
 
 					<h2 style="margin-top: 50px;">Select URLs</h2>
@@ -1569,12 +1567,12 @@ class WebChangeDetector_Admin {
 					<?php
 
 					$merged_url_details = array();
-                    $added_urls = array(); // if we have for whatever reason the same url twice in the url group, we only show it one time.
+					$added_urls         = array(); // if we have for whatever reason the same url twice in the url group, we only show it one time.
 					foreach ( $group_and_urls['urls'] as $wcd_group_url ) {
 						foreach ( $wcd_website_urls as $wcd_website_url ) {
-							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] && ! in_array($wcd_group_url['id'], $added_urls)) {
+							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] && ! in_array( $wcd_group_url['id'], $added_urls ) ) {
 								$merged_url_details[ $wcd_website_url['url_category'] ][] = array_merge( $wcd_group_url, $wcd_website_url );
-                                $added_urls[] = $wcd_group_url['id'];
+								$added_urls[] = $wcd_group_url['id'];
 							}
 						}
 					}
@@ -1616,9 +1614,10 @@ class WebChangeDetector_Admin {
 												</tr>
 												<?php
 												// Select all from same device.
+
 												echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
-                                            <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['group_id'] ) . '\' )" /></td>
-                                            <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['group_id'] ) . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['group'] ) . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['group'] ) . '\' )" /></td>
                                             <td></td>
                                         </tr>';
 												$amount_active_posts = 0;
@@ -1642,8 +1641,8 @@ class WebChangeDetector_Admin {
 							// This way the wp_posts should be sorted the right way.
 							$urls = array_merge( $active_posts, $inactive_posts );
 
-							$selected_desktop = 0;
-							$selected_mobile = 0;
+							$selected_desktop    = 0;
+							$selected_mobile     = 0;
 							$amount_active_posts = 0;
 							foreach ( $urls as $url ) {
 								// init.
@@ -1734,7 +1733,9 @@ class WebChangeDetector_Admin {
 						class="button button-primary"
 						type="submit"
 						name="save_settings"
-						value="save_update_settings_and_continue" >
+						value="save_update_settings_and_continue"
+						onclick="return wcdValidateFormManualSettings()"
+					>
 						Start manual checks >
 					</button>
 						<?php } ?>
@@ -1743,14 +1744,18 @@ class WebChangeDetector_Admin {
 						type="submit"
 						name="save_settings"
 						value="post_urls"
-						style="margin-left: 10px;">
+						style="margin-left: 10px;"
+						onclick="return wcdValidateFormManualSettings()"
+				>
 					Save
 				</button>
 				<button class="button"
 						type="submit"
 						name="save_settings"
 						value="post_urls_update_and_auto"
-						style="margin-left: 10px;">
+						style="margin-left: 10px;"
+						onclick="return wcdValidateFormManualSettings()"
+				>
 					Save & copy settings to monitoring
 				</button>
 				<?php } ?>
@@ -1776,16 +1781,15 @@ class WebChangeDetector_Admin {
 
 				// sanitize before.
 				$wp_post_id = sanitize_text_field( $postdata[ 'post_id-' . $post_id ] ); // should be numeric.
-				if ( ! is_numeric( $wp_post_id ) ) {
+				if ( ! is_string( $wp_post_id ) ) {
 					continue; // just skip it.
 				}
-				$permalink = get_permalink( $wp_post_id ); // should return the whole link.
-				$desktop   = array_key_exists( 'desktop-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'desktop-' . $post_id ] ) : 0;
-				$mobile    = array_key_exists( 'mobile-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'mobile-' . $post_id ] ) : 0;
+
+				$desktop = array_key_exists( 'desktop-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'desktop-' . $post_id ] ) : 0;
+				$mobile  = array_key_exists( 'mobile-' . $post_id, $postdata ) ? sanitize_text_field( $postdata[ 'mobile-' . $post_id ] ) : 0;
 
 				$active_posts[] = array(
-					'url_id'  => $post_id,
-					'url'     => $permalink,
+					'id'      => $post_id,
 					'desktop' => $desktop,
 					'mobile'  => $mobile,
 				);
@@ -1819,10 +1823,10 @@ class WebChangeDetector_Admin {
                  </p></div>';
 		} else {
 			if ( $save_both_groups ) {
-				$this->update_urls( $website_details['auto_detection_group_id'], $active_posts );
-				$this->update_urls( $website_details['manual_detection_group_id'], $active_posts );
+				WebChangeDetector_API_V2::update_urls_in_group_v2( $website_details['auto_detection_group_id'], $active_posts );
+				WebChangeDetector_API_V2::update_urls_in_group_v2( $website_details['manual_detection_group_id'], $active_posts );
 			} else {
-				$this->update_urls( $group_id_website_details, $active_posts );
+				WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 			}
 			echo '<div class="updated notice"><p>Settings saved.</p></div>';
 		}
@@ -2271,7 +2275,7 @@ class WebChangeDetector_Admin {
 	 * @param string $log The log message.
 	 */
 	public static function error_log( $log ) {
-		if ( defined( WCD_DEV ) && WCD_DEV ) {
+		if ( defined( 'WCD_DEV' ) && WCD_DEV ) {
 			error_log( $log );
 		}
 	}

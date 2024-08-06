@@ -394,6 +394,54 @@ function mmToggle(source, postType, column, groupId) {
 }
 
 /**
+* Validates comma separated emails in a form
+* Called `onsubmit=` in HTML
+*/
+function wcdValidateFormManualSettings() {
+
+    // Early return if auto update checks are disabled.
+    var autoUpdateChecksEnabled = document.getElementById("auto_update_checks_enabled").checked;
+    if(!autoUpdateChecksEnabled) {
+        return true;
+    }
+
+    // Validation from and to time.
+    var from = document.getElementById("auto_update_checks_from");
+    var to = document.getElementById("auto_update_checks_to");
+
+    console.log("from: " + from.value + " | to: " + to.value);
+    if(to.value < from.value) {
+        jQuery(from).css("border", "2px solid #d63638");
+        jQuery(to).css("border", "2px solid #d63638");
+        jQuery("#error-from-to-validation").css("display", "block");
+        from.scrollIntoView({
+            behavior: 'smooth'
+        });
+        return false;
+    }
+
+    // Validation weekday.
+    var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');
+    if(
+        ! document.getElementsByName("auto_update_checks_monday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_tuesday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_wednesday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_thursday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_friday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_saturday")[0].checked &&
+        ! document.getElementsByName("auto_update_checks_sunday")[0].checked
+    ) {
+        jQuery(weekdayContainer).css("border", "2px solid #d63638");
+        jQuery("#error-on-days-validation").css("display", "block");
+        weekdayContainer.scrollIntoView({
+            behavior: 'smooth'
+        });
+        return false;
+    }
+    return true;
+}
+
+/**
  * Validates comma separated emails in a form
  * Called `onsubmit=` in HTML
  */
@@ -408,7 +456,7 @@ function wcdValidateFormAutoSettings() {
     // get all emails
     var emailsElement = document.getElementById("alert_emails");
     // split by new line
-    let emails = emailsElement.value.replace(/\r\n/g,"\n").split("\n");
+    let emails = emailsElement.value.split(",");
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
