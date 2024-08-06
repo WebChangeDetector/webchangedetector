@@ -1282,8 +1282,10 @@ class WebChangeDetector_Admin {
 			}
 		}
 
+        // TODO: Filter duplicate urls. Shouldn't, but could happen.
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
+            //dd($synced_posts);
 			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
 
 			return $synced_posts;
@@ -1466,6 +1468,7 @@ class WebChangeDetector_Admin {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 		$wcd_website_urls = $this->sync_posts();
 
+
 		// Select URLS.
 		$tab            = 'update-settings'; // init.
 		$detection_type = 'update';
@@ -1553,6 +1556,7 @@ class WebChangeDetector_Admin {
 							</div>
 						</div>
 					</div>
+                    <script> jQuery(".accordion").accordion( "option", "active", 2 );</script>
 					<?php } ?>
 
 					<h2 style="margin-top: 50px;">Select URLs</h2>
@@ -1563,12 +1567,14 @@ class WebChangeDetector_Admin {
 					<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
 
 					<?php
-					$merged_url_details = array();
 
+					$merged_url_details = array();
+                    $added_urls = array(); // if we have for whatever reason the same url twice in the url group, we only show it one time.
 					foreach ( $group_and_urls['urls'] as $wcd_group_url ) {
 						foreach ( $wcd_website_urls as $wcd_website_url ) {
-							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] ) {
+							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] && ! in_array($wcd_group_url['id'], $added_urls)) {
 								$merged_url_details[ $wcd_website_url['url_category'] ][] = array_merge( $wcd_group_url, $wcd_website_url );
+                                $added_urls[] = $wcd_group_url['id'];
 							}
 						}
 					}
@@ -1611,8 +1617,8 @@ class WebChangeDetector_Admin {
 												<?php
 												// Select all from same device.
 												echo '<tr class="live-filter-row even-tr-white" style="background: none; text-align: center">
-                                            <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
-                                            <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['pivot']['group_id'] ) . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-desktop-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'desktop\', \'' . esc_html( $urls[0]['group_id'] ) . '\' )" /></td>
+                                            <td><input type="checkbox" id="select-mobile-' . esc_html( lcfirst( $url_type ) ) . '" onclick="mmToggle( this, \'' . esc_html( lcfirst( $url_type ) ) . '\', \'mobile\', \'' . esc_html( $urls[0]['group_id'] ) . '\' )" /></td>
                                             <td></td>
                                         </tr>';
 												$amount_active_posts = 0;
@@ -1626,7 +1632,7 @@ class WebChangeDetector_Admin {
 							$inactive_posts = array();
 							$active_posts   = array();
 							foreach ( $urls as $url ) {
-								if ( $url['pivot']['desktop'] || $url['pivot']['mobile'] ) {
+								if ( $url['desktop'] || $url['mobile'] ) {
 									$active_posts[] = $url;
 								} else {
 									$inactive_posts[] = $url;
@@ -1636,18 +1642,21 @@ class WebChangeDetector_Admin {
 							// This way the wp_posts should be sorted the right way.
 							$urls = array_merge( $active_posts, $inactive_posts );
 
+							$selected_desktop = 0;
+							$selected_mobile = 0;
+							$amount_active_posts = 0;
 							foreach ( $urls as $url ) {
 								// init.
 								$checked = array(
 									'desktop' => '',
 									'mobile'  => '',
 								);
-								if ( $url['pivot']['desktop'] ) {
+								if ( $url['desktop'] ) {
 									$checked['desktop'] = 'checked';
 									++$selected_desktop;
 									++$amount_active_posts;
 								}
-								if ( $url['pivot']['mobile'] ) {
+								if ( $url['mobile'] ) {
 									$checked['mobile'] = 'checked';
 									++$selected_mobile;
 									++$amount_active_posts;

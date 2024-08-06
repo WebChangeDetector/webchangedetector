@@ -20,7 +20,7 @@ class WebChangeDetector_API_V2 {
 	 * @param bool  $delete_missing_urls Delete missing urls or not.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts, $delete_missing_urls = false ) {
+	public static function sync_urls( $posts, $delete_missing_urls = true ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
@@ -32,6 +32,31 @@ class WebChangeDetector_API_V2 {
 		);
 
 		return self::api_v2( $args );
+	}
+
+	/** Get group details.
+* @param $group_id
+* @return mixed|string
+	 */
+	public static function get_group_v2 ($group_id) {
+		$args = array(
+			'action' => 'groups/'.$group_id
+		);
+		return self::api_v2($args, 'GET' );
+	}
+
+	/** Get urls of a group.
+	 *
+	 * @param int $group_id The group id.
+	 *
+	 * @return array|mixed|string
+	 */
+	public static function get_group_urls_v2( $group_id, $filters = [] ) {
+		$args = array(
+			'action'   => 'groups/'.$group_id . '/urls?' . build_query($filters),
+		);
+
+		return self::api_v2( $args, 'GET' );
 	}
 
 	/** Take screenshots.

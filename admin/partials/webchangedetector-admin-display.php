@@ -229,6 +229,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					case 'post_urls_update_and_auto':
 						$wcd->post_urls( $postdata, $wcd->website_details, true );
 
+
 						// Get the depending group names before saving to avoid group name changes in webapp.
 						$manual_group_name      = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
 						$postdata['group_name'] = $manual_group_name;
@@ -240,6 +241,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						break;
 
 					case 'post_urls':
+
 						$wcd->post_urls( $postdata, $wcd->website_details, false );
 						if ( ! empty( $postdata['monitoring'] ) && $postdata['monitoring'] ) {
 							$wcd->update_monitoring_settings( $postdata, $wcd->monitoring_group_id );
@@ -523,8 +525,19 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
+                $group_and_urls = WebChangeDetector_API_V2::get_group_v2($wcd->manual_group_uuid)['data'];
+
+				// Get group urls.
+				$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $wcd->manual_group_uuid, ['per_page' => 999999] )['data'];
+
+
 				// Get selected urls.
-				$group_and_urls = $wcd->get_urls_of_group( $wcd->group_id );
+				$group_and_urls['amount_selected_urls'] = 0;
+				foreach($group_and_urls['urls'] as $group_and_url) {
+					if($group_and_url['desktop'] || $group_and_url['mobile']) {
+						$group_and_urls['amount_selected_urls']++;
+					}
+				}
 
 				$step = false;
 				// Show message if no urls are selected.
