@@ -10,16 +10,13 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
-use JetBrains\PhpStorm\NoReturn;
-
 /** WCD Admin Class
  */
 class WebChangeDetector_Admin {
 
 	const API_TOKEN_LENGTH = 10;
-	const PRODUCT_ID_FREE  = 57;
-	const LIMIT_QUEUE_ROWS = 50;
 
+	const LIMIT_QUEUE_ROWS  = 50;
 	const VALID_WCD_ACTIONS = array(
 		'reset_api_token',
 		're-add-api-token',
@@ -1282,10 +1279,8 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		// TODO: Filter duplicate urls. Shouldn't, but could happen.
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
-			// dd($synced_posts);
 			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
 
 			return $synced_posts;
@@ -1553,7 +1548,7 @@ class WebChangeDetector_Admin {
 							<div class="mm_accordion_content padding" style="background: #fff;">
 								<?php include 'partials/templates/auto-settings.php'; ?>
 							</div>
-                        </div>
+						</div>
 					</div>
 					<?php } ?>
 
@@ -1570,7 +1565,7 @@ class WebChangeDetector_Admin {
 					$added_urls         = array(); // if we have for whatever reason the same url twice in the url group, we only show it one time.
 					foreach ( $group_and_urls['urls'] as $wcd_group_url ) {
 						foreach ( $wcd_website_urls as $wcd_website_url ) {
-							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] && ! in_array( $wcd_group_url['id'], $added_urls ) ) {
+							if ( $wcd_website_url['url_id'] === $wcd_group_url['id'] && ! in_array( $wcd_group_url['id'], $added_urls, true ) ) {
 								$merged_url_details[ $wcd_website_url['url_category'] ][] = array_merge( $wcd_group_url, $wcd_website_url );
 								$added_urls[] = $wcd_group_url['id'];
 							}
@@ -1667,14 +1662,14 @@ class WebChangeDetector_Admin {
 								echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . ' value="1">';
 
 								echo '<td class="checkbox-desktop-' . esc_html( lcfirst( $url_type ) ) . '" style="text-align: center;">
-                                                    <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">
-                                                    <input type="checkbox" name="desktop-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
-                                                    id="desktop-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
+                                        <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">
+                                        <input type="checkbox" name="desktop-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['desktop'] ) . '
+                                        id="desktop-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
 
 								echo '<td class="checkbox-mobile-' . esc_html( lcfirst( $url_type ) ) . '" style="text-align: center;">
-                                                    <input type="hidden" value="0" name="mobile-' . esc_html( $url['id'] ) . '">
-                                                    <input type="checkbox" name="mobile-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
-                                                    id="mobile-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
+                                        <input type="hidden" value="0" name="mobile-' . esc_html( $url['id'] ) . '">
+                                        <input type="checkbox" name="mobile-' . esc_html( $url['id'] ) . '" value="1" ' . esc_html( $checked['mobile'] ) . '
+                                        id="mobile-' . esc_html( $url['id'] ) . '" onclick="mmMarkRows(\'' . esc_html( $url['id'] ) . '\')" ></td>';
 
 								echo '<td style="text-align: left;"><strong>' . esc_html( $url['html_title'] ) . '</strong><br>';
 								echo '<a href="' . esc_html( $url['url'] ) . '" target="_blank">' . esc_html( $url['url'] ) . '</a></td>';
@@ -1709,55 +1704,55 @@ class WebChangeDetector_Admin {
 
 					if ( $monitoring_group ) {
 						?>
-				<button
-						class="button button-primary"
-						type="submit"
-						name="save_settings"
-						value="post_urls"
-						onclick="return wcdValidateFormAutoSettings()">
-					Save
-				</button>
-				<button class="button"
-						type="submit"
-						name="save_settings"
-						value="post_urls_update_and_auto"
-						style="margin-left: 10px;"
-						onclick="return wcdValidateFormAutoSettings()">
-					Save & copy to manual checks
-				</button>
+						<button
+								class="button button-primary"
+								type="submit"
+								name="save_settings"
+								value="post_urls"
+								onclick="return wcdValidateFormAutoSettings()">
+							Save
+						</button>
+						<button class="button"
+								type="submit"
+								name="save_settings"
+								value="post_urls_update_and_auto"
+								style="margin-left: 10px;"
+								onclick="return wcdValidateFormAutoSettings()">
+							Save & copy to manual checks
+						</button>
 						<?php
 					} else {
 						if ( $this->website_details['allow_manual_detection'] ) {
 							?>
-					<button
-						class="button button-primary"
-						type="submit"
-						name="save_settings"
-						value="save_update_settings_and_continue"
-						onclick="return wcdValidateFormManualSettings()"
-					>
-						Start manual checks >
-					</button>
+							<button
+								class="button button-primary"
+								type="submit"
+								name="save_settings"
+								value="save_update_settings_and_continue"
+								onclick="return wcdValidateFormManualSettings()"
+							>
+								Start manual checks >
+							</button>
 						<?php } ?>
-				<button
-						class="button"
-						type="submit"
-						name="save_settings"
-						value="post_urls"
-						style="margin-left: 10px;"
-						onclick="return wcdValidateFormManualSettings()"
-				>
-					Save
-				</button>
-				<button class="button"
-						type="submit"
-						name="save_settings"
-						value="post_urls_update_and_auto"
-						style="margin-left: 10px;"
-						onclick="return wcdValidateFormManualSettings()"
-				>
-					Save & copy settings to monitoring
-				</button>
+						<button
+								class="button"
+								type="submit"
+								name="save_settings"
+								value="post_urls"
+								style="margin-left: 10px;"
+								onclick="return wcdValidateFormManualSettings()"
+						>
+							Save
+						</button>
+						<button class="button"
+								type="submit"
+								name="save_settings"
+								value="post_urls_update_and_auto"
+								style="margin-left: 10px;"
+								onclick="return wcdValidateFormManualSettings()"
+						>
+							Save & copy settings to monitoring
+						</button>
 				<?php } ?>
 			</form>
 		</div>
