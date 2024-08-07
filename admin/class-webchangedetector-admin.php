@@ -711,14 +711,14 @@ class WebChangeDetector_Admin {
 														data-status="ok"
 														data-nonce="<?php echo esc_html( $nonce ); ?>"
 														value="ok"
-														class=" ajax_update_comparison_status comparison_status comparison_status_ok"
+														class="ajax_update_comparison_status comparison_status comparison_status_ok"
 														onclick="return false;">Ok</button>
 												<button name="status"
 														data-id="<?php echo esc_html( $compare['id'] ); ?>"
 														data-status="to_fix"
 														data-nonce="<?php echo esc_html( $nonce ); ?>"
 														value="to_fix"
-														class=" ajax_update_comparison_status comparison_status comparison_status_to_fix"
+														class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
 														onclick="return false;">To Fix</button>
 												<button name="status"
 														data-id="<?php echo esc_html( $compare['id'] ); ?>"

@@ -314,9 +314,10 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
                 status: status
             };
 
-            $.post(ajaxurl, data, function (response) {
+            // Replace content with loading img.
+            $(e).parent().parent().find(".current_comparison_status").html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
 
-                    console.log("ajax response: "+response)
+            $.post(ajaxurl, data, function (response) {
 
                let status_nice_name;
                 if( 'ok' === status) {
