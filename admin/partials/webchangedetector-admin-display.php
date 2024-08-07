@@ -475,11 +475,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<span class="pagination-links">
 								<?php
 								foreach ( $pagination['links'] as $link ) {
-									if ( ! empty( $link['url'] ) ) {
-										$url_components = wp_parse_url( $link['url'] );
-										parse_str( $url_components['query'], $params );
-									}
-									$class = ! $link['url'] || $link['active'] ? 'disabled' : '';
+									$params = $wcd->get_params_of_url( $link['url'] );
+									$class  = ! $link['url'] || $link['active'] ? 'disabled' : '';
 									?>
 									<a class="tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
 										href="?page=webchangedetector-change-detections&
@@ -765,95 +762,84 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-logs':
-				// Show queued urls.
-				$queues = $wcd->get_queue();
+				$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
+
+				$queues      = WebChangeDetector_API_V2::get_queue_v2( false, false, array( 'page' => $paged ) );
+				$queues_meta = $queues['meta'];
+				$queues      = $queues['data'];
 
 				$type_nice_name = array(
-					'pre'     => 'Pre-update Screenshot',
-					'post'    => 'Post-update Screenshot',
-					'auto'    => 'Monitoring Screenshot',
-					'compare' => 'Change Detection',
+					'pre'     => 'Pre-update screenshot',
+					'post'    => 'Post-update screenshot',
+					'auto'    => 'Monitoring screenshot',
+					'compare' => 'Change detection',
 				);
 				?>
+
 				<div class="action-container">
-				<?php
-				echo '<table class="queue">';
-				echo '<tr>
-                        <th></th>
-                        <th style="width: 100%">Page & URL</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Added</th>
-                        <th>Last changed</th>
-                        <th>Show</th>
-                        </tr>';
-				if ( ! empty( $queues ) && is_iterable( $queues ) ) {
+					<table class="queue">
+						<tr>
+							<th></th>
+							<th style="width: 100%">Page & URL</th>
+							<th style="min-width: 150px;">Type</th>
+							<th>Status</th>
+							<th style="min-width: 120px;">Time added /<br> Time updated</th>
+							<th>Show</th>
+						</tr>
+					<?php
+					if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 
-					foreach ( $queues as $queue ) {
+						foreach ( $queues as $queue ) {
+							$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
+							echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
+							echo '<td>';
+							$wcd->get_device_icon( $queue['device'] );
+							echo '</td>';
+							echo '<td>
+                                            <span class="html-title queue"> ' . esc_html( $queue['html_title'] ) . '</span><br>
+                                            <span class="url queue">URL: ' . esc_url( $queue['url_link'] ) . '</span><br>
+                                            ' . esc_html( $group_type ) . '
+                                    </td>';
+							echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
+							echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
+							echo '<td><span class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
+								esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</span><br>';
+							echo '<span class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
+								esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</span></td>';
+							echo '<td>';
 
-						$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
-						echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
-						echo '<td>';
-						$wcd->get_device_icon( $queue['device'] );
-						echo '</td>';
-						echo '<td>
-                                        <span class="html-title queue"> ' . esc_html( $queue['url']['html_title'] ) . '</span><br>
-                                        <span class="url queue">URL: ' . esc_url( $queue['url']['url'] ) . '</span><br>
-                                        ' . esc_html( $group_type ) . '
-                                </td>';
-						echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
-						echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
-						echo '<td class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
-							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</td>';
-						echo '<td class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
-							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</td>';
-						echo '<td>';
-
-						// Show screenshot button.
-						if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto' ), true ) &&
-							'done' === $queue['status'] &&
-							! empty( $queue['screenshots'][0]['link'] ) ) {
-							?>
-							<form method="post" action="?page=webchangedetector-show-screenshot">
-								<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['screenshots'][0]['link'] ); ?>">Show</button>
-							</form>
-							<?php
-
-							// Show comparison.
-						} elseif ( 'compare' === $queue['sc_type'] &&
+							// Show screenshot button.
+							if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
 								'done' === $queue['status'] &&
-								! empty( $queue['comparisons'][0]['token'] ) ) {
-							?>
-							<form method="post" action="?page=webchangedetector-show-detection">
-								<button class="button" type="submit" name="token" value="<?php echo esc_html( $queue['comparisons'][0]['token'] ); ?>">Show</button>
-							</form>
-							<?php
+								( ! empty( $queue['comparison_link'] ) || ! empty( $queue['screenshot_link'] ) ) ) {
+								?>
+								<form method="post" action="?page=webchangedetector-show-screenshot">
+									<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['comparison_link'] ?? $queue['screenshot_link'] ); ?>">Show</button>
+								</form>
+								<?php
+							}
+							echo '</td>';
+							echo '</tr>';
 						}
-
-						echo '</td>';
-						echo '</tr>';
+					} else {
+						echo '<tr><td colspan="7" style="text-align: center; font-weight: 700; background-color: #fff;">Nothing to show yet.</td></tr>';
 					}
-				} else {
-					echo '<tr><td colspan="7" style="text-align: center; font-weight: 700; background-color: #fff;">Nothing to show yet.</td></tr>';
-				}
-				?>
+					?>
 					</table>
 					<?php
-					$offset = isset( $_GET['offset'] ) ? wp_unslash( sanitize_key( $_GET['offset'] ) ) : 0;
-					$limit  = isset( $_GET['limit'] ) ? wp_unslash( sanitize_key( $_GET['limit'] ) ) : $wcd::LIMIT_QUEUE_ROWS;
+					foreach ( $queues_meta['links'] as $link ) {
+						$url_params      = $wcd->get_params_of_url( $link['url'] );
+						$pagination_link = '';
+						if ( $url_params && ! empty( $url_params['page'] ) ) {
+							?>
+							<a class="button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a>
+						<?php } else { ?>
+							<span class="button" disabled=""><?php echo esc_html( $link['label'] ); ?></span>
+							<?php
+						}
+					}
 					?>
-					<a class="button <?php echo ! $offset ? 'disabled' : ''; ?>"
-						href="/wp-admin/admin.php?page=webchangedetector-logs
-						&offset=<?php echo esc_html( $offset - $limit ); ?>
-						&limit=<?php echo esc_html( $limit ); ?>"
-					> < Newer
-					</a>
-					<a class="button <?php echo count( $queues ) !== $limit ? 'disabled' : ''; ?>"
-						href="/wp-admin/admin.php?page=webchangedetector-logs
-						&offset=<?php echo esc_html( $offset + $limit ); ?>
-						&limit=<?php echo esc_html( $limit ); ?>"
-					> Older >
-					</a>
+
 				</div>
 				<div class="sidebar">
 					<div class="account-box">

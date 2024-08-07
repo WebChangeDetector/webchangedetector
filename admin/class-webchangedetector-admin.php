@@ -1247,6 +1247,21 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+	/** Get params of an url.
+	 *
+	 * @param string $url The url.
+	 * @return array|false
+	 */
+	public function get_params_of_url( $url ) {
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		$url_components = wp_parse_url( $url );
+		parse_str( $url_components['query'], $params );
+		return $params;
+	}
+
 	/** Group url view.
 	 *
 	 * @param array $group_and_urls The groups and their urls.
@@ -1517,24 +1532,13 @@ class WebChangeDetector_Admin {
 						</button>
 						<?php
 					} else {
-						if ( $this->website_details['allow_manual_detection'] ) {
-							?>
-							<button
+						?>
+
+						<button
 								class="button button-primary"
 								type="submit"
 								name="save_settings"
-								value="save_update_settings_and_continue"
-								onclick="return wcdValidateFormManualSettings()"
-							>
-								Start manual checks >
-							</button>
-						<?php } ?>
-						<button
-								class="button"
-								type="submit"
-								name="save_settings"
 								value="post_urls"
-								style="margin-left: 10px;"
 								onclick="return wcdValidateFormManualSettings()"
 						>
 							Save
@@ -1548,7 +1552,23 @@ class WebChangeDetector_Admin {
 						>
 							Save & copy settings to monitoring
 						</button>
-				<?php } ?>
+						<?php
+						if ( $this->website_details['allow_manual_detection'] ) {
+							?>
+							<button
+									class="button button-primary"
+									style="float: right;"
+									type="submit"
+									name="save_settings"
+									value="save_update_settings_and_continue"
+									onclick="return wcdValidateFormManualSettings()"
+							>
+								Start manual checks >
+							</button>
+							<?php
+						}
+					}
+					?>
 			</form>
 		</div>
 		<?php
@@ -1994,6 +2014,8 @@ class WebChangeDetector_Admin {
 		$group_and_urls['amount_selected_urls'] = $amount_selected_urls;
 		return $group_and_urls;
 	}
+
+
 
 	/**
 	 * Call to V1 API.

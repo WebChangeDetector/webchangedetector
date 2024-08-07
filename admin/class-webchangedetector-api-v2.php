@@ -205,15 +205,19 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param string $batch_id The batch id.
 	 * @param string $status Status seperatated by comma.
+	 * @param array  $filters Additional filters.
 	 * @return mixed|string
 	 */
-	public static function get_queue_v2( $batch_id = false, $status = false ) {
+	public static function get_queue_v2( $batch_id = false, $status = false, $filters = array() ) {
 		$args = array();
 		if ( $batch_id ) {
 			$args['batch'] = $batch_id;
 		}
 		if ( $status ) {
 			$args['status'] = $status;
+		}
+		if ( ! empty( $filters ) ) {
+			$args = array_merge( $args, $filters );
 		}
 
 		$args = array(
