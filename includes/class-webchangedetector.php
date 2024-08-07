@@ -77,6 +77,7 @@ class WebChangeDetector {
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
+		$this->define_public_hooks();
 	}
 
 	/**
@@ -120,6 +121,7 @@ class WebChangeDetector {
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'public/class-webchangedetector-public.php';
 
 		$this->loader = new WebChangeDetector_Loader();
 	}
@@ -178,6 +180,16 @@ class WebChangeDetector {
 		return $this->plugin_name;
 	}
 
+	/**
+	 * Register all of the hooks related to the public-facing functionality
+	 * of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 */
+	private function define_public_hooks() {
+		new WebChangeDetector_Public();
+	}
 	/**
 	 * Retrieve the version number of the plugin.
 	 *

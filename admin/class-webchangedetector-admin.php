@@ -305,6 +305,7 @@ class WebChangeDetector_Admin {
 			),
 			$postdata
 		);
+
 		return $this->api_v1( $args, true );
 	}
 
@@ -1673,12 +1674,11 @@ class WebChangeDetector_Admin {
 						</p>
 						<form class="frm_new_account" method="post">
 							<input type="hidden" name="wcd_action" value="create_free_account">
-							<?php wp_create_nonce( 'create_free_account' ); ?>
+							<?php wp_nonce_field( 'create_free_account' ); ?>
 							<input type="text" name="name_first" placeholder="First Name" value="<?php echo esc_html( $first_name ); ?>" required>
 							<input type="text" name="name_last" placeholder="Last Name" value="<?php echo esc_html( $last_name ); ?>" required>
 							<input type="email" name="email" placeholder="Email" value="<?php echo esc_html( $email ); ?>" required>
 							<input type="password" name="password" placeholder="Password" required>
-							<input type="checkbox" name="marketingoptin" checked style="width: 10px; display: inline-block;"> Send me news about WebChangeDetector
 
 							<input type="submit" class="button-primary" value="Create Free Account">
 						</form>
