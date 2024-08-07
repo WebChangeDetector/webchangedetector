@@ -826,20 +826,29 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 					?>
 					</table>
-					<?php
-					foreach ( $queues_meta['links'] as $link ) {
-						$url_params      = $wcd->get_params_of_url( $link['url'] );
-						$pagination_link = '';
-						if ( $url_params && ! empty( $url_params['page'] ) ) {
-							?>
-							<a class="button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a>
-						<?php } else { ?>
-							<span class="button" disabled=""><?php echo esc_html( $link['label'] ); ?></span>
+					<!-- Pagination -->
+					<div class="tablenav">
+						<div class="tablenav-pages">
+							<span class="displaying-num"><?php echo esc_html( $queues_meta['total'] ); ?> items</span>
+							<span class="pagination-links">
 							<?php
-						}
-					}
-					?>
-
+							foreach ( $queues_meta['links'] as $link ) {
+								$url_params      = $wcd->get_params_of_url( $link['url'] );
+								$pagination_link = '';
+								if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
+									?>
+									<a class="tablenav-pages-navspan button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>">
+										<?php echo esc_html( $link['label'] ); ?>
+									</a>
+								<?php } else { ?>
+									<span class="tablenav-pages-navspan button" disabled=""><?php echo esc_html( $link['label'] ); ?></span>
+									<?php
+								}
+							}
+							?>
+							</span>
+						</div>
+					</div>
 				</div>
 				<div class="sidebar">
 					<div class="account-box">
