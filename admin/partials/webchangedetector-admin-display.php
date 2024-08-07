@@ -738,7 +738,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								data-amount_selected_urls="<?php echo esc_html( $group_and_urls['amount_selected_urls'] ); ?>"
 								data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"
 							>
-								<?php echo esc_html( $account_details['available_compares'] ); ?> available until renewal
+								<?php echo esc_html( $account_details['checks_left'] ); ?> available until renewal
 							</div>
 						</div>
 						<div class="clear"></div>
