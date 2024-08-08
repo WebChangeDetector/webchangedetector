@@ -337,7 +337,7 @@ class WebChangeDetector_API_V2 {
 				'Authorization' => 'Bearer ' . $api_token,
 				'x-wcd-domain'  => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
 				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => WEBCHANGEDETECTOR_VERSION,
+				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 			),
 		);
 

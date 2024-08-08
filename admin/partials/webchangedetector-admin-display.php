@@ -112,7 +112,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Check if account is activated and if the api key is authorized.
-		if ( ! is_array( $account_details ) && ( 'activate account' === $account_details || 'unauthorized' === $account_details ) ) {
+		if ( ! is_array( $account_details ) && ( 'ActivateAccount' === $account_details || 'unauthorized' === $account_details ) ) {
 			$wcd->show_activate_account( $account_details );
 			return false;
 		}
@@ -128,7 +128,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Show low credits.
-
 		$usage_percent = (int) ( $account_details['checks_done'] / $account_details['checks_limit'] * 100 );
 
 		if ( $usage_percent >= 100 ) {?>
@@ -146,6 +145,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$wcd->monitoring_group_uuid = ! empty( $wcd->website_details['auto_detection_group']['uuid'] ) ? $wcd->website_details['auto_detection_group']['uuid'] : null;
 		$wcd->manual_group_uuid     = ! empty( $wcd->website_details['manual_detection_group']['uuid'] ) ? $wcd->website_details['manual_detection_group']['uuid'] : null;
 
+		// TODO Legacy Ids. Replace those with V2.
+		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
+		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
+
 		// If we (for whatever reason) don't get the uuids, take them from wp_option.
 		if ( is_null( $wcd->monitoring_group_uuid ) || is_null( $wcd->manual_group_uuid ) ) {
 			$group_uuids = get_option( 'wcd_website_groups' );
@@ -155,12 +158,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 		}
 
-		// TODO Replace those with V2.
-		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
-		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
-
 		// If we don't have the website for any reason we show an error message.
 		if ( empty( $wcd->website_details ) ) {
+
 			?>
 			<div class="notice notice-error">
 				<p>Ooops! We couldn't find your settings. Please try reloading the page.
@@ -181,6 +181,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Perform actions.
 		switch ( $wcd_action ) {
+			case 'enable_wizard':
+				add_option( 'wcd_wizard', 'true', '', false );
+				break;
+
+			case 'disable_wizard':
+				delete_option( 'wcd_wizard' );
+				break;
+
 			case 'change_comparison_status':
 				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_uuid'], $postdata['status'] );
 				break;
@@ -394,7 +402,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 
 				?>
+
 				<div class="action-container">
+
 					<form method="get" style="margin-bottom: 20px;">
 						<input type="hidden" name="page" value="webchangedetector-change-detections">
 
@@ -420,7 +430,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						<input class="button" type="submit" value="Filter">
 					</form>
+
 					<?php
+					$wizard_text = '<h2>Change Detections</h2>In this tab, you will see all your change detections.';
+					$wcd->print_wizard(
+						$wizard_text,
+						'wizard_change_detection_tab',
+						'wizard_change_detection_batches',
+						false,
+						true,
+						'top top-minus-50 left-plus-500'
+					);
 
 					$extra_filters          = array();
 					$extra_filters['paged'] = isset( $_GET['paged'] ) ? sanitize_key( wp_unslash( $_GET['paged'] ) ) : 1;
@@ -460,6 +480,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					);
 
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
+
+					$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
+			                They are grouped by the type: Monitoring, Manual Checks or Auto Update Checks';
+					$wcd->print_wizard(
+						$wizard_text,
+						'wizard_change_detection_batches',
+						false,
+						'?page=webchangedetector-logs',
+						false,
+						'top top-plus-100 left-plus-300'
+					);
 					$wcd->compare_view_v2( $comparisons['data'] );
 
 					// Prepare pagination.
@@ -512,19 +543,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
-				}
-
-				$group_and_urls = WebChangeDetector_API_V2::get_group_v2( $wcd->manual_group_uuid )['data'];
-
-				// Get group urls.
-				$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $wcd->manual_group_uuid, array( 'per_page' => 999999 ) )['data'];
-
-				// Get selected urls.
-				$group_and_urls['amount_selected_urls'] = 0;
-				foreach ( $group_and_urls['urls'] as $group_and_url ) {
-					if ( $group_and_url['desktop'] || $group_and_url['mobile'] ) {
-						++$group_and_urls['amount_selected_urls'];
-					}
 				}
 
 				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, array( 'per_page' => 999999 ) );
@@ -628,6 +646,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-auto-settings':
+				$wizard_text = '<h2>Monitoring</h2>The monitoring checks your webpages automatically in intervals.';
+				$wcd->print_wizard(
+					$wizard_text,
+					'wizard_monitoring_tab',
+					'wizard_monitoring_settings',
+					false,
+					true,
+					'top left-plus-300'
+				);
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_auto_detection'] ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
@@ -694,9 +721,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Calculate screenshots until renewal.
-					$account = $wcd->get_account();
-
-					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account['renewal_at'] ) ) - gmdate( 'U' ) );
+					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account_details['renewal_at'] ) ) - gmdate( 'U' ) );
 					$amount_group_sc_per_day = $group_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
 
 					// Get first detection hour.
@@ -762,6 +787,16 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-logs':
+				$wizard_text = '<h2>Logs</h2>In this tab, all the action which happened.';
+				$wcd->print_wizard(
+					$wizard_text,
+					'wizard_logs_tab',
+					'wizard_logs_log',
+					false,
+					true,
+					'top left-plus-650'
+				);
+
 				$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
 
 				$queues      = WebChangeDetector_API_V2::get_queue_v2( false, false, array( 'page' => $paged ) );
@@ -773,6 +808,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'post'    => 'Post-update screenshot',
 					'auto'    => 'Monitoring screenshot',
 					'compare' => 'Change detection',
+				);
+
+				$wizard_text = '<h2>Log</h2>Every Screenshot and every comparison is listed here. 
+                                If something failed, you can see it here to.';
+				$wcd->print_wizard(
+					$wizard_text,
+					'wizard_logs_log',
+					false,
+					false,
+					false,
+					'bottom top-minus-50 left-plus-500'
 				);
 				?>
 
@@ -811,10 +857,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							// Show screenshot button.
 							if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
 								'done' === $queue['status'] &&
-								( ! empty( $queue['comparison_link'] ) || ! empty( $queue['screenshot_link'] ) ) ) {
+								! empty( $queue['image_link'] ) ) {
 								?>
 								<form method="post" action="?page=webchangedetector-show-screenshot">
-									<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['comparison_link'] ?? $queue['screenshot_link'] ); ?>">Show</button>
+									<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['image_link'] ); ?>">Show</button>
 								</form>
 								<?php
 							}

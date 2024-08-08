@@ -29,5 +29,6 @@ class WebChangeDetector_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+		add_option( 'wcd_wizard', true, '', false );
 	}
 }

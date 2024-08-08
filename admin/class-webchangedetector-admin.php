@@ -34,6 +34,8 @@ class WebChangeDetector_Admin {
 		'add_post_type',
 		'filter_change_detections',
 		'change_comparison_status',
+		'enable_wizard',
+		'disable_wizard',
 	);
 
 	const VALID_SC_TYPES = array(
@@ -341,12 +343,21 @@ class WebChangeDetector_Admin {
 
 	/** Get account details.
 	 *
-	 * @return array
+	 * @return array|string|bool
 	 */
 	public function get_account() {
-		$account_details                 = WebChangeDetector_API_V2::get_account_v2()['data'];
-		$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
-		return $account_details;
+		$account_details = WebChangeDetector_API_V2::get_account_v2();
+
+		if ( ! empty( $account_details['data'] ) ) {
+			$account_details                 = $account_details['data'];
+			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
+			return $account_details;
+		}
+		if ( ! empty( $account_details['message'] ) ) {
+			return $account_details['message'];
+		}
+
+		return false;
 	}
 
 	/** Sync Post if permalink changed. Currently deactivated.
@@ -373,7 +384,8 @@ class WebChangeDetector_Admin {
 			'action' => 'account_details',
 		);
 		$account_details = $this->api_v1( $args );
-		$upgrade_url     = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+
+		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
 		update_option( 'wcd_upgrade_url', $upgrade_url, false );
 		return $account_details;
 	}
@@ -497,6 +509,7 @@ class WebChangeDetector_Admin {
 		$upgrade_url = get_option( 'wcd_upgrade_url' );
 		if ( ! $upgrade_url ) {
 			$account_details = $this->get_account();
+
 			if ( ! is_array( $account_details ) ) {
 				return false;
 			}
@@ -611,8 +624,8 @@ class WebChangeDetector_Admin {
 			?>
 			<table style="width: 100%">
 				<tr>
-					<td colspan="5" style="text-align: center; background: #fff;">
-						<strong>There are no change detections to show.</strong
+					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
+						<strong>No change detections (yet)</strong
 					</td>
 				</tr>
 			</table>
@@ -634,6 +647,7 @@ class WebChangeDetector_Admin {
 			}
 		}
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
+
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 			?>
 			<div class="accordion accordion-batch" style="margin-top: 20px;">
@@ -1296,11 +1310,32 @@ class WebChangeDetector_Admin {
 					if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
 						$auto_update_checks_enabled = false;
 					}
+
+					$wizard_text = '<h2>Manual Checks & Auto Update Checks</h2>In this tab, you can make all settings for auto update checks and start manual checks.';
+					$this->print_wizard(
+						$wizard_text,
+						'wizard_manual_checks_tab',
+						'wizard_manual_checks_settings',
+						false,
+						true,
+						'top left-plus-200'
+					);
+
+					$wizard_text = '<h2>Settings</h2>If you want to check your Website during WP auto updates, you can enable this here. <br>';
+					$this->print_wizard(
+						$wizard_text,
+						'wizard_manual_checks_settings',
+						'wizard_manual_checks_urls',
+						false,
+						false,
+						'bottom  top-minus-150 left-plus-400'
+					);
 					?>
 
 					<input type="hidden" name="step" value="pre-update">
+
 					<h2>Settings</h2>
-					<div class="accordion">
+					<div id="manual_checks_settings_accordion" class="accordion">
 						<div class="mm_accordion_title">
 							<h3>
 								Manual- & Auto Update Checks Settings<br>
@@ -1321,12 +1356,28 @@ class WebChangeDetector_Admin {
 							</div>
 						</div>
 					</div>
+					<script>jQuery(document).ready(function() {jQuery("#manual_checks_settings_accordion.accordion h3").click();});</script>
 
-				<?php } else { ?>
+					<?php
+				} else {
+
+					$wizard_text = '<h2>Monitoring Settings</h2>Do all settings for the monitoring. 
+                                Set the interval of the monitoring checks and the hour of when the checks should start.';
+
+					$wizard_text = '<h2>Settings</h2>If you want to check your Website during WP auto updates, you can enable this here. <br>';
+					$this->print_wizard(
+						$wizard_text,
+						'wizard_monitoring_settings',
+						'wizard_monitoring_urls',
+						false,
+						false,
+						'bottom  top-minus-100 left-plus-200'
+					);
+					?>
 
 					<!-- Monitoring settings -->
 					<h2>Settings</h2>
-					<div class="accordion" style="margin-bottom: 40px;">
+					<div id="monitoring_settings_accordion" class="accordion" style="margin-bottom: 40px;">
 						<div class="mm_accordion_title" id="accordion-auto-detection-settings">
 							<h3>
 								Monitoring Settings<br>
@@ -1361,7 +1412,33 @@ class WebChangeDetector_Admin {
 							</div>
 						</div>
 					</div>
-					<?php } ?>
+					<script>jQuery(document).ready(function() {jQuery("#monitoring_settings_accordion.accordion h3").click();});</script>
+					<?php
+				}
+
+				$wizard_text = '<h2>Select URLs</h2>In these accordions you find all URLs of your website. 
+                                Here you can select the URLs you want to check.<br>
+                                These settings are taken for manual checks and for auto update checks.';
+				$this->print_wizard(
+					$wizard_text,
+					'wizard_manual_checks_urls',
+					'wizard_manual_checks_start',
+					false,
+					false,
+					'bottom top-minus-200 left-plus-400'
+				);
+
+				$wizard_text = '<h2>Select URLs</h2>All URLs which you select here will be monitored with settings before.';
+				$this->print_wizard(
+					$wizard_text,
+					'wizard_monitoring_urls',
+					'wizard_save_monitoring',
+					false,
+					false,
+					'bottom top-minus-100 left-plus-100'
+				);
+		?>
+
 
 					<h2 style="margin-top: 50px;">Select URLs</h2>
 					<p style="text-align: center;">Add other post types and taxonomies at
@@ -1514,6 +1591,15 @@ class WebChangeDetector_Admin {
 					}
 
 					if ( $monitoring_group ) {
+						$wizard_text = "<h2>Save</h2>Don't forget to save the settings.";
+						$this->print_wizard(
+							$wizard_text,
+							'wizard_save_monitoring',
+							false,
+							'?page=webchangedetector-change-detections',
+							false,
+							'bottom bottom-plus-100 left-minus-100'
+						);
 						?>
 						<button
 								class="button button-primary"
@@ -1533,6 +1619,16 @@ class WebChangeDetector_Admin {
 						</button>
 						<?php
 					} else {
+						$wizard_text = '<h2>Start Manual Checks</h2>When you want to do updates or other changes and check your selected websites, start the wizard here.<br>
+                                        The wizard guides you through the process.';
+						$this->print_wizard(
+							$wizard_text,
+							'wizard_manual_checks_start',
+							false,
+							'?page=webchangedetector-auto-settings',
+							false,
+							'bottom bottom-plus-100 right-minus-100'
+						);
 						?>
 
 						<button
@@ -1640,6 +1736,58 @@ class WebChangeDetector_Admin {
 				WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 			}
 			echo '<div class="updated notice"><p>Settings saved.</p></div>';
+		}
+	}
+
+	/** Print the wizard.
+	 *
+	 * @param string $text The wizard element text.
+	 * @param string $this_id Current wizard element id.
+	 * @param string $next_id Next wizard element id.
+	 * @param string $next_link Next wizard element url.
+	 * @param bool   $visible Is the wizard element visible by default.
+	 * @param string $extra_classes Extra css classes.
+	 * @return void
+	 */
+	public function print_wizard( $text, $this_id, $next_id = false, $next_link = false, $visible = false, $extra_classes = false ) {
+		if ( get_option( 'wcd_wizard' ) ) {
+			?>
+			<div id="<?php echo esc_html( $this_id ); ?>" class="wcd-wizard  <?php echo esc_html( $extra_classes ); ?>">
+				<?php echo wp_kses( $text, array( 'h2' => true ) ); ?>
+				<div style="margin-top: 20px; ">
+					<div style="float: left;">
+						<form method="post">
+							<input type="hidden" name="wcd_action" value="disable_wizard">
+							<?php wp_nonce_field( 'disable_wizard' ); ?>
+							<input type="submit" class="button button-danger"style="color: darkred;" href="" value="Exit wizard">
+						</form>
+
+					</div>
+					<?php if ( $next_id ) { ?>
+					<div style="float:right;">
+						<a style=" margin-left: auto; margin-right: 0;" class="button" href="" onclick="
+								jQuery('#<?php echo esc_html( $this_id ); ?>').fadeOut();
+								jQuery('#<?php echo esc_html( $next_id ); ?>').fadeIn();
+								document.getElementById('<?php echo esc_html( $next_id ); ?>').scrollIntoView({behavior: 'smooth'});
+								return false;">
+							Next
+						</a>
+					</div>
+					<?php } ?>
+					<?php if ( $next_link ) { ?>
+					<div style="float:right;">
+						<a style=" margin-left: auto; margin-right: 0;" class="button" href="<?php echo esc_html( $next_link ); ?>" >Next</a>
+					</div>
+						<div class="clear"></div>
+					<?php } ?>
+				</div>
+			</div>
+			<?php if ( $visible ) { ?>
+				<script>
+					jQuery("#<?php echo esc_html( $this_id ); ?>").show();
+				</script>
+				<?php
+			}
 		}
 	}
 
@@ -1881,6 +2029,16 @@ class WebChangeDetector_Admin {
 				}
 
 				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
+
+				$wizard_text = "<h2>Change Detections</h2>Your latest change detections will appear here. But first, let's do some checks and create some change detections.";
+				$this->print_wizard(
+					$wizard_text,
+					'first_step',
+					false,
+					'?page=webchangedetector-update-settings&wcd-wizard=true',
+					true,
+					'bottom top-minus-200 left-plus-300'
+				);
 				$this->compare_view_v2( $recent_comparisons['data'] );
 
 				if ( ! empty( $recent_comparisons ) ) {
@@ -1901,7 +2059,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function show_activate_account( $error ) {
 
-		if ( 'activate account' === $error ) {
+		if ( 'ActivateAccount' === $error ) {
 			?>
 			<div class="notice notice-info"></span>
 				<p>Please <strong>activate</strong> your account.</p>
