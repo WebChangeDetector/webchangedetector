@@ -1524,7 +1524,7 @@ class WebChangeDetector_Admin {
 								echo '<tr class="live-filter-row even-tr-white post_id_' . esc_html( $group_and_urls['id'] ) . '" id="' . esc_html( $url['id'] ) . '" >';
 								echo '<input type="hidden" name="post_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
 								echo '<input type="hidden" name="url_id-' . esc_html( $url['id'] ) . '" value="' . esc_html( $url['id'] ) . '">';
-								echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . ' value="1">';
+								echo '<input type="hidden" name="active-' . esc_html( $url['id'] ) . '" value="1">';
 
 								echo '<td class="checkbox-desktop-' . esc_html( lcfirst( $url_type ) ) . '" style="text-align: center;">
                                         <input type="hidden" value="0" name="desktop-' . esc_html( $url['id'] ) . '">

@@ -218,7 +218,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
 
         // Set time until next screenshots
         let autoEnabled = false;
-        if(($("#auto-enabled").is(':checked'))) {
+        if($("#auto-enabled").is(':checked')) {
             autoEnabled = true;
         }
         let txtNextScIn = "No trackings active";
