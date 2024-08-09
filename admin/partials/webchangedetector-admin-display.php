@@ -745,7 +745,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 					<div class="status_bar">
 						<div class="box full">
-							<div id="txt_next_sc_in">Next change detections in</div>
+							<div id="txt_next_sc_in">Next monitoring checks in</div>
 							<div id="next_sc_in" class="big"></div>
 							<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 						</div>

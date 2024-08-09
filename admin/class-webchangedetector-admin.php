@@ -1316,7 +1316,7 @@ class WebChangeDetector_Admin {
 					<div id="manual_checks_settings_accordion" class="accordion">
 						<div class="mm_accordion_title">
 							<h3>
-                                Settings <br>
+								Settings <br>
 								<small>
 									Auto update checks:
 									<strong>
@@ -1730,7 +1730,16 @@ class WebChangeDetector_Admin {
 		if ( get_option( 'wcd_wizard' ) ) {
 			?>
 			<div id="<?php echo esc_html( $this_id ); ?>" class="wcd-wizard  <?php echo esc_html( $extra_classes ); ?>">
-				<?php echo wp_kses( $text, array( 'h2' => true, 'br' => true, 'p' => true ) ); ?>
+				<?php
+				echo wp_kses(
+					$text,
+					array(
+						'h2' => true,
+						'br' => true,
+						'p'  => true,
+					)
+				);
+				?>
 				<div style="margin-top: 20px; ">
 					<div style="float: left;">
 						<form method="post">
@@ -1916,9 +1925,11 @@ class WebChangeDetector_Admin {
 		if ( $auto_group['enabled'] ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * WCD_DAYS_PER_MONTH;
 		}
-		$wizard_text = "<h2>Welcome to WebChange Detector</h2>This Wizard helps you to get started with your website Checks.<br>
-                        You can exit the wizard any time and restart it from the dashboard.";
-		$this->print_wizard( $wizard_text, 'wizard_dashboard_welcome',
+		$wizard_text = '<h2>Welcome to WebChange Detector</h2>This Wizard helps you to get started with your website Checks.<br>
+                        You can exit the wizard any time and restart it from the dashboard.';
+		$this->print_wizard(
+			$wizard_text,
+			'wizard_dashboard_welcome',
 			'wizard_dashboard_change_detections',
 			false,
 			true,
@@ -1927,7 +1938,7 @@ class WebChangeDetector_Admin {
 		?>
 		<div class="dashboard">
 
-			<div>
+			<div class="no-border box-plain">
 				<div class="box-half no-border">
 					<h1>Welcome to WebChange Detector</h1>
 					<hr>
@@ -1945,7 +1956,7 @@ class WebChangeDetector_Admin {
 					</form>
 				</div>
 
-				<div class="box-half box-plain">
+				<div class="box-half ">
 					<h2>
 						<strong>
 							Used Checks in this period:
@@ -2000,7 +2011,9 @@ class WebChangeDetector_Admin {
 				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
 
 				$wizard_text = "<h2>Change Detections</h2>Your latest change detections will appear here. But first, let's do some checks and create some change detections.";
-				$this->print_wizard( $wizard_text, 'wizard_dashboard_change_detections',
+				$this->print_wizard(
+					$wizard_text,
+					'wizard_dashboard_change_detections',
 					false,
 					'?page=webchangedetector-update-settings&wcd-wizard=true',
 					false,

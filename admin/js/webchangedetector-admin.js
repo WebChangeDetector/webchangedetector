@@ -238,7 +238,7 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
             var hours = nextScIn.getHours() == 1 ? " Hour " : " Hours ";
             txtNextScIn = nextScIn.getHours() + hours + nextScIn.getMinutes() + minutes;
             $("#next_sc_date").html(getLocalDateTime(nextScDate));
-            $("#txt_next_sc_in").html("Next change detections in ");
+            $("#txt_next_sc_in").html("Next monitoring checks in ");
         }
         $("#next_sc_in").html(txtNextScIn);
 
