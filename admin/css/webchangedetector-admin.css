@@ -2,6 +2,10 @@
  * Global
  */
 
+.webchangedetector h2.nav-tab-wrapper {
+    margin-bottom: 30px;
+}
+
 #toplevel_page_webchangedetector .wp-submenu li:last-child a{
     color: #3eb43e;
 }
@@ -352,8 +356,7 @@
 
 .webchangedetector .mm_accordion_title {
     background: #fff;
-    border-radius: 3px;
-    border: 1px solid #276ECC;
+    border: 1px solid #ddd;
     margin: 0 auto 15px;
     padding: 0;
 }
@@ -663,7 +666,7 @@ Dashboard
     margin: 0 auto;
 }
 
-.webchangedetector .dashboard .box-plain {
+.webchangedetector .box-plain {
     padding: 15px 20px;
     background: #fff;
     border: 1px solid #ddd;
@@ -712,7 +715,7 @@ Dashboard
 }
 
 
-.webchangedetector .dashboard .box-half.no-border {
+.webchangedetector .box-half.no-border {
     border: none;
     padding-left: 0;
 }

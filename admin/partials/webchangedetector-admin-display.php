@@ -104,8 +104,24 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Get the account details.
 		$account_details = $wcd->get_account();
 
+		// Show error message if we didn't get response from API.
+		if ( empty( $account_details ) ) { ?>
+			<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
+				<h1>Oooops!</h1>
+				<p>Something went wrong. Please try to re-add your api token.</p>
+				<form method="post">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+					<input type="submit" value="Reset API token" class="button button-delete">
+				</form>
+			</div>
+
+			<?php
+			wp_die();
+		}
+
 		// Check if plugin has to be updated.
-		if ( 'update plugin' === $account_details ) {
+		if ( ! is_array( $account_details ) && 'update plugin' === $account_details ) {
 			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
             WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
 			wp_die();
@@ -117,20 +133,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			return false;
 		}
 
-		// Show error message if we didn't get response from API.
-		if ( empty( $account_details ) ) {
-			echo "<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
-                    <h1>Oooops!</h1>
-                    <p>Something went wrong. We're already working on the issue. <br>
-                    Please check again later.</p>
-                  </div>";
-			exit;
-		}
-
 		// Show low credits.
 		$usage_percent = (int) ( $account_details['checks_done'] / $account_details['checks_limit'] * 100 );
 
-		if ( $usage_percent >= 100 ) {?>
+		if ( $usage_percent >= 100 ) {
+			?>
 			<div class="notice notice-error">
 				<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.</p>
 			</div>
@@ -330,8 +337,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		$wcd->tabs();
 
-		echo '<div style="margin-top: 30px;"></div>';
-
 		// Account credits.
 		$comp_usage         = $account_details['checks_done'];
 		$limit              = $account_details['checks_limit'];
@@ -400,7 +405,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				if ( isset( $_GET['difference_only'] ) ) {
 					$difference_only = sanitize_text_field( wp_unslash( $_GET['difference_only'] ) );
 				}
-
 				?>
 
 				<div class="action-container">
@@ -914,8 +918,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'webchangedetector-settings':
 				?>
-				<div class="action-container" style="text-align: center">
+				<div class="action-container">
+					<div class="box-plain no-border">
 					<h2>Add Post Types</h2>
+						<p>All added post types will be available in your url list.</p>
 					<?php
 
 					// Add post types.
@@ -967,10 +973,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						?>
 						<p>No more post types found</p>
 					<?php } ?>
+					</div>
 
-					<hr>
 
+				<div class="box-plain no-border">
 					<h2>Add Taxonomies</h2>
+					<p>All added taxonomies will be available in your url list.</p>
 					<?php
 
 					// Add Taxonomies.
@@ -1020,7 +1028,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						?>
 						<p>No more taxonomies found</p>
 					<?php } ?>
-					<hr>
+				</div>
+
+
 					<?php
 
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
@@ -1028,9 +1038,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                         <p>Please enter a valid API Token.</p>
                     </div>';
 					} elseif ( ! $wcd->website_details['enable_limits'] ) {
-						echo '<h2>Need more checks?</h2>';
-						echo '<p>If you need more checks, please upgrade your account with the button below.</p>';
-						echo '<a class="button" href="' . esc_url( $wcd->get_upgrade_url() ) . '">Upgrade</a>';
+						?>
+						<div class="box-plain no-border">
+							<h2>Need more checks?</h2>
+							<p>If you need more checks, please upgrade your account with the button below.</p>
+							<a class="button" href="' . esc_url( $wcd->get_upgrade_url() ) . '">Upgrade</a>
+						</div>
+						<?php
 					}
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 					?>

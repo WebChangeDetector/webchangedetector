@@ -1128,27 +1128,30 @@ class WebChangeDetector_Admin {
 
 		if ( $api_token ) {
 			?>
-			<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
-				onsubmit="return confirm('Are sure you want to reset the API token?');">
-				<input type="hidden" name="wcd_action" value="reset_api_token">
-				<?php wp_nonce_field( 'reset_api_token' ); ?>
-				<hr>
-				<h2> Account</h2>
-				<p>
-					Your email address: <strong><?php echo esc_html( $this->get_account()['email'] ); ?></strong><br>
-					Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
-				</p>
-				<p>
-					With resetting the API Token, auto detections still continue and your settings will
-					be still available when you use the same api token with this website again.
-				</p>
-				<input type="submit" value="Reset API Token" class="button button-delete"><br>
-				<hr>
+			<div class="box-plain no-border">
+				<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
+					onsubmit="return confirm('Are sure you want to reset the API token?');">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+
+					<h2> Account</h2>
+					<p>
+						Your email address: <strong><?php echo esc_html( $this->get_account()['email'] ); ?></strong><br>
+						Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
+					</p>
+					<p>
+						With resetting the API Token, auto detections still continue and your settings will
+						be still available when you use the same api token with this website again.
+					</p>
+					<input type="submit" value="Reset API Token" class="button button-delete"><br>
+				</form>
+			</div>
+			<div class="box-plain no-border">
 				<h2>Delete Account</h2>
 				<p>To delete your account completely, please login to your account at
 					<a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.
 				</p>
-			</form>
+			</div>
 			<?php
 		} else {
 			if ( isset( $_POST['wcd_action'] ) && 'save_api_token' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
@@ -1416,9 +1419,8 @@ class WebChangeDetector_Admin {
 				);
 		?>
 
-
 					<h2 style="margin-top: 50px;">Select URLs</h2>
-					<p style="text-align: center;">Add other post types and taxonomies at
+					<p style="text-align: center;">Add more types and taxonomies at
 						<a href="?page=webchangedetector-settings">Settings</a>
 					</p>
 					<input type="hidden" value="webchangedetector" name="page">
@@ -2143,6 +2145,11 @@ class WebChangeDetector_Admin {
 
 		$group_and_urls         = WebChangeDetector_API_V2::get_group_v2( $group_id )['data'];
 		$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter )['data'];
+
+		if ( empty( $group_and_urls['urls'] ) ) {
+			$this->sync_posts();
+			$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter )['data'];
+		}
 
 		$amount_selected_urls = 0;
 		foreach ( $group_and_urls['urls'] as $url ) {
