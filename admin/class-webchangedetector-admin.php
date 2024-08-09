@@ -1286,6 +1286,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_url_settings( $group_and_urls, $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
+
 		$wcd_website_urls = $this->sync_posts();
 
 		// Select URLS.
@@ -1333,8 +1334,6 @@ class WebChangeDetector_Admin {
 					?>
 
 					<input type="hidden" name="step" value="pre-update">
-
-					<h2>Settings</h2>
 					<div id="manual_checks_settings_accordion" class="accordion">
 						<div class="mm_accordion_title">
 							<h3>
@@ -1376,7 +1375,6 @@ class WebChangeDetector_Admin {
 					?>
 
 					<!-- Monitoring settings -->
-					<h2>Settings</h2>
 					<div id="monitoring_settings_accordion" class="accordion" style="margin-bottom: 40px;">
 						<div class="mm_accordion_title" id="accordion-auto-detection-settings">
 							<h3>
@@ -1943,43 +1941,26 @@ class WebChangeDetector_Admin {
 		<div class="dashboard">
 			<div>
 				<div class="box-half no-border">
-					<a class="box" href="?page=webchangedetector-update-settings">
-						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php $this->get_device_icon( 'update-group' ); ?>
-						</div>
-						<div style="float: left; max-width: 350px;">
-							<strong>Manual Checks & Auto Update Checks</strong><br>
-							Check webpages at WP auto updates or manually
-
-						</div>
-						<div class="clear"></div>
-					</a>
-					<a class="box" href="?page=webchangedetector-auto-settings">
-						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php $this->get_device_icon( 'auto-group' ); ?>
-						</div>
-						<div style="float: left; max-width: 350px;">
-							<strong>Monitoring</strong><br>
-							Monitor webpages and get notified on changes
-						</div>
-						<div class="clear"></div>
-					</a>
-					<a class="box" href="?page=webchangedetector-change-detections">
-						<div style="padding-top:10px; font-size: 60px; width: 50px; float: left;">
-							<?php $this->get_device_icon( 'change-detections' ); ?>
-						</div>
-						<div style="float: left; max-width: 350px;">
-							<strong>Show Change Detections</strong><br>
-							Check all your change detections
-						</div>
-						<div class="clear"></div>
-					</a>
-
+					<h1>Welcome to WebChange Detector</h1>
+					<hr>
+					<p>
+						Perform visual checks (visual regression tests) on your WordPress website to find
+						unwanted visual changes on your web pages before anyone else sees them.
+					</p>
+					<p>
+						Start the Wizard to see what you can do with WebChange Detector.
+					</p>
+					<form method="post" action="?page=webchangedetector">
+						<input type="hidden" name="wcd_action" value="enable_wizard">
+						<?php wp_nonce_field( 'enable_wizard' ); ?>
+						<input type="submit" class="button button-primary" value="Start Wizard">
+					</form>
 				</div>
 
 				<div class="box-half box-plain">
 					<h2>
 						<strong>
+							Used Checks in this period:
 							<?php
 							if ( ! empty( $client_account['checks_limit'] ) ) {
 								echo number_format( esc_html( $client_account['checks_done'] / $client_account['checks_limit'] * 100 ), 1 );
@@ -1987,7 +1968,7 @@ class WebChangeDetector_Admin {
 								echo 0;
 							}
 							?>
-							% credits used
+							%
 						</strong>
 					</h2>
 					<hr>

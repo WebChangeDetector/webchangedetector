@@ -38,6 +38,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 	<div style="padding: 10px; margin-top: 20px;" class="toggle">
 		<label for="threshold" >Threshold</label>
 		<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %<br>
+		<small>Ignore changes in Change Detections below the threshold.</small>
 	</div>
 	<div style="padding: 10px;" class="">
 		<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
@@ -50,6 +51,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ); ?>" type="time" class="auto_update_checks_from">
 			<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
 			<input id="auto_update_checks_to" name="auto_update_checks_to" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_to'] ); ?>" type="time" class="auto_update_checks_to">
+			<small>Set the time frame in which you want to allow WP auto updates.</small>
 		</div>
 		<span class="notice notice-error" id="error-from-to-validation" style="display: none;">
 			<span style="padding: 10px; display: block;" class="default-bg">The time window is invalid. The "to" time must be greater than "from" time.</span>
@@ -72,6 +74,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 				<input name="auto_update_checks_sunday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ); ?> class="auto_update_checks_sunday">
 				<label for="auto_update_checks_sunday" style="min-width: inherit">Sunday </label><br>
 			</div>
+			<small>Set the weekdays in which you want to allow WP auto updates.</small>
 			<span class="notice notice-error" id="error-on-days-validation" style="display: none;">
 				<span style="padding: 10px; display: block;" class="default-bg">At least one weekday has to be selected.</span>
 			</span>
@@ -79,6 +82,7 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 		<div style="padding: 10px; " class="toggle" >
 			<label for="auto_update_checks_emails" >Notification email to (comma separated)</label>
 			<input name="auto_update_checks_emails" style="width: 100%" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
+			<small>Enter the email address(es) which should get notified on about auto update checks.</small>
 		</div>
 	</div>
 	<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ); ?>">

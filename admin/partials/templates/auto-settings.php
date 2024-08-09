@@ -15,7 +15,7 @@
 
 			<label for="enabled">Monitoring </label>
 			<input type="checkbox" name="enabled" id="auto-enabled" <?php echo isset( $group_and_urls['enabled'] ) && $group_and_urls['enabled'] ? 'checked' : ''; ?>>
-
+			<small>Enable or disable the monitoring for your selected URls.</small>
 		</p>
 		<div id="auto_settings">
 			<p class="toggle" style="display:none"></p>
@@ -33,12 +33,14 @@
 					}
 					?>
 				</select>
+				<small>Set the hour on which the monitoring checks should be done.</small>
 			</p>
 			<p class="auto-setting toggle">
 				<?php
-				$account_details       = $this->account_details();
+				$account_details = $this->get_account();
+
 				$show_minute_intervals = false;
-				if ( 2 < $account_details['plan']['id'] && 8 !== $account_details['plan_id'] ) {
+				if ( ! in_array( $account_details['plan'], array( 'trial', 'free', 'personal', 'personal_pro' ), true ) ) {
 					$show_minute_intervals = true;
 				}
 				?>
@@ -72,10 +74,12 @@
 						Every 24 hours
 					</option>
 				</select>
+				<small>This is the interval in which the checks are done.</small>
 			</p>
 			<p class="auto-setting toggle">
 				<label for="threshold" class="auto-setting">Threshold</label>
 				<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %
+				<small>Ignore changes in Change Detections below the threshold.</small>
 			</p>
 			<p class="auto-setting toggle">
 				<label for="alert_emails" class="auto-setting">
@@ -83,6 +87,7 @@
 				</label>
 				<input type="text" name="alert_emails" id="alert_emails" style="width: 100%;" class="auto-setting"
 				value="<?php echo isset( $group_and_urls['alert_emails'] ) ? esc_attr( $group_and_urls['alert_emails'] ) : ''; ?>">
+				<small>Enter the email address(es) which should get notified on about auto update checks.</small>
 			</p>
 			<span class="notice notice-error" id="error-email-validation" style="display: none;">
 				<span style="padding: 10px; display: block;" class="default-bg">Please check your email address(es).</span>
