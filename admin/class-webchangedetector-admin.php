@@ -369,27 +369,6 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
-	/** Get the account details.
-	 *
-	 * @return array|mixed|string
-	 * @depecated
-	 */
-	public function account_details() {
-		static $account_details;
-		if ( $account_details && 'unauthorized' !== $account_details && 'activate account' !== $account_details ) {
-			return $account_details;
-		}
-
-		$args            = array(
-			'action' => 'account_details',
-		);
-		$account_details = $this->api_v1( $args );
-
-		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-		update_option( 'wcd_upgrade_url', $upgrade_url, false );
-		return $account_details;
-	}
-
 	/** Ajax get processing queue
 	 *
 	 * @return void
