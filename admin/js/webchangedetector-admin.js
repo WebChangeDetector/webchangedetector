@@ -217,12 +217,15 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         });
 
         // Set time until next screenshots
-        var autoEnabled = parseInt($("#auto-enabled").val());
-        var txtNextScIn = "No trackings active";
-        var nextScIn;
-        var nextScDate = $("#next_sc_date").data("date");
-        var amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
-
+        let autoEnabled = false;
+        if(($("#auto-enabled").is(':checked'))) {
+            autoEnabled = true;
+        }
+        let txtNextScIn = "No trackings active";
+        let nextScIn;
+        let nextScDate = $("#next_sc_date").data("date");
+        let amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
+        console.log(autoEnabled);
         $("#txt_next_sc_in").html("Currently");
         $("#next_sc_date").html("");
 
