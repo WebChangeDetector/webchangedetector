@@ -1920,7 +1920,8 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account, $update_group_id, $auto_group_id ) {
 
-		$auto_group            = $this->get_urls_of_group( $auto_group_id );
+		$auto_group = $this->get_urls_of_group( $auto_group_id );
+
 		$amount_auto_detection = 0;
 		if ( $auto_group['enabled'] ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * WCD_DAYS_PER_MONTH;

@@ -1028,8 +1028,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                         <p>Please enter a valid API Token.</p>
                     </div>';
 					} elseif ( ! $wcd->website_details['enable_limits'] ) {
-						echo '<h2>Need more screenshots?</h2>';
-						echo '<p>If you need more screenshots, please upgrade your account with the button below.</p>';
+						echo '<h2>Need more checks?</h2>';
+						echo '<p>If you need more checks, please upgrade your account with the button below.</p>';
 						echo '<a class="button" href="' . esc_url( $wcd->get_upgrade_url() ) . '">Upgrade</a>';
 					}
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
