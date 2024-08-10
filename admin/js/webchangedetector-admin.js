@@ -1,5 +1,104 @@
 const MM_BG_COLOR_DARK_GREEN = '#006400';
 
+function updateProcessingStep() {
+    (function($) {
+        //currentlyProcessingSpinner.show();
+        var currentlyProcessingTable = $('#currently-processing-table');
+        var currentlyProcessingSpinner = $('#currently-processing-spinner');
+        var currentlyProcessing = $('#currently-processing');
+
+        var data = {
+            action: 'get_processing_queue'
+        };
+
+        $.post(ajaxurl, data, function (response) {
+
+            response = JSON.parse(response);
+
+            let currentlyProcessingAmount = response.open.meta.total + response.processing.meta.total;
+            let currentlyProcessingSc = [];
+            let actuallyProcessingSc = [];
+
+            currentlyProcessing.html(currentlyProcessingAmount);
+
+            // Get the processing queues in the plugin
+            $('.processing_sc_row').each(function () {
+                currentlyProcessingSc.push($(this).data('id'));
+            });
+
+            // Get the actually processing queues
+            $(response.processing.data).each(function (i) {
+                if ($(this)[0].status === 'processing') {
+                    actuallyProcessingSc.push($(this)[0].id)
+                }
+            });
+
+            $("#processing_sc_row_empty").hide();
+            if ($(actuallyProcessingSc).length === 0) {
+                $("#processing_sc_row_empty").show();
+            }
+
+            // Hide done queues
+            $('.processing_sc_row').each(function () {
+                const row = $(this);
+                if ($.inArray($(this).data('id'), actuallyProcessingSc) === -1) {
+                    $(this).css("background", "#d5e4d5");
+                    setTimeout(function () {
+                        $(row).fadeOut(1000, function () {
+                            $(row).remove();
+                        });
+                    }, 2000);
+                }
+            });
+
+
+            // Add new queues
+            $(response.processing.data).each(function () {
+                if ($(this)[0].status !== 'open' && -1 === $.inArray($(this)[0].id, currentlyProcessingSc)) {
+                    const tbody = $(currentlyProcessingTable).find('tbody');
+                    const item = $('<tr class="processing_sc_row" data-id="' + $(this)[0].id + '"><td><strong>' + $(this)[0].html_title + '</strong><br>Screensize: ' + $(this)[0].device + ' <br>URL: ' + $(this)[0].url_link + '</td></tr>')
+                    setTimeout(function () {
+                        $(tbody).append(item);
+                        $(item).hide().fadeIn(1000);
+                    }, 1000);
+                }
+            });
+
+
+            // If the queue is done, show all done for 10 sec
+            if (parseInt(currentlyProcessingAmount) === 0 || !response) {
+                currentlyProcessingSpinner.hide(); // hide spinner
+
+                // Replace message when everything is done
+                $("#wcd-currently-in-progress").hide();
+                $("#wcd-screenshots-done").show();
+                // Stop the interval when everything is done.
+                //clearInterval(processingInterval);
+            }
+        });
+    })(jQuery);
+}
+function currentlyProcessing() {
+    (function($) {
+        var currentlyProcessing = $('#currently-processing');
+        let processingInterval;
+
+        // Only show currently processing if there is something to process and check every 10 sec then
+        if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0) {
+            let totalSc = parseInt(currentlyProcessing.html());
+            updateProcessingStep()
+            processingInterval = setInterval(function() {
+                updateProcessingStep(currentlyProcessing);
+            }, 5000, currentlyProcessing)
+        } else {
+            $("#wcd-screenshots-done").show();
+            if($(processingInterval).length) {
+                clearInterval(processingInterval);
+            }
+        }
+    })(jQuery)
+}
+
 (function( $ ) {
     'use strict';
 
@@ -269,43 +368,9 @@ const MM_BG_COLOR_DARK_GREEN = '#006400';
         /**********
          * AJAX
          *********/
-        function currentlyProcessing() {
-            var currentlyProcessing = $('#currently-processing');
-            var currentlyProcessingContainer = $('#currently-processing-container');
-            var currentlyProcessingSpinner = $('#currently-processing-spinner');
 
-            // Only show currently processing if there is something to process and check every 10 sec then
-            if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0) {
-                let totalSc = parseInt(currentlyProcessing.html());
-                var processingInterval = setInterval(function() {
-
-                    //currentlyProcessingSpinner.show();
-                    var data = {
-                        action: 'get_processing_queue'
-                    };
-
-                    $.post(ajaxurl, data, function (response) {
-                        currentlyProcessing.html(response);
-
-                        // If the queue is done, show all done for 10 sec
-                        if (parseInt(response) === 0 || !response) {
-                            currentlyProcessingSpinner.hide(); // hide spinner
-
-                            // Replace message when everything is done
-                            $("#wcd-currently-in-progress").hide();
-                            $("#wcd-screenshots-done").show();
-                            // Stop the interval when everything is done.
-                            clearInterval(processingInterval);
-                        }
-                    });
-                }, 5000, currentlyProcessing)
-            } else {
-                $("#wcd-screenshots-done").show();
-            }
-        }
         // This needs to instantly be executed
         currentlyProcessing();
-
 
         $(".ajax_update_comparison_status").click(function() {
             let e = $(this);

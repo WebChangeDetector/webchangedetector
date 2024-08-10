@@ -219,14 +219,16 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$results = $wcd->take_screenshot( $wcd->group_id, $sc_type );
-
-				if ( $results && is_array( $results ) && 1 < count( $results ) && 'error' === $results[0] ) {
-					echo '<div class="error notice"><p>' . esc_html( $results[1] ) . '</p></div>';
-				} elseif ( 'pre' === $sc_type ) {
+				$results = WebChangeDetector_API_V2::take_screenshot_v2( $wcd->manual_group_uuid, $sc_type );
+				if ( isset( $results['batch'] ) ) {
+					update_option( 'wcd_manual_checks_batch', $results['batch'] );
+					if ( 'pre' === $sc_type ) {
 						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
-				} elseif ( 'post' === $sc_type ) {
-					update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
+					} elseif ( 'post' === $sc_type ) {
+						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
+					}
+				} else {
+					echo '<div class="error notice"><p>Sorry, something went wrong. Please try again.</p></div>';
 				}
 				break;
 
@@ -598,7 +600,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$progress_make_update      = 'disabled';
 						$progress_post             = 'disabled';
 						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue(); // used in template.
+						$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
 						include 'templates/update-detection/update-step-pre-sc-started.php';
 						break;
 
@@ -617,7 +619,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$progress_make_update      = 'done';
 						$progress_post             = 'active';
 						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue(); // used in template.
+						$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
 						include 'templates/update-detection/update-step-post-sc-started.php';
 						break;
 

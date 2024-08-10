@@ -14,7 +14,7 @@ require 'update-step-tiles.php';
 	<input type="hidden" name="wcd_action" value="update_detection_step">
 	<?php wp_nonce_field( 'update_detection_step' ); ?>
 	<input type="hidden" name="step" value="settings">
-	<input class="button button-primary" type="submit" value="Start new Update Change Detection">
+	<input class="button button-primary" type="submit" value="< Back to settings">
 </form>
 <form method="post" style="display: inline">
 	<input type="hidden" name="wcd_action" value="update_detection_step">

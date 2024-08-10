@@ -374,7 +374,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_get_processing_queue() {
-		echo esc_html( $this->get_processing_queue() );
+		echo wp_json_encode( $this->get_processing_queue_v2( get_option( 'wcd_manual_checks_batch' ) ) );
 		die();
 	}
 
@@ -395,6 +395,21 @@ class WebChangeDetector_Admin {
 
 		echo esc_html( $this->update_comparison_status( sanitize_key( wp_unslash( $_POST['id'] ) ), sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
 		die();
+	}
+
+	/** Get queues for status processing and open
+	 *
+	 * @param string $batch_id The batch id.
+	 * @param int    $per_page Rows per page.
+	 * @return array
+	 */
+	public function get_processing_queue_v2( $batch_id = false, $per_page = 30 ) {
+		$processing = WebChangeDetector_API_V2::get_queue_v2( $batch_id, 'processing', array( 'per_page' => $per_page ) );
+		$open       = WebChangeDetector_API_V2::get_queue_v2( $batch_id, 'open', array( 'per_page' => $per_page ) );
+		return array(
+			'open'       => $open,
+			'processing' => $processing,
+		);
 	}
 
 	/** Get processing queue.

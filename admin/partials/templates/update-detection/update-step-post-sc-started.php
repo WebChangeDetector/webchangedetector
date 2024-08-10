@@ -14,7 +14,7 @@ require 'update-step-tiles.php';
 <?php require 'update-step-processing-sc.php'; ?>
 
 <!-- Pre-Update started / finished -->
-<div id="wcd-screenshots-done" class="wcd-step-container" style="display: <?php echo $sc_processing ? 'none' : 'block'; ?>;">
+<div id="wcd-screenshots-done" class="wcd-step-container wcd-section" style="display: <?php echo $sc_processing ? 'none' : 'block'; ?>;">
 	<!--<div class="wcd-highlight-bg done">
 		<h2><?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
 	</div>
