@@ -388,14 +388,15 @@ class WebChangeDetector_Admin {
 			die();
 		}
 
+        // Verify nonce;
 		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			echo 'Nonce verify failed';
 			die( 'Busted!' );
 		}
 
 		$result = $this->update_comparison_status( esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
-		echo esc_html($result['data']['id']) ?? 'failed';
-        die();
+		echo esc_html( $result['data']['status'] ) ?? 'failed';
+		die();
 	}
 
 	/** Get queues for status processing and open

@@ -389,15 +389,16 @@ function currentlyProcessing() {
             $.post(ajaxurl, data, function (response) {
                 if('failed' === response) {
                     $(statusElement).html(initialStatusContent);
-                    alert('something went wrong. Please try again.');
+                    alert('Something went wrong. Please try again.');
                     return false;
                 }
-               let status_nice_name;
-                if( 'ok' === status) {
+
+                let status_nice_name;
+                if( 'ok' === response) {
                     status_nice_name = 'Ok';
-                } else if ('to_fix' === status) {
+                } else if ('to_fix' === response) {
                     status_nice_name = 'To Fix';
-                } else if ('false_positive' === status) {
+                } else if ('false_positive' === response) {
                     status_nice_name = 'False Positive';
                 }
                 $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
@@ -405,7 +406,7 @@ function currentlyProcessing() {
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
-                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_"+status);
+                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_"+response);
             });
 
         })
