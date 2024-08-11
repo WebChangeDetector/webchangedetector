@@ -16,21 +16,21 @@
 			<strong>Change Status to:</strong><br>
 			<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
 			<button name="status"
-					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-id="<?php echo esc_html( $compare['id'] ); ?>"
 					data-status="ok"
 					data-nonce="<?php echo esc_html( $nonce ); ?>"
 					value="ok"
 					class="ajax_update_comparison_status comparison_status comparison_status_ok"
 					onclick="return false;">Ok</button>
 			<button name="status"
-					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-id="<?php echo esc_html( $compare['id'] ); ?>"
 					data-status="to_fix"
 					data-nonce="<?php echo esc_html( $nonce ); ?>"
 					value="to_fix"
 					class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
 					onclick="return false;">To Fix</button>
 			<button name="status"
-					data-id="<?php echo esc_html( $compare['uuid'] ); ?>"
+					data-id="<?php echo esc_html( $compare['id'] ); ?>"
 					data-status="false_positive"
 					data-nonce="<?php echo esc_html( $nonce ); ?>"
 					value="false_positive"
@@ -40,16 +40,16 @@
 	</div>
 	<div class="comparison-tile comparison-url-tile">
 		<?php
-		if ( ! empty( $compare['screenshot1']['queue']['url']['html_title'] ) ) {
-			echo '<strong>' . esc_html( $compare['screenshot1']['queue']['url']['html_title'] ) . '</strong><br>';
+		if ( ! empty( $compare['html_title'] ) ) {
+			echo '<strong>' . esc_html( $compare['html_title'] ) . '</strong><br>';
 		}
 		?>
 
-		<a href="http://<?php echo esc_url( $compare['screenshot1']['url'] ); ?>" target="_blank" >
-			<?php echo esc_url( $compare['screenshot1']['url'] ); ?>
+		<a href="http://<?php echo esc_url( $compare['url'] ); ?>" target="_blank" >
+			<?php echo esc_url( $compare['url'] ); ?>
 		</a>
 		<br>
-		<?php $public_link = $this->app_url() . '/show-change-detection/?token=' . $token; ?>
+		<?php $public_link = $this->app_url() . 'show-change-detection/?token=' . $public_token; ?>
 		Public link: <a href="<?php echo esc_url( $public_link ); ?>" target="_blank">
 			<?php echo esc_url( $public_link ); ?>
 		</a>
@@ -62,11 +62,11 @@
 
 	<div class="comparison-tile comparison-date-tile">
 		<strong>Screenshots</strong><br>
-		<div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo esc_html( strtotime( $compare['screenshot1']['updated_at'] ) ); ?>">
-			<?php echo esc_html( gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot1']['updated_at'] ) ) ); ?>
+		<div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo esc_html( strtotime( $compare['screenshot_1_created_at'] ) ); ?>">
+			<?php echo esc_html( gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot_1_created_at'] ) ) ); ?>
 		</div>
-		<div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo esc_html( strtotime( $compare['screenshot2']['updated_at'] ) ); ?>">
-			<?php echo esc_html( gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot2']['updated_at'] ) ) ); ?>
+		<div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo esc_html( strtotime( $compare['screenshot_2_created_at'] ) ); ?>">
+			<?php echo esc_html( gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot_1_created_at'] ) ) ); ?>
 		</div>
 	</div>
 </div>
@@ -78,8 +78,8 @@
 		data-token="<?php echo esc_html( $token ); ?>"
 		style="width: 100%; ">
 
-		<img class="comp-img" style="padding: 0;" src="<?php echo esc_url( $compare['screenshot1']['link'] ); ?>">
-		<img style="padding: 0;" src="<?php echo esc_url( $compare['screenshot2']['link'] ); ?>">
+		<img class="comp-img" style="padding: 0;" src="<?php echo esc_url( $compare['screenshot_1_link'] ); ?>">
+		<img style="padding: 0;" src="<?php echo esc_url( $compare['screenshot_2_link'] ); ?>">
 	</div>
 </div>
 

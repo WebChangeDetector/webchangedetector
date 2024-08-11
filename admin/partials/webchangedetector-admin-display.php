@@ -197,7 +197,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'change_comparison_status':
-				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_uuid'], $postdata['status'] );
+				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_id'], $postdata['status'] );
 				break;
 
 			case 'add_post_type':
@@ -237,13 +237,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					case 'post_urls_update_and_auto':
 						$wcd->post_urls( $postdata, $wcd->website_details, true );
 
-						// Get the depending group names before saving to avoid group name changes in webapp.
-						$manual_group_name      = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
-						$postdata['group_name'] = $manual_group_name;
 						$wcd->update_manual_check_group_settings( $postdata );
-
-						$auto_group_name             = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
-						$postdata['group_name_auto'] = $auto_group_name;
 						$wcd->update_monitoring_settings( $postdata );
 						break;
 
@@ -359,7 +353,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				$wcd->get_dashboard_view( $account_details, $wcd->group_id, $wcd->monitoring_group_id );
+				$wcd->get_dashboard_view( $account_details );
 				break;
 
 			/********************

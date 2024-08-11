@@ -393,8 +393,9 @@ class WebChangeDetector_Admin {
 			die( 'Busted!' );
 		}
 
-		echo esc_html( $this->update_comparison_status( sanitize_key( wp_unslash( $_POST['id'] ) ), sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
-		die();
+		$result = $this->update_comparison_status( esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
+		echo esc_html($result['data']['id']) ?? 'failed';
+        die();
 	}
 
 	/** Get queues for status processing and open
@@ -419,9 +420,9 @@ class WebChangeDetector_Admin {
 	 * @return array|string
 	 */
 	public function update_monitoring_settings( $group_data ) {
-        $monitoring_settings = WebChangeDetector_API_V2::get_group_v2($this->monitoring_group_uuid)['data'];
+		$monitoring_settings = WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'];
 
-		$args                = array(
+		$args = array(
 			'monitoring'    => true,
 			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
 			'interval_in_h' => ! isset( $group_data['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $group_data['interval_in_h'] ),
@@ -441,7 +442,6 @@ class WebChangeDetector_Admin {
 	/** Update group settings
 	 *
 	 * @param array $postdata The postdata.
-	 * @param int   $group_id The group id.
 	 *
 	 * @return array|string
 	 */
@@ -461,18 +461,15 @@ class WebChangeDetector_Admin {
 
 		// Update group settings in api.
 		$args = array(
-			//'action'    => 'update_group',
-			//'group_id'  => $group_id,
 			'name'      => $postdata['group_name'],
 			'threshold' => sanitize_text_field( $postdata['threshold'] ),
 		);
 
-        if(!empty($postdata['css'] ) ){
-	        $args['css'] = sanitize_textarea_field( $postdata['css'] ); // there is no css sanitation.
-        }
+		if ( ! empty( $postdata['css'] ) ) {
+			$args['css'] = sanitize_textarea_field( $postdata['css'] ); // there is no css sanitation.
+		}
 
-        return ( WebChangeDetector_API_V2::update_group($this->manual_group_uuid, $args));
-
+		return ( WebChangeDetector_API_V2::update_group( $this->manual_group_uuid, $args ) );
 	}
 
 	/** Get the upgrade url
@@ -610,9 +607,9 @@ class WebChangeDetector_Admin {
 		$all_tokens          = array();
 		$compares_in_batches = array();
 
-		foreach ( $compares as $key => $compare ) {
+		foreach ( $compares as $compare ) {
 
-			$all_tokens[] = $compare['token'];
+			$all_tokens[] = $compare['id'];
 
 			// Sort comparisons by batches.
 			$compares_in_batches[ $compare['batch'] ][] = $compare;
@@ -685,6 +682,7 @@ class WebChangeDetector_Admin {
 								if ( $compare['difference_percent'] ) {
 									$class = 'is-difference';
 								}
+
 								?>
 								<tr>
 									<td>
@@ -742,8 +740,7 @@ class WebChangeDetector_Admin {
 										<?php echo esc_html( $compare['difference_percent'] ); ?>%
 									</td>
 									<td>
-										<form action="?page=webchangedetector-show-detection" method="post">
-											<input type="hidden" name="token" value="<?php echo esc_html( $compare['token'] ); ?>">
+										<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $compare['id'] ); ?>" method="post">
 											<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 											<input type="submit" value="Show" class="button">
 										</form>
@@ -772,17 +769,14 @@ class WebChangeDetector_Admin {
 	public function get_comparison_by_token( $postdata, $hide_switch = false, $whitelabel = false ) {
 		$token = $postdata['token'] ?? null;
 
-		if ( ! $token && ! empty( $_GET['token'] ) ) {
-			$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
+		if ( ! $token && ! empty( $_GET['id'] ) ) {
+			$token = sanitize_text_field( wp_unslash( $_GET['id'] ) );
 		}
 		if ( isset( $token ) ) {
-			$args    = array(
-				'action' => 'get_comparison_by_token',
-				'token'  => $token,
-			);
-			$compare = $this->api_v1( $args ); // used in template.
+			$compare = WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
 
-			$all_tokens = array();
+			$public_token = $compare['token'];
+			$all_tokens   = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
 
@@ -813,11 +807,14 @@ class WebChangeDetector_Admin {
 			$after_token  = $after_current_token[0] ?? null;
 			?>
 			<!-- Previous and next buttons -->
-			<div style="width: 100%; margin-bottom: 20px; text-align: center">
-				<form method="post" >
+			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
+				<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $before_token ) ?? null; ?>" method="post" style="display:inline-block;">
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> < Previous </button>
+				</form>
+				<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $after_token ) ?? null; ?>" method="post" style="display:inline-block;">
+					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>> Next > </button>
 				</form>
@@ -844,20 +841,6 @@ class WebChangeDetector_Admin {
                     Sorry, we couldn\'t find the screenshot. Please try again.</p>';
 		}
 		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . esc_url( $postdata['img_url'] ) . '"></div>';
-	}
-
-	/** Get Queue
-	 *
-	 * @return array|string
-	 */
-	public function get_queue() {
-		$args = array(
-			'action' => 'get_queue',
-			'status' => wp_json_encode( array( 'open', 'done', 'processing', 'failed' ) ),
-			'limit'  => isset( $_GET['limit'] ) ? sanitize_key( (int) $_GET['limit'] ) : $this::LIMIT_QUEUE_ROWS,
-			'offset' => isset( $_GET['offset'] ) ? sanitize_key( (int) $_GET['offset'] ) : 0,
-		);
-		return $this->api_v1( $args );
 	}
 
 	/** Add Post type to website
@@ -1081,38 +1064,6 @@ class WebChangeDetector_Admin {
 		return substr( $url, strpos( $url, '//' ) + 2 );
 	}
 
-	/** Update urls.
-	 *
-	 * @param int   $group_id The group id.
-	 * @param array $active_posts All active posts.
-	 *
-	 * @return array|string
-	 */
-	public function update_urls( $group_id, $active_posts = array() ) {
-		$args = array(
-			'action'   => 'update_urls',
-			'group_id' => $group_id,
-			'posts'    => wp_json_encode( $active_posts ),
-		);
-		return $this->api_v1( $args );
-	}
-
-	/** Take screenshot.
-	 *
-	 * @param int    $group_id The group id.
-	 * @param string $sc_type Is 'pre' or 'post'.
-	 *
-	 * @return array|string
-	 */
-	public function take_screenshot( $group_id, $sc_type ) {
-		$args = array(
-			'action'   => 'take_screenshots',
-			'sc_type'  => $sc_type,
-			'group_id' => $group_id,
-		);
-		return $this->api_v1( $args );
-	}
-
 	/** Get api token form.
 	 *
 	 * @param string $api_token The api token.
@@ -1187,30 +1138,6 @@ class WebChangeDetector_Admin {
 			// domain sent at mm_api.
 		);
 		return $this->api_v1( $args );
-	}
-
-	/** Get urls of a group.
-	 *
-	 * @param int $group_id The group id.
-	 *
-	 * @return array|mixed|string
-	 */
-	public function get_urls_of_group( $group_id ) {
-		$args = array(
-			'action'   => 'get_user_groups_and_urls',
-			'cms'      => 'wordpress',
-			'group_id' => $group_id,
-		);
-
-		// We only get one group as we send the group_id.
-
-		$response = $this->api_v1( $args );
-
-		if ( array_key_exists( 0, $response ) ) {
-			return $response[0];
-		}
-
-		return $response;
 	}
 
 	/** Set default sync types.
@@ -1910,14 +1837,12 @@ class WebChangeDetector_Admin {
 	/** Get the dashboard view.
 	 *
 	 * @param array $client_account Account data.
-	 * @param int   $update_group_id Manual checks group id.
-	 * @param int   $auto_group_id Monitoring checks group id.
 	 *
 	 * @return void
 	 */
-	public function get_dashboard_view( $client_account, $update_group_id, $auto_group_id ) {
+	public function get_dashboard_view( $client_account ) {
 
-		$auto_group = $this->get_urls_of_group( $auto_group_id );
+		$auto_group = $this->get_group_and_urls( $this->monitoring_group_uuid );
 
 		$amount_auto_detection = 0;
 		if ( $auto_group['enabled'] ) {

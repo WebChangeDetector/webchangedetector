@@ -374,6 +374,7 @@ function currentlyProcessing() {
         $(".ajax_update_comparison_status").click(function() {
             let e = $(this);
             let status = $(this).data('status');
+            let statusElement = $(e).parent().parent().find(".current_comparison_status");
             var data = {
                 action: 'update_comparison_status',
                 nonce: $(this).data('nonce'),
@@ -382,10 +383,15 @@ function currentlyProcessing() {
             };
 
             // Replace content with loading img.
-            $(e).parent().parent().find(".current_comparison_status").html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
+            let initialStatusContent = $(statusElement).html();
+            $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
 
             $.post(ajaxurl, data, function (response) {
-
+                if('failed' === response) {
+                    $(statusElement).html(initialStatusContent);
+                    alert('something went wrong. Please try again.');
+                    return false;
+                }
                let status_nice_name;
                 if( 'ok' === status) {
                     status_nice_name = 'Ok';

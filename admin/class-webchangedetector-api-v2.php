@@ -14,6 +14,14 @@
  */
 class WebChangeDetector_API_V2 {
 
+	/** Possible status for comparitons
+	 */
+	const WCD_POSSIBLE_COMPARISON_STATUS = array(
+		'new',
+		'ok',
+		'to_fix',
+		'false_positive',
+	);
 	/** Get account details.
 	 *
 	 * @return mixed|string
@@ -183,6 +191,20 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
+	/** Get single comparison.
+	 *
+	 * @param string $comparison_id The comparison id.
+	 * @return mixed|string
+	 */
+	public static function get_comparison_v2( $comparison_id ) {
+
+		$args = array(
+			'action' => 'comparisons/' . $comparison_id,
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
 	/** Get comparisons.
 	 *
 	 * @param array $filters Filters for getting comparisons.
@@ -276,21 +298,20 @@ class WebChangeDetector_API_V2 {
 	 * @return mixed|string
 	 */
 	public static function update_comparison_v2( $id, $status ) {
-		$possible_status = array(
-			'new',
-			'ok',
-			'to_fix',
-			'false_positive',
-		);
-		if ( ! in_array( $status, $possible_status, true ) ) {
-			return false;
+		if ( empty( $id ) ) {
+			return 'Id is missing.';
+		}
+
+		if ( ! in_array( $status, self::WCD_POSSIBLE_COMPARISON_STATUS, true ) ) {
+			return 'Wrong status.';
 		}
 
 		$args = array(
-			'action' => 'comparisons/' . esc_html( $id ),
-			'status' => esc_html( $status ),
+			'action' => 'comparisons/' . ( $id ),
+			'status' => ( $status ),
 		);
-		return self::api_v2( $args, 'PATCH' );
+
+		return self::api_v2( $args, 'PUT' );
 	}
 
 	/** Call the WCD api.
