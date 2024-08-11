@@ -659,7 +659,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
-				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid );
+				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid, array( 'per_page' => 999999 ) );
 
 				// Calculation for monitoring.
 				$date_next_sc = false;

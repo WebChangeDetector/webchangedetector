@@ -1583,6 +1583,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function post_urls( $postdata, $website_details, $save_both_groups ) {
 		// Get active posts from post data.
+		$this->sync_posts( true );
 		$active_posts   = array();
 		$count_selected = 0;
 		foreach ( $postdata as $key => $post_id ) {
@@ -1843,7 +1844,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account ) {
 
-		$auto_group = $this->get_group_and_urls( $this->monitoring_group_uuid );
+		$auto_group = $this->get_group_and_urls( $this->monitoring_group_uuid, array( 'per_page' => 999999 ) );
 
 		$amount_auto_detection = 0;
 		if ( $auto_group['enabled'] ) {
