@@ -412,30 +412,6 @@ class WebChangeDetector_Admin {
 		);
 	}
 
-	/** Get processing queue.
-	 *
-	 * @return array|string
-	 */
-	public function get_processing_queue() {
-		return $this->api_v1( array( 'action' => 'get_not_closed_queue' ) );
-	}
-
-	/** Get monitoring settings.
-	 *
-	 * @param int $group_id The monitoring group id.
-	 *
-	 * @return array|string
-	 */
-	public function get_monitoring_settings( $group_id ) {
-		// Deprecated.
-		$args = array(
-			'action'   => 'get_monitoring_settings',
-			'group_id' => $group_id,
-		);
-
-		return $this->api_v1( $args );
-	}
-
 	/** Update monitoring group settings.
 	 *
 	 * @param array $group_data The postdata.
@@ -443,8 +419,8 @@ class WebChangeDetector_Admin {
 	 * @return array|string
 	 */
 	public function update_monitoring_settings( $group_data ) {
+        $monitoring_settings = WebChangeDetector_API_V2::get_group_v2($this->monitoring_group_uuid)['data'];
 
-		$monitoring_settings = $this->get_monitoring_settings( $this->monitoring_group_uuid );
 		$args                = array(
 			'monitoring'    => true,
 			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
@@ -469,7 +445,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return array|string
 	 */
-	public function update_settings( $postdata, $group_id ) {
+	public function update_manual_check_group_settings( $postdata ) {
 
 		// Saving auto update settings.
 		self::error_log( 'Saving Manual Checks settings: ' . wp_json_encode( $postdata ) );
@@ -485,14 +461,18 @@ class WebChangeDetector_Admin {
 
 		// Update group settings in api.
 		$args = array(
-			'action'    => 'update_group',
-			'group_id'  => $group_id,
+			//'action'    => 'update_group',
+			//'group_id'  => $group_id,
 			'name'      => $postdata['group_name'],
-			'css'       => sanitize_textarea_field( $postdata['css'] ), // there is no css sanitation.
 			'threshold' => sanitize_text_field( $postdata['threshold'] ),
 		);
 
-		return $this->api_v1( $args );
+        if(!empty($postdata['css'] ) ){
+	        $args['css'] = sanitize_textarea_field( $postdata['css'] ); // there is no css sanitation.
+        }
+
+        return ( WebChangeDetector_API_V2::update_group($this->manual_group_uuid, $args));
+
 	}
 
 	/** Get the upgrade url

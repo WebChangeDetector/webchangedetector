@@ -240,7 +240,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						// Get the depending group names before saving to avoid group name changes in webapp.
 						$manual_group_name      = $wcd->get_urls_of_group( $wcd->website_details['manual_detection_group_id'] )['name'];
 						$postdata['group_name'] = $manual_group_name;
-						$wcd->update_settings( $postdata, $wcd->group_id );
+						$wcd->update_manual_check_group_settings( $postdata );
 
 						$auto_group_name             = $wcd->get_urls_of_group( $wcd->website_details['auto_detection_group_id'] )['name'];
 						$postdata['group_name_auto'] = $auto_group_name;
@@ -252,13 +252,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						if ( ! empty( $postdata['monitoring'] ) && $postdata['monitoring'] ) {
 							$wcd->update_monitoring_settings( $postdata );
 						} else {
-							$wcd->update_settings( $postdata, $wcd->group_id );
+							$wcd->update_manual_check_group_settings( $postdata );
 						}
 						break;
 
 					case 'save_update_settings_and_continue':
 						$wcd->post_urls( $_POST, $wcd->website_details, false );
-						$wcd->update_settings( $_POST, $wcd->group_id );
+						$wcd->update_manual_check_group_settings( $_POST );
 
 						// Update step in update detection.
 						if ( ! empty( $_POST['step'] ) ) {

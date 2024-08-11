@@ -15,11 +15,12 @@ function updateProcessingStep() {
 
             response = JSON.parse(response);
 
-            let currentlyProcessingAmount = response.open.meta.total + response.processing.meta.total;
+            // Calculate all
+            let currentlyInQueueAmount = response.open.meta.total + response.processing.meta.total;
             let currentlyProcessingSc = [];
             let actuallyProcessingSc = [];
 
-            currentlyProcessing.html(currentlyProcessingAmount);
+            currentlyProcessing.html(currentlyInQueueAmount);
 
             // Get the processing queues in the plugin
             $('.processing_sc_row').each(function () {
@@ -51,7 +52,6 @@ function updateProcessingStep() {
                 }
             });
 
-
             // Add new queues
             $(response.processing.data).each(function () {
                 if ($(this)[0].status !== 'open' && -1 === $.inArray($(this)[0].id, currentlyProcessingSc)) {
@@ -64,9 +64,8 @@ function updateProcessingStep() {
                 }
             });
 
-
             // If the queue is done, show all done for 10 sec
-            if (parseInt(currentlyProcessingAmount) === 0 || !response) {
+            if (parseInt(currentlyInQueueAmount) === 0 || !response) {
                 currentlyProcessingSpinner.hide(); // hide spinner
 
                 // Replace message when everything is done
@@ -405,7 +404,6 @@ function currentlyProcessing() {
 
         })
     });
-
 })( jQuery );
 
 /**
