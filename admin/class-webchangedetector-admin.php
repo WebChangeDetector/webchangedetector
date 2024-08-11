@@ -388,7 +388,7 @@ class WebChangeDetector_Admin {
 			die();
 		}
 
-        // Verify nonce;
+		// Verify nonce.
 		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			echo 'Nonce verify failed';
 			die( 'Busted!' );
@@ -1795,9 +1795,9 @@ class WebChangeDetector_Admin {
 		$active_tab = 'webchangedetector'; // init.
 
 		if ( isset( $_GET['page'] ) ) {
-			// sanitize: lower-case with "-".
 			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 		}
+
 		?>
 		<div class="wrap">
 			<h2 class="nav-tab-wrapper">

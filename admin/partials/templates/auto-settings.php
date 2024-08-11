@@ -85,8 +85,8 @@
 				<label for="alert_emails" class="auto-setting">
 					Alert email addresses (comma separated)
 				</label>
-				<input type="text" name="alert_emails" id="alert_emails" style="width: 100%;" class="auto-setting"
-				value="<?php echo isset( $group_and_urls['alert_emails'] ) ? esc_attr( $group_and_urls['alert_emails'] ) : ''; ?>">
+				<input type="email"  name="alert_emails" id="alert_emails" style="width: 100%;" class="au   to-setting"
+				value="<?php echo isset( $group_and_urls['alert_emails'] ) ? esc_attr( $group_and_urls['alert_emails'] ) : ''; ?>" multiple >
 				<small>Enter the email address(es) which should get notified on about auto update checks.</small>
 			</p>
 			<span class="notice notice-error" id="error-email-validation" style="display: none;">

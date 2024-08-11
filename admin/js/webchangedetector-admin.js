@@ -468,7 +468,6 @@ function wcdValidateFormManualSettings() {
     var from = document.getElementById("auto_update_checks_from");
     var to = document.getElementById("auto_update_checks_to");
 
-    console.log("from: " + from.value + " | to: " + to.value);
     if(to.value < from.value) {
         jQuery(from).css("border", "2px solid #d63638");
         jQuery(to).css("border", "2px solid #d63638");
@@ -497,7 +496,31 @@ function wcdValidateFormManualSettings() {
         });
         return false;
     }
+
+    // Validation Notification emails
+
+    // get all emails.
+    var emailsElement = document.getElementsByName("auto_update_checks_emails")[0];
+    if(emailsElement.value !== "" ) {
+        // split by comma.
+        let emails = emailsElement.value.split(",");
+
+        // Validation failed.
+        if (false === validateEmail(emails)) {
+            jQuery(emailsElement).css("border", "2px solid red");
+            jQuery("#manual_checks_settings_accordion").css("border", "2px solid red");
+            jQuery("#error-email-validation").css("display", "block");
+            emailsElement.scrollIntoView({behavior: "smooth"});
+            return false;
+        }
+
+        // Validation succeeded.
+        jQuery("#error-email-validation").css("display", "none");
+        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
+        jQuery(emailsElement).css("border", "2px solid green");
+    }
     return true;
+
 }
 
 /**
@@ -507,15 +530,36 @@ function wcdValidateFormManualSettings() {
 function wcdValidateFormAutoSettings() {
 
     // Check if monitoring is enabled.
-    var autoDetectionEnabled = document.getElementById("auto-enabled").value;
-
-    if(! parseInt(autoDetectionEnabled)) {
+    if( 'on' !== document.getElementById("auto-enabled").value ) {
         return true;
     }
-    // get all emails
+
+    // get all emails.
     var emailsElement = document.getElementById("alert_emails");
-    // split by new line
+
+    // split by comma.
     let emails = emailsElement.value.split(",");
+
+    // Validate emails if it's filled.
+    if(emailsElement.value !== "" ) {
+        if (false === validateEmail(emails)) {
+            // Validation failed.
+            jQuery(emailsElement).css("border", "2px solid red");
+            jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
+            jQuery("#error-email-validation").css("display", "block");
+            emailsElement.scrollIntoView({behavior: "smooth"});
+            return false;
+
+        }
+        // Validation succeeded.
+        jQuery("#error-email-validation").css("display", "none");
+        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
+        jQuery(emailsElement).css("border", "2px solid green");
+    }
+    return true;
+}
+
+function validateEmail(emails) {
     // init email regex
     var emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
@@ -524,15 +568,9 @@ function wcdValidateFormAutoSettings() {
 
         // Validation failed
         if(emails[i] === "" || ! emailRegex.test(emails[i]) ){
-            jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "block");
             return false;
         }
     }
-    jQuery("#error-email-validation").css("display", "none");
-    jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
-    jQuery(emailsElement).css("border", "2px solid green");
     return true;
 }
 
