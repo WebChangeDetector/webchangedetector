@@ -318,20 +318,20 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Convert the local time into gmt time.
-		$should_next_run = gmdate( 'U', strtotime( $auto_update_checks_from ) );
+		$should_next_run     = gmdate( 'U', strtotime( $auto_update_checks_from ) );
 		$should_next_run_gmt = get_gmt_from_date( gmdate( 'Y-m-d H:i:s', $should_next_run ), 'U' );
 
-		$now_gmt = get_gmt_from_date( current_time( 'Y-m-d H:i:s' ), 'U' );
+		$now_gmt = get_gmt_from_date( current_time( 'Y-m-d H:i:s' ), 'U ' );
 
 		// Add a day if we passed the auto_update_checks_from time already.
 		if ( $now_gmt > $should_next_run_gmt ) {
 			$should_next_run_gmt = strtotime( '+1 day', $should_next_run_gmt );
 		}
 
-		// Remove last-updated transients
-		delete_site_transient('update_core');
-		delete_site_transient('update_plugins');
-		delete_site_transient('update_themes');
+		// Remove last-updated transients.
+		delete_site_transient( 'update_core' );
+		delete_site_transient( 'update_plugins' );
+		delete_site_transient( 'update_themes' );
 
 		// Finally clear current hook and create a new one.
 		wp_clear_scheduled_hook( 'wp_version_check' );

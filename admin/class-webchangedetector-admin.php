@@ -63,14 +63,15 @@ class WebChangeDetector_Admin {
 
 	);
 
-    const WEEKDAYS = array(
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-        'sunday' );
+	const WEEKDAYS = array(
+		'monday',
+		'tuesday',
+		'wednesday',
+		'thursday',
+		'friday',
+		'saturday',
+		'sunday',
+	);
 
 	/**
 	 * The ID of this plugin.
@@ -1854,25 +1855,25 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account ) {
 
-		$auto_group = $this->get_group_and_urls( $this->monitoring_group_uuid, array( 'per_page' => 999999 ) );
-        $update_group = $this->get_group_and_urls( $this->manual_group_uuid, array( 'per_page' => 999999 ) );
+		$auto_group   = $this->get_group_and_urls( $this->monitoring_group_uuid, array( 'per_page' => 999999 ) );
+		$update_group = $this->get_group_and_urls( $this->manual_group_uuid, array( 'per_page' => 999999 ) );
 
 		$amount_auto_detection = 0;
 		if ( $auto_group['enabled'] ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['amount_selected_urls'] * WCD_DAYS_PER_MONTH;
 		}
-        $auto_update_settings = get_option('wcd_auto_update_settings');
-		$max_auto_update_checks = 0;
-        $amount_auto_update_days = 0;
+		$auto_update_settings    = get_option( 'wcd_auto_update_settings' );
+		$max_auto_update_checks  = 0;
+		$amount_auto_update_days = 0;
 
-        if( 'on' === $auto_update_settings['auto_update_checks_enabled'] ){
-            foreach(self::WEEKDAYS as $weekday) {
-                if( 'on' === $auto_update_settings['auto_update_checks_'.$weekday] ) {
-                    $amount_auto_update_days++;
-                }
-            }
-            $max_auto_update_checks = $update_group['amount_selected_urls'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
-        }
+		if ( 'on' === $auto_update_settings['auto_update_checks_enabled'] ) {
+			foreach ( self::WEEKDAYS as $weekday ) {
+				if ( 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+					++$amount_auto_update_days;
+				}
+			}
+			$max_auto_update_checks = $update_group['amount_selected_urls'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
+		}
 
 		$wizard_text = '<h2>Welcome to WebChange Detector</h2>This Wizard helps you to get started with your website Checks.<br>
                         You can exit the wizard any time and restart it from the dashboard.';
@@ -1924,46 +1925,48 @@ class WebChangeDetector_Admin {
 						<?php echo esc_html( $client_account['checks_done'] ); ?> /
 						<?php echo esc_html( $client_account['checks_limit'] ); ?>
 					</p>
-                    <div style="width: 100%; background: #aaa; height: 20px; display: inline-block; position: relative; text-align: center;">
+					<div style="width: 100%; background: #aaa; height: 20px; display: inline-block; position: relative; text-align: center;">
 
-                        <span style="z-index: 5; position: absolute; color: #fff;"><?= $usage_percent ?> %</span>
-                        <div style="width: <?= $usage_percent ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
-                    </div>
+						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
+						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
+					</div>
 					<p>
-                        <strong>Monitoring: </strong>
-                        <?= $amount_auto_detection > 0 ?
-                            '<span style="color: green; font-weight: 900;">On</span> (≈ '. $amount_auto_detection . ' checks / month)' :
-                            '<span style="color: red; font-weight: 900">Off</span>'
-                        ?>
+						<strong>Monitoring: </strong>
+						<?php
+						echo $amount_auto_detection > 0 ?
+							'<span style="color: green; font-weight: 900;">On</span> (≈ ' . esc_html( $amount_auto_detection ) . ' checks / month)' :
+							'<span style="color: red; font-weight: 900">Off</span>'
+						?>
 
 						<?php
 						$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
 									( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
 
-                        ?>
-                    </p>
-                    <p>
-                        <strong>Auto update checks: </strong>
-                        <?php
+						?>
+					</p>
+					<p>
+						<strong>Auto update checks: </strong>
+						<?php
 
-                        echo $max_auto_update_checks > 0 ?
-	                        '<span style="color: green; font-weight: 900;">On</span> (≈ '. $max_auto_update_checks . ' checks / month)' :
-	                        '<span style="color: red; font-weight: 900">Off</span>';
-                        $checks_auto_update_until_renewal = $max_auto_update_checks / WCD_SECONDS_IN_MONTH *
-                                                ( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
-                        ?>
-                    </p>
-                    <?php
-                    $checks_needed = $checks_until_renewal + $max_auto_update_checks;
-                    $checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
-                    if($checks_needed > $checks_available) { ?>
-                        <span class="notice notice-warning" style="display:block; padding: 10px;">
-                            <?= $this->get_device_icon('warning'); ?>
-                            <strong>You might run out of checks before renewal day. </strong><br>
-                            Current settings require up to <?php echo number_format($checks_needed - $checks_available, 0 )?> more checks. <br>
-                            <a href="<?= $this->get_upgrade_url() ?>">Upgrade your account now.</a>
-                        </span>
-                    <?php } ?>
+						echo $max_auto_update_checks > 0 ?
+							'<span style="color: green; font-weight: 900;">On</span> (≈ ' . esc_html( $max_auto_update_checks ) . ' checks / month)' :
+							'<span style="color: red; font-weight: 900">Off</span>';
+						$checks_auto_update_until_renewal = $max_auto_update_checks / WCD_SECONDS_IN_MONTH *
+												( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
+						?>
+					</p>
+					<?php
+					$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
+					$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
+					if ( $checks_needed > $checks_available ) {
+						?>
+						<span class="notice notice-warning" style="display:block; padding: 10px;">
+							<?php $this->get_device_icon( 'warning' ); ?>
+							<strong>You might run out of checks before renewal day. </strong><br>
+							Current settings require up to <?php echo esc_html( number_format( $checks_needed - $checks_available, 0 ) ); ?> more checks. <br>
+							<a href="<?php echo esc_html( $this->get_upgrade_url() ); ?>">Upgrade your account now.</a>
+						</span>
+					<?php } ?>
 
 					<p><strong>Renewal on:</strong> <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?></p>
 				</div>
