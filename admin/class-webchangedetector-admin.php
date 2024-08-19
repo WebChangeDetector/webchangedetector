@@ -1906,22 +1906,15 @@ class WebChangeDetector_Admin {
 					</form>
 				</div>
 
-				<div class="box-half ">
-					<h2>
-						<strong>
-							Your Account
-							<?php
-							$usage_percent = 0;
-							if ( ! empty( $client_account['checks_limit'] ) ) {
-								$usage_percent = number_format( $client_account['checks_done'] / $client_account['checks_limit'] * 100, 1 );
-							}
+				<div class="box-half right ">
 
-							?>
-
-						</strong>
-					</h2>
-					<hr>
 					<p style="margin-top: 20px;"><strong>Used checks:</strong>
+						<?php
+						$usage_percent = 0;
+						if ( ! empty( $client_account['checks_limit'] ) ) {
+							$usage_percent = number_format( $client_account['checks_done'] / $client_account['checks_limit'] * 100, 1 );
+						}
+						?>
 						<?php echo esc_html( $client_account['checks_done'] ); ?> /
 						<?php echo esc_html( $client_account['checks_limit'] ); ?>
 					</p>

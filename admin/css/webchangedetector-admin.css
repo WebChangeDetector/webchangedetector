@@ -708,12 +708,14 @@ Dashboard
 }
 
 .webchangedetector .dashboard .box-half {
-    border: 3px solid #276ECC;
-    border-radius: 5px;
-    margin: 10px auto;
-    width: 45%;
+    border: 1px solid #276ECC;
+    margin: 10px 0;
+    width: calc(50% - 44px);
     float: left;
     padding: 0 20px ;
+}
+.webchangedetector .dashboard .box-half.right {
+    float: right;
 }
 
 .webchangedetector .dashboard .box-half.usages {
@@ -723,7 +725,7 @@ Dashboard
 
 .webchangedetector .box-half.no-border {
     border: none;
-    padding-left: 0;
+
 }
 
 .webchangedetector .dashboard .box-half.last {
