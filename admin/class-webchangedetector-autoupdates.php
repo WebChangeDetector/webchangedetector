@@ -42,7 +42,7 @@ class WebChangeDetector_Autoupdates {
 		$this->set_defines();
 
 		// Register auto-update filter hooks
-		add_action( 'plugins_loaded', array( $this, 'add_auto_update_filters' ) );
+		add_action( 'plugins_loaded', array( $this, 'add_auto_update_filters' ) ); // todo to delete?
 
 		// Post updates.
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
@@ -54,7 +54,8 @@ class WebChangeDetector_Autoupdates {
 		//add_action( 'wcd_release_lock', array( $this, 'wcd_release_lock' ) );
 		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
 		add_action('wcd_wp_version_check', array($this,'wcd_wp_version_check'));
-		add_action('wp_version_check', array($this,'wp_version_check'), 5);
+		add_action('wp_maybe_auto_update', array($this,'wp_maybe_auto_update'),5);
+		//add_action( 'pre_auto_update', array( $this, 'auto_update' ), PHP_INT_MAX, 3 );
 		//add_action( 'pre_auto_update', array($this, 'pre_auto_update'), 10, 3);
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
@@ -65,18 +66,12 @@ class WebChangeDetector_Autoupdates {
 		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 	}
 
-	/*public function pre_auto_update($type, $item, $context) {
-
-	}*/
-
-	public function wp_version_check() {
-		$this->add_auto_update_filters();
-	}
-
 	public function wcd_wp_version_check () {
-		$this->add_auto_update_filters();
+		//$this->maybe_cancel_auto_update();
 		//$this->wcd_release_lock();
 		wp_version_check();
+		//remove_action('wp_version_check','wp_version_check');
+		//wp_installing(true); // prevents wp_version_check() to run again without our filters.
 	}
 
 	/**
@@ -84,9 +79,12 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public function add_auto_update_filters() {
 		WebChangeDetector_Admin::error_log("Creating update filter hooks");
-		add_filter( 'auto_update_plugin', array( $this, 'auto_update_plugin' ), PHP_INT_MAX, 2 );
-		add_filter( 'auto_update_theme', array( $this, 'auto_update_theme' ), PHP_INT_MAX, 2 );
-		add_filter( 'auto_update_core', array( $this, 'auto_update_core' ), PHP_INT_MAX, 2 );
+		//$this->maybe_cancel_auto_update();
+		//remove_action('wp_maybe_auto_update','wp_maybe_auto_update');
+		//add_filter( 'auto_update_plugin', array( $this, 'auto_update_plugin' ), PHP_INT_MAX, 2 );
+		//add_filter( 'auto_update_theme', array( $this, 'auto_update_theme' ), PHP_INT_MAX, 2 );
+		//add_filter( 'auto_update_core', array( $this, 'auto_update_core' ), PHP_INT_MAX, 2 );
+		//add_action( 'pre_auto_update', array( $this, 'auto_update' ), 5, 3 );
 		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
 	}
 
@@ -143,9 +141,22 @@ class WebChangeDetector_Autoupdates {
 			// There are still open or processing queues. So we check again in a minute.
 			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_cron_check_post_queues' );
 		} else {
-			// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-			$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
-			$mail_body   = '<style>
+			$this->send_change_detection_mail($post_sc_option);
+
+			// We don't need the webhook anymore.
+			WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_WORDPRESS_CRON ) );
+
+			// Cleanup wp_options and cron webhook.
+			delete_option( WCD_WORDPRESS_CRON );
+			delete_transient( WCD_PRE_AUTO_UPDATE );
+			delete_transient( WCD_POST_AUTO_UPDATE );
+		}
+	}
+
+	public function send_change_detection_mail($post_sc_option) {
+		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
+		$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
+		$mail_body   = '<style>
 								table {
 									border: 1px solid #ccc;
 									width: 100%;
@@ -163,78 +174,69 @@ class WebChangeDetector_Autoupdates {
 								}
 								</style>
 								<div style="width: 800px; margin: 0 auto;">';
-			$mail_body  .= '<p>Howdy again, we checked your website for visual changes during the WP auto updates with WebChange Detector. Here are the results:</p>';
-			if ( count( $comparisons['data'] ) ) {
-				$no_difference_rows   = '';
-				$with_difference_rows = '';
+		$mail_body  .= '<p>Howdy again, we checked your website for visual changes during the WP auto updates with WebChange Detector. Here are the results:</p>';
+		if ( count( $comparisons['data'] ) ) {
+			$no_difference_rows   = '';
+			$with_difference_rows = '';
 
-				foreach ( $comparisons['data'] as $comparison ) {
-					$row =
-						'<tr>
+			foreach ( $comparisons['data'] as $comparison ) {
+				$row =
+					'<tr>
 						<td>' . $comparison['url'] . '</td>
 						<td>' . $comparison['difference_percent'] . ' %</td>
 		                <td><a href="' . $comparison['public_link'] . '">See changes</a></td>
 					</tr>';
-					if ( ! $comparison['difference_percent'] ) {
-						$no_difference_rows .= $row;
-					} else {
-						$with_difference_rows .= $row;
-					}
-				}
-				$mail_body .= '<div style="width: 300px; margin: 20px auto; text-align: center; padding: 30px; background: #DCE3ED;">';
-				if ( empty( $with_difference_rows ) ) {
-					$mail_body .= '<div style="padding: 10px;background: green; color: #fff; border-radius: 20px; font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; transform: scaleX(-1) rotate(-35deg);">L</div>
-									<div style="font-size: 18px; padding-top: 20px;">Checks Passed</div>';
+				if ( ! $comparison['difference_percent'] ) {
+					$no_difference_rows .= $row;
 				} else {
-					$mail_body .= '<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
-									<div style="font-size: 18px; padding-top: 20px;">We found changes<br>Please check the change detections.</div>';
+					$with_difference_rows .= $row;
 				}
-				$mail_body .= '</div>';
-
-				$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
-				$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
-				if ( ! empty( $with_difference_rows ) ) {
-					$mail_body .= $with_difference_rows;
-				} else {
-					$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
-				}
-				$mail_body .= '</table>';
-
-				$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
-				$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
-				if ( ! empty( $no_difference_rows ) ) {
-					$mail_body .= $no_difference_rows;
-				} else {
-					$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
-				}
-				$mail_body .= '</table>';
-
-			} else {
-				$mail_body .= 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.';
 			}
+			$mail_body .= '<div style="width: 300px; margin: 20px auto; text-align: center; padding: 30px; background: #DCE3ED;">';
+			if ( empty( $with_difference_rows ) ) {
+				$mail_body .= '<div style="padding: 10px;background: green; color: #fff; border-radius: 20px; font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; transform: scaleX(-1) rotate(-35deg);">L</div>
+									<div style="font-size: 18px; padding-top: 20px;">Checks Passed</div>';
+			} else {
+				$mail_body .= '<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
+									<div style="font-size: 18px; padding-top: 20px;">We found changes<br>Please check the change detections.</div>';
+			}
+			$mail_body .= '</div>';
 
-			$mail_body .= '<div style="margin: 20px 0">You can find all change detections and settings for the checks 
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
+			$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			if ( ! empty( $with_difference_rows ) ) {
+				$mail_body .= $with_difference_rows;
+			} else {
+				$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
+			}
+			$mail_body .= '</table>';
+
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
+			$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			if ( ! empty( $no_difference_rows ) ) {
+				$mail_body .= $no_difference_rows;
+			} else {
+				$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
+			}
+			$mail_body .= '</table>';
+
+		} else {
+			$mail_body .= 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.';
+		}
+
+		$mail_body .= '<div style="margin: 20px 0">You can find all change detections and settings for the checks 
 								in your wp-admin dashboard of your website.<br><br>
 								Your WebChange Detector team</div>';
 
-			$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
-			$to                   = get_bloginfo( 'admin_email' );
-			if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
-				$to = $auto_update_settings['auto_update_checks_emails'];
-			}
-			$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
-			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-			WebChangeDetector_Admin::error_log( 'Sending Mail with differences' );
-			wp_mail( $to, $subject, $mail_body, $headers );
-
-			// We don't need the webhook anymore.
-			WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_WORDPRESS_CRON ) );
-
-			// Cleanup wp_options and cron webhook.
-			delete_option( WCD_WORDPRESS_CRON );
-			delete_transient( WCD_PRE_AUTO_UPDATE );
-			delete_transient( WCD_POST_AUTO_UPDATE );
+		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		$to                   = get_bloginfo( 'admin_email' );
+		if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
+			$to = $auto_update_settings['auto_update_checks_emails'];
 		}
+		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		WebChangeDetector_Admin::error_log( 'Sending Mail with differences' );
+		wp_mail( $to, $subject, $mail_body, $headers );
 	}
 
 	/**
@@ -276,18 +278,8 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public function set_lock() {
 		WebChangeDetector_Admin::error_log( 'Setting Lock' );
-		$result = update_option('auto_updater.lock', time() - HOUR_IN_SECONDS + (MINUTE_IN_SECONDS * 2), false );
-		//$result = WP_Upgrader::create_lock( $this->lock_name, MINUTE_IN_SECONDS );
+		$result = update_option($this->lock_name, time() - HOUR_IN_SECONDS + MINUTE_IN_SECONDS);
 		WebChangeDetector_Admin::error_log("Create lock result: " . ($result ? "true" : "false"));
-	}
-
-	/**
-	 * Release lock to allow wp to update
-	 *
-	 * @return void
-	 */
-	public function wcd_release_lock() {
-		WP_Upgrader::release_lock($this->lock_name);
 	}
 
 	/** Reset next cron run of wp_version_check to our auto_update_checks_from.
@@ -319,35 +311,44 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Remove last-updated transients.
-		delete_site_transient( 'update_core' );
+		/*delete_site_transient( 'update_core' );
 		delete_site_transient( 'update_plugins' );
-		delete_site_transient( 'update_themes' );
+		delete_site_transient( 'update_themes' );*/
 
 		// Finally clear current hook and create a new one.
 		/*wp_clear_scheduled_hook( 'wp_version_check' );
 		wp_clear_scheduled_hook( 'wp_update_plugins' );
 		wp_clear_scheduled_hook( 'wp_update_themes' );
-		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
+
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_plugins' );
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_update_themes' );
 		*/
+		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
+		// backup cron in case something else changes the wp_version_check - cron.
 		wp_schedule_event( $should_next_run_gmt, 'daily', 'wcd_wp_version_check' );
 	}
 
-	public function maybe_cancel_auto_update($auto_update_settings) {
+	public function wp_maybe_auto_update() {
 
-		static $cancel_auto_update;
+		$auto_update_settings = $this->get_auto_update_settings();
 
-		if($cancel_auto_update) {
-			return $cancel_auto_update;
+		// We don't have auto-update settings yet or the manual checks group is not set. So, go the wp way.
+		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
+			WebChangeDetector_Admin::error_log( 'Running auto updates without checks. Don\'t have an group_id or auto update settings. ' );
+			return;
 		}
 
-		$cancel_auto_update = false;
+		// Check if auto update checks are enabled.
+		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || 'on' !== $auto_update_settings['auto_update_checks_enabled']  ) {
+			WebChangeDetector_Admin::error_log( 'Running auto updates without checks. They are disabled in WCD.' );
+			return;
+		}
+
 		// Check if we do updates on today's weekday.
 		if ( ! array_key_exists( 'auto_update_checks_' . strtolower( current_time( 'l' ) ), $auto_update_settings ) ) {
 			WebChangeDetector_Admin::error_log( 'Canceling auto updates: ' . strtolower( current_time( 'l' ) ) . ' is disabled.' );
 			$this->set_lock();
-			$cancel_auto_update = true;
+			return;
 		}
 
 		// Check if we do updates at current times.
@@ -359,82 +360,21 @@ class WebChangeDetector_Autoupdates {
 				' and ' . $auto_update_settings['auto_update_checks_to']
 			);
 			$this->set_lock();
-			$cancel_auto_update = true;
+			return;
 		}
 
-		return $cancel_auto_update;
-	}
-
-	/**
-	 * Note - with the addition of support for JetPack remote updates (via manual action in a user's wordpress.com dashboard),
-	 * this is now more accurately a method to handle *background* updates, rather than "automatic" ones.
-	 *
-	 * @param bool   $update Whether item is to update or not.
-	 * @param string $item The item to update.
-	 * @param string $type The type of the item.
-	 * @return string
-	 */
-	public function auto_update( $update, $item, $type ) {
-
-		WebChangeDetector_Admin::error_log( 'Function: auto_update '. $update );
-		// If one failed, we don't have to check the others
-		static $cancel_auto_updates;
-		if($cancel_auto_updates) {
-			return $update;
-		}
-		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
-
-		if($this->maybe_cancel_auto_update($auto_update_settings)) {
-			return $update;
-		}
-
-
-		// We don't have auto-update settings yet or the manual checks group is not set. So, go the wp way.
-		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
-			WebChangeDetector_Admin::error_log( 'Don\'t have  an group_id. Exiting' );
-			$cancel_auto_updates = true;
-			return $update;
-		}
-
-		// Check if auto update checks are enabled.
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || 'on' !== $auto_update_settings['auto_update_checks_enabled']  ) {
-			WebChangeDetector_Admin::error_log( 'Running auto updates without checks because they are disabled in WCD.' );
-			$cancel_auto_updates = true;
-			return $update;
-		}
-
-
-
-		// Early returns.
+		// Other early returns.
 		if (
-			! $update ||
-			(
-				! doing_filter( 'wp_maybe_auto_update' ) &&
-				! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
-				! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
-				! doing_filter( 'jetpack_pre_core_upgrade' )
-			)
+			! doing_filter( 'wp_maybe_auto_update' ) &&
+			! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
+			! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
+			! doing_filter( 'jetpack_pre_core_upgrade' )
 		) {
-			return $update;
-		}
-
-		// This has to be copied from WP_Automatic_Updater::should_update() because it's another reason why the eventual decision may be false.
-		// If it's a core update, are we actually compatible with its requirements?
-		if ( 'core' === $type ) {
-			global $wpdb;
-			$php_compat = version_compare( phpversion(), $item->php_version, '>=' );
-			if ( file_exists( WP_CONTENT_DIR . '/db.php' ) && empty( $wpdb->is_mysql ) ) {
-				$mysql_compat = true;
-			} else {
-				$mysql_compat = version_compare( $wpdb->db_version(), $item->mysql_version, '>=' );
-			}
-			if ( ! $php_compat || ! $mysql_compat ) {
-				return false;
-			}
+			WebChangeDetector_Admin::error_log("Not called from one of the allowed filters. Exiting.");
+			return;
 		}
 
 		WebChangeDetector_Admin::error_log( 'Checking status of Screenshots' );
-		WebChangeDetector_Admin::error_log( 'Update type: ' . wp_json_encode( $type ) );
 
 		// Create external cron at wcd api to make sure the wp cron is triggered every minute.
 		if ( false === get_option( WCD_WORDPRESS_CRON ) ) {
@@ -445,7 +385,7 @@ class WebChangeDetector_Autoupdates {
 			}
 		}
 
-		// Do the WCD Magic and start pre-update screenshots.
+		// Start pre-update screenshots and do the WCD Magic and .
 		$wcd_pre_update_data = get_transient( WCD_PRE_AUTO_UPDATE );
 		if ( false === $wcd_pre_update_data ) { // We don't have a transient yet. So we start screenshots.
 			WebChangeDetector_Admin::error_log( 'Manual Group UUID: ' . $this->manual_group_id );
@@ -458,17 +398,41 @@ class WebChangeDetector_Autoupdates {
 
 			WebChangeDetector_Admin::error_log( 'Started taking screenshots and setting transients' );
 			set_transient( WCD_PRE_AUTO_UPDATE, $transient_data, HOUR_IN_SECONDS );
+			$this->set_lock();
 			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_wp_maybe_auto_update' );
-			return false;
+			return;
 
-		} elseif ( 'done' !== $wcd_pre_update_data['status'] ) { // SC are not done yet. Reschedule updates.
+		// SC are not done yet. Reschedule updates.
+		} elseif ( 'done' !== $wcd_pre_update_data['status'] ) {
 			WebChangeDetector_Admin::error_log( "Rescheduling cron 'wcd_wp_maybe_auto_update'..." );
+			$this->set_lock();
 			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_wp_maybe_auto_update' );
-			return false;
+			return;
 		}
+	}
 
-		// shouldn't get here, but to be safe...
-		return $update;
+	public function get_auto_update_settings() {
+		static $auto_update_settings;
+		if($auto_update_settings) {
+			return $auto_update_settings;
+		}
+		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		return $auto_update_settings;
+	}
+
+	/**
+	 * Note - with the addition of support for JetPack remote updates (via manual action in a user's wordpress.com dashboard),
+	 * this is now more accurately a method to handle *background* updates, rather than "automatic" ones.
+	 *
+	 * @param bool   $update Whether item is to update or not.
+	 * @param string $item The item to update.
+	 * @param string $type The type of the item.
+	 * @return void
+	 */
+	public function auto_update( $type, $item, $context ) {
+
+		WebChangeDetector_Admin::error_log( 'Function: auto_update ' );
+
 	}
 
 	/**
