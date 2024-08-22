@@ -1038,7 +1038,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>
 							<p>If you need more checks, please upgrade your account with the button below.</p>
-							<a class="button" href="' . esc_url( $wcd->get_upgrade_url() ) . '">Upgrade</a>
+							<a class="button" href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>">Upgrade</a>
 						</div>
 						<?php
 					}

@@ -47,9 +47,13 @@ class WebChangeDetector_Autoupdates {
 		// Saving settings.
 		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
 
-		// Cron jobs.
-		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
+		// Backup cron job for checking for updates.
 		add_action( 'wcd_wp_version_check', array( $this, 'wcd_wp_version_check' ) );
+
+		// Scheduled tasks checking for post-sc to be finished.
+		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
+
+		// Hooking into the update process.
 		add_action( 'wp_maybe_auto_update', array( $this, 'wp_maybe_auto_update' ), 5 );
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
