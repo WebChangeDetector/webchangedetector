@@ -876,14 +876,25 @@ class WebChangeDetector_Admin {
 	 * @return int[]|WP_Post[]
 	 */
 	public function get_posts( $posttype ) {
-		$args = array(
+		$args           = array(
 			'post_type'   => $posttype,
 			'post_status' => array( 'publish', 'inherit' ),
 			'numberposts' => -1,
 			'order'       => 'ASC',
 			'orderby'     => 'title',
 		);
-		return get_posts( $args );
+		$wpml_languages = $this->get_wpml_languages();
+		$posts          = array();
+		if ( ! $wpml_languages ) {
+			$posts = get_posts( $args );
+		} else {
+			foreach ( $wpml_languages['languages'] as $language ) {
+				do_action( 'wpml_switch_language', $language['code'] );
+				$posts = array_merge( $posts, get_posts( $args ) );
+			}
+			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
+		}
+		return $posts;
 	}
 
 	/** Get terms.
@@ -901,20 +912,40 @@ class WebChangeDetector_Admin {
 		);
 
 		// Get terms for all languages if WPML is enabled.
-		if ( class_exists( 'SitePress' ) ) {
-			$languages        = apply_filters( 'wpml_active_languages', null );
-			$terms            = array();
-			$current_language = apply_filters( 'wpml_current_language', null );
-			foreach ( $languages as $language ) {
+		$wpml_languages = $this->get_wpml_languages();
+		$terms          = array();
+
+		// If we don't have languages, we can return the terms.
+		if ( ! $wpml_languages ) {
+			$terms = get_terms( $args );
+
+			// With languages, we loop through them and return all of them.
+		} else {
+			foreach ( $wpml_languages['languages'] as $language ) {
 				do_action( 'wpml_switch_language', $language['code'] );
 				$terms = array_merge( $terms, get_terms( $args ) );
 			}
-			do_action( 'wpml_switch_language', $current_language );
-		} else {
-			$terms = get_terms( $args );
+			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
 		}
-
 		return $terms;
+	}
+
+	/** Check if wpml is active and return all languages and the active one.
+	 *
+	 * @return array|false|void[]
+	 */
+	public function get_wpml_languages() {
+		if ( ! class_exists( 'SitePress' ) ) {
+			return false;
+		}
+		$languages        = apply_filters( 'wpml_active_languages', null );
+		$current_language = apply_filters( 'wpml_current_language', null );
+		return array_merge(
+			array(
+				'current_language' => $current_language,
+				'languages'        => $languages,
+			)
+		);
 	}
 
 	/** Sync posts with api.
