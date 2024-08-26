@@ -323,7 +323,7 @@ function currentlyProcessing() {
         let nextScIn;
         let nextScDate = $("#next_sc_date").data("date");
         let amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
-        console.log(autoEnabled);
+
         $("#txt_next_sc_in").html("Currently");
         $("#next_sc_date").html("");
 
@@ -412,6 +412,44 @@ function currentlyProcessing() {
         })
     });
 })( jQuery );
+
+function postUrl(postId) {
+    let groupId = document.getElementsByName('group_id')[0]
+    let data;
+    if(postId.startsWith('select')) {
+        const selectAllCheckbox = jQuery('#'+postId);
+        const type = selectAllCheckbox.data('type');
+        const screensize = selectAllCheckbox.data('screensize');
+
+         data = {
+            action: 'post_url',
+            nonce: jQuery(selectAllCheckbox).data('nonce'),
+            group_id:  groupId.value,
+        }
+
+        let posts = jQuery("td.checkbox-"+screensize+"-"+type+" input[type='checkbox']");
+
+        jQuery(posts).each(function() {
+            data = { ...data, [screensize+"-"+jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
+        });
+
+    } else {
+        let desktop = document.getElementById("desktop-" + postId);
+        let mobile = document.getElementById("mobile-" + postId);
+
+         data = {
+            action: 'post_url',
+            nonce: jQuery(desktop).data('nonce'),
+            group_id: groupId.value,
+            ['desktop-' + postId]: desktop.checked ? 1 : 0,
+            ['mobile-' + postId]: mobile.checked ? 1 : 0,
+        }
+    }
+
+    jQuery.post(ajaxurl, data, function (response) {
+      // nothing to return.
+    });
+}
 
 /**
  * Marks rows as green or red, depending on if a checkbox is checked

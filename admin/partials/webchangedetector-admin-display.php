@@ -186,6 +186,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		$monitoring_group_settings = null; // @TODO Can be deleted?
 
+		// If we hit the max input vars, show error message.
+		$php_max_input_vars = ini_get( 'max_input_vars' );
+		if ( count( $postdata ) >= $php_max_input_vars ) {
+			?>
+			<div class="notice notice-error"><strong>ERROR:</strong> Increase max_input_vars in your PHP settings. Current value: <?php echo esc_html( $php_max_input_vars ); ?>
+			<?php
+		}
+
 		// Perform actions.
 		switch ( $wcd_action ) {
 			case 'enable_wizard':
@@ -783,11 +791,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			/*********
-			 * Logs
+			 * Queue
 			 */
 
 			case 'webchangedetector-logs':
-				$wizard_text = '<h2>Logs</h2>In this tab, all the action which happened.';
+				$wizard_text = '<h2>Queue</h2>In this tab, all the action which happened.';
 				$wcd->print_wizard(
 					$wizard_text,
 					'wizard_logs_tab',
@@ -810,7 +818,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'compare' => 'Change detection',
 				);
 
-				$wizard_text = '<h2>Log</h2>Every Screenshot and every comparison is listed here. 
+				$wizard_text = '<h2>Queue</h2>Every Screenshot and every comparison is listed here. 
                                 If something failed, you can see it here to.';
 				$wcd->print_wizard(
 					$wizard_text,
