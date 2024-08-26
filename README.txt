@@ -57,6 +57,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 * Improvement: Group change detections
 * Fix: Calculation of available checks
 * Fix: Compatibility with WPML and Polylang
+* Fix: Saving of settings with more than 500 pages
 
 = 2.3.3 =
 * Show updated pricing calculations

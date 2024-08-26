@@ -530,6 +530,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</div>
 					</div>
 				</div>
+
 				<div class="sidebar">
 					<div class="account-box">
 						<?php include 'templates/account.php'; ?>
@@ -553,7 +554,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, array( 'per_page' => 999999 ) );
+                $filters = array (
+                        'per_page' => 10000,
+                        'sorted' => 'selected',
+                        //'type' => 'types',
+                        //'category' => 'Pages'
+                );
+				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, $filters );
 
 				$step = false;
 				// Show message if no urls are selected.

@@ -12,6 +12,8 @@
  *
  * @package    WebChangeDetector
  */
+
+
 class WebChangeDetector_API_V2 {
 
 	/** Possible status for comparitons
@@ -220,6 +222,18 @@ class WebChangeDetector_API_V2 {
 			'action' => $url,
 		);
 
+		// Make sure to show only change detections from the current website.
+		if ( empty( $args['group_ids'] ) ) {
+			$groups = get_option( WCD_WEBSITE_GROUPS );
+
+			if ( $groups ) {
+				$args['group_ids'] = implode( ',', $groups );
+			} else {
+				// We don't have a group id. So we can't get comparisons.
+				return false;
+			}
+		}
+
 		return self::api_v2( $args, 'GET' );
 	}
 
@@ -288,6 +302,9 @@ class WebChangeDetector_API_V2 {
 		$args = array(
 			'action' => 'batches?' . build_query( $filter ),
 		);
+		if ( empty( $args['group_ids'] ) && empty( $args['group_ids'] ) ) {
+			$args['group_ids'] = implode( ',', get_option( WCD_WEBSITE_GROUPS ) );
+		}
 		return self::api_v2( $args, 'GET' );
 	}
 

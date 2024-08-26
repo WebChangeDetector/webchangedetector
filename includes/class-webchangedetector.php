@@ -114,7 +114,15 @@ class WebChangeDetector {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin.php';
+
+		/**
+		 * The class responsible API calls.
+		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-api-v2.php';
+
+		/**
+		 * The class responsible for auto-update-checks
+		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';
 
 		/**

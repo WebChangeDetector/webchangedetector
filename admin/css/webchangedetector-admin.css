@@ -164,6 +164,7 @@
 
 .webchangedetector .sidebar {
     border-left: 2px solid #aaa;
+    display: none;
 }
 
 .webchangedetector .account-box,
@@ -435,7 +436,7 @@
     position: relative;
     float: left;
     margin-right: 20px;
-    width: calc(100% - 340px);
+    width: 100%;
     min-width: 400px;
 }
 

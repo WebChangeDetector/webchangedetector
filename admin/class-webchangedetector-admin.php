@@ -995,12 +995,13 @@ class WebChangeDetector_Admin {
 			if ( ! $post_type->rest_base ) {
 				$post_type->rest_base = $post_type->name;
 			}
-
-			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-				if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
-					$url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
-				}
-			}
+            if(!empty($this->website_details['sync_url_types'])) {
+                foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+                    if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
+                        $url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
+                    }
+                }
+            }
 		}
 
 		// Get Taxonomies.
@@ -1011,12 +1012,13 @@ class WebChangeDetector_Admin {
 			if ( ! $taxonomy->rest_base ) {
 				$taxonomy->rest_base = $taxonomy->name;
 			}
-
-			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-				if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
-					$url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
-				}
-			}
+			if(!empty($this->website_details['sync_url_types'])) {
+                foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+                    if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
+                        $url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
+                    }
+                }
+            }
 		}
 
 		if ( is_iterable( $url_types ) ) {
@@ -1263,6 +1265,7 @@ class WebChangeDetector_Admin {
 			$tab            = 'auto-settings';
 			$detection_type = 'auto';
 		}
+
 		?>
 
 		<div class="wcd-select-urls-container">
@@ -1397,8 +1400,8 @@ class WebChangeDetector_Admin {
 				$this->print_wizard(
 					$wizard_text,
 					'wizard_monitoring_urls',
-					'wizard_save_monitoring',
 					false,
+					'?page=webchangedetector-change-detections',
 					false,
 					'bottom top-minus-100 left-plus-100'
 				);
@@ -1420,7 +1423,6 @@ class WebChangeDetector_Admin {
 			</p>
 			<input type="hidden" value="webchangedetector" name="page">
 			<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
-
 
 				<?php
 				$nonce              = wp_create_nonce( 'ajax-nonce' );
@@ -1694,12 +1696,6 @@ class WebChangeDetector_Admin {
 				}
 				$already_processed_ids[] = $post_id;
 
-				// sanitize before.
-				$wp_post_id = sanitize_text_field( $postdata[ 'post_id-' . $post_id ] ); // should be numeric.
-				if ( ! is_string( $wp_post_id ) ) {
-					continue; // just skip it.
-				}
-
 				$desktop = array_key_exists( 'desktop-' . $post_id, $postdata ) ? ( $postdata[ 'desktop-' . $post_id ] ) : null;
 				$mobile  = array_key_exists( 'mobile-' . $post_id, $postdata ) ? ( $postdata[ 'mobile-' . $post_id ] ) : null;
 
@@ -1966,7 +1962,7 @@ class WebChangeDetector_Admin {
 
 		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'] ) {
 			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+				if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && isset($auto_update_settings[ 'auto_update_checks_' . $weekday ]) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
 					++$amount_auto_update_days;
 				}
 			}
@@ -2211,8 +2207,10 @@ class WebChangeDetector_Admin {
 	public function get_group_and_urls( $group_id, $url_filter = array() ) {
 
 		$group_and_urls         = WebChangeDetector_API_V2::get_group_v2( $group_id )['data'];
-		$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter )['data'];
-
+        $urls = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter );
+		$group_and_urls['urls'] = $urls['data'];
+		$group_and_urls['meta'] = $urls['meta'];
+		//dd($group_and_urls);
 		if ( empty( $group_and_urls['urls'] ) ) {
 			$this->sync_posts();
 			$group_and_urls['urls'] = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter )['data'];
