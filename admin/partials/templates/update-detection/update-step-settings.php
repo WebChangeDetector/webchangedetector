@@ -13,5 +13,5 @@
 
 <!-- Settings -->
 <div class="wcd-update-step settings" <?php echo 'settings' !== $step ? 'style="display: none"' : ''; ?>>
-	<?php $wcd->get_url_settings( $group_and_urls ); ?>
+	<?php $wcd->get_url_settings(false); ?>
 </div>

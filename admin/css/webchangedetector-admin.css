@@ -48,7 +48,7 @@
 
 .webchangedetector tr th {
     text-align: left;
-    background: #DCE3ED;
+    background: #E3ECF7;
     color: #333;
 }
 
@@ -390,8 +390,23 @@
     font-size: 16px;
 }
 
-.webchangedetector .mm_accordion_title .mm_accordion_content .toggle:nth-of-type(odd) {
-    background: #eee;
+.webchangedetector .toggle:nth-of-type(odd) {
+    background: #f7f7f7;
+}
+
+.webchangedetector .setting-row {
+    padding: 20px 10px;
+    margin: 0;
+}
+.webchangedetector .setting-row small {
+    padding-top: 10px;
+    display: block;
+}
+
+.webchangedetector .wcd-frm-settings {
+    background: #fff;
+    padding: 10px;
+
 }
 
 .webchangedetector h3 {
@@ -440,10 +455,24 @@
     min-width: 400px;
 }
 
+.webchangedetector .group_urls_container {
+    background: #fff;
+}
+
+.webchangedetector .setting-container-column {
+    float: left;
+    width: calc(50% - 10px);
+    margin-right: 20px;
+}
+.webchangedetector .setting-container-column.last {
+    margin-right: 0;
+}
+
 .webchangedetector .sidebar {
     float:left;
     width: 300px;
 }
+
 
 /*.webchangedetector .help-box,
 .webchangedetector .account-box {
@@ -502,7 +531,6 @@
 .webchangedetector .wcd-select-urls-container,
 .webchangedetector .wcd-settings-container,
 .webchangedetector .wcd-highlight-bg{
-    padding: 10px 10px 10px;
     margin-bottom: 20px;
 }
 
@@ -528,6 +556,7 @@
 }
 
 .webchangedetector .wcd-frm-settings {
+    margin-bottom: 30px;
 }
 
 .webchangedetector .btn-copy-url-settings {
@@ -869,4 +898,70 @@ Wizard
     margin-left: -15px;
     border-width: 15px;
 
+}
+
+
+/* The switch - the box around the slider */
+.webchangedetector .switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    min-width: inherit;
+}
+
+/* Hide default HTML checkbox */
+.webchangedetector .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider */
+.webchangedetector .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+
+}
+
+.webchangedetector .slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.webchangedetector input:checked + .slider {
+    background-color: #2196F3;
+}
+
+.webchangedetector input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+.webchangedetector input:checked + .slider:before {
+    -webkit-transform: translateX(14px);
+    -ms-transform: translateX(14px);
+    transform: translateX(14px);
+}
+
+/* Rounded sliders */
+.webchangedetector .slider.round {
+    border-radius: 34px;
+}
+
+.webchangedetector .slider.round:before {
+    border-radius: 50%;
 }

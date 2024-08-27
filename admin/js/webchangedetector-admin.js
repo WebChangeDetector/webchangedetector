@@ -418,7 +418,7 @@ function postUrl(postId) {
     let data;
     if(postId.startsWith('select')) {
         const selectAllCheckbox = jQuery('#'+postId);
-        const type = selectAllCheckbox.data('type');
+        //const type = selectAllCheckbox.data('type');
         const screensize = selectAllCheckbox.data('screensize');
 
          data = {
@@ -427,7 +427,7 @@ function postUrl(postId) {
             group_id:  groupId.value,
         }
 
-        let posts = jQuery("td.checkbox-"+screensize+"-"+type+" input[type='checkbox']");
+        let posts = jQuery("td.checkbox-"+screensize+" input[type='checkbox']");
 
         jQuery(posts).each(function() {
             data = { ...data, [screensize+"-"+jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
@@ -475,8 +475,8 @@ function mmMarkRows(postId) {
  * Called from `onclick=` in HTML
  * Calls mmMarkRows
  */
-function mmToggle(source, postType, column, groupId) {
-    var checkboxes = document.querySelectorAll('.checkbox-' + column + '-' + postType + ' input[type=\"checkbox\"]');
+function mmToggle(source, column, groupId) {
+    var checkboxes = document.querySelectorAll('.checkbox-' + column + ' input[type=\"checkbox\"]');
     for (var i = 0; i < checkboxes.length; i++) {
         if (checkboxes[i] != source) {
             checkboxes[i].checked = source.checked;

@@ -16,13 +16,13 @@ require 'update-step-tiles.php';
 	<div class="wcd-highlight-bg done">
 		<h2>
 			<?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>
-			<strong><?php echo esc_html( $group_and_urls['amount_selected_urls'] ); ?></strong> URL(s) selected
+			<strong><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong> URL(s) selected
 		</h2>
 	</div>
 
 	<?php
 	$insufficient_screenshots = false;
-	if ( $group_and_urls['amount_selected_urls'] > $account_details['checks_left'] ) {
+	if ( $group_and_urls['selected_urls_count'] > $account_details['checks_left'] ) {
 		$insufficient_screenshots = true;
 	}
 

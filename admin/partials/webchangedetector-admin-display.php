@@ -554,17 +554,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-                $filters = array (
-                        'per_page' => 10000,
-                        'sorted' => 'selected',
-                        //'type' => 'types',
-                        //'category' => 'Pages'
-                );
+				$filters = array(
+					'per_page' => 100,
+					'sorted'   => 'selected',
+				);
 				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, $filters );
 
 				$step = false;
 				// Show message if no urls are selected.
-				if ( ! $group_and_urls['amount_selected_urls'] ) {
+				if ( ! $group_and_urls['selected_urls_count'] ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS
 					?>
 					<div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
@@ -674,7 +672,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
-				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid, array( 'per_page' => 999999 ) );
+				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid, array( 'per_page' => 1 ) );
 
 				// Calculation for monitoring.
 				$date_next_sc = false;
@@ -737,7 +735,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 					// Calculate screenshots until renewal.
 					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account_details['renewal_at'] ) ) - gmdate( 'U' ) );
-					$amount_group_sc_per_day = $group_and_urls['amount_selected_urls'] * $amount_sc_per_day * $days_until_renewal;
+					$amount_group_sc_per_day = $group_and_urls['selected_urls_count'] * $amount_sc_per_day * $days_until_renewal;
 
 					// Get first detection hour.
 					$first_hour_of_interval = $group_and_urls['hour_of_day'];
@@ -753,7 +751,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Subtract screenshots already taken today.
-					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group_and_urls['amount_selected_urls'];
+					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group_and_urls['selected_urls_count'];
 				}
 				?>
 
@@ -772,7 +770,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<span id="ajax_amount_total_sc"></span> Checks
 							</div>
 							<div id="sc_available_until_renew"
-								data-amount_selected_urls="<?php echo esc_html( $group_and_urls['amount_selected_urls'] ); ?>"
+								data-amount_selected_urls="<?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?>"
 								data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"
 							>
 								<?php echo esc_html( $account_details['checks_left'] ); ?> available until renewal
@@ -781,7 +779,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="clear"></div>
 					</div>
 
-					<?php $wcd->get_url_settings( $group_and_urls, true ); ?>
+					<?php $wcd->get_url_settings(  true ); ?>
 
 				</div>
 
@@ -893,9 +891,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<span class="displaying-num"><?php echo esc_html( $queues_meta['total'] ); ?> items</span>
 							<span class="pagination-links">
 							<?php
+							if ( ! isset( $_GET['paged'] ) ) {
+								$_GET['paged'] = 1;
+							}
 							foreach ( $queues_meta['links'] as $link ) {
-								$url_params      = $wcd->get_params_of_url( $link['url'] );
-								$pagination_link = '';
+								$url_params = $wcd->get_params_of_url( $link['url'] );
+
 								if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
 									?>
 									<a class="tablenav-pages-navspan button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>">
