@@ -909,6 +909,7 @@ class WebChangeDetector_Admin {
 		if ( ! $wpml_languages ) {
 			$posts = get_posts( $args );
 		} else {
+			$posts = array();
 			foreach ( $wpml_languages['languages'] as $language ) {
 				do_action( 'wpml_switch_language', $language['code'] );
 				$posts = array_merge( $posts, get_posts( $args ) );
@@ -981,6 +982,7 @@ class WebChangeDetector_Admin {
 
 			// With languages, we loop through them and return all of them.
 		} else {
+			$terms = array();
 			foreach ( $wpml_languages['languages'] as $language ) {
 				do_action( 'wpml_switch_language', $language['code'] );
 				$terms = array_merge( $terms, get_terms( $args ) );
@@ -1319,10 +1321,12 @@ class WebChangeDetector_Admin {
 		$urls_meta      = $group_and_urls['meta'];
 
 		// Set filters for pagination.
-		$filters['post-type'] = $filters['category'];
+		if ( isset( $filters['category'] ) ) {
+			$filters['post-type'] = $filters['category'];
+			unset( $filters['category'] );
+		}
 
 		// Unset filters for pagination.
-		unset( $filters['category'] );
 		unset( $filters['page'] );
 
 		$nonce = wp_create_nonce( 'ajax-nonce' );
@@ -1339,6 +1343,10 @@ class WebChangeDetector_Admin {
 		<div class="wcd-select-urls-container">
 			<form class="wcd-frm-settings box-plain" action="<?php echo esc_url( admin_url() . 'admin.php?page=webchangedetector-' . $tab ); ?>" method="post">
 				<input type="hidden" name="wcd_action" value="save_group_settings">
+				<input type="hidden" name="step" value="pre-update">
+				<input type="hidden" name="wcd-update-settings" value="true">
+				<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
+
 				<?php
 				wp_nonce_field( 'save_group_settings' );
 
@@ -1372,9 +1380,6 @@ class WebChangeDetector_Admin {
 					?>
 					<h2>Settings</h2>
 					<p style="text-align: center;">Make all settings for auto-update checks and for manual checks. </p>
-
-					<input type="hidden" name="step" value="pre-update">
-					<input type="hidden" name="wcd-update-settings" value="true">
 
 					<?php include 'partials/templates/update-settings.php'; ?>
 
@@ -1471,7 +1476,7 @@ class WebChangeDetector_Admin {
 							<select name="post-type">
 								<option value="0">All</option>
 								<?php
-								$selected_post_type = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
+								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : '';
 								if ( ! get_option( 'page_on_front' ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>>Frontpage</option>
