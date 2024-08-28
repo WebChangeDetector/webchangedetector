@@ -536,6 +536,7 @@
 
 .webchangedetector .wcd-highlight-bg.done {
     background: #d5e4d5;
+    padding: 10px;
 }
 
 .webchangedetector .screenshots-done-icon {

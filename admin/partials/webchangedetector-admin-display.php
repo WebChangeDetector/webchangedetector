@@ -258,16 +258,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						}
 						break;
 
-					case 'save_update_settings_and_continue':
-						$wcd->post_urls( $_POST, $wcd->website_details, false );
-						$wcd->update_manual_check_group_settings( $_POST );
-
-						// Update step in update detection.
-						if ( ! empty( $_POST['step'] ) ) {
-							update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( wp_unslash( $_POST['step'] ) ) );
-						}
-						break;
 				}
+				break;
+
+			case 'start_manual_checks':
+				// Update step in update detection.
+				if ( ! empty( $postdata['step'] ) ) {
+					update_option( WCD_OPTION_UPDATE_STEP_KEY, ( $postdata['step'] ) );
+				}
+				break;
 		}
 
 		// Get updated account and website data.
@@ -554,7 +553,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					break;
 				}
 
-				$filters = array(
+				$filters        = array(
 					'per_page' => 100,
 					'sorted'   => 'selected',
 				);
@@ -576,7 +575,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
 				}
 
-				// Default step.
+				// Still no step? Get default step.
 				if ( ! $step ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS;
 				}
@@ -589,7 +588,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$progress_make_update      = 'disabled';
 						$progress_post             = 'disabled';
 						$progress_change_detection = 'disabled';
-						include 'templates/update-detection/update-step-settings.php';
+						$wcd->get_url_settings( false );
 						break;
 
 					case WCD_OPTION_UPDATE_STEP_PRE:
@@ -779,7 +778,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="clear"></div>
 					</div>
 
-					<?php $wcd->get_url_settings(  true ); ?>
+					<?php $wcd->get_url_settings( true ); ?>
 
 				</div>
 

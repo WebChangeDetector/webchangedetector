@@ -12,8 +12,6 @@
  *
  * @package    WebChangeDetector
  */
-
-
 class WebChangeDetector_API_V2 {
 
 	/** Possible status for comparitons
