@@ -902,21 +902,22 @@ class WebChangeDetector_Admin {
 			'post_status' => array( 'publish', 'inherit' ),
 			'numberposts' => -1,
 			'order'       => 'ASC',
-			'orderby'     => 'title',
-            'suppress_filters' => true
+			'orderby'     => 'title'
+
 		);
 		$wpml_languages = $this->get_wpml_languages();
 		$posts          = array();
 		if ( ! $wpml_languages ) {
 			$posts = get_posts( $args );
+            //dd($posts);
 		} else {
 			foreach ( $wpml_languages['languages'] as $language ) {
 				do_action( 'wpml_switch_language', $language['code'] );
 				//dd(get_posts( $args ));
-				//$posts = array_merge( $posts, get_posts( $args ) );
-				$posts = get_posts( $args );
+				$posts = array_merge( $posts, get_posts( $args ) );
 			}
 			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
+
 		}
 		return $posts;
 	}
@@ -947,8 +948,9 @@ class WebChangeDetector_Admin {
 		} else {
 			foreach ( $wpml_languages['languages'] as $language ) {
 				do_action( 'wpml_switch_language', $language['code'] );
-				$terms = array_merge( $terms, get_terms( $args ) );
+				//$terms = array_merge( $terms, get_terms( $args ) );
 			}
+			$terms = get_terms( $args );
 			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
 		}
 		return $terms;
@@ -990,94 +992,84 @@ class WebChangeDetector_Admin {
 		$array     = array(); // init.
 		$url_types = array();
 
-		// Get Post Types.
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
-		foreach ( $post_types as $post_type ) {
-
-			// if rest_base is not set we use post_name (wp default).
-			if ( ! $post_type->rest_base ) {
-				$post_type->rest_base = $post_type->name;
-			}
-			if ( ! empty( $this->website_details['sync_url_types'] ) ) {
-				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
-						$url_types['types'][ $post_type->rest_base ] = $this->get_posts( $post_type->name );
-					}
-				}
-			}
-        // Get available post_types
-        $wp_post_type_names = [];
-		foreach ( $post_types as $name => $post_type ) {
-			$wp_post_type_names[] = $name;
+		// Init sync urls if we don't have them yet.
+		if(empty( $this->website_details['sync_url_types'])) {
+			$this->set_website_details();
 		}
 
-        // Get Posts from all
-        foreach($this->website_details['sync_url_types'] as $sync_url_type){
-            if(in_array($sync_url_type['post_type_slug'], $wp_post_type_names)) {
-                $url_types['types'][ $sync_url_type['post_type_slug'] ] = $this->get_posts( $sync_url_type['post_type_slug'] );
+		// Get all WP post_ypes.
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+
+		// Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
+        // But it's not always available. So we take 'name' as fallback name.
+		foreach ( $post_types as $post_type ) {
+            if($post_type->rest_base) {
+	            $wp_post_type_name = $post_type->rest_base;
+            } else {
+	            $wp_post_type_name = $post_type->name;
             }
-        }
 
+			// Get Posts
+			foreach($this->website_details['sync_url_types'] as $sync_url_type){
+				if($sync_url_type['post_type_slug'] === $wp_post_type_name) {
 
+					// The 'get_posts' function needs 'name' instead of 'rest_base'.
+					$url_types['types'][$sync_url_type['post_type_slug']] = $this->get_posts( $post_type->name );
+				}
+			}
+		}
 
-		// Get Taxonomies.
+		// Get all WP taxonomies.
 		$taxonomies = get_taxonomies( array('public' => true), 'objects' );
 
 		foreach ( $taxonomies as $taxonomy ) {
-			// if rest_base is not set we use post_name (wp default).
-			if ( ! $taxonomy->rest_base ) {
-				$taxonomy->rest_base = $taxonomy->name;
+			if($taxonomy->rest_base) {
+				$wp_taxonomy_name = $taxonomy->rest_base;
+			} else {
+				$wp_taxonomy_name = $taxonomy->name;
 			}
-			if ( ! empty( $this->website_details['sync_url_types'] ) ) {
-				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
-						$url_types['taxonomies'][ $taxonomy->rest_base ] = $this->get_terms( $taxonomy->name );
-					}
+
+			// Get the terms
+			foreach($this->website_details['sync_url_types'] as $sync_url_type){
+				if($sync_url_type['post_type_slug'] === $wp_taxonomy_name) {
+					$url_types['taxonomies'][ $taxonomy->name ] = $this->get_terms( $taxonomy->name );
 				}
-
-		$wp_taxonomy_names = [];
-
-		foreach ( $taxonomies as $name => $taxonomy ) {
-			$wp_taxonomy_names[] = $name;
-		}
-
-		// Get Posts from all
-		foreach($this->website_details['sync_url_types'] as $sync_url_type){
-			if(in_array($sync_url_type['post_type_slug'], $wp_taxonomy_names)) {
-                echo "check";
-				$url_types['taxonomies'][ $sync_url_type['post_type_slug'] ] = $this->get_posts( $sync_url_type['post_type_slug'] );
 			}
 		}
 
 		if ( is_iterable( $url_types ) ) {
-			foreach ( $url_types as $url_type => $url_categories ) {
-				foreach ( $url_categories as $url_category_name => $url_category_posts ) {
+			foreach ( $url_types as $url_type => $url_categories ) { // types or taxonomies.
+				foreach ( $url_categories as $url_category_name => $url_category_posts ) { //  (posts, products, categories, etc).
 					if ( ! empty( $url_category_posts ) && is_iterable( $url_category_posts ) ) {
-						foreach ( $url_category_posts as $post ) {
+						foreach ( $url_category_posts as $post ) { // actual posts or taxonomies.
 							switch ( $url_type ) {
 								case 'types':
 									$url           = get_permalink( $post );
-									$url           = substr( $url, strpos( $url, '//' ) + 2 );
+									$url           = $this->remove_url_protocol($url);
 									$post_type_obj = get_post_type_object( $post->post_type );
+
 									$array[]       = array(
 										'url'             => $url,
 										'html_title'      => $post->post_title,
 										'cms_resource_id' => $post->ID,
 										'url_type'        => $url_type,
-										'url_category'    => $post_type_obj->labels->name,
+										'url_category'    => $post_type_obj->label,
 									);
 									break;
 
 								case 'taxonomies':
 									$url     = get_term_link( $post );
-									$url     = substr( $url, strpos( $url, '//' ) + 2 );
+									$url           = $this->remove_url_protocol($url);
+
+									$post_type_obj = get_taxonomy( $post->taxonomy );
+
 									$array[] = array(
 										'url'             => $url,
 										'html_title'      => $post->name,
 										'cms_resource_id' => $post->term_id,
 										'url_type'        => $url_type,
-										'url_category'    => $url_category_name,
+										'url_category'    => $post_type_obj->label,
 									);
 
 									break;
@@ -1255,7 +1247,7 @@ class WebChangeDetector_Admin {
 					),
 				)
 			);
-			$this->website_details                   = $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+			$this->website_details = $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
 	}
 
@@ -1474,9 +1466,9 @@ class WebChangeDetector_Admin {
 								}
 
 								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
-									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
+									$selected = $url_type['post_type_name'] === $selected_post_type ? 'selected' : '';
 									?>
-									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
+									<option value="<?php echo esc_html( $url_type['post_type_name'] ); ?>" <?php echo esc_html( $selected ); ?>>
 										<?php echo esc_html( $url_type['post_type_name'] ); ?>
 									</option>
 								<?php } ?>
@@ -2213,9 +2205,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_group_and_urls( $group_id, $url_filter = array() ) {
 
+
 		$group_and_urls = WebChangeDetector_API_V2::get_group_v2( $group_id )['data'];
 		$urls           = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter );
-
 
 		if ( empty( $urls['data'] ) ) {
 			$this->sync_posts( true );
