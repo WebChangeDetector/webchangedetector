@@ -1122,9 +1122,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				?>
 
-					?>
-
-
 				</div>
 				<div class="sidebar">
 					<div class="account-box">

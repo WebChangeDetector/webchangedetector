@@ -1471,7 +1471,7 @@ class WebChangeDetector_Admin {
 						<form method="get" style="float: left;">
 
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
-							Post Types
+							Post types & taxonomies
 
 							<select name="post-type">
 								<option value="0">All</option>
@@ -1496,7 +1496,7 @@ class WebChangeDetector_Admin {
 						<form method="get" style="float: right;">
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
 							<button type="submit" style="float: right" class="button button-secondary">Search</button>
-							<input style="margin: 0" class="filter-url-table" name="search" type="text" placeholder="Search" value="<?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) ) ); ?>">
+							<input style="margin: 0" name="search" type="text" placeholder="Search" value="<?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) ) ); ?>">
 						</form>
 						<div class="clear" style="margin-bottom: 20px;"></div>
 						<table class="no-margin filter-table">
@@ -1624,7 +1624,7 @@ class WebChangeDetector_Admin {
 						</div>
 					</div>
 					<script>
-					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> ) {
+					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> || <?php echo isset( $_GET['search'] ) ? 1 : 0; ?> ) {
 						const scrollToEl = jQuery('.group_urls_container');
 						jQuery('html').animate(
 							{
