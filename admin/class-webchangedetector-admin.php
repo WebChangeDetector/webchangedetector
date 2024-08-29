@@ -1368,14 +1368,14 @@ class WebChangeDetector_Admin {
 						'top left-plus-200'
 					);
 
-					$wizard_text = '<h2>Settings</h2>If you want to check your Website during WP auto updates, you can enable this here. <br>';
+					$wizard_text = '<h2>Settings</h2><p>If you want to check your Website during WP auto updates, you can enable this here. </p>';
 					$this->print_wizard(
 						$wizard_text,
 						'wizard_manual_checks_settings',
 						'wizard_manual_checks_urls',
 						false,
 						false,
-						'bottom  top-minus-150 left-plus-400'
+						'bottom  top-minus-150 left-plus-300'
 					);
 					?>
 					<h2>Settings</h2>
@@ -1396,10 +1396,9 @@ class WebChangeDetector_Admin {
 
 					<?php
 				} else {
-					$wizard_text = '<h2>Monitoring Settings</h2>Do all settings for the monitoring. 
-                                Set the interval of the monitoring checks and the hour of when the checks should start.';
+					$wizard_text = '<h2>Monitoring Settings</h2><p>Do all settings for the monitoring.</p><p> 
+                                Set the interval of the monitoring checks and the hour of when the checks should start.</p>';
 
-					$wizard_text = '<h2>Settings</h2>If you want to check your Website during WP auto updates, you can enable this here. <br>';
 					$this->print_wizard(
 						$wizard_text,
 						'wizard_monitoring_settings',
@@ -1432,9 +1431,10 @@ class WebChangeDetector_Admin {
 				}
 
 				// Select URLs section.
-				$wizard_text = '<h2>Select URLs</h2>In these accordions you find all URLs of your website. 
-                                Here you can select the URLs you want to check.<br>
-                                These settings are taken for manual checks and for auto update checks.';
+				$wizard_text = '<h2>Select URLs</h2><p>In these accordions you find all URLs of your website. 
+                                Here you can select the URLs you want to check.</p><p>
+                                These settings are taken for manual checks and for auto update checks.</p><p>
+                                Your don\'t have to hit the \'save\' button here. Enabling and disabling URLs are saved automatically.</p>';
 				$this->print_wizard(
 					$wizard_text,
 					'wizard_manual_checks_urls',
@@ -1650,15 +1650,15 @@ class WebChangeDetector_Admin {
 			);
 
 		} else {
-			$wizard_text = '<h2>Start Manual Checks</h2>When you want to do updates or other changes and check your selected websites, start the wizard here.<br>
-                            The wizard guides you through the process.';
+			$wizard_text = '<h2>Start Manual Checks</h2><p>When you want to do updates or other changes and check your selected websites, start the wizard here.</p><p>
+                            The wizard guides you through the process.</p>';
 			$this->print_wizard(
 				$wizard_text,
 				'wizard_manual_checks_start',
 				false,
 				'?page=webchangedetector-auto-settings',
 				false,
-				'bottom bottom-plus-100 right-minus-100'
+				'bottom bottom-plus-50 right-minus-30'
 			);
 
 			if ( $this->website_details['allow_manual_detection'] ) {
@@ -1784,6 +1784,11 @@ class WebChangeDetector_Admin {
 						'h2' => true,
 						'br' => true,
 						'p'  => true,
+						'a'  => array(
+							'href'   => true,
+							'target' => true,
+						),
+
 					)
 				);
 				?>
@@ -1985,12 +1990,12 @@ class WebChangeDetector_Admin {
 			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
 		}
 
-		$wizard_text = '<h2>Welcome to WebChange Detector</h2>This Wizard helps you to get started with your website Checks.<br>
-                        You can exit the wizard any time and restart it from the dashboard.';
+		$wizard_text = '<h2>Welcome to WebChange Detector</h2><p>This Wizard helps you to get started with your website Checks.</p><p>
+                        You can exit the wizard any time and restart it from the dashboard.</p>';
 		$this->print_wizard(
 			$wizard_text,
 			'wizard_dashboard_welcome',
-			'wizard_dashboard_change_detections',
+			'wizard_dashboard_account',
 			false,
 			true,
 			' top-plus-200 left-plus-400'
@@ -1999,7 +2004,9 @@ class WebChangeDetector_Admin {
 		<div class="dashboard">
 			<div class="no-border box-plain">
 				<div class="box-half no-border">
-					<h1>Welcome to WebChange Detector</h1>
+					<p>
+						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
+					</p>
 					<hr>
 					<p>
 						Perform visual checks (visual regression tests) on your WordPress website to find
@@ -2014,7 +2021,17 @@ class WebChangeDetector_Admin {
 						<input type="submit" class="button button-primary" value="Start Wizard">
 					</form>
 				</div>
-
+				<?php
+				$wizard_text = '<h2>Your Account</h2>See how many checks you have left and how many checks are used with your current settings until renewal.';
+				$this->print_wizard(
+					$wizard_text,
+					'wizard_dashboard_account',
+					'wizard_dashboard_change_detections',
+					false,
+					false,
+					'right top-plus-200 left-plus-100'
+				);
+				?>
 				<div class="box-half right ">
 					<p style="margin-top: 20px;"><strong>Your Plan:</strong>  <?php echo esc_html( $client_account['plan_name'] ); ?> (renews on: <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?>)</p>
 					<p style="margin-top:10px;"><strong>Used checks:</strong>

@@ -799,7 +799,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-logs':
-				$wizard_text = '<h2>Queue</h2>In this tab, all the action which happened.';
+				$wizard_text = '<h2>Queue</h2>In the queue you can see all the action which happened.';
 				$wcd->print_wizard(
 					$wizard_text,
 					'wizard_logs_tab',
@@ -809,7 +809,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'top left-plus-650'
 				);
 
-				$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
+				$paged = 1;
+				if ( isset( $_GET['paged'] ) ) {
+					$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
+				}
 
 				$queues      = WebChangeDetector_API_V2::get_queue_v2( false, false, array( 'page' => $paged ) );
 				$queues_meta = $queues['meta'];
@@ -823,12 +826,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				);
 
 				$wizard_text = '<h2>Queue</h2>Every Screenshot and every comparison is listed here. 
-                                If something failed, you can see it here to.';
+                                If something failed, you can see it here too.';
 				$wcd->print_wizard(
 					$wizard_text,
 					'wizard_logs_log',
 					false,
-					false,
+					'?page=webchangedetector-settings',
 					false,
 					'bottom top-minus-50 left-plus-500'
 				);
@@ -930,10 +933,44 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			case 'webchangedetector-settings':
 				?>
 				<div class="action-container">
+
 					<div class="box-plain no-border">
-					<h2>Add Post Types</h2>
-						<p>All added post types will be available in your url list.</p>
 					<?php
+					$wizard_text = '<h2>Settings</h2>In this tab, you can find some more settings.';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_tab',
+							'wizard_settings_add_post_type',
+							false,
+							true,
+							'top left-plus-700'
+						);
+
+						$wizard_text = '<h2>Upgrade for more checks</h2><p>If you run out of checks, you can upgrade your account here.</p>
+                                        Plans with 1000 checks / month start already at $7 per month.</p>';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_upgrade',
+							'wizard_settings_finished',
+							false,
+							false,
+							'top left-plus-800'
+						);
+					?>
+					<h2>Show URLs from post types</h2>
+						<p>Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
+					<?php
+					$wizard_text = '<h2>Questions?</h2><p>We hope this wizard was helpful to understand how WebChange Detector works.</p><p>
+                                    If you have any questions, please write us an email to <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a> or create a ticket 
+                                    at our plugin site at <a href="https://wordpress.org/plugins/webchangedetector" target="_blank">wordpress.org</a>.</p>';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_finished',
+							false,
+							false,
+							false,
+							' left-plus-400'
+						);
 
 					// Add post types.
 					$post_types = get_post_types( array( 'public' => true ), 'objects' );
@@ -977,9 +1014,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
 						<?php } ?>
 							</select>
-							<input type="submit" class="button" value="Add">
+							<input type="submit" class="button" value="Show">
 						</form>
 						<?php
+						$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
+                                        They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_add_post_type',
+							'wizard_settings_account_details',
+							false,
+							false,
+							'left top-minus-100 left-plus-400'
+						);
+
 					} else {
 						?>
 						<p>No more post types found</p>
@@ -988,8 +1036,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 
 				<div class="box-plain no-border">
-					<h2>Add Taxonomies</h2>
-					<p>All added taxonomies will be available in your url list.</p>
+					<h2>Show URLs from taxonomies</h2>
+					<p>Missing taxonomies like categories or tags? Select them here and they appear in the URL list to select for the checks.</p>
 					<?php
 
 					// Add Taxonomies.
@@ -1058,11 +1106,30 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<?php
 					}
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
+					$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector accout here.
+                                                Please don\'t share your API token with anyone. </p><p>
+                                                Resetting your API Token will allow you to switch accounts. Keep in mind to
+                                                save your API Token before the reset! </p><p>
+                                                When you login with your API token after the reset, all your settings will be still there.</p>';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_account_details',
+							'wizard_settings_upgrade',
+							false,
+							false,
+							'left top-minus-400 left-plus-400'
+						);
+
+				?>
+
 					?>
+
+
 				</div>
 				<div class="sidebar">
 					<div class="account-box">
 						<?php include 'templates/account.php'; ?>
+
 					</div>
 				</div>
 				<div class="clear"></div>

@@ -790,15 +790,25 @@ Wizard
     padding: 20px;
     background: #01A0D2;
     color: #fff;
-    box-shadow: 0 0 20px #000;
+    box-shadow: 0 0 20px #666;
     max-width: 300px;
     font-size: 14px;
     scroll-margin-top: 30px;
+    border: 3px solid #fff;
 }
 
 .webchangedetector .wcd-wizard h2 {
     color: #fff;
     margin-top: 0;
+}
+.webchangedetector .wcd-wizard p a {
+    color: #fff;
+    text-decoration: underline;
+}
+.webchangedetector .wcd-wizard p a:hover {
+    color: #fff;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .webchangedetector .bottom-plus-50 {
@@ -813,8 +823,17 @@ Wizard
 .webchangedetector .bottom-plus-300 {
     bottom: 300px;
 }
+.webchangedetector .right-minus-30 {
+    right: -30px;
+}
 .webchangedetector .right-minus-50 {
     right: -50px;
+}
+.webchangedetector .right-plus-10 {
+    right: 10px;
+}
+.webchangedetector .right-plus-50 {
+    right: 50px;
 }
 .webchangedetector .right-minus-100 {
     right: -100px;
@@ -833,6 +852,9 @@ Wizard
 }
 .webchangedetector .top-minus-200 {
     margin-top: -200px;
+}
+.webchangedetector .top-minus-400 {
+    margin-top: -400px;
 }
 .webchangedetector .top-minus-600 {
     margin-top: -600px;
@@ -857,6 +879,12 @@ Wizard
 }
 .webchangedetector .left-plus-650 {
     margin-left: 650px;
+}
+.webchangedetector .left-plus-700 {
+    margin-left: 700px;
+}
+.webchangedetector .left-plus-800 {
+    margin-left: 800px;
 }
 .wcd-wizard.bottom::after {
     content: " ";
@@ -883,7 +911,7 @@ Wizard
     position: absolute;
     border-style: solid;
     top: 50%; /* At the bottom of the tooltip */
-    margin-left: -40px;
+    margin-left: -50px;
     margin-top: -15px;
     border-width: 15px;
     border-color:  transparent #01A0D2 transparent transparent ;
