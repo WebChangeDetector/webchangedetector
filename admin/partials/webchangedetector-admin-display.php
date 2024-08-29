@@ -978,17 +978,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$available_post_types = array();
 					foreach ( $post_types as $post_type ) {
 
-						// if rest_base is not set we use post_name (wp default).
-						if ( ! $post_type->rest_base ) {
-							$post_type->rest_base = $post_type->name;
-						}
+						$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
+
 						$show_type = false;
 						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $post_type->rest_base && $sync_url_type['post_type_slug'] === $post_type->rest_base ) {
+							if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 								$show_type = true;
 							}
 						}
-						if ( $post_type->rest_base && ! $show_type ) {
+						if ( $wp_post_type_slug && ! $show_type ) {
 							$available_post_types[] = $post_type;
 						}
 					}
@@ -1000,13 +998,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<select name="post_type">
 						<?php
 						foreach ( $available_post_types as $available_post_type ) {
-							$add_post_type = wp_json_encode(
+							$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
+							$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
+							$add_post_type          = wp_json_encode(
 								array(
 									array(
 										'url_type_slug'  => 'types',
 										'url_type_name'  => 'Post Types',
-										'post_type_slug' => $available_post_type->rest_base,
-										'post_type_name' => $available_post_type->label,
+										'post_type_slug' => $current_post_type_slug,
+										'post_type_name' => $current_post_type_name,
 									),
 								)
 							);
@@ -1044,17 +1044,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 					foreach ( $taxonomies as $taxonomy ) {
 
-						// if rest_base is not set we use post_name (wp default).
-						if ( ! $taxonomy->rest_base ) {
-							$taxonomy->rest_base = $taxonomy->name;
-						}
+						$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
+
 						$show_taxonomy = false;
 						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $taxonomy->rest_base && $sync_url_type['post_type_slug'] === $taxonomy->rest_base ) {
+							if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
 								$show_taxonomy = true;
 							}
 						}
-						if ( $taxonomy->rest_base && ! $show_taxonomy ) {
+						if ( $wp_taxonomy_slug && ! $show_taxonomy ) {
 							$available_taxonomies[] = $taxonomy;
 						}
 					}
@@ -1066,13 +1064,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<select name="post_type">
 								<?php
 								foreach ( $available_taxonomies as $available_taxonomy ) {
-									$add_post_type = wp_json_encode(
+									$current_taxonomy_slug = $wcd->get_post_type_slug( $available_taxonomy );
+									$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
+									$add_post_type         = wp_json_encode(
 										array(
 											array(
 												'url_type_slug' => 'taxonomies',
 												'url_type_name' => 'Taxonomies',
-												'post_type_slug' => $available_taxonomy->rest_base,
-												'post_type_name' => $available_taxonomy->label,
+												'post_type_slug' => $current_taxonomy_slug,
+												'post_type_name' => $current_taxonomy_name,
 											),
 										)
 									);

@@ -1035,17 +1035,12 @@ class WebChangeDetector_Admin {
 		// Get all WP post_types.
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
-		// Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
-		// But it's not always available. So we take 'name' as fallback name.
 		foreach ( $post_types as $post_type ) {
-			$wp_post_type_name = $post_type->name;
-			if ( $post_type->rest_base ) {
-				$wp_post_type_name = $post_type->rest_base;
-			}
+			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
 
 			// Get Posts.
 			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-				if ( $sync_url_type['post_type_slug'] === $wp_post_type_name ) {
+				if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 
 					// The 'get_posts' function needs 'name' instead of 'rest_base'.
 					$posts = $this->get_posts( $post_type->name );
@@ -1074,15 +1069,12 @@ class WebChangeDetector_Admin {
 		foreach ( $taxonomies as $taxonomy ) {
 
 			// Depending on if we have 'rest_base' name we use this one or the 'name'.
-			$wp_taxonomy_name = $taxonomy->name;
-			if ( $taxonomy->rest_base ) {
-				$wp_taxonomy_name = $taxonomy->rest_base;
-			}
+			$wp_taxonomy_slug = $this->get_taxonomy_slug( $taxonomy );
 
 			// Get the terms.
 			$taxonomy_posts = array();
 			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-				if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_name ) {
+				if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
 					$taxonomy_posts = $this->get_terms( $taxonomy->name );
 				}
 			}
@@ -1252,13 +1244,13 @@ class WebChangeDetector_Admin {
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
 						'post_type_slug' => 'posts',
-						'post_type_name' => 'Posts',
+						'post_type_name' => $this->get_post_type_name( 'posts' ),
 					),
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
 						'post_type_slug' => 'pages',
-						'post_type_name' => 'Pages',
+						'post_type_name' => $this->get_post_type_name( 'pages' ),
 					),
 				)
 			);
@@ -1308,7 +1300,10 @@ class WebChangeDetector_Admin {
 			'page'     => $page,
 		);
 		if ( ! empty( $_GET['post-type'] ) ) {
-			$filters['category'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
+			$filters['category'] = $this->get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
+		}
+		if ( ! empty( $_GET['taxonomy'] ) ) {
+			$filters['category'] = $this->get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
 		}
 
 		if ( ! empty( $_GET['search'] ) ) {
@@ -1321,7 +1316,7 @@ class WebChangeDetector_Admin {
 		$urls_meta      = $group_and_urls['meta'];
 
 		// Set filters for pagination.
-		if ( isset( $filters['category'] ) ) {
+		if ( isset( $filters['category'] ) && $filters['category'] ) {
 			$filters['post-type'] = $filters['category'];
 			unset( $filters['category'] );
 		}
@@ -1468,12 +1463,12 @@ class WebChangeDetector_Admin {
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
 				<?php if ( is_iterable( $urls ) ) { ?>
 					<div class="group_urls_container">
+
 						<form method="get" style="float: left;">
-
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
-							Post types & taxonomies
 
-							<select name="post-type">
+							Post types
+							<select id="filter-post-type" name="post-type">
 								<option value="0">All</option>
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : '';
@@ -1484,15 +1479,51 @@ class WebChangeDetector_Admin {
 								}
 
 								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
-									$selected = $url_type['post_type_name'] === $selected_post_type ? 'selected' : '';
+									if ( 'types' !== $url_type['url_type_slug'] ) {
+										continue;
+									}
+									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
 									?>
-									<option value="<?php echo esc_html( $url_type['post_type_name'] ); ?>" <?php echo esc_html( $selected ); ?>>
-										<?php echo esc_html( $url_type['post_type_name'] ); ?>
+									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
+										<?php echo esc_html( $this->get_post_type_name( $url_type['post_type_slug'] ) ); ?>
+									</option>
+								<?php } ?>
+							</select>
+
+							Taxonomies
+							<select id="filter-taxonomy" name="taxonomy">
+								<option value="0">All</option>
+								<?php
+								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
+
+								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+									if ( 'types' === $url_type['url_type_slug'] ) {
+										continue;
+									}
+									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
+									?>
+									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
+										<?php echo esc_html( $this->get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
 									</option>
 								<?php } ?>
 							</select>
 							<button class="button button-secondary">Filter</button>
 						</form>
+
+						<script>
+							jQuery("#filter-post-type").change(function() {
+								if(jQuery(this).val() !== '0') {
+									jQuery('#filter-taxonomy').val(0);
+								}
+							});
+
+							jQuery("#filter-taxonomy").change(function() {
+								if(jQuery(this).val() !== '0') {
+									jQuery('#filter-post-type').val(0);
+								}
+							});
+						</script>
+
 						<form method="get" style="float: right;">
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
 							<button type="submit" style="float: right" class="button button-secondary">Search</button>
@@ -1624,7 +1655,10 @@ class WebChangeDetector_Admin {
 						</div>
 					</div>
 					<script>
-					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> || <?php echo isset( $_GET['search'] ) ? 1 : 0; ?> ) {
+					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> ||
+						<?php echo isset( $_GET['search'] ) ? 1 : 0; ?> ||
+					<?php echo isset( $_GET['post-type'] ) ? 1 : 0; ?> ||
+					<?php echo isset( $_GET['taxonomy'] ) ? 1 : 0; ?> ||) {
 						const scrollToEl = jQuery('.group_urls_container');
 						jQuery('html').animate(
 							{
@@ -1679,6 +1713,84 @@ class WebChangeDetector_Admin {
 				<?php
 			}
 		}
+	}
+
+	/** Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
+	But it's not always available. So we take 'name' as fallback name.
+	 *
+	 * @param object $post_type The post_type object.
+	 *
+	 * @return string|bool
+	 */
+	public function get_post_type_slug( $post_type ) {
+
+		$wp_post_type_slug = $post_type->rest_base;
+		if ( ! $wp_post_type_slug ) {
+			$wp_post_type_slug = $post_type->name;
+		}
+		return $wp_post_type_slug ?? false;
+	}
+
+	/**
+	 * Get name of the post_type
+	 *
+	 * @param string $post_type_slug The post_type slug.
+	 * @return string|bool
+	 */
+	public function get_post_type_name( $post_type_slug ) {
+		if ( 'frontpage' === $post_type_slug ) {
+			return 'Frontpage';
+		}
+
+		static $post_types;
+		if ( ! $post_types ) {
+			$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		}
+
+		foreach ( $post_types as $post_type ) {
+			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
+
+			if ( $wp_post_type_slug === $post_type_slug ) {
+				return $post_type->labels->name;
+			}
+		}
+		return false;
+	}
+
+	/** Get the right taxonomy slug which we use in WCD.
+	 *
+	 * @param object $taxonomy The taxonomy object.
+	 *
+	 * @return string|bool
+	 */
+	public function get_taxonomy_slug( $taxonomy ) {
+		$wp_taxonomy_slug = $taxonomy->rest_base;
+		if ( ! $wp_taxonomy_slug ) {
+			$wp_taxonomy_slug = $taxonomy->name;
+		}
+		return $wp_taxonomy_slug ?? false;
+	}
+
+	/**
+	 * Get name of the taxonomy
+	 *
+	 * @param string $taxonomy_slug The taxonomy slug.
+	 * @return string|bool
+	 */
+	public function get_taxonomy_name( $taxonomy_slug ) {
+		static $taxonomies;
+		if ( ! $taxonomies ) {
+			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
+		}
+
+		foreach ( $taxonomies as $post_type ) {
+			$wp_taxonomy_slug = $this->get_taxonomy_slug( $post_type );
+
+			if ( $wp_taxonomy_slug === $taxonomy_slug ) {
+				return $post_type->labels->name;
+			}
+		}
+		return false;
 	}
 
 	/** Save url settings
