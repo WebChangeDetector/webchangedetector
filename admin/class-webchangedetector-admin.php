@@ -1639,7 +1639,7 @@ class WebChangeDetector_Admin {
 							<?php
 							foreach ( $urls_meta['links'] as $link ) {
 								$pagination_page = $this->get_params_of_url( $link['url'] )['page'] ?? '';
-								if ( ! $link['active'] ) {
+								if ( ! $link['active'] &&  $pagination_page) {
 									?>
 									<a class="tablenav-pages-navspan button"
 										href="?page=webchangedetector-<?php echo esc_html( $tab ); ?>&paged=<?php echo esc_html( $pagination_page ); ?>&<?php echo esc_html( build_query( $filters ) ); ?>">
