@@ -5,6 +5,8 @@
  * @package    webchangedetector
  */
 
+$enabled = $group_and_urls['enabled'];
+
 ?>
 <h2>Settings</h2>
 <p style="text-align: center;">Monitor your website and receive alert emails when something changes. </p>

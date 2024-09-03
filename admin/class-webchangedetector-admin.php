@@ -1379,7 +1379,7 @@ class WebChangeDetector_Admin {
 		<?php
 	}
 
-	/** Group url view.
+	/** Group settings and url selection view.
 	 *
 	 * @param bool $monitoring_group Is it a monitoring group.
 	 *
@@ -1442,10 +1442,8 @@ class WebChangeDetector_Admin {
 
 		// Select URLS.
 		$tab            = 'update-settings'; // init.
-		$detection_type = 'update';
 		if ( $monitoring_group ) {
 			$tab            = 'auto-settings';
-			$detection_type = 'auto';
 		}
 		?>
 
@@ -1460,12 +1458,6 @@ class WebChangeDetector_Admin {
 
 				// Manual check settings.
 				if ( ! $monitoring_group ) {
-					$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
-					$auto_update_checks_enabled = true;
-					if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
-						$auto_update_checks_enabled = false;
-					}
-
 					$wizard_text = '<h2>Manual Checks & Auto Update Checks</h2>In this tab, you can make all settings for auto update checks and start manual checks.';
 					$this->print_wizard(
 						$wizard_text,
@@ -1502,7 +1494,6 @@ class WebChangeDetector_Admin {
 					);
 
 					// Monitoring settings.
-					$enabled = $group_and_urls['enabled'];
 					include 'partials/templates/auto-settings.php';
 				}
 

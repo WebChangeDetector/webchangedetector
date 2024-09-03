@@ -33,6 +33,13 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 } elseif ( 'on' === $auto_update_settings['auto_update_checks_enabled'] ) {
 	$auto_update_settings['auto_update_checks_enabled'] = 'checked';
 }
+
+$auto_update_settings       = get_option( 'wcd_auto_update_settings' );
+$auto_update_checks_enabled = true;
+if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
+	$auto_update_checks_enabled = false;
+}
+
 ?>
 <h2>Settings</h2>
 <p style="text-align: center;">Make all settings for auto-update checks and for manual checks. </p>
