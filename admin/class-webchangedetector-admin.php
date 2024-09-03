@@ -1618,9 +1618,8 @@ class WebChangeDetector_Admin {
 							}
 				}
 				?>
-					</table>
+						</table>
 						<?php
-
 						if ( ! count( $urls ) ) {
 							?>
 							<div style="text-align: center; font-weight: 700; padding: 20px 0;">
@@ -1639,7 +1638,7 @@ class WebChangeDetector_Admin {
 							<?php
 							foreach ( $urls_meta['links'] as $link ) {
 								$pagination_page = $this->get_params_of_url( $link['url'] )['page'] ?? '';
-								if ( ! $link['active'] &&  $pagination_page) {
+								if ( ! $link['active'] && $pagination_page ) {
 									?>
 									<a class="tablenav-pages-navspan button"
 										href="?page=webchangedetector-<?php echo esc_html( $tab ); ?>&paged=<?php echo esc_html( $pagination_page ); ?>&<?php echo esc_html( build_query( $filters ) ); ?>">
@@ -1654,11 +1653,12 @@ class WebChangeDetector_Admin {
 							</span>
 						</div>
 					</div>
+
 					<script>
 					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> ||
 						<?php echo isset( $_GET['search'] ) ? 1 : 0; ?> ||
-					<?php echo isset( $_GET['post-type'] ) ? 1 : 0; ?> ||
-					<?php echo isset( $_GET['taxonomy'] ) ? 1 : 0; ?> ||) {
+						<?php echo isset( $_GET['post-type'] ) ? 1 : 0; ?> ||
+						<?php echo isset( $_GET['taxonomy'] ) ? 1 : 0; ?> ) {
 						const scrollToEl = jQuery('.group_urls_container');
 						jQuery('html').animate(
 							{

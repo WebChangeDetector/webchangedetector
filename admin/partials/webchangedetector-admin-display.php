@@ -678,13 +678,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$next_sc_in   = false;
 
 				if ( $group_and_urls['monitoring'] ) {
-
 					$amount_sc_per_day = 0;
+
 					// Check for intervals >= 1h.
 					if ( $group_and_urls['interval_in_h'] >= 1 ) {
 						$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
 						$amount_sc_per_day = ( 24 / $group_and_urls['interval_in_h'] );
 						$possible_hours    = array();
+
 						// Get possible tracking hours.
 						for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
 							$possible_hour    = $group_and_urls['hour_of_day'] + $i * $group_and_urls['interval_in_h'];
@@ -702,6 +703,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									break;
 								}
 							}
+
 							// Don't check for tomorrow if we found the next date today.
 							if ( $date_next_sc ) {
 								break;
@@ -762,24 +764,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 						</div>
 
-						<!-- @TODO: Calculation is wrong and hidden. Replace this with the one from the dashboard -->
-						<div class="box half" style="display: none;">
-							Current settings require
-							<div id="sc_until_renew" class="big">
-								<span id="ajax_amount_total_sc"></span> Checks
-							</div>
-							<div id="sc_available_until_renew"
-								data-amount_selected_urls="<?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?>"
-								data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"
-							>
-								<?php echo esc_html( $account_details['checks_left'] ); ?> available until renewal
-							</div>
-						</div>
-						<div class="clear"></div>
 					</div>
-
 					<?php $wcd->get_url_settings( true ); ?>
-
 				</div>
 
 				<div class="sidebar">
@@ -1032,8 +1018,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						?>
 						<p>No more post types found</p>
 					<?php } ?>
-					</div>
-
+				</div>
 
 				<div class="box-plain no-border">
 					<h2>Show URLs from taxonomies</h2>
@@ -1043,10 +1028,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					// Add Taxonomies.
 					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 					foreach ( $taxonomies as $taxonomy ) {
-
 						$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
-
-						$show_taxonomy = false;
+						$show_taxonomy    = false;
 						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
 							if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
 								$show_taxonomy = true;
@@ -1089,7 +1072,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<?php } ?>
 				</div>
 
-
 					<?php
 
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
@@ -1111,15 +1093,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                                                 Resetting your API Token will allow you to switch accounts. Keep in mind to
                                                 save your API Token before the reset! </p><p>
                                                 When you login with your API token after the reset, all your settings will be still there.</p>';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_account_details',
-							'wizard_settings_upgrade',
-							false,
-							false,
-							'left top-minus-400 left-plus-400'
-						);
-
+					$wcd->print_wizard(
+						$wizard_text,
+						'wizard_settings_account_details',
+						'wizard_settings_upgrade',
+						false,
+						false,
+						'left top-minus-400 left-plus-400'
+					);
 				?>
 
 				</div>
