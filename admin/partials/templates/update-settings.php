@@ -34,6 +34,8 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 	$auto_update_settings['auto_update_checks_enabled'] = 'checked';
 }
 ?>
+<h2>Settings</h2>
+<p style="text-align: center;">Make all settings for auto-update checks and for manual checks. </p>
 <div class="setting-container-column">
 	<div class="setting-row toggle">
 		<label for="threshold" >Threshold</label>
@@ -103,3 +105,12 @@ if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 	<?php require 'css-settings.php'; ?>
 </div>
 <div class="clear"></div>
+
+<button
+        class="button button-primary"
+        type="submit"
+        onclick="return wcdValidateFormManualSettings()"
+        style="margin-top: 20px;"
+>
+    Save
+</button>

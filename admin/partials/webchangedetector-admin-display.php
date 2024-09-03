@@ -241,23 +241,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'save_group_settings':
-				switch ( $postdata['save_settings'] ) {
-					case 'post_urls_update_and_auto':
-						$wcd->post_urls( $postdata, $wcd->website_details, true );
-
-						$wcd->update_manual_check_group_settings( $postdata );
-						$wcd->update_monitoring_settings( $postdata );
-						break;
-
-					case 'post_urls':
-						$wcd->post_urls( $postdata, $wcd->website_details, false );
-						if ( ! empty( $postdata['monitoring'] ) && $postdata['monitoring'] ) {
-							$wcd->update_monitoring_settings( $postdata );
-						} else {
-							$wcd->update_manual_check_group_settings( $postdata );
-						}
-						break;
-
+				if ( ! empty( $postdata['monitoring'] ) ) {
+					$wcd->update_monitoring_settings( $postdata );
+				} else {
+					$wcd->update_manual_check_group_settings( $postdata );
 				}
 				break;
 
@@ -548,38 +535,22 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			*/
 
 			case 'webchangedetector-update-settings':
+				// Disable settings if this website has no permissions.
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
 
-				$filters        = array(
-					'per_page' => 100,
-					'sorted'   => 'selected',
-				);
-				$group_and_urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid, $filters );
-
-				$step = false;
-				// Show message if no urls are selected.
-				if ( ! $group_and_urls['selected_urls_count'] ) {
-					$step = WCD_OPTION_UPDATE_STEP_SETTINGS
-					?>
-					<div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
-				<?php } ?>
-
-				<div class="action-container">
-
-				<?php
 				// Check if we have a step in the db.
-				if ( ! $step ) {
-					$step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
-				}
-
-				// Still no step? Get default step.
+				$step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
 				if ( ! $step ) {
 					$step = WCD_OPTION_UPDATE_STEP_SETTINGS;
 				}
 				update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $step ), false );
+
+				?>
+				<div class="action-container">
+				<?php
 
 				switch ( $step ) {
 					case WCD_OPTION_UPDATE_STEP_SETTINGS:
@@ -671,101 +642,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
-				$group_and_urls = $wcd->get_group_and_urls( $wcd->monitoring_group_uuid, array( 'per_page' => 1 ) );
-
-				// Calculation for monitoring.
-				$date_next_sc = false;
-				$next_sc_in   = false;
-
-				if ( $group_and_urls['monitoring'] ) {
-					$amount_sc_per_day = 0;
-
-					// Check for intervals >= 1h.
-					if ( $group_and_urls['interval_in_h'] >= 1 ) {
-						$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						$amount_sc_per_day = ( 24 / $group_and_urls['interval_in_h'] );
-						$possible_hours    = array();
-
-						// Get possible tracking hours.
-						for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
-							$possible_hour    = $group_and_urls['hour_of_day'] + $i * $group_and_urls['interval_in_h'];
-							$possible_hours[] = $possible_hour >= 24 ? $possible_hour - 24 : $possible_hour;
-						}
-						sort( $possible_hours );
-
-						// Check for today and tomorrow.
-						for ( $ii = 0; $ii <= 1; $ii++ ) { // Do 2 loops for today and tomorrow.
-							for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
-								$possible_time = gmmktime( $possible_hours[ $i ], 0, 0, gmdate( 'm' ), gmdate( 'd' ) + $ii, gmdate( 'Y' ) );
-
-								if ( $possible_time >= $next_possible_sc ) {
-									$date_next_sc = $possible_time; // This is the next possible time. So we break here.
-									break;
-								}
-							}
-
-							// Don't check for tomorrow if we found the next date today.
-							if ( $date_next_sc ) {
-								break;
-							}
-						}
-					}
-
-					// Check for 30 min intervals.
-					if ( 0.5 === $group_and_urls['interval_in_h'] ) {
-						$amount_sc_per_day = 48;
-						if ( gmdate( 'i' ) < 30 ) {
-							$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						} else {
-							$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						}
-					}
-					// Check for 15 min intervals.
-					if ( 0.25 === $group_and_urls['interval_in_h'] ) {
-						$amount_sc_per_day = 96;
-						if ( gmdate( 'i' ) < 15 ) {
-							$date_next_sc = gmmktime( gmdate( 'H' ), 15, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						} elseif ( gmdate( 'i' ) < 30 ) {
-							$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						} elseif ( gmdate( 'i' ) < 45 ) {
-							$date_next_sc = gmmktime( gmdate( 'H' ), 45, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						} else {
-							$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
-						}
-					}
-
-					// Calculate screenshots until renewal.
-					$days_until_renewal      = gmdate( 'd', gmdate( 'U', strtotime( $account_details['renewal_at'] ) ) - gmdate( 'U' ) );
-					$amount_group_sc_per_day = $group_and_urls['selected_urls_count'] * $amount_sc_per_day * $days_until_renewal;
-
-					// Get first detection hour.
-					$first_hour_of_interval = $group_and_urls['hour_of_day'];
-					while ( $first_hour_of_interval - $group_and_urls['interval_in_h'] >= 0 ) {
-						$first_hour_of_interval = $first_hour_of_interval - $group_and_urls['interval_in_h'];
-					}
-
-					// Count up in interval_in_h to current hour.
-					$skip_sc_count_today = 0;
-					while ( $first_hour_of_interval + $group_and_urls['interval_in_h'] <= gmdate( 'H' ) ) {
-						$first_hour_of_interval = $first_hour_of_interval + $group_and_urls['interval_in_h'];
-						++$skip_sc_count_today;
-					}
-
-					// Subtract screenshots already taken today.
-					$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group_and_urls['selected_urls_count'];
-				}
 				?>
-
 				<div class="action-container">
-					<div class="status_bar">
-						<div class="box full">
-							<div id="txt_next_sc_in">Next monitoring checks in</div>
-							<div id="next_sc_in" class="big"></div>
-							<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
-						</div>
-
-					</div>
-					<?php $wcd->get_url_settings( true ); ?>
+				<?php
+				$wcd->get_url_settings( true );
+				?>
 				</div>
 
 				<div class="sidebar">

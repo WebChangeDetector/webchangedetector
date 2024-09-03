@@ -6,6 +6,8 @@
  */
 
 ?>
+<h2>Settings</h2>
+<p style="text-align: center;">Monitor your website and receive alert emails when something changes. </p>
 <div class="setting-container-column">
 	<p class="auto-setting setting-row toggle">
 		<input type="hidden" name="monitoring" value="1">
@@ -110,3 +112,12 @@
 	<?php require 'css-settings.php'; ?>
 </div>
 <div class="clear"></div>
+<button
+		class="button button-primary"
+		style="margin-top: 20px;"
+		type="submit"
+		name="save_settings"
+		value="post_urls"
+		onclick="return wcdValidateFormAutoSettings()">
+	Save
+</button>

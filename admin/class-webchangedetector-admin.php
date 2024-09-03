@@ -357,6 +357,12 @@ class WebChangeDetector_Admin {
 	 * @return array|string|bool
 	 */
 	public function get_account() {
+
+		static $account_details;
+		if ( $account_details ) {
+			return $account_details;
+		}
+
 		$account_details = WebChangeDetector_API_V2::get_account_v2();
 
 		if ( ! empty( $account_details['data'] ) ) {
@@ -1273,6 +1279,106 @@ class WebChangeDetector_Admin {
 		return $params;
 	}
 
+	/** Print the monitoring status bar.
+	 *
+	 * @param array $group The group details.
+	 * @return void
+	 */
+	public function print_monitoring_status_bar( $group ) {
+		// Calculation for monitoring.
+		$date_next_sc = false;
+
+		$amount_sc_per_day = 0;
+
+		// Check for intervals >= 1h.
+		if ( $group['interval_in_h'] >= 1 ) {
+			$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			$amount_sc_per_day = ( 24 / $group['interval_in_h'] );
+			$possible_hours    = array();
+
+			// Get possible tracking hours.
+			for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
+				$possible_hour    = $group['hour_of_day'] + $i * $group['interval_in_h'];
+				$possible_hours[] = $possible_hour >= 24 ? $possible_hour - 24 : $possible_hour;
+			}
+			sort( $possible_hours );
+
+			// Check for today and tomorrow.
+			for ( $ii = 0; $ii <= 1; $ii++ ) { // Do 2 loops for today and tomorrow.
+				for ( $i = 0; $i <= $amount_sc_per_day * 2; $i++ ) {
+					$possible_time = gmmktime( $possible_hours[ $i ], 0, 0, gmdate( 'm' ), gmdate( 'd' ) + $ii, gmdate( 'Y' ) );
+
+					if ( $possible_time >= $next_possible_sc ) {
+						$date_next_sc = $possible_time; // This is the next possible time. So we break here.
+						break;
+					}
+				}
+
+				// Don't check for tomorrow if we found the next date today.
+				if ( $date_next_sc ) {
+					break;
+				}
+			}
+		}
+
+		// Check for 30 min intervals.
+		if ( 0.5 === $group['interval_in_h'] ) {
+			$amount_sc_per_day = 48;
+			if ( gmdate( 'i' ) < 30 ) {
+				$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			} else {
+				$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			}
+		}
+		// Check for 15 min intervals.
+		if ( 0.25 === $group['interval_in_h'] ) {
+			$amount_sc_per_day = 96;
+			if ( gmdate( 'i' ) < 15 ) {
+				$date_next_sc = gmmktime( gmdate( 'H' ), 15, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			} elseif ( gmdate( 'i' ) < 30 ) {
+				$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			} elseif ( gmdate( 'i' ) < 45 ) {
+				$date_next_sc = gmmktime( gmdate( 'H' ), 45, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			} else {
+				$date_next_sc = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
+			}
+		}
+
+		// Calculate screenshots until renewal.
+		$days_until_renewal = gmdate( 'd', gmdate( 'U', strtotime( $this->get_account()['renewal_at'] ) ) - gmdate( 'U' ) );
+
+		$amount_group_sc_per_day = $group['selected_urls_count'] * $amount_sc_per_day * $days_until_renewal;
+
+		// Get first detection hour.
+		$first_hour_of_interval = $group['hour_of_day'];
+		while ( $first_hour_of_interval - $group['interval_in_h'] >= 0 ) {
+			$first_hour_of_interval = $first_hour_of_interval - $group['interval_in_h'];
+		}
+
+		// Count up in interval_in_h to current hour.
+		$skip_sc_count_today = 0;
+		while ( $first_hour_of_interval + $group['interval_in_h'] <= gmdate( 'H' ) ) {
+			$first_hour_of_interval = $first_hour_of_interval + $group['interval_in_h'];
+			++$skip_sc_count_today;
+		}
+
+		// Subtract screenshots already taken today.
+		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_urls_count'];
+		?>
+
+		<div class="status_bar">
+			<div class="box full">
+				<div id="txt_next_sc_in">Next monitoring checks in</div>
+				<div id="next_sc_in" class="big"></div>
+				<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
+				<div id="sc_available_until_renew"
+					data-amount_selected_urls="<?php echo esc_html( $group['selected_urls_count'] ); ?>"
+					data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"></div>
+			</div>
+		</div>
+		<?php
+	}
+
 	/** Group url view.
 	 *
 	 * @param bool $monitoring_group Is it a monitoring group.
@@ -1281,7 +1387,6 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_url_settings( $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
-
 		$wcd_website_urls = $this->sync_posts();
 
 		if ( $monitoring_group ) {
@@ -1290,10 +1395,13 @@ class WebChangeDetector_Admin {
 			$group_id = $this->manual_group_uuid;
 		}
 
+		// Setting pagination page.
 		$page = 1;
 		if ( ! empty( $_GET['paged'] ) ) {
 			$page = sanitize_key( wp_unslash( $_GET['paged'] ) );
 		}
+
+		// Set filters for urls.
 		$filters = array(
 			'per_page' => 20,
 			'sorted'   => 'selected',
@@ -1305,7 +1413,6 @@ class WebChangeDetector_Admin {
 		if ( ! empty( $_GET['taxonomy'] ) ) {
 			$filters['category'] = $this->get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
 		}
-
 		if ( ! empty( $_GET['search'] ) ) {
 			$filters['search'] = sanitize_text_field( wp_unslash( $_GET['search'] ) );
 		}
@@ -1314,6 +1421,13 @@ class WebChangeDetector_Admin {
 		$group_and_urls = $this->get_group_and_urls( $group_id, $filters );
 		$urls           = $group_and_urls['urls'];
 		$urls_meta      = $group_and_urls['meta'];
+
+		// Show message if no urls are selected.
+		if ( ! $group_and_urls['selected_urls_count'] ) {
+			?>
+			<div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
+			<?php
+		}
 
 		// Set filters for pagination.
 		if ( isset( $filters['category'] ) && $filters['category'] ) {
@@ -1339,7 +1453,6 @@ class WebChangeDetector_Admin {
 			<form class="wcd-frm-settings box-plain" action="<?php echo esc_url( admin_url() . 'admin.php?page=webchangedetector-' . $tab ); ?>" method="post">
 				<input type="hidden" name="wcd_action" value="save_group_settings">
 				<input type="hidden" name="step" value="pre-update">
-				<input type="hidden" name="wcd-update-settings" value="true">
 				<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
 
 				<?php
@@ -1372,28 +1485,13 @@ class WebChangeDetector_Admin {
 						false,
 						'bottom  top-minus-150 left-plus-300'
 					);
-					?>
-					<h2>Settings</h2>
-					<p style="text-align: center;">Make all settings for auto-update checks and for manual checks. </p>
 
-					<?php include 'partials/templates/update-settings.php'; ?>
-
-					<button
-							class="button button-primary"
-							type="submit"
-							name="save_settings"
-							value="post_urls"
-							onclick="return wcdValidateFormManualSettings()"
-							style="margin-top: 20px ;"
-					>
-						Save
-					</button>
-
-					<?php
+                    include 'partials/templates/update-settings.php';
 				} else {
+					$this->print_monitoring_status_bar( $group_and_urls );
+
 					$wizard_text = '<h2>Monitoring Settings</h2><p>Do all settings for the monitoring.</p><p> 
                                 Set the interval of the monitoring checks and the hour of when the checks should start.</p>';
-
 					$this->print_wizard(
 						$wizard_text,
 						'wizard_monitoring_settings',
@@ -1404,25 +1502,8 @@ class WebChangeDetector_Admin {
 					);
 
 					// Monitoring settings.
-					?>
-					<h2>Settings</h2>
-					<p style="text-align: center;">Monitor your website and receive alert emails when something changes. </p>
-					<?php
 					$enabled = $group_and_urls['enabled'];
 					include 'partials/templates/auto-settings.php';
-					?>
-
-					<button
-							class="button button-primary"
-							style="margin-top: 20px;"
-							type="submit"
-							name="save_settings"
-							value="post_urls"
-							onclick="return wcdValidateFormAutoSettings()">
-						Save
-					</button>
-
-					<?php
 				}
 
 				// Select URLs section.
@@ -1453,7 +1534,6 @@ class WebChangeDetector_Admin {
 
 			<div class="wcd-frm-settings box-plain">
 				<h2>Select URLs<br><small></small></h2>
-
 				<p style="text-align: center;">
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
 					Missing URLs? Select them from other post types and taxonomies by enabling them in the
@@ -1630,6 +1710,7 @@ class WebChangeDetector_Admin {
 						?>
 
 					</div>
+
 					<!-- Pagination -->
 					<div class="tablenav">
 						<div class="tablenav-pages">
@@ -1793,7 +1874,7 @@ class WebChangeDetector_Admin {
 		return false;
 	}
 
-	/** Save url settings
+	/** Save url settings.
 	 *
 	 * @param array $postdata The postdata.
 	 * @param array $website_details The website details.
