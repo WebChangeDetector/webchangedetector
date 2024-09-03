@@ -966,7 +966,7 @@ Wizard
     height: 12px;
     width: 12px;
     left: 4px;
-    bottom: 4px;
+    bottom: 3px;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -981,14 +981,15 @@ Wizard
 }
 
 .webchangedetector input:checked + .slider:before {
-    -webkit-transform: translateX(14px);
-    -ms-transform: translateX(14px);
-    transform: translateX(14px);
+    -webkit-transform: translateX(12px);
+    -ms-transform: translateX(12px);
+    transform: translateX(12px);
 }
 
 /* Rounded sliders */
 .webchangedetector .slider.round {
     border-radius: 34px;
+    border: 1px solid #fff;
 }
 
 .webchangedetector .slider.round:before {
