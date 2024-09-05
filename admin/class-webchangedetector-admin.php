@@ -2056,7 +2056,7 @@ class WebChangeDetector_Admin {
 				'auto_detection_group'   => $this->website_details['auto_detection_group']['uuid'],
 				'manual_detection_group' => $this->website_details['manual_detection_group']['uuid'],
 			);
-			update_option( 'wcd_website_groups', $groups );
+			update_option( WCD_WEBSITE_GROUPS, $groups );
 		}
 	}
 

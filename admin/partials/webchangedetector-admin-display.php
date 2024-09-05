@@ -121,15 +121,15 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Check if plugin has to be updated.
-		if ( ! is_array( $account_details ) && 'update plugin' === $account_details ) {
+		if ( ! empty( $account_details ) && 'update plugin' === $account_details['message'] ) {
 			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
             WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
 			wp_die();
 		}
 
 		// Check if account is activated and if the api key is authorized.
-		if ( ! is_array( $account_details ) && ( 'ActivateAccount' === $account_details || 'unauthorized' === $account_details ) ) {
-			$wcd->show_activate_account( $account_details );
+		if ( ! empty( $account_details['message'] ) && ( 'ActivateAccount' === $account_details['message'] || 'unauthorized' === $account_details['message'] ) ) {
+			$wcd->show_activate_account( $account_details['message'] );
 			return false;
 		}
 
