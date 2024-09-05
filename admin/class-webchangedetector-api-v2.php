@@ -43,7 +43,7 @@ class WebChangeDetector_API_V2 {
 
 		$args = array(
 			'action'              => 'urls/sync',
-			'domain'              => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
+			'domain'              => WebChangeDetector_Admin::get_domain_from_site_url(),
 			'urls'                => ( $posts ),
 			'delete_missing_urls' => $delete_missing_urls,
 		);
@@ -211,26 +211,21 @@ class WebChangeDetector_API_V2 {
 	 * @return mixed|string
 	 */
 	public static function get_comparisons_v2( $filters = array() ) {
-		$url = 'comparisons';
-		if ( ! empty( $filters ) ) {
-			$url = $url . '?' . ( build_query( $filters ) );
-		}
-
-		$args = array(
-			'action' => $url,
-		);
 
 		// Make sure to show only change detections from the current website.
-		if ( empty( $args['group_ids'] ) ) {
+		if ( empty( $filters['groups'] ) ) {
 			$groups = get_option( WCD_WEBSITE_GROUPS );
-
 			if ( $groups ) {
-				$args['group_ids'] = implode( ',', $groups );
+				$filters['groups'] = implode( ',', $groups );
 			} else {
 				// We don't have a group id. So we can't get comparisons.
 				return false;
 			}
 		}
+
+		$args = array(
+			'action' => 'comparisons?' . build_query( $filters ),
+		);
 
 		return self::api_v2( $args, 'GET' );
 	}
@@ -297,12 +292,12 @@ class WebChangeDetector_API_V2 {
 	 * @return mixed|string
 	 */
 	public static function get_batches( $filter = array() ) {
+		if ( empty( $filter['group_ids'] ) ) {
+			$filter['group_ids'] = implode( ',', get_option( WCD_WEBSITE_GROUPS ) );
+		}
 		$args = array(
 			'action' => 'batches?' . build_query( $filter ),
 		);
-		if ( empty( $args['group_ids'] ) && empty( $args['group_ids'] ) ) {
-			$args['group_ids'] = implode( ',', get_option( WCD_WEBSITE_GROUPS ) );
-		}
 		return self::api_v2( $args, 'GET' );
 	}
 
@@ -371,7 +366,7 @@ class WebChangeDetector_API_V2 {
 			'headers' => array(
 				'Accept'        => 'application/json',
 				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
+				'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
 				'x-wcd-wp-id'   => get_current_user_id(),
 				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 			),
