@@ -1935,7 +1935,6 @@ class WebChangeDetector_Admin {
 							'href'   => true,
 							'target' => true,
 						),
-
 					)
 				);
 				?>

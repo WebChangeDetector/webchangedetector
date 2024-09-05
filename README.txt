@@ -11,7 +11,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
 ## The #1 Visual Regression Test Tool For WordPress
 
-Check your website after **WP auto updates** to see if something broke with visual regression tests. Or monitor your website visually in intervals and get notified about any change.
+Check your website visually after **WP auto updates** to see if something broke with visual regression tests. Or monitor your website visually in intervals and get notified about any change.
 With WebChange Detector you can find any difference on your website
 
 *   after installing updates,
@@ -55,6 +55,9 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 * Feature: Checks on WP auto updates
 * Feature: Set status for change detections
 * Improvement: Group change detections
+* Improvement: Cleaner design
+* Improvement: Better URL sync
+* Improvement: Filter and search urls to select
 * Fix: Calculation of available checks
 * Fix: Compatibility with WPML and Polylang
 * Fix: Saving of settings with more than 500 pages
@@ -184,12 +187,9 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Screenshots ==
 1. Show Change Detection: Check the changes before and after updates
 2. Dashboard:  Show the latest change detections and account information
-3. Manual Checks: Select the pages to check and inject CSS for e.g. to hide dynamic content
-4. Manual Checks: Start the pre-update screenshots of the selected pages
-5. Manual Checks: Taking screenshots is in progress
-6. Manual Checks: Make Updates or other changes on the website
-7. Manual Checks: Create post-update screenshots and compare them with the pre-update screenshots
-8. Manual Checks: Overview of all changed pages during the update detection
-9. Change Detections: Overview of all change detections with filter options
-10. Monitoring: Select pages to check automatically in intervals from 1h up to 24h
-11. Logs: See all screenshots and change detections which were created
+3. Auto-update checks: Make all settings for WP auto update checks and select the pages to check
+5. Manual Checks: See all Change detections and their change in percent. Set the status for a better overview.
+4. Monitoring: Make all settings for Monitoring and select the pages to check
+6. Change Detections: Have all change detections in on overview - grouped by monitoring, manual checks or auto update checks
+7. Queue: Find all tasks which were done in this overwiew
+8. Settings: Additional settings are listed here.

@@ -9,7 +9,7 @@
  * Include manual check tiles
  */
 require 'update-step-tiles.php';
-$group_urls = WebChangeDetector_API_V2::get_group_urls_v2($wcd->manual_group_uuid);
+$group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $wcd->manual_group_uuid );
 
 ?>
 
