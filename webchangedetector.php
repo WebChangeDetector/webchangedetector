@@ -35,7 +35,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Rename this for your plugin and update it as you release new versions.
  */
 
-define( 'WEBCHANGEDETECTOR_VERSION', '3.0.0' );
+define( 'WEBCHANGEDETECTOR_VERSION', '3.0.1' );
 
 /**
  * The code that runs during plugin activation.

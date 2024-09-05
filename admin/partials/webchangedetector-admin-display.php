@@ -121,7 +121,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Check if plugin has to be updated.
-		if ( ! empty( $account_details ) && 'update plugin' === $account_details['message'] ) {
+		if ( ! empty( $account_details['message'] ) && 'update plugin' === $account_details['message'] ) {
 			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
             WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
 			wp_die();
@@ -134,8 +134,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Show low credits.
-		$usage_percent = (int) ( $account_details['checks_done'] / $account_details['checks_limit'] * 100 );
-
+		$usage_percent = 0;
+		if ( $account_details['checks_limit'] > 0 ) {
+			$usage_percent = (int) ( $account_details['checks_done'] / $account_details['checks_limit'] * 100 );
+		}
 		if ( $usage_percent >= 100 ) {
 			?>
 			<div class="notice notice-error">

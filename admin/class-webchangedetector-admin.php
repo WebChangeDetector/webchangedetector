@@ -312,7 +312,7 @@ class WebChangeDetector_Admin {
 			array(
 				'action'            => 'add_free_account',
 				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
-				'domain'            => isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '',
+				'domain'            => preg_replace( '(^https?://)', '', get_site_url() ), // site might be in subdir.
 				'validation_string' => $validation_string,
 				'cms'               => 'wp',
 			),
@@ -2429,7 +2429,7 @@ class WebChangeDetector_Admin {
 
 		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
-		$post['domain'] = isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
+		$post['domain'] = rtrim( preg_replace( '(^https?://)', '', get_site_url() ), '/' );// site might be in subdir.
 		$post['wp_id']  = get_current_user_id();
 
 		// Increase timeout for php.ini.
