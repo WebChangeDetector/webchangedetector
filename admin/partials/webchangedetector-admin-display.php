@@ -190,7 +190,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$php_max_input_vars = ini_get( 'max_input_vars' );
 		if ( count( $postdata ) >= $php_max_input_vars ) {
 			?>
-			<div class="notice notice-error"><strong>ERROR:</strong> Increase max_input_vars in your PHP settings. Current value: <?php echo esc_html( $php_max_input_vars ); ?>
+			<div class="notice notice-error">
+				<p><strong>ERROR:</strong> Increase max_input_vars in your PHP settings. Current value: <?php echo esc_html( $php_max_input_vars ); ?></p>
+			</div>
 			<?php
 		}
 

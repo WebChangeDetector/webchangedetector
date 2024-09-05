@@ -486,7 +486,6 @@ class WebChangeDetector_Admin {
 	public function update_manual_check_group_settings( $postdata ) {
 
 		// Saving auto update settings.
-		self::error_log( 'Saving Manual Checks settings: ' . wp_json_encode( $postdata ) );
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
@@ -1422,6 +1421,12 @@ class WebChangeDetector_Admin {
 		$urls           = $group_and_urls['urls'];
 		$urls_meta      = $group_and_urls['meta'];
 
+		// Set tab for the right url.
+		$tab = 'update-settings'; // init.
+		if ( $monitoring_group ) {
+			$tab = 'auto-settings';
+		}
+
 		// Show message if no urls are selected.
 		if ( ! $group_and_urls['selected_urls_count'] ) {
 			?>
@@ -1439,89 +1444,47 @@ class WebChangeDetector_Admin {
 		unset( $filters['page'] );
 
 		$nonce = wp_create_nonce( 'ajax-nonce' );
-
-		// Select URLS.
-		$tab            = 'update-settings'; // init.
-		if ( $monitoring_group ) {
-			$tab            = 'auto-settings';
-		}
 		?>
 
 		<div class="wcd-select-urls-container">
-			<form class="wcd-frm-settings box-plain" action="<?php echo esc_url( admin_url() . 'admin.php?page=webchangedetector-' . $tab ); ?>" method="post">
-				<input type="hidden" name="wcd_action" value="save_group_settings">
-				<input type="hidden" name="step" value="pre-update">
-				<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
+			<?php
 
-				<?php
-				wp_nonce_field( 'save_group_settings' );
+			// Include the group settings.
+			if ( ! $monitoring_group ) {
+				include 'partials/templates/update-settings.php';
+			} else {
 
-				// Manual check settings.
-				if ( ! $monitoring_group ) {
-					$wizard_text = '<h2>Manual Checks & Auto Update Checks</h2>In this tab, you can make all settings for auto update checks and start manual checks.';
-					$this->print_wizard(
-						$wizard_text,
-						'wizard_manual_checks_tab',
-						'wizard_manual_checks_settings',
-						false,
-						true,
-						'top left-plus-200'
-					);
+				// Print the status bar.
+				$this->print_monitoring_status_bar( $group_and_urls );
 
-					$wizard_text = '<h2>Settings</h2><p>If you want to check your Website during WP auto updates, you can enable this here. </p>';
-					$this->print_wizard(
-						$wizard_text,
-						'wizard_manual_checks_settings',
-						'wizard_manual_checks_urls',
-						false,
-						false,
-						'bottom  top-minus-150 left-plus-300'
-					);
+				// Monitoring settings.
+				include 'partials/templates/auto-settings.php';
+			}
 
-                    include 'partials/templates/update-settings.php';
-				} else {
-					$this->print_monitoring_status_bar( $group_and_urls );
+			// Select URLs section.
+			$wizard_text = '<h2>Select URLs</h2><p>In these accordions you find all URLs of your website. 
+                            Here you can select the URLs you want to check.</p><p>
+                            These settings are taken for manual checks and for auto update checks.</p><p>
+                            Your don\'t have to hit the \'save\' button here. Enabling and disabling URLs are saved automatically.</p>';
+			$this->print_wizard(
+				$wizard_text,
+				'wizard_manual_checks_urls',
+				'wizard_manual_checks_start',
+				false,
+				false,
+				'bottom top-minus-200 left-plus-400'
+			);
 
-					$wizard_text = '<h2>Monitoring Settings</h2><p>Do all settings for the monitoring.</p><p> 
-                                Set the interval of the monitoring checks and the hour of when the checks should start.</p>';
-					$this->print_wizard(
-						$wizard_text,
-						'wizard_monitoring_settings',
-						'wizard_monitoring_urls',
-						false,
-						false,
-						'bottom  top-minus-100 left-plus-200'
-					);
-
-					// Monitoring settings.
-					include 'partials/templates/auto-settings.php';
-				}
-
-				// Select URLs section.
-				$wizard_text = '<h2>Select URLs</h2><p>In these accordions you find all URLs of your website. 
-                                Here you can select the URLs you want to check.</p><p>
-                                These settings are taken for manual checks and for auto update checks.</p><p>
-                                Your don\'t have to hit the \'save\' button here. Enabling and disabling URLs are saved automatically.</p>';
-				$this->print_wizard(
-					$wizard_text,
-					'wizard_manual_checks_urls',
-					'wizard_manual_checks_start',
-					false,
-					false,
-					'bottom top-minus-200 left-plus-400'
-				);
-
-				$wizard_text = '<h2>Select URLs</h2>All URLs which you select here will be monitored with settings before.';
-				$this->print_wizard(
-					$wizard_text,
-					'wizard_monitoring_urls',
-					false,
-					'?page=webchangedetector-change-detections',
-					false,
-					'bottom top-minus-100 left-plus-100'
-				);
-		?>
-			</form>
+			$wizard_text = '<h2>Select URLs</h2>All URLs which you select here will be monitored with settings before.';
+			$this->print_wizard(
+				$wizard_text,
+				'wizard_monitoring_urls',
+				false,
+				'?page=webchangedetector-change-detections',
+				false,
+				'bottom top-minus-100 left-plus-100'
+			);
+			?>
 
 			<div class="wcd-frm-settings box-plain">
 				<h2>Select URLs<br><small></small></h2>
@@ -1534,7 +1497,6 @@ class WebChangeDetector_Admin {
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
 				<?php if ( is_iterable( $urls ) ) { ?>
 					<div class="group_urls_container">
-
 						<form method="get" style="float: left;">
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
 
@@ -1685,7 +1647,6 @@ class WebChangeDetector_Admin {
 
 								<script> mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); </script>
 								<?php
-
 							}
 				}
 				?>
@@ -1744,6 +1705,7 @@ class WebChangeDetector_Admin {
 		</div>
 
 		<?php
+		// Some more wizards windows.
 		if ( $monitoring_group ) {
 			$wizard_text = "<h2>Save</h2>Don't forget to save the settings.";
 			$this->print_wizard(
@@ -1767,6 +1729,7 @@ class WebChangeDetector_Admin {
 				'bottom bottom-plus-50 right-minus-30'
 			);
 
+			// Start change detection button.
 			if ( $this->website_details['allow_manual_detection'] ) {
 				?>
 					<form method="post">
@@ -1774,13 +1737,13 @@ class WebChangeDetector_Admin {
 						<input type="hidden" name="wcd_action" value="start_manual_checks">
 						<input type="hidden" name="step" value="<?php echo esc_html( WCD_OPTION_UPDATE_STEP_PRE ); ?>">
 
-				<button
-						class="button button-primary"
-						style="float: right;"
-						type="submit"
-				>
-					Start manual checks >
-				</button>
+						<button
+								class="button button-primary"
+								style="float: right;"
+								type="submit"
+						>
+							Start manual checks >
+						</button>
 					</form>
 				<?php
 			}
@@ -2323,7 +2286,7 @@ class WebChangeDetector_Admin {
 
 		if ( 'ActivateAccount' === $error ) {
 			?>
-			<div class="notice notice-info"></span>
+			<div class="notice notice-info">
 				<p>Please <strong>activate</strong> your account.</p>
 			</div>
 			<div class="activate-account highlight-container" >
@@ -2366,9 +2329,7 @@ class WebChangeDetector_Admin {
 		if ( 'unauthorized' === $error ) {
 			?>
 			<div class="notice notice-error">
-				<p>
-					The API token is not valid. Please reset the API token and enter a valid one.
-				</p>
+				<p>The API token is not valid. Please reset the API token and enter a valid one.</p>
 			</div>
 			<?php
 			$this->get_no_account_page();
