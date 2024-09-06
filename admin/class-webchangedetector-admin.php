@@ -1052,7 +1052,7 @@ class WebChangeDetector_Admin {
 
 		// Init sync urls if we don't have them yet.
 		if ( empty( $this->website_details['sync_url_types'] ) ) {
-			//return [];
+			return [];
 		}
 
 		// Get all WP post_types.
