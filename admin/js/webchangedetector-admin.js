@@ -447,7 +447,7 @@ function postUrl(postId) {
     }
 
     jQuery.post(ajaxurl, data, function (response) {
-      // nothing to return.
+      // TODO confirm saving.
     });
 }
 

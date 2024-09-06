@@ -90,7 +90,7 @@ class WebChangeDetector_Admin {
 	 * @access   public
 	 * @var      int $group_id The manual checks group id.
 	 */
-	public $group_id;
+	//public $group_id;
 
 	/**
 	 * The monitoring checks group uuid.
@@ -101,6 +101,15 @@ class WebChangeDetector_Admin {
 	 */
 	public $monitoring_group_uuid;
 
+
+	/**
+	 * Array with the group_ids.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      array $groups_ids An array with the group_uuids.
+	 */
+	public $groups_ids;
 	/**
 	 * The manual checks group uuid.
 	 *
@@ -117,7 +126,7 @@ class WebChangeDetector_Admin {
 	 * @access   public
 	 * @var      int $group_id The manual checks group id.
 	 */
-	public $monitoring_group_id;
+	//public $monitoring_group_id;
 
 	/**
 	 * The version of this plugin.
@@ -363,12 +372,13 @@ class WebChangeDetector_Admin {
 
 	/** Get account details.
 	 *
+	 * @param bool $force Force account data from api.
 	 * @return array|string|bool
 	 */
-	public function get_account() {
+	public function get_account( $force = false ) {
 
 		static $account_details;
-		if ( $account_details ) {
+		if ( $account_details && ! $force ) {
 			return $account_details;
 		}
 
@@ -420,7 +430,7 @@ class WebChangeDetector_Admin {
 			die( 'Busted!' );
 		}
 
-		$this->post_urls( $_POST, $this->website_details, false );
+		$this->post_urls( $_POST, false );
 		die();
 	}
 
@@ -897,11 +907,10 @@ class WebChangeDetector_Admin {
 	 */
 	public function add_post_type( $postdata ) {
 		$post_type                               = json_decode( stripslashes( $postdata['post_type'] ), true );
-		$existing_post_types                     = $this->website_details['sync_url_types'];
-		$this->website_details['sync_url_types'] = array_merge( $post_type, $existing_post_types );
+		$this->website_details['sync_url_types'] = array_merge( $post_type, $this->website_details['sync_url_types'] );
 
 		$this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
-		$this->sync_posts();
+		$this->sync_posts( true );
 	}
 
 	/** Get posts
@@ -919,7 +928,7 @@ class WebChangeDetector_Admin {
 			'orderby'     => 'title',
 		);
 		$wpml_languages = $this->get_wpml_languages();
-		$posts          = array();
+
 		if ( ! $wpml_languages ) {
 			$posts = get_posts( $args );
 		} else {
@@ -1043,7 +1052,7 @@ class WebChangeDetector_Admin {
 
 		// Init sync urls if we don't have them yet.
 		if ( empty( $this->website_details['sync_url_types'] ) ) {
-			$this->set_website_details();
+			//return [];
 		}
 
 		// Get all WP post_types.
@@ -1053,6 +1062,7 @@ class WebChangeDetector_Admin {
 			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
 
 			// Get Posts.
+
 			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
 				if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 
@@ -1251,24 +1261,23 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function set_default_sync_types() {
-		if ( empty( $this->website_details['sync_url_types'] ) ) {
-			$this->website_details['sync_url_types'] = wp_json_encode(
-				array(
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'posts',
-						'post_type_name' => $this->get_post_type_name( 'posts' ),
-					),
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'pages',
-						'post_type_name' => $this->get_post_type_name( 'pages' ),
-					),
-				)
+		if ( !empty($this->website_details) && empty( $this->website_details['sync_url_types'] ) ) {
+			$this->website_details['sync_url_types'] = array(
+                array(
+                    'url_type_slug'  => 'types',
+                    'url_type_name'  => 'Post Types',
+                    'post_type_slug' => 'posts',
+                    'post_type_name' => $this->get_post_type_name( 'posts' ),
+                ),
+                array(
+                    'url_type_slug'  => 'types',
+                    'url_type_name'  => 'Post Types',
+                    'post_type_slug' => 'pages',
+                    'post_type_name' => $this->get_post_type_name( 'pages' ),
+                ),
 			);
-			$this->website_details                   = $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+
+            $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
 	}
 
@@ -1845,16 +1854,9 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return void
 	 */
-	public function post_urls( $postdata, $website_details, $save_both_groups ) {
-		// Get active posts from post data.
-		$this->sync_posts( true );
+	public function post_urls( $postdata ) {
 		$active_posts   = array();
 		$count_selected = 0;
-
-		if ( empty( $website_details ) ) {
-			$this->set_website_details();
-			$website_details = $this->website_details;
-		}
 
 		foreach ( $postdata as $key => $post ) {
 			$already_processed_ids = array();
@@ -1891,32 +1893,11 @@ class WebChangeDetector_Admin {
 		}
 
 		$group_id_website_details = sanitize_text_field( $postdata['group_id'] );
+        WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 
-		// Check if there is a limit for selecting URLs.
-		if ( $website_details['enable_limits'] &&
-			$website_details['url_limit_manual_detection'] < $count_selected &&
-			$website_details['manual_detection_group_id'] === $group_id_website_details ) {
-			echo '<div class="error notice"><p>The limit for selecting URLs is ' .
-				esc_html( $website_details['url_limit_manual_detection'] ) . '.
-                        You selected ' . esc_html( $count_selected ) . ' URLs. The settings were not saved.</p></div>';
-		} elseif ( $website_details['enable_limits'] &&
-			isset( $monitoring_group_settings ) &&
-			$website_details['sc_limit'] < $count_selected * ( WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h'] ) * WCD_DAYS_PER_MONTH &&
-			$website_details['auto_detection_group_id'] === $group_id_website_details ) {
-			echo '<div class="error notice"><p>The limit for monitorings is ' .
-				esc_html( $website_details['sc_limit'] ) . '. per month. You selected ' .
-				esc_html( $count_selected * ( WCD_HOURS_IN_DAY / $monitoring_group_settings['interval_in_h'] ) * WCD_DAYS_PER_MONTH ) .
-				' change detections. The settings were not saved.
-                 </p></div>';
-		} else {
-			if ( $save_both_groups ) {
-				WebChangeDetector_API_V2::update_urls_in_group_v2( $website_details['auto_detection_group_id'], $active_posts );
-				WebChangeDetector_API_V2::update_urls_in_group_v2( $website_details['manual_detection_group_id'], $active_posts );
-			} else {
-				WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
-			}
-			echo '<div class="updated notice"><p>Settings saved.</p></div>';
-		}
+        // TODO Make return to show the result.
+        echo '<div class="updated notice"><p>Settings saved.</p></div>';
+
 	}
 
 	/** Print the wizard.
@@ -2032,42 +2013,22 @@ class WebChangeDetector_Admin {
 		<?php
 	}
 
-	/** Get the website details and set the class vars.
-	 *
-	 * @return void
-	 */
-	public function set_website_details() {
-		$args = array(
-			'action' => 'get_website_details',
-			// domain sent at mm_api.
-		);
-		$this->website_details = $this->api_v1( $args );
-
-		// If we don't have websites details yet, we create them. This happens after account activation.
-		if ( empty( $this->website_details ) ) {
-			$this->create_website_and_groups();
-			$this->website_details = $this->api_v1( $args );
-		}
-		// Take the first website details or return error string.
-		if ( is_array( $this->website_details ) && ! empty( $this->website_details ) ) {
-			$this->website_details = $this->website_details[0];
-
-			// Set default sync types if they are empty.
-			$this->set_default_sync_types();
-			$this->website_details['sync_url_types'] = json_decode( $this->website_details['sync_url_types'], true );
-		}
-
-		// Save group uuids. If website_details request fails, we have at least those.
-		if ( ! empty( $this->website_details['auto_detection_group']['uuid'] ) &&
-			! empty( $this->website_details['manual_detection_group']['uuid'] )
-		) {
-			$groups = array(
-				'auto_detection_group'   => $this->website_details['auto_detection_group']['uuid'],
-				'manual_detection_group' => $this->website_details['manual_detection_group']['uuid'],
-			);
-			update_option( WCD_WEBSITE_GROUPS, $groups );
-		}
-	}
+    /**
+     * Get Website details.
+     *
+     * @return array The website details.
+     */
+    public function get_website_details() {
+	    $args = array(
+		    'action' => 'get_website_details',
+		    // domain sent at mm_api.
+	    );
+        $website_details = $this->api_v1( $args );
+        if(isset($website_details[0]['sync_url_types'])) {
+            $website_details[0]['sync_url_types'] = json_decode($website_details[0]['sync_url_types'],1);
+        }
+	    return $website_details;
+    }
 
 	/** View of tabs
 	 *

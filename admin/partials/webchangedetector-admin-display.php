@@ -102,7 +102,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get the account details.
-		$account_details = $wcd->get_account();
+		$account_details = $wcd->get_account( true );
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) { ?>
@@ -121,17 +121,53 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Check if plugin has to be updated.
-		if ( ! empty( $account_details['message'] ) && 'update plugin' === $account_details['message'] ) {
+		if ( 'update plugin' === $account_details ) {
 			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
             WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
 			wp_die();
 		}
 
 		// Check if account is activated and if the api key is authorized.
-		if ( ! empty( $account_details['message'] ) && ( 'ActivateAccount' === $account_details['message'] || 'unauthorized' === $account_details['message'] ) ) {
-			$wcd->show_activate_account( $account_details['message'] );
+		if ( 'ActivateAccount' === $account_details || 'unauthorized' === $account_details ) {
+			$wcd->show_activate_account( $account_details );
 			return false;
 		}
+
+
+        // Get website details and create them if we don't have them yet.
+		$wcd->website_details = $wcd->get_website_details()[0] ?? false;
+        if(!$wcd->website_details) {
+	        $success = $wcd->create_website_and_groups();
+	        $wcd->website_details = $wcd->get_website_details()[0] ?? false;
+	        $wcd->set_default_sync_types();
+            $wcd->sync_posts(true);
+        }
+
+        // We can't get the website. So we exit with an error.
+        if(empty($wcd->website_details)) {
+	        echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your account. Please contact us.</p></div>';
+            return;
+        }
+
+        // Get the groups.
+        $groups = get_option(WCD_WEBSITE_GROUPS);
+
+        if(empty($groups) || empty($groups['auto_detection_group']) || empty($groups['manual_detection_group'])) {
+	        $groups = array(
+		        'auto_detection_group'   => $wcd->website_details['auto_detection_group']['uuid'] ?? false,
+		        'manual_detection_group' => $wcd->website_details['manual_detection_group']['uuid'] ?? false,
+	        );
+            update_option(WCD_WEBSITE_GROUPS, $groups, false);
+
+        }
+
+		$wcd->monitoring_group_uuid = $groups['auto_detection_group'] ?? false;
+		$wcd->manual_group_uuid     = $groups['manual_detection_group'] ?? false;
+
+        if(!$wcd->manual_group_uuid || !$wcd->monitoring_group_uuid) {
+	        echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your URL settings. Please contact us.</p></div>';
+	        return;
+        }
 
 		// Show low credits.
 		$usage_percent = 0;
@@ -149,23 +185,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Set the website details class object.
-		$wcd->set_website_details();
+		//$wcd->set_website_details();
 
-		$wcd->monitoring_group_uuid = ! empty( $wcd->website_details['auto_detection_group']['uuid'] ) ? $wcd->website_details['auto_detection_group']['uuid'] : null;
-		$wcd->manual_group_uuid     = ! empty( $wcd->website_details['manual_detection_group']['uuid'] ) ? $wcd->website_details['manual_detection_group']['uuid'] : null;
+		//$wcd->monitoring_group_uuid = ! empty( $wcd->website_details['auto_detection_group']['uuid'] ) ? $wcd->website_details['auto_detection_group']['uuid'] : null;
+		//$wcd->manual_group_uuid     = ! empty( $wcd->website_details['manual_detection_group']['uuid'] ) ? $wcd->website_details['manual_detection_group']['uuid'] : null;
 
 		// TODO Legacy Ids. Replace those with V2.
-		$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
-		$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
+		//$wcd->group_id            = ! empty( $wcd->website_details['manual_detection_group_id'] ) ? $wcd->website_details['manual_detection_group_id'] : null;
+		//$wcd->monitoring_group_id = ! empty( $wcd->website_details['auto_detection_group_id'] ) ? $wcd->website_details['auto_detection_group_id'] : null;
 
 		// If we (for whatever reason) don't get the uuids, take them from wp_option.
-		if ( is_null( $wcd->monitoring_group_uuid ) || is_null( $wcd->manual_group_uuid ) ) {
+		/*if ( is_null( $wcd->monitoring_group_uuid ) || is_null( $wcd->manual_group_uuid ) ) {
 			$group_uuids = get_option( 'wcd_website_groups' );
 			if ( $group_uuids && $group_uuids['auto_detection_group'] && $group_uuids['manual_detection_group'] ) {
 				$wcd->monitoring_group_uuid = $group_uuids['auto_detection_group'];
 				$wcd->manual_group_uuid     = $group_uuids['manual_detection_group'];
 			}
-		}
+		}*/
 
 		// If we don't have the website for any reason we show an error message.
 		if ( empty( $wcd->website_details ) ) {
