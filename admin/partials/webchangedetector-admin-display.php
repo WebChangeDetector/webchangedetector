@@ -904,21 +904,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<input type="submit" class="button" value="Show">
 						</form>
 						<?php
-						$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
-                                        They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_add_post_type',
-							'wizard_settings_account_details',
-							false,
-							false,
-							'left top-minus-100 left-plus-400'
-						);
+
 
 					} else {
 						?>
 						<p>No more post types found</p>
-					<?php } ?>
+					<?php }
+
+					$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
+                                        They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
+					$wcd->print_wizard(
+						$wizard_text,
+						'wizard_settings_add_post_type',
+						'wizard_settings_account_details',
+						false,
+						false,
+						'left top-minus-100 left-plus-400'
+					);?>
 				</div>
 
 				<div class="box-plain no-border">
