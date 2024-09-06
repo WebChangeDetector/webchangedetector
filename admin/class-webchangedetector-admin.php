@@ -16,7 +16,6 @@ class WebChangeDetector_Admin {
 
 	const API_TOKEN_LENGTH = 10;
 
-	const LIMIT_QUEUE_ROWS  = 50;
 	const VALID_WCD_ACTIONS = array(
 		'reset_api_token',
 		're-add-api-token',
@@ -84,15 +83,6 @@ class WebChangeDetector_Admin {
 	private $plugin_name;
 
 	/**
-	 * The manual checks group.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      int $group_id The manual checks group id.
-	 */
-	//public $group_id;
-
-	/**
 	 * The monitoring checks group uuid.
 	 *
 	 * @since    1.0.0
@@ -101,15 +91,6 @@ class WebChangeDetector_Admin {
 	 */
 	public $monitoring_group_uuid;
 
-
-	/**
-	 * Array with the group_ids.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      array $groups_ids An array with the group_uuids.
-	 */
-	public $groups_ids;
 	/**
 	 * The manual checks group uuid.
 	 *
@@ -118,15 +99,6 @@ class WebChangeDetector_Admin {
 	 * @var      string $manual_group_uuid The manual checks group uuid.
 	 */
 	public $manual_group_uuid;
-
-	/**
-	 * The auto checks group id.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      int $group_id The manual checks group id.
-	 */
-	//public $monitoring_group_id;
 
 	/**
 	 * The version of this plugin.
@@ -430,7 +402,7 @@ class WebChangeDetector_Admin {
 			die( 'Busted!' );
 		}
 
-		$this->post_urls( $_POST, false );
+		$this->post_urls( $_POST );
 		die();
 	}
 
@@ -1052,7 +1024,7 @@ class WebChangeDetector_Admin {
 
 		// Init sync urls if we don't have them yet.
 		if ( empty( $this->website_details['sync_url_types'] ) ) {
-			return [];
+			return array();
 		}
 
 		// Get all WP post_types.
@@ -1062,7 +1034,6 @@ class WebChangeDetector_Admin {
 			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
 
 			// Get Posts.
-
 			foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
 				if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 
@@ -1164,7 +1135,7 @@ class WebChangeDetector_Admin {
 
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
-			set_transient( 'wcd_synced_posts', $synced_posts, 3600 );
+			set_transient( 'wcd_synced_posts', $synced_posts, 60 );
 
 			return $synced_posts;
 		}
@@ -1261,23 +1232,23 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function set_default_sync_types() {
-		if ( !empty($this->website_details) && empty( $this->website_details['sync_url_types'] ) ) {
+		if ( ! empty( $this->website_details ) && empty( $this->website_details['sync_url_types'] ) ) {
 			$this->website_details['sync_url_types'] = array(
-                array(
-                    'url_type_slug'  => 'types',
-                    'url_type_name'  => 'Post Types',
-                    'post_type_slug' => 'posts',
-                    'post_type_name' => $this->get_post_type_name( 'posts' ),
-                ),
-                array(
-                    'url_type_slug'  => 'types',
-                    'url_type_name'  => 'Post Types',
-                    'post_type_slug' => 'pages',
-                    'post_type_name' => $this->get_post_type_name( 'pages' ),
-                ),
+				array(
+					'url_type_slug'  => 'types',
+					'url_type_name'  => 'Post Types',
+					'post_type_slug' => 'posts',
+					'post_type_name' => $this->get_post_type_name( 'posts' ),
+				),
+				array(
+					'url_type_slug'  => 'types',
+					'url_type_name'  => 'Post Types',
+					'post_type_slug' => 'pages',
+					'post_type_name' => $this->get_post_type_name( 'pages' ),
+				),
 			);
 
-            $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+			$this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
 	}
 
@@ -1847,10 +1818,9 @@ class WebChangeDetector_Admin {
 	}
 
 	/** Save url settings.
+	 *  TODO: Optional save settings for monitoring and manual checks.
 	 *
 	 * @param array $postdata The postdata.
-	 * @param array $website_details The website details.
-	 * @param bool  $save_both_groups Save monitoring or manual group or both.
 	 *
 	 * @return void
 	 */
@@ -1893,11 +1863,10 @@ class WebChangeDetector_Admin {
 		}
 
 		$group_id_website_details = sanitize_text_field( $postdata['group_id'] );
-        WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
+		WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 
-        // TODO Make return to show the result.
-        echo '<div class="updated notice"><p>Settings saved.</p></div>';
-
+		// TODO Make return to show the result.
+		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
 	/** Print the wizard.
@@ -2013,22 +1982,22 @@ class WebChangeDetector_Admin {
 		<?php
 	}
 
-    /**
-     * Get Website details.
-     *
-     * @return array The website details.
-     */
-    public function get_website_details() {
-	    $args = array(
-		    'action' => 'get_website_details',
-		    // domain sent at mm_api.
-	    );
-        $website_details = $this->api_v1( $args );
-        if(isset($website_details[0]['sync_url_types'])) {
-            $website_details[0]['sync_url_types'] = json_decode($website_details[0]['sync_url_types'],1);
-        }
-	    return $website_details;
-    }
+	/**
+	 * Get Website details.
+	 *
+	 * @return array The website details.
+	 */
+	public function get_website_details() {
+		$args = array(
+			'action' => 'get_website_details',
+			// domain sent at mm_api.
+		);
+		$website_details = $this->api_v1( $args );
+		if ( isset( $website_details[0]['sync_url_types'] ) ) {
+			$website_details[0]['sync_url_types'] = json_decode( $website_details[0]['sync_url_types'], 1 );
+		}
+		return $website_details;
+	}
 
 	/** View of tabs
 	 *
