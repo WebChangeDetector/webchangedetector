@@ -6,7 +6,7 @@
     margin-bottom: 30px;
 }
 
-#toplevel_page_webchangedetector .wp-submenu li:last-child a{
+#toplevel_page_webchangedetector .wp-submenu li:nth-child(8) a{ /* Upgrade account link */
     color: #3eb43e;
 }
 

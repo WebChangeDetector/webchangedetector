@@ -524,6 +524,9 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string|null
 	 */
 	public function get_upgrade_url() {
+        if(!$this->is_allowed('upgrade_account')) {
+            return false;
+        }
 		$upgrade_url = get_option( 'wcd_upgrade_url' );
 		if ( ! $upgrade_url ) {
 			$account_details = $this->get_account();

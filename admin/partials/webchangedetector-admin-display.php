@@ -964,7 +964,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-					} elseif ( ! $wcd->website_details['enable_limits'] ) {
+					} elseif ( ! $wcd->website_details['enable_limits'] && $wcd->is_allowed('upgrade_account')) {
 						?>
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>
