@@ -40,7 +40,7 @@ class WebChangeDetector_Public {
 	 */
 	public function verify_website() {
 
-		$verify_string = get_option( 'webchangedetector_verify_secret' );
+		$verify_string = get_option( WCD_VERIFY_SECRET );
 
 		if ( ! empty( $_GET['wcd-verify'] ) && ! empty( $verify_string ) ) {
 			echo wp_json_encode( $verify_string );

@@ -331,7 +331,7 @@ class WebChangeDetector_API_V2 {
 	 * @param bool   $is_web Call web interface.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false, ) {
+	private static function api_v2( $post, $method = 'POST', $is_web = false ) {
 		$api_token = get_option( 'webchangedetector_api_token' );
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.

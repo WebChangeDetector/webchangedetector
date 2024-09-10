@@ -27,7 +27,7 @@ $this->print_wizard(
 
 $weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 
-$auto_update_settings = get_option( 'wcd_auto_update_settings' );
+$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 
 if ( ! $auto_update_settings ) { // Set defaults.
 	$auto_update_settings['auto_update_checks_enabled']   = '';

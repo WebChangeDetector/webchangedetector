@@ -27,8 +27,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		echo '<h1>WebChange Detector</h1>';
 
 		// Validate wcd_action and nonce.
-		$wcd_action = null;
 		$postdata   = array();
+		$wcd_action = null;
 		if ( isset( $_POST['wcd_action'] ) ) {
 			$wcd_action = sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) );
 			check_admin_referer( $wcd_action );
@@ -37,7 +37,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				return;
 			}
 		}
-
 		$wcd = new WebChangeDetector_Admin();
 
 		// Unslash postdata.
@@ -66,7 +65,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'reset_api_token':
-				delete_option(WCD_WP_OPTION_KEY_API_TOKEN);
+				delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
+				delete_option( WCD_WEBSITE_GROUPS );
+				delete_option( WCD_OPTION_UPDATE_STEP_SETTINGS );
+				delete_option( WCD_AUTO_UPDATE_SETTINGS );
+                delete_option( WCD_ALLOWANCES );
 				break;
 
 			case 're-add-api-token':
@@ -140,6 +143,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
 			$wcd->set_default_sync_types();
 			$wcd->sync_posts( true );
+		}
+
+		if ( ! empty( $wcd->website_details['allowances'] ) ) {
+			update_option( 'wcd_allowances', $wcd->website_details['allowances'] );
 		}
 
 		// We can't get the website. So we exit with an error.
@@ -236,7 +243,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'update_detection_step':
-				update_option( 'webchangedetector_update_detection_step', sanitize_text_field( $postdata['step'] ) );
+				update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $postdata['step'] ) );
 				break;
 
 			case 'take_screenshots':
@@ -367,7 +374,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				$wcd->get_dashboard_view( $account_details );
+				if ( $wcd->is_allowed( 'dashboard_view' ) ) {
+					$wcd->get_dashboard_view( $account_details );
+				}
 				break;
 
 			/********************
@@ -375,6 +384,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector-change-detections':
+				if ( ! $wcd->is_allowed( 'change_detections_view' ) ) {
+					break;
+				}
+
 				$from = gmdate( 'Y-m-d', strtotime( '- 7 days' ) );
 				if ( isset( $_GET['from'] ) ) {
 					$from = sanitize_text_field( wp_unslash( $_GET['from'] ) );
@@ -536,15 +549,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</div>
 					</div>
 				</div>
-
-				<div class="sidebar">
-					<div class="account-box">
-						<?php include 'templates/account.php'; ?>
-					</div>
-					<div class="help-box">
-						<?php include 'templates/help-change-detection.php'; ?>
-					</div>
-				</div>
 				<div class="clear"></div>
 
 				<?php
@@ -555,6 +559,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			*/
 
 			case 'webchangedetector-update-settings':
+				if ( ! $wcd->is_allowed( 'manual_checks_view' ) ) {
+					break;
+				}
 				// Disable settings if this website has no permissions.
 				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
 					echo 'Settings for Manual Checks are disabled by your API Token.';
@@ -632,14 +639,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				?>
 				</div>
 
-				<div class="sidebar">
-					<div class="account-box">
-						<?php include 'templates/account.php'; ?>
-					</div>
-					<div class="help-box">
-						<?php include 'templates/help-update.php'; ?>
-					</div>
-				</div>
 				<div class="clear"></div>
 				<?php
 				break;
@@ -667,15 +666,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<?php
 				$wcd->get_url_settings( true );
 				?>
-				</div>
-
-				<div class="sidebar">
-					<div class="account-box">
-						<?php include 'templates/account.php'; ?>
-					</div>
-					<div class="help-box">
-						<?php include 'templates/help-auto.php'; ?>
-					</div>
 				</div>
 				<div class="clear"></div>
 				<?php
@@ -801,14 +791,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</div>
 					</div>
 				</div>
-				<div class="sidebar">
-					<div class="account-box">
-						<?php include 'templates/account.php'; ?>
-					</div>
-					<div class="help-box">
-						<?php include 'templates/help-logs.php'; ?>
-					</div>
-				</div>
 				<div class="clear"></div>
 				<?php
 				break;
@@ -905,11 +887,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</form>
 						<?php
 
-
 					} else {
 						?>
 						<p>No more post types found</p>
-					<?php }
+						<?php
+					}
 
 					$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
                                         They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
@@ -920,60 +902,61 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						false,
 						false,
 						'left top-minus-100 left-plus-400'
-					);?>
-				</div>
+					);
+				?>
+					</div>
 
-				<div class="box-plain no-border">
-					<h2>Show URLs from taxonomies</h2>
-					<p>Missing taxonomies like categories or tags? Select them here and they appear in the URL list to select for the checks.</p>
-					<?php
+					<div class="box-plain no-border">
+						<h2>Show URLs from taxonomies</h2>
+						<p>Missing taxonomies like categories or tags? Select them here and they appear in the URL list to select for the checks.</p>
+						<?php
 
-					// Add Taxonomies.
-					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-					foreach ( $taxonomies as $taxonomy ) {
-						$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
-						$show_taxonomy    = false;
-						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
-								$show_taxonomy = true;
+						// Add Taxonomies.
+						$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
+						foreach ( $taxonomies as $taxonomy ) {
+							$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
+							$show_taxonomy    = false;
+							foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+								if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
+									$show_taxonomy = true;
+								}
+							}
+							if ( $wp_taxonomy_slug && ! $show_taxonomy ) {
+								$available_taxonomies[] = $taxonomy;
 							}
 						}
-						if ( $wp_taxonomy_slug && ! $show_taxonomy ) {
-							$available_taxonomies[] = $taxonomy;
-						}
-					}
-					if ( ! empty( $available_taxonomies ) ) {
-						?>
-						<form method="post">
-							<input type="hidden" name="wcd_action" value="add_post_type">
-							<?php wp_nonce_field( 'add_post_type' ); ?>
-							<select name="post_type">
-								<?php
-								foreach ( $available_taxonomies as $available_taxonomy ) {
-									$current_taxonomy_slug = $wcd->get_post_type_slug( $available_taxonomy );
-									$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
-									$add_post_type         = wp_json_encode(
-										array(
+						if ( ! empty( $available_taxonomies ) ) {
+							?>
+							<form method="post">
+								<input type="hidden" name="wcd_action" value="add_post_type">
+								<?php wp_nonce_field( 'add_post_type' ); ?>
+								<select name="post_type">
+									<?php
+									foreach ( $available_taxonomies as $available_taxonomy ) {
+										$current_taxonomy_slug = $wcd->get_post_type_slug( $available_taxonomy );
+										$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
+										$add_post_type         = wp_json_encode(
 											array(
-												'url_type_slug' => 'taxonomies',
-												'url_type_name' => 'Taxonomies',
-												'post_type_slug' => $current_taxonomy_slug,
-												'post_type_name' => $current_taxonomy_name,
-											),
-										)
-									);
-									?>
-									<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
-								<?php } ?>
-							</select>
-							<input type="submit" class="button" value="Add">
-						</form>
-						<?php
-					} else {
-						?>
-						<p>No more taxonomies found</p>
-					<?php } ?>
-				</div>
+												array(
+													'url_type_slug' => 'taxonomies',
+													'url_type_name' => 'Taxonomies',
+													'post_type_slug' => $current_taxonomy_slug,
+													'post_type_name' => $current_taxonomy_name,
+												),
+											)
+										);
+										?>
+										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
+									<?php } ?>
+								</select>
+								<input type="submit" class="button" value="Add">
+							</form>
+							<?php
+						} else {
+							?>
+							<p>No more taxonomies found</p>
+						<?php } ?>
+					</div>
 
 					<?php
 
@@ -1007,13 +990,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				?>
 
 				</div>
-				<div class="sidebar">
-					<div class="account-box">
-						<?php include 'templates/account.php'; ?>
-
-					</div>
-				</div>
 				<div class="clear"></div>
+
 				<?php
 				break;
 
