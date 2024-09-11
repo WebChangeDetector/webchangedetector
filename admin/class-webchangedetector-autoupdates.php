@@ -252,16 +252,39 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Check if we do updates at current times.
-		if ( current_time( 'H:i' ) < $auto_update_settings['auto_update_checks_from'] ||
-			current_time( 'H:i' ) > $auto_update_settings['auto_update_checks_to'] ) {
-			WebChangeDetector_Admin::error_log(
-				'Canceling auto updates: ' . current_time( 'H:i' ) .
-				' is not between ' . $auto_update_settings['auto_update_checks_from'] .
-				' and ' . $auto_update_settings['auto_update_checks_to']
-			);
-			$this->set_lock();
-			return;
+
+		// Get the current time in the same format (HH:MM)
+		$current_time = current_time( 'H:i');
+
+		// Convert the times to timestamps for comparison
+		$from_timestamp = strtotime($auto_update_settings['auto_update_checks_from']);
+		$to_timestamp = strtotime($auto_update_settings['auto_update_checks_to']);
+		$current_timestamp = strtotime($current_time);
+
+		// Check if current time is between from_time and to_time
+		if ($from_timestamp < $to_timestamp) {
+			// Case 1: Time range is on the same day
+			if ($current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp) {
+				WebChangeDetector_Admin::error_log(
+					'Canceling auto updates: ' . current_time( 'H:i' ) .
+					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
+					' and ' . $auto_update_settings['auto_update_checks_to']
+				);
+				$this->set_lock();
+				return;
+			}
+		} else {
+			// Case 2: Time range spans midnight
+			$to_timestamp = strtotime($auto_update_settings['auto_update_checks_to'] . ' +1 day');
+			if (!($current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp)) {
+				WebChangeDetector_Admin::error_log(
+					'Canceling auto updates: ' . current_time( 'H:i' ) .
+					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
+					' and ' . $auto_update_settings['auto_update_checks_to']
+				);
+				$this->set_lock();
+				return;
+			}
 		}
 
 		// Other early returns.

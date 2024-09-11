@@ -313,7 +313,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
 					}
 				} else {
-					echo '<div class="error notice"><p>Sorry, something went wrong. Please try again.</p></div>';
+					echo '<div class="error notice"><p>' . $results['message'] . '</p></div>';
 				}
 				break;
 
