@@ -109,25 +109,30 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) { ?>
-			<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
-				<h1>Oooops!</h1>
-				<p>Something went wrong. Please try to re-add your api token.</p>
-				<form method="post">
-					<input type="hidden" name="wcd_action" value="reset_api_token">
-					<?php wp_nonce_field( 'reset_api_token' ); ?>
-					<input type="submit" value="Reset API token" class="button button-delete">
-				</form>
-			</div>
-
+            <div class="notice notice-error">
+                <p>
+                    Something went wrong. Please try to re-add your api token.
+                    <form method="post">
+                        <input type="hidden" name="wcd_action" value="reset_api_token">
+                        <?php wp_nonce_field( 'reset_api_token' ); ?>
+                        <input type="submit" value="Reset API token" class="button button-delete">
+                    </form>
+                </p>
+            </div>
 			<?php
-			wp_die();
+			return;
 		}
 
 		// Check if plugin has to be updated.
-		if ( 'update plugin' === $account_details ) {
-			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
-            WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
-			wp_die();
+		if ( 'update plugin' === $account_details ) { ?>
+			<div class="notice notice-error">
+                <p>
+                    There are major updates in our system which requires to update the plugin
+                    WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.
+                </p>
+            </div>
+            <?php
+			return;
 		}
 
 		// Check if account is activated and if the api key is authorized.
@@ -143,22 +148,61 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
 
             // Check if we are only allowed to sync the frontpage.
-            if(!empty($wcd->website_details['allowances']['only_frontpage']) && $wcd->website_details['allowances']['only_frontpage']) {
+            if($wcd->is_allowed('only_frontpage')) {
 	            $wcd->set_default_sync_types(true);
             } else {
 			    $wcd->set_default_sync_types();
             }
-			$wcd->sync_posts( true );
-		}
 
-		if ( ! empty( $wcd->website_details['allowances'] ) ) {
-			update_option( 'wcd_allowances', $wcd->website_details['allowances'] );
+            // Make the inital post sync
+			$urls = $wcd->sync_posts( true );
+
+            // If only the frontpage is allowed, we activate the URLs.
+			if($wcd->is_allowed('only_frontpage')) {
+                if(!empty($urls[0])) {
+                    $update_urls = [
+                            'desktop-'.$urls[0]['url_id'] => 1,
+                            'mobile-'.$urls[0]['url_id'] => 1,
+                            'group_id' => $wcd->website_details['manual_detection_group']['uuid'],
+                    ];
+	                $wcd->post_urls($update_urls);
+                }
+			}
+
+            // Set default auto-update settings
+            $auto_update_settings = get_option(WCD_AUTO_UPDATE_SETTINGS);
+
+			if ( ! $auto_update_settings ) { // Set defaults.
+				$auto_update_settings['auto_update_checks_enabled']   = '';
+				$auto_update_settings['auto_update_checks_from']      = '8:00';
+				$auto_update_settings['auto_update_checks_to']        = '20:00';
+				$auto_update_settings['auto_update_checks_monday']    = 'on';
+				$auto_update_settings['auto_update_checks_tuesday']   = 'on';
+				$auto_update_settings['auto_update_checks_wednesday'] = 'on';
+				$auto_update_settings['auto_update_checks_thursday']  = 'on';
+				$auto_update_settings['auto_update_checks_friday']    = 'on';
+				$auto_update_settings['auto_update_checks_saturday']  = '';
+				$auto_update_settings['auto_update_checks_sunday']    = '';
+				$auto_update_settings['auto_update_checks_emails']    = get_option( 'admin_email' );
+                update_option(WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings);
+			}
 		}
 
 		// We can't get the website. So we exit with an error.
-		if ( empty( $wcd->website_details ) ) {
-			echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your account. Please contact us.</p></div>';
+		if ( empty( $wcd->website_details ) ) { ?>
+			<div class="notice notice-error">
+                <p>
+                    Sorry, we couldn't find your website details. Please contact us at
+                    <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
+                </p>
+            </div>
+            <?php
 			return;
+		}
+
+		// Save the allowances to the db. We need this for the navigation.
+		if ( ! empty( $wcd->website_details['allowances'] ) ) {
+			update_option( 'wcd_allowances', ($wcd->website_details['allowances']));
 		}
 
 		// Get the groups.
@@ -380,9 +424,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				if ( $wcd->is_allowed( 'dashboard_view' ) ) {
-					$wcd->get_dashboard_view( $account_details );
-				}
+                $wcd->get_dashboard_view( $account_details );
 				break;
 
 			/********************

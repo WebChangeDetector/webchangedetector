@@ -191,7 +191,8 @@ class WebChangeDetector_Admin {
 
 		// We get the allowances from the options as the website_details are not there yet.
 		$allowances = get_option( 'wcd_allowances' );
-		if ( $allowances ) {
+
+		if ( !empty($allowances)) {
 			$allowances = json_decode( $allowances, 1 );
 		}
 		add_menu_page(
@@ -1046,7 +1047,7 @@ class WebChangeDetector_Admin {
         if(!empty($this->website_details['allowances']['only_frontpage']) && $this->website_details['allowances']['only_frontpage'] ) {
 	        $array[] = array(
 		        'url'             => $this::get_domain_from_site_url(),
-		        'html_title'      => get_option('blog_title'),
+		        'html_title'      => get_bloginfo('name'),
 		        'cms_resource_id' => 0,
 		        'url_type'        => 'types',
 		        'url_category'    => 'Frontpage',
@@ -2066,24 +2067,11 @@ class WebChangeDetector_Admin {
 		if ( isset( $website_details[0]['sync_url_types'] ) ) {
 			$website_details[0]['sync_url_types'] = json_decode( $website_details[0]['sync_url_types'], 1 );
 		}
+
 		return $website_details;
 	}
 
 	/** Check if current account is allowed for view.
-	 * Possible strings: (TODO make defines for them)
-	 *  - change_detections_view
-	 *  - manual_checks_view
-	 *  - manual_checks_start
-	 *  - manual_checks_settings
-	 *  - manual_checks_urls
-	 *  - monitoring_checks_view
-	 *  - monitoring_checks_settings
-	 *  - monitoring_checks_urls
-	 *  - logs_view
-	 *  - settings_view
-	 *  - settings_add_urls
-	 *  - settings_account_settings
-	 *  - upgrade_account
 	 *
 	 * @param string $allowed The allowance string.
 	 * @return mixed|true
@@ -2091,7 +2079,7 @@ class WebChangeDetector_Admin {
 	public function is_allowed( $allowed ) {
 		$allowances = $this->website_details['allowances'] ?? false;
 
-		// Set default allowances if we don't have any yet.
+		// Set default allowances if we don't have any yet. Should't happen as they come from the api.
 		if ( empty( $allowances ) ) {
 			$allowances = array(
 				'change_detections_view'     => 1,
@@ -2108,10 +2096,10 @@ class WebChangeDetector_Admin {
 				'settings_account_settings'  => 1,
 				'upgrade_account'            => 1,
 				'wizard_start'               => 1,
+                'only_frontpage'            => 0
 			);
-		} else {
-			$allowances = json_decode( $allowances, true );
 		}
+
 		// need them as option for the admin menu.
 		update_option( 'wcd_allowances', wp_json_encode( $allowances ) );
 
@@ -2200,13 +2188,16 @@ class WebChangeDetector_Admin {
 		if ( $auto_group['enabled'] ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
 		}
-		$auto_update_settings    = get_option( WCD_AUTO_UPDATE_SETTINGS );
+
+
+
+		$auto_update_settings    =  WebChangeDetector_Autoupdates::get_auto_update_settings();
 		$max_auto_update_checks  = 0;
 		$amount_auto_update_days = 0;
 
-		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'] ) {
+		if ( (! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'])) {
 			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
 					++$amount_auto_update_days;
 				}
 			}
@@ -2258,7 +2249,7 @@ class WebChangeDetector_Admin {
 				);
 
 				?>
-				<div class="box-half right">
+				<div class="box-half credit">
 					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
 						<p style="margin-top: 20px;">
 							<strong>Your Plan:</strong>
@@ -2281,7 +2272,7 @@ class WebChangeDetector_Admin {
 						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
 						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
 					</div>
-					<?php if ( $this->is_allowed( 'monitoring_view' ) ) { ?>
+					<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
 					<p>
 						<strong>Monitoring: </strong>
 						<?php
@@ -2297,8 +2288,9 @@ class WebChangeDetector_Admin {
 
 						?>
 					</p>
-			<?php } ?>
-					<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
+			        <?php } ?>
+
+					<?php if ( $this->is_allowed( 'manual_checks_view' ) || (defined('WCD_AUTO_UPDATES_ENABLED') && WCD_AUTO_UPDATES_ENABLED)) { ?>
 					<p>
 						<strong>Auto update checks: </strong>
 						<?php

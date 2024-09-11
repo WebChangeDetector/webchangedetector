@@ -25,23 +25,9 @@ $this->print_wizard(
 	'bottom  top-minus-150 left-plus-300'
 );
 
-$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
-
 $auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 
-if ( ! $auto_update_settings ) { // Set defaults.
-	$auto_update_settings['auto_update_checks_enabled']   = '';
-	$auto_update_settings['auto_update_checks_from']      = '10:00';
-	$auto_update_settings['auto_update_checks_to']        = '16:00';
-	$auto_update_settings['auto_update_checks_monday']    = 'checked';
-	$auto_update_settings['auto_update_checks_tuesday']   = 'checked';
-	$auto_update_settings['auto_update_checks_wednesday'] = 'checked';
-	$auto_update_settings['auto_update_checks_thursday']  = 'checked';
-	$auto_update_settings['auto_update_checks_friday']    = 'checked';
-	$auto_update_settings['auto_update_checks_saturday']  = '';
-	$auto_update_settings['auto_update_checks_sunday']    = '';
-	$auto_update_settings['auto_update_checks_emails']    = get_option( 'admin_email' );
-}
+$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 foreach ( $weekdays as $weekday ) {
 	if ( ! isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 		$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
