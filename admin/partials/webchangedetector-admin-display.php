@@ -141,7 +141,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		if ( ! $wcd->website_details ) {
 			$success              = $wcd->create_website_and_groups();
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
-			$wcd->set_default_sync_types();
+
+            // Check if we are only allowed to sync the frontpage.
+            if(!empty($wcd->website_details['allowances']['only_frontpage']) && $wcd->website_details['allowances']['only_frontpage']) {
+	            $wcd->set_default_sync_types(true);
+            } else {
+			    $wcd->set_default_sync_types();
+            }
 			$wcd->sync_posts( true );
 		}
 
