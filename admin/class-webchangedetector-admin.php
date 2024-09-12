@@ -1519,6 +1519,8 @@ class WebChangeDetector_Admin {
 				false,
 				'bottom top-minus-100 left-plus-100'
 			);
+
+            if((! $monitoring_group && $this->is_allowed('manual_checks_urls')) || ($monitoring_group && $this->is_allowed('monitoring_checks_urls'))) {
 			?>
 
 			<div class="wcd-frm-settings box-plain">
@@ -1738,6 +1740,7 @@ class WebChangeDetector_Admin {
 				</script>
 				<?php } ?>
 			</div>
+            <?php } ?>
 		</div>
 
 		<?php
@@ -1766,7 +1769,7 @@ class WebChangeDetector_Admin {
 			);
 
 			// Start change detection button.
-			if ( $this->website_details['allow_manual_detection'] ) {
+			if ( $this->is_allowed('manual_checks_start') ) {
 				?>
 					<form method="post">
 						<?php wp_nonce_field( 'start_manual_checks' ); ?>

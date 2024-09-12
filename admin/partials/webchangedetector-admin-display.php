@@ -174,7 +174,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			if ( ! $auto_update_settings ) { // Set defaults.
 				$auto_update_settings['auto_update_checks_enabled']   = '';
-				$auto_update_settings['auto_update_checks_from']      = '8:00';
+				$auto_update_settings['auto_update_checks_from']      = '08:00';
 				$auto_update_settings['auto_update_checks_to']        = '20:00';
 				$auto_update_settings['auto_update_checks_monday']    = 'on';
 				$auto_update_settings['auto_update_checks_tuesday']   = 'on';
