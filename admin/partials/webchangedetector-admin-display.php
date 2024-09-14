@@ -202,7 +202,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Save the allowances to the db. We need this for the navigation.
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {
-			update_option( 'wcd_allowances', ($wcd->website_details['allowances']));
+
+			update_option( WCD_ALLOWANCES, json_decode($wcd->website_details['allowances'],1));
+
 		}
 
 		// Get the groups.
