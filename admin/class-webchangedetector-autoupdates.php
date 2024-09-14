@@ -452,6 +452,9 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
 			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
 		}
+		if ( ! defined( 'WCD_ALLOWANCES' ) ) {
+			define( 'WCD_ALLOWANCES', 'wcd_allowances' );
+		}
 		if ( ! defined( 'WCD_HOUR_IN_SECONDS' ) ) {
 			define( 'WCD_HOUR_IN_SECONDS', 3600 );
 		}

@@ -186,7 +186,14 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function wcd_plugin_setup_menu() {
+
 		require_once 'partials/webchangedetector-admin-display.php';
+
+		// We get the allowances from the options as the website_details are not there yet.
+		$allowances = get_option( 'wcd_allowances' );
+		if ( $allowances ) {
+			$allowances = json_decode( $allowances, 1 );
+		}
 		add_menu_page(
 			'WebChange Detector',
 			'WebChange Detector',
@@ -195,62 +202,74 @@ class WebChangeDetector_Admin {
 			'wcd_webchangedetector_init',
 			plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg'
 		);
+		add_submenu_page(
+			'webchangedetector',
+			'Dashboard',
+			'Dashboard',
+			'manage_options',
+			'webchangedetector',
+			'wcd_webchangedetector_init'
+		);
 
-		add_submenu_page(
-			'webchangedetector',
-			'Dashboard',
-			'Dashboard',
-			'manage_options',
-			'webchangedetector',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Change Detections',
-			'Change Detections',
-			'manage_options',
-			'webchangedetector-change-detections',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Manual Checks & Auto Update Checks',
-			'Manual Checks & Auto Update Checks',
-			'manage_options',
-			'webchangedetector-update-settings',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Monitoring',
-			'Monitoring',
-			'manage_options',
-			'webchangedetector-auto-settings',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Queue',
-			'Queue',
-			'manage_options',
-			'webchangedetector-logs',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Settings',
-			'Settings',
-			'manage_options',
-			'webchangedetector-settings',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Upgrade Account',
-			'Upgrade Account',
-			'manage_options',
-			$this->get_upgrade_url()
-		);
+		if ( $allowances && $allowances['change_detections_view'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Change Detections',
+				'Change Detections',
+				'manage_options',
+				'webchangedetector-change-detections',
+				'wcd_webchangedetector_init'
+			);
+		}
+		if ( $allowances && $allowances['manual_checks_view'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Manual Checks & Auto Update Checks',
+				'Manual Checks & Auto Update Checks',
+				'manage_options',
+				'webchangedetector-update-settings',
+				'wcd_webchangedetector_init'
+			);
+		}
+		if ( $allowances && $allowances['monitoring_checks_view'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Monitoring',
+				'Monitoring',
+				'manage_options',
+				'webchangedetector-auto-settings',
+				'wcd_webchangedetector_init'
+			);
+		}
+		if ( $allowances && $allowances['logs_view'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Queue',
+				'Queue',
+				'manage_options',
+				'webchangedetector-logs',
+				'wcd_webchangedetector_init'
+			);
+		}
+		if ( $allowances && $allowances['settings_view'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Settings',
+				'Settings',
+				'manage_options',
+				'webchangedetector-settings',
+				'wcd_webchangedetector_init'
+			);
+		}
+		if ( $allowances && $allowances['upgrade_account'] ) {
+			add_submenu_page(
+				'webchangedetector',
+				'Upgrade Account',
+				'Upgrade Account',
+				'manage_options',
+				$this->get_upgrade_url()
+			);
+		}
 		add_submenu_page(
 			null,
 			'Show Change Detection',
@@ -287,7 +306,7 @@ class WebChangeDetector_Admin {
 
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
-		update_option( 'webchangedetector_verify_secret', $validation_string, false );
+		update_option( WCD_VERIFY_SECRET, $validation_string, false );
 
 		$args = array_merge(
 			array(
@@ -484,7 +503,7 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		update_option( 'wcd_auto_update_settings', $auto_update_settings );
+		update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
 		do_action( 'wcd_save_update_group_settings', $postdata );
 
 		// Update group settings in api.
@@ -505,6 +524,9 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string|null
 	 */
 	public function get_upgrade_url() {
+        if(!$this->is_allowed('upgrade_account')) {
+            return false;
+        }
 		$upgrade_url = get_option( 'wcd_upgrade_url' );
 		if ( ! $upgrade_url ) {
 			$account_details = $this->get_account();
@@ -1419,7 +1441,7 @@ class WebChangeDetector_Admin {
 		// Show message if no urls are selected.
 		if ( ! $group_and_urls['selected_urls_count'] ) {
 			?>
-			<div class="notice notice-warning"><p>Select URLs for manual checks to get started.</p></div>
+			<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> Select URLs for manual checks to get started.</p></div>
 			<?php
 		}
 
@@ -1635,23 +1657,23 @@ class WebChangeDetector_Admin {
 								</tr>
 
 								<script> mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); </script>
+
 								<?php
 							}
-				}
-				?>
+							?>
 						</table>
 						<?php
-						if ( ! count( $urls ) ) {
-							?>
-							<div style="text-align: center; font-weight: 700; padding: 20px 0;">
-								No Urls to show.
+				} else {
+					?>
+								<div colspan="3" style="text-align: center; font-weight: 700; padding: 20px 0;">
+											No Urls to show.
 							</div>
-							<?php
-						}
-						?>
+						<?php
+				}
+				?>
 
 					</div>
-
+					<?php if ( ! empty( $urls_meta['total'] ) ) { ?>
 					<!-- Pagination -->
 					<div class="tablenav">
 						<div class="tablenav-pages">
@@ -1690,6 +1712,7 @@ class WebChangeDetector_Admin {
 						);
 					}
 				</script>
+				<?php } ?>
 			</div>
 		</div>
 
@@ -1880,7 +1903,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function print_wizard( $text, $this_id, $next_id = false, $next_link = false, $visible = false, $extra_classes = false ) {
-		if ( get_option( 'wcd_wizard' ) ) {
+		if ( get_option( 'wcd_wizard' ) && $this->is_allowed( 'wizard_start' ) ) {
 			?>
 			<div id="<?php echo esc_html( $this_id ); ?>" class="wcd-wizard  <?php echo esc_html( $extra_classes ); ?>">
 				<?php
@@ -1940,6 +1963,29 @@ class WebChangeDetector_Admin {
 	 * @param string $api_token The api token.
 	 */
 	public function get_no_account_page( $api_token = '' ) {
+		$user      = wp_get_current_user();
+		$user_meta = get_user_meta( $user->ID );
+
+		// If we have a reseller url, we get the api token from there.
+		if ( defined( 'WCD_RESELLER_URL' ) && WCD_RESELLER_URL ) {
+			$body_args = array(
+				'name_first' => ! empty( $user_meta['first_name'][0] ) ? $user_meta['first_name'][0] : 'n/a',
+				'name_last'  => ! empty( $user_meta['last_name'][0] ) ? $user_meta['last_name'][0] : 'n/a',
+				'email'      => $user->user_email,
+				'domain'     => self::get_domain_from_site_url(),
+			);
+
+			$response   = wp_remote_post( WCD_RESELLER_URL, array( 'body' => $body_args ) );
+			$subaccount = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( ! empty( $subaccount['api_token'] ) ) {
+				$this->save_api_token( $subaccount, $subaccount['api_token'] );
+				wp_safe_redirect( '/wp-admin/admin.php?page=webchangedetector' );
+				exit;
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( wp_remote_retrieve_body( $response ) ) . '</p></div>';
+				return;
+			}
+		}
 
 		if ( isset( $_POST['wcd_action'] ) && 'create_free_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
 			check_admin_referer( 'create_free_account' );
@@ -1999,6 +2045,61 @@ class WebChangeDetector_Admin {
 		return $website_details;
 	}
 
+	/** Check if current account is allowed for view.
+	 * Possible strings: (TODO make defines for them)
+	 *  - change_detections_view
+	 *  - manual_checks_view
+	 *  - manual_checks_start
+	 *  - manual_checks_settings
+	 *  - manual_checks_urls
+	 *  - monitoring_checks_view
+	 *  - monitoring_checks_settings
+	 *  - monitoring_checks_urls
+	 *  - logs_view
+	 *  - settings_view
+	 *  - settings_add_urls
+	 *  - settings_account_settings
+	 *  - upgrade_account
+	 *
+	 * @param string $allowed The allowance string.
+	 * @return mixed|true
+	 */
+	public function is_allowed( $allowed ) {
+		$allowances = $this->website_details['allowances'] ?? false;
+
+		// Set default allowances if we don't have any yet.
+		if ( empty( $allowances ) ) {
+			$allowances = array(
+				'change_detections_view'     => 1,
+				'manual_checks_view'         => 1,
+				'manual_checks_start'        => 1,
+				'manual_checks_settings'     => 1,
+				'manual_checks_urls'         => 1,
+				'monitoring_checks_view'     => 1,
+				'monitoring_checks_settings' => 1,
+				'monitoring_checks_urls'     => 1,
+				'logs_view'                  => 1,
+				'settings_view'              => 1,
+				'settings_add_urls'          => 1,
+				'settings_account_settings'  => 1,
+				'upgrade_account'            => 1,
+				'wizard_start'               => 1,
+			);
+		} else {
+			$allowances = json_decode( $allowances, true );
+		}
+		// need them as option for the admin menu.
+		update_option( 'wcd_allowances', wp_json_encode( $allowances ) );
+
+		// Return allowance value if exists.
+		if ( array_key_exists( $allowed, $allowances ) ) {
+			return $allowances[ $allowed ];
+		}
+
+		// Shouldn't get here. But if so, we allow.
+		return true;
+	}
+
 	/** View of tabs
 	 *
 	 * @return void
@@ -2009,38 +2110,51 @@ class WebChangeDetector_Admin {
 		if ( isset( $_GET['page'] ) ) {
 			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 		}
-
 		?>
 		<div class="wrap">
 			<h2 class="nav-tab-wrapper">
+				<?php if ( $this->is_allowed( 'dashboard_view' ) ) { ?>
 				<a href="?page=webchangedetector"
 					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'dashboard' ); ?> Dashboard
 				</a>
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
 				</a>
-				<a href="?page=webchangedetector-auto-settings"
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
+					<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'auto-group' ); ?> Monitoring
 				</a>
-				<a href="?page=webchangedetector-change-detections"
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'change_detections_view' ) ) { ?>
+					<a href="?page=webchangedetector-change-detections"
 					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'change-detections' ); ?> Change Detections
 				</a>
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'logs_view' ) ) { ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'logs' ); ?> Queue
 				</a>
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'settings_view' ) ) { ?>
 				<a href="?page=webchangedetector-settings"
 					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php $this->get_device_icon( 'settings' ); ?> Settings
 				</a>
+				<?php } ?>
+				<?php if ( $this->is_allowed( 'upgrade_account' ) ) { ?>
 				<a href="<?php echo esc_url( $this->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
 					<?php $this->get_device_icon( 'upgrade' ); ?> Upgrade Account
 				</a>
+				<?php } ?>
 			</h2>
 		</div>
 
@@ -2062,7 +2176,7 @@ class WebChangeDetector_Admin {
 		if ( $auto_group['enabled'] ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
 		}
-		$auto_update_settings    = get_option( 'wcd_auto_update_settings' );
+		$auto_update_settings    = get_option( WCD_AUTO_UPDATE_SETTINGS );
 		$max_auto_update_checks  = 0;
 		$amount_auto_update_days = 0;
 
@@ -2097,6 +2211,7 @@ class WebChangeDetector_Admin {
 						Perform visual checks (visual regression tests) on your WordPress website to find
 						unwanted visual changes on your web pages before anyone else sees them.
 					</p>
+					<?php if ( $this->is_allowed( 'wizard_start' ) ) { ?>
 					<p>
 						Start the Wizard to see what you can do with WebChange Detector.
 					</p>
@@ -2105,6 +2220,7 @@ class WebChangeDetector_Admin {
 						<?php wp_nonce_field( 'enable_wizard' ); ?>
 						<input type="submit" class="button button-primary" value="Start Wizard">
 					</form>
+				<?php } ?>
 				</div>
 				<?php
 				$wizard_text = '<h2>Your Account</h2>See how many checks you have left and how many checks are used with your current settings until renewal.';
@@ -2116,10 +2232,18 @@ class WebChangeDetector_Admin {
 					false,
 					'right top-plus-200 left-plus-100'
 				);
+
 				?>
-				<div class="box-half right ">
-					<p style="margin-top: 20px;"><strong>Your Plan:</strong>  <?php echo esc_html( $client_account['plan_name'] ); ?> (renews on: <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?>)</p>
-					<p style="margin-top:10px;"><strong>Used checks:</strong>
+				<div class="box-half right">
+					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
+						<p style="margin-top: 20px;">
+							<strong>Your Plan:</strong>
+							<?php echo esc_html( $client_account['plan_name'] ); ?>
+							(renews on: <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?>)
+						</p>
+					<?php } ?>
+					<p style="margin-top:10px;">
+						<strong>Used checks:</strong>
 						<?php
 						$usage_percent = 0;
 						if ( ! empty( $client_account['checks_limit'] ) ) {
@@ -2133,6 +2257,7 @@ class WebChangeDetector_Admin {
 						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
 						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
 					</div>
+					<?php if ( $this->is_allowed( 'monitoring_view' ) ) { ?>
 					<p>
 						<strong>Monitoring: </strong>
 						<?php
@@ -2148,6 +2273,8 @@ class WebChangeDetector_Admin {
 
 						?>
 					</p>
+			<?php } ?>
+					<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 					<p>
 						<strong>Auto update checks: </strong>
 						<?php
@@ -2158,7 +2285,8 @@ class WebChangeDetector_Admin {
 							<span style="color: red; font-weight: 900">Off</span>
 						<?php } ?>
 					</p>
-					<?php
+						<?php
+					}
 					$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
 					$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
 					if ( $checks_needed > $checks_available ) {
@@ -2460,6 +2588,11 @@ if ( ! defined( 'WCD_HOURS_IN_DAY' ) ) {
 if ( ! defined( 'WCD_SECONDS_IN_MONTH' ) ) {
 	// 60 * 60 * 24 * 30.
 	define( 'WCD_SECONDS_IN_MONTH', 2592000 );
+}
+
+// Option secret for domain verification.
+if ( ! defined( 'WCD_VERIFY_SECRET' ) ) {
+	define( 'WCD_VERIFY_SECRET', 'webchangedetector_verify_secret' );
 }
 
 // Option / UserMeta keys.
