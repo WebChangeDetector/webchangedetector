@@ -192,8 +192,6 @@ class WebChangeDetector_Admin {
 		// We get the allowances from the options as the website_details are not there yet.
 		$allowances = get_option( WCD_ALLOWANCES );
 
-
-
 		add_menu_page(
 			'WebChange Detector',
 			'WebChange Detector',
@@ -1114,7 +1112,7 @@ class WebChangeDetector_Admin {
 
 			// Add the data to the main array
 			$all_terms_data[] = array(
-				'url'            => $url,
+				'url'            => $this->remove_url_protocol($url),
 				'html_title'           => $term->name,
                 'url_type' => 'taxonomy',
 				'url_category'    => $taxonomy_label,
@@ -1226,6 +1224,11 @@ class WebChangeDetector_Admin {
 	        $taxonomy_posts = $this->get_all_terms_data($taxonomy_post_names);
 	        $array = array_merge($array, $taxonomy_posts);
 
+	        // Check if frontpage is already in the sync settings.
+	        $frontpage_exists = array_filter($this->website_details['sync_url_types'], function($item) {
+		        return isset($item['post_type_slug']) && $item['post_type_slug'] === 'frontpage';
+	        });
+
             // If blog is set as home page.
             if ( ! get_option( 'page_on_front' ) ) {
 
@@ -1237,7 +1240,7 @@ class WebChangeDetector_Admin {
                         foreach ( $languages as $lang_code => $lang ) {
                             // Store the home URL for each language.
                             $array[] = array(
-                                'url'             => rtrim( self::remove_url_protocol( $lang['url'] ), '/' ),
+                                'url'             => self::remove_url_protocol( $lang['url'] ),
                                 'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
                                 'url_type'        => 'frontpage',
                                 'url_category'    => 'Frontpage',
@@ -1251,7 +1254,7 @@ class WebChangeDetector_Admin {
                     $translations = pll_the_languages( array( 'raw' => 1 ) );
                     foreach ( $translations as $lang_code => $translation ) {
                         $array[] = array(
-                            'url'             => rtrim( self::remove_url_protocol( pll_home_url( $lang_code ) ), '/' ),
+                            'url'             => self::remove_url_protocol( pll_home_url( $lang_code ) ),
                             'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
                             'url_type'        => 'frontpage',
                             'url_category'    => 'Frontpage',
@@ -1259,17 +1262,12 @@ class WebChangeDetector_Admin {
                     }
                 } else {
                     $array[] = array(
-                        'url'             => rtrim( self::remove_url_protocol( get_option( 'home' ) ), '/' ),
+                        'url'             => self::remove_url_protocol( get_option( 'home' ) ),
                         'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
                         'url_type'        => 'frontpage',
                         'url_category'    => 'Frontpage',
                     );
                 }
-
-                // Check if frontpage is already in the sync settings.
-	            $frontpage_exists = array_filter($this->website_details['sync_url_types'], function($item) {
-		            return isset($item['post_type_slug']) && $item['post_type_slug'] === 'frontpage';
-	            });
 
                 // Add frontpage if it's not yet in the sync_url_types array.
                 if(empty($frontpage_exists)){
@@ -1282,9 +1280,15 @@ class WebChangeDetector_Admin {
 	                $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
                 }
 
+            } elseif( $frontpage_exists) {
+	            foreach($this->website_details['sync_url_types'] as $key => $sync_types_values) {
+                    if('frontpage' === $sync_types_values['post_type_slug']) {
+                        unset($this->website_details['sync_url_types'][$key]);
+                    }
+	            }
+	            $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
             }
         }
-
 
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
@@ -2188,6 +2192,7 @@ class WebChangeDetector_Admin {
 			// domain sent at mm_api.
 		);
 		$website_details = $this->api_v1( $args );
+
 		if ( isset( $website_details[0]['sync_url_types'] ) ) {
 			$website_details[0]['sync_url_types'] = json_decode( $website_details[0]['sync_url_types'], 1 );
 		}
@@ -2202,9 +2207,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function is_allowed( $allowed ) {
 		$allowances = $this->website_details['allowances'] ?? false;
-        if($allowances) {
-            $allowances = json_decode($allowances, 1);
-        }
+
 		// Set default allowances if we don't have any yet. Should't happen as they come from the api.
 		if ( empty( $allowances ) ) {
 			$allowances = array(

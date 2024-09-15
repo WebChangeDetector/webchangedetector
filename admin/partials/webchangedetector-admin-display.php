@@ -202,9 +202,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Save the allowances to the db. We need this for the navigation.
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {
-
-			update_option( WCD_ALLOWANCES, json_decode($wcd->website_details['allowances'],1));
-
+            update_option( WCD_ALLOWANCES, $wcd->website_details['allowances']);
 		}
 
 		// Get the groups.
@@ -289,7 +287,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'add_post_type':
 				$wcd->add_post_type( $postdata );
-				$wcd->sync_posts();
 				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
 				echo '<div class="notice notice-success"><p>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
