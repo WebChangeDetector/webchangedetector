@@ -41,8 +41,6 @@ class WebChangeDetector_Autoupdates {
 
 		$this->set_defines();
 
-
-
 		// Post updates.
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
 
@@ -244,7 +242,6 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-
 		// Check if we do updates on today's weekday.
 		if ( ! array_key_exists( 'auto_update_checks_' . strtolower( current_time( 'l' ) ), $auto_update_settings ) ) {
 			WebChangeDetector_Admin::error_log( 'Canceling auto updates: ' . strtolower( current_time( 'l' ) ) . ' is disabled.' );
@@ -252,19 +249,18 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Get the current time in the same format (HH:MM).
+		$current_time = current_time( 'H:i' );
 
-		// Get the current time in the same format (HH:MM)
-		$current_time = current_time( 'H:i');
+		// Convert the times to timestamps for comparison.
+		$from_timestamp    = strtotime( $auto_update_settings['auto_update_checks_from'] );
+		$to_timestamp      = strtotime( $auto_update_settings['auto_update_checks_to'] );
+		$current_timestamp = strtotime( $current_time );
 
-		// Convert the times to timestamps for comparison
-		$from_timestamp = strtotime($auto_update_settings['auto_update_checks_from']);
-		$to_timestamp = strtotime($auto_update_settings['auto_update_checks_to']);
-		$current_timestamp = strtotime($current_time);
-
-		// Check if current time is between from_time and to_time
-		if ($from_timestamp < $to_timestamp) {
-			// Case 1: Time range is on the same day
-			if ($current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp) {
+		// Check if current time is between from_time and to_time.
+		if ( $from_timestamp < $to_timestamp ) {
+			// Case 1: Time range is on the same day.
+			if ( $current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp ) {
 				WebChangeDetector_Admin::error_log(
 					'Canceling auto updates: ' . current_time( 'H:i' ) .
 					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
@@ -274,9 +270,9 @@ class WebChangeDetector_Autoupdates {
 				return;
 			}
 		} else {
-			// Case 2: Time range spans midnight
-			$to_timestamp = strtotime($auto_update_settings['auto_update_checks_to'] . ' +1 day');
-			if (!($current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp)) {
+			// Case 2: Time range spans midnight.
+			$to_timestamp = strtotime( $auto_update_settings['auto_update_checks_to'] . ' +1 day' );
+			if ( ! ( $current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp ) ) {
 				WebChangeDetector_Admin::error_log(
 					'Canceling auto updates: ' . current_time( 'H:i' ) .
 					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
@@ -434,7 +430,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 		// Enable auto-update checks if the defines are set.
-		if(defined('WCD_AUTO_UPDATES_ENABLED') && true === WCD_AUTO_UPDATES_ENABLED ){
+		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
 			$auto_update_settings['auto_update_checks_enabled'] = 'on';
 		}
 		return $auto_update_settings;

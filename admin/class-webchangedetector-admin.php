@@ -209,7 +209,7 @@ class WebChangeDetector_Admin {
 			'wcd_webchangedetector_init'
 		);
 
-		if ( is_array($allowances) && $allowances['change_detections_view'] ) {
+		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Change Detections',
@@ -219,7 +219,7 @@ class WebChangeDetector_Admin {
 				'wcd_webchangedetector_init'
 			);
 		}
-		if ( is_array($allowances) && $allowances['manual_checks_view'] ) {
+		if ( is_array( $allowances ) && $allowances['manual_checks_view'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Manual Checks & Auto Update Checks',
@@ -229,7 +229,7 @@ class WebChangeDetector_Admin {
 				'wcd_webchangedetector_init'
 			);
 		}
-		if ( is_array($allowances) && $allowances['monitoring_checks_view'] ) {
+		if ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Monitoring',
@@ -239,7 +239,7 @@ class WebChangeDetector_Admin {
 				'wcd_webchangedetector_init'
 			);
 		}
-		if ( is_array($allowances) && $allowances['logs_view'] ) {
+		if ( is_array( $allowances ) && $allowances['logs_view'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Queue',
@@ -249,7 +249,7 @@ class WebChangeDetector_Admin {
 				'wcd_webchangedetector_init'
 			);
 		}
-		if ( is_array($allowances) && $allowances['settings_view'] ) {
+		if ( is_array( $allowances ) && $allowances['settings_view'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Settings',
@@ -259,7 +259,7 @@ class WebChangeDetector_Admin {
 				'wcd_webchangedetector_init'
 			);
 		}
-		if ( is_array($allowances) && $allowances['upgrade_account'] ) {
+		if ( is_array( $allowances ) && $allowances['upgrade_account'] ) {
 			add_submenu_page(
 				'webchangedetector',
 				'Upgrade Account',
@@ -521,9 +521,9 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string|null
 	 */
 	public function get_upgrade_url() {
-        if(!$this->is_allowed('upgrade_account')) {
-            return false;
-        }
+		if ( ! $this->is_allowed( 'upgrade_account' ) ) {
+			return false;
+		}
 		$upgrade_url = get_option( 'wcd_upgrade_url' );
 		if ( ! $upgrade_url ) {
 			$account_details = $this->get_account();
@@ -1025,101 +1025,118 @@ class WebChangeDetector_Admin {
 		);
 	}
 
-	function get_all_posts_data($post_types) {
-		global $wpdb;
-
-		// Array to store all posts data
+	/** Get the posts.
+	 *
+	 * @param array $post_types the post_types to get.
+	 * @return array
+	 */
+	public function get_all_posts_data( $post_types ) {
+		// Array to store all posts data.
 		$all_posts_data = array();
 
-        // Get the posts.
-		$post_types_in = "'". implode("','", array_map('esc_sql', $post_types)) . "'";
+		// Define the number of posts to retrieve per batch.
+		$offset          = 0;
+		$posts_per_batch = 100; // Adjust based on your server's capacity.
+		$post_status     = 'publish'; // We're only fetching published posts.
 
-		// Define the number of posts to retrieve per batch
-		$offset = 0;
-		$posts_per_batch = 100; // Adjust based on your server's capacity
 		do {
-			// Fetch posts directly from the database
-			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT ID, post_title, post_type
-                FROM $wpdb->posts 
-                WHERE post_type IN ( $post_types_in ) 
-                AND post_status = 'publish' 
-                LIMIT %d OFFSET %d",
-					$posts_per_batch,
-					$offset
-				)
+			// Set up WP_Query arguments.
+			$args = array(
+				'post_type'      => $post_types, // Pass the array of post types.
+				'post_status'    => $post_status,
+				'posts_per_page' => $posts_per_batch,
+				'offset'         => $offset,
 			);
 
-			// If no more results, break the loop.
-			if (empty($results)) {
+			// Create a new query.
+			$query = new WP_Query( $args );
+
+			// If no posts, break the loop.
+			if ( ! $query->have_posts() ) {
 				break;
 			}
 
-			// Process each result.
-			foreach ($results as $post) {
-				// Retrieve the post URL
-				$url = get_permalink($post->ID);
+			// Process each post.
+			while ( $query->have_posts() ) {
+				$query->the_post();
 
-				$post_type_object = get_post_type_object($post->post_type);
-				$post_type_label = $post_type_object ? $post_type_object->labels->name : $post->post_type;
+				$post_id    = get_the_ID();
+				$post_title = get_the_title();
+				$post_type  = get_post_type();
+				$url        = get_permalink( $post_id );
 
-				// Add the data to the main array
+				// Get the post type label.
+				$post_type_object = get_post_type_object( $post_type );
+				$post_type_label  = $post_type_object ? $post_type_object->labels->name : $post_type;
+
+				// Add the data to the main array.
 				$all_posts_data[] = array(
-					'url'       => $this->remove_url_protocol($url),
-					'html_title'     => $post->post_title,
-					'url_type' => 'types',
-					'url_category'    => $post_type_label, // Fallback to slug if label not found
+					'url'          => $this->remove_url_protocol( $url ),
+					'html_title'   => $post_title,
+					'url_type'     => 'types',
+					'url_category' => $post_type_label,
 				);
 			}
 
-			// Increment the offset for the next batch
+			// Reset post data to avoid conflicts in global post state.
+			wp_reset_postdata();
+
+			// Increment the offset for the next batch.
 			$offset += $posts_per_batch;
 
-		} while (count($results) === $posts_per_batch);
+			// Get the count of the results.
+			$results_count = $query->post_count;
+		} while ( $results_count === $posts_per_batch );
 
-		// Return the collected data
+		// Return the collected data.
 		return $all_posts_data;
 	}
 
-	function get_all_terms_data($taxonomies) {
-		global $wpdb;
+	/** Get the taxonomies.
+	 *
+	 * @param array $taxonomies The taxonomies.
+	 * @return array
+	 */
+	public function get_all_terms_data( $taxonomies ) {
 
-		// Sanitize and prepare the taxonomies for SQL query
-		$taxonomies_in = "'" . implode("','", array_map('esc_sql', $taxonomies)) . "'";
-
-		// Array to store all terms data
+		// Array to store all terms data.
 		$all_terms_data = array();
 
-		// Fetch terms directly from the database
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT t.term_id, t.name, t.slug, tt.taxonomy 
-            FROM $wpdb->terms t 
-            INNER JOIN $wpdb->term_taxonomy tt ON t.term_id = tt.term_id 
-            WHERE tt.taxonomy IN ($taxonomies_in)"
+		// Get terms from WordPress core function.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomies, // Pass the taxonomies as an array.
+				'hide_empty' => false,       // Show all terms, including those with no posts.
+				'fields'     => 'all',       // Retrieve all term fields (term_id, name, slug, etc.).
 			)
 		);
 
-		// Process each result
-		foreach ($results as $term) {
-			// Retrieve the term link (URL)
-			$url = get_term_link((int) $term->term_id, $term->taxonomy);
+		// Check for errors or empty result.
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			// Early return.
+			return array();
 
-			// Retrieve the taxonomy object to get the label
-			$taxonomy_object = get_taxonomy($term->taxonomy);
-			$taxonomy_label = $taxonomy_object ? $taxonomy_object->labels->name : $term->taxonomy;
+		}
 
-			// Add the data to the main array
+		// Process each result.
+		foreach ( $terms as $term ) {
+			// Retrieve the term link (URL).
+			$url = get_term_link( (int) $term->term_id, $term->taxonomy );
+
+			// Retrieve the taxonomy object to get the label.
+			$taxonomy_object = get_taxonomy( $term->taxonomy );
+			$taxonomy_label  = $taxonomy_object ? $taxonomy_object->labels->name : $term->taxonomy;
+
+			// Add the data to the main array.
 			$all_terms_data[] = array(
-				'url'            => $this->remove_url_protocol($url),
-				'html_title'           => $term->name,
-                'url_type' => 'taxonomy',
-				'url_category'    => $taxonomy_label,
+				'url'          => $this->remove_url_protocol( $url ),
+				'html_title'   => $term->name,
+				'url_type'     => 'taxonomy',
+				'url_category' => $taxonomy_label,
 			);
 		}
 
-		// Return the collected data
+		// Return the collected data.
 		return $all_terms_data;
 	}
 
@@ -1140,166 +1157,140 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-        // We only sync the frontpage
-        if(!empty($this->website_details['allowances']['only_frontpage']) && $this->website_details['allowances']['only_frontpage'] ) {
-	        $array[] = array(
-		        'url'             => $this::get_domain_from_site_url(),
-		        'html_title'      => get_bloginfo('name'),
-		        'url_type'        => 'types',
-		        'url_category'    => 'Frontpage',
-	        );
-        } else {
-            // We sync all from the settings
-            $array = array(); // init.
+		// We only sync the frontpage.
+		if ( ! empty( $this->website_details['allowances']['only_frontpage'] ) && $this->website_details['allowances']['only_frontpage'] ) {
+			$array[] = array(
+				'url'          => $this::get_domain_from_site_url(),
+				'html_title'   => get_bloginfo( 'name' ),
+				'url_type'     => 'types',
+				'url_category' => 'Frontpage',
+			);
+		} else {
+			// We sync all from the settings.
+			$array = array(); // init.
 
-            // Init sync urls if we don't have them yet.
-            if ( empty( $this->website_details['sync_url_types'] ) ) {
-                return array();
-            }
+			// Init sync urls if we don't have them yet.
+			if ( empty( $this->website_details['sync_url_types'] ) ) {
+				return array();
+			}
 
-            // Get all WP post_types.
-            $post_types = get_post_types( array( 'public' => true ), 'objects' );
+			// Get all WP post_types.
+			$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
-            foreach ( $post_types as $post_type ) {
-	            $wp_post_type_slug = $this->get_post_type_slug( $post_type );
+			foreach ( $post_types as $post_type ) {
+				$wp_post_type_slug = $this->get_post_type_slug( $post_type );
 
-	            // Get the right name for the request
-	            foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-		            if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
+				// Get the right name for the request.
+				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+					if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 
-			            // The 'get_posts' function needs 'name' instead of 'rest_base'.
-			            $post_type_names[] = $post_type->name;
-		            }
-	            }
-            }
+						// The 'get_posts' function needs 'name' instead of 'rest_base'.
+						$post_type_names[] = $post_type->name;
+					}
+				}
+			}
 
-            $posts = $this->get_all_posts_data($post_type_names);
+			$posts = $this->get_all_posts_data( $post_type_names );
 
-            $array = array_merge($array, $posts);
+			$array = array_merge( $array, $posts );
 
-            // Get the actual URLs and prepare for sending.
-            /*foreach ( $posts as $post ) { // actual posts or taxonomies.
-                $url           = get_permalink( $post );
-                $url           = $this->remove_url_protocol( $url );
-                $post_type_obj = get_post_type_object( $post->post_type );
+			// Get all WP taxonomies.
+			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 
-                $array[] = array(
-                    'url'             => $url,
-                    'html_title'      => $post->post_title,
-                    'url_type'        => 'types',
-                    'url_category'    => $post_type_obj->labels->name,
-                );
-            }*/
+			$taxonomy_post_names = array();
+			foreach ( $taxonomies as $taxonomy ) {
 
+				// Depending on if we have 'rest_base' name we use this one or the 'name'.
+				$wp_taxonomy_slug = $this->get_taxonomy_slug( $taxonomy );
 
-            // Get all WP taxonomies.
-            $taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
+				// Get the terms names.
+				foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
+					if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
+						$taxonomy_post_names[] = $taxonomy->name;
+					}
+				}
+			}
+			$taxonomy_posts = $this->get_all_terms_data( $taxonomy_post_names );
+			$array          = array_merge( $array, $taxonomy_posts );
 
-	        $taxonomy_post_names = array();
-            foreach ( $taxonomies as $taxonomy ) {
+			// Check if frontpage is already in the sync settings.
+			$frontpage_exists = array_filter(
+				$this->website_details['sync_url_types'],
+				function ( $item ) {
+					return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
+				}
+			);
+			$active_plugins   = get_option( 'active_plugins' );
 
-                // Depending on if we have 'rest_base' name we use this one or the 'name'.
-                $wp_taxonomy_slug = $this->get_taxonomy_slug( $taxonomy );
+			// If blog is set as home page.
+			if ( ! get_option( 'page_on_front' ) ) {
 
-                // Get the terms names.
-                foreach ( $this->website_details['sync_url_types'] as $sync_url_type ) {
-                    if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
-                        $taxonomy_post_names[] =  $taxonomy->name ;
-                    }
-                }
+				// WPML fix.
+				if ( $active_plugins && in_array( WCD_WPML_PLUGIN_FILE, $active_plugins, true ) ) {
+					$languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
 
-                /*foreach ( $taxonomy_posts as $post ) { // actual posts or taxonomies.
-                    $url          = get_term_link( $post );
-                    $url          = $this->remove_url_protocol( $url );
-                    $taxonomy_obj = get_taxonomy( $post->taxonomy );
+					if ( ! empty( $languages ) ) {
 
-                    $array[] = array(
-                        'url'             => $url,
-                        'html_title'      => $post->name,
-                        'url_type'        => 'taxonomies',
-                        'url_category'    => $taxonomy_obj->labels->name,
-                    );
-                }*/
-            }
-	        $taxonomy_posts = $this->get_all_terms_data($taxonomy_post_names);
-	        $array = array_merge($array, $taxonomy_posts);
+						// Store the current language to switch back later.
+						$current_lang = apply_filters( 'wpml_current_language', null );
+						foreach ( $languages as $lang_code => $lang_info ) {
 
-	        // Check if frontpage is already in the sync settings.
-	        $frontpage_exists = array_filter($this->website_details['sync_url_types'], function($item) {
-		        return isset($item['post_type_slug']) && $item['post_type_slug'] === 'frontpage';
-	        });
-            $active_plugins = get_option('active_plugins');
+							// Switch to each language.
+							do_action( 'wpml_switch_language', $lang_code );
 
-            // If blog is set as home page.
-            if ( ! get_option( 'page_on_front' ) ) {
+							// Store the title in the array with the language code as the key.
+							$array[] = array(
+								'url'          => self::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
+								'html_title'   => get_bloginfo( 'name' ),
+								'url_type'     => 'frontpage',
+								'url_category' => 'Frontpage',
+							);
+						}
 
-                // WPML fix.
-                if ( $active_plugins && in_array(WCD_WPML_PLUGIN_FILE, $active_plugins) ) {
-                    $languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
+						// Switch back to the original language.
+						do_action( 'wpml_switch_language', $current_lang );
+					}
 
-                    if ( ! empty( $languages ) ) {
+					// Polylang fix.
+				} elseif ( $active_plugins && in_array( WCD_POLYLANG_PLUGIN_FILE, $active_plugins, true ) ) {
 
-	                    // Store the current language to switch back later
-	                    $current_lang = apply_filters('wpml_current_language', NULL);
-	                    foreach ($languages as $lang_code => $lang_info) {
+					$translations = pll_the_languages( array( 'raw' => 1 ) );
+					foreach ( $translations as $lang_code => $translation ) {
+						$array[] = array(
+							'url'          => self::remove_url_protocol( pll_home_url( $lang_code ) ),
+							'html_title'   => get_bloginfo( 'name' ),
+							'url_type'     => 'frontpage',
+							'url_category' => 'Frontpage',
+						);
+					}
+				} else {
+					$array[] = array(
+						'url'          => self::remove_url_protocol( get_option( 'home' ) ),
+						'html_title'   => get_bloginfo( 'name' ),
+						'url_type'     => 'frontpage',
+						'url_category' => 'Frontpage',
+					);
+				}
 
-		                    // Switch to each language
-		                    do_action('wpml_switch_language', $lang_code);
-
-		                    // Store the title in the array with the language code as the key
-		                    $array[] = array(
-			                    'url'             => self::remove_url_protocol( apply_filters('wpml_home_url', get_home_url(), $lang_code) ),
-			                    'html_title'      => get_bloginfo('name'),
-			                    'url_type'        => 'frontpage',
-			                    'url_category'    => 'Frontpage',
-		                    );
-	                    }
-
-	                    // Switch back to the original language
-	                    do_action('wpml_switch_language', $current_lang);
-                    }
-
-                    // Polylang fix.
-                } elseif ( $active_plugins && in_array(WCD_POLYLANG_PLUGIN_FILE, $active_plugins) ) {
-
-                    $translations = pll_the_languages( array( 'raw' => 1 ) );
-                    foreach ( $translations as $lang_code => $translation ) {
-                        $array[] = array(
-                            'url'             => self::remove_url_protocol( pll_home_url( $lang_code ) ),
-                            'html_title'      => get_bloginfo('name'),
-                            'url_type'        => 'frontpage',
-                            'url_category'    => 'Frontpage',
-                        );
-                    }
-                } else {
-                    $array[] = array(
-                        'url'             => self::remove_url_protocol( get_option( 'home' ) ),
-                        'html_title'      => get_bloginfo('name'),
-                        'url_type'        => 'frontpage',
-                        'url_category'    => 'Frontpage',
-                    );
-                }
-
-                // Add frontpage if it's not yet in the sync_url_types array.
-                if(empty($frontpage_exists)){
-	                $this->website_details['sync_url_types'][] = [
-                        'url_type_slug' => 'types',
-                        'url_type_name' => 'frontpage',
-                        'post_type_slug' => 'frontpage',
-                        'post_type_name' => 'Frontpage',
-                    ];
-	                $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
-                }
-
-            } elseif( $frontpage_exists) {
-	            foreach($this->website_details['sync_url_types'] as $key => $sync_types_values) {
-                    if('frontpage' === $sync_types_values['post_type_slug']) {
-                        unset($this->website_details['sync_url_types'][$key]);
-                    }
-	            }
-	            $this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
-            }
-        }
+				// Add frontpage if it's not yet in the sync_url_types array.
+				if ( empty( $frontpage_exists ) ) {
+					$this->website_details['sync_url_types'][] = array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'frontpage',
+						'post_type_slug' => 'frontpage',
+						'post_type_name' => 'Frontpage',
+					);
+					$this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+				}
+			} elseif ( $frontpage_exists ) {
+				foreach ( $this->website_details['sync_url_types'] as $key => $sync_types_values ) {
+					if ( 'frontpage' === $sync_types_values['post_type_slug'] ) {
+						unset( $this->website_details['sync_url_types'][ $key ] );
+					}
+				}
+				$this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
+			}
+		}
 
 		if ( ! empty( $array ) ) {
 			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
@@ -1397,35 +1388,36 @@ class WebChangeDetector_Admin {
 
 	/** Set default sync types.
 	 *
+	 * @param bool $only_frontpage Only sync the frontpage.
 	 * @return void
 	 */
-	public function set_default_sync_types($only_frontpage = false) {
+	public function set_default_sync_types( $only_frontpage = false ) {
 		if ( ! empty( $this->website_details ) && empty( $this->website_details['sync_url_types'] ) ) {
-            if($only_frontpage) {
-	            $this->website_details['sync_url_types'] = array(
-		            array(
-			            'url_type_slug'  => 'types',
-			            'url_type_name'  => 'frontpage',
-			            'post_type_slug' => 'frontpage',
-			            'post_type_name' => 'Frontpage',
-		            )
-	            );
-            } else {
-                $this->website_details['sync_url_types'] = array(
-                    array(
-                        'url_type_slug'  => 'types',
-                        'url_type_name'  => 'Post Types',
-                        'post_type_slug' => 'posts',
-                        'post_type_name' => $this->get_post_type_name( 'posts' ),
-                    ),
-                    array(
-                        'url_type_slug'  => 'types',
-                        'url_type_name'  => 'Post Types',
-                        'post_type_slug' => 'pages',
-                        'post_type_name' => $this->get_post_type_name( 'pages' ),
-                    ),
-                );
-            }
+			if ( $only_frontpage ) {
+				$this->website_details['sync_url_types'] = array(
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'frontpage',
+						'post_type_slug' => 'frontpage',
+						'post_type_name' => 'Frontpage',
+					),
+				);
+			} else {
+				$this->website_details['sync_url_types'] = array(
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'Post Types',
+						'post_type_slug' => 'posts',
+						'post_type_name' => $this->get_post_type_name( 'posts' ),
+					),
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'Post Types',
+						'post_type_slug' => 'pages',
+						'post_type_name' => $this->get_post_type_name( 'pages' ),
+					),
+				);
+			}
 
 			$this->api_v1( array_merge( array( 'action' => 'save_user_website' ), $this->website_details ) );
 		}
@@ -1575,19 +1567,19 @@ class WebChangeDetector_Admin {
 			'page'     => $page,
 		);
 
-        $pagination_params = [];
+		$pagination_params = array();
 		if ( ! empty( $_GET['post-type'] ) ) {
-			$filters['category'] = $this->get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
-            $pagination_params['post-type'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ));
+			$filters['category']            = $this->get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
+			$pagination_params['post-type'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
 		}
 		if ( ! empty( $_GET['taxonomy'] ) ) {
-			$filters['category'] = $this->get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
-			$pagination_params['taxonomy'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ));
+			$filters['category']           = $this->get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
+			$pagination_params['taxonomy'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
 
 		}
 		if ( ! empty( $_GET['search'] ) ) {
-			$filters['search'] = sanitize_text_field( wp_unslash( $_GET['search'] ) );
-			$pagination_params['search'] = sanitize_text_field( wp_unslash( $_GET['search'] ));
+			$filters['search']           = sanitize_text_field( wp_unslash( $_GET['search'] ) );
+			$pagination_params['search'] = sanitize_text_field( wp_unslash( $_GET['search'] ) );
 		}
 
 		// Get the urls.
@@ -1608,15 +1600,6 @@ class WebChangeDetector_Admin {
 			<?php
 		}
 
-		// Set filters for pagination.
-		/*if ( isset( $filters['category'] ) && $filters['category'] ) {
-			$filters['post-type'] = $filters['category'];
-			unset( $filters['category'] );
-		}
-
-		// Unset filters for pagination.
-		unset( $filters['page'] );
-*/
 		$nonce = wp_create_nonce( 'ajax-nonce' );
 		?>
 
@@ -1659,8 +1642,8 @@ class WebChangeDetector_Admin {
 				'bottom top-minus-100 left-plus-100'
 			);
 
-            if((! $monitoring_group && $this->is_allowed('manual_checks_urls')) || ($monitoring_group && $this->is_allowed('monitoring_checks_urls'))) {
-			?>
+			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+				?>
 
 			<div class="wcd-frm-settings box-plain">
 				<h2>Select URLs<br><small></small></h2>
@@ -1680,9 +1663,9 @@ class WebChangeDetector_Admin {
 							<select id="filter-post-type" name="post-type">
 								<option value="0">All</option>
 								<?php
-								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : [];
+								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								if ( ! get_option( 'page_on_front' ) && in_array('frontpage', array_column($this->website_details['sync_url_types'], 'post_type_slug'))) {
+								if ( ! get_option( 'page_on_front' ) && in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>>Frontpage</option>
 									<?php
@@ -1880,7 +1863,7 @@ class WebChangeDetector_Admin {
 				</script>
 				<?php } ?>
 			</div>
-            <?php } ?>
+			<?php } ?>
 		</div>
 
 		<?php
@@ -1909,7 +1892,7 @@ class WebChangeDetector_Admin {
 			);
 
 			// Start change detection button.
-			if ( $this->is_allowed('manual_checks_start') ) {
+			if ( $this->is_allowed( 'manual_checks_start' ) ) {
 				?>
 					<form method="post">
 						<?php wp_nonce_field( 'start_manual_checks' ); ?>
@@ -1956,7 +1939,7 @@ class WebChangeDetector_Admin {
 			return 'Frontpage';
 		}
 
-        $post_types = get_post_types( array( 'public' => true ), 'objects' );
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
 		foreach ( $post_types as $post_type ) {
 			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
@@ -2237,7 +2220,7 @@ class WebChangeDetector_Admin {
 				'settings_account_settings'  => 1,
 				'upgrade_account'            => 1,
 				'wizard_start'               => 1,
-                'only_frontpage'            => 0
+				'only_frontpage'             => 0,
 			);
 		}
 
@@ -2330,13 +2313,11 @@ class WebChangeDetector_Admin {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
 		}
 
-
-
-		$auto_update_settings    =  WebChangeDetector_Autoupdates::get_auto_update_settings();
+		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
 		$max_auto_update_checks  = 0;
 		$amount_auto_update_days = 0;
 
-		if ( (! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'])) {
+		if ( ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			foreach ( self::WEEKDAYS as $weekday ) {
 				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
 					++$amount_auto_update_days;
@@ -2429,9 +2410,9 @@ class WebChangeDetector_Admin {
 
 						?>
 					</p>
-			        <?php } ?>
+					<?php } ?>
 
-					<?php if ( $this->is_allowed( 'manual_checks_view' ) || (defined('WCD_AUTO_UPDATES_ENABLED') && WCD_AUTO_UPDATES_ENABLED)) { ?>
+					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && WCD_AUTO_UPDATES_ENABLED ) ) { ?>
 					<p>
 						<strong>Auto update checks: </strong>
 						<?php

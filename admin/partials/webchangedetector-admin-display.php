@@ -69,7 +69,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				delete_option( WCD_WEBSITE_GROUPS );
 				delete_option( WCD_OPTION_UPDATE_STEP_SETTINGS );
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
-                delete_option( WCD_ALLOWANCES );
+				delete_option( WCD_ALLOWANCES );
 				break;
 
 			case 're-add-api-token':
@@ -109,29 +109,30 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) { ?>
-            <div class="notice notice-error">
-                <p>
-                    Something went wrong. Please try to re-add your api token.
-                    <form method="post">
-                        <input type="hidden" name="wcd_action" value="reset_api_token">
-                        <?php wp_nonce_field( 'reset_api_token' ); ?>
-                        <input type="submit" value="Reset API token" class="button button-delete">
-                    </form>
-                </p>
-            </div>
+			<div class="notice notice-error">
+				<p>
+					Something went wrong. Please try to re-add your api token.
+					<form method="post">
+						<input type="hidden" name="wcd_action" value="reset_api_token">
+						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<input type="submit" value="Reset API token" class="button button-delete">
+					</form>
+				</p>
+			</div>
 			<?php
 			return;
 		}
 
 		// Check if plugin has to be updated.
-		if ( 'update plugin' === $account_details ) { ?>
+		if ( 'update plugin' === $account_details ) {
+			?>
 			<div class="notice notice-error">
-                <p>
-                    There are major updates in our system which requires to update the plugin
-                    WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.
-                </p>
-            </div>
-            <?php
+				<p>
+					There are major updates in our system which requires to update the plugin
+					WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.
+				</p>
+			</div>
+			<?php
 			return;
 		}
 
@@ -147,30 +148,30 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$success              = $wcd->create_website_and_groups();
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
 
-            // Check if we are only allowed to sync the frontpage.
-            if($wcd->is_allowed('only_frontpage')) {
-	            $wcd->set_default_sync_types(true);
-            } else {
-			    $wcd->set_default_sync_types();
-            }
-
-            // Make the inital post sync
-			$urls = $wcd->sync_posts( true );
-
-            // If only the frontpage is allowed, we activate the URLs.
-			if($wcd->is_allowed('only_frontpage')) {
-                if(!empty($urls[0])) {
-                    $update_urls = [
-                            'desktop-'.$urls[0]['url_id'] => 1,
-                            'mobile-'.$urls[0]['url_id'] => 1,
-                            'group_id' => $wcd->website_details['manual_detection_group']['uuid'],
-                    ];
-	                $wcd->post_urls($update_urls);
-                }
+			// Check if we are only allowed to sync the frontpage.
+			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
+				$wcd->set_default_sync_types( true );
+			} else {
+				$wcd->set_default_sync_types();
 			}
 
-            // Set default auto-update settings
-            $auto_update_settings = get_option(WCD_AUTO_UPDATE_SETTINGS);
+			// Make the inital post sync.
+			$urls = $wcd->sync_posts( true );
+
+			// If only the frontpage is allowed, we activate the URLs.
+			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
+				if ( ! empty( $urls[0] ) ) {
+					$update_urls = array(
+						'desktop-' . $urls[0]['url_id'] => 1,
+						'mobile-' . $urls[0]['url_id']  => 1,
+						'group_id'                      => $wcd->website_details['manual_detection_group']['uuid'],
+					);
+					$wcd->post_urls( $update_urls );
+				}
+			}
+
+			// Set default auto-update settings.
+			$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 
 			if ( ! $auto_update_settings ) { // Set defaults.
 				$auto_update_settings['auto_update_checks_enabled']   = '';
@@ -184,25 +185,26 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$auto_update_settings['auto_update_checks_saturday']  = '';
 				$auto_update_settings['auto_update_checks_sunday']    = '';
 				$auto_update_settings['auto_update_checks_emails']    = get_option( 'admin_email' );
-                update_option(WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings);
+				update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
 			}
 		}
 
 		// We can't get the website. So we exit with an error.
-		if ( empty( $wcd->website_details ) ) { ?>
+		if ( empty( $wcd->website_details ) ) {
+			?>
 			<div class="notice notice-error">
-                <p>
-                    Sorry, we couldn't find your website details. Please contact us at
-                    <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
-                </p>
-            </div>
-            <?php
+				<p>
+					Sorry, we couldn't find your website details. Please contact us at
+					<a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
+				</p>
+			</div>
+			<?php
 			return;
 		}
 
 		// Save the allowances to the db. We need this for the navigation.
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {
-            update_option( WCD_ALLOWANCES, $wcd->website_details['allowances']);
+			update_option( WCD_ALLOWANCES, $wcd->website_details['allowances'] );
 		}
 
 		// Get the groups.
@@ -312,7 +314,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
 					}
 				} else {
-					echo '<div class="error notice"><p>' . $results['message'] . '</p></div>';
+					echo '<div class="error notice"><p>' . esc_html( $results['message'] ) . '</p></div>';
 				}
 				break;
 
@@ -423,7 +425,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-                $wcd->get_dashboard_view( $account_details );
+				$wcd->get_dashboard_view( $account_details );
 				break;
 
 			/********************
@@ -1011,7 +1013,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-					} elseif ( ! $wcd->website_details['enable_limits'] && $wcd->is_allowed('upgrade_account')) {
+					} elseif ( ! $wcd->website_details['enable_limits'] && $wcd->is_allowed( 'upgrade_account' ) ) {
 						?>
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>

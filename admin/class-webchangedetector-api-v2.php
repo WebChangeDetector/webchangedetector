@@ -109,16 +109,17 @@ class WebChangeDetector_API_V2 {
 	}
 
 	/** Delete urls from group
-* @param string $group_id The group_id.
-* @param array $group_url_ids Ids of group_urls.
-* @return mixed|string
+	 *
+	 * @param string $group_id The group_id.
+	 * @param array  $group_url_ids Ids of group_urls.
+	 * @return mixed|string
 	 */
-	public static function delete_group_urls_v2($group_id, $group_url_ids = []) {
+	public static function delete_group_urls_v2( $group_id, $group_url_ids = array() ) {
 		$args = array(
 			'action' => 'groups/' . $group_id . '/remove-urls',
-			'urls' => $group_url_ids,
+			'urls'   => $group_url_ids,
 		);
-		return self::api_v2( $args, 'PUT');
+		return self::api_v2( $args, 'PUT' );
 	}
 
 	/** Take screenshots.
