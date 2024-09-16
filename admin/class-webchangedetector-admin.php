@@ -1043,7 +1043,7 @@ class WebChangeDetector_Admin {
 				$wpdb->prepare(
 					"SELECT ID, post_title, post_type
                 FROM $wpdb->posts 
-                WHERE post_type IN ($post_types_in) 
+                WHERE post_type IN ( $post_types_in ) 
                 AND post_status = 'publish' 
                 LIMIT %d OFFSET %d",
 					$posts_per_batch,
@@ -1228,34 +1228,45 @@ class WebChangeDetector_Admin {
 	        $frontpage_exists = array_filter($this->website_details['sync_url_types'], function($item) {
 		        return isset($item['post_type_slug']) && $item['post_type_slug'] === 'frontpage';
 	        });
+            $active_plugins = get_option('active_plugins');
 
             // If blog is set as home page.
             if ( ! get_option( 'page_on_front' ) ) {
 
                 // WPML fix.
-                if ( function_exists( 'icl_get_languages' ) ) {
+                if ( $active_plugins && in_array(WCD_WPML_PLUGIN_FILE, $active_plugins) ) {
                     $languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
 
                     if ( ! empty( $languages ) ) {
-                        foreach ( $languages as $lang_code => $lang ) {
-                            // Store the home URL for each language.
-                            $array[] = array(
-                                'url'             => self::remove_url_protocol( $lang['url'] ),
-                                'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
-                                'url_type'        => 'frontpage',
-                                'url_category'    => 'Frontpage',
-                            );
-                        }
+
+	                    // Store the current language to switch back later
+	                    $current_lang = apply_filters('wpml_current_language', NULL);
+	                    foreach ($languages as $lang_code => $lang_info) {
+
+		                    // Switch to each language
+		                    do_action('wpml_switch_language', $lang_code);
+
+		                    // Store the title in the array with the language code as the key
+		                    $array[] = array(
+			                    'url'             => self::remove_url_protocol( apply_filters('wpml_home_url', get_home_url(), $lang_code) ),
+			                    'html_title'      => get_bloginfo('name'),
+			                    'url_type'        => 'frontpage',
+			                    'url_category'    => 'Frontpage',
+		                    );
+	                    }
+
+	                    // Switch back to the original language
+	                    do_action('wpml_switch_language', $current_lang);
                     }
 
                     // Polylang fix.
-                } elseif ( function_exists( 'pll_the_languages' ) ) {
+                } elseif ( $active_plugins && in_array(WCD_POLYLANG_PLUGIN_FILE, $active_plugins) ) {
 
                     $translations = pll_the_languages( array( 'raw' => 1 ) );
                     foreach ( $translations as $lang_code => $translation ) {
                         $array[] = array(
                             'url'             => self::remove_url_protocol( pll_home_url( $lang_code ) ),
-                            'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
+                            'html_title'      => get_bloginfo('name'),
                             'url_type'        => 'frontpage',
                             'url_category'    => 'Frontpage',
                         );
@@ -1263,7 +1274,7 @@ class WebChangeDetector_Admin {
                 } else {
                     $array[] = array(
                         'url'             => self::remove_url_protocol( get_option( 'home' ) ),
-                        'html_title'      => get_option( 'blogname' ) . ' - ' . get_option( 'blogdescription' ),
+                        'html_title'      => get_bloginfo('name'),
                         'url_type'        => 'frontpage',
                         'url_category'    => 'Frontpage',
                     );
@@ -1564,6 +1575,7 @@ class WebChangeDetector_Admin {
 			'page'     => $page,
 		);
 
+        $pagination_params = [];
 		if ( ! empty( $_GET['post-type'] ) ) {
 			$filters['category'] = $this->get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
             $pagination_params['post-type'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ));
@@ -1670,7 +1682,7 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : [];
 
-								if ( ! get_option( 'page_on_front' ) && empty(array_intersect(array(['post_type_slug' => 'frontpage']), $this->website_details['sync_url_types']))) {
+								if ( ! get_option( 'page_on_front' ) && in_array('frontpage', array_column($this->website_details['sync_url_types'], 'post_type_slug'))) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>>Frontpage</option>
 									<?php
@@ -2800,5 +2812,13 @@ if ( ! defined( 'WCD_TAB_SETTINGS' ) ) {
 if ( ! defined( 'WCD_REQUEST_TIMEOUT' ) ) {
 	define( 'WCD_REQUEST_TIMEOUT', 30 );
 }
+if ( ! defined( 'WCD_POLYLANG_PLUGIN_FILE' ) ) {
+	define( 'WCD_POLYLANG_PLUGIN_FILE', 'polylang/polylang.php' );
+}
+
+if ( ! defined( 'WCD_WPML_PLUGIN_FILE' ) ) {
+	define( 'WCD_WPML_PLUGIN_FILE', 'sitepress-multilingual-cms/sitepress.php' );
+}
+
 
 

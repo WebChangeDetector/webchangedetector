@@ -288,7 +288,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			case 'add_post_type':
 				$wcd->add_post_type( $postdata );
 				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
-				echo '<div class="notice notice-success"><p>' . esc_html( $post_type_name ) . ' added.</p></div>';
+				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
 
 			case 'update_detection_step':
