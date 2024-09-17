@@ -998,7 +998,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
 									<?php } ?>
 								</select>
-								<input type="submit" class="button" value="Add">
+								<input type="submit" class="button" value="Show">
 							</form>
 							<?php
 						} else {

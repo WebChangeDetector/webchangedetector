@@ -1034,6 +1034,9 @@ class WebChangeDetector_Admin {
 		// Array to store all posts data.
 		$all_posts_data = array();
 
+        if(empty($post_types)) {
+            return [];
+        }
 		// Define the number of posts to retrieve per batch.
 		$offset          = 0;
 		$posts_per_batch = 100; // Adjust based on your server's capacity.
@@ -1102,6 +1105,9 @@ class WebChangeDetector_Admin {
 		// Array to store all terms data.
 		$all_terms_data = array();
 
+        if(empty($taxonomies)) {
+			return [];
+		}
 		// Get terms from WordPress core function.
 		$terms = get_terms(
 			array(
@@ -1190,9 +1196,10 @@ class WebChangeDetector_Admin {
 				}
 			}
 
-			$posts = $this->get_all_posts_data( $post_type_names );
-
-			$array = array_merge( $array, $posts );
+            if(!empty($post_type_names)) {
+                $posts = $this->get_all_posts_data( $post_type_names );
+                $array = array_merge( $array, $posts );
+            }
 
 			// Get all WP taxonomies.
 			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
@@ -1210,8 +1217,11 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
-			$taxonomy_posts = $this->get_all_terms_data( $taxonomy_post_names );
-			$array          = array_merge( $array, $taxonomy_posts );
+
+            if(!empty($taxonomy_post_names)) {
+                $taxonomy_posts = $this->get_all_terms_data( $taxonomy_post_names );
+                $array          = array_merge( $array, $taxonomy_posts );
+            }
 
 			// Check if frontpage is already in the sync settings.
 			$frontpage_exists = array_filter(
