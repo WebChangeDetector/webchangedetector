@@ -1073,11 +1073,11 @@ class WebChangeDetector_Admin {
 				$post_type_label  = $post_type_object ? $post_type_object->labels->name : $post_type;
 
 				// Add the data to the main array.
-				$all_posts_data[] = array(
+				$all_posts_data['types%%'.$post_type_label][] = array(
 					'url'          => $this->remove_url_protocol( $url ),
 					'html_title'   => $post_title,
-					'url_type'     => 'types',
-					'url_category' => $post_type_label,
+					//'url_type'     => 'types',
+					//'url_category' => $post_type_label,
 				);
 			}
 
@@ -1134,11 +1134,11 @@ class WebChangeDetector_Admin {
 			$taxonomy_label  = $taxonomy_object ? $taxonomy_object->labels->name : $term->taxonomy;
 
 			// Add the data to the main array.
-			$all_terms_data[] = array(
+			$all_terms_data['taxonomy%%'.$taxonomy_label][] = array(
 				'url'          => $this->remove_url_protocol( $url ),
 				'html_title'   => $term->name,
-				'url_type'     => 'taxonomy',
-				'url_category' => $taxonomy_label,
+				//'url_type'     => 'taxonomy',
+				//'url_category' => $taxonomy_label,
 			);
 		}
 
@@ -1163,13 +1163,15 @@ class WebChangeDetector_Admin {
 			}
 		}
 
+        WebChangeDetector_Admin::error_log("Starting Sync");
+
 		// We only sync the frontpage.
 		if ( ! empty( $this->website_details['allowances']['only_frontpage'] ) && $this->website_details['allowances']['only_frontpage'] ) {
-			$array[] = array(
+			$array['frontpage%%Frontpage'][] = array(
 				'url'          => $this::get_domain_from_site_url(),
 				'html_title'   => get_bloginfo( 'name' ),
-				'url_type'     => 'types',
-				'url_category' => 'Frontpage',
+				//'url_type'     => 'types',
+				//'url_category' => 'Frontpage',
 			);
 		} else {
 			// We sync all from the settings.
@@ -1249,11 +1251,11 @@ class WebChangeDetector_Admin {
 							do_action( 'wpml_switch_language', $lang_code );
 
 							// Store the title in the array with the language code as the key.
-							$array[] = array(
+							$array['frontpage%%Frontpage'][] = array(
 								'url'          => self::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
 								'html_title'   => get_bloginfo( 'name' ),
-								'url_type'     => 'frontpage',
-								'url_category' => 'Frontpage',
+								//'url_type'     => 'frontpage',
+								//'url_category' => 'Frontpage',
 							);
 						}
 
@@ -1266,19 +1268,19 @@ class WebChangeDetector_Admin {
 
 					$translations = pll_the_languages( array( 'raw' => 1 ) );
 					foreach ( $translations as $lang_code => $translation ) {
-						$array[] = array(
+						$array['frontpage%%Frontpage'][] = array(
 							'url'          => self::remove_url_protocol( pll_home_url( $lang_code ) ),
 							'html_title'   => get_bloginfo( 'name' ),
-							'url_type'     => 'frontpage',
-							'url_category' => 'Frontpage',
+							//'url_type'     => 'frontpage',
+							//'url_category' => 'Frontpage',
 						);
 					}
 				} else {
-					$array[] = array(
+					$array['frontpage%%Frontpage'][] = array(
 						'url'          => self::remove_url_protocol( get_option( 'home' ) ),
 						'html_title'   => get_bloginfo( 'name' ),
-						'url_type'     => 'frontpage',
-						'url_category' => 'Frontpage',
+						//'url_type'     => 'frontpage',
+						//'url_category' => 'Frontpage',
 					);
 				}
 
@@ -1303,11 +1305,14 @@ class WebChangeDetector_Admin {
 		}
 
 		if ( ! empty( $array ) ) {
-			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array );
+			$synced_posts = WebChangeDetector_API_V2::sync_urls( $array, true, true );
 			set_transient( 'wcd_synced_posts', $synced_posts, 60 );
+			WebChangeDetector_Admin::error_log("Finished URL Sync: " . count($array) . " Urls");
 
 			return $synced_posts;
 		}
+		WebChangeDetector_Admin::error_log("Finished URL Sync: 0 Urls");
+
 		return false;
 	}
 

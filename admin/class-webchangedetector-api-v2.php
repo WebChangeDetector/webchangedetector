@@ -36,7 +36,7 @@ class WebChangeDetector_API_V2 {
 	 * @param bool  $delete_missing_urls Delete missing urls or not.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts, $delete_missing_urls = true ) {
+	public static function sync_urls( $posts, $delete_missing_urls = true, $sync_v2 = false ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
@@ -46,6 +46,7 @@ class WebChangeDetector_API_V2 {
 			'domain'              => WebChangeDetector_Admin::get_domain_from_site_url(),
 			'urls'                => ( $posts ),
 			'delete_missing_urls' => $delete_missing_urls,
+			'sync_v2' => $sync_v2
 		);
 
 		return self::api_v2( $args );
