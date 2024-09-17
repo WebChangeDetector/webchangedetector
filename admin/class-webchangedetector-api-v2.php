@@ -397,9 +397,12 @@ class WebChangeDetector_API_V2 {
 
 		$body          = wp_remote_retrieve_body( $response );
 		$response_code = (int) wp_remote_retrieve_response_code( $response );
+
 		WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
 		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
-
+		if(200 !== $response_code) {
+			WebChangeDetector_Admin::error_log(print_r($decoded_body,1));
+		}
 		// `message` is part of the Laravel Stacktrace.
 		if ( WCD_HTTP_BAD_REQUEST === $response_code &&
 			is_array( $decoded_body ) &&
