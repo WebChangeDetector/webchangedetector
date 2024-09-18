@@ -49,7 +49,7 @@ class WebChangeDetector_API_V2 {
 			'sync_v2' => $sync_v2
 		);
 
-		return self::api_v2( $args );
+		self::api_v2( $args );
 	}
 	/** Update group settings.
 	 *
@@ -387,7 +387,9 @@ class WebChangeDetector_API_V2 {
 			),
 		);
 
-		WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
+		$log_args = $args;
+		$log_args['body']['urls'] = "A lot of urls...";
+		WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
 
 		if ( $is_web ) {
 			$response = wp_remote_request( $url_web, $args );
