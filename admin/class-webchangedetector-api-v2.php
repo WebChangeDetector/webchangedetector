@@ -403,7 +403,7 @@ class WebChangeDetector_API_V2 {
 		WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
 		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 		if(200 !== $response_code) {
-			if( is_array($decoded_body)){
+			if(!empty($decoded_body) && is_array($decoded_body)){
 				WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
 			} else {
 				WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
