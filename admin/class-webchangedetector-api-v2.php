@@ -401,7 +401,11 @@ class WebChangeDetector_API_V2 {
 		WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
 		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 		if(200 !== $response_code) {
-			WebChangeDetector_Admin::error_log(print_r($decoded_body,1));
+			if( is_array($decoded_body)){
+				WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
+			} else {
+				WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
+			}
 		}
 		// `message` is part of the Laravel Stacktrace.
 		if ( WCD_HTTP_BAD_REQUEST === $response_code &&
