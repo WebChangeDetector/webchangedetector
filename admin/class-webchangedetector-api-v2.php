@@ -7,6 +7,8 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
+use WpOrg\Requests\Transport\Curl;
+
 /**
  * Class for wcd api v2 requests.
  *
@@ -36,21 +38,30 @@ class WebChangeDetector_API_V2 {
 	 * @param bool  $delete_missing_urls Delete missing urls or not.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts, $delete_missing_urls = true, $sync_v2 = false ) {
+	public static function sync_urls( $posts, $delete_missing_urls = true ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
 
 		$args = array(
-			'action'              => 'urls/sync',
+			'action'              => 'sync-urls',
 			'domain'              => WebChangeDetector_Admin::get_domain_from_site_url(),
-			'urls'                => ( $posts ),
+			'urls'                => $posts,
 			'delete_missing_urls' => $delete_missing_urls,
-			'sync_v2' => $sync_v2
+			'multi_call'          => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
 		);
 
-		self::api_v2( $args );
+		// Upload urls.
+		return self::api_v2( $args );
 	}
+
+	/**
+	 * Start the sync with the already uploaded urls .
+	 */
+	public static function start_url_sync() {
+		return self::api_v2( array( 'action' => 'start-sync' ) );
+	}
+
 	/** Update group settings.
 	 *
 	 * @param string $group_id The group id.
@@ -361,6 +372,11 @@ class WebChangeDetector_API_V2 {
 		if ( $is_web && defined( 'WCD_API_URL_WEB' ) && is_string( WCD_API_URL_WEB ) && ! empty( WCD_API_URL_WEB ) ) {
 			$url_web = WCD_API_URL_WEB;
 		}
+		$multicall = false;
+		if ( ! empty( $post['multi_call'] ) ) {
+			$multicall = $post['multi_call'];
+			unset( $post['multi_call'] );
+		}
 
 		$url     .= $post['action']; // add kebab action to url.
 		$url_web .= $post['action']; // add kebab action to url.
@@ -374,43 +390,83 @@ class WebChangeDetector_API_V2 {
 			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
 		}
 
-		$args = array(
-			'timeout' => WCD_REQUEST_TIMEOUT,
-			'body'    => $post,
-			'method'  => $method,
-			'headers' => array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			),
-		);
+		if ( $multicall ) {
+			$args = array();
+			foreach ( $post[ $multicall ] as $multicall_data ) {
+				$args[] = array(
+					'url'     => $url,
+					'timeout' => WCD_REQUEST_TIMEOUT,
+					'data'    => array_merge( $post, array( $multicall => $multicall_data ) ),
+					'type'    => $method,
+					'headers' => array(
+						'Accept'        => 'application/json',
+						'Authorization' => 'Bearer ' . $api_token,
+						'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+						'x-wcd-wp-id'   => get_current_user_id(),
+						'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+					),
+				);
+			}
+			if ( ! empty( $args ) ) {
+				WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: multiple curl call' );
+				$responses = WpOrg\Requests\Requests::request_multiple(
+					$args,
+					array(
+						'data-format' => 'data',
+					)
+				);
+				$i         = 0;
+				foreach ( $responses as $response ) {
+					++$i;
+					if ( isset( $response->headers['date'] ) ) {
+						WebChangeDetector_Admin::error_log( "Responsetime Request $i: " . $response->headers['date'] );
+					}
+				}
 
-		$log_args = $args;
-		$log_args['body']['urls'] = "A lot of urls...";
-		WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
+				$response_code = (int) wp_remote_retrieve_response_code( $responses );
+				WebChangeDetector_Admin::error_log( ' Response code curl-multi-call: ' . $response_code );
 
-		if ( $is_web ) {
-			$response = wp_remote_request( $url_web, $args );
+			}
 		} else {
-			$response = wp_remote_request( $url, $args );
-		}
+			$args = array(
+				'timeout' => WCD_REQUEST_TIMEOUT,
+				'body'    => $post,
+				'method'  => $method,
+				'headers' => array(
+					'Accept'        => 'application/json',
+					'Authorization' => 'Bearer ' . $api_token,
+					'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+					'x-wcd-wp-id'   => get_current_user_id(),
+					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+				),
+			);
 
-		$body          = wp_remote_retrieve_body( $response );
-		$response_code = (int) wp_remote_retrieve_response_code( $response );
+			$log_args                 = $args;
+			$log_args['body']['urls'] = 'A lot of urls...';
+			WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
 
-		WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
-		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
-		if(200 !== $response_code) {
-			if(!empty($decoded_body) && is_array($decoded_body)){
-				WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
+			if ( $is_web ) {
+				$response = wp_remote_request( $url_web, $args );
 			} else {
-				WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
+				$response = wp_remote_request( $url, $args );
+			}
+			$body          = wp_remote_retrieve_body( $response );
+			$response_code = (int) wp_remote_retrieve_response_code( $response );
+
+			WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
+			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
+			if ( 200 !== $response_code ) {
+				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
+					WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
+				} else {
+					WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
+				}
 			}
 		}
+
 		// `message` is part of the Laravel Stacktrace.
 		if ( WCD_HTTP_BAD_REQUEST === $response_code &&
+			! empty( $decoded_body ) &&
 			is_array( $decoded_body ) &&
 			array_key_exists( 'message', $decoded_body ) &&
 			'plugin_update_required' === $decoded_body['message'] ) {
@@ -427,9 +483,9 @@ class WebChangeDetector_API_V2 {
 
 		// if parsing JSON into $decoded_body was without error.
 		if ( JSON_ERROR_NONE === json_last_error() ) {
-			return $decoded_body;
+			return $decoded_body ?? true;
 		}
 
-		return $body;
+		return $body ?? true;
 	}
 }

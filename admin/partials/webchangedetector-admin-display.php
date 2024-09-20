@@ -33,7 +33,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$wcd_action = sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) );
 			check_admin_referer( $wcd_action );
 			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
-				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
+				?>
+				<div class="error notice">
+					<p>Ooops! There was an unknown action called. Please contact us if this issue persists.</p>
+				</div>
+				<?php
 				return;
 			}
 		}
@@ -70,6 +74,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				delete_option( WCD_OPTION_UPDATE_STEP_SETTINGS );
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
 				delete_option( WCD_ALLOWANCES );
+				delete_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
 				break;
 
 			case 're-add-api-token':
@@ -108,7 +113,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$account_details = $wcd->get_account( true );
 
 		// Show error message if we didn't get response from API.
-		if ( empty( $account_details ) ) { ?>
+		if ( empty( $account_details ) ) {
+			?>
 			<div class="notice notice-error">
 				<p>
 					Something went wrong. Please try to re-add your api token.
@@ -144,6 +150,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Get website details and create them if we don't have them yet.
 		$wcd->website_details = $wcd->get_website_details()[0] ?? false;
+
 		if ( ! $wcd->website_details ) {
 			$success              = $wcd->create_website_and_groups();
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
@@ -156,10 +163,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 
 			// Make the inital post sync.
-			$urls = $wcd->sync_posts( true );
+			$wcd->sync_posts( true );
 
 			// If only the frontpage is allowed, we activate the URLs.
 			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
+				$urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid )['urls'];
 				if ( ! empty( $urls[0] ) ) {
 					$update_urls = array(
 						'desktop-' . $urls[0]['url_id'] => 1,
@@ -168,24 +176,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					);
 					$wcd->post_urls( $update_urls );
 				}
-			}
-
-			// Set default auto-update settings.
-			$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
-
-			if ( ! $auto_update_settings ) { // Set defaults.
-				$auto_update_settings['auto_update_checks_enabled']   = '';
-				$auto_update_settings['auto_update_checks_from']      = '08:00';
-				$auto_update_settings['auto_update_checks_to']        = '20:00';
-				$auto_update_settings['auto_update_checks_monday']    = 'on';
-				$auto_update_settings['auto_update_checks_tuesday']   = 'on';
-				$auto_update_settings['auto_update_checks_wednesday'] = 'on';
-				$auto_update_settings['auto_update_checks_thursday']  = 'on';
-				$auto_update_settings['auto_update_checks_friday']    = 'on';
-				$auto_update_settings['auto_update_checks_saturday']  = '';
-				$auto_update_settings['auto_update_checks_sunday']    = '';
-				$auto_update_settings['auto_update_checks_emails']    = get_option( 'admin_email' );
-				update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
 			}
 		}
 
@@ -207,6 +197,26 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			update_option( WCD_ALLOWANCES, $wcd->website_details['allowances'] );
 		}
 
+		// Set default auto-update settings.
+		if ( empty( $wcd->website_details['auto_update_settings'] ) ) {
+			$wcd->website_details['auto_update_settings'] = array(
+				'auto_update_checks_enabled'   => '',
+				'auto_update_checks_from'      => gmdate( 'H:i' ),
+				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
+				'auto_update_checks_monday'    => 'on',
+				'auto_update_checks_tuesday'   => 'on',
+				'auto_update_checks_wednesday' => 'on',
+				'auto_update_checks_thursday'  => 'on',
+				'auto_update_checks_friday'    => 'on',
+				'auto_update_checks_saturday'  => '',
+				'auto_update_checks_sunday'    => '',
+				'auto_update_checks_emails'    => get_option( 'admin_email' ),
+			);
+
+			$wcd->update_website_details();
+		}
+		update_option( WCD_AUTO_UPDATE_SETTINGS, $wcd->website_details['auto_update_settings'] );
+
 		// Get the groups.
 		$groups = get_option( WCD_WEBSITE_GROUPS );
 
@@ -216,14 +226,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				'manual_detection_group' => $wcd->website_details['manual_detection_group']['uuid'] ?? false,
 			);
 			update_option( WCD_WEBSITE_GROUPS, $groups, false );
-
 		}
 
 		$wcd->monitoring_group_uuid = $groups['auto_detection_group'] ?? false;
 		$wcd->manual_group_uuid     = $groups['manual_detection_group'] ?? false;
 
 		if ( ! $wcd->manual_group_uuid || ! $wcd->monitoring_group_uuid ) {
-			echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your URL settings. Please contact us.</p></div>';
+			?>
+			<div class="notice notice-error">
+				<p>Sorry, we couldn't get your account settings. Please contact us.
+				<form method="post">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+					<input type="submit" value="Reset API token" class="button button-delete">
+				</form>
+				</p>
+			</div>
+			<?php
 			return;
 		}
 
@@ -409,11 +428,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$comp_usage         = $account_details['checks_done'];
 		$limit              = $account_details['checks_limit'];
 		$available_compares = $account_details['checks_left'];
-
-		if ( $wcd->website_details['enable_limits'] ) {
-			$account_details['usage']            = $comp_usage; // used in dashboard.
-			$account_details['plan']['sc_limit'] = $limit; // used in dashboard.
-		}
 
 		// Renew date (used in template).
 		$renew_date = strtotime( $account_details['renewal_at'] ); // used in account template.
