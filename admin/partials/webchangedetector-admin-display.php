@@ -1021,8 +1021,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<?php } ?>
 					</div>
 
-					<?php
+					<div class="box-plain no-border">
+						<h2>URL sync status</h2>
+						<p>To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
+							This works automatically in the background.<br>
+							When you add a webpage, you can start the sync manually to be able to activate them for checks.</p>
+						<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
+							<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
+						</span>
+						</p>
+						<button class="button button-secondary" onclick="sync_urls(true)">Sync URLs</button>
+					</div>
 
+
+					<?php
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>

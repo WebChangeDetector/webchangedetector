@@ -35,20 +35,18 @@ class WebChangeDetector_API_V2 {
 	/** Sync urls.
 	 *
 	 * @param array $posts The posts to sync.
-	 * @param bool  $delete_missing_urls Delete missing urls or not.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts, $delete_missing_urls = true ) {
+	public static function sync_urls( $posts ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
 
 		$args = array(
-			'action'              => 'sync-urls',
-			'domain'              => WebChangeDetector_Admin::get_domain_from_site_url(),
-			'urls'                => $posts,
-			'delete_missing_urls' => $delete_missing_urls,
-			'multi_call'          => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
+			'action'     => 'sync-urls',
+			'domain'     => WebChangeDetector_Admin::get_domain_from_site_url(),
+			'urls'       => $posts,
+			'multi_call' => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
 		);
 
 		// Upload urls.
@@ -56,10 +54,17 @@ class WebChangeDetector_API_V2 {
 	}
 
 	/**
-	 * Start the sync with the already uploaded urls .
+	 * Start the sync with the already uploaded urls.
+	 *
+	 * @param bool $delete_missing_urls Delete missing urls or not.
 	 */
-	public static function start_url_sync() {
-		return self::api_v2( array( 'action' => 'start-sync' ) );
+	public static function start_url_sync( $delete_missing_urls = true ) {
+		return self::api_v2(
+			array(
+				'action'              => 'start-sync',
+				'delete_missing_urls' => $delete_missing_urls,
+			)
+		);
 	}
 
 	/** Update group settings.

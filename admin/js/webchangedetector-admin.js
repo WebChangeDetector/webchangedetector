@@ -413,6 +413,24 @@ function currentlyProcessing() {
     });
 })( jQuery );
 
+function sync_urls(force = 0) {
+
+    var data = {
+        action: 'sync_urls',
+        nonce: jQuery('#ajax_sync_urls_status').data('nonce'),
+        force: force
+    };
+
+    // Loading icon to show we are checking if we have to sync.
+    jQuery('#ajax_sync_urls_status').append("<img style='width: 10px' src='/wp-content/plugins/webchangedetector/admin/img/loader.gif'>");
+
+    jQuery.post(ajaxurl, data, function (response) {
+        // We get the last sync date as response.
+        jQuery('#ajax_sync_urls_status').html(response);
+        return response;
+    });
+}
+
 function postUrl(postId) {
     let groupId = document.getElementsByName('group_id')[0]
     let data;

@@ -165,6 +165,9 @@ class WebChangeDetector {
 		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_admin, 'ajax_get_processing_queue' );
 		$this->loader->add_action( 'wp_ajax_post_url', $plugin_admin, 'ajax_post_url' );
 		$this->loader->add_action( 'wp_ajax_update_comparison_status', $plugin_admin, 'ajax_update_comparison_status' );
+		$this->loader->add_action( 'wp_ajax_sync_urls', $plugin_admin, 'ajax_sync_urls' );
+		$this->loader->add_action( 'post_updated', $plugin_admin, 'update_post', 9999, 3 );
+
 		// TODO Sync all pages and posts when there is a new page or post published.
 		// Maybe with action hook save_post and the function wcd_sync_post_after_save.
 	}
