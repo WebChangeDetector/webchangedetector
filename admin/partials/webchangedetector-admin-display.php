@@ -158,7 +158,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			if ( ! $wcd->website_details ) {
 				WebChangeDetector_Admin::error_log( "Can't get website_details." );
+				// TODO Exit with a proper error message.
 			}
+
+			// The sync needs defaults. So we set default sync_url_types and default auto_update_settings.
+			$wcd->set_website_defaults();
 
 			// Make the inital post sync.
 			$wcd->sync_posts( true );
