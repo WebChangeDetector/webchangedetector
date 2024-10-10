@@ -151,16 +151,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Get website details and create them if we don't have them yet.
 		$wcd->website_details = $wcd->get_website_details()[0] ?? false;
 
+		// Set the sync types if we don't have them yet.. Check if we are only allowed to sync the frontpage.
+		if ( $wcd->is_allowed( 'only_frontpage' ) ) {
+			$wcd->set_default_sync_types( true );
+		} else {
+			$wcd->set_default_sync_types();
+		}
+
 		if ( ! $wcd->website_details ) {
 			$success              = $wcd->create_website_and_groups();
 			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
 
-			// Check if we are only allowed to sync the frontpage.
-			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
-				$wcd->set_default_sync_types( true );
-			} else {
-				$wcd->set_default_sync_types();
-			}
 
 			// Make the inital post sync.
 			$wcd->sync_posts( true );

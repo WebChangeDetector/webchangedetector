@@ -1317,6 +1317,7 @@ class WebChangeDetector_Admin {
 				$wp_post_type_slug = $this->get_post_type_slug( $post_type );
 
 				// Get the right name for the request.
+
 				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
 					if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 
