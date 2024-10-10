@@ -357,7 +357,7 @@ class WebChangeDetector_Admin {
 		$post_after_url  = get_permalink( $post_after );
 
 		// Check if we sync this post_type.
-		$website_details = $this->get_website_details()[0];
+		$website_details = $this->get_website_details();
 		$to_sync         = false;
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
 			if ( $post_category === $sync_url_type['post_type_name'] ) {
@@ -498,7 +498,7 @@ class WebChangeDetector_Admin {
 
 		$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
 		self::error_log( 'Force? ' . (bool) $force );
-		$response = $this->sync_posts( (bool) $force, $this->get_website_details()[0] );
+		$response = $this->sync_posts( (bool) $force, $this->get_website_details() );
 		if ( $response ) {
 			echo esc_html( $response );
 		}
@@ -1527,12 +1527,15 @@ class WebChangeDetector_Admin {
 
 	/** Set default sync types.
 	 *
-	 * @param bool $only_frontpage Only sync the frontpage.
 	 * @return void
 	 */
-	public function set_default_sync_types( $only_frontpage = false ) {
+	public function set_website_defaults() {
+		$update = false;
+		// Set default sync types.
 		if ( ! empty( $this->website_details ) && empty( $this->website_details['sync_url_types'] ) ) {
-			if ( $only_frontpage ) {
+			$update = true;
+
+			if ( $this->is_allowed( 'only_frontpage' ) ) {
 				$this->website_details['sync_url_types'] = array(
 					array(
 						'url_type_slug'  => 'types',
@@ -1557,7 +1560,27 @@ class WebChangeDetector_Admin {
 					),
 				);
 			}
+		}
 
+		// Set default auto update settings.
+		if ( ! empty( $this->website_details ) && empty( $this->website_details['auto_update_settings'] ) ) {
+			$update                                        = true;
+			$this->website_details['auto_update_settings'] = array(
+				'auto_update_checks_enabled'   => '',
+				'auto_update_checks_from'      => gmdate( 'H:i' ),
+				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
+				'auto_update_checks_monday'    => 'on',
+				'auto_update_checks_tuesday'   => 'on',
+				'auto_update_checks_wednesday' => 'on',
+				'auto_update_checks_thursday'  => 'on',
+				'auto_update_checks_friday'    => 'on',
+				'auto_update_checks_saturday'  => '',
+				'auto_update_checks_sunday'    => '',
+				'auto_update_checks_emails'    => get_option( 'admin_email' ),
+			);
+		}
+
+		if ( $update ) {
 			$this->update_website_details();
 		}
 	}
@@ -2322,7 +2345,7 @@ class WebChangeDetector_Admin {
 	/**
 	 * Get Website details.
 	 *
-	 * @return array The website details.
+	 * @return array|bool The website details.
 	 */
 	public function get_website_details() {
 		$args = array(
@@ -2334,8 +2357,11 @@ class WebChangeDetector_Admin {
 		if ( isset( $website_details[0]['sync_url_types'] ) ) {
 			$website_details[0]['sync_url_types'] = json_decode( $website_details[0]['sync_url_types'], 1 );
 		}
+		if ( isset( $website_details[0]['auto_update_settings'] ) ) {
+			$website_details[0]['auto_update_settings'] = json_decode( $website_details[0]['auto_update_settings'], 1 );
+		}
 
-		return $website_details;
+		return $website_details[0] ?? false;
 	}
 
 	/** Check if string is json.
@@ -2361,15 +2387,10 @@ class WebChangeDetector_Admin {
 			$update_website_details = $this->website_details;
 		}
 
-		if ( ! $this->is_json( $update_website_details['sync_url_types'] ) ) {
-			$update_website_details['sync_url_types'] = wp_json_encode( $update_website_details['sync_url_types'], JSON_UNESCAPED_UNICODE );
-		}
 		$this->api_v1(
 			array_merge(
-				array(
-					'action' => 'save_user_website',
-					$update_website_details,
-				)
+				array( 'action' => 'save_user_website' ),
+				$update_website_details
 			)
 		);
 	}
@@ -2760,18 +2781,19 @@ class WebChangeDetector_Admin {
 
 	/** Get group details and its urls.
 	 *
-	 * @param string $group_id The group id.
+	 * @param string $group_uuid The group id.
 	 * @param array  $url_filter Filters for the urls.
+	 *
 	 * @return mixed
 	 */
-	public function get_group_and_urls( $group_id, $url_filter = array() ) {
+	public function get_group_and_urls( $group_uuid, $url_filter = array() ) {
 
-		$group_and_urls = WebChangeDetector_API_V2::get_group_v2( $group_id )['data'];
-		$urls           = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter );
+		$group_and_urls = WebChangeDetector_API_V2::get_group_v2( $group_uuid )['data'];
+		$urls           = WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 
 		if ( empty( $urls['data'] ) ) {
 			$this->sync_posts( true );
-			$urls = WebChangeDetector_API_V2::get_group_urls_v2( $group_id, $url_filter );
+			$urls = WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 		}
 
 		$group_and_urls['urls']                = $urls['data'];
