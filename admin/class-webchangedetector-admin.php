@@ -312,8 +312,8 @@ class WebChangeDetector_Admin {
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
 		update_option( WCD_VERIFY_SECRET, $validation_string, false );
-        $postdata['password'] = password_hash($postdata['password'], PASSWORD_BCRYPT);
-		$args = array_merge(
+		$postdata['password'] = password_hash( $postdata['password'], PASSWORD_BCRYPT );
+		$args                 = array_merge(
 			array(
 				'action'            => 'add_free_account',
 				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
@@ -1529,7 +1529,7 @@ class WebChangeDetector_Admin {
 	/** Set default sync types.
 	 *
 	 * @return void
-     * @depreacted
+	 * @depreacted
 	 */
 	public function set_website_defaults() {
 		$update = false;
@@ -2356,9 +2356,9 @@ class WebChangeDetector_Admin {
 		);
 		$website_details = $this->api_v1( $args );
 
-        if(!empty($website_details[0])) {
-            $website_details = $website_details[0];
-        }
+		if ( ! empty( $website_details[0] ) ) {
+			$website_details = $website_details[0];
+		}
 		if ( isset( $website_details['sync_url_types'] ) ) {
 			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
@@ -2417,7 +2417,7 @@ class WebChangeDetector_Admin {
 		}
 
 		if ( $update ) {
-			$this->update_website_details($website_details);
+			$this->update_website_details( $website_details );
 		}
 
 		return $website_details ?? false;
