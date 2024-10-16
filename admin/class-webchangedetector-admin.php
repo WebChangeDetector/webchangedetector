@@ -1284,9 +1284,8 @@ class WebChangeDetector_Admin {
 		$last_sync     = get_option( 'wcd_last_urls_sync' );
 		$sync_interval = '+1 hour';
 
-		self::error_log( 'Checking if we need to sync.' );
 		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && $last_sync < strtotime( $sync_interval, current_time( 'timestamp' ) ) ) {
+		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > gmdate( 'U' ) ) {
 			// Returning last sync datetime.
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
@@ -1436,7 +1435,7 @@ class WebChangeDetector_Admin {
 		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
 		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
-		update_option( 'wcd_last_urls_sync', current_time( 'U' ) );
+		update_option( 'wcd_last_urls_sync', gmdate( 'U' ) );
 
 		return date_i18n( 'd.m.Y H:i' );
 	}
