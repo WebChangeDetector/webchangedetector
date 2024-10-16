@@ -161,9 +161,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				// TODO Exit with a proper error message.
 			}
 
-			// The sync needs defaults. So we set default sync_url_types and default auto_update_settings.
-			$wcd->set_website_defaults();
-
 			// Make the inital post sync.
 			$wcd->sync_posts( true );
 
@@ -203,9 +200,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			<?php
 			return false;
 		}
-
-		// Set the default sync types and auto update settings (only if they are missing).
-		$wcd->set_website_defaults();
 
 		// Save the allowances to the db. We need this for the navigation.
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {

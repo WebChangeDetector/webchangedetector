@@ -312,7 +312,7 @@ class WebChangeDetector_Admin {
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
 		update_option( WCD_VERIFY_SECRET, $validation_string, false );
-
+        $postdata['password'] = password_hash($postdata['password'], PASSWORD_BCRYPT);
 		$args = array_merge(
 			array(
 				'action'            => 'add_free_account',
@@ -1121,7 +1121,7 @@ class WebChangeDetector_Admin {
 			return;
 		}
 
-		// Set the batch size to 500 for both retrieving and uploading.
+		// Set the batch size for both retrieving and uploading.
 		$offset          = 0;
 		$posts_per_batch = 1000;  // Number of posts to retrieve per query.
 		$post_status     = 'publish';  // Fetch only published posts.
@@ -1170,7 +1170,8 @@ class WebChangeDetector_Admin {
 			// Increment the offset for the next batch.
 			$offset += $posts_per_batch;
 			self::error_log( 'Sending Posts.' );
-			// Call uploadUrls after every batch of 500 posts.
+
+			// Call uploadUrls after every batch.
 			$this->upload_urls_in_batches( $all_posts_data );
 
 			// Clear the data array after each batch to free memory.
@@ -1528,6 +1529,7 @@ class WebChangeDetector_Admin {
 	/** Set default sync types.
 	 *
 	 * @return void
+     * @depreacted
 	 */
 	public function set_website_defaults() {
 		$update = false;
@@ -2354,14 +2356,71 @@ class WebChangeDetector_Admin {
 		);
 		$website_details = $this->api_v1( $args );
 
-		if ( isset( $website_details[0]['sync_url_types'] ) ) {
-			$website_details[0]['sync_url_types'] = json_decode( $website_details[0]['sync_url_types'], 1 );
+        if(!empty($website_details[0])) {
+            $website_details = $website_details[0];
+        }
+		if ( isset( $website_details['sync_url_types'] ) ) {
+			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
-		if ( isset( $website_details[0]['auto_update_settings'] ) ) {
-			$website_details[0]['auto_update_settings'] = json_decode( $website_details[0]['auto_update_settings'], 1 );
+		if ( isset( $website_details['auto_update_settings'] ) ) {
+			$website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
 		}
 
-		return $website_details[0] ?? false;
+		$update = false;
+
+		// Set default sync types.
+		if ( ! empty( $website_details ) && empty( $website_details['sync_url_types'] ) ) {
+			$update = true;
+			if ( $this->is_allowed( 'only_frontpage' ) ) {
+				$website_details['sync_url_types'] = array(
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'frontpage',
+						'post_type_slug' => 'frontpage',
+						'post_type_name' => 'Frontpage',
+					),
+				);
+			} else {
+				$website_details['sync_url_types'] = array(
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'Post Types',
+						'post_type_slug' => 'posts',
+						'post_type_name' => $this->get_post_type_name( 'posts' ),
+					),
+					array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => 'Post Types',
+						'post_type_slug' => 'pages',
+						'post_type_name' => $this->get_post_type_name( 'pages' ),
+					),
+				);
+			}
+		}
+
+		// Set default auto update settings.
+		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
+			$update                                  = true;
+			$website_details['auto_update_settings'] = array(
+				'auto_update_checks_enabled'   => '',
+				'auto_update_checks_from'      => gmdate( 'H:i' ),
+				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
+				'auto_update_checks_monday'    => 'on',
+				'auto_update_checks_tuesday'   => 'on',
+				'auto_update_checks_wednesday' => 'on',
+				'auto_update_checks_thursday'  => 'on',
+				'auto_update_checks_friday'    => 'on',
+				'auto_update_checks_saturday'  => '',
+				'auto_update_checks_sunday'    => '',
+				'auto_update_checks_emails'    => get_option( 'admin_email' ),
+			);
+		}
+
+		if ( $update ) {
+			$this->update_website_details($website_details);
+		}
+
+		return $website_details ?? false;
 	}
 
 	/** Check if string is json.
