@@ -483,6 +483,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					} else {
 						$extra_filters['status'] = 'new,ok,to_fix,false_positive';
 					}
+
 					if ( $difference_only ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
@@ -552,11 +553,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'webchangedetector-update-settings':
 				if ( ! $wcd->is_allowed( 'manual_checks_view' ) ) {
-					break;
-				}
-				// Disable settings if this website has no permissions.
-				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
-					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
 
@@ -649,10 +645,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					true,
 					'top left-plus-300'
 				);
-				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_auto_detection'] ) {
-					echo 'Settings for Manual Checks are disabled by your API Token.';
-					break;
-				}
 				?>
 				<div class="action-container">
 					<?php
@@ -955,7 +947,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<p>To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
 							This works automatically in the background.<br>
 							When you add a webpage, you can start the sync manually to be able to activate them for checks.</p>
-						<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
+						<p> Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
 							<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 						</span>
 						</p>
@@ -968,7 +960,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-					} elseif ( ! $wcd->website_details['enable_limits'] && $wcd->is_allowed( 'upgrade_account' ) ) {
+					} elseif ( $wcd->is_allowed( 'upgrade_account' ) ) {
 						?>
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>

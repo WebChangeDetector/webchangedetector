@@ -108,6 +108,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
+		WebChangeDetector_API_V2::update_batch_v2($response['batch'], 'Auto Update Checks');
 
 		$this->wcd_cron_check_post_queues();
 	}

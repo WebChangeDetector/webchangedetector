@@ -2362,7 +2362,7 @@ class WebChangeDetector_Admin {
 			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
 		if ( isset( $website_details['auto_update_settings'] ) ) {
-			$website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
+			//$website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
 		}
 
 		$update = false;
@@ -2670,7 +2670,7 @@ class WebChangeDetector_Admin {
 					</p>
 					<?php } ?>
 
-					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && WCD_AUTO_UPDATES_ENABLED ) ) { ?>
+					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
 					<p>
 						<strong>Auto update checks: </strong>
 						<?php
