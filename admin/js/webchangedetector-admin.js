@@ -524,15 +524,7 @@ function wcdValidateFormManualSettings() {
     var from = document.getElementById("auto_update_checks_from");
     var to = document.getElementById("auto_update_checks_to");
 
-    if(to.value < from.value) {
-        jQuery(from).css("border", "2px solid #d63638");
-        jQuery(to).css("border", "2px solid #d63638");
-        jQuery("#error-from-to-validation").css("display", "block");
-        from.scrollIntoView({
-            behavior: 'smooth'
-        });
-        return false;
-    }
+
 
     // Validation weekday.
     var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');

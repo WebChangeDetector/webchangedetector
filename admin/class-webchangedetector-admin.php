@@ -582,8 +582,10 @@ class WebChangeDetector_Admin {
 				$auto_update_settings[ $key ] = $value;
 			}
 		}
-
+		$this->website_details['auto_update_settings'] = $auto_update_settings;
+		$this->update_website_details( $this->website_details );
 		update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
+
 		do_action( 'wcd_save_update_group_settings', $postdata );
 
 		// Update group settings in api.
@@ -2362,7 +2364,7 @@ class WebChangeDetector_Admin {
 			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
 		if ( isset( $website_details['auto_update_settings'] ) ) {
-			//$website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
+			// $website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
 		}
 
 		$update = false;
@@ -2908,6 +2910,9 @@ class WebChangeDetector_Admin {
 			'headers' => array(
 				'Accept'        => 'application/json',
 				'Authorization' => 'Bearer ' . $api_token,
+				'x-wcd-domain'  => self::get_domain_from_site_url(),
+				'x-wcd-wp-id'   => get_current_user_id(),
+				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 			),
 		);
 

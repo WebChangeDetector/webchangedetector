@@ -338,12 +338,12 @@ class WebChangeDetector_API_V2 {
 	 * @param string $name The new batch name.
 	 * @return mixed|string|true
 	 */
-	public static function update_batch_v2($batch_id, $name) {
+	public static function update_batch_v2( $batch_id, $name ) {
 		$args = array(
 			'action' => 'batches/' . $batch_id,
-			'name' => '$name'
+			'name'   => '$name',
 		);
-		return self::api_v2($args, "PUT");
+		return self::api_v2( $args, 'PUT' );
 	}
 
 	/** Update comparison.

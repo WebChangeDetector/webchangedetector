@@ -64,7 +64,7 @@ class WebChangeDetector_Autoupdates {
 		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 	}
 
-	/** This is just calls the version check from a backup cron.
+	/** This just calls the version check from a backup cron.
 	 *
 	 * @return void
 	 */
@@ -108,7 +108,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
-		WebChangeDetector_API_V2::update_batch_v2($response['batch'], 'Auto Update Checks');
+		WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks' );
 
 		$this->wcd_cron_check_post_queues();
 	}
@@ -429,7 +429,10 @@ class WebChangeDetector_Autoupdates {
 		if ( $auto_update_settings ) {
 			return $auto_update_settings;
 		}
-		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		$wcd                  = new WebChangeDetector_Admin();
+		$auto_update_settings = $wcd->get_website_details()['auto_update_settings'];
+		update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
+
 		// Enable auto-update checks if the defines are set.
 		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
 			$auto_update_settings['auto_update_checks_enabled'] = 'on';
