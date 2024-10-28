@@ -499,6 +499,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						'per_page' => 999999,
 					);
 
+					// Get failed queues
+					$batch_ids = [];
+					foreach($batches['data'] as $batch ) {
+						$batch_ids[] = $batch['id'];
+					}
+					$failed_queues = WebChangeDetector_API_V2::get_queues_v2($batch_ids, 'failed');
+
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
 					$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
@@ -511,7 +518,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						false,
 						'top top-plus-100 left-plus-300'
 					);
-					$wcd->compare_view_v2( $comparisons['data'] );
+					$wcd->compare_view_v2( $comparisons['data'], $failed_queues );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );

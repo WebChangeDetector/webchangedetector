@@ -287,6 +287,31 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'GET' );
 	}
 
+	/** Get queues
+	 *
+	 * @param string $batch_id The batch id.
+	 * @param string $status Status seperatated by comma.
+	 * @param array  $filters Additional filters.
+	 * @return mixed|string
+	 */
+	public static function get_queues_v2( $batch_ids = [], $status = false ) {
+		$args = array();
+
+		if(!is_array($batch_ids )) {
+			return false;
+		}
+		if ( $batch_ids ) {
+			$args['batches'] = implode(",",$batch_ids);
+		}
+		if ( $status ) {
+			$args['status'] = $status;
+		}
+
+		$args['action'] = 'queues';
+
+		return self::api_v2( $args, 'GET' );
+	}
+
 	/** Add webhook
 	 *
 	 * @param string $url The url to send the webhook to.

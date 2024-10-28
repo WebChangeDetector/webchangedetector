@@ -244,10 +244,14 @@
     background: grey;
 }
 .webchangedetector .comparison_status.comparison_status_to_fix {
-    background: darkred;
+    background: orange;
 }
 .webchangedetector .comparison_status.comparison_status_false_positive {
-    background: orange;
+    background: cornflowerblue;
+}
+
+.webchangedetector .comparison_status.comparison_status_failed {
+    background: darkred;
 }
 
 .webchangedetector .comparison-url-tile {
