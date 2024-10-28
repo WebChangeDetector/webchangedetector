@@ -584,7 +584,6 @@ class WebChangeDetector_Admin {
 		}
 		$this->website_details['auto_update_settings'] = $auto_update_settings;
 		$this->update_website_details( $this->website_details );
-		update_option( WCD_AUTO_UPDATE_SETTINGS, $auto_update_settings );
 
 		do_action( 'wcd_save_update_group_settings', $postdata );
 
