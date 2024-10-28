@@ -721,7 +721,8 @@ class WebChangeDetector_Admin {
 
 	/** View of comparison overview.
 	 *
-	 * @param array $compares the compares.
+	 * @param array $compares The compares.
+	 * @param array $failed_queues Array with failed queues.
 	 * @return void
 	 */
 	public function compare_view_v2( $compares, $failed_queues = false ) {
@@ -803,31 +804,35 @@ class WebChangeDetector_Admin {
 							</tr>
 
 							<?php
-                            if($failed_queues) {
-                                foreach($failed_queues['data'] as $failed_queue) {
-                                    //echo "Batch1: {$compare['batch']} | Batch2: {$failed_queue['batch']}";
-                                    if($batch_id === $failed_queue['batch']) { ?>
-                                        <tr style="background-color: rgba(220, 50, 50, 0.28)">
-                                            <td>
-                                                <div class="comparison_status_container">
-                                                    <span class="current_comparison_status comparison_status comparison_status_failed"><?php echo $this->comparison_status_nice_name( 'failed' )  ?></span>
-                                                </div>
-                                            </td>
-                                            <td><?php
-                                                if ( ! empty( $failed_queue['html_title'] ) ) {
-                                                    echo '<strong>' . $failed_queue['html_title'] . '</strong><br>';
-                                                }
-                                                echo $this->get_device_icon( $failed_queue['device'] ) . $failed_queue['url_link'];  ?>
-                                            </td>
-                                            <td colspan="3">
-                                                <strong>Creating Change Detection failed.</strong><br> Please check the URL.
-                                            </td>
+							if ( $failed_queues ) {
+								foreach ( $failed_queues['data'] as $failed_queue ) {
 
-                                        </tr>
+									if ( $batch_id === $failed_queue['batch'] ) {
+										?>
+										<tr style="background-color: rgba(220, 50, 50, 0.28)">
+											<td>
+												<div class="comparison_status_container">
+													<span class="current_comparison_status comparison_status comparison_status_failed"><?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?></span>
+												</div>
+											</td>
+											<td>
+											<?php
+											if ( ! empty( $failed_queue['html_title'] ) ) {
+												echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
+											}
+												echo esc_html( $this->get_device_icon( $failed_queue['device'] ) . $failed_queue['url_link'] );
+											?>
+											</td>
+											<td colspan="3">
+												<strong>Creating Change Detection failed.</strong><br> Please check the URL.
+											</td>
 
-                                    <?php }
-                                }
-                            }
+										</tr>
+
+										<?php
+									}
+								}
+							}
 
 							foreach ( $compares_in_batch as $key => $compare ) {
 								if ( 'needs_attention' === $key ) {

@@ -499,12 +499,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						'per_page' => 999999,
 					);
 
-					// Get failed queues
-					$batch_ids = [];
-					foreach($batches['data'] as $batch ) {
+					// Get failed queues.
+					$batch_ids = array();
+					foreach ( $batches['data'] as $batch ) {
 						$batch_ids[] = $batch['id'];
 					}
-					$failed_queues = WebChangeDetector_API_V2::get_queues_v2($batch_ids, 'failed');
+					$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
 
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 

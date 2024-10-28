@@ -289,19 +289,18 @@ class WebChangeDetector_API_V2 {
 
 	/** Get queues
 	 *
-	 * @param string $batch_id The batch id.
+	 * @param array  $batch_ids Array of batch_ids.
 	 * @param string $status Status seperatated by comma.
-	 * @param array  $filters Additional filters.
 	 * @return mixed|string
 	 */
-	public static function get_queues_v2( $batch_ids = [], $status = false ) {
+	public static function get_queues_v2( $batch_ids = array(), $status = false ) {
 		$args = array();
 
-		if(!is_array($batch_ids )) {
+		if ( ! is_array( $batch_ids ) ) {
 			return false;
 		}
 		if ( $batch_ids ) {
-			$args['batches'] = implode(",",$batch_ids);
+			$args['batches'] = implode( ',', $batch_ids );
 		}
 		if ( $status ) {
 			$args['status'] = $status;
