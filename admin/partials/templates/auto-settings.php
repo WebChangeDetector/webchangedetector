@@ -4,6 +4,7 @@
  *
  * @package    webchangedetector
  */
+
 // Are we allowed to see the settings?
 if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings'] ) && $this->website_details['allowances']['monitoring_checks_settings'] ) {
 	$enabled     = $group_and_urls['enabled'];

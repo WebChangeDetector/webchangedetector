@@ -2363,9 +2363,6 @@ class WebChangeDetector_Admin {
 		if ( isset( $website_details['sync_url_types'] ) ) {
 			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
-		if ( isset( $website_details['auto_update_settings'] ) ) {
-			// $website_details['auto_update_settings'] = json_decode( $website_details['auto_update_settings'], 1 );
-		}
 
 		$update = false;
 

@@ -341,7 +341,7 @@ class WebChangeDetector_API_V2 {
 	public static function update_batch_v2( $batch_id, $name ) {
 		$args = array(
 			'action' => 'batches/' . $batch_id,
-			'name'   => '$name',
+			'name'   => $name,
 		);
 		return self::api_v2( $args, 'PUT' );
 	}
