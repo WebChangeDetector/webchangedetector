@@ -312,7 +312,7 @@ class WebChangeDetector_Admin {
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
 		update_option( WCD_VERIFY_SECRET, $validation_string, false );
-		$postdata['password'] = password_hash( $postdata['password'], PASSWORD_BCRYPT );
+		$postdata['password'] = wp_hash_password( $postdata['password'] );
 		$args                 = array_merge(
 			array(
 				'action'            => 'add_free_account',
