@@ -730,7 +730,8 @@ class WebChangeDetector_Admin {
 			<table style="width: 100%">
 				<tr>
 					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
-						<strong>No change detections (yet)</strong
+						<strong>No change detections (yet).</strong><br>
+                        Try different filters to show change detections.
 					</td>
 				</tr>
 			</table>
@@ -753,7 +754,16 @@ class WebChangeDetector_Admin {
 		}
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 
+
+
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
+
+			$amount_failed = 0;
+			foreach($failed_queues['data'] as $failed_queue) {
+                if($failed_queue['batch'] === $batch_id) {
+                    $amount_failed++;
+                }
+			}
 			?>
 			<div class="accordion accordion-batch" style="margin-top: 20px;">
 				<div class="mm_accordion_title">
@@ -768,6 +778,9 @@ class WebChangeDetector_Admin {
 									$this->get_device_icon( 'check', 'batch_is_ok' );
 									echo '<small>Looks Good</small>';
 								}
+                                if($amount_failed) {
+                                    echo "<div style='font-size: 14px; color: darkred'>{$amount_failed} " . ($amount_failed > 1 ? "checks" : "check") . " failed</div>";
+                                }
 								?>
 							</div>
 							<div class="accordion-batch-title-tile">
@@ -805,7 +818,6 @@ class WebChangeDetector_Admin {
 							<?php
 							if ( $failed_queues ) {
 								foreach ( $failed_queues['data'] as $failed_queue ) {
-
 									if ( $batch_id === $failed_queue['batch'] ) {
 										?>
 										<tr style="background-color: rgba(220, 50, 50, 0.28)">
