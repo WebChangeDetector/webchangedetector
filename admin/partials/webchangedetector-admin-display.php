@@ -161,7 +161,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 
 			// Make the inital post sync.
-            //TODO: make this asyncron and show loading screen.
+			// TODO: make this asyncron and show loading screen.
 			$wcd->sync_posts( true );
 
 			// If only the frontpage is allowed, we activate the URLs.
@@ -206,11 +206,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			update_option( WCD_ALLOWANCES, $wcd->website_details['allowances'] );
 		}
 
-        // Moving local auto update settings to the api
-        if($local_auto_update_settings = get_option(WCD_AUTO_UPDATE_SETTINGS)) {
-            $wcd->update_website_details($local_auto_update_settings);
-            delete_option(WCD_AUTO_UPDATE_SETTINGS);
-        }
+		// Moving local auto update settings to the api.
+		$local_auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		if ( $local_auto_update_settings ) {
+			$wcd->update_website_details( $local_auto_update_settings );
+			delete_option( WCD_AUTO_UPDATE_SETTINGS );
+		}
 
 		// Update groups in case we have group ids from previous account. We need them for auto updates.
 		$groups = array(

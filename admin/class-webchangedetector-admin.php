@@ -731,7 +731,7 @@ class WebChangeDetector_Admin {
 				<tr>
 					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
 						<strong>No change detections (yet).</strong><br>
-                        Try different filters to show change detections.
+						Try different filters to show change detections.
 					</td>
 				</tr>
 			</table>
@@ -754,15 +754,13 @@ class WebChangeDetector_Admin {
 		}
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 
-
-
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 
 			$amount_failed = 0;
-			foreach($failed_queues['data'] as $failed_queue) {
-                if($failed_queue['batch'] === $batch_id) {
-                    $amount_failed++;
-                }
+			foreach ( $failed_queues['data'] as $failed_queue ) {
+				if ( $failed_queue['batch'] === $batch_id ) {
+					++$amount_failed;
+				}
 			}
 			?>
 			<div class="accordion accordion-batch" style="margin-top: 20px;">
@@ -778,9 +776,9 @@ class WebChangeDetector_Admin {
 									$this->get_device_icon( 'check', 'batch_is_ok' );
 									echo '<small>Looks Good</small>';
 								}
-                                if($amount_failed) {
-                                    echo "<div style='font-size: 14px; color: darkred'>{$amount_failed} " . ($amount_failed > 1 ? "checks" : "check") . " failed</div>";
-                                }
+								if ( $amount_failed ) {
+									echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
+								}
 								?>
 							</div>
 							<div class="accordion-batch-title-tile">
@@ -915,7 +913,7 @@ class WebChangeDetector_Admin {
 										<?php echo esc_html( $compare['difference_percent'] ); ?>%
 									</td>
 									<td>
-										<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $compare['id'] ); ?>" method="post">
+										<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
 											<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 											<input type="submit" value="Show" class="button">
 										</form>
@@ -943,6 +941,11 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_comparison_by_token( $postdata, $hide_switch = false, $whitelabel = false ) {
 		$token = $postdata['token'] ?? null;
+
+		if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
+			echo 'Something went wrong. Please try again.';
+			wp_die();
+		}
 
 		if ( ! $token && ! empty( $_GET['id'] ) ) {
 			$token = sanitize_text_field( wp_unslash( $_GET['id'] ) );
@@ -983,12 +986,12 @@ class WebChangeDetector_Admin {
 			?>
 			<!-- Previous and next buttons -->
 			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
-				<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $before_token ) ?? null; ?>" method="post" style="display:inline-block;">
+				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> < Previous </button>
 				</form>
-				<form action="?page=webchangedetector-show-detection&id=<?php echo esc_html( $after_token ) ?? null; ?>" method="post" style="display:inline-block;">
+				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>> Next > </button>
@@ -1755,6 +1758,11 @@ class WebChangeDetector_Admin {
 	public function get_url_settings( $monitoring_group = false ) {
 		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 
+		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
+			echo 'Something went wrong. Try again.';
+			wp_die();
+		}
+
 		if ( $monitoring_group ) {
 			$group_id = $this->monitoring_group_uuid;
 		} else {
@@ -2044,9 +2052,11 @@ class WebChangeDetector_Admin {
 							foreach ( $urls_meta['links'] as $link ) {
 								$pagination_page = $this->get_params_of_url( $link['url'] )['page'] ?? '';
 								if ( ! $link['active'] && $pagination_page ) {
+									$pagination_link = '?page=webchangedetector-' . esc_html( $tab ) . '&paged=' . esc_html( $pagination_page ) . '&' . esc_html( build_query( $pagination_params ) );
+									$pagination_link = wp_nonce_url( $pagination_link );
 									?>
 									<a class="tablenav-pages-navspan button"
-										href="?page=webchangedetector-<?php echo esc_html( $tab ); ?>&paged=<?php echo esc_html( $pagination_page ); ?>&<?php echo esc_html( build_query( $pagination_params ) ); ?>">
+										href="<?php echo esc_html( $pagination_link ); ?>">
 										<?php echo esc_html( $link['label'] ); ?>
 									</a>
 								<?php } else { ?>
@@ -2542,6 +2552,10 @@ class WebChangeDetector_Admin {
 	 */
 	public function tabs() {
 		$active_tab = 'webchangedetector'; // init.
+
+		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
+			echo 'Something went wrong. Please try again.';
+		}
 
 		if ( isset( $_GET['page'] ) ) {
 			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );

@@ -500,8 +500,10 @@ class WebChangeDetector_API_V2 {
 			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 			if ( 200 !== $response_code ) {
 				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
+					// phpcs:ignore
 					WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
 				} else {
+					// phpcs:ignore
 					WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
 				}
 			}
