@@ -178,6 +178,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 
 			// Make the inital post sync.
+            //TODO: make this asyncron and show loading screen.
 			$wcd->sync_posts( true );
 
 			// If only the frontpage is allowed, we activate the URLs.
