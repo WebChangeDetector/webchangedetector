@@ -64,13 +64,14 @@ class WebChangeDetector_Autoupdates {
 		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 	}
 
-	/** This is just calls the version check from a backup cron.
+	/** This just calls the version check from a backup cron.
 	 *
 	 * @return void
 	 */
 	public function wcd_wp_version_check() {
 		wp_version_check();
 	}
+
 
 	/**
 	 * Fires when wp auto updates are done.
@@ -81,7 +82,7 @@ class WebChangeDetector_Autoupdates {
 		WebChangeDetector_Admin::error_log( 'Function: Automatic Updates Complete' );
 
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
-		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		$auto_update_settings = self::get_auto_update_settings();
 		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || ! get_transient( WCD_PRE_AUTO_UPDATE ) ) {
 			WebChangeDetector_Admin::error_log( 'Skipping after update stuff as checks are disabled or we don\'t have pre-update checks.' );
 			return;
@@ -107,6 +108,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
+		WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks' );
 
 		$this->wcd_cron_check_post_queues();
 	}
@@ -189,7 +191,7 @@ class WebChangeDetector_Autoupdates {
 		if ( isset( $group_settings['auto_update_checks_from'] ) ) {
 			$auto_update_checks_from = $group_settings['auto_update_checks_from'];
 		} else {
-			$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+			$auto_update_settings = self::get_auto_update_settings();
 			if ( ! $auto_update_settings ) {
 				return;
 			}
@@ -227,7 +229,7 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
 
 		// Get the auto-update settings.
-		$auto_update_settings = $this->get_auto_update_settings();
+		$auto_update_settings = self::get_auto_update_settings();
 
 		// We don't have auto-update settings yet or the manual checks group is not set. So, go the wp way.
 		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
@@ -248,16 +250,38 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Check if we do updates at current times.
-		if ( current_time( 'H:i' ) < $auto_update_settings['auto_update_checks_from'] ||
-			current_time( 'H:i' ) > $auto_update_settings['auto_update_checks_to'] ) {
-			WebChangeDetector_Admin::error_log(
-				'Canceling auto updates: ' . current_time( 'H:i' ) .
-				' is not between ' . $auto_update_settings['auto_update_checks_from'] .
-				' and ' . $auto_update_settings['auto_update_checks_to']
-			);
-			$this->set_lock();
-			return;
+		// Get the current time in the same format (HH:MM).
+		$current_time = current_time( 'H:i' );
+
+		// Convert the times to timestamps for comparison.
+		$from_timestamp    = strtotime( $auto_update_settings['auto_update_checks_from'] );
+		$to_timestamp      = strtotime( $auto_update_settings['auto_update_checks_to'] );
+		$current_timestamp = strtotime( $current_time );
+
+		// Check if current time is between from_time and to_time.
+		if ( $from_timestamp < $to_timestamp ) {
+			// Case 1: Time range is on the same day.
+			if ( $current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp ) {
+				WebChangeDetector_Admin::error_log(
+					'Canceling auto updates: ' . current_time( 'H:i' ) .
+					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
+					' and ' . $auto_update_settings['auto_update_checks_to']
+				);
+				$this->set_lock();
+				return;
+			}
+		} else {
+			// Case 2: Time range spans midnight.
+			$to_timestamp = strtotime( $auto_update_settings['auto_update_checks_to'] . ' +1 day' );
+			if ( ! ( $current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp ) ) {
+				WebChangeDetector_Admin::error_log(
+					'Canceling auto updates: ' . current_time( 'H:i' ) .
+					' is not between ' . $auto_update_settings['auto_update_checks_from'] .
+					' and ' . $auto_update_settings['auto_update_checks_to']
+				);
+				$this->set_lock();
+				return;
+			}
 		}
 
 		// Other early returns.
@@ -385,7 +409,7 @@ class WebChangeDetector_Autoupdates {
 								in your wp-admin dashboard of your website.<br><br>
 								Your WebChange Detector team</div>';
 
-		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		$auto_update_settings = self::get_auto_update_settings();
 		$to                   = get_bloginfo( 'admin_email' );
 		if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
 			$to = $auto_update_settings['auto_update_checks_emails'];
@@ -400,12 +424,19 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @return false|mixed|null
 	 */
-	public function get_auto_update_settings() {
+	public static function get_auto_update_settings() {
 		static $auto_update_settings;
 		if ( $auto_update_settings ) {
 			return $auto_update_settings;
 		}
-		$auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+
+		$wcd                  = new WebChangeDetector_Admin();
+		$auto_update_settings = $wcd->get_website_details()['auto_update_settings'];
+
+		// Enable auto-update checks if the defines are set.
+		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
+			$auto_update_settings['auto_update_checks_enabled'] = 'on';
+		}
 		return $auto_update_settings;
 	}
 

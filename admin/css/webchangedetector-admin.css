@@ -244,10 +244,14 @@
     background: grey;
 }
 .webchangedetector .comparison_status.comparison_status_to_fix {
-    background: darkred;
+    background: orange;
 }
 .webchangedetector .comparison_status.comparison_status_false_positive {
-    background: orange;
+    background: cornflowerblue;
+}
+
+.webchangedetector .comparison_status.comparison_status_failed {
+    background: darkred;
 }
 
 .webchangedetector .comparison-url-tile {
@@ -745,8 +749,9 @@ Dashboard
     float: left;
     padding: 0 20px ;
 }
-.webchangedetector .dashboard .box-half.right {
+.webchangedetector .dashboard .box-half.credit {
     float: right;
+    padding-bottom: 20px;
 }
 
 .webchangedetector .dashboard .box-half.usages {

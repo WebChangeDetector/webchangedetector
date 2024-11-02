@@ -19,7 +19,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 * @return bool|void
 	 */
 	function wcd_webchangedetector_init() {
-		// Add a nonce for security and authentication.
+        // Check dev updates
+		if (is_admin() && class_exists("WP_GitHub_Updater") && defined("WCD_DEV") && true === WCD_DEV) { // note the use of is_admin() to double check that this is happening in the admin
+			$config = array(
+				'slug' => plugin_basename(__FILE__), // this is the slug of your plugin
+				'proper_folder_name' => 'plugin-name', // this is the name of the folder your plugin lives in
+				'api_url' => 'https://api.github.com/repos/WebChangeDetector/wp-webchangedetector', // the GitHub API url of your GitHub repo
+				'raw_url' => 'https://github.com/WebChangeDetector/wp-webchangedetector/master', // the GitHub raw url of your GitHub repo
+				'github_url' => 'https://github.com/WebChangeDetector/wp-webchangedetector', // the GitHub url of your GitHub repo
+				'zip_url' => 'https://github.com/WebChangeDetector/wp-webchangedetector/zipball/master', // the zip url of the GitHub repo
+				'sslverify' => true, // whether WP should check the validity of the SSL cert when getting an update, see https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/2 and https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/4 for details
+				'requires' => '3.0', // which version of WordPress does your plugin require?
+				'tested' => '3.3', // which version of WordPress is your plugin tested up to?
+				'readme' => 'README.md', // which file to use as the readme for the version number
+				'access_token' => '', // Access private repositories by authorizing under Plugins > GitHub Updates when this example plugin is installed
+			);
+			new WP_GitHub_Updater($config);
+		}
 
 		// Start view.
 		echo '<div class="wrap">';
@@ -33,7 +49,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$wcd_action = sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) );
 			check_admin_referer( $wcd_action );
 			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
-				echo '<div class="error notice"><p>Ooops! There was an unknown action called. Please contact us.</p></div>';
+				?>
+				<div class="error notice">
+					<p>Ooops! There was an unknown action called. Please contact us if this issue persists.</p>
+				</div>
+				<?php
 				return;
 			}
 		}
@@ -69,7 +89,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				delete_option( WCD_WEBSITE_GROUPS );
 				delete_option( WCD_OPTION_UPDATE_STEP_SETTINGS );
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
-                delete_option( WCD_ALLOWANCES );
+				delete_option( WCD_ALLOWANCES );
+				delete_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
 				break;
 
 			case 're-add-api-token':
@@ -108,70 +129,129 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$account_details = $wcd->get_account( true );
 
 		// Show error message if we didn't get response from API.
-		if ( empty( $account_details ) ) { ?>
-			<div style='margin: 0 auto; text-align: center;  width: 400px; padding: 20px; border: 1px solid #aaa'>
-				<h1>Oooops!</h1>
-				<p>Something went wrong. Please try to re-add your api token.</p>
+		if ( empty( $account_details ) ) {
+			?>
+			<div class="notice notice-error">
+				<p>
+					Something went wrong. Please try to re-add your api token.
+					<form method="post">
+						<input type="hidden" name="wcd_action" value="reset_api_token">
+						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<input type="submit" value="Reset API token" class="button button-delete">
+					</form>
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		// Check if plugin has to be updated.
+		if ( 'update plugin' === $account_details ) {
+			?>
+			<div class="notice notice-error">
+				<p>
+					There are major updates in our system which requires to update the plugin
+					WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		// Check if account is activated and if the api key is authorized.
+		if ( 'ActivateAccount' === $account_details || 'activate account' === $account_details || 'unauthorized' === $account_details ) {
+			$wcd->show_activate_account( $account_details );
+			return false;
+		}
+
+		// Get website details.
+		$wcd->website_details = $wcd->get_website_details();
+
+		// Create new ones if we don't have them yet.
+		if ( ! $wcd->website_details ) {
+			$success              = $wcd->create_website_and_groups();
+			$wcd->website_details = $wcd->get_website_details();
+
+			if ( ! $wcd->website_details ) {
+				WebChangeDetector_Admin::error_log( "Can't get website_details." );
+				// TODO Exit with a proper error message.
+			}
+
+			// Make the inital post sync.
+			$wcd->sync_posts( true );
+
+			// If only the frontpage is allowed, we activate the URLs.
+			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
+				$urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid )['urls'];
+				if ( ! empty( $urls[0] ) ) {
+					$update_urls = array(
+						'desktop-' . $urls[0]['url_id'] => 1,
+						'mobile-' . $urls[0]['url_id']  => 1,
+						'group_id'                      => $wcd->website_details['manual_detection_group']['uuid'],
+					);
+					$wcd->post_urls( $update_urls );
+				}
+			}
+		}
+
+		// Check if website details are available.
+		if ( empty( $wcd->website_details ) ) {
+			?>
+			<div class="error notice">
+				<p>
+					We couldn't find your website settings. Please reset the API token in
+					settings and re-add your website with your API Token.
+				</p><p>
+					Your current API token is: <strong><?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?></strong>.
+				</p>
+				<p>
+				<form method="post">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+					<input type="hidden" name="api_token" value="<?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?>">
+					<input type="submit" value="Reset API token" class="button button-delete">
+				</form>
+				</p>
+			</div>
+			<?php
+			return false;
+		}
+
+		// Save the allowances to the db. We need this for the navigation.
+		if ( ! empty( $wcd->website_details['allowances'] ) ) {
+			update_option( WCD_ALLOWANCES, $wcd->website_details['allowances'] );
+		}
+
+        // Moving local auto update settings to the api
+        if($local_auto_update_settings = get_option(WCD_AUTO_UPDATE_SETTINGS)) {
+            $wcd->update_website_details($local_auto_update_settings);
+            delete_option(WCD_AUTO_UPDATE_SETTINGS);
+        }
+
+		// Update groups in case we have group ids from previous account. We need them for auto updates.
+		$groups = array(
+			'auto_detection_group'   => $wcd->website_details['auto_detection_group']['uuid'] ?? false,
+			'manual_detection_group' => $wcd->website_details['manual_detection_group']['uuid'] ?? false,
+		);
+		update_option( WCD_WEBSITE_GROUPS, $groups, false );
+
+		// Save group_ids to the class vars.
+		$wcd->monitoring_group_uuid = $groups['auto_detection_group'] ?? false;
+		$wcd->manual_group_uuid     = $groups['manual_detection_group'] ?? false;
+
+		// Error if we don't have group_ids.
+		if ( ! $wcd->manual_group_uuid || ! $wcd->monitoring_group_uuid ) {
+			?>
+			<div class="notice notice-error">
+				<p>Sorry, we couldn't get your account settings. Please contact us.
 				<form method="post">
 					<input type="hidden" name="wcd_action" value="reset_api_token">
 					<?php wp_nonce_field( 'reset_api_token' ); ?>
 					<input type="submit" value="Reset API token" class="button button-delete">
 				</form>
+				</p>
 			</div>
-
 			<?php
-			wp_die();
-		}
-
-		// Check if plugin has to be updated.
-		if ( 'update plugin' === $account_details ) {
-			echo '<div class="notice notice-error"><p>There are major updates in our system which requires to update the plugin 
-            WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.</p></div>';
-			wp_die();
-		}
-
-		// Check if account is activated and if the api key is authorized.
-		if ( 'ActivateAccount' === $account_details || 'unauthorized' === $account_details ) {
-			$wcd->show_activate_account( $account_details );
-			return false;
-		}
-
-		// Get website details and create them if we don't have them yet.
-		$wcd->website_details = $wcd->get_website_details()[0] ?? false;
-		if ( ! $wcd->website_details ) {
-			$success              = $wcd->create_website_and_groups();
-			$wcd->website_details = $wcd->get_website_details()[0] ?? false;
-			$wcd->set_default_sync_types();
-			$wcd->sync_posts( true );
-		}
-
-		if ( ! empty( $wcd->website_details['allowances'] ) ) {
-			update_option( 'wcd_allowances', $wcd->website_details['allowances'] );
-		}
-
-		// We can't get the website. So we exit with an error.
-		if ( empty( $wcd->website_details ) ) {
-			echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your account. Please contact us.</p></div>';
-			return;
-		}
-
-		// Get the groups.
-		$groups = get_option( WCD_WEBSITE_GROUPS );
-
-		if ( empty( $groups ) || empty( $groups['auto_detection_group'] ) || empty( $groups['manual_detection_group'] ) ) {
-			$groups = array(
-				'auto_detection_group'   => $wcd->website_details['auto_detection_group']['uuid'] ?? false,
-				'manual_detection_group' => $wcd->website_details['manual_detection_group']['uuid'] ?? false,
-			);
-			update_option( WCD_WEBSITE_GROUPS, $groups, false );
-
-		}
-
-		$wcd->monitoring_group_uuid = $groups['auto_detection_group'] ?? false;
-		$wcd->manual_group_uuid     = $groups['manual_detection_group'] ?? false;
-
-		if ( ! $wcd->manual_group_uuid || ! $wcd->monitoring_group_uuid ) {
-			echo '<div class="notice notice-error"><p>Sorry, we couldn\'t get your URL settings. Please contact us.</p></div>';
 			return;
 		}
 
@@ -187,37 +267,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			</div>
 		<?php } elseif ( $usage_percent > 70 ) { ?>
 			<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
-			<?php
-		}
-
-		// If we don't have the website for any reason we show an error message.
-		if ( empty( $wcd->website_details ) ) {
-
-			?>
-			<div class="notice notice-error">
-				<p>Ooops! We couldn't find your settings. Please try reloading the page.
-				If the issue persists, please contact us.</p>
-				<p>
-					<form method="post">
-						<input type="hidden" name="wcd_action" value="re-add-api-token">
-						<?php wp_nonce_field( 're-add-api-token' ); ?>
-						<input type="submit" value="Re-add website" class="button-primary">
-					</form>
-				</p>
-			</div>
-			<?php
-			return false;
-		}
-
-		$monitoring_group_settings = null; // @TODO Can be deleted?
-
-		// If we hit the max input vars, show error message.
-		$php_max_input_vars = ini_get( 'max_input_vars' );
-		if ( count( $postdata ) >= $php_max_input_vars ) {
-			?>
-			<div class="notice notice-error">
-				<p><strong>ERROR:</strong> Increase max_input_vars in your PHP settings. Current value: <?php echo esc_html( $php_max_input_vars ); ?></p>
-			</div>
 			<?php
 		}
 
@@ -237,9 +286,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'add_post_type':
 				$wcd->add_post_type( $postdata );
-				$wcd->sync_posts();
 				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
-				echo '<div class="notice notice-success"><p>' . esc_html( $post_type_name ) . ' added.</p></div>';
+				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
 
 			case 'update_detection_step':
@@ -263,7 +311,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
 					}
 				} else {
-					echo '<div class="error notice"><p>Sorry, something went wrong. Please try again.</p></div>';
+					echo '<div class="error notice"><p>' . esc_html( $results['message'] ) . '</p></div>';
 				}
 				break;
 
@@ -287,7 +335,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		$account_details = $wcd->get_account();
 
 		// Error message if api didn't return account details.
-
 		if ( empty( $account_details['status'] ) ) {
 			?>
 			<div class="error notice">
@@ -300,26 +347,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Check for account status.
 		if ( 'active' !== $account_details['status'] ) {
-
 			// Set error message.
-			$err_msg = 'cancelled';
-			if ( ! empty( $account_details['status'] ) ) {
-				$err_msg = $account_details['status'];
-			}
+			$err_msg = $account_details['status'];
 			?>
 			<div class="error notice">
-				<h3>Your account was <?php echo esc_html( $err_msg ); ?></h3>
+				<h3>Your account status is <?php echo esc_html( $err_msg ); ?></h3>
 				<p>Please <a href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>">Upgrade</a> to re-activate your account.</p>
-				<p>To use a different account, please reset the API token.
-					<form method="post">
-						<input type="hidden" name="wcd_action" value="reset_api_token">
-						<?php wp_nonce_field( 'reset_api_token' ); ?>
-						<input type="submit" value="Reset API token" class="button button-delete">
-					</form>
-				</p>
+				<p>To use a different account, please reset the API token.</p>
+				<form method="post">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+					<input type="submit" value="Reset API token" class="button button-delete">
+				</form>
 			</div>
 			<?php
-			return false;
 		}
 
 		// Get page to view.
@@ -329,40 +370,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			$tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 		}
 
-		// Check if website details are available.
-		if ( empty( $wcd->website_details ) ) {
-			?>
-			<div class="error notice">
-				<p>
-					We couldn't find your website settings. Please reset the API token in
-					settings and re-add your website with your API Token.
-				</p><p>
-					Your current API token is: <strong><?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?></strong>.
-				</p>
-				<p>
-					<form method="post">
-						<input type="hidden" name="wcd_action" value="reset_api_token">
-						<?php wp_nonce_field( 'reset_api_token' ); ?>
-						<input type="hidden" name="api_token" value="<?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?>">
-						<input type="submit" value="Reset API token" class="button button-delete">
-					</form>
-				</p>
-			</div>
-			<?php
-			return false;
-		}
-
 		$wcd->tabs();
 
 		// Account credits.
 		$comp_usage         = $account_details['checks_done'];
 		$limit              = $account_details['checks_limit'];
 		$available_compares = $account_details['checks_left'];
-
-		if ( $wcd->website_details['enable_limits'] ) {
-			$account_details['usage']            = $comp_usage; // used in dashboard.
-			$account_details['plan']['sc_limit'] = $limit; // used in dashboard.
-		}
 
 		// Renew date (used in template).
 		$renew_date = strtotime( $account_details['renewal_at'] ); // used in account template.
@@ -374,9 +387,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				if ( $wcd->is_allowed( 'dashboard_view' ) ) {
-					$wcd->get_dashboard_view( $account_details );
-				}
+				$wcd->get_dashboard_view( $account_details );
 				break;
 
 			/********************
@@ -491,6 +502,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					} else {
 						$extra_filters['status'] = 'new,ok,to_fix,false_positive';
 					}
+
 					if ( $difference_only ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
@@ -506,6 +518,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						'per_page' => 999999,
 					);
 
+					// Get failed queues.
+					$batch_ids = array();
+					foreach ( $batches['data'] as $batch ) {
+						$batch_ids[] = $batch['id'];
+					}
+					$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
+
 					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
 					$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
@@ -518,7 +537,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						false,
 						'top top-plus-100 left-plus-300'
 					);
-					$wcd->compare_view_v2( $comparisons['data'] );
+					$wcd->compare_view_v2( $comparisons['data'], $failed_queues );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
@@ -560,11 +579,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'webchangedetector-update-settings':
 				if ( ! $wcd->is_allowed( 'manual_checks_view' ) ) {
-					break;
-				}
-				// Disable settings if this website has no permissions.
-				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_manual_detection'] ) {
-					echo 'Settings for Manual Checks are disabled by your API Token.';
 					break;
 				}
 
@@ -657,15 +671,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					true,
 					'top left-plus-300'
 				);
-				if ( $wcd->website_details['enable_limits'] && ! $wcd->website_details['allow_auto_detection'] ) {
-					echo 'Settings for Manual Checks are disabled by your API Token.';
-					break;
-				}
 				?>
 				<div class="action-container">
-				<?php
-				$wcd->get_url_settings( true );
-				?>
+					<?php
+					$wcd->get_url_settings( true );
+					?>
 				</div>
 				<div class="clear"></div>
 				<?php
@@ -702,7 +712,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'compare' => 'Change detection',
 				);
 
-				$wizard_text = '<h2>Queue</h2>Every Screenshot and every comparison is listed here. 
+				$wizard_text = '<h2>Queue</h2>Every Screenshot and every comparison are listed here. 
                                 If something failed, you can see it here too.';
 				$wcd->print_wizard(
 					$wizard_text,
@@ -949,7 +959,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
 									<?php } ?>
 								</select>
-								<input type="submit" class="button" value="Add">
+								<input type="submit" class="button" value="Show">
 							</form>
 							<?php
 						} else {
@@ -958,13 +968,25 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<?php } ?>
 					</div>
 
-					<?php
+					<div class="box-plain no-border">
+						<h2>URL sync status</h2>
+						<p>To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
+							This works automatically in the background.<br>
+							When you add a webpage, you can start the sync manually to be able to activate them for checks.</p>
+						<p> Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
+							<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
+						</span>
+						</p>
+						<button class="button button-secondary" onclick="sync_urls(true)">Sync URLs</button>
+					</div>
 
+
+					<?php
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-					} elseif ( ! $wcd->website_details['enable_limits'] && $wcd->is_allowed('upgrade_account')) {
+					} elseif ( $wcd->is_allowed( 'upgrade_account' ) ) {
 						?>
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>

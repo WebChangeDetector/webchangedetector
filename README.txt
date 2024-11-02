@@ -3,10 +3,11 @@ Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
 Requires at least: 5.2
 Tested up to: 6.6.1
-Stable tag: 3.0.4
+Stable tag: 3.0.4.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+~Current Version:3.0.4.2~
 
 == Description ==
 ## The #1 Visual Regression Test Tool For WordPress
@@ -51,6 +52,13 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 3.1.0 =
+* Improvement: New URL sync
+* Feature: Limitations for agencies
+
+= 3.0.4 =
+* Fix: Error handling
 
 = 3.0.3 =
 * Fix: Signup issues
