@@ -64,10 +64,6 @@ register_deactivation_hook( __FILE__, 'deactivate_webchangedetector' );
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector.php';
 
-if(defined("WCD_DEV") && true === WCD_DEV ) {
-	require plugin_dir_path(__FILE__) . 'includes/class-github-updater.php';
-}
-
 /**
  * Begins execution of the plugin.
  *
