@@ -451,7 +451,7 @@ class WebChangeDetector_API_V2 {
 				);
 			}
 			if ( ! empty( $args ) ) {
-				WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: multiple curl call' );
+				WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
 				$responses = WpOrg\Requests\Requests::request_multiple(
 					$args,
 					array(
@@ -484,8 +484,7 @@ class WebChangeDetector_API_V2 {
 				),
 			);
 
-			$log_args                 = $args;
-			$log_args['body']['urls'] = 'A lot of urls...';
+			$log_args = $args;
 			WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
 
 			if ( $is_web ) {

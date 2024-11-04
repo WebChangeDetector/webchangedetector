@@ -1169,65 +1169,66 @@ class WebChangeDetector_Admin {
 			return;
 		}
 
-		// Set the batch size for both retrieving and uploading.
-		$offset          = 0;
-		$posts_per_batch = 1000;  // Number of posts to retrieve per query.
-		$post_status     = 'publish';  // Fetch only published posts.
+		foreach ( $post_types as $single_post_type ) {
+			// Set the batch size for both retrieving and uploading.
+			$offset          = 0;
+			$posts_per_batch = 1000;  // Number of posts to retrieve per query.
 
-		do {
-			self::error_log( 'Getting next chunk. Offset: ' . $offset );
-			// Set up WP_Query arguments.
-			$args = array(
-				'post_type'      => $post_types,  // Pass the array of post types.
-				'post_status'    => $post_status,
-				'posts_per_page' => $posts_per_batch,  // Fetch 500 posts at a time.
-				'offset'         => $offset,
-			);
-
-			// Create a new query.
-			$query = new WP_Query( $args );
-
-			// If no posts, break the loop.
-			if ( ! $query->have_posts() ) {
-				break;
-			}
-
-			// Process each post in the current batch.
-			while ( $query->have_posts() ) {
-				$query->the_post();
-
-				$post_id    = get_the_ID();
-				$post_title = get_the_title();
-				$post_type  = get_post_type();
-				$url        = get_permalink( $post_id );
-
-				// Get the post type label.
-				$post_type_object = get_post_type_object( $post_type );
-				$post_type_label  = $post_type_object ? $post_type_object->labels->name : $post_type;
-
-				// Add the data to the main array.
-				$all_posts_data[ 'types%%' . $post_type_label ][] = array(
-					'url'        => $this->remove_url_protocol( $url ),
-					'html_title' => $post_title,
+			do {
+				self::error_log( 'Getting next chunk. Offset: ' . $offset );
+				// Set up WP_Query arguments.
+				$args = array(
+					'post_type'      => $single_post_type,  // Pass the array of post types.
+					'post_status'    => 'publish',
+					'posts_per_page' => $posts_per_batch,  // Fetch 500 posts at a time.
+					'offset'         => $offset,
 				);
-			}
 
-			// Reset post data to avoid conflicts in global post state.
-			wp_reset_postdata();
+				// Create a new query.
+				$query = new WP_Query( $args );
 
-			// Increment the offset for the next batch.
-			$offset += $posts_per_batch;
-			self::error_log( 'Sending Posts.' );
+				// If no posts, break the loop.
+				if ( ! $query->have_posts() ) {
+					break;
+				}
 
-			// Call uploadUrls after every batch.
-			$this->upload_urls_in_batches( $all_posts_data );
+				// Process each post in the current batch.
+				while ( $query->have_posts() ) {
+					$query->the_post();
 
-			// Clear the data array after each batch to free memory.
-			$all_posts_data = array();
+					$post_id    = get_the_ID();
+					$post_title = get_the_title();
+					$post_type  = get_post_type();
+					$url        = get_permalink( $post_id );
 
-			// Get the count of the results.
-			$results_count = $query->post_count;
-		} while ( $results_count === $posts_per_batch );
+					// Get the post type label.
+					$post_type_object = get_post_type_object( $post_type );
+					$post_type_label  = $post_type_object ? $post_type_object->labels->name : $post_type;
+
+					// Add the data to the main array.
+					$all_posts_data[ 'types%%' . $post_type_label ][] = array(
+						'url'        => $this->remove_url_protocol( $url ),
+						'html_title' => $post_title,
+					);
+				}
+
+				// Reset post data to avoid conflicts in global post state.
+				wp_reset_postdata();
+
+				// Increment the offset for the next batch.
+				$offset += $posts_per_batch;
+				self::error_log( 'Sending Posts.' );
+
+				// Call uploadUrls after every batch.
+				$this->upload_urls_in_batches( $all_posts_data );
+
+				// Clear the data array after each batch to free memory.
+				$all_posts_data = array();
+
+				// Get the count of the results.
+				$results_count = $query->post_count;
+			} while ( $results_count === $posts_per_batch );
+		}
 	}
 
 	/** Get the taxonomies.
