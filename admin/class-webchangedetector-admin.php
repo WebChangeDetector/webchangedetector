@@ -1886,9 +1886,9 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								if ( ! get_option( 'page_on_front' ) && in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
+								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
 									?>
-									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>>Frontpage</option>
+									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
 									<?php
 								}
 
