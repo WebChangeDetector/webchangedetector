@@ -1875,7 +1875,7 @@ class WebChangeDetector_Admin {
 				</p>
 				<input type="hidden" value="webchangedetector" name="page">
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
-				<?php if ( is_iterable( $urls ) ) { ?>
+
 					<div class="group_urls_container">
 						<form method="get" style="float: left;">
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
@@ -1944,6 +1944,7 @@ class WebChangeDetector_Admin {
 							<input style="margin: 0" name="search" type="text" placeholder="Search" value="<?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) ) ); ?>">
 						</form>
 						<div class="clear" style="margin-bottom: 20px;"></div>
+
 						<table class="no-margin filter-table">
 							<tr>
 								<th style="min-width: 50px; text-align: center;"><?php $this->get_device_icon( 'desktop' ); ?><br>Desktop</th>
@@ -1951,100 +1952,99 @@ class WebChangeDetector_Admin {
 								<th style="width: 100%">URL</th>
 								<th style="min-width: 90px">Post type</th>
 							</tr>
-
-							<?php // Select all from same device. ?>
-							<tr class=" even-tr-white" style="background: none; text-align: center">
-								<td>
-									<label class="switch">
-										<input type="checkbox"
-										id="select-desktop"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										data-screensize="desktop"
-										onclick="mmToggle( this, 'desktop', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-desktop');"/>
-										<span class="slider round"></span>
-									</label>
-								</td>
-
-								<td>
-									<label class="switch">
-										<input type="checkbox"
-										id="select-mobile"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										data-screensize="mobile"
-										onclick="mmToggle( this, 'mobile', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-mobile');" />
-										<span class="slider round"></span>
-									</label>
-								</td>
-								<td></td>
-								<td></td>
-							</tr>
-							<?php
-							foreach ( $urls as $url ) {
-								// init.
-								$checked = array(
-									'desktop' => $url['desktop'] ? 'checked' : '',
-									'mobile'  => $url['mobile'] ? 'checked' : '',
-								);
-								?>
-								<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
-									<td class="checkbox-desktop" style="text-align: center;">
-										<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url['id'] ); ?>">
+							<?php if ( count( $urls ) ) { ?>
+								<?php // Select all from same device. ?>
+								<tr class=" even-tr-white" style="background: none; text-align: center">
+									<td>
 										<label class="switch">
 											<input type="checkbox"
+											id="select-desktop"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
-											data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
 											data-screensize="desktop"
-											data-url_id="<?php echo esc_html( $url['id'] ); ?>"
-											name="desktop-<?php echo esc_html( $url['id'] ); ?>"
-											value="1" <?php echo esc_html( $checked['desktop'] ); ?>
-											id="desktop-<?php echo esc_html( $url['id'] ); ?>"
-											onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
+											onclick="mmToggle( this, 'desktop', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-desktop');"/>
 											<span class="slider round"></span>
 										</label>
 									</td>
 
-									<td class="checkbox-mobile" style="text-align: center;">
-									<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url['id'] ); ?>">
-									<label class="switch">
-										<input type="checkbox"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
-										data-screensize="mobile"
-										data-url_id="<?php echo esc_html( $url['id'] ); ?>"
-										name="mobile-<?php echo esc_html( $url['id'] ); ?>"
-										value="1" <?php echo esc_html( $checked['mobile'] ); ?>
-										id="mobile-<?php echo esc_html( $url['id'] ); ?>"
-										onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
-										<span class="slider round"></span>
-									</label>
+									<td>
+										<label class="switch">
+											<input type="checkbox"
+											id="select-mobile"
+											data-nonce="<?php echo esc_html( $nonce ); ?>"
+											data-screensize="mobile"
+											onclick="mmToggle( this, 'mobile', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-mobile');" />
+											<span class="slider round"></span>
+										</label>
 									</td>
-
-									<td style="text-align: left;">
-										<strong><?php echo esc_html( $url['html_title'] ); ?></strong><br>
-										<a href="<?php echo ( is_ssl() ? 'https://' : 'http://' ) . esc_html( $url['url'] ); ?>" target="_blank"><?php echo esc_html( $url['url'] ); ?></a>
-									</td>
-									<td><?php echo esc_html( $url['category'] ); ?></td>
+									<td></td>
+									<td></td>
 								</tr>
-
-								<script> mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); </script>
-
 								<?php
-							}
-							?>
-						</table>
-						<?php
-				} else {
-					?>
-								<div colspan="3" style="text-align: center; font-weight: 700; padding: 20px 0;">
-											No Urls to show.
-							</div>
-						<?php
-				}
-				?>
 
+								foreach ( $urls as $url ) {
+									// init.
+									$checked = array(
+										'desktop' => $url['desktop'] ? 'checked' : '',
+										'mobile'  => $url['mobile'] ? 'checked' : '',
+									);
+									?>
+									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
+										<td class="checkbox-desktop" style="text-align: center;">
+											<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url['id'] ); ?>">
+											<label class="switch">
+												<input type="checkbox"
+												data-nonce="<?php echo esc_html( $nonce ); ?>"
+												data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
+												data-screensize="desktop"
+												data-url_id="<?php echo esc_html( $url['id'] ); ?>"
+												name="desktop-<?php echo esc_html( $url['id'] ); ?>"
+												value="1" <?php echo esc_html( $checked['desktop'] ); ?>
+												id="desktop-<?php echo esc_html( $url['id'] ); ?>"
+												onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
+												<span class="slider round"></span>
+											</label>
+										</td>
+
+										<td class="checkbox-mobile" style="text-align: center;">
+										<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url['id'] ); ?>">
+										<label class="switch">
+											<input type="checkbox"
+											data-nonce="<?php echo esc_html( $nonce ); ?>"
+											data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
+											data-screensize="mobile"
+											data-url_id="<?php echo esc_html( $url['id'] ); ?>"
+											name="mobile-<?php echo esc_html( $url['id'] ); ?>"
+											value="1" <?php echo esc_html( $checked['mobile'] ); ?>
+											id="mobile-<?php echo esc_html( $url['id'] ); ?>"
+											onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
+											<span class="slider round"></span>
+										</label>
+										</td>
+
+										<td style="text-align: left;">
+											<strong><?php echo esc_html( $url['html_title'] ); ?></strong><br>
+											<a href="<?php echo ( is_ssl() ? 'https://' : 'http://' ) . esc_html( $url['url'] ); ?>" target="_blank"><?php echo esc_html( $url['url'] ); ?></a>
+										</td>
+										<td><?php echo esc_html( $url['category'] ); ?></td>
+									</tr>
+
+									<script> mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); </script>
+
+									<?php
+								}
+							} else {
+								?>
+								<tr>
+									<td colspan="4" style="text-align: center; font-weight: 700; padding: 20px 0;">
+										No Urls to show.
+									</td>
+								</tr>
+							<?php } ?>
+						</table>
 					</div>
-					<?php if ( ! empty( $urls_meta['total'] ) ) { ?>
+
 					<!-- Pagination -->
+					<?php if ( ! empty( $urls_meta['total'] ) ) { ?>
 					<div class="tablenav">
 						<div class="tablenav-pages">
 							<span class="displaying-num"><?php echo esc_html( $urls_meta['total'] ); ?> items</span>
@@ -2071,19 +2071,19 @@ class WebChangeDetector_Admin {
 					</div>
 
 					<script>
-					if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> ||
+						if(<?php echo isset( $_GET['paged'] ) ? 1 : 0; ?> ||
 						<?php echo isset( $_GET['search'] ) ? 1 : 0; ?> ||
 						<?php echo isset( $_GET['post-type'] ) ? 1 : 0; ?> ||
 						<?php echo isset( $_GET['taxonomy'] ) ? 1 : 0; ?> ) {
-						const scrollToEl = jQuery('.group_urls_container');
-						jQuery('html').animate(
-							{
-								scrollTop: scrollToEl.offset().top,
-							},
-							0 //speed
-						);
-					}
-				</script>
+							const scrollToEl = jQuery('.group_urls_container');
+							jQuery('html').animate(
+								{
+									scrollTop: scrollToEl.offset().top,
+								},
+								0 //speed
+							);
+						}
+					</script>
 				<?php } ?>
 			</div>
 			<?php } ?>
