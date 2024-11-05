@@ -74,6 +74,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
 				delete_option( WCD_ALLOWANCES );
 				delete_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
+				delete_option( WCD_WP_OPTION_KEY_UPGRADE_URL );
 				break;
 
 			case 're-add-api-token':
@@ -203,6 +204,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Save the allowances to the db. We need this for the navigation.
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {
+
+			// Disable upgrade account for subaccounts.
+			if ( ! empty( $wcd->get_account()['is_subaccount'] ) && $wcd->get_account()['is_subaccount'] ) {
+				$allowances['upgrade_account'] = 0;
+			}
+
 			update_option( WCD_ALLOWANCES, $wcd->website_details['allowances'] );
 		}
 

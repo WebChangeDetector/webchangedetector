@@ -608,15 +608,18 @@ class WebChangeDetector_Admin {
 		if ( ! $this->is_allowed( 'upgrade_account' ) ) {
 			return false;
 		}
-		$upgrade_url = get_option( 'wcd_upgrade_url' );
-		if ( ! $upgrade_url ) {
+		$upgrade_url = get_option( WCD_WP_OPTION_KEY_UPGRADE_URL );
+
+		if ( ! $upgrade_url || empty( $this->get_params_of_url( $upgrade_url )['secret'] ) ) {
 			$account_details = $this->get_account();
 
 			if ( ! is_array( $account_details ) ) {
 				return false;
 			}
-			$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-			update_option( 'wcd_upgrade_url', $upgrade_url );
+			if ( ! empty( $account_details['magic_login_secret'] ) ) {
+				$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+				update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
+			}
 		}
 		return $upgrade_url;
 	}
@@ -2535,6 +2538,11 @@ class WebChangeDetector_Admin {
 			);
 		}
 
+		// Disable upgrade account for subaccounts.
+		if ( ! empty( $this->get_account()['is_subaccount'] ) && $this->get_account()['is_subaccount'] ) {
+			$allowances['upgrade_account'] = 0;
+		}
+
 		// need them as option for the admin menu.
 		update_option( WCD_ALLOWANCES, ( $allowances ) );
 
@@ -3063,6 +3071,11 @@ if ( ! defined( 'WCD_WP_OPTION_KEY_API_TOKEN' ) ) {
 if ( ! defined( 'WCD_WP_OPTION_KEY_ACCOUNT_EMAIL' ) ) {
 	define( 'WCD_WP_OPTION_KEY_ACCOUNT_EMAIL', 'webchangedetector_account_email' );
 }
+
+if ( ! defined( 'WCD_WP_OPTION_KEY_UPGRADE_URL' ) ) {
+	define( 'WCD_WP_OPTION_KEY_UPGRADE_URL', 'wcd_upgrade_url' );
+}
+
 
 // Steps in update change detection.
 if ( ! defined( 'WCD_OPTION_UPDATE_STEP_KEY' ) ) {

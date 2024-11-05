@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
 Requires at least: 5.2
 Tested up to: 6.6.1
-Stable tag: 3.0.99
+Stable tag: 3.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -54,9 +54,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Changelog ==
 
 = 3.1.0 =
-* Improvement: New URL sync for
 * Feature: Limitations for agencies
-* Fix: Show failed change detections
+* Improvement: URL sync for large amount of pages
+* Improvement: Show failed change detections
+* Fix: Upgrade account URL
 
 = 3.0.4 =
 * Fix: Error handling
