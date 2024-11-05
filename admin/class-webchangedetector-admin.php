@@ -1494,9 +1494,9 @@ class WebChangeDetector_Admin {
 		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
 		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
-		update_option( 'wcd_last_urls_sync', gmdate( 'U' ) );
+		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
-		return date_i18n( 'd.m.Y H:i' );
+		return date_i18n( 'd/m/Y H:i' );
 	}
 
 	/** Remove the protocol from an url.

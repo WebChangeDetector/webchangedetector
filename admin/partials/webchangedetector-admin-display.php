@@ -969,7 +969,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 						</span>
 						</p>
-						<button class="button button-secondary" onclick="sync_urls(true)">Sync URLs</button>
+						<button class="button button-secondary" onclick="sync_urls(1)">Sync URLs</button>
 					</div>
 
 
