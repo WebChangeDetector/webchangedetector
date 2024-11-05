@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
 Requires at least: 5.2
 Tested up to: 6.6.1
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,9 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 3.1.1 =
+* Fix: Use local auto update settings
 
 = 3.1.0 =
 * Feature: Limitations for agencies
