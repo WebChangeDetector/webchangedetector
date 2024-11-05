@@ -58,7 +58,7 @@ if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings']
 					$account_details = $this->get_account();
 
 					$show_minute_intervals = false;
-					if ( ! $this->is_subaccount() && ! in_array( $account_details['plan'], array( 'trial', 'free', 'personal', 'personal_pro' ), true ) ) {
+					if ( ! $account_details['is_subaccount'] && ! in_array( $account_details['plan'], array( 'trial', 'free', 'personal', 'personal_pro' ), true ) ) {
 						$show_minute_intervals = true;
 					}
 					?>
