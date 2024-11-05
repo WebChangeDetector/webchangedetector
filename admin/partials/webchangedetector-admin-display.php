@@ -1023,6 +1023,20 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$wcd->get_screenshot( $postdata );
 				break;
 
+			/***************
+			 * No billing account
+			 */
+			case 'webchangedetector-no-billing-account':
+				?>
+				<div style="text-align: center;">
+					<h2>Ooops!</h2>
+					<p>We couldn't get your billing account. <br>
+						Please get in touch with us at <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
+					</p>
+				</div>
+				<?php
+				break;
+
 			default:
 				// Should already be validated by VALID_WCD_ACTIONS.
 				break;

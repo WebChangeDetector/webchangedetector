@@ -291,6 +291,14 @@ class WebChangeDetector_Admin {
 			'webchangedetector-show-screenshot',
 			'wcd_webchangedetector_init'
 		);
+		add_submenu_page(
+			null,
+			'No billing account found',
+			'No billing account found',
+			'manage_options',
+			'webchangedetector-no-billing-account',
+			'wcd_webchangedetector_init'
+		);
 	}
 
 	/** Get wcd plugin dir.
@@ -605,22 +613,21 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string|null
 	 */
 	public function get_upgrade_url() {
-		if ( ! $this->is_allowed( 'upgrade_account' ) ) {
-			return false;
-		}
-		$upgrade_url = get_option( WCD_WP_OPTION_KEY_UPGRADE_URL );
 
-		if ( ! $upgrade_url || empty( $this->get_params_of_url( $upgrade_url )['secret'] ) ) {
-			$account_details = $this->get_account();
-
-			if ( ! is_array( $account_details ) ) {
-				return false;
-			}
-			if ( ! empty( $account_details['magic_login_secret'] ) ) {
-				$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-				update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
-			}
+		static $upgrade_url;
+		if ( $upgrade_url ) {
+			return $upgrade_url;
 		}
+
+		$account_details = $this->get_account();
+
+		if ( ! $this->is_allowed( 'upgrade_account' ) || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
+			return '?page=webchangedetector-no-billing-account';
+		}
+
+		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
+		update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
+
 		return $upgrade_url;
 	}
 
