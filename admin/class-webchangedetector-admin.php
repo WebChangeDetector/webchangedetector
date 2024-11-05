@@ -2476,6 +2476,11 @@ class WebChangeDetector_Admin {
 				'auto_update_checks_sunday'    => '',
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
+			$local_auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+            if($local_auto_update_settings && is_array($local_auto_update_settings)) {
+                delete_option( WCD_AUTO_UPDATE_SETTINGS );
+                $website_details['auto_update_settings'] = array_merge($website_details['auto_update_settings'], $local_auto_update_settings);
+            }
 		}
 
 		if ( $update ) {

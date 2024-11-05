@@ -214,11 +214,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Moving local auto update settings to the api.
-		$local_auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
+		/*$local_auto_update_settings = get_option( WCD_AUTO_UPDATE_SETTINGS );
 		if ( $local_auto_update_settings && empty($wcd->website_details['auto_update_settings'] ) ) {
 			$wcd->update_website_details( ['auto_update_settings' => $local_auto_update_settings] );
 			delete_option( WCD_AUTO_UPDATE_SETTINGS );
-		}
+		}*/
 
 		// Update groups in case we have group ids from previous account. We need them for auto updates.
 		$groups = array(
