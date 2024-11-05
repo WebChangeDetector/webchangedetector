@@ -41,13 +41,13 @@ $group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $wcd->manual_group_uu
 					Take Pre-Update Screenshots
 				</button>
 				<?php if ( $insufficient_screenshots ) { ?>
-                    <p style="color: #A00000; font-weight: 500;">
-                        Sorry, you don't have enough screenshots available.<br>
-                        Please upgrade your account or select fewer URLs.
-                    </p>
-                    <?php if ( ! $wcd->get_account['is_subaccount'] ) { ?>
-                        <a href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>" class="button button-primary">Upgrade</a>
-                    <?php } ?>
+					<p style="color: #A00000; font-weight: 500;">
+						Sorry, you don't have enough screenshots available.<br>
+						Please upgrade your account or select fewer URLs.
+					</p>
+					<?php if ( ! $wcd->get_account['is_subaccount'] ) { ?>
+						<a href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>" class="button button-primary">Upgrade</a>
+					<?php } ?>
 				<?php } ?>
 			</form>
 		</div>
