@@ -2763,7 +2763,9 @@ class WebChangeDetector_Admin {
 							<?php $this->get_device_icon( 'warning' ); ?>
 							<strong>You might run out of checks before renewal day. </strong><br>
 							Current settings require up to <?php echo esc_html( number_format( $checks_needed - $checks_available, 0 ) ); ?> more checks. <br>
-							<a href="<?php echo esc_html( $this->get_upgrade_url() ); ?>">Upgrade your account now.</a>
+							<?php if ( ! $client_account['is_subaccount'] ) { ?>
+								<a href="<?php echo esc_html( $this->get_upgrade_url() ); ?>">Upgrade your account now.</a>
+							<?php } ?>
 						</span>
 					<?php } ?>
 
