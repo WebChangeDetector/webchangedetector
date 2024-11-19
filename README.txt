@@ -53,6 +53,12 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 
+= 3.1.3 =
+* Fix: Auto-update weekday settings from webapp were ignored
+
+= 3.1.2 =
+* Fix: Use local auto update settings (for real)
+
 = 3.1.1 =
 * Fix: Use local auto update settings
 
