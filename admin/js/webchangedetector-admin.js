@@ -529,13 +529,13 @@ function wcdValidateFormManualSettings() {
     // Validation weekday.
     var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');
     if(
-        ! document.getElementsByName("auto_update_checks_monday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_tuesday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_wednesday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_thursday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_friday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_saturday")[0].checked &&
-        ! document.getElementsByName("auto_update_checks_sunday")[0].checked
+        ! document.getElementsByName("auto_update_checks_monday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_tuesday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_wednesday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_thursday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_friday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_saturday")[1].checked &&
+        ! document.getElementsByName("auto_update_checks_sunday")[1].checked
     ) {
         jQuery(weekdayContainer).css("border", "2px solid #d63638");
         jQuery("#error-on-days-validation").css("display", "block");

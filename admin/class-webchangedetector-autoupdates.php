@@ -238,14 +238,17 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Check if auto update checks are enabled.
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || 'on' !== $auto_update_settings['auto_update_checks_enabled'] ) {
+		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
+			'on' !== $auto_update_settings['auto_update_checks_enabled'] ) {
 			WebChangeDetector_Admin::error_log( 'Running auto updates without checks. They are disabled in WCD.' );
 			return;
 		}
 
 		// Check if we do updates on today's weekday.
-		if ( ! array_key_exists( 'auto_update_checks_' . strtolower( current_time( 'l' ) ), $auto_update_settings ) ) {
-			WebChangeDetector_Admin::error_log( 'Canceling auto updates: ' . strtolower( current_time( 'l' ) ) . ' is disabled.' );
+		$todays_weekday = strtolower( current_time( 'l' ) );
+		if ( ! array_key_exists( 'auto_update_checks_' . $todays_weekday, $auto_update_settings ) ||
+			'on' !== $auto_update_settings[ 'auto_update_checks_' . $todays_weekday ] ) {
+			WebChangeDetector_Admin::error_log( 'Canceling auto updates: ' . $todays_weekday . ' is disabled.' );
 			$this->set_lock();
 			return;
 		}
