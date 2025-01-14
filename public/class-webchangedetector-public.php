@@ -41,9 +41,8 @@ class WebChangeDetector_Public {
 	public function verify_website() {
 
 		$verify_string = get_option( WCD_VERIFY_SECRET );
-		if (
+		if ( ! empty( $_GET['wcd-verify'] ) &&
 			( empty( $_GET['_wpnonce'] ) || wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) &&
-			! empty( $_GET['wcd-verify'] ) &&
 			! empty( $verify_string )
 		) {
 			echo wp_json_encode( $verify_string );
