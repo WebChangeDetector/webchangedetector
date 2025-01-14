@@ -31,20 +31,23 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 
 	$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 	foreach ( $weekdays as $weekday ) {
-		if ( ! isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
-		} elseif ( 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+		if ( 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] || // backward compatibility.
+				1 === (int) $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
 			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = 'checked';
+		} elseif ( ! isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) || // backward compatibility.
+					0 === (int) $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
 		}
 	}
-	if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-		$auto_update_settings['auto_update_checks_enabled'] = '';
-	} elseif ( 'on' === $auto_update_settings['auto_update_checks_enabled'] ) {
+
+	if ( 'on' === $auto_update_settings['auto_update_checks_enabled'] || 1 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
 		$auto_update_settings['auto_update_checks_enabled'] = 'checked';
+	} elseif ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) || 0 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
+		$auto_update_settings['auto_update_checks_enabled'] = '';
 	}
 
 	$auto_update_checks_enabled = true;
-	if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
+	if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || 0 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
 		$auto_update_checks_enabled = false;
 	}
 	?>
@@ -64,7 +67,8 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 			</div>
 			<div class="setting-row toggle">
 				<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
-				<input id="auto_update_checks_enabled" name="auto_update_checks_enabled" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_enabled'] ); ?> class="auto_update_checks_enabled">
+				<input type="hidden" name="auto_update_checks_enabled" value="0">
+				<input id="auto_update_checks_enabled" value="1" name="auto_update_checks_enabled" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_enabled'] ); ?> class="auto_update_checks_enabled">
 				<small> WP auto updates have to be enabled. This option only enables checks during auto updates.</small>
 			</div>
 			<div id="auto_update_checks_settings">
@@ -79,19 +83,33 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 				<div class="setting-row toggle">
 					<label for="auto_update_checks_weekdays" style="vertical-align:top;">On days</label>
 					<div id="auto_update_checks_weekday_container" style="display: inline-block">
-						<input name="auto_update_checks_monday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ); ?> class="auto_update_checks_monday">
+
+						<input name="auto_update_checks_monday" value="0" type="hidden">
+						<input name="auto_update_checks_monday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ); ?> class="auto_update_checks_monday">
 						<label for="auto_update_checks_monday" style="min-width: inherit">Monday </label><br>
-						<input name="auto_update_checks_tuesday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_tuesday'] ); ?> class="auto_update_checks_tuesday">
-						<label for="auto_update_checks_monday" style="min-width: inherit">Tuesday </label><br>
-						<input name="auto_update_checks_wednesday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_wednesday'] ); ?> class="auto_update_checks_wednesday">
+
+						<input name="auto_update_checks_tuesday" value="0" type="hidden">
+						<input name="auto_update_checks_tuesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_tuesday'] ); ?> class="auto_update_checks_tuesday">
+						<label for="auto_update_checks_tuesday" style="min-width: inherit">Tuesday </label><br>
+
+						<input name="auto_update_checks_wednesday" value="0" type="hidden">
+						<input name="auto_update_checks_wednesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_wednesday'] ); ?> class="auto_update_checks_wednesday">
 						<label for="auto_update_checks_wednesday" style="min-width: inherit">Wednesday </label><br>
-						<input name="auto_update_checks_thursday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_thursday'] ); ?> class="auto_update_checks_thursday">
+
+						<input name="auto_update_checks_thursday" value="0" type="hidden">
+						<input name="auto_update_checks_thursday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_thursday'] ); ?> class="auto_update_checks_thursday">
 						<label for="auto_update_checks_thursday" style="min-width: inherit">Thursday </label><br>
-						<input name="auto_update_checks_friday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_friday'] ); ?> class="auto_update_checks_friday">
+
+						<input name="auto_update_checks_friday" value="0" type="hidden">
+						<input name="auto_update_checks_friday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_friday'] ); ?> class="auto_update_checks_friday">
 						<label for="auto_update_checks_friday" style="min-width: inherit">Friday </label><br>
-						<input name="auto_update_checks_saturday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_saturday'] ); ?> class="auto_update_checks_saturday">
+
+						<input name="auto_update_checks_saturday" value="0" type="hidden">
+						<input name="auto_update_checks_saturday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_saturday'] ); ?> class="auto_update_checks_saturday">
 						<label for="auto_update_checks_saturday" style="min-width: inherit">Saturday </label><br>
-						<input name="auto_update_checks_sunday" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ); ?> class="auto_update_checks_sunday">
+
+						<input name="auto_update_checks_sunday" value="0" type="hidden">
+						<input name="auto_update_checks_sunday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ); ?> class="auto_update_checks_sunday">
 						<label for="auto_update_checks_sunday" style="min-width: inherit">Sunday </label><br>
 					</div>
 					<small>Set the weekdays in which you want to allow WP auto updates.</small>
