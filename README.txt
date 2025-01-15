@@ -51,8 +51,9 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
-= 3.1.4 =
-* Fix: Save settings in correct format
+= 3.1.5 =
+* Fix: Improved compatibility with webapp
+* Fix: Checks at auto-updates in some cases
 
 = 3.1.4 =
 * Fix: Error on activate / deactivate plugins when no api token provided
