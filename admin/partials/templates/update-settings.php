@@ -31,18 +31,16 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 
 	$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 	foreach ( $weekdays as $weekday ) {
-		if ( 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] || // backward compatibility.
-				1 === (int) $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+		if ( !empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = 'checked';
-		} elseif ( ! isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) || // backward compatibility.
-					0 === (int) $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+		} else {
 			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
 		}
 	}
 
-	if ( 'on' === $auto_update_settings['auto_update_checks_enabled'] || 1 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
+	if ( !empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 		$auto_update_settings['auto_update_checks_enabled'] = 'checked';
-	} elseif ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) || 0 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
+	} else {
 		$auto_update_settings['auto_update_checks_enabled'] = '';
 	}
 

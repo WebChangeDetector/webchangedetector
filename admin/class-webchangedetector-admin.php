@@ -1584,67 +1584,6 @@ class WebChangeDetector_Admin {
 		return $this->api_v1( $args );
 	}
 
-	/** Set default sync types.
-	 *
-	 * @return void
-	 * @depreacted
-	 */
-	public function set_website_defaults() {
-		$update = false;
-		// Set default sync types.
-		if ( ! empty( $this->website_details ) && empty( $this->website_details['sync_url_types'] ) ) {
-			$update = true;
-
-			if ( $this->is_allowed( 'only_frontpage' ) ) {
-				$this->website_details['sync_url_types'] = array(
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'frontpage',
-						'post_type_slug' => 'frontpage',
-						'post_type_name' => 'Frontpage',
-					),
-				);
-			} else {
-				$this->website_details['sync_url_types'] = array(
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'posts',
-						'post_type_name' => $this->get_post_type_name( 'posts' ),
-					),
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'pages',
-						'post_type_name' => $this->get_post_type_name( 'pages' ),
-					),
-				);
-			}
-		}
-
-		// Set default auto update settings.
-		if ( ! empty( $this->website_details ) && empty( $this->website_details['auto_update_settings'] ) ) {
-			$update                                        = true;
-			$this->website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => '',
-				'auto_update_checks_from'      => gmdate( 'H:i' ),
-				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => 'on',
-				'auto_update_checks_tuesday'   => 'on',
-				'auto_update_checks_wednesday' => 'on',
-				'auto_update_checks_thursday'  => 'on',
-				'auto_update_checks_friday'    => 'on',
-				'auto_update_checks_saturday'  => '',
-				'auto_update_checks_sunday'    => '',
-				'auto_update_checks_emails'    => get_option( 'admin_email' ),
-			);
-		}
-
-		if ( $update ) {
-			$this->update_website_details();
-		}
-	}
-
 	/** Get params of an url.
 	 *
 	 * @param string $url The url.
@@ -2464,16 +2403,16 @@ class WebChangeDetector_Admin {
 		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
 			$update                                  = true;
 			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => '',
+				'auto_update_checks_enabled'   => '0',
 				'auto_update_checks_from'      => gmdate( 'H:i' ),
 				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => 'on',
-				'auto_update_checks_tuesday'   => 'on',
-				'auto_update_checks_wednesday' => 'on',
-				'auto_update_checks_thursday'  => 'on',
-				'auto_update_checks_friday'    => 'on',
-				'auto_update_checks_saturday'  => '',
-				'auto_update_checks_sunday'    => '',
+				'auto_update_checks_monday'    => '1',
+				'auto_update_checks_tuesday'   => '1',
+				'auto_update_checks_wednesday' => '1',
+				'auto_update_checks_thursday'  => '1',
+				'auto_update_checks_friday'    => '1',
+				'auto_update_checks_saturday'  => '0',
+				'auto_update_checks_sunday'    => '0',
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
 			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
@@ -2652,9 +2591,9 @@ class WebChangeDetector_Admin {
 		$max_auto_update_checks  = 0;
 		$amount_auto_update_days = 0;
 
-		if ( ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && 'on' === $auto_update_settings['auto_update_checks_enabled'] ) ) {
+		if ( ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && !empty( $auto_update_settings['auto_update_checks_enabled'] ) ) ) {
 			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && 'on' === $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && !empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 					++$amount_auto_update_days;
 				}
 			}
