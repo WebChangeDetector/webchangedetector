@@ -2591,7 +2591,7 @@ class WebChangeDetector_Admin {
 		$max_auto_update_checks  = 0;
 		$amount_auto_update_days = 0;
 
-		if ( ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && !empty( $auto_update_settings['auto_update_checks_enabled'] ) ) ) {
+		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			foreach ( self::WEEKDAYS as $weekday ) {
 				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && !empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 					++$amount_auto_update_days;
