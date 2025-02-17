@@ -53,6 +53,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Changelog ==
 = 3.1.6 =
 * Feature: Diffbar in Change Detection for easier detection where changes are
+* Improvement: Load faster jpeg screenshots instead of pngs
 * Fix: Missing frontpage in other languages when blog is homepage
 * Fix: Cannot see bottom changes if post-screenshot is higher than pre-screenshot
 

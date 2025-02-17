@@ -81,17 +81,17 @@
 </div>
 
 <?php
-if(str_contains($compare['screenshot_1_link'], '_dev_.png')) {
-	$sc_1_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['screenshot_1_link']);
-	$sc_2_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['screenshot_2_link']);
-	$sc_comparison_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['link']);
+if ( str_contains( $compare['screenshot_1_link'], '_dev_.png' ) ) {
+	$sc_1_compressed          = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['screenshot_1_link'] );
+	$sc_2_compressed          = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['screenshot_2_link'] );
+	$sc_comparison_compressed = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['link'] );
 } else {
-	$sc_1_compressed = str_replace(".png","_compressed.jpeg", $compare['screenshot_1_link']);
-	$sc_2_compressed = str_replace(".png","_compressed.jpeg", $compare['screenshot_2_link']);
-	$sc_comparison_compressed = str_replace(".png","_compressed.jpeg", $compare['link']);
+	$sc_1_compressed          = str_replace( '.png', '_compressed.jpeg', $compare['screenshot_1_link'] );
+	$sc_2_compressed          = str_replace( '.png', '_compressed.jpeg', $compare['screenshot_2_link'] );
+	$sc_comparison_compressed = str_replace( '.png', '_compressed.jpeg', $compare['link'] );
 }
-$sc_1_raw = $compare['screenshot_1_link'];
-$sc_2_raw = $compare['screenshot_2_link'];
+$sc_1_raw          = $compare['screenshot_1_link'];
+$sc_2_raw          = $compare['screenshot_2_link'];
 $sc_comparison_raw = $compare['link'];
 ?>
 <div id="comp-container" style="display:flex;  align-items: stretch; gap: 0; ">
@@ -100,8 +100,8 @@ $sc_comparison_raw = $compare['link'];
 			data-token="<?php echo esc_html( $token ); ?>"
 			style="width: 100%; ">
 
-			<img class="comp-img" style="display: block; padding: 0;" src="<?php echo $sc_1_compressed; ?>" onerror="this.src = '<?php echo $sc_1_raw ?>'">
-			<img style="display: block; padding: 0;" src="<?php echo $sc_2_compressed; ?>" onerror="this.src = '<?php echo $sc_2_raw ?>'">
+			<img class="comp-img" style="display: block; padding: 0;" src="<?php echo esc_url( $sc_1_compressed ); ?>" onerror="this.src = '<?php echo esc_url( $sc_1_raw ); ?>'">
+			<img style="display: block; padding: 0;" src="<?php echo esc_url( $sc_2_compressed ); ?>" onerror="this.src = '<?php echo esc_url( $sc_2_raw ); ?>'">
 		</div>
 	</div>
 
@@ -111,7 +111,7 @@ $sc_comparison_raw = $compare['link'];
 	</div>
 
 	<div id="comp_image" class="comp_image" style="border:1px solid #aaa; width: calc(50% - 20px); float: right; margin-right: 0; margin-left: 10px;flex: 1;">
-		<img style="display: block; padding: 0;" src="<?php echo $sc_comparison_compressed; ?>" onerror="this.src = '<?php echo $sc_comparison_raw ?>'">
+		<img style="display: block; padding: 0;" src="<?php echo esc_url( $sc_comparison_compressed ); ?>" onerror="this.src = '<?php echo esc_url( $sc_comparison_raw ); ?>'">
 	</div>
 </div>
 <div class="clear"></div>

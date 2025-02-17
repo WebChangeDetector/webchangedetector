@@ -767,13 +767,13 @@ class WebChangeDetector_Admin {
 		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
 
 			$amount_failed = 0;
-            if(!empty($failed_queues['data'])) {
-	            foreach ( $failed_queues['data'] as $failed_queue ) {
-		            if ( $failed_queue['batch'] === $batch_id ) {
-			            ++ $amount_failed;
-		            }
-	            }
-            }
+			if ( ! empty( $failed_queues['data'] ) ) {
+				foreach ( $failed_queues['data'] as $failed_queue ) {
+					if ( $failed_queue['batch'] === $batch_id ) {
+						++$amount_failed;
+					}
+				}
+			}
 			?>
 			<div class="accordion accordion-batch" style="margin-top: 20px;">
 				<div class="mm_accordion_title">
