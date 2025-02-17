@@ -40,7 +40,7 @@
       
       var calcOffset = function(dimensionPct) {
         var w = beforeImg.width();
-        var h = beforeImg.height();
+        var h = Math.max(beforeImg.height(), afterImg.height());
         return {
           w: w+"px",
           h: h+"px",

@@ -71,20 +71,47 @@
 	</div>
 </div>
 <div class="clear"></div>
-
-<div id="comp-slider" style="width: 49%; float: left;">
-	<h2>Screenshots</h2>
-	<div id="diff-container"
-		data-token="<?php echo esc_html( $token ); ?>"
-		style="width: 100%; ">
-
-		<img class="comp-img" style="padding: 0;" src="<?php echo esc_url( $compare['screenshot_1_link'] ); ?>">
-		<img style="padding: 0;" src="<?php echo esc_url( $compare['screenshot_2_link'] ); ?>">
+<div id="comp-headlines">
+	<div style="display:inline-block; width: calc(50% - 20px); text-align: center;">
+		<h2>Screenshots</h2>
+	</div>
+	<div style="display:inline-block; width: calc(50% - 20px); text-align: center;">
+		<h2>Change Detection</h2>
 	</div>
 </div>
 
-<div id="comp_image" class="comp_image" style="width: 49%; float: right; margin-right: 0;">
-	<h2>Change Detection</h2>
-	<img style="padding: 0;" src="<?php echo esc_url( $compare['link'] ); ?>">
+<?php
+if(str_contains($compare['screenshot_1_link'], '_dev_.png')) {
+	$sc_1_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['screenshot_1_link']);
+	$sc_2_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['screenshot_2_link']);
+	$sc_comparison_compressed = str_replace("_dev_.png","_dev_compressed.jpeg", $compare['link']);
+} else {
+	$sc_1_compressed = str_replace(".png","_compressed.jpeg", $compare['screenshot_1_link']);
+	$sc_2_compressed = str_replace(".png","_compressed.jpeg", $compare['screenshot_2_link']);
+	$sc_comparison_compressed = str_replace(".png","_compressed.jpeg", $compare['link']);
+}
+$sc_1_raw = $compare['screenshot_1_link'];
+$sc_2_raw = $compare['screenshot_2_link'];
+$sc_comparison_raw = $compare['link'];
+?>
+<div id="comp-container" style="display:flex;  align-items: stretch; gap: 0; ">
+	<div id="comp-slider" style="width: calc(50% - 20px); float: left; flex: 1; border:1px solid #aaa;">
+		<div id="diff-container"
+			data-token="<?php echo esc_html( $token ); ?>"
+			style="width: 100%; ">
+
+			<img class="comp-img" style="display: block; padding: 0;" src="<?php echo $sc_1_compressed; ?>" onerror="this.src = '<?php echo $sc_1_raw ?>'">
+			<img style="display: block; padding: 0;" src="<?php echo $sc_2_compressed; ?>" onerror="this.src = '<?php echo $sc_2_raw ?>'">
+		</div>
+	</div>
+
+	<div id="diff-bar" style="flex: 0 0 30px; padding-left:10px; padding-right: 10px;
+			background: url('<?php echo esc_url( str_replace( '.png', '_diffbar.jpeg', $compare['link'] ) ); ?>') repeat-x;
+			background-size: 100% 100%;">
+	</div>
+
+	<div id="comp_image" class="comp_image" style="border:1px solid #aaa; width: calc(50% - 20px); float: right; margin-right: 0; flex: 1;">
+		<img style="display: block; padding: 0;" src="<?php echo $sc_comparison_compressed; ?>" onerror="this.src = '<?php echo $sc_comparison_raw ?>'">
+	</div>
 </div>
 <div class="clear"></div>

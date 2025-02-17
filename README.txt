@@ -2,8 +2,8 @@
 Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
 Requires at least: 5.2
-Tested up to: 6.7.1
-Stable tag: 3.1.5
+Tested up to: 6.7.2
+Stable tag: 3.1.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,11 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+= 3.1.6 =
+* Feature: Diffbar in Change Detection for easier detection where changes are
+* Fix: Missing frontpage in other languages when blog is homepage
+* Fix: Cannot see bottom changes if post-screenshot is higher than pre-screenshot
+
 = 3.1.5 =
 * Fix: Improved compatibility with webapp
 * Fix: Checks at auto-updates in some cases

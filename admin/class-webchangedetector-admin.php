@@ -1453,14 +1453,19 @@ class WebChangeDetector_Admin {
 
 				// Polylang fix.
 			} elseif ( $active_plugins && in_array( WCD_POLYLANG_PLUGIN_FILE, $active_plugins, true ) ) {
+				if ( isset( $GLOBALS['polylang'] ) ) {
+					$languages = $GLOBALS['polylang']->model->get_languages_list();
 
-				$translations = pll_the_languages( array( 'raw' => 1 ) );
-				foreach ( $translations as $lang_code => $translation ) {
-					$array['frontpage%%Frontpage'][] = array(
-						'url'        => self::remove_url_protocol( pll_home_url( $lang_code ) ),
-						'html_title' => get_bloginfo( 'name' ),
+					foreach ( $languages as $language ) {
 
-					);
+						// Check if home_url is available in the language info.
+						if ( ! empty( $language->home_url ) ) {
+							$array['frontpage%%Frontpage'][] = array(
+								'url'        => self::remove_url_protocol( $language->home_url ),
+								'html_title' => get_bloginfo( 'name' ),
+							);
+						}
+					}
 				}
 			} else {
 				$array['frontpage%%Frontpage'][] = array(
@@ -2595,7 +2600,7 @@ class WebChangeDetector_Admin {
 
 		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && !empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 					++$amount_auto_update_days;
 				}
 			}

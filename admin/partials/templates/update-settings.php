@@ -31,14 +31,14 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 
 	$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 	foreach ( $weekdays as $weekday ) {
-		if ( !empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
+		if ( ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
 			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = 'checked';
 		} else {
 			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
 		}
 	}
 
-	if ( !empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+	if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 		$auto_update_settings['auto_update_checks_enabled'] = 'checked';
 	} else {
 		$auto_update_settings['auto_update_checks_enabled'] = '';

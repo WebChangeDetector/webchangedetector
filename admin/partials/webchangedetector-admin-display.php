@@ -406,7 +406,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				if ( isset( $_GET['group_type'] ) ) {
 					$group_type = sanitize_text_field( wp_unslash( $_GET['group_type'] ) );
 					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
-						echo '<div class="error   notice"><p>Invalid group_type.</p></div>';
+						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
 						return false;
 					}
 				}
