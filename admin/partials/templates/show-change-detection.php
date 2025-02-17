@@ -95,7 +95,7 @@ $sc_2_raw = $compare['screenshot_2_link'];
 $sc_comparison_raw = $compare['link'];
 ?>
 <div id="comp-container" style="display:flex;  align-items: stretch; gap: 0; ">
-	<div id="comp-slider" style="width: calc(50% - 20px); float: left; flex: 1; border:1px solid #aaa;">
+	<div id="comp-slider" style="width: calc(50% - 20px); float: left; flex: 1; border:1px solid #aaa; margin-right: 10px;">
 		<div id="diff-container"
 			data-token="<?php echo esc_html( $token ); ?>"
 			style="width: 100%; ">
@@ -105,12 +105,12 @@ $sc_comparison_raw = $compare['link'];
 		</div>
 	</div>
 
-	<div id="diff-bar" style="flex: 0 0 30px; padding-left:10px; padding-right: 10px;
+	<div id="diff-bar" style="flex: 0 0 10px; padding-left:10px; padding-right: 10px;
 			background: url('<?php echo esc_url( str_replace( '.png', '_diffbar.jpeg', $compare['link'] ) ); ?>') repeat-x;
 			background-size: 100% 100%;">
 	</div>
 
-	<div id="comp_image" class="comp_image" style="border:1px solid #aaa; width: calc(50% - 20px); float: right; margin-right: 0; flex: 1;">
+	<div id="comp_image" class="comp_image" style="border:1px solid #aaa; width: calc(50% - 20px); float: right; margin-right: 0; margin-left: 10px;flex: 1;">
 		<img style="display: block; padding: 0;" src="<?php echo $sc_comparison_compressed; ?>" onerror="this.src = '<?php echo $sc_comparison_raw ?>'">
 	</div>
 </div>
