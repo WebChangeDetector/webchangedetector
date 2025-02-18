@@ -413,8 +413,23 @@ function currentlyProcessing() {
     });
 })( jQuery );
 
-function sync_urls(force = 0) {
+// We got jpeg images and png. So we load jpeg for faster page load.
+// If jpeg is not available, we load pngs. To not be stuck in the onerror-loop, we do this.
+function loadFallbackImg(img, fallbackSrc) {
+    if (!img.dataset.fallbackAttempted) {
+        // Mark that we've tried the fallback already.
+        img.dataset.fallbackAttempted = "true";
+        // Set the fallback image source.
+        img.src = fallbackSrc;
+    } else {
+        // Fallback already attempted—stop further error handling.
+        img.onerror = null;
+        // TODO Add a placeholder img
+        // img.src = 'path/to/placeholder.jpg';
+    }
+}
 
+function sync_urls(force = 0) {
     var data = {
         action: 'sync_urls',
         nonce: jQuery('#ajax_sync_urls_status').data('nonce'),
