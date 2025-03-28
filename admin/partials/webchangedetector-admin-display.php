@@ -720,8 +720,25 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<th>Show</th>
 						</tr>
 					<?php
-					if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 
+					// Clean the queues to only show the current domain
+					if ( ! empty( $queues ) ){
+						foreach ( $queues as $queue ) {
+							// Get the current site's domain
+							$current_domain = parse_url(get_site_url(), PHP_URL_HOST);
+							$queue_domain = parse_url($queue['url_link'], PHP_URL_HOST);
+							
+							// Skip queues that don't match the current domain
+							if ($current_domain !== $queue_domain) {
+								continue;
+							}
+							$cleaned_queues[] = $queue;
+						}
+						$queues = $cleaned_queues;
+						$cleaned_queues = array();
+					}
+
+					if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 						foreach ( $queues as $queue ) {
 							$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
 							echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';

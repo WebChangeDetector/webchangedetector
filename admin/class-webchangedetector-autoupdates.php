@@ -38,7 +38,9 @@ class WebChangeDetector_Autoupdates {
 	 * Plugin constructor.
 	 */
 	public function __construct() {
-
+		// Register the complete hook in constructor to ensure it's always registered
+		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
+	
 		$this->set_defines();
 
 		// Post updates.
@@ -50,11 +52,11 @@ class WebChangeDetector_Autoupdates {
 		// Backup cron job for checking for updates.
 		add_action( 'wcd_wp_version_check', array( $this, 'wcd_wp_version_check' ) );
 
-		// Scheduled tasks checking for post-sc to be finished.
-		add_action( 'wcd_wp_maybe_auto_update', array( $this, 'wcd_wp_maybe_auto_update' ) );
-
 		// Hooking into the update process.
 		add_action( 'wp_maybe_auto_update', array( $this, 'wp_maybe_auto_update' ), 5 );
+		
+		// Add webhook endpoint for triggering cron jobs
+		add_action( 'init', array( $this, 'handle_webhook_trigger' ), 5 );
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
 		if ( ! $wcd_groups ) {
@@ -83,7 +85,7 @@ class WebChangeDetector_Autoupdates {
 
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = self::get_auto_update_settings();
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || ! get_transient( WCD_PRE_AUTO_UPDATE ) ) {
+		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || ! get_option( WCD_PRE_AUTO_UPDATE ) ) {
 			WebChangeDetector_Admin::error_log( 'Skipping after update stuff as checks are disabled or we don\'t have pre-update checks.' );
 			return;
 		}
@@ -92,13 +94,13 @@ class WebChangeDetector_Autoupdates {
 		WebChangeDetector_Admin::error_log( 'Updates complete. Starting post-update screenshots and comparisons.' );
 		$response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
 		WebChangeDetector_Admin::error_log( 'Post-Screenshot Response: ' . wp_json_encode( $response ) );
-		set_transient(
+		update_option(
 			WCD_POST_AUTO_UPDATE,
 			array(
 				'status'   => 'processing',
 				'batch_id' => $response['batch'],
 			),
-			WCD_HOUR_IN_SECONDS
+			false
 		);
 
 		// Save the auto update batch id.
@@ -108,8 +110,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
-		WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks' );
-
+		WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks - ' . WebChangeDetector_Admin::get_domain_from_site_url() );
 		$this->wcd_cron_check_post_queues();
 	}
 
@@ -119,56 +120,28 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function wcd_cron_check_post_queues() {
-		$post_sc_option = get_transient( WCD_POST_AUTO_UPDATE );
+		$post_sc_option = get_option( WCD_POST_AUTO_UPDATE );
+		WebChangeDetector_Admin::error_log( 'Checking post_sc_option: ' . wp_json_encode( $post_sc_option ) );
 		$response       = WebChangeDetector_API_V2::get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
-
+		WebChangeDetector_Admin::error_log( 'Response: ' . wp_json_encode( $response ) );
+		
 		// Check if the batch is done.
 		if ( count( $response['data'] ) > 0 ) {
 			// There are still open or processing queues. So we check again in a minute.
-			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_cron_check_post_queues' );
+			WebChangeDetector_Admin::error_log( 'There are still open or processing queues. So we check again in a minute.' );
+			$this->reschedule( 'wcd_cron_check_post_queues' );
 		} else {
 			$this->send_change_detection_mail( $post_sc_option );
 
 			// We don't need the webhook anymore.
-			WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_WORDPRESS_CRON ) );
+			WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wcd_cron_check_post_queues' ) );
 
 			// Cleanup wp_options and cron webhook.
 			delete_option( WCD_WORDPRESS_CRON );
-			delete_transient( WCD_PRE_AUTO_UPDATE );
-			delete_transient( WCD_POST_AUTO_UPDATE );
+			delete_option( 'wcd_current_webhook_wcd_cron_check_post_queues' );
+			delete_option( WCD_PRE_AUTO_UPDATE );
+			delete_option( WCD_POST_AUTO_UPDATE );
 		}
-	}
-
-	/**
-	 * Proceed with wp auto updates when pre_sc are done
-	 *
-	 * @return void
-	 */
-	public function wcd_wp_maybe_auto_update() {
-
-		WebChangeDetector_Admin::error_log( 'Checking if sc are ready' );
-		$pre_sc_transient = get_transient( WCD_PRE_AUTO_UPDATE );
-		$response         = WebChangeDetector_API_V2::get_queue_v2( $pre_sc_transient['batch_id'], 'open,processing' );
-
-		WebChangeDetector_Admin::error_log( 'Queue: ' . wp_json_encode( $response ) );
-		// If we don't have open or processing queues of the batch anymore, we can do auto-updates.
-		if ( count( $response['data'] ) === 0 ) {
-			$pre_sc_transient['status'] = 'done';
-			set_transient( WCD_PRE_AUTO_UPDATE, $pre_sc_transient, WCD_HOUR_IN_SECONDS );
-		}
-
-		// If the queues are not done yet, we reschedule and exit.
-		if ( 'done' !== $pre_sc_transient['status'] ) {
-			WebChangeDetector_Admin::error_log( 'Rescheduling updates as sc are not ready yet.' );
-			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_wp_maybe_auto_update' );
-			return;
-		}
-
-		// Remove the lock to start the updates.
-		delete_option( $this->lock_name );
-
-		// Actally start the auto-updates.
-		wp_maybe_auto_update();
 	}
 
 	/**
@@ -219,15 +192,17 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/** Starting the pre-update screenshots before auto-updates are started.
+	 * We set the lock to delay WP from starting the auto updates.
 	 * Auto updates are delayed when they are not in the selected timeframe.
 	 *
 	 * @return void
 	 */
 	public function wp_maybe_auto_update() {
 
-		// Register the complete hook.
-		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
+		// Remove the lock to start the updates.
+		delete_option( $this->lock_name );
 
+		// Remove the hook registration from here since it's now in the constructor
 		// Get the auto-update settings.
 		$auto_update_settings = self::get_auto_update_settings();
 
@@ -294,41 +269,59 @@ class WebChangeDetector_Autoupdates {
 			! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
 			! doing_filter( 'jetpack_pre_core_upgrade' )
 		) {
-			WebChangeDetector_Admin::error_log( 'Not called from one of the allowed filters. Exiting.' );
-			return;
+			WebChangeDetector_Admin::error_log( 'Not called from one of the known filters. Continuing anyway.' );
 		}
 
 		WebChangeDetector_Admin::error_log( 'Checking status of Screenshots' );
-
-		// Create external cron at wcd api to make sure the wp cron is triggered every minute.
-		if ( false === get_option( WCD_WORDPRESS_CRON ) ) {
-			$result = WebChangeDetector_API_V2::add_webhook_v2( get_site_url(), 'wordpress_cron' );
-			WebChangeDetector_Admin::error_log( 'Webhook result: ' . wp_json_encode( $result ) );
-			if ( is_array( $result ) && array_key_exists( 'data', $result ) ) {
-				add_option( WCD_WORDPRESS_CRON, $result['data']['id'] );
-			}
-		}
-
+		
 		// Start pre-update screenshots and do the WCD Magic.
-		$wcd_pre_update_data = get_transient( WCD_PRE_AUTO_UPDATE );
-		if ( false === $wcd_pre_update_data ) { // We don't have a transient yet. So we start screenshots.
+		$wcd_pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+		if ( false === $wcd_pre_update_data ) { // We don't have an option yet. So we start screenshots.
+
+			// Create external cron at wcd api to make sure the wp cron is triggered every minute.
+			if ( false === get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) ) {
+				$this->reschedule( 'wp_maybe_auto_update' );
+			}
+
+			// Take the screenshots and set the status to processing.
 			$sc_response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'pre' );
 			WebChangeDetector_Admin::error_log( 'Pre update SC data: ' . wp_json_encode( $sc_response ) );
-			$transient_data = array(
+			$option_data = array(
 				'status'   => 'processing',
 				'batch_id' => esc_html( $sc_response['batch'] ),
 			);
 
-			WebChangeDetector_Admin::error_log( 'Started taking screenshots and setting transients' );
-			set_transient( WCD_PRE_AUTO_UPDATE, $transient_data, HOUR_IN_SECONDS );
+			// Save the data to the option.
+			WebChangeDetector_Admin::error_log( 'Started taking screenshots and setting options' );
+			update_option( WCD_PRE_AUTO_UPDATE, $option_data, false );
+			// Set the lock to prevent WP from starting the auto updates.
 			$this->set_lock();
-			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_wp_maybe_auto_update' );
-
-			// SC are not done yet. Reschedule updates.
-		} elseif ( 'done' !== $wcd_pre_update_data['status'] ) {
-			WebChangeDetector_Admin::error_log( "Rescheduling cron 'wcd_wp_maybe_auto_update'..." );
-			$this->set_lock();
-			$this->reschedule( MINUTE_IN_SECONDS, 'wcd_wp_maybe_auto_update' );
+		} else { 
+			// Screenshots were already started. Now we check if they are done.
+			WebChangeDetector_Admin::error_log( 'Checking if sc are ready' );
+			$response         = WebChangeDetector_API_V2::get_queue_v2( $wcd_pre_update_data['batch_id'], 'open,processing' );
+	
+			WebChangeDetector_Admin::error_log( 'Queue: ' . wp_json_encode( $response ) );
+			// We check if the queues are done. If so, we update the status.
+			if ( count( $response['data'] ) === 0 ) {
+				$wcd_pre_update_data['status'] = 'done';
+				update_option( WCD_PRE_AUTO_UPDATE, $wcd_pre_update_data, false );
+			}
+	
+			// If the queues are not done yet, we set the lock. So the WP auto updates are delayed.
+			if ( 'done' !== $wcd_pre_update_data['status'] ) {
+				WebChangeDetector_Admin::error_log( 'SCs are not ready yet. Waiting for next cron run.' );
+				$this->reschedule( 'wp_maybe_auto_update' );
+				$this->set_lock();
+			} else { 
+				// The SCs are done and we can delete the webhook to stop the cron job. 
+				// The auto updates will be executed now with the wp_maybe_auto_update hook.
+				// And the post-screenshot will be triggered with the automatic_updates_complete hook.
+				WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) );
+				delete_option( 'wcd_current_webhook_wp_maybe_auto_update' );
+				//update_option('wcd_auto_updates_started', true);
+				WebChangeDetector_Admin::error_log( 'Deleted webhook for wp_maybe_auto_update' );
+			}
 		}
 	}
 
@@ -444,18 +437,53 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Reschedule a single event
+	 * Create a cron at our api to trigger a hook after a certain time.
 	 *
-	 * @param int    $how_long Seconds to reschedule the event in.
 	 * @param string $hook Hook name.
 	 * @return void
 	 */
-	private function reschedule( $how_long, $hook ) {
+	private function reschedule( $hook ) {
+
+		// Our cron method for the hook.
+		$how_long = 60; // 60 seconds.
 		wp_clear_scheduled_hook( $hook );
-		if ( ! $how_long ) {
+		wp_schedule_single_event( time() + $how_long, $hook );
+		
+		// Create a webhook that will trigger the hook after the specified time
+		$webhook_key = get_option( 'wcd_webhook_key', '' );
+		if ( empty( $webhook_key ) ) {
+			// Create a new webhook key if we don't have one
+			$webhook_key = wp_generate_password( 32, false );
+			update_option( 'wcd_webhook_key', $webhook_key );
+		}
+		
+		// Create our external webhook in the API
+		$webhook_url = add_query_arg(
+			array(
+				'wcd_action' => 'trigger_cron',
+				'key' => $webhook_key,
+				'hook' => $hook
+			),
+			site_url()
+		);
+		
+		WebChangeDetector_Admin::error_log( 'Creating webhook to trigger ' . $hook );
+		
+		// Store the webhook ID to avoid duplication
+		$webhook_id = get_option( 'wcd_current_webhook_' . $hook, false );
+		if ( $webhook_id ) {
+			WebChangeDetector_Admin::error_log( 'We already have a webhook for this hook. Skipping...' );
 			return;
 		}
-		wp_schedule_single_event( time() + $how_long, $hook );
+		
+		// Create a new wordpress cron webhook 
+		$result = WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_cron', date('Y-m-d H:i:s',time() + HOUR_IN_SECONDS * 3 ));
+		
+		if ( is_array( $result ) && isset( $result['data'] ) && isset( $result['data']['id'] ) ) {
+			// Store the webhook ID for later reference
+			update_option( 'wcd_current_webhook_' . $hook, $result['data']['id'] );
+		}
+		
 	}
 
 	/**
@@ -494,6 +522,47 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES' ) ) {
 			define( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES', 'wcd_auto_update_comparison_batches' );
+		}
+	}
+
+	/**
+	 * Handle webhook trigger for cron jobs
+	 * 
+	 * @return void
+	 */
+	public function handle_webhook_trigger() {
+		// Check if this is a webhook trigger request
+		if ( isset( $_GET['wcd_action'] ) && 'trigger_cron' === $_GET['wcd_action'] && isset( $_GET['key'] ) && isset( $_GET['hook'] ) ) {
+			// Check if key matches saved key
+			$webhook_key = get_option( 'wcd_webhook_key', '' );
+			WebChangeDetector_Admin::error_log( 'Handling webhook trigger for hook: ' . $_GET['hook'] );
+			// Validate the key
+			if ( !empty( $webhook_key ) && $_GET['key'] === $webhook_key ) {
+				$hook = sanitize_text_field( $_GET['hook'] );
+
+				// Only allow specific hooks for security
+				$allowed_hooks = array(
+					'wp_maybe_auto_update',
+					'wcd_cron_check_post_queues'
+				);
+
+				// Check if the webhook still exists in our local database.
+				if ( !get_option( 'wcd_current_webhook_' . $hook ) ) {
+					WebChangeDetector_Admin::error_log( 'Ignoring webhook trigger - webhook no longer exists' );
+					return;
+				}
+				
+				if ( in_array( $hook, $allowed_hooks, true ) ) {
+					WebChangeDetector_Admin::error_log( 'Webhook triggering cron hook: ' . $hook );
+					
+					// Trigger the hook
+					do_action( $hook );
+					
+					// Return minimal response to save bandwidth
+					echo 'OK';
+					exit;
+				}
+			}
 		}
 	}
 }
