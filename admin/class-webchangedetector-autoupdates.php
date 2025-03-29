@@ -524,7 +524,7 @@ class WebChangeDetector_Autoupdates {
 			define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );
 		}
 		if ( ! defined( 'WCD_CURRENT_CRON_CHECK_POST_QUEUES' ) ) {
-			define( 'WCD_WORDPRESS_CRON', 'wcd_current_webhook_wcd_cron_check_post_queues' );
+			define( 'WCD_CURRENT_CRON_CHECK_POST_QUEUES', 'wcd_current_webhook_wcd_cron_check_post_queues' );
 		}
 		
 		if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
