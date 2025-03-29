@@ -150,6 +150,7 @@ class WebChangeDetector_Autoupdates {
 			$this->reschedule( 'wcd_cron_check_post_queues' ); 
 		} else {
 			$this->send_change_detection_mail( $post_sc_option );
+			update_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES, time() );
 
 			// We don't need the webhook anymore.
 			WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_CURRENT_CRON_CHECK_POST_QUEUES ) );
@@ -228,6 +229,15 @@ class WebChangeDetector_Autoupdates {
 		if ( get_option( WCD_POST_AUTO_UPDATE ) ) {
 			WebChangeDetector_Admin::error_log( 'Post-update screenshots already processed. Skipping auto updates.' );
 			$this->set_lock();
+			return;
+		}
+
+		// Make auto-updates only once every 24h
+		$last_successfull_auto_updates = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
+		if($last_successfull_auto_updates && $last_successfull_auto_updates + 24 * HOUR_IN_SECONDS > time() ) {
+			// We already did auto-updates in the last 24h. Skipping this one now.
+			WebChangeDetector_Admin::error_log( 'Auto updates already done at ' . date( 'Y-m-d H:i:s', get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES ) ) . '. We only do them once per day. Skipping auto updates.' );
+			$this->set_lock();	
 			return;
 		}
 
@@ -535,7 +545,9 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_CURRENT_CRON_CHECK_POST_QUEUES' ) ) {
 			define( 'WCD_CURRENT_CRON_CHECK_POST_QUEUES', 'wcd_current_webhook_wcd_cron_check_post_queues' );
 		}
-		
+		if ( ! defined( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES' ) ) {
+			define( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES', 'wcd_last_successfull_auto_updates' );
+		}
 		if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
 			define( 'WCD_PRE_AUTO_UPDATE', 'wcd_pre_auto_update' );
 		}
@@ -545,7 +557,6 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_AUTO_UPDATES_RUNNING' ) ) {
 			define( 'WCD_AUTO_UPDATES_RUNNING', 'wcd_auto_updates_running' );
 		}
-		
 		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
 			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
 		}
