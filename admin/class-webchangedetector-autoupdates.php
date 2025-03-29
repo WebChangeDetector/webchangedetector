@@ -83,6 +83,8 @@ class WebChangeDetector_Autoupdates {
 	public function automatic_updates_complete() {
 		WebChangeDetector_Admin::error_log( 'Function: Automatic Updates Complete' );
 
+		// Auto updates are done. So we remove the option.
+		delete_option( 'wcd_auto_updates_started' );
 
 		// The SCs are done and we can delete the webhook to stop the cron job. 
 		// The auto updates will be executed now with the wp_maybe_auto_update hook.
