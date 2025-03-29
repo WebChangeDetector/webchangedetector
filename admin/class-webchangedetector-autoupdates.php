@@ -227,6 +227,7 @@ class WebChangeDetector_Autoupdates {
 		// Check if post-update screenshots are already done.
 		if ( get_option( WCD_POST_AUTO_UPDATE ) ) {
 			WebChangeDetector_Admin::error_log( 'Post-update screenshots already processed. Skipping auto updates.' );
+			$this->set_lock();
 			return;
 		}
 
