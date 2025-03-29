@@ -441,6 +441,8 @@ class WebChangeDetector_API_V2 {
 			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
 		}
 
+		
+
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
@@ -498,6 +500,10 @@ class WebChangeDetector_API_V2 {
 			if ( $is_web ) {
 				$response = wp_remote_request( $url_web, $args );
 			} else {
+				// Todo Check if api token is empty. 
+				if(empty($api_token)) {
+					return 'No API token found';
+				}
 				$response = wp_remote_request( $url, $args );
 			}
 			$body          = wp_remote_retrieve_body( $response );

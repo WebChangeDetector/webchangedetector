@@ -726,7 +726,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						foreach ( $queues as $queue ) {
 							// Get the current site's domain
 							$current_domain = parse_url(get_site_url(), PHP_URL_HOST);
-							$queue_domain = parse_url($queue['url_link'], PHP_URL_HOST);
+							$url = $queue['url_link'];
+							if (!preg_match('~^https?://~i', $url)) {
+								$url = "https://" . $url;
+							}
+							$queue_domain = parse_url($url, PHP_URL_HOST);
 							
 							// Skip queues that don't match the current domain
 							if ($current_domain !== $queue_domain) {
