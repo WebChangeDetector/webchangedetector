@@ -83,6 +83,14 @@ class WebChangeDetector_Autoupdates {
 	public function automatic_updates_complete() {
 		WebChangeDetector_Admin::error_log( 'Function: Automatic Updates Complete' );
 
+		// The SCs are done and we can delete the webhook to stop the cron job. 
+		// The auto updates will be executed now with the wp_maybe_auto_update hook.
+		// And the post-screenshot will be triggered with the automatic_updates_complete hook.
+		WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) );
+		delete_option( 'wcd_current_webhook_wp_maybe_auto_update' );
+		//update_option('wcd_auto_updates_started', true);
+		WebChangeDetector_Admin::error_log( 'Deleted webhook for wp_maybe_auto_update' );
+
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = self::get_auto_update_settings();
 		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || ! get_option( WCD_PRE_AUTO_UPDATE ) ) {
@@ -313,15 +321,7 @@ class WebChangeDetector_Autoupdates {
 				WebChangeDetector_Admin::error_log( 'SCs are not ready yet. Waiting for next cron run.' );
 				$this->reschedule( 'wp_maybe_auto_update' );
 				$this->set_lock();
-			} else { 
-				// The SCs are done and we can delete the webhook to stop the cron job. 
-				// The auto updates will be executed now with the wp_maybe_auto_update hook.
-				// And the post-screenshot will be triggered with the automatic_updates_complete hook.
-				WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) );
-				delete_option( 'wcd_current_webhook_wp_maybe_auto_update' );
-				//update_option('wcd_auto_updates_started', true);
-				WebChangeDetector_Admin::error_log( 'Deleted webhook for wp_maybe_auto_update' );
-			}
+			} 
 		}
 	}
 
