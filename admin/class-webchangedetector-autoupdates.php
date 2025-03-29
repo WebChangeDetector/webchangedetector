@@ -129,6 +129,12 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public function wcd_cron_check_post_queues() {
 		$post_sc_option = get_option( WCD_POST_AUTO_UPDATE );
+
+		// Check if we still have the post_sc_option. If not, we already sent the mail.
+		if(!$post_sc_option) {
+			WebChangeDetector_Admin::error_log( 'No post_sc_option found. So we already sent the mail.' );
+			return;
+		}
 		WebChangeDetector_Admin::error_log( 'Checking post_sc_option: ' . wp_json_encode( $post_sc_option ) );
 		$response       = WebChangeDetector_API_V2::get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
 		WebChangeDetector_Admin::error_log( 'Response: ' . wp_json_encode( $response ) );
@@ -449,7 +455,7 @@ class WebChangeDetector_Autoupdates {
 		wp_clear_scheduled_hook( $hook );
 		wp_schedule_single_event( time() + $how_long, $hook );
 		
-		// Create a webhook that will trigger the hook after the specified time
+		// Create the webhook key if we don't have one
 		$webhook_key = get_option( 'wcd_webhook_key', '' );
 		if ( empty( $webhook_key ) ) {
 			// Create a new webhook key if we don't have one
@@ -457,7 +463,7 @@ class WebChangeDetector_Autoupdates {
 			update_option( 'wcd_webhook_key', $webhook_key );
 		}
 		
-		// Create our external webhook in the API
+		// Create our external webhook url
 		$webhook_url = add_query_arg(
 			array(
 				'wcd_action' => 'trigger_cron',
