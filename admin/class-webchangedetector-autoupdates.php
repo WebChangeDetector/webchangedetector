@@ -285,7 +285,7 @@ class WebChangeDetector_Autoupdates {
 			}
 		}
 
-		// Other early returns.
+		// Check if we are called from one of the known filters.
 		if (
 			! doing_filter( 'wp_maybe_auto_update' ) &&
 			! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
@@ -553,6 +553,13 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function handle_webhook_trigger() {
+
+		// Check if the auto updates are already started. We don't want to interfere with the auto updates in this stage.
+		if ( get_option( 'wcd_auto_updates_started' ) ) {
+			WebChangeDetector_Admin::error_log( 'Auto updates are already started. No need to trigger the webhook.' );
+			return;
+		}
+
 		// Check if this is a webhook trigger request
 		if ( isset( $_GET['wcd_action'] ) && 'trigger_cron' === $_GET['wcd_action'] && isset( $_GET['key'] ) && isset( $_GET['hook'] ) ) {
 			// Check if key matches saved key
