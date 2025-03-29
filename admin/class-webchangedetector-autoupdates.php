@@ -83,6 +83,7 @@ class WebChangeDetector_Autoupdates {
 	public function automatic_updates_complete() {
 		WebChangeDetector_Admin::error_log( 'Function: Automatic Updates Complete' );
 
+
 		// The SCs are done and we can delete the webhook to stop the cron job. 
 		// The auto updates will be executed now with the wp_maybe_auto_update hook.
 		// And the post-screenshot will be triggered with the automatic_updates_complete hook.
@@ -143,16 +144,16 @@ class WebChangeDetector_Autoupdates {
 		if ( count( $response['data'] ) > 0 ) {
 			// There are still open or processing queues. So we check again in a minute.
 			WebChangeDetector_Admin::error_log( 'There are still open or processing queues. So we check again in a minute.' );
-			$this->reschedule( 'wcd_cron_check_post_queues' );
+			$this->reschedule( 'wcd_cron_check_post_queues' ); 
 		} else {
 			$this->send_change_detection_mail( $post_sc_option );
 
 			// We don't need the webhook anymore.
-			WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wcd_cron_check_post_queues' ) );
+			WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_CURRENT_CRON_CHECK_POST_QUEUES ) );
 
 			// Cleanup wp_options and cron webhook.
 			delete_option( WCD_WORDPRESS_CRON );
-			delete_option( 'wcd_current_webhook_wcd_cron_check_post_queues' );
+			delete_option( WCD_CURRENT_CRON_CHECK_POST_QUEUES );
 			delete_option( WCD_PRE_AUTO_UPDATE );
 			delete_option( WCD_POST_AUTO_UPDATE );
 		}
@@ -212,6 +213,12 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function wp_maybe_auto_update() {
+
+		// Check if the auto updates are already started.
+		if ( get_option( 'wcd_auto_updates_started' ) ) {
+			WebChangeDetector_Admin::error_log( 'Auto updates are already started. So we don\'t need to start them again.' );
+			return;
+		}
 
 		// Remove the lock to start the updates.
 		delete_option( $this->lock_name );
@@ -327,7 +334,10 @@ class WebChangeDetector_Autoupdates {
 				WebChangeDetector_Admin::error_log( 'SCs are not ready yet. Waiting for next cron run.' );
 				$this->reschedule( 'wp_maybe_auto_update' );
 				$this->set_lock();
-			} 
+			} else {
+				WebChangeDetector_Admin::error_log( 'SCs are ready. Continuing with the updates.' );
+				update_option( 'wcd_auto_updates_started', true );
+			}
 		}
 	}
 
@@ -511,6 +521,10 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_WORDPRESS_CRON' ) ) {
 			define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );
 		}
+		if ( ! defined( 'WCD_CURRENT_CRON_CHECK_POST_QUEUES' ) ) {
+			define( 'WCD_WORDPRESS_CRON', 'wcd_current_webhook_wcd_cron_check_post_queues' );
+		}
+		
 		if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
 			define( 'WCD_PRE_AUTO_UPDATE', 'wcd_pre_auto_update' );
 		}
