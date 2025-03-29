@@ -85,14 +85,13 @@ class WebChangeDetector_Autoupdates {
 		WebChangeDetector_Admin::error_log( 'Function: Automatic Updates Complete' );
 
 		// Auto updates are done. So we remove the option.
-		delete_option( 'wcd_auto_updates_started' );
+		delete_option( WCD_AUTO_UPDATES_RUNNING );
 
 		// The SCs are done and we can delete the webhook to stop the cron job. 
 		// The auto updates will be executed now with the wp_maybe_auto_update hook.
 		// And the post-screenshot will be triggered with the automatic_updates_complete hook.
 		WebChangeDetector_API_V2::delete_webhook_v2( get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) );
 		delete_option( 'wcd_current_webhook_wp_maybe_auto_update' );
-		//update_option('wcd_auto_updates_started', true);
 		WebChangeDetector_Admin::error_log( 'Deleted webhook for wp_maybe_auto_update' );
 
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
@@ -123,6 +122,7 @@ class WebChangeDetector_Autoupdates {
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
 		WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks - ' . WebChangeDetector_Admin::get_domain_from_site_url() );
+		
 		$this->wcd_cron_check_post_queues();
 	}
 
@@ -159,6 +159,7 @@ class WebChangeDetector_Autoupdates {
 			delete_option( WCD_CURRENT_CRON_CHECK_POST_QUEUES );
 			delete_option( WCD_PRE_AUTO_UPDATE );
 			delete_option( WCD_POST_AUTO_UPDATE );
+			delete_option( WCD_AUTO_UPDATES_RUNNING );
 		}
 	}
 
@@ -218,8 +219,14 @@ class WebChangeDetector_Autoupdates {
 	public function wp_maybe_auto_update() {
 
 		// Check if the auto updates are already started.
-		if ( get_option( 'wcd_auto_updates_started' ) ) {
-			WebChangeDetector_Admin::error_log( 'Auto updates are already started. So we don\'t need to start them again.' );
+		if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
+			WebChangeDetector_Admin::error_log( 'Auto updates are already started. Skipping auto updates.' );
+			return;
+		}
+
+		// Check if post-update screenshots are already done.
+		if ( get_option( WCD_POST_AUTO_UPDATE ) ) {
+			WebChangeDetector_Admin::error_log( 'Post-update screenshots already processed. Skipping auto updates.' );
 			return;
 		}
 
@@ -339,7 +346,7 @@ class WebChangeDetector_Autoupdates {
 				$this->set_lock();
 			} else {
 				WebChangeDetector_Admin::error_log( 'SCs are ready. Continuing with the updates.' );
-				update_option( 'wcd_auto_updates_started', true );
+				update_option( WCD_AUTO_UPDATES_RUNNING, true );
 			}
 		}
 	}
@@ -534,6 +541,10 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_POST_AUTO_UPDATE' ) ) {
 			define( 'WCD_POST_AUTO_UPDATE', 'wcd_post_auto_update' );
 		}
+		if ( ! defined( 'WCD_AUTO_UPDATES_RUNNING' ) ) {
+			define( 'WCD_AUTO_UPDATES_RUNNING', 'wcd_auto_updates_running' );
+		}
+		
 		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
 			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
 		}
@@ -556,7 +567,7 @@ class WebChangeDetector_Autoupdates {
 	public function handle_webhook_trigger() {
 
 		// Check if the auto updates are already started. We don't want to interfere with the auto updates in this stage.
-		if ( get_option( 'wcd_auto_updates_started' ) ) {
+		if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
 			WebChangeDetector_Admin::error_log( 'Auto updates are already started. No need to trigger the webhook.' );
 			return;
 		}
