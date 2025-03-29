@@ -38,10 +38,11 @@ class WebChangeDetector_Autoupdates {
 	 * Plugin constructor.
 	 */
 	public function __construct() {
+		
+		$this->set_defines();
+
 		// Register the complete hook in constructor to ensure it's always registered
 		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
-	
-		$this->set_defines();
 
 		// Post updates.
 		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
