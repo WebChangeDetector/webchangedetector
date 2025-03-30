@@ -326,7 +326,7 @@ class WebChangeDetector_API_V2 {
 
 		// The event wordpress_cron always needs an expires_at.
 		if("wordpress_cron" === $event && !$expires_at) {
-			$args['expires_at'] = $date('Y-m-d H:i:s',time() + HOUR_IN_SECONDS * 3 ); 
+			$args['expires_at'] = date('Y-m-d H:i:s',time() + HOUR_IN_SECONDS * 3 ); 
 		} elseif ( $expires_at ) {
 			$args['expires_at'] = $expires_at;
 		}
