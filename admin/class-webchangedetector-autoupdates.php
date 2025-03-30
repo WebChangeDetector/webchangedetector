@@ -557,12 +557,17 @@ class WebChangeDetector_Autoupdates
             WebChangeDetector_Admin::error_log('Remote host: ' . $remote_host);
             // Our API server IP
             $api_server_ip = '138.68.83.218';
+            $api_server_ip_v6 = '2a03:b0c0:3:d0::f94:7001';
+
             if (defined('WCD_API_SERVER_IP') && WCD_API_SERVER_IP) {
                 $api_server_ip = WCD_API_SERVER_IP;
             }
+            if (defined('WCD_API_SERVER_IP_V6') && WCD_API_SERVER_IP_V6) {
+                $api_server_ip_v6 = WCD_API_SERVER_IP_V6;
+            }
 
             // Check if request is from one of our API servers
-            if (gethostbyname($remote_host) === gethostbyname($api_server_ip)) {
+            if (gethostbyname($remote_host) === gethostbyname($api_server_ip) || gethostbyname($remote_host) === gethostbyname($api_server_ip_v6)) {
 
                 // Get the webhook ID from our local option
                 $webhook_id = get_option(WCD_WORDPRESS_CRON);
