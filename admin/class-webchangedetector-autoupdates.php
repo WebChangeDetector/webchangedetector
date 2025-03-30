@@ -388,6 +388,7 @@ class WebChangeDetector_Autoupdates {
 								}
 								</style>
 								<div style="width: 800px; margin: 0 auto;">';
+								
 		$mail_body  .= '<p>Howdy again, we checked your website for visual changes during the WP auto updates with WebChange Detector. Here are the results:</p>';
 		if ( count( $comparisons['data'] ) ) {
 			$no_difference_rows   = '';
@@ -397,6 +398,7 @@ class WebChangeDetector_Autoupdates {
 				$row =
 					'<tr>
 						<td>' . $comparison['url'] . '</td>
+						<td>' . $comparison['device'] . '</td>
 						<td>' . $comparison['difference_percent'] . ' %</td>
 		                <td><a href="' . $comparison['public_link'] . '">See changes</a></td>
 					</tr>';
@@ -417,7 +419,7 @@ class WebChangeDetector_Autoupdates {
 			$mail_body .= '</div>';
 
 			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th></tr>';
 			if ( ! empty( $with_difference_rows ) ) {
 				$mail_body .= $with_difference_rows;
 			} else {
@@ -426,7 +428,7 @@ class WebChangeDetector_Autoupdates {
 			$mail_body .= '</table>';
 
 			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th></tr>';
 			if ( ! empty( $no_difference_rows ) ) {
 				$mail_body .= $no_difference_rows;
 			} else {
