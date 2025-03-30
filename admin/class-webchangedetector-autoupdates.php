@@ -321,9 +321,9 @@ class WebChangeDetector_Autoupdates {
 		if ( false === $wcd_pre_update_data ) { // We don't have an option yet. So we start screenshots.
 
 			// Create external cron at wcd api to make sure the wp cron is triggered every minute.
-			if ( false === get_option( 'wcd_current_webhook_wp_maybe_auto_update' ) ) {
-				$this->reschedule( 'wp_maybe_auto_update' );
-			}
+			
+				$this->reschedule( WCD_TRIGGER_AUTO_UPDATE_CRON );
+			
 
 			// Take the screenshots and set the status to processing.
 			$sc_response = WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'pre' );
@@ -488,6 +488,13 @@ class WebChangeDetector_Autoupdates {
 		wp_clear_scheduled_hook( $hook );
 		wp_schedule_single_event( time() + $how_long, $hook );
 		
+		// Store the webhook ID to avoid duplication
+		$webhook_id = get_option( WCD_WORDPRESS_CRON, false );
+		if ( $webhook_id ) {
+			WebChangeDetector_Admin::error_log( 'We already have a webhook for this hook. Skipping...' );
+			return;
+		}
+
 		// Create the webhook key if we don't have one
 		$webhook_key = get_option( 'wcd_webhook_key', '' );
 		if ( empty( $webhook_key ) ) {
@@ -499,21 +506,13 @@ class WebChangeDetector_Autoupdates {
 		// Create our external webhook url
 		$webhook_url = add_query_arg(
 			array(
-				'wcd_action' => 'trigger_cron',
-				'key' => $webhook_key,
-				'hook' => $hook
+				'wcd_action' => WCD_TRIGGER_AUTO_UPDATE_CRON,
+				'key' => $webhook_key
 			),
 			site_url()
 		);
 		
 		WebChangeDetector_Admin::error_log( 'Creating webhook to trigger ' . $hook );
-		
-		// Store the webhook ID to avoid duplication
-		$webhook_id = get_option( 'wcd_current_webhook_' . $hook, false );
-		if ( $webhook_id ) {
-			WebChangeDetector_Admin::error_log( 'We already have a webhook for this hook. Skipping...' );
-			return;
-		}
 		
 		// Create a new wordpress cron webhook 
 		$result = WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_cron', date('Y-m-d H:i:s',time() + HOUR_IN_SECONDS * 3 ));
@@ -522,7 +521,6 @@ class WebChangeDetector_Autoupdates {
 			// Store the webhook ID for later reference
 			update_option( 'wcd_current_webhook_' . $hook, $result['data']['id'] );
 		}
-		
 	}
 
 	/**
@@ -571,53 +569,58 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES' ) ) {
 			define( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES', 'wcd_auto_update_comparison_batches' );
 		}
+		if ( ! defined( 'WCD_TRIGGER_AUTO_UPDATE_CRON' ) ) {
+			define( 'WCD_TRIGGER_AUTO_UPDATE_CRON', 'trigger_auto_update_cron' );
+		}
+		
 	}
 
 	/**
-	 * Handle webhook trigger for cron jobs
-	 * 
-	 * @return void
+	 * Process webhook trigger by executing the appropriate WordPress cron event
 	 */
 	public function handle_webhook_trigger() {
-
-		// Check if the auto updates are already started. We don't want to interfere with the auto updates in this stage.
-		if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
-			WebChangeDetector_Admin::error_log( 'Auto updates are already started. No need to trigger the webhook.' );
-			return;
+		$is_authorized = false;
+		
+		// Method 1: Check for key-based auth (new style)
+		if (isset($_GET['wcd_action']) && WCD_TRIGGER_AUTO_UPDATE_CRON === $_GET['wcd_action'] && isset($_GET['key'])) {
+			$webhook_key = get_option('wcd_webhook_key', '');
+			if (!empty($webhook_key) && $_GET['key'] === $webhook_key) {
+				$is_authorized = true;
+			}
 		}
-
-		// Check if this is a webhook trigger request
-		if ( isset( $_GET['wcd_action'] ) && 'trigger_cron' === $_GET['wcd_action'] && isset( $_GET['key'] ) && isset( $_GET['hook'] ) ) {
-			// Check if key matches saved key
-			$webhook_key = get_option( 'wcd_webhook_key', '' );
-			WebChangeDetector_Admin::error_log( 'Handling webhook trigger for hook: ' . $_GET['hook'] );
-			// Validate the key
-			if ( !empty( $webhook_key ) && $_GET['key'] === $webhook_key ) {
-				$hook = sanitize_text_field( $_GET['hook'] );
-
-				// Only allow specific hooks for security
-				$allowed_hooks = array(
-					'wp_maybe_auto_update',
-					'wcd_cron_check_post_queues'
-				);
-
-				// Check if the webhook still exists in our local database.
-				if ( !get_option( 'wcd_current_webhook_' . $hook ) ) {
-					WebChangeDetector_Admin::error_log( 'Ignoring webhook trigger - webhook no longer exists' );
-					return;
+		// Method 2: Fallback for old webhooks - verify request comes from our API server
+		else {
+			// Get the remote host/IP
+			$remote_host = $_SERVER['REMOTE_ADDR'];
+			
+			// List of API server IPs or hostnames allowed with
+			$api_server_ip = '138.68.83.218';
+			if(defined('WCD_API_SERVER_IP') && WCD_API_SERVER_IP) {
+				$api_server_ip = WCD_API_SERVER_IP;
+			}
+			
+			// Check if request is from one of our API servers
+			if ( gethostbyname($remote_host) === gethostbyname($api_server_ip)) {
+				$is_authorized = true;
+				WebChangeDetector_Admin::error_log('Legacy webhook request validated by host: ' . $remote_host);
+				
+				// Update API webhook to include key for future requests
+				$webhook_id = get_option(WCD_WORDPRESS_CRON);
+				if($webhook_id) {
+					WebChangeDetector_API_V2::update_webhook_v2($webhook_id, $webhook_url);
 				}
 				
-				if ( in_array( $hook, $allowed_hooks, true ) ) {
-					WebChangeDetector_Admin::error_log( 'Webhook triggering cron hook: ' . $hook );
-					
-					// Trigger the hook
-					do_action( $hook );
-					
-					// Return minimal response to save bandwidth
-					echo 'OK';
-					exit;
-				}
 			}
+		}
+		
+		if ($is_authorized) {
+			WebChangeDetector_Admin::error_log('Processing authorized webhook trigger');
+			
+			// Force WordPress to process all pending cron events
+			spawn_cron();
+			
+			echo 'OK';
+			exit;
 		}
 	}
 }

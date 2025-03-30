@@ -334,6 +334,21 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
+	/** Update webhook
+	 *
+	 * @param string $id Id of the webhook.
+	 * @param string $url The url to send the webhook to.
+	 * @return mixed|string
+	 */
+	public static function update_webhook_v2( $id, $url ) {
+		$args = array(
+			'action' => 'webhooks/' . $id,
+			'url'    => $url,
+		);
+		return self::api_v2( $args, 'PUT' );
+	}
+	
+
 	/** Delete webhook
 	 *
 	 * @param string $id Id of the webhook.
