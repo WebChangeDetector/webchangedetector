@@ -311,10 +311,11 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'GET' );
 	}
 
-	/** Add webhook
+	/** Add webhook.
 	 *
 	 * @param string $url The url to send the webhook to.
 	 * @param string $event The event on which the webhook is sent.
+	 * @param string $expires_at The date and time the webhook expires.
 	 * @return mixed|string
 	 */
 	public static function add_webhook_v2( $url, $event, $expires_at = false ) {
@@ -325,12 +326,12 @@ class WebChangeDetector_API_V2 {
 		);
 
 		// The event wordpress_cron always needs an expires_at.
-		if("wordpress_cron" === $event && !$expires_at) {
-			$args['expires_at'] = date('Y-m-d H:i:s',time() + HOUR_IN_SECONDS * 3 ); 
+		if ( 'wordpress_cron' === $event && ! $expires_at ) {
+			$args['expires_at'] = gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS * 3 );
 		} elseif ( $expires_at ) {
 			$args['expires_at'] = $expires_at;
 		}
-		
+
 		return self::api_v2( $args );
 	}
 
@@ -347,7 +348,7 @@ class WebChangeDetector_API_V2 {
 		);
 		return self::api_v2( $args, 'PUT' );
 	}
-	
+
 
 	/** Delete webhook
 	 *
@@ -456,8 +457,6 @@ class WebChangeDetector_API_V2 {
 			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
 		}
 
-		
-
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
@@ -515,8 +514,8 @@ class WebChangeDetector_API_V2 {
 			if ( $is_web ) {
 				$response = wp_remote_request( $url_web, $args );
 			} else {
-				// Todo Check if api token is empty. 
-				if(empty($api_token)) {
+				// Todo Check if api token is empty.
+				if ( empty( $api_token ) ) {
 					return 'No API token found';
 				}
 				$response = wp_remote_request( $url, $args );

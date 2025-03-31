@@ -68,7 +68,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'reset_api_token':
-				delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
+				delete_option(WCD_WP_OPTION_KEY_API_TOKEN);
 				delete_option( WCD_WEBSITE_GROUPS );
 				delete_option( WCD_OPTION_UPDATE_STEP_SETTINGS );
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
@@ -118,11 +118,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			<div class="notice notice-error">
 				<p>
 					Something went wrong. Please try to re-add your api token.
-					<form method="post">
-						<input type="hidden" name="wcd_action" value="reset_api_token">
-						<?php wp_nonce_field( 'reset_api_token' ); ?>
-						<input type="submit" value="Reset API token" class="button button-delete">
-					</form>
+				<form method="post">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+					<input type="submit" value="Reset API token" class="button button-delete">
+				</form>
 				</p>
 			</div>
 			<?php
@@ -186,7 +186,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<p>
 					We couldn't find your website settings. Please reset the API token in
 					settings and re-add your website with your API Token.
-				</p><p>
+				</p>
+				<p>
 					Your current API token is: <strong><?php echo esc_html( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ); ?></strong>.
 				</p>
 				<p>
@@ -251,7 +252,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<p><strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.</p>
 			</div>
 		<?php } elseif ( $usage_percent > 70 ) { ?>
-			<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p></div>
+			<div class="notice notice-warning">
+				<p><strong>WebChange Detector:</strong> You used <?php echo esc_html( $usage_percent ); ?>% of your checks.</p>
+			</div>
 			<?php
 		}
 
@@ -375,9 +378,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$wcd->get_dashboard_view( $account_details );
 				break;
 
-			/********************
-			 * Change Detections
-			 */
+				/********************
+				 * Change Detections
+				 */
 
 			case 'webchangedetector-change-detections':
 				if ( ! $wcd->is_allowed( 'change_detections_view' ) ) {
@@ -434,7 +437,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						from <input name="from" value="<?php echo esc_html( $from ); ?>" type="date">
 						to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
 
-						<select name="group_type" >
+						<select name="group_type">
 							<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
 							<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Manual Checks & Auto Update Checks</option>
 							<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
@@ -543,8 +546,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									<a class="tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
 										href="?page=webchangedetector-change-detections&
 										paged=<?php echo esc_html( $params['page'] ?? 1 ); ?>&
-										<?php echo esc_html( build_query( $pagination_filters ) ); ?>" >
-											<?php echo esc_html( $link['label'] ); ?>
+										<?php echo esc_html( build_query( $pagination_filters ) ); ?>">
+										<?php echo esc_html( $link['label'] ); ?>
 									</a>
 									<?php
 								}
@@ -558,9 +561,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<?php
 				break;
 
-			/***************************
-			 * Manual Checks
-			*/
+				/***************************
+				 * Manual Checks
+				 */
 
 			case 'webchangedetector-update-settings':
 				if ( ! $wcd->is_allowed( 'manual_checks_view' ) ) {
@@ -576,75 +579,75 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 				?>
 				<div class="action-container">
-				<?php
+					<?php
 
-				switch ( $step ) {
-					case WCD_OPTION_UPDATE_STEP_SETTINGS:
-						$progress_setting          = 'active';
-						$progress_pre              = 'disabled';
-						$progress_make_update      = 'disabled';
-						$progress_post             = 'disabled';
-						$progress_change_detection = 'disabled';
-						$wcd->get_url_settings( false );
-						break;
+					switch ( $step ) {
+						case WCD_OPTION_UPDATE_STEP_SETTINGS:
+							$progress_setting          = 'active';
+							$progress_pre              = 'disabled';
+							$progress_make_update      = 'disabled';
+							$progress_post             = 'disabled';
+							$progress_change_detection = 'disabled';
+							$wcd->get_url_settings( false );
+							break;
 
-					case WCD_OPTION_UPDATE_STEP_PRE:
-						$progress_setting          = 'done';
-						$progress_pre              = 'active';
-						$progress_make_update      = 'disabled';
-						$progress_post             = 'disabled';
-						$progress_change_detection = 'disabled';
-						include 'templates/update-detection/update-step-pre-sc.php';
-						break;
+						case WCD_OPTION_UPDATE_STEP_PRE:
+							$progress_setting          = 'done';
+							$progress_pre              = 'active';
+							$progress_make_update      = 'disabled';
+							$progress_post             = 'disabled';
+							$progress_change_detection = 'disabled';
+							include 'templates/update-detection/update-step-pre-sc.php';
+							break;
 
-					case WCD_OPTION_UPDATE_STEP_PRE_STARTED:
-						$progress_setting          = 'done';
-						$progress_pre              = 'active';
-						$progress_make_update      = 'disabled';
-						$progress_post             = 'disabled';
-						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
-						include 'templates/update-detection/update-step-pre-sc-started.php';
-						break;
+						case WCD_OPTION_UPDATE_STEP_PRE_STARTED:
+							$progress_setting          = 'done';
+							$progress_pre              = 'active';
+							$progress_make_update      = 'disabled';
+							$progress_post             = 'disabled';
+							$progress_change_detection = 'disabled';
+							$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
+							include 'templates/update-detection/update-step-pre-sc-started.php';
+							break;
 
-					case WCD_OPTION_UPDATE_STEP_POST:
-						$progress_setting          = 'done';
-						$progress_pre              = 'done';
-						$progress_make_update      = 'done';
-						$progress_post             = 'active';
-						$progress_change_detection = 'disabled';
-						include 'templates/update-detection/update-step-post-sc.php';
-						break;
+						case WCD_OPTION_UPDATE_STEP_POST:
+							$progress_setting          = 'done';
+							$progress_pre              = 'done';
+							$progress_make_update      = 'done';
+							$progress_post             = 'active';
+							$progress_change_detection = 'disabled';
+							include 'templates/update-detection/update-step-post-sc.php';
+							break;
 
-					case WCD_OPTION_UPDATE_STEP_POST_STARTED:
-						$progress_setting          = 'done';
-						$progress_pre              = 'done';
-						$progress_make_update      = 'done';
-						$progress_post             = 'active';
-						$progress_change_detection = 'disabled';
-						$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
-						include 'templates/update-detection/update-step-post-sc-started.php';
-						break;
+						case WCD_OPTION_UPDATE_STEP_POST_STARTED:
+							$progress_setting          = 'done';
+							$progress_pre              = 'done';
+							$progress_make_update      = 'done';
+							$progress_post             = 'active';
+							$progress_change_detection = 'disabled';
+							$sc_processing             = $wcd->get_processing_queue_v2(); // used in template.
+							include 'templates/update-detection/update-step-post-sc-started.php';
+							break;
 
-					case WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION:
-						$progress_setting          = 'done';
-						$progress_pre              = 'done';
-						$progress_make_update      = 'done';
-						$progress_post             = 'done';
-						$progress_change_detection = 'active';
-						include 'templates/update-detection/update-step-change-detection.php';
-						break;
-				}
-				?>
+						case WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION:
+							$progress_setting          = 'done';
+							$progress_pre              = 'done';
+							$progress_make_update      = 'done';
+							$progress_post             = 'done';
+							$progress_change_detection = 'active';
+							include 'templates/update-detection/update-step-change-detection.php';
+							break;
+					}
+					?>
 				</div>
 
 				<div class="clear"></div>
 				<?php
 				break;
 
-			/**************************
-			 * Monitoring
-			 */
+				/**************************
+				 * Monitoring
+				 */
 
 			case 'webchangedetector-auto-settings':
 				$wizard_text = '<h2>Monitoring</h2>The monitoring checks your webpages automatically in intervals.';
@@ -666,9 +669,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<?php
 				break;
 
-			/*********
-			 * Queue
-			 */
+				/*********
+				 * Queue
+				 */
 
 			case 'webchangedetector-logs':
 				$wizard_text = '<h2>Queue</h2>In the queue you can see all the action which happened.';
@@ -719,90 +722,92 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<th style="min-width: 120px;">Time added /<br> Time updated</th>
 							<th>Show</th>
 						</tr>
-					<?php
+						<?php
 
-					// Clean the queues to only show the current domain
-					if ( ! empty( $queues ) ){
-						foreach ( $queues as $queue ) {
-							// Get the current site's domain
-							$current_domain = parse_url(get_site_url(), PHP_URL_HOST);
-							$url = $queue['url_link'];
-							if (!preg_match('~^https?://~i', $url)) {
-								$url = "https://" . $url;
+						// Clean the queues to only show the current domain.
+						if ( ! empty( $queues ) ) {
+							foreach ( $queues as $queue ) {
+								// Get the current site's domain.
+								$current_domain = wp_parse_url( get_site_url(), PHP_URL_HOST );
+								$url            = $queue['url_link'];
+								if ( ! preg_match( '~^https?://~i', $url ) ) {
+									$url = 'https://' . $url;
+								}
+								$queue_domain = wp_parse_url( $url, PHP_URL_HOST );
+
+								// Skip queues that don't match the current domain.
+								if ( $current_domain !== $queue_domain ) {
+									continue;
+								}
+								$cleaned_queues[] = $queue;
 							}
-							$queue_domain = parse_url($url, PHP_URL_HOST);
-							
-							// Skip queues that don't match the current domain
-							if ($current_domain !== $queue_domain) {
-								continue;
-							}
-							$cleaned_queues[] = $queue;
+							$queues         = $cleaned_queues;
+							$cleaned_queues = array();
 						}
-						$queues = $cleaned_queues;
-						$cleaned_queues = array();
-					}
 
-					if ( ! empty( $queues ) && is_iterable( $queues ) ) {
-						foreach ( $queues as $queue ) {
-							$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
-							echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
-							echo '<td>';
-							$wcd->get_device_icon( $queue['device'] );
-							echo '</td>';
-							echo '<td>
+						if ( ! empty( $queues ) && is_iterable( $queues ) ) {
+							foreach ( $queues as $queue ) {
+								$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
+								echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
+								echo '<td>';
+								$wcd->get_device_icon( $queue['device'] );
+								echo '</td>';
+								echo '<td>
                                             <span class="html-title queue"> ' . esc_html( $queue['html_title'] ) . '</span><br>
                                             <span class="url queue">URL: ' . esc_url( $queue['url_link'] ) . '</span><br>
                                             ' . esc_html( $group_type ) . '
                                     </td>';
-							echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
-							echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
-							echo '<td><span class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
-								esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</span><br>';
-							echo '<span class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
-								esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</span></td>';
-							echo '<td>';
+								echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
+								echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
+								echo '<td><span class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
+									esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</span><br>';
+								echo '<span class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
+									esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</span></td>';
+								echo '<td>';
 
-							// Show screenshot button.
-							if ( in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
-								'done' === $queue['status'] &&
-								! empty( $queue['image_link'] ) ) {
-								?>
-								<form method="post" action="?page=webchangedetector-show-screenshot">
-									<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['image_link'] ); ?>">Show</button>
-								</form>
-								<?php
+								// Show screenshot button.
+								if (
+									in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
+									'done' === $queue['status'] &&
+									! empty( $queue['image_link'] )
+								) {
+									?>
+									<form method="post" action="?page=webchangedetector-show-screenshot">
+										<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['image_link'] ); ?>">Show</button>
+									</form>
+									<?php
+								}
+								echo '</td>';
+								echo '</tr>';
 							}
-							echo '</td>';
-							echo '</tr>';
+						} else {
+							echo '<tr><td colspan="7" style="text-align: center; font-weight: 700; background-color: #fff;">Nothing to show yet.</td></tr>';
 						}
-					} else {
-						echo '<tr><td colspan="7" style="text-align: center; font-weight: 700; background-color: #fff;">Nothing to show yet.</td></tr>';
-					}
-					?>
+						?>
 					</table>
 					<!-- Pagination -->
 					<div class="tablenav">
 						<div class="tablenav-pages">
 							<span class="displaying-num"><?php echo esc_html( $queues_meta['total'] ); ?> items</span>
 							<span class="pagination-links">
-							<?php
-							if ( ! isset( $_GET['paged'] ) ) {
-								$_GET['paged'] = 1;
-							}
-							foreach ( $queues_meta['links'] as $link ) {
-								$url_params = $wcd->get_params_of_url( $link['url'] );
-
-								if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
-									?>
-									<a class="tablenav-pages-navspan button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>">
-										<?php echo esc_html( $link['label'] ); ?>
-									</a>
-								<?php } else { ?>
-									<span class="tablenav-pages-navspan button" disabled=""><?php echo esc_html( $link['label'] ); ?></span>
-									<?php
+								<?php
+								if ( ! isset( $_GET['paged'] ) ) {
+									$_GET['paged'] = 1;
 								}
-							}
-							?>
+								foreach ( $queues_meta['links'] as $link ) {
+									$url_params = $wcd->get_params_of_url( $link['url'] );
+
+									if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
+										?>
+										<a class="tablenav-pages-navspan button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>">
+											<?php echo esc_html( $link['label'] ); ?>
+										</a>
+									<?php } else { ?>
+										<span class="tablenav-pages-navspan button" disabled=""><?php echo esc_html( $link['label'] ); ?></span>
+										<?php
+									}
+								}
+								?>
 							</span>
 						</div>
 					</div>
@@ -811,17 +816,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<?php
 				break;
 
-			/***********
-			 * Settings
-			 */
+				/***********
+				 * Settings
+				 */
 
 			case 'webchangedetector-settings':
 				?>
 				<div class="action-container">
 
 					<div class="box-plain no-border">
-					<?php
-					$wizard_text = '<h2>Settings</h2>In this tab, you can find some more settings.';
+						<?php
+						$wizard_text = '<h2>Settings</h2>In this tab, you can find some more settings.';
 						$wcd->print_wizard(
 							$wizard_text,
 							'wizard_settings_tab',
@@ -841,11 +846,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							false,
 							'top left-plus-800'
 						);
-					?>
-					<h2>Show URLs from post types</h2>
+						?>
+						<h2>Show URLs from post types</h2>
 						<p>Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
-					<?php
-					$wizard_text = '<h2>Questions?</h2><p>We hope this wizard was helpful to understand how WebChange Detector works.</p><p>
+						<?php
+						$wizard_text = '<h2>Questions?</h2><p>We hope this wizard was helpful to understand how WebChange Detector works.</p><p>
                                     If you have any questions, please write us an email to <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a> or create a ticket 
                                     at our plugin site at <a href="https://wordpress.org/plugins/webchangedetector" target="_blank">wordpress.org</a>.</p>';
 						$wcd->print_wizard(
@@ -857,68 +862,68 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							' left-plus-400'
 						);
 
-					// Add post types.
-					$post_types = get_post_types( array( 'public' => true ), 'objects' );
+						// Add post types.
+						$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
-					$available_post_types = array();
-					foreach ( $post_types as $post_type ) {
+						$available_post_types = array();
+						foreach ( $post_types as $post_type ) {
 
-						$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
+							$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
 
-						$show_type = false;
-						foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-							if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
-								$show_type = true;
+							$show_type = false;
+							foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+								if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
+									$show_type = true;
+								}
+							}
+							if ( $wp_post_type_slug && ! $show_type ) {
+								$available_post_types[] = $post_type;
 							}
 						}
-						if ( $wp_post_type_slug && ! $show_type ) {
-							$available_post_types[] = $post_type;
-						}
-					}
-					if ( ! empty( $available_post_types ) ) {
-						?>
-						<form method="post">
-							<input type="hidden" name="wcd_action" value="add_post_type">
-							<?php wp_nonce_field( 'add_post_type' ); ?>
-							<select name="post_type">
-						<?php
-						foreach ( $available_post_types as $available_post_type ) {
-							$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
-							$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
-							$add_post_type          = wp_json_encode(
-								array(
-									array(
-										'url_type_slug'  => 'types',
-										'url_type_name'  => 'Post Types',
-										'post_type_slug' => $current_post_type_slug,
-										'post_type_name' => $current_post_type_name,
-									),
-								)
-							);
+						if ( ! empty( $available_post_types ) ) {
 							?>
-							<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
-						<?php } ?>
-							</select>
-							<input type="submit" class="button" value="Show">
-						</form>
-						<?php
+							<form method="post">
+								<input type="hidden" name="wcd_action" value="add_post_type">
+								<?php wp_nonce_field( 'add_post_type' ); ?>
+								<select name="post_type">
+									<?php
+									foreach ( $available_post_types as $available_post_type ) {
+										$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
+										$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
+										$add_post_type          = wp_json_encode(
+											array(
+												array(
+													'url_type_slug'  => 'types',
+													'url_type_name'  => 'Post Types',
+													'post_type_slug' => $current_post_type_slug,
+													'post_type_name' => $current_post_type_name,
+												),
+											)
+										);
+										?>
+										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
+									<?php } ?>
+								</select>
+								<input type="submit" class="button" value="Show">
+							</form>
+							<?php
 
-					} else {
-						?>
-						<p>No more post types found</p>
-						<?php
-					}
+						} else {
+							?>
+							<p>No more post types found</p>
+							<?php
+						}
 
-					$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
+						$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
                                         They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
-					$wcd->print_wizard(
-						$wizard_text,
-						'wizard_settings_add_post_type',
-						'wizard_settings_account_details',
-						false,
-						false,
-						'left top-minus-100 left-plus-400'
-					);
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_add_post_type',
+							'wizard_settings_account_details',
+							false,
+							false,
+							'left top-minus-100 left-plus-400'
+						);
 				?>
 					</div>
 
@@ -980,8 +985,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							This works automatically in the background.<br>
 							When you add a webpage, you can start the sync manually to be able to activate them for checks.</p>
 						<p> Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
-							<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
-						</span>
+								<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
+							</span>
 						</p>
 						<button class="button button-secondary" onclick="sync_urls(1)">Sync URLs</button>
 					</div>
@@ -1023,23 +1028,23 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<?php
 				break;
 
-			/***************
-			 * Show compare
-			 */
+				/***************
+				 * Show compare
+				 */
 			case 'webchangedetector-show-detection':
 				$wcd->get_comparison_by_token( $postdata );
 				break;
 
-			/***************
-			 * Show screenshot
-			 */
+				/***************
+				 * Show screenshot
+				 */
 			case 'webchangedetector-show-screenshot':
 				$wcd->get_screenshot( $postdata );
 				break;
 
-			/***************
-			 * No billing account
-			 */
+				/***************
+				 * No billing account
+				 */
 			case 'webchangedetector-no-billing-account':
 				?>
 				<div style="text-align: center;">
@@ -1054,7 +1059,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			default:
 				// Should already be validated by VALID_WCD_ACTIONS.
 				break;
-
 		} // switch
 
 		echo '</div>'; // closing from div webchangedetector.
