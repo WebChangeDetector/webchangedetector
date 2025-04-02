@@ -136,7 +136,7 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 		WebChangeDetector_Admin::error_log( 'Checking if post-update screenshots are done: ' . wp_json_encode( $post_sc_option ) );
-		$response = WebChangeDetector_API_V2::get_queue_v2( $post_sc_option['batch_id'], 'open,processing' );
+		$response = WebChangeDetector_API_V2::get_queues_v2( $post_sc_option['batch_id'], 'open,processing' );
 		WebChangeDetector_Admin::error_log( 'Response: ' . wp_json_encode( $response ) );
 
 		// Check if the batch is done.
@@ -339,7 +339,7 @@ class WebChangeDetector_Autoupdates {
 		} else {
 			// Screenshots were already started. Now we check if they are done.
 			WebChangeDetector_Admin::error_log( 'Checking if screenshots are ready' );
-			$response = WebChangeDetector_API_V2::get_queue_v2( $wcd_pre_update_data['batch_id'], 'open,processing' );
+			$response = WebChangeDetector_API_V2::get_queues_v2( $wcd_pre_update_data['batch_id'], 'open,processing' );
 
 			WebChangeDetector_Admin::error_log( 'Queue: ' . wp_json_encode( $response ) );
 			// We check if the queues are done. If so, we update the status.

@@ -12,14 +12,6 @@ require 'update-step-tiles.php';
 ?>
 
 <div class="wcd-step-container wcd-section">
-	<!--<div class="wcd-highlight-bg done">
-		<h2><?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
-	</div>
-
-	<div class="wcd-highlight-bg done">
-		<h2><?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Updates and Changes</h2>
-	</div>
--->
 	<div class="wcd-highlight-bg">
 		<h2>Create Change Detections</h2>
 		<p>Done with updates or other changes? <br>Create change detections to see what changed.</p>

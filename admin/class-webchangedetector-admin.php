@@ -541,12 +541,7 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function get_processing_queue_v2( $batch_id = false, $per_page = 30 ) {
-		$processing = WebChangeDetector_API_V2::get_queue_v2( $batch_id, 'processing', array( 'per_page' => $per_page ) );
-		$open       = WebChangeDetector_API_V2::get_queue_v2( $batch_id, 'open', array( 'per_page' => $per_page ) );
-		return array(
-			'open'       => $open,
-			'processing' => $processing,
-		);
+		return WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing,open', false, array( 'per_page' => $per_page ) );
 	}
 
 	/** Update monitoring group settings.

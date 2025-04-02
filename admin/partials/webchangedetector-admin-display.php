@@ -689,7 +689,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
 				}
 
-				$queues      = WebChangeDetector_API_V2::get_queue_v2( false, false, array( 'page' => $paged ) );
+                $groups = get_option( WCD_WEBSITE_GROUPS );
+                $filter_groups = false;
+                if ( $groups ) {
+                    $filter_groups = implode( ',', $groups );
+                }
+                
+				$queues      = WebChangeDetector_API_V2::get_queues_v2( false, false, $filter_groups, array( 'page' => $paged ) );
+                
 				$queues_meta = $queues['meta'];
 				$queues      = $queues['data'];
 
@@ -723,27 +730,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<th>Show</th>
 						</tr>
 						<?php
-
-						// Clean the queues to only show the current domain.
-						if ( ! empty( $queues ) ) {
-							foreach ( $queues as $queue ) {
-								// Get the current site's domain.
-								$current_domain = wp_parse_url( get_site_url(), PHP_URL_HOST );
-								$url            = $queue['url_link'];
-								if ( ! preg_match( '~^https?://~i', $url ) ) {
-									$url = 'https://' . $url;
-								}
-								$queue_domain = wp_parse_url( $url, PHP_URL_HOST );
-
-								// Skip queues that don't match the current domain.
-								if ( $current_domain !== $queue_domain ) {
-									continue;
-								}
-								$cleaned_queues[] = $queue;
-							}
-							$queues         = $cleaned_queues;
-							$cleaned_queues = array();
-						}
 
 						if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 							foreach ( $queues as $queue ) {

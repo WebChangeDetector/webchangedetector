@@ -257,7 +257,7 @@ class WebChangeDetector_API_V2 {
 		$args = array(
 			'action' => 'comparisons?' . build_query( $filters ),
 		);
-
+        
 		return self::api_v2( $args, 'GET' );
 	}
 
@@ -268,20 +268,14 @@ class WebChangeDetector_API_V2 {
 	 * @param array  $filters Additional filters.
 	 * @return mixed|string
 	 */
-	public static function get_queue_v2( $batch_id = false, $status = false, $filters = array() ) {
-		$args = array();
-		if ( $batch_id ) {
-			$args['batch'] = $batch_id;
-		}
-		if ( $status ) {
-			$args['status'] = $status;
-		}
-		if ( ! empty( $filters ) ) {
-			$args = array_merge( $args, $filters );
+	public static function get_queue_v2( $batch_id = false ) {
+	
+		if (! $batch_id ) {
+			return false;
 		}
 
 		$args = array(
-			'action' => 'queues?' . build_query( $args ),
+			'action' => 'queues?id=' . $batch_id,
 		);
 
 		return self::api_v2( $args, 'GET' );
@@ -293,20 +287,42 @@ class WebChangeDetector_API_V2 {
 	 * @param string $status Status seperatated by comma.
 	 * @return mixed|string
 	 */
-	public static function get_queues_v2( $batch_ids = array(), $status = false ) {
+	public static function get_queues_v2( $batch_ids = false, $status = false, $group_ids = false, $filters = array() ) {
 		$args = array();
 
-		if ( ! is_array( $batch_ids ) ) {
-			return false;
-		}
-		if ( $batch_ids ) {
-			$args['batches'] = implode( ',', $batch_ids );
-		}
-		if ( $status ) {
-			$args['status'] = $status;
-		}
+        // Batch ids
+        if($batch_ids){
+            if ( is_array( $batch_ids ) ) {
+                $args['batches'] = implode( ',', $batch_ids );
+            } else {
+                $args['batches'] = $batch_ids;
+            }
+        }
 
-		$args['action'] = 'queues';
+        // Group ids
+        if($group_ids){
+            if ( is_array( $group_ids ) ) {
+                $args['groups'] = implode( ',', $group_ids );
+            } else {
+                $args['groups'] = $group_ids;
+            }
+        }
+
+        // Status
+		if ( $status ) {
+            if ( is_array( $status ) ) {
+                $args['status'] = implode( ',', $status );
+            } else {
+                $args['status'] = $status;
+            }
+		}
+      
+        // Filters
+        if ( ! empty( $filters ) ) {
+            $args = array_merge( $args, $filters );
+        }
+
+		$args['action'] = 'queues?' . build_query( $args );
 
 		return self::api_v2( $args, 'GET' );
 	}
