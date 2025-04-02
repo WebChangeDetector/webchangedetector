@@ -231,7 +231,9 @@ class WebChangeDetector_Autoupdates {
 
 		// Make auto-updates only once every 24h. Otherwise we skip the auto updates.
 		$last_successfull_auto_updates = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
-		if ( $last_successfull_auto_updates && $last_successfull_auto_updates + 24 * HOUR_IN_SECONDS > time() ) {
+        // Only once in 12 hours are auto updates allowed. We shouldn't do every 24 hours as the successful time is at the end of the auto updates.
+        // And when we start the auto updates on the next day, 24 hours might not be over yet.
+		if ( $last_successfull_auto_updates && $last_successfull_auto_updates + 12 * HOUR_IN_SECONDS > time() ) {
 			// We already did auto-updates in the last 24h. Skipping this one now.
 			WebChangeDetector_Admin::error_log( 'Auto updates already done at ' . gmdate( 'Y-m-d H:i:s', get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES ) ) . '. We only do them once per day. Skipping auto updates.' );
 			$this->set_lock();
