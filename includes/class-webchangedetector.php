@@ -168,6 +168,11 @@ class WebChangeDetector {
 		$this->loader->add_action( 'wp_ajax_sync_urls', $plugin_admin, 'ajax_sync_urls' );
 		$this->loader->add_action( 'post_updated', $plugin_admin, 'update_post', 9999, 3 );
 
+		// Add hook for admin bar menu rendering.
+		$this->loader->add_action( 'admin_bar_menu', $plugin_admin, 'wcd_admin_bar_menu', 999 );
+		// Add hook for frontend admin bar script enqueueing.
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_admin, 'enqueue_admin_bar_scripts' );
+
 		// TODO Sync all pages and posts when there is a new page or post published.
 		// Maybe with action hook save_post and the function wcd_sync_post_after_save.
 	}
@@ -200,7 +205,10 @@ class WebChangeDetector {
 	 * @access   private
 	 */
 	private function define_public_hooks() {
-		new WebChangeDetector_Public();
+		$plugin_public = new WebChangeDetector_Public();
+
+		// Add hook for frontend styles (including admin bar slider styles).
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 	}
 	/**
 	 * Retrieve the version number of the plugin.

@@ -34,6 +34,18 @@ class WebChangeDetector_Public {
 		}
 	}
 
+	/**
+	 * Register the stylesheets for the public-facing side of the site.
+	 *
+	 * @since    3.1.8
+	 */
+	public function enqueue_styles() {
+		// Only enqueue if the admin bar is showing for a logged-in user who can manage options.
+		if ( is_admin_bar_showing() && is_user_logged_in() && current_user_can('manage_options') ) {
+			wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+		}
+	}
+
 	/** Verify the website if we do.
 	 *
 	 * @return void

@@ -1,0 +1,124 @@
+/**
+ * WebChangeDetector Public Styles
+ */
+
+/*---------------------------------------------------------------
+Admin Bar Menu Slider Styles
+---------------------------------------------------------------*/
+
+/* Ensure dropdown items with sliders don't collapse */
+#wp-admin-bar-wcd-manual-checks .ab-item,
+#wp-admin-bar-wcd-monitoring .ab-item {
+    height: auto;
+    line-height: 1.4;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* Style for nodes containing sliders */
+#wpadminbar .wcd-slider-node .ab-item {
+    padding: 5px 10px;
+    height: auto;
+    min-height: 0;
+    /* Override potential theme styles */
+    cursor: default !important;
+    /* Prevent hover effects on the container item */
+}
+
+/* Slider container */
+.wcd-admin-bar-slider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Push label and switch apart */
+    padding: 2px 0;
+    min-width: 150px;
+    /* Give it some width */
+    cursor: default;
+}
+
+.wcd-slider-label {
+    margin-right: 10px;
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* The switch - the box around the slider */
+#wpadminbar .wcd-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    /* Reduced width */
+    height: 24px;
+    /* Reduced height */
+    vertical-align: middle;
+    /* Align with label */
+    cursor: pointer;
+}
+
+/* Hide default HTML checkbox */
+#wpadminbar .wcd-switch input.wcd-admin-bar-toggle {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider track */
+#wpadminbar .wcd-switch .wcd-slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .2s;
+    transition: .2s;
+    border-radius: 24px;
+    /* Keep it round */
+}
+
+/* The slider knob */
+#wpadminbar .wcd-switch .wcd-slider-round:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    /* Smaller knob */
+    width: 18px;
+    /* Smaller knob */
+    left: 3px;
+    /* Adjust position */
+    bottom: 3px;
+    /* Adjust position */
+    background-color: white;
+    -webkit-transition: .2s;
+    transition: .2s;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Checked state styles */
+#wpadminbar .wcd-switch input.wcd-admin-bar-toggle:checked+.wcd-slider-round {
+    background-color: #2271b1;
+    /* WP Admin Blue */
+}
+
+#wpadminbar .wcd-switch input.wcd-admin-bar-toggle:focus+.wcd-slider-round {
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+#wpadminbar .wcd-switch input.wcd-admin-bar-toggle:checked+.wcd-slider-round:before {
+    -webkit-transform: translateX(20px);
+    /* Adjust translation distance */
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+}
+
+/* Separator styling (optional, WP might handle) */
+#wpadminbar .wcd-admin-bar-separator .ab-item {
+    height: 1px !important;
+    background-color: #eee;
+    margin: 5px 0;
+    padding: 0 !important;
+    cursor: default !important;
+}

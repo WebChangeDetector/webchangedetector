@@ -124,6 +124,8 @@ class WebChangeDetector_Admin {
 	 */
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
+		// Add hook for admin bar menu.
+		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right
 	}
 
 	/**
@@ -180,6 +182,39 @@ class WebChangeDetector_Admin {
 		);
 		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
 		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+
+		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
+		//       hooked to wp_enqueue_scripts for frontend loading.
+	}
+
+	/**
+	 * Register the JavaScript for the admin bar on the frontend.
+	 *
+	 * @since 3.1.8
+	 */
+	public function enqueue_admin_bar_scripts() {
+		// Enqueue admin bar specific script only when needed.
+		if ( is_admin_bar_showing() && ! is_admin() && current_user_can('manage_options') ) {
+			$admin_bar_script_handle = 'webchangedetector-admin-bar';
+			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true ); // Load in footer.
+
+			// Get Group UUIDs (ensure they are available here too)
+			$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
+			$manual_group_uuid = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? null; 
+			$monitoring_group_uuid = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? null;
+
+			// Localize script with necessary data.
+			wp_localize_script(
+				$admin_bar_script_handle,
+				'wcdAdminBarData',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'ajax-nonce' ), 
+					'manual_group_uuid' => $manual_group_uuid,
+					'monitoring_group_uuid' => $monitoring_group_uuid,
+				)
+			);
+		}
 	}
 
 	/** Website details.
@@ -473,19 +508,27 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_post_url() {
-		if ( ! isset( $_POST['nonce'] ) ) {
-			echo 'POST Params missing';
+		// Check for the standard WordPress AJAX nonce key.
+		if ( ! isset( $_POST['_ajax_nonce'] ) ) {
+			// Send JSON error for consistency
+			wp_send_json_error( 'Nonce missing' );
 			die();
 		}
 
-		// Verify nonce.
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
-			echo 'Nonce verify failed';
-			die( 'Busted!' );
+		// Verify nonce using the correct key.
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ), 'ajax-nonce' ) ) {
+			// Send JSON error
+			wp_send_json_error( 'Nonce verification failed.' );
+			die(); 
 		}
 
+		// TODO: Add checks here to ensure other required $_POST fields exist 
+		// (e.g., group_id, url_id, desktop-*, mobile-*) before calling post_urls.
 		$this->post_urls( $_POST );
-		die();
+
+		// post_urls echoes its own success/failure message (potentially HTML).
+
+		die(); 
 	}
 
 	/** Sync posts via ajax.
@@ -2982,6 +3025,312 @@ class WebChangeDetector_Admin {
 			error_log( $log );
 			// phpcs:enable
 		}
+	}
+
+	/** Add items to the admin bar.
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WP_Admin_Bar instance.
+	 * @return void
+	 */
+	public function wcd_admin_bar_menu( $wp_admin_bar ) {
+		self::error_log('[WCD Admin Bar] wcd_admin_bar_menu function called.'); // DEBUG
+
+		// Only show for admins on the frontend, and not on admin pages themselves.
+		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
+
+			// --- 1. Get Group UUIDs from Options --- 
+			// Assuming these constants/options exist. Adjust keys if necessary.
+			$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
+			$manual_group_uuid = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? null; // Use null coalescing
+			$monitoring_group_uuid = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? null; // Use null coalescing
+			
+			// Fallback to website_details if needed.
+			if ( ! $manual_group_uuid || ! $monitoring_group_uuid ) {
+				self::error_log('[WCD Admin Bar] Group UUIDs not in options, trying website_details fallback.');
+				if ( empty( $this->website_details ) ) {
+					$this->website_details = $this->get_website_details();
+				}
+				if ( ! empty( $this->website_details ) && is_array( $this->website_details ) ) {
+					$manual_group_uuid = $manual_group_uuid ?: ( $this->website_details['manual_group_uuid'] ?? null );
+					$monitoring_group_uuid = $monitoring_group_uuid ?: ( $this->website_details['monitoring_group_uuid'] ?? null );
+				}
+			}
+
+			self::error_log('[WCD Admin Bar] Conditions met. Adding menu items.'); // DEBUG
+			self::error_log('[WCD Admin Bar] Manual Group UUID: ' . ($manual_group_uuid ?? 'NULL')); // DEBUG
+			self::error_log('[WCD Admin Bar] Monitoring Group UUID: ' . ($monitoring_group_uuid ?? 'NULL')); // DEBUG
+
+			// Check if Group UUIDs were actually found.
+			if ( ! $manual_group_uuid || ! $monitoring_group_uuid ) {
+				self::error_log('[WCD Admin Bar] Missing one or both Group UUIDs after checking options and fallback. Aborting.'); // DEBUG
+				return; 
+			}
+
+			// --- Get Current URL Info (needed regardless of how ID is found) --- 
+			global $wp;
+			$current_url_full = home_url( add_query_arg( array(), $wp->request ) );
+			$post_id = is_singular() ? get_queried_object_id() : null;
+
+			// --- 2. Get WCD URL UUID (`url_id`) ---.
+			$wcd_url_id = null;
+			$found_via_api = false;
+			$manual_url_data = null; // Holds data for manual group url
+			$monitoring_url_data = null; // Holds data for monitoring group url
+
+			// Try post meta first if applicable
+            $meta_url_id = get_post_meta( $post_id, 'wcd_url_uuid', true );
+            if ( ! empty( $meta_url_id ) ) {
+                $wcd_url_id = $meta_url_id;
+                self::error_log('[WCD Admin Bar] Found url_id in post meta: ' . $wcd_url_id);
+            } else {
+                self::error_log('[WCD Admin Bar] url_id not found in post meta for post ' . $post_id);
+            }
+			
+			// If not found in meta, try API lookup using normalized URL.
+			if ( ! $wcd_url_id ) {
+				self::error_log('[WCD Admin Bar] url_id not found yet, trying API lookup.');
+				
+				// Prepare Search URL Base.
+				$url_no_protocol = preg_replace( '(^https?://)', '', $current_url_full );
+				$url_parts = explode( '?', $url_no_protocol );
+				$url_no_query = $url_parts[0];
+				$url_no_trailing_slash = rtrim( $url_no_query, '/' );
+				$site_url        = get_option('siteurl');
+				$site_uses_www   = ( strpos( preg_replace( '(^https?://)', '', $site_url ), 'www.' ) === 0 );
+				$current_has_www = ( strpos( $url_no_trailing_slash, 'www.' ) === 0 );
+				$search_url_base = $url_no_trailing_slash;
+				if ( $site_uses_www && ! $current_has_www ) {
+					$search_url_base = 'www.' . $search_url_base;
+				} elseif ( ! $site_uses_www && $current_has_www ) {
+					$search_url_base = substr( $search_url_base, 4 );
+				}
+				self::error_log('[WCD Admin Bar] Prepared Search URL Base for API lookup: ' . $search_url_base);
+
+				// Helper function remains the same.
+				$find_best_match = function( $api_results, $target_normalized_url, $site_uses_www_flag ) {
+					// ... (Implementation as before)
+					if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) return null;
+					$matches = [];
+					foreach ( $api_results['data'] as $item ) {
+						if ( empty( $item['url'] ) ) continue;
+						$api_url_no_protocol = preg_replace( '(^https?://)', '', $item['url'] );
+						$api_url_parts = explode( '?', $api_url_no_protocol );
+						$api_url_no_query = $api_url_parts[0];
+						$api_url_no_trailing_slash = rtrim( $api_url_no_query, '/' );
+						$api_has_www = ( strpos( $api_url_no_trailing_slash, 'www.' ) === 0 );
+						$normalized_api_url = $api_url_no_trailing_slash;
+						if ( $site_uses_www_flag && ! $api_has_www ) {
+							$normalized_api_url = 'www.' . $normalized_api_url;
+						} elseif ( ! $site_uses_www_flag && $api_has_www ) {
+							$normalized_api_url = substr( $normalized_api_url, 4 );
+						}
+						if ( $normalized_api_url === $target_normalized_url ) $matches[] = $item;
+					}
+					if ( empty( $matches ) ) return null;
+					if ( count( $matches ) === 1 ) return $matches[0];
+					$shortest_match = $matches[0];
+					foreach ( $matches as $match ) {
+						if ( strlen( $match['url'] ) < strlen( $shortest_match['url'] ) ) $shortest_match = $match;
+					}
+					return $shortest_match;
+				};
+
+				$url_filter = array( 'search' => $search_url_base );
+				
+				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
+				$manual_match = $find_best_match( $manual_group_urls, $search_url_base, $site_uses_www );
+
+				$monitoring_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
+				$monitoring_match = $find_best_match( $monitoring_group_urls, $search_url_base, $site_uses_www );
+
+				// Prioritize manual match, store ID and full data.
+				$matched_api_data = $manual_match ?: $monitoring_match; // Use manual if available, else monitoring
+				if ( $matched_api_data ) {
+					$wcd_url_id = $matched_api_data['id'] ?? null;
+					$found_via_api = true;
+					self::error_log('[WCD Admin Bar] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . ($manual_match ? 'Manual' : 'Monitoring') . ')');
+					
+					// Assign to correct variable based on which group it was found in.
+					if ($manual_match && $wcd_url_id === $manual_match['id']) {
+						$manual_url_data = $manual_match;
+					} elseif ($monitoring_match && $wcd_url_id === $monitoring_match['id']) {
+						$monitoring_url_data = $monitoring_match;
+					}
+					
+					// Save to post meta if applicable.
+					if ( $wcd_url_id && $post_id ) {
+						self::error_log('[WCD Admin Bar] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id);
+						update_post_meta( $post_id, 'wcd_url_uuid', $wcd_url_id );
+					}
+				}
+			} // End if (! $wcd_url_id)
+
+			// --- 3. Check if URL is Tracked ---.
+			if ( ! $wcd_url_id ) {
+				self::error_log('[WCD Admin Bar] url_id still not found after meta and API checks. URL not tracked.');
+				$wp_admin_bar->add_node(
+					array(
+						'parent' => 'wcd-admin-bar',
+						'id'     => 'wcd-not-tracked',
+						'title'  => 'URL not tracked by WCD',
+						'href'   => false,
+					)
+				);
+				return; 
+			}
+
+			// --- 4. Get Desktop/Mobile Status ---.
+			if ( ! $found_via_api ) {
+				// If ID was from post meta, we need to fetch current status from API.
+				self::error_log('[WCD Admin Bar] Fetching status using url_id from post meta: ' . $wcd_url_id);
+				$url_id_filter = ['url_ids' => [$wcd_url_id], 'limit' => 1]; 
+				$manual_check = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
+				$manual_url_data = $manual_check['data'][0] ?? null;
+				$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
+				$monitoring_url_data = $monitoring_check['data'][0] ?? null;
+			} else {
+				// If ID was from API search, we already have data for one group.
+				// Check if we need to fetch data for the *other* group.
+				if ( $manual_url_data && ! $monitoring_url_data ) { // Found in manual, check monitoring
+					$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, ['url_id' => $wcd_url_id, 'limit' => 1] );
+					$monitoring_url_data = $monitoring_check['data'][0] ?? null;
+					self::error_log('[WCD Admin Bar] API search found manual, checked monitoring status.');
+				} elseif ( $monitoring_url_data && ! $manual_url_data ) { // Found in monitoring, check manual
+					$manual_check = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, ['url_id' => $wcd_url_id, 'limit' => 1] );
+					$manual_url_data = $manual_check['data'][0] ?? null;
+					self::error_log('[WCD Admin Bar] API search found monitoring, checked manual status.');
+				}
+			}
+
+			// Log the final data found.
+			self::error_log('[WCD Admin Bar] Final Manual Data: ' . ($manual_url_data ? json_encode($manual_url_data) : 'NULL'));
+			self::error_log('[WCD Admin Bar] Final Monitoring Data: ' . ($monitoring_url_data ? json_encode($monitoring_url_data) : 'NULL'));
+
+			// --- 5. Generate Admin Bar Nodes ---.
+			// Add top level node.
+			$wp_admin_bar->add_node(
+				array(
+					'id'    => 'wcd-admin-bar',
+					'title' => 'WCD',
+					'href'  => admin_url( 'admin.php?page=webchangedetector' ), 
+				)
+			);
+
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-admin-bar',
+					'id'     => 'wcd-dashboard',
+					'title'  => 'WCD Dashboard',
+					'href'   => admin_url( 'admin.php?page=webchangedetector' ),
+				)
+			);
+			
+
+			// Manual Checks Section.
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-admin-bar',
+					'id'     => 'wcd-manual-checks',
+					'title'  => 'Manual / Auto Update Checks',
+					'href'   => false,
+				)
+			);
+			// Pass $current_url_full to generate_slider_html for the data-url attribute (if needed by JS later, though maybe not).
+			$manual_desktop_enabled = ! empty( $manual_url_data['desktop'] );
+			$manual_mobile_enabled = ! empty( $manual_url_data['mobile'] );
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-manual-checks',
+					'id'     => 'wcd-manual-desktop',
+					'title'  => $this->generate_slider_html( 'manual', 'desktop', $manual_desktop_enabled, $current_url_full, $wcd_url_id, $manual_group_uuid ),
+					'href'   => false,
+					'meta'   => array( 'class' => 'wcd-slider-node' ),
+				)
+			);
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-manual-checks',
+					'id'     => 'wcd-manual-mobile',
+					'title'  => $this->generate_slider_html( 'manual', 'mobile', $manual_mobile_enabled, $current_url_full, $wcd_url_id, $manual_group_uuid ),
+					'href'   => false,
+					'meta'   => array( 'class' => 'wcd-slider-node' ),
+				)
+			);
+
+			 // Monitoring Section.
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-admin-bar',
+					'id'     => 'wcd-monitoring',
+					'title'  => 'Monitoring',
+					'href'   => false,
+				)
+			);
+			$monitoring_desktop_enabled = ! empty( $monitoring_url_data['desktop'] );
+			$monitoring_mobile_enabled = ! empty( $monitoring_url_data['mobile'] );
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-monitoring',
+					'id'     => 'wcd-monitoring-desktop',
+					'title'  => $this->generate_slider_html( 'monitoring', 'desktop', $monitoring_desktop_enabled, $current_url_full, $wcd_url_id, $monitoring_group_uuid ),
+					'href'   => false,
+					'meta'   => array( 'class' => 'wcd-slider-node' ),
+				)
+			);
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'wcd-monitoring',
+					'id'     => 'wcd-monitoring-mobile',
+					'title'  => $this->generate_slider_html( 'monitoring', 'mobile', $monitoring_mobile_enabled, $current_url_full, $wcd_url_id, $monitoring_group_uuid ),
+					'href'   => false,
+					'meta'   => array( 'class' => 'wcd-slider-node' ),
+				)
+			);
+		}
+	}
+
+	/** Generate HTML for a single slider.
+	 *
+	 * @param string      $type 'monitoring' or 'manual'.
+	 * @param string      $device 'desktop' or 'mobile'.
+	 * @param bool        $is_enabled Current state.
+	 * @param string      $url Current page URL (no protocol).
+	 * @param string|null $url_id WCD URL ID if known.
+	 * @param string|null $group_id WCD Group ID.
+	 * @return string HTML for the slider.
+	 */
+	private function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
+		$checked = $is_enabled ? 'checked' : '';
+		$label   = ucfirst( $device );
+		$id      = sprintf( 'wcd-slider-%s-%s', $type, $device );
+
+		// Data attributes for JS.
+		$data_attrs = sprintf(
+			'data-type="%s" data-device="%s" data-url="%s" data-url-id="%s" data-group-id="%s"',
+			esc_attr( $type ),
+			esc_attr( $device ),
+			esc_attr( $url ),
+			esc_attr( $url_id ?? '' ),
+			esc_attr( $group_id ?? '' )
+		);
+
+		// Simple switch HTML structure.
+		$html = sprintf(
+			'<div class="wcd-admin-bar-slider">' .
+			'<label for="%s" class="wcd-slider-label">%s:</label>' .
+			'<label class="wcd-switch">' .
+			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' .
+			'<span class="wcd-slider-round"></span>' .
+			'</label>' .
+			'</div>',
+			esc_attr( $id ),
+			esc_html( $label ),
+			esc_attr( $id ),
+			$checked,
+			$data_attrs
+		);
+
+		return $html;
 	}
 }
 
