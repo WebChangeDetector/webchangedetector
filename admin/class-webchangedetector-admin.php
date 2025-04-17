@@ -3082,92 +3082,84 @@ class WebChangeDetector_Admin {
 			$monitoring_url_data = null; // Holds data for monitoring group url
 
 			// Try post meta first if applicable
-            $meta_url_id = get_post_meta( $post_id, 'wcd_url_uuid', true );
-            if ( ! empty( $meta_url_id ) ) {
-                $wcd_url_id = $meta_url_id;
-                self::error_log('[WCD Admin Bar] Found url_id in post meta: ' . $wcd_url_id);
-            } else {
-                self::error_log('[WCD Admin Bar] url_id not found in post meta for post ' . $post_id);
-            }
+            $wcd_url_id = get_post_meta( $post_id, 'wcd_url_uuid', true )
+
 			// If not found in meta, try API lookup using normalized URL.
 			if ( ! $wcd_url_id ) {
 				self::error_log('[WCD Admin Bar] url_id not found yet, trying API lookup.');
-
-                // lets try to find the url_id by searching for the url in the groups.
-                $url_filter = array( 'search' => $current_url_full );
-				// Prepare Search URL Base.
-				$url_no_protocol = preg_replace( '(^https?://)', '', $current_url_full );
-				$url_parts = explode( '?', $url_no_protocol );
-				$url_no_query = $url_parts[0];
-				$url_no_trailing_slash = rtrim( $url_no_query, '/' );
-				$site_url        = get_option('siteurl');
-				$site_uses_www   = ( strpos( preg_replace( '(^https?://)', '', $site_url ), 'www.' ) === 0 );
-				$current_has_www = ( strpos( $url_no_trailing_slash, 'www.' ) === 0 );
-				$search_url_base = $url_no_trailing_slash;
-				if ( $site_uses_www && ! $current_has_www ) {
-					$search_url_base = 'www.' . $search_url_base;
-				} elseif ( ! $site_uses_www && $current_has_www ) {
-					$search_url_base = substr( $search_url_base, 4 );
-				}
-				self::error_log('[WCD Admin Bar] Prepared Search URL Base for API lookup: ' . $search_url_base);
-
-				// Helper function remains the same.
-				$find_best_match = function( $api_results, $target_normalized_url, $site_uses_www_flag ) {
-					// ... (Implementation as before)
-					if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) return null;
-					$matches = [];
-					foreach ( $api_results['data'] as $item ) {
-						if ( empty( $item['url'] ) ) continue;
-						$api_url_no_protocol = preg_replace( '(^https?://)', '', $item['url'] );
-						$api_url_parts = explode( '?', $api_url_no_protocol );
-						$api_url_no_query = $api_url_parts[0];
-						$api_url_no_trailing_slash = rtrim( $api_url_no_query, '/' );
-						$api_has_www = ( strpos( $api_url_no_trailing_slash, 'www.' ) === 0 );
-						$normalized_api_url = $api_url_no_trailing_slash;
-						if ( $site_uses_www_flag && ! $api_has_www ) {
-							$normalized_api_url = 'www.' . $normalized_api_url;
-						} elseif ( ! $site_uses_www_flag && $api_has_www ) {
-							$normalized_api_url = substr( $normalized_api_url, 4 );
-						}
-						if ( $normalized_api_url === $target_normalized_url ) $matches[] = $item;
-					}
-					if ( empty( $matches ) ) return null;
-					if ( count( $matches ) === 1 ) return $matches[0];
-					$shortest_match = $matches[0];
-					foreach ( $matches as $match ) {
-						if ( strlen( $match['url'] ) < strlen( $shortest_match['url'] ) ) $shortest_match = $match;
-					}
-					return $shortest_match;
-				};
-
-				$url_filter = array( 'search' => $search_url_base );
 				
-				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
-				$manual_match = $find_best_match( $manual_group_urls, $search_url_base, $site_uses_www );
-
-				$monitoring_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
-				$monitoring_match = $find_best_match( $monitoring_group_urls, $search_url_base, $site_uses_www );
-
-				// Prioritize manual match, store ID and full data.
-				$matched_api_data = $manual_match ?: $monitoring_match; // Use manual if available, else monitoring
-				if ( $matched_api_data ) {
-					$wcd_url_id = $matched_api_data['id'] ?? null;
-					$found_via_api = true;
-					self::error_log('[WCD Admin Bar] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . ($manual_match ? 'Manual' : 'Monitoring') . ')');
-					
-					// Assign to correct variable based on which group it was found in.
-					if ($manual_match && $wcd_url_id === $manual_match['id']) {
-						$manual_url_data = $manual_match;
-					} elseif ($monitoring_match && $wcd_url_id === $monitoring_match['id']) {
-						$monitoring_url_data = $monitoring_match;
-					}
-					
-					// Save to post meta if applicable.
-					if ( $wcd_url_id && $post_id ) {
-						self::error_log('[WCD Admin Bar] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id);
-						update_post_meta( $post_id, 'wcd_url_uuid', $wcd_url_id );
-					}
+				// Prepare Search URL Base using wp_parse_url.
+				$parsed_url = wp_parse_url( $current_url_full );
+				if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
+					self::error_log('[WCD Admin Bar] Failed to parse current URL: ' . $current_url_full);
+					$search_url_base = null; // Could not parse
+				} else {
+					$host = $parsed_url['host'];
+					// Get path and remove trailing slash (if path exists)
+					$path = isset($parsed_url['path']) ? rtrim($parsed_url['path'], '/') : ''; 
+					// Combine host and path for the base URL.
+					$search_url_base = $host . $path;
 				}
+
+				if( empty($search_url_base) ) { 
+					self::error_log('[WCD Admin Bar] Could not determine search_url_base. Aborting API lookup.');
+				} else {
+					self::error_log('[WCD Admin Bar] Prepared Search URL Base for API lookup: ' . $search_url_base);
+
+					// Simple helper function: checks for exact url match.
+					$find_exact_match = function( $api_results, $target_normalized_url ) {
+						if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) return null;
+						
+						foreach ( $api_results['data'] as $item ) {
+							if ( empty( $item['url'] ) ) continue;
+							
+							// Normalize API URL: remove protocol, query, trailing slash.
+							$api_url_no_protocol = preg_replace( '(^https?://)', '', $item['url'] );
+							$api_url_parts = explode( '?', $api_url_no_protocol );
+							$api_url_no_query = $api_url_parts[0];
+							$normalized_api_url = rtrim( $api_url_no_query, '/' );
+
+							// Return the first exact match found.
+							if ( $normalized_api_url === $target_normalized_url ) {
+								return $item;
+							}
+						}
+						// No exact match found.
+						return null;
+					};
+
+					$url_filter = array( 'search' => $search_url_base ); // Use the base URL for search
+					
+					// Search manual group for exact match.
+					$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
+					$manual_match = $find_exact_match( $manual_group_urls, $search_url_base );
+
+					// Search monitoring group for exact match.
+					$monitoring_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
+					$monitoring_match = $find_exact_match( $monitoring_group_urls, $search_url_base );
+
+					// Prioritize manual match, store ID and full data.
+					$matched_api_data = $manual_match ?: $monitoring_match; // Use manual if available, else monitoring
+					if ( $matched_api_data ) {
+						$wcd_url_id = $matched_api_data['id'] ?? null;
+						$found_via_api = true;
+						self::error_log('[WCD Admin Bar] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . ($manual_match ? 'Manual' : 'Monitoring') . ')');
+						
+						// Assign to correct variable based on which group it was found in.
+						if ($manual_match && $wcd_url_id === $manual_match['id']) {
+							$manual_url_data = $manual_match;
+						} 
+                        if ($monitoring_match && $wcd_url_id === $monitoring_match['id']) {
+							$monitoring_url_data = $monitoring_match;
+						}
+						
+						// Save to post meta if applicable.
+						if ( $wcd_url_id && $post_id ) {
+							self::error_log('[WCD Admin Bar] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id);
+							update_post_meta( $post_id, 'wcd_url_uuid', $wcd_url_id );
+						}
+					}
+				} // End else block for empty($search_url_base)
 			} // End if (! $wcd_url_id)
 
 			// --- 3. Check if URL is Tracked ---.
@@ -3197,7 +3189,7 @@ class WebChangeDetector_Admin {
 				// If ID was from API search, we already have data for one group.
 				// Check if we need to fetch data for the *other* group.
 				if ( $manual_url_data && ! $monitoring_url_data ) { // Found in manual, check monitoring
-					$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, ['url_id' => $wcd_url_id, 'limit' => 1] );
+					$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, ['url_ids' => $wcd_url_id, 'limit' => 1] );
 					$monitoring_url_data = $monitoring_check['data'][0] ?? null;
 					self::error_log('[WCD Admin Bar] API search found manual, checked monitoring status.');
 				} elseif ( $monitoring_url_data && ! $manual_url_data ) { // Found in monitoring, check manual
