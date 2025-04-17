@@ -37,6 +37,7 @@ class WebChangeDetector_Admin {
 		'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
+        'save_admin_bar_setting',
 	);
 
 	const VALID_SC_TYPES = array(
@@ -193,6 +194,10 @@ class WebChangeDetector_Admin {
 	 * @since 3.1.8
 	 */
 	public function enqueue_admin_bar_scripts() {
+		// Check if admin bar menu is disabled in settings.
+		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
+			return;
+		}
 		// Enqueue admin bar specific script only when needed.
 		if ( is_admin_bar_showing() && ! is_admin() && current_user_can('manage_options') ) {
 			$admin_bar_script_handle = 'webchangedetector-admin-bar';
@@ -3033,7 +3038,10 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function wcd_admin_bar_menu( $wp_admin_bar ) {
-		self::error_log('[WCD Admin Bar] wcd_admin_bar_menu function called.'); // DEBUG
+		// Check if admin bar menu is disabled in settings.
+		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
+			return;
+		}
 
 		// Only show for admins on the frontend, and not on admin pages themselves.
 		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
@@ -3055,10 +3063,6 @@ class WebChangeDetector_Admin {
 					$monitoring_group_uuid = $monitoring_group_uuid ?: ( $this->website_details['monitoring_group_uuid'] ?? null );
 				}
 			}
-
-			self::error_log('[WCD Admin Bar] Conditions met. Adding menu items.'); // DEBUG
-			self::error_log('[WCD Admin Bar] Manual Group UUID: ' . ($manual_group_uuid ?? 'NULL')); // DEBUG
-			self::error_log('[WCD Admin Bar] Monitoring Group UUID: ' . ($monitoring_group_uuid ?? 'NULL')); // DEBUG
 
 			// Check if Group UUIDs were actually found.
 			if ( ! $manual_group_uuid || ! $monitoring_group_uuid ) {
@@ -3085,11 +3089,12 @@ class WebChangeDetector_Admin {
             } else {
                 self::error_log('[WCD Admin Bar] url_id not found in post meta for post ' . $post_id);
             }
-			
 			// If not found in meta, try API lookup using normalized URL.
 			if ( ! $wcd_url_id ) {
 				self::error_log('[WCD Admin Bar] url_id not found yet, trying API lookup.');
-				
+
+                // lets try to find the url_id by searching for the url in the groups.
+                $url_filter = array( 'search' => $current_url_full );
 				// Prepare Search URL Base.
 				$url_no_protocol = preg_replace( '(^https?://)', '', $current_url_full );
 				$url_parts = explode( '?', $url_no_protocol );

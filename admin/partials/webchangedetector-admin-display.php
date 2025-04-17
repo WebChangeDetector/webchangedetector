@@ -19,6 +19,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 * @return bool|void
 	 */
 	function wcd_webchangedetector_init() {
+		global $wpdb;
+		$wcd = new WebChangeDetector_Admin();
+		$wcd->website_details = $wcd->get_website_details();
+		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+
+		
 
 		// Start view.
 		echo '<div class="wrap">';
@@ -317,6 +323,16 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					update_option( WCD_OPTION_UPDATE_STEP_KEY, ( $postdata['step'] ) );
 				}
 				break;
+
+
+                // --- Handle Settings Save ---.
+		    case 'save_admin_bar_setting':
+				$disable_admin_bar = isset( $_POST['wcd_disable_admin_bar_menu'] ) ? 1 : 0;
+				update_option( 'wcd_disable_admin_bar_menu', $disable_admin_bar );
+				// Add an admin notice for success.
+                echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>Admin bar setting saved.</p></div>';
+				
+                break;
 		}
 
 		// Get updated account and website data.
@@ -833,151 +849,168 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							'top left-plus-800'
 						);
 						?>
-						<h2>Show URLs from post types</h2>
-						<p>Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
-						<?php
-						$wizard_text = '<h2>Questions?</h2><p>We hope this wizard was helpful to understand how WebChange Detector works.</p><p>
-                                    If you have any questions, please write us an email to <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a> or create a ticket 
-                                    at our plugin site at <a href="https://wordpress.org/plugins/webchangedetector" target="_blank">wordpress.org</a>.</p>';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_finished',
-							false,
-							false,
-							false,
-							' left-plus-400'
-						);
-
-						// Add post types.
-						$post_types = get_post_types( array( 'public' => true ), 'objects' );
-
-						$available_post_types = array();
-						foreach ( $post_types as $post_type ) {
-
-							$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
-
-							$show_type = false;
-							foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-								if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
-									$show_type = true;
-								}
-							}
-							if ( $wp_post_type_slug && ! $show_type ) {
-								$available_post_types[] = $post_type;
-							}
-						}
-						if ( ! empty( $available_post_types ) ) {
-							?>
-							<form method="post">
-								<input type="hidden" name="wcd_action" value="add_post_type">
-								<?php wp_nonce_field( 'add_post_type' ); ?>
-								<select name="post_type">
+						<h2>URL Synchronization Settings</h2>
+						<table class="form-table">
+							<tr valign="top">
+								<th scope="row">
+									<label>Show Post Types</label>
+								</th>
+								<td>
+									<p class="description" style="margin-bottom: 10px;">Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
 									<?php
-									foreach ( $available_post_types as $available_post_type ) {
-										$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
-										$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
-										$add_post_type          = wp_json_encode(
-											array(
-												array(
-													'url_type_slug'  => 'types',
-													'url_type_name'  => 'Post Types',
-													'post_type_slug' => $current_post_type_slug,
-													'post_type_name' => $current_post_type_name,
-												),
-											)
-										);
+									// Add post types form
+									$post_types = get_post_types( array( 'public' => true ), 'objects' );
+									$available_post_types = array();
+									foreach ( $post_types as $post_type ) {
+										$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
+										$show_type = false;
+										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists
+											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+												if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
+													$show_type = true;
+													break; // Found, no need to check further for this post type
+												}
+											}
+										}
+										if ( $wp_post_type_slug && ! $show_type ) {
+											$available_post_types[] = $post_type;
+										}
+									}
+									if ( ! empty( $available_post_types ) ) {
 										?>
-										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
-									<?php } ?>
-								</select>
-								<input type="submit" class="button" value="Show">
-							</form>
-							<?php
-
-						} else {
-							?>
-							<p>No more post types found</p>
-							<?php
-						}
-
-						$wizard_text = '<h2>Show more URLs</h2>If you are missing URLs to select for the checks, you can show them here.
-                                        They will appear in the URL settings in the \'Manual Checks\' and the \' Monitoring\' tab.';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_add_post_type',
-							'wizard_settings_account_details',
-							false,
-							false,
-							'left top-minus-100 left-plus-400'
-						);
-				?>
+										<form method="post" style="display: inline-block; margin-right: 10px;">
+											<input type="hidden" name="wcd_action" value="add_post_type">
+											<?php wp_nonce_field( 'add_post_type' ); ?>
+											<select name="post_type">
+												<?php
+												foreach ( $available_post_types as $available_post_type ) {
+													$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
+													$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
+													$add_post_type = wp_json_encode(
+														array(
+															array(
+																'url_type_slug'  => 'types',
+																'url_type_name'  => 'Post Types',
+																'post_type_slug' => $current_post_type_slug,
+																'post_type_name' => $current_post_type_name,
+															),
+														)
+													);
+													?>
+													<option value='<?php echo esc_attr( $add_post_type ); ?>'><?php echo esc_html( $available_post_type->label ); ?></option>
+												<?php } ?>
+											</select>
+											<?php submit_button( 'Show Post Type', 'secondary', 'submit', false ); ?>
+										</form>
+										<?php
+									} else {
+										?>
+										<p><i>All available post types are already shown.</i></p>
+										<?php
+									}
+									?>
+								</td>
+							</tr>
+							<tr valign="top">
+								<th scope="row">
+									<label>Show Taxonomies</label>
+								</th>
+								<td>
+									<p class="description" style="margin-bottom: 10px;">Missing taxonomies like categories or tags? Select them here and they appear in the URL list.</p>
+									<?php
+									// Add Taxonomies form
+									$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
+									$available_taxonomies = array(); // Reset for taxonomies
+									foreach ( $taxonomies as $taxonomy ) {
+										$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
+										$show_taxonomy = false;
+										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists
+											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
+												if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
+													$show_taxonomy = true;
+													break; // Found
+												}
+											}
+										}
+										if ( $wp_taxonomy_slug && ! $show_taxonomy ) {
+											$available_taxonomies[] = $taxonomy;
+										}
+									}
+									if ( ! empty( $available_taxonomies ) ) {
+										?>
+										<form method="post" style="display: inline-block; margin-right: 10px;">
+											<input type="hidden" name="wcd_action" value="add_post_type">
+											<?php wp_nonce_field( 'add_post_type' ); ?>
+											<select name="post_type">
+												<?php
+												foreach ( $available_taxonomies as $available_taxonomy ) {
+													$current_taxonomy_slug = $wcd->get_taxonomy_slug( $available_taxonomy ); // Use correct function
+													$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
+													$add_post_type = wp_json_encode(
+														array(
+															array(
+																'url_type_slug' => 'taxonomies',
+																'url_type_name' => 'Taxonomies',
+																'post_type_slug' => $current_taxonomy_slug,
+																'post_type_name' => $current_taxonomy_name,
+															),
+														)
+													);
+													?>
+													<option value='<?php echo esc_attr( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
+												<?php } ?>
+											</select>
+											<?php submit_button( 'Show Taxonomy', 'secondary', 'submit', false ); ?>
+										</form>
+										<?php
+									} else {
+										?>
+										<p><i>All available taxonomies are already shown.</i></p>
+										<?php
+									}
+									?>
+								</td>
+							</tr>
+							<tr valign="top">
+								<th scope="row">URL Sync Status</th>
+								<td>
+									<p class="description" style="margin-bottom: 10px;">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
+									This works automatically in the background. When you add a webpage, you can start the sync manually.</p>
+									<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
+											<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
+										</span>
+									</p>
+									<button class="button button-secondary" onclick="sync_urls(1); return false;">Sync URLs Manually</button>
+								</td>
+							</tr>
+						</table>
 					</div>
+
+					<hr />
 
 					<div class="box-plain no-border">
-						<h2>Show URLs from taxonomies</h2>
-						<p>Missing taxonomies like categories or tags? Select them here and they appear in the URL list to select for the checks.</p>
-						<?php
-
-						// Add Taxonomies.
-						$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-						foreach ( $taxonomies as $taxonomy ) {
-							$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
-							$show_taxonomy    = false;
-							foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-								if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
-									$show_taxonomy = true;
-								}
-							}
-							if ( $wp_taxonomy_slug && ! $show_taxonomy ) {
-								$available_taxonomies[] = $taxonomy;
-							}
-						}
-						if ( ! empty( $available_taxonomies ) ) {
-							?>
-							<form method="post">
-								<input type="hidden" name="wcd_action" value="add_post_type">
-								<?php wp_nonce_field( 'add_post_type' ); ?>
-								<select name="post_type">
-									<?php
-									foreach ( $available_taxonomies as $available_taxonomy ) {
-										$current_taxonomy_slug = $wcd->get_post_type_slug( $available_taxonomy );
-										$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
-										$add_post_type         = wp_json_encode(
-											array(
-												array(
-													'url_type_slug' => 'taxonomies',
-													'url_type_name' => 'Taxonomies',
-													'post_type_slug' => $current_taxonomy_slug,
-													'post_type_name' => $current_taxonomy_name,
-												),
-											)
-										);
-										?>
-										<option value='<?php echo esc_html( $add_post_type ); ?>'><?php echo esc_html( $available_taxonomy->label ); ?></option>
-									<?php } ?>
-								</select>
-								<input type="submit" class="button" value="Show">
-							</form>
-							<?php
-						} else {
-							?>
-							<p>No more taxonomies found</p>
-						<?php } ?>
+						<h2>Admin Bar Menu</h2>
+						<form method="post">
+                        <?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
+                        <input type="hidden" name="wcd_action" value="save_admin_bar_setting">
+							<table class="form-table">
+								<tr valign="top">
+									<th scope="row">Disable Admin Bar Menu</th>
+									<td>
+										<label>
+                                            
+											<input type="checkbox" name="wcd_disable_admin_bar_menu" value="1" <?php checked( get_option( 'wcd_disable_admin_bar_menu', 0 ), 1 ); ?> />
+											Disable WCD Menu in Admin Bar
+										</label>
+										<p class="description">Check this box to hide the WCD menu item in the frontend admin bar.</p>
+									</td>
+								</tr>
+							</table>
+							<?php submit_button('Save Admin Bar Setting'); ?>
+						</form>
 					</div>
 
-					<div class="box-plain no-border">
-						<h2>URL sync status</h2>
-						<p>To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
-							This works automatically in the background.<br>
-							When you add a webpage, you can start the sync manually to be able to activate them for checks.</p>
-						<p> Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
-								<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
-							</span>
-						</p>
-						<button class="button button-secondary" onclick="sync_urls(1)">Sync URLs</button>
-					</div>
-
-
+                    <hr>
 					<?php
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
 						echo '<div class="error notice">
@@ -992,6 +1025,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</div>
 						<?php
 					}
+                    echo '<hr>';
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 					$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector accout here.
                                                 Please don\'t share your API token with anyone. </p><p>
@@ -1049,5 +1083,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
+
+		// Add inline JavaScript for sync_urls function
+		echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
 	} // wcd_webchangedetector_init.
 } // function_exists.
