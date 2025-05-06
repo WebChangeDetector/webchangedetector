@@ -1,119 +1,257 @@
 (function ($) {
     'use strict';
 
-    $(function () {
-        // Ensure admin bar data is available.
+    $(function () { // Alias for jQuery(document).ready(function($) { ... });
+        // Ensure admin bar data is available
         if (typeof wcdAdminBarData === 'undefined') {
-            console.error('WCD Admin Bar Error: Localized data not found.');
             return;
         }
 
-        // Event listener for the toggle switches.
-        $('#wp-admin-bar-wcd-admin-bar').on('change', 'input.wcd-admin-bar-toggle', function (e) {
-            console.log('[WCD Admin Bar] Slider change event triggered!'); // DEBUG: Check if handler fires
-            e.preventDefault(); // Prevent default checkbox behavior just in case.
+        const wcdAdminBarNode = $('#wp-admin-bar-wcd-admin-bar');
+        const placeholderNode = $('#wp-admin-bar-wcd-status-placeholder'); // Target for replacement
+        let wcdAdminBarLoaded = false; // Flag to prevent multiple loads
 
-            var $checkbox = $(this);
-            var type = $checkbox.data('type'); // 'manual' or 'monitoring'
-            var device = $checkbox.data('device'); // 'desktop' or 'mobile'
-            var urlId = $checkbox.data('url-id');
-            var groupId = $checkbox.data('group-id');
-            var isChecked = $checkbox.is(':checked');
+        // Add logging to check if the elements are found
+        if (!wcdAdminBarNode.length) {
+            console.error('WCD Admin Bar Error: Top-level node #wp-admin-bar-wcd-admin-bar not found.');
+            // Attempt alternative selector if needed, e.g. $('#wp-admin-bar-wcd-admin-bar-default')?
+        } else {
 
-            console.log('Toggle:', { type: type, device: device, urlId: urlId, groupId: groupId, isChecked: isChecked });
+        }
+        if (!placeholderNode.length) {
+            // This might be expected if the user isn't an admin or menu is disabled,
+            // but if wcdAdminBarData *was* found, this node *should* exist initially.
+            console.warn('WCD Admin Bar Warning: Placeholder node #wcd-status-placeholder not found.');
+        }
 
-            // Determine which group ID and URL ID to use based on the type.
-            var targetUrlId = null;
-            var targetGroupId = null;
+        // --- Function to generate slider HTML (based on PHP function) ---
+        // We replicate the PHP function's output here to avoid another AJAX call
+        function generateSliderHtml(type, device, isEnabled, url, urlId, groupId) {
+            const checked = isEnabled ? 'checked' : '';
+            // Use localized labels passed from PHP
+            const label = (device === 'desktop') ? wcdAdminBarData.desktop_label : wcdAdminBarData.mobile_label;
+            const uniqueSuffix = (urlId || Math.random().toString(36).substring(7)); // Ensure unique ID
+            const id = `wcd-slider-${type}-${device}-${uniqueSuffix.replace(/[^a-zA-Z0-9-_]/g, '-')}`; // Sanitize ID
 
-            if (type === 'manual') {
-                targetGroupId = wcdAdminBarData.manual_group_uuid;
-                // Need to potentially find the URL ID specific to this group if not already on the element.
-                // For now, we assume the ID passed in data-url-id is correct for the respective group.
-                targetUrlId = urlId;
-            } else if (type === 'monitoring') {
-                targetGroupId = wcdAdminBarData.monitoring_group_uuid;
-                // As above, assume the passed urlId is correct for this group.
-                targetUrlId = urlId;
+            // Escape attributes for security (basic JS escaping)
+            const escAttr = (str) => {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
             }
 
-            if (!targetUrlId || !targetGroupId) {
-                console.error('WCD Admin Bar Error: Missing URL ID or Group ID for AJAX call.', { urlId: targetUrlId, groupId: targetGroupId });
-                // Optionally provide user feedback here.
-                // Revert checkbox state?
-                // $checkbox.prop('checked', !isChecked);
-                return;
+            const dataAttrs = `data-type="${escAttr(type)}" data-device="${escAttr(device)}" data-url="${escAttr(url)}" data-url-id="${escAttr(urlId || '')}" data-group-id="${escAttr(groupId || '')}"`;
+
+            return `
+                <div class="wcd-admin-bar-slider">
+                    <label for="${escAttr(id)}" class="wcd-slider-label">${escAttr(label)}:</label>
+                    <label class="wcd-switch">
+                        <input type="checkbox" id="${escAttr(id)}" class="wcd-admin-bar-toggle" ${checked} ${dataAttrs}> 
+                        <span class="wcd-slider-round"></span>
+                    </label>
+                </div>
+            `;
+        }
+
+        // --- Function to build the admin bar menu content ---
+        function buildAdminBarMenu(data) {
+            let menuItemsHtml = ''; // Build list items <li>...</li>
+
+            if (!data.tracked) {
+                menuItemsHtml = `
+                    <li id="wcd-status-not-tracked">
+                        <div class="ab-item ab-empty-item" aria-hidden="true">${wcdAdminBarData.not_tracked_text}</div>
+                    </li>
+                `;
+            } else {
+
+                const manualDesktopHtml = generateSliderHtml('manual', 'desktop', data.manual_status.desktop, data.current_url, data.wcd_url_id, data.manual_group_uuid);
+                const manualMobileHtml = generateSliderHtml('manual', 'mobile', data.manual_status.mobile, data.current_url, data.wcd_url_id, data.manual_group_uuid);
+                const monitoringDesktopHtml = generateSliderHtml('monitoring', 'desktop', data.monitoring_status.desktop, data.current_url, data.wcd_url_id, data.monitoring_group_uuid);
+                const monitoringMobileHtml = generateSliderHtml('monitoring', 'mobile', data.monitoring_status.mobile, data.current_url, data.wcd_url_id, data.monitoring_group_uuid);
+
+                // Structure needs to be <li> elements for the submenu
+                menuItemsHtml = `<hr>
+                     <li id="wp-admin-bar-wcd-manual-checks-title" class="wcd-admin-bar-subitem wcd-admin-bar-title">
+                         <div class="ab-item ab-empty-item" aria-hidden="true">${wcdAdminBarData.manual_label}</div>
+                     </li>
+                     <li id="wp-admin-bar-wcd-manual-desktop" class="wcd-admin-bar-subitem wcd-slider-node">
+                         <div class="ab-item ab-empty-item" aria-hidden="true">${manualDesktopHtml}</div>
+                     </li>
+                      <li id="wp-admin-bar-wcd-manual-mobile" class="wcd-admin-bar-subitem wcd-slider-node">
+                         <div class="ab-item ab-empty-item" aria-hidden="true">${manualMobileHtml}</div>
+                     </li>
+                     <hr>
+                      <li id="wp-admin-bar-wcd-monitoring-title" class="wcd-admin-bar-subitem wcd-admin-bar-title">
+                          <div class="ab-item ab-empty-item" aria-hidden="true">${wcdAdminBarData.monitoring_label}</div>
+                      </li>
+                      <li id="wp-admin-bar-wcd-monitoring-desktop" class="wcd-admin-bar-subitem wcd-slider-node">
+                         <div class="ab-item ab-empty-item" aria-hidden="true">${monitoringDesktopHtml}</div>
+                     </li>
+                      <li id="wp-admin-bar-wcd-monitoring-mobile" class="wcd-admin-bar-subitem wcd-slider-node">
+                         <div class="ab-item ab-empty-item" aria-hidden="true">${monitoringMobileHtml}</div>
+                     </li>
+                `;
             }
+            // Return only the list items, they will be wrapped later
+            return menuItemsHtml;
+        }
 
-            // Prepare AJAX data - mirror structure potentially used by ajax_update_url / post_urls.
-            // Keys should be dynamic: desktop-<url_id> and mobile-<url_id>.
-            var ajaxData = {
-                action: 'post_url', // Use 'post_url' action based on get_url_settings onclick
-                _ajax_nonce: wcdAdminBarData.nonce,
-                group_id: targetGroupId,
-                // Add url_id separately as it might be needed directly by the handler
-                url_id: targetUrlId
-                // Dynamic keys for desktop/mobile status will be added below
-            };
+        // --- AJAX Loading Event Listener ---
+        wcdAdminBarNode.on('mouseenter', function () {
 
-            // Find the sibling checkbox for the other device within the same type section.
-            var $otherCheckbox = null;
-            if (device === 'desktop') {
-                ajaxData['desktop-' + targetUrlId] = isChecked ? 1 : 0;
-                $otherCheckbox = $checkbox.closest('.wcd-slider-node').siblings().find('input.wcd-admin-bar-toggle[data-device="mobile"]');
-                if ($otherCheckbox.length) {
-                    ajaxData['mobile-' + targetUrlId] = $otherCheckbox.is(':checked') ? 1 : 0;
-                } else {
-                    // If sibling doesn't exist for some reason, assume 0 for its value
-                    ajaxData['mobile-' + targetUrlId] = 0;
-                }
-            } else { // device === 'mobile'
-                ajaxData['mobile-' + targetUrlId] = isChecked ? 1 : 0;
-                $otherCheckbox = $checkbox.closest('.wcd-slider-node').siblings().find('input.wcd-admin-bar-toggle[data-device="desktop"]');
-                if ($otherCheckbox.length) {
-                    ajaxData['desktop-' + targetUrlId] = $otherCheckbox.is(':checked') ? 1 : 0;
-                } else {
-                    // If sibling doesn't exist, assume 0
-                    ajaxData['desktop-' + targetUrlId] = 0;
-                }
+            if (wcdAdminBarLoaded) {
+                return; // Already loaded
             }
-
-            console.log('AJAX Data:', ajaxData);
-
-            // Disable checkbox temporarily to prevent rapid clicks.
-            $checkbox.prop('disabled', true);
-            if ($otherCheckbox && $otherCheckbox.length) {
-                $otherCheckbox.prop('disabled', true);
+            if (!placeholderNode.length) {
+                return; // Don't proceed if placeholder isn't there
             }
+            wcdAdminBarLoaded = true; // Set flag
 
-            // Perform AJAX request.
+            placeholderNode.find('.ab-item').text(wcdAdminBarData.loading_text);
+
             $.ajax({
                 url: wcdAdminBarData.ajax_url,
                 type: 'POST',
-                data: ajaxData,
-                //dataType: 'json', // We are getting html back, not json.
+                data: {
+                    action: wcdAdminBarData.action, // 'wcd_get_admin_bar_status'
+                    nonce: wcdAdminBarData.nonce,
+                    current_url: window.location.href
+                },
+                dataType: 'json',
                 success: function (response) {
-                    console.log('WCD Admin Bar AJAX Success:', response);
-                    // Optimistically assume success if the request didn't error.
-                    // The checked state is already visually set by the user click.
-                    // We only need to revert it on explicit failure (in the error callback).
-                    console.log('Settings update assumed successful based on request completion.');
+
+                    // Find the placeholder LI element
+                    const placeholderLi = $('#wp-admin-bar-wcd-status-placeholder');
+
+                    if (!placeholderLi.length) {
+                        console.error('WCD Admin Bar JS: Placeholder LI #wp-admin-bar-wcd-status-placeholder disappeared before update!');
+                        return;
+                    }
+
+                    // Clear the initial "Loading..." text
+                    placeholderLi.empty();
+
+                    if (response.success && response.data) {
+                        const menuItemsHtml = buildAdminBarMenu(response.data);
+
+                        if (response.data.tracked === false) {
+                            // If not tracked, just put the message inside the placeholder's inner div
+                            placeholderLi.html(`<div class="ab-item ab-empty-item" >${wcdAdminBarData.not_tracked_text}</div>`);
+                            // Ensure it doesn't act like a submenu parent
+                            placeholderLi.removeClass('menupop');
+                        } else {
+                            // Construct the standard WP Admin Bar submenu structure
+                            const submenuHtml = `
+                                <ul id="wp-admin-bar-wcd-admin-bar-default" class="ab-submenu">
+                                    ${menuItemsHtml} 
+                                </ul>`;
+
+                            // Append the submenu structure inside the placeholder LI
+                            placeholderLi.append(submenuHtml);
+                            // Add the necessary class for hover display
+                            placeholderLi.addClass('menupop');
+                        }
+
+                        // Trigger custom event for other scripts
+                        $(document).trigger('wcd_admin_bar_loaded', response.data);
+
+                    } else {
+                        const errorMsg = response.data?.message || wcdAdminBarData.error_text;
+                        console.error('WCD Admin Bar JS: Load Status AJAX Error (Success false or no data)', response);
+                        // Put error message inside the placeholder's inner div
+                        placeholderLi.html(`<div class="ab-item ab-empty-item" aria-hidden="true">${errorMsg}</div>`);
+                        placeholderLi.removeClass('menupop');
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    console.error('WCD Admin Bar AJAX Error:', textStatus, errorThrown);
-                    // Revert checkbox state visually ONLY on explicit error.
-                    $checkbox.prop('checked', !isChecked);
-                    alert('Failed to update setting. Please try again.'); // Basic user feedback.
-                },
-                complete: function () {
-                    // Re-enable checkbox after request completes.
-                    $checkbox.prop('disabled', false);
-                    if ($otherCheckbox && $otherCheckbox.length) {
-                        $otherCheckbox.prop('disabled', false);
+                    const placeholderLi = $('#wp-admin-bar-wcd-status-placeholder');
+                    console.error('WCD Admin Bar JS: Load Status AJAX Request Failed:', textStatus, errorThrown, jqXHR.responseText);
+                    // Replace placeholder LI's content with error message
+                    if (placeholderLi.length) {
+                        placeholderLi.html(`<div class="ab-item ab-empty-item">${wcdAdminBarData.error_text}</div>`);
                     }
                 }
             });
         });
-    });
+
+        // --- Existing Toggle Slider Event Listener ---
+        // Uses event delegation, so it *should* work with dynamically added sliders.
+        $('#wp-admin-bar-wcd-admin-bar').on('change', 'input.wcd-admin-bar-toggle', function (e) {
+            e.preventDefault();
+
+            var $checkbox = $(this);
+            var type = $checkbox.data('type');
+            var device = $checkbox.data('device');
+            var urlId = $checkbox.data('url-id');
+            var groupId = $checkbox.data('group-id');
+            var isChecked = $checkbox.is(':checked');
+            var currentUrl = $checkbox.data('url'); // Get URL from data attribute now
+
+
+            if (!urlId || !groupId) {
+                console.error('WCD Admin Bar Error: Missing URL ID or Group ID for toggle AJAX call.', { urlId: urlId, groupId: groupId });
+                $checkbox.prop('checked', !isChecked); // Revert change
+                alert('Error: Missing data needed to save the change.');
+                return;
+            }
+            if (!wcdAdminBarData || !wcdAdminBarData.nonce || !wcdAdminBarData.ajax_url) {
+                console.error('WCD Admin Bar Error: Missing nonce or AJAX URL for toggle.');
+                $checkbox.prop('checked', !isChecked); // Revert change
+                alert('Error: Configuration data missing. Cannot save change.');
+                return;
+            }
+
+
+            // Prepare AJAX data - Needs to match what ajax_post_url expects
+            // Based on get_url_settings code, it uses dynamic keys like 'desktop-<url_id>'
+            var ajaxData = {
+                action: 'post_url', // Action from original onclick attribute
+                _ajax_nonce: wcdAdminBarData.nonce, // Use the *correct* nonce if it was different, otherwise keep localized one
+                group_id: groupId,
+            };
+            // Only send the toggled device for the correct group
+            ajaxData[device + '-' + urlId] = isChecked ? 1 : 0;
+
+            // Disable checkbox temporarily
+            $checkbox.prop('disabled', true);
+            // Find and disable sibling checkbox if applicable
+            var $siblingCheckbox = $checkbox.closest('.wcd-admin-bar-subitem')
+                .siblings('.wcd-slider-node')
+                .find('input.wcd-admin-bar-toggle');
+            if ($siblingCheckbox.length) {
+                $siblingCheckbox.prop('disabled', true);
+            }
+
+
+            // Perform AJAX request
+            $.ajax({
+                url: wcdAdminBarData.ajax_url,
+                type: 'POST',
+                data: ajaxData,
+                success: function (response) {
+                    // Check response? Assume okay for now.
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('WCD Admin Bar Toggle AJAX Error:', textStatus, errorThrown, jqXHR.responseText);
+                    // Revert checkbox state visually ONLY on explicit error
+                    $checkbox.prop('checked', !isChecked);
+                    alert('Failed to update setting. Please try again.');
+                },
+                complete: function () {
+                    // Re-enable checkbox(es) after request completes
+                    $checkbox.prop('disabled', false);
+                    if ($siblingCheckbox.length) {
+                        $siblingCheckbox.prop('disabled', false);
+                    }
+                }
+            });
+        });
+
+    }); // End document ready
 
 })(jQuery); 

@@ -37,7 +37,7 @@ class WebChangeDetector_Public {
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
 	 *
-	 * @since    3.1.8
+	 * @since    3.1.7
 	 */
 	public function enqueue_styles() {
 		// Check if admin bar menu is disabled in settings.
