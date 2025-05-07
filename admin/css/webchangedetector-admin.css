@@ -592,17 +592,7 @@
     margin-top: -60px;
 }
 
-/* Darcula theme
-.webchangedetector p.code-tags {
-    background: #2B2B2B !important;
-    color: #629755;
-    font-style: italic;
-    font-size: 14px;
-    padding: 5px 10px !important;
-    margin: 0;
-} */
-
-.webchangedetector p.code-tags {
+.webchangedetector div.code-tags {
     color: #d29305;
     background: #f7f7f7;
     font-style: italic;

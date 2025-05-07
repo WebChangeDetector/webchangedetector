@@ -257,20 +257,18 @@ class WebChangeDetector_API_V2 {
 		$args = array(
 			'action' => 'comparisons?' . build_query( $filters ),
 		);
-        
+
 		return self::api_v2( $args, 'GET' );
 	}
 
-	/** Get queues
+	/** Get single queue
 	 *
 	 * @param string $batch_id The batch id.
-	 * @param string $status Status seperatated by comma.
-	 * @param array  $filters Additional filters.
 	 * @return mixed|string
 	 */
 	public static function get_queue_v2( $batch_id = false ) {
-	
-		if (! $batch_id ) {
+
+		if ( ! $batch_id ) {
 			return false;
 		}
 
@@ -285,42 +283,44 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param array  $batch_ids Array of batch_ids.
 	 * @param string $status Status seperatated by comma.
+	 * @param array  $group_ids Array of group_ids.
+	 * @param array  $filters Additional filters.
 	 * @return mixed|string
 	 */
 	public static function get_queues_v2( $batch_ids = false, $status = false, $group_ids = false, $filters = array() ) {
 		$args = array();
 
-        // Batch ids
-        if($batch_ids){
-            if ( is_array( $batch_ids ) ) {
-                $args['batches'] = implode( ',', $batch_ids );
-            } else {
-                $args['batches'] = $batch_ids;
-            }
-        }
-
-        // Group ids
-        if($group_ids){
-            if ( is_array( $group_ids ) ) {
-                $args['groups'] = implode( ',', $group_ids );
-            } else {
-                $args['groups'] = $group_ids;
-            }
-        }
-
-        // Status
-		if ( $status ) {
-            if ( is_array( $status ) ) {
-                $args['status'] = implode( ',', $status );
-            } else {
-                $args['status'] = $status;
-            }
+		// Batch ids.
+		if ( $batch_ids ) {
+			if ( is_array( $batch_ids ) ) {
+				$args['batches'] = implode( ',', $batch_ids );
+			} else {
+				$args['batches'] = $batch_ids;
+			}
 		}
-      
-        // Filters
-        if ( ! empty( $filters ) ) {
-            $args = array_merge( $args, $filters );
-        }
+
+		// Group ids.
+		if ( $group_ids ) {
+			if ( is_array( $group_ids ) ) {
+				$args['groups'] = implode( ',', $group_ids );
+			} else {
+				$args['groups'] = $group_ids;
+			}
+		}
+
+		// Status.
+		if ( $status ) {
+			if ( is_array( $status ) ) {
+				$args['status'] = implode( ',', $status );
+			} else {
+				$args['status'] = $status;
+			}
+		}
+
+		// Filters.
+		if ( ! empty( $filters ) ) {
+			$args = array_merge( $args, $filters );
+		}
 
 		$args['action'] = 'queues?' . build_query( $args );
 

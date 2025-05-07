@@ -11,7 +11,7 @@
 	style="display: <?php echo esc_html( $sc_processing['meta']['total'] ) ? 'block' : 'none'; ?>">
 
 	<div id="currently-processing-container" class="wcd-section" >
-		<div id="currently-processing" style="font-size: 50px; line-height: 50px; font-weight: 700;"><?php echo esc_html( $sc_processing['meta']['total']); ?></div>
+		<div id="currently-processing" style="font-size: 50px; line-height: 50px; font-weight: 700;"><?php echo esc_html( $sc_processing['meta']['total'] ); ?></div>
 		<p><strong>Screenshot(s) in progress.</strong></p>
 		<p>
 			<img src="<?php echo esc_url( $wcd->get_wcd_plugin_url() . 'admin/img/loading-bar.gif' ); ?>" style="height: 15px;">

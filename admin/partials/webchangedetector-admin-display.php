@@ -20,11 +20,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 */
 	function wcd_webchangedetector_init() {
 		global $wpdb;
-		$wcd = new WebChangeDetector_Admin();
+		$wcd                  = new WebChangeDetector_Admin();
 		$wcd->website_details = $wcd->get_website_details();
-		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
-
-		
+		$api_token            = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
 
 		// Start view.
 		echo '<div class="wrap">';
@@ -324,15 +322,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 				break;
 
-
-                // --- Handle Settings Save ---.
-		    case 'save_admin_bar_setting':
+				// --- Handle Settings Save ---.
+			case 'save_admin_bar_setting':
 				$disable_admin_bar = isset( $_POST['wcd_disable_admin_bar_menu'] ) ? 1 : 0;
 				update_option( 'wcd_disable_admin_bar_menu', $disable_admin_bar );
 				// Add an admin notice for success.
-                echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>Admin bar setting saved.</p></div>';
-				
-                break;
+				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>Admin bar setting saved.</p></div>';
+
+				break;
 		}
 
 		// Get updated account and website data.
@@ -705,14 +702,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
 				}
 
-                $groups = get_option( WCD_WEBSITE_GROUPS );
-                $filter_groups = false;
-                if ( $groups ) {
-                    $filter_groups = implode( ',', $groups );
-                }
-                
-				$queues      = WebChangeDetector_API_V2::get_queues_v2( false, false, $filter_groups, array( 'page' => $paged ) );
-                
+				$groups        = get_option( WCD_WEBSITE_GROUPS );
+				$filter_groups = false;
+				if ( $groups ) {
+					$filter_groups = implode( ',', $groups );
+				}
+
+				$queues = WebChangeDetector_API_V2::get_queues_v2( false, false, $filter_groups, array( 'page' => $paged ) );
+
 				$queues_meta = $queues['meta'];
 				$queues      = $queues['data'];
 
@@ -858,17 +855,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<td>
 									<p class="description" style="margin-bottom: 10px;">Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
 									<?php
-									// Add post types form
-									$post_types = get_post_types( array( 'public' => true ), 'objects' );
+									// Add post types form.
+									$post_types           = get_post_types( array( 'public' => true ), 'objects' );
 									$available_post_types = array();
 									foreach ( $post_types as $post_type ) {
 										$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
-										$show_type = false;
-										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists
+										$show_type         = false;
+										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
 												if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
 													$show_type = true;
-													break; // Found, no need to check further for this post type
+													break; // Found, no need to check further for this post type.
 												}
 											}
 										}
@@ -886,7 +883,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 												foreach ( $available_post_types as $available_post_type ) {
 													$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
 													$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
-													$add_post_type = wp_json_encode(
+													$add_post_type          = wp_json_encode(
 														array(
 															array(
 																'url_type_slug'  => 'types',
@@ -918,17 +915,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<td>
 									<p class="description" style="margin-bottom: 10px;">Missing taxonomies like categories or tags? Select them here and they appear in the URL list.</p>
 									<?php
-									// Add Taxonomies form
-									$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-									$available_taxonomies = array(); // Reset for taxonomies
+									// Add Taxonomies form.
+									$taxonomies           = get_taxonomies( array( 'public' => true ), 'objects' );
+									$available_taxonomies = array(); // Reset for taxonomies.
 									foreach ( $taxonomies as $taxonomy ) {
 										$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
-										$show_taxonomy = false;
-										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists
+										$show_taxonomy    = false;
+										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
 												if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
 													$show_taxonomy = true;
-													break; // Found
+													break; // Found, no need to check further for this taxonomy.
 												}
 											}
 										}
@@ -944,9 +941,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 											<select name="post_type">
 												<?php
 												foreach ( $available_taxonomies as $available_taxonomy ) {
-													$current_taxonomy_slug = $wcd->get_taxonomy_slug( $available_taxonomy ); // Use correct function
+													$current_taxonomy_slug = $wcd->get_taxonomy_slug( $available_taxonomy ); // Use correct function.
 													$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
-													$add_post_type = wp_json_encode(
+													$add_post_type         = wp_json_encode(
 														array(
 															array(
 																'url_type_slug' => 'taxonomies',
@@ -991,14 +988,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					<div class="box-plain no-border">
 						<h2>Admin Bar Menu</h2>
 						<form method="post">
-                        <?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
-                        <input type="hidden" name="wcd_action" value="save_admin_bar_setting">
+						<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
+						<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
 							<table class="form-table">
 								<tr valign="top">
 									<th scope="row">Disable Admin Bar Menu</th>
 									<td>
 										<label>
-                                            
+											
 											<input type="checkbox" name="wcd_disable_admin_bar_menu" value="1" <?php checked( get_option( 'wcd_disable_admin_bar_menu', 0 ), 1 ); ?> />
 											Disable WCD Menu in Admin Bar
 										</label>
@@ -1006,11 +1003,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									</td>
 								</tr>
 							</table>
-							<?php submit_button('Save Admin Bar Setting'); ?>
+							<?php submit_button( 'Save Admin Bar Setting' ); ?>
 						</form>
 					</div>
 
-                    <hr>
+					<hr>
 					<?php
 					if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
 						echo '<div class="error notice">
@@ -1025,7 +1022,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						</div>
 						<?php
 					}
-                    echo '<hr>';
+					echo '<hr>';
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 					$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector accout here.
                                                 Please don\'t share your API token with anyone. </p><p>
@@ -1084,7 +1081,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
 
-		// Add inline JavaScript for sync_urls function
+		// Add inline JavaScript for sync_urls function.
 		echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
 	} // wcd_webchangedetector_init.
 } // function_exists.

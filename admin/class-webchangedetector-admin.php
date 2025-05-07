@@ -37,7 +37,7 @@ class WebChangeDetector_Admin {
 		'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
-        'save_admin_bar_setting',
+		'save_admin_bar_setting',
 	);
 
 	const VALID_SC_TYPES = array(
@@ -126,13 +126,10 @@ class WebChangeDetector_Admin {
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
 		// Add hook for admin bar menu.
-		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right
+		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right.
 
-		// Register AJAX handler
+		// Register AJAX handler.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
-
-		// Enqueue scripts hook needs to be added by the loader class, example:
-		// add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_admin_bar_scripts' ) ); 
 	}
 
 	/**
@@ -191,7 +188,7 @@ class WebChangeDetector_Admin {
 		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
 
 		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
-		//       hooked to wp_enqueue_scripts for frontend loading.
+		// hooked to wp_enqueue_scripts for frontend loading.
 	}
 
 	/**
@@ -205,28 +202,28 @@ class WebChangeDetector_Admin {
 			return;
 		}
 		// Enqueue admin bar specific script only when needed.
-		if ( is_admin_bar_showing() && ! is_admin() && current_user_can('manage_options') ) {
+		if ( is_admin_bar_showing() && ! is_admin() && current_user_can( 'manage_options' ) ) {
 			$admin_bar_script_handle = 'webchangedetector-admin-bar'; // Use existing handle if webchangedetector-admin-bar.js exists
-			// Ensure the script is registered/enqueued correctly
+			// Ensure the script is registered/enqueued correctly.
 			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true ); // Load in footer.
 
 			// Localize script with necessary data for AJAX.
 			wp_localize_script(
 				$admin_bar_script_handle,
-				'wcdAdminBarData', // Keep the same object name
+				'wcdAdminBarData', // Keep the same object name.
 				array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'wcd_admin_bar_nonce' ), // Use a specific nonce
-					'action'   => 'wcd_get_admin_bar_status', // Action name for the handler
-					'loading_text' => __( 'Loading WCD Status...', 'webchangedetector' ),
-					'error_text'   => __( 'Error loading status.', 'webchangedetector' ),
+					'ajax_url'         => admin_url( 'admin-ajax.php' ),
+					'nonce'            => wp_create_nonce( 'wcd_admin_bar_nonce' ), // Use a specific nonce.
+					'action'           => 'wcd_get_admin_bar_status', // Action name for the handler.
+					'loading_text'     => __( 'Loading WCD Status...', 'webchangedetector' ),
+					'error_text'       => __( 'Error loading status.', 'webchangedetector' ),
 					'not_tracked_text' => __( 'URL not tracked by WCD', 'webchangedetector' ),
-					'manual_label' => __( 'Manual / Auto Update Checks', 'webchangedetector' ),
+					'manual_label'     => __( 'Manual / Auto Update Checks', 'webchangedetector' ),
 					'monitoring_label' => __( 'Monitoring', 'webchangedetector' ),
-					'desktop_label' => __( 'Desktop', 'webchangedetector' ),
-					'mobile_label' => __( 'Mobile', 'webchangedetector' ),
-					'dashboard_label' => __( 'WCD Dashboard', 'webchangedetector' ),
-					'dashboard_url' => admin_url( 'admin.php?page=webchangedetector' ),
+					'desktop_label'    => __( 'Desktop', 'webchangedetector' ),
+					'mobile_label'     => __( 'Mobile', 'webchangedetector' ),
+					'dashboard_label'  => __( 'WCD Dashboard', 'webchangedetector' ),
+					'dashboard_url'    => admin_url( 'admin.php?page=webchangedetector' ),
 				)
 			);
 		}
@@ -525,25 +522,25 @@ class WebChangeDetector_Admin {
 	public function ajax_post_url() {
 		// Check for the standard WordPress AJAX nonce key.
 		if ( ! isset( $_POST['_ajax_nonce'] ) ) {
-			// Send JSON error for consistency
+			// Send JSON error for consistency.
 			wp_send_json_error( 'Nonce missing' );
 			die();
 		}
 
 		// Verify nonce using the specific action name used during creation.
 		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ), 'wcd_admin_bar_nonce' ) ) {
-			// Send JSON error
+			// Send JSON error.
 			wp_send_json_error( 'Nonce verification failed.' );
 			die( 'Busted!' );
 		}
 
-		// TODO: Add checks here to ensure other required $_POST fields exist 
+		// TODO: Add checks here to ensure other required $_POST fields exist.
 		// (e.g., group_id, url_id, desktop-*, mobile-*) before calling post_urls.
 		$this->post_urls( $_POST );
 
 		// post_urls echoes its own success/failure message (potentially HTML).
 
-		die(); 
+		die();
 	}
 
 	/** Sync posts via ajax.
@@ -571,7 +568,7 @@ class WebChangeDetector_Admin {
 		wp_die();
 	}
 
-	/** Ajax update comparison status
+	/** Ajax update comparison status.
 	 *
 	 * @return void
 	 */
@@ -592,7 +589,7 @@ class WebChangeDetector_Admin {
 		die();
 	}
 
-	/** Get queues for status processing and open
+	/** Get queues for status processing and open.
 	 *
 	 * @param string $batch_id The batch id.
 	 * @param int    $per_page Rows per page.
@@ -628,7 +625,7 @@ class WebChangeDetector_Admin {
 		return WebChangeDetector_API_V2::update_group( $this->monitoring_group_uuid, $args );
 	}
 
-	/** Update group settings
+	/** Update group settings.
 	 *
 	 * @param array $postdata The postdata.
 	 *
@@ -661,7 +658,7 @@ class WebChangeDetector_Admin {
 		return ( WebChangeDetector_API_V2::update_group( $this->manual_group_uuid, $args ) );
 	}
 
-	/** Get the upgrade url
+	/** Get the upgrade url.
 	 *
 	 * @return false|mixed|string|null
 	 */
@@ -1073,7 +1070,7 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-	/** Get screenshot
+	/** Get screenshot.
 	 *
 	 * @param array $postdata The postdata.
 	 * @return void
@@ -1086,7 +1083,7 @@ class WebChangeDetector_Admin {
 		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . esc_url( $postdata['img_url'] ) . '"></div>';
 	}
 
-	/** Add Post type to website
+	/** Add Post type to website.
 	 *
 	 * @param array $postdata The postdata.
 	 *
@@ -3056,9 +3053,9 @@ class WebChangeDetector_Admin {
 		// Only show for admins on the frontend, and not on admin pages themselves.
 		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
 
-			// Get icon URL
+			// Get icon URL.
 			$icon_url = plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg';
-			// Prepare title with icon
+			// Prepare title with icon.
 			$wcd_title = sprintf(
 				'<img src="%s" alt="WCD Logo" style="height: 16px; width: auto; vertical-align: middle; margin-right: 5px;" /> WCD',
 				esc_url( $icon_url )
@@ -3068,8 +3065,8 @@ class WebChangeDetector_Admin {
 			$wp_admin_bar->add_node(
 				array(
 					'id'    => 'wcd-admin-bar',
-					'title' => $wcd_title, // Use the title with the image
-					'href'  => admin_url( 'admin.php?page=webchangedetector' ), 
+					'title' => $wcd_title, // Use the title with the image.
+					'href'  => admin_url( 'admin.php?page=webchangedetector' ),
 				)
 			);
 
@@ -3087,9 +3084,9 @@ class WebChangeDetector_Admin {
 			$wp_admin_bar->add_node(
 				array(
 					'parent' => 'wcd-admin-bar',
-					'id'     => 'wcd-status-placeholder', // ID for JS to target
-					'title'  => __( 'Loading WCD Status...', 'webchangedetector' ), // Initial text
-					'href'   => false, 
+					'id'     => 'wcd-status-placeholder', // ID for JS to target.
+					'title'  => __( 'Loading WCD Status...', 'webchangedetector' ), // Initial text.
+					'href'   => false,
 				)
 			);
 		}
@@ -3097,215 +3094,218 @@ class WebChangeDetector_Admin {
 
 	/**
 	 * AJAX handler to get WCD status for the admin bar.
-	 * 
-	 * @since 3.x.x
+	 *
+	 * @since 3.1.7
 	 */
 	public function ajax_get_wcd_admin_bar_status() {
-		// 1. Verify Nonce and User Caps
+		// 1. Verify Nonce and User Caps.
 		check_ajax_referer( 'wcd_admin_bar_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			self::error_log('[WCD Admin Bar AJAX] Permission denied.');
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'webchangedetector' ) ], 403 );
+			self::error_log( '[WCD Admin Bar AJAX] Permission denied.' );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
 		}
 
 		// 2. Get Current URL from request
 		$current_url_full = isset( $_POST['current_url'] ) ? esc_url_raw( wp_unslash( $_POST['current_url'] ) ) : null;
 		if ( ! $current_url_full ) {
-			 self::error_log('[WCD Admin Bar AJAX] Missing current URL.');
-			wp_send_json_error( [ 'message' => __( 'Missing current URL.', 'webchangedetector' ) ], 400 );
+			self::error_log( '[WCD Admin Bar AJAX] Missing current URL.' );
+			wp_send_json_error( array( 'message' => __( 'Missing current URL.', 'webchangedetector' ) ), 400 );
 		}
-		self::error_log('[WCD Admin Bar AJAX] Received URL: ' . $current_url_full);
+		self::error_log( '[WCD Admin Bar AJAX] Received URL: ' . $current_url_full );
 
-
-		// 3. Core Logic (Moved from original wcd_admin_bar_menu)
-		// --- Get Group UUIDs ---
-		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );
-		$manual_group_uuid = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? null;
+		// 3. Core Logic (Moved from original wcd_admin_bar_menu).
+		$wcd_groups            = get_option( WCD_WEBSITE_GROUPS );
+		$manual_group_uuid     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? null;
 		$monitoring_group_uuid = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? null;
-		
-		// Add fallback logic if needed, similar to original function
+
+		// Add fallback logic if needed, similar to original function.
 		if ( ! $manual_group_uuid || ! $monitoring_group_uuid ) {
-			 self::error_log('[WCD Admin Bar AJAX] Missing Group UUIDs in options.');
-			// Consider trying get_website_details() here if options fail
-			 wp_send_json_error( [ 'message' => __( 'Missing Group UUID configuration.', 'webchangedetector' ) ], 500 );
+			self::error_log( '[WCD Admin Bar AJAX] Missing Group UUIDs in options.' );
+			// Consider trying get_website_details() here if options fail.
+			wp_send_json_error( array( 'message' => __( 'Missing Group UUID configuration.', 'webchangedetector' ) ), 500 );
 		}
-		self::error_log('[WCD Admin Bar AJAX] Group UUIDs - Manual: ' . $manual_group_uuid . ', Monitoring: ' . $monitoring_group_uuid);
+		self::error_log( '[WCD Admin Bar AJAX] Group UUIDs - Manual: ' . $manual_group_uuid . ', Monitoring: ' . $monitoring_group_uuid );
 
+		// Get Post ID (if applicable).
+		$post_id = url_to_postid( $current_url_full );
+		self::error_log( '[WCD Admin Bar AJAX] URL to Post ID (' . $current_url_full . '): ' . ( $post_id ? $post_id : 'Not Found' ) );
 
-		// --- Get Post ID (if applicable) ---
-		$post_id = url_to_postid( $current_url_full ); 
-		self::error_log('[WCD Admin Bar AJAX] URL to Post ID (' . $current_url_full . '): ' . ($post_id ? $post_id : 'Not Found'));
-
-
-		// --- Get WCD URL UUID (`url_id`) ---
-		$wcd_url_id = null;
-		$found_via_api = false;
-		$manual_url_data = null; 
+		// Get WCD URL UUID (`url_id`).
+		$wcd_url_id          = null;
+		$found_via_api       = false;
+		$manual_url_data     = null;
 		$monitoring_url_data = null;
 
-		// Try post meta first if we have a post ID
+		// Try post meta first if we have a post ID.
 		if ( $post_id ) {
 			$wcd_url_id = get_post_meta( $post_id, 'wcd_url_uuid', true );
-			 if ($wcd_url_id) {
-				 self::error_log('[WCD Admin Bar AJAX] Found url_id in post meta (' . $post_id . '): ' . $wcd_url_id);
-			 } else {
-				 self::error_log('[WCD Admin Bar AJAX] url_id not found in post meta for post ' . $post_id);
-			 }
+			if ( $wcd_url_id ) {
+				self::error_log( '[WCD Admin Bar AJAX] Found url_id in post meta (' . $post_id . '): ' . $wcd_url_id );
+			} else {
+				self::error_log( '[WCD Admin Bar AJAX] url_id not found in post meta for post ' . $post_id );
+			}
 		} else {
-			 self::error_log('[WCD Admin Bar AJAX] No post ID found, cannot check post meta.');
+			self::error_log( '[WCD Admin Bar AJAX] No post ID found, cannot check post meta.' );
 		}
 
 		// If not found in meta, try API lookup using normalized URL.
-		if ( empty($wcd_url_id) ) {
-			 self::error_log('[WCD Admin Bar AJAX] url_id not found in meta, trying API lookup.');
+		if ( empty( $wcd_url_id ) ) {
+			self::error_log( '[WCD Admin Bar AJAX] url_id not found in meta, trying API lookup.' );
 			$parsed_url = wp_parse_url( $current_url_full );
 			if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
-				$search_url_base = null; 
-				self::error_log('[WCD Admin Bar AJAX] Failed to parse current URL for API search.');
+				$search_url_base = null;
+				self::error_log( '[WCD Admin Bar AJAX] Failed to parse current URL for API search.' );
 			} else {
-				$host = $parsed_url['host'];
-				$path = isset($parsed_url['path']) ? rtrim($parsed_url['path'], '/') : ''; 
+				$host            = $parsed_url['host'];
+				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'], '/' ) : '';
 				$search_url_base = $host . $path;
-				 self::error_log('[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base);
+				self::error_log( '[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base );
 
 			}
 
-			if( !empty($search_url_base) ) { 
-				// Re-define the helper function locally or move it to a class method
-				$find_exact_match = function( $api_results, $target_normalized_url ) {
-					if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) return null;
-					self::error_log('[WCD Admin Bar AJAX] find_exact_match: Searching in ' . count($api_results['data']) . ' results for ' . $target_normalized_url);
+			if ( ! empty( $search_url_base ) ) {
+				// Re-define the helper function locally or move it to a class method.
+				$find_exact_match = function ( $api_results, $target_normalized_url ) {
+					if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) {
+						return null;
+					}
+					self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Searching in ' . count( $api_results['data'] ) . ' results for ' . $target_normalized_url );
 					foreach ( $api_results['data'] as $item ) {
-						if ( empty( $item['url'] ) ) continue;
+						if ( empty( $item['url'] ) ) {
+							continue;
+						}
 						$api_url_no_protocol = preg_replace( '(^https?://)', '', $item['url'] );
-						$api_url_parts = explode( '?', $api_url_no_protocol );
-						$api_url_no_query = $api_url_parts[0];
-						$normalized_api_url = rtrim( $api_url_no_query, '/' );
-						self::error_log('[WCD Admin Bar AJAX] find_exact_match: Comparing ' . $normalized_api_url . ' with ' . $target_normalized_url);
+						$api_url_parts       = explode( '?', $api_url_no_protocol );
+						$api_url_no_query    = $api_url_parts[0];
+						$normalized_api_url  = rtrim( $api_url_no_query, '/' );
+						self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Comparing ' . $normalized_api_url . ' with ' . $target_normalized_url );
 						if ( $normalized_api_url === $target_normalized_url ) {
-							 self::error_log('[WCD Admin Bar AJAX] find_exact_match: Found match! ID: ' . $item['id']);
+							self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Found match! ID: ' . $item['id'] );
 							return $item;
 						}
 					}
-					 self::error_log('[WCD Admin Bar AJAX] find_exact_match: No exact match found.');
+					self::error_log( '[WCD Admin Bar AJAX] find_exact_match: No exact match found.' );
 					return null;
 				};
 
-				$url_filter = array( 'search' => $search_url_base, 'limit' => 5 ); // Limit search results?
+				$url_filter = array(
+					'search' => $search_url_base,
+					'limit'  => 5,
+				); // Limit search results?
 
-				 self::error_log('[WCD Admin Bar AJAX] Searching manual group (' . $manual_group_uuid . ') with filter: ' . json_encode($url_filter));
+				self::error_log( '[WCD Admin Bar AJAX] Searching manual group (' . $manual_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
 				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
-				$manual_match = $find_exact_match( $manual_group_urls, $search_url_base );
+				$manual_match      = $find_exact_match( $manual_group_urls, $search_url_base );
 
-				 self::error_log('[WCD Admin Bar AJAX] Searching monitoring group (' . $monitoring_group_uuid . ') with filter: ' . json_encode($url_filter));
+				self::error_log( '[WCD Admin Bar AJAX] Searching monitoring group (' . $monitoring_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
 				$monitoring_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
-				$monitoring_match = $find_exact_match( $monitoring_group_urls, $search_url_base );
+				$monitoring_match      = $find_exact_match( $monitoring_group_urls, $search_url_base );
 
-				// Prioritize manual match
-				$matched_api_data = $manual_match ?: $monitoring_match;
+				// Prioritize manual match.
+				$matched_api_data = $manual_match ? $manual_match : $monitoring_match;
 				if ( $matched_api_data ) {
-					$wcd_url_id = $matched_api_data['id'] ?? null;
+					$wcd_url_id    = $matched_api_data['id'] ?? null;
 					$found_via_api = true;
-					$source_group = $manual_match ? 'Manual' : 'Monitoring';
-					self::error_log('[WCD Admin Bar AJAX] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . $source_group . ')');
+					$source_group  = $manual_match ? 'Manual' : 'Monitoring';
+					self::error_log( '[WCD Admin Bar AJAX] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . $source_group . ')' );
 
-					
-					if ($manual_match && $wcd_url_id === $manual_match['id']) {
+					if ( $manual_match && $wcd_url_id === $manual_match['id'] ) {
 						$manual_url_data = $manual_match;
-						 self::error_log('[WCD Admin Bar AJAX] API search result assigned to manual_url_data.');
-					} 
-					// Assign to monitoring_url_data if it was the source
-					if ($monitoring_match && !$manual_match && $wcd_url_id === $monitoring_match['id']) {
-						$monitoring_url_data = $monitoring_match;
-						 self::error_log('[WCD Admin Bar AJAX] API search result assigned to monitoring_url_data.');
+						self::error_log( '[WCD Admin Bar AJAX] API search result assigned to manual_url_data.' );
 					}
-					
-					// Save to post meta if applicable and we found a post ID
+					// Assign to monitoring_url_data if it was the source.
+					if ( $monitoring_match && ! $manual_match && $wcd_url_id === $monitoring_match['id'] ) {
+						$monitoring_url_data = $monitoring_match;
+						self::error_log( '[WCD Admin Bar AJAX] API search result assigned to monitoring_url_data.' );
+					}
+
+					// Save to post meta if applicable and we found a post ID.
 					if ( $wcd_url_id && $post_id ) {
-						self::error_log('[WCD Admin Bar AJAX] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id);
+						self::error_log( '[WCD Admin Bar AJAX] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id );
 						update_post_meta( $post_id, 'wcd_url_uuid', $wcd_url_id );
 					}
 				} else {
-					 self::error_log('[WCD Admin Bar AJAX] No match found via API search.');
+					self::error_log( '[WCD Admin Bar AJAX] No match found via API search.' );
 				}
 			} else {
-				self::error_log('[WCD Admin Bar AJAX] Search URL base was empty, skipping API search.');
+				self::error_log( '[WCD Admin Bar AJAX] Search URL base was empty, skipping API search.' );
 			}
-		} // End API lookup block
+		} // End API lookup block.
 
-		// --- Check if URL is Tracked ---
+		// Check if URL is Tracked.
 		if ( ! $wcd_url_id ) {
-			 self::error_log('[WCD Admin Bar AJAX] URL not tracked (no ID found).');
-			 wp_send_json_success( [ 'tracked' => false ] ); // Send success, but indicate not tracked
+			self::error_log( '[WCD Admin Bar AJAX] URL not tracked (no ID found).' );
+			wp_send_json_success( array( 'tracked' => false ) ); // Send success, but indicate not tracked.
 		}
-		 self::error_log('[WCD Admin Bar AJAX] URL is tracked. ID: ' . $wcd_url_id . ' (Found via API: ' . ($found_via_api ? 'Yes' : 'No (Meta)') . ')');
+		self::error_log( '[WCD Admin Bar AJAX] URL is tracked. ID: ' . $wcd_url_id . ' (Found via API: ' . ( $found_via_api ? 'Yes' : 'No (Meta)' ) . ')' );
 
+		// Get Desktop/Mobile Status for both groups.
+		$url_id_filter = array(
+			'url_ids' => $wcd_url_id,
+			'limit'   => 1,
+		);
 
-		// --- Get Desktop/Mobile Status for both groups ---
-		$url_id_filter = ['url_ids' => $wcd_url_id, 'limit' => 1]; 
-		
 		if ( ! $found_via_api ) {
-			// ID was from post meta, fetch both groups using the ID
-			 self::error_log('[WCD Admin Bar AJAX] Fetching status for ID from meta. Filter: ' . json_encode($url_id_filter));
-			 self::error_log('[WCD Admin Bar AJAX] Fetching manual group (' . $manual_group_uuid . ') data.');
-			$manual_check = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
+			// ID was from post meta, fetch both groups using the ID.
+			self::error_log( '[WCD Admin Bar AJAX] Fetching status for ID from meta. Filter: ' . wp_json_encode( $url_id_filter ) );
+			self::error_log( '[WCD Admin Bar AJAX] Fetching manual group (' . $manual_group_uuid . ') data.' );
+			$manual_check    = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
 			$manual_url_data = $manual_check['data'][0] ?? null;
-			 self::error_log('[WCD Admin Bar AJAX] Manual Data fetched: ' . ($manual_url_data ? 'Found' : 'Not Found'));
+			self::error_log( '[WCD Admin Bar AJAX] Manual Data fetched: ' . ( $manual_url_data ? 'Found' : 'Not Found' ) );
 
-			 self::error_log('[WCD Admin Bar AJAX] Fetching monitoring group (' . $monitoring_group_uuid . ') data.');
-			$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
+			self::error_log( '[WCD Admin Bar AJAX] Fetching monitoring group (' . $monitoring_group_uuid . ') data.' );
+			$monitoring_check    = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
 			$monitoring_url_data = $monitoring_check['data'][0] ?? null;
-			 self::error_log('[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ($monitoring_url_data ? 'Found' : 'Not Found'));
+			self::error_log( '[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ( $monitoring_url_data ? 'Found' : 'Not Found' ) );
 
 		} else {
-			// ID was from API search, we might have one group's data already, fetch the other if needed
-			self::error_log('[WCD Admin Bar AJAX] Fetching status for ID from API search. Checking if other group needed.');
-			 self::error_log('[WCD Admin Bar AJAX] Pre-fetch check - Manual Data: ' . ($manual_url_data ? 'Exists' : 'NULL') . ', Monitoring Data: ' . ($monitoring_url_data ? 'Exists' : 'NULL'));
+			// ID was from API search, we might have one group's data already, fetch the other if needed.
+			self::error_log( '[WCD Admin Bar AJAX] Fetching status for ID from API search. Checking if other group needed.' );
+			self::error_log( '[WCD Admin Bar AJAX] Pre-fetch check - Manual Data: ' . ( $manual_url_data ? 'Exists' : 'NULL' ) . ', Monitoring Data: ' . ( $monitoring_url_data ? 'Exists' : 'NULL' ) );
 
-
-			if ( ! $monitoring_url_data ) { // Need monitoring group data (either manual was found, or neither - though unlikely if found_via_api is true)
-				 self::error_log('[WCD Admin Bar AJAX] Fetching missing monitoring group (' . $monitoring_group_uuid . ') data. Filter: ' . json_encode($url_id_filter));
-				$monitoring_check = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
+			if ( ! $monitoring_url_data ) { // Need monitoring group data (either manual was found, or neither - though unlikely if found_via_api is true).
+				self::error_log( '[WCD Admin Bar AJAX] Fetching missing monitoring group (' . $monitoring_group_uuid . ') data. Filter: ' . wp_json_encode( $url_id_filter ) );
+				$monitoring_check    = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
 				$monitoring_url_data = $monitoring_check['data'][0] ?? null;
-				 self::error_log('[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ($monitoring_url_data ? 'Found' : 'Not Found'));
-			} 
-			
-			if ( ! $manual_url_data ) { // Need manual group data
-				 self::error_log('[WCD Admin Bar AJAX] Fetching missing manual group (' . $manual_group_uuid . ') data. Filter: ' . json_encode($url_id_filter));
-				$manual_check = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
+				self::error_log( '[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ( $monitoring_url_data ? 'Found' : 'Not Found' ) );
+			}
+
+			if ( ! $manual_url_data ) { // Need manual group data.
+				self::error_log( '[WCD Admin Bar AJAX] Fetching missing manual group (' . $manual_group_uuid . ') data. Filter: ' . wp_json_encode( $url_id_filter ) );
+				$manual_check    = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
 				$manual_url_data = $manual_check['data'][0] ?? null;
-				 self::error_log('[WCD Admin Bar AJAX] Manual Data fetched: ' . ($manual_url_data ? 'Found' : 'Not Found'));
+				self::error_log( '[WCD Admin Bar AJAX] Manual Data fetched: ' . ( $manual_url_data ? 'Found' : 'Not Found' ) );
 			}
 		}
 
-        self::error_log('[WCD Admin Bar AJAX] Manual Data: ' . json_encode($manual_url_data));
+		self::error_log( '[WCD Admin Bar AJAX] Manual Data: ' . wp_json_encode( $manual_url_data ) );
 
-		// 4. Prepare JSON Response Data
-		$response_data = [
-			'tracked' => true,
-			'wcd_url_id' => $wcd_url_id,
-			'manual_group_uuid' => $manual_group_uuid,
+		// 4. Prepare JSON Response Data.
+		$response_data = array(
+			'tracked'               => true,
+			'wcd_url_id'            => $wcd_url_id,
+			'manual_group_uuid'     => $manual_group_uuid,
 			'monitoring_group_uuid' => $monitoring_group_uuid,
-			'manual_status' => [
+			'manual_status'         => array(
 				'desktop' => ! empty( $manual_url_data['desktop'] ),
-				'mobile' => ! empty( $manual_url_data['mobile'] ),
-			],
-			'monitoring_status' => [
+				'mobile'  => ! empty( $manual_url_data['mobile'] ),
+			),
+			'monitoring_status'     => array(
 				'desktop' => ! empty( $monitoring_url_data['desktop'] ),
-				'mobile' => ! empty( $monitoring_url_data['mobile'] ),
-			],
-			 'current_url' => $current_url_full // Pass original URL back 
-		];
-		 self::error_log('[WCD Admin Bar AJAX] Sending success response: ' . json_encode($response_data));
+				'mobile'  => ! empty( $monitoring_url_data['mobile'] ),
+			),
+			'current_url'           => $current_url_full, // Pass original URL back.
+		);
+		self::error_log( '[WCD Admin Bar AJAX] Sending success response: ' . wp_json_encode( $response_data ) );
 
-
-		// 5. Send JSON Response
+		// 5. Send JSON Response.
 		wp_send_json_success( $response_data );
 	}
 
-	/** Generate HTML for a single slider. 
+	/** Generate HTML for a single slider.
 	 * (This function might be used by JS via another AJAX call, or JS might replicate the HTML.
 	 * Keep it available for now, but ensure JS doesn't rely on PHP rendering context unavailable in AJAX)
+	 *
 	 * @param string      $type 'monitoring' or 'manual'.
 	 * @param string      $device 'desktop' or 'mobile'.
 	 * @param bool        $is_enabled Current state.
@@ -3314,41 +3314,40 @@ class WebChangeDetector_Admin {
 	 * @param string|null $group_id WCD Group ID.
 	 * @return string HTML for the slider.
 	 */
-	 private function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
+	private function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
 		$checked = $is_enabled ? 'checked' : '';
-		$label   = ucfirst( $device ); // Consider using localized labels passed to JS
-		$id      = sprintf( 'wcd-slider-%s-%s-%s', $type, $device, str_replace(['.', ':', '/'], '-', $url_id ?? wp_generate_password(5, false)) ); // Make ID more unique for AJAX
+		$label   = ucfirst( $device ); // Consider using localized labels passed to JS.
+		$id      = sprintf( 'wcd-slider-%s-%s-%s', $type, $device, str_replace( array( '.', ':', '/' ), '-', $url_id ?? wp_generate_password( 5, false ) ) ); // Make ID more unique for AJAX.
 
 		// Data attributes for JS.
 		$data_attrs = sprintf(
 			'data-type="%s" data-device="%s" data-url="%s" data-url-id="%s" data-group-id="%s"',
 			esc_attr( $type ),
 			esc_attr( $device ),
-			esc_attr( $url ), // Use the URL passed to the function
+			esc_attr( $url ), // Use the URL passed to the function.
 			esc_attr( $url_id ?? '' ),
 			esc_attr( $group_id ?? '' )
 		);
 
-		// Simple switch HTML structure. Use localized labels if possible
+		// Simple switch HTML structure. Use localized labels if possible.
 		$html = sprintf(
 			'<div class="wcd-admin-bar-slider">' .
-			'<label for="%s" class="wcd-slider-label">%s:</label>' . // TODO: Use localized label from wcdAdminBarData
+			'<label for="%s" class="wcd-slider-label">%s:</label>' . // TODO: Use localized label from wcdAdminBarData.
 			'<label class="wcd-switch">' .
 			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' . // Class for existing JS?
 			'<span class="wcd-slider-round"></span>' .
 			'</label>' .
 			'</div>',
 			esc_attr( $id ),
-			esc_html( $label ), // TODO: Use localized label
+			esc_html( $label ), // TODO: Use localized label.
 			esc_attr( $id ),
 			$checked,
 			$data_attrs
 		);
 
 		return $html;
-	 }
-
-} // End class WebChangeDetector_Admin
+	}
+} // End class WebChangeDetector_Admin.
 
 // HTTP Status Codes.
 if ( ! defined( 'WCD_HTTP_BAD_REQUEST' ) ) {
