@@ -1,8 +1,8 @@
 === Web Change Detector ===
 Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
-Requires at least: 5.2
-Tested up to: 6.7.2
+Requires at least: 5.5
+Tested up to: 6.8.1
 Stable tag: 3.1.7
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -52,8 +52,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 = 3.1.7 =
-* Improvment: Integration of external cron for auto-update process
-* Fix: Show only change detections current domain 
+* Feature: Select urls in frontend from admin bar
+* Improvement: External cron for auto-update process
+* Improvement: Show currently enabled auto-updates
+* Fix: Show only change detections current domain
 
 = 3.1.6 =
 * Feature: Diffbar in Change Detection for easier detection where changes are

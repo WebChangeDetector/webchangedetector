@@ -1868,7 +1868,7 @@ class WebChangeDetector_Admin {
 				?>
 
 			<div class="wcd-frm-settings box-plain">
-				<h2>Select URLs<br><small></small></h2>
+				<h2>Select URLs to Check<br><small></small></h2>
 				<p style="text-align: center;">
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
 					Missing URLs? Select them from other post types and taxonomies by enabling them in the
