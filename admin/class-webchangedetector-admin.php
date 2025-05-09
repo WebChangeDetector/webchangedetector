@@ -2419,7 +2419,7 @@ class WebChangeDetector_Admin {
 		);
 		$website_details = $this->api_v1( $args );
 
-        // If we get unauthorized, we need to redirect to the no-account page.
+		// If we get unauthorized, we need to redirect to the no-account page.
 		if ( 'unauthorized' === $website_details ) {
 			return false;
 		}
