@@ -1,7 +1,7 @@
 const MM_BG_COLOR_DARK_GREEN = '#006400';
 
 function updateProcessingStep() {
-    (function($) {
+    (function ($) {
         //currentlyProcessingSpinner.show();
         var currentlyProcessingTable = $('#currently-processing-table');
         var currentlyProcessingSpinner = $('#currently-processing-spinner');
@@ -15,8 +15,9 @@ function updateProcessingStep() {
 
             response = JSON.parse(response);
 
+            console.log(response);
             // Calculate all
-            let currentlyInQueueAmount = response.open.meta.total + response.processing.meta.total;
+            let currentlyInQueueAmount = response.meta.total;
             let currentlyProcessingSc = [];
             let actuallyProcessingSc = [];
 
@@ -28,7 +29,7 @@ function updateProcessingStep() {
             });
 
             // Get the actually processing queues
-            $(response.processing.data).each(function (i) {
+            $(response.data).each(function (i) {
                 if ($(this)[0].status === 'processing') {
                     actuallyProcessingSc.push($(this)[0].id)
                 }
@@ -53,7 +54,7 @@ function updateProcessingStep() {
             });
 
             // Add new queues
-            $(response.processing.data).each(function () {
+            $(response.data).each(function () {
                 if ($(this)[0].status !== 'open' && -1 === $.inArray($(this)[0].id, currentlyProcessingSc)) {
                     const tbody = $(currentlyProcessingTable).find('tbody');
                     const item = $('<tr class="processing_sc_row" data-id="' + $(this)[0].id + '"><td><strong>' + $(this)[0].html_title + '</strong><br>Screensize: ' + $(this)[0].device + ' <br>URL: ' + $(this)[0].url_link + '</td></tr>')
@@ -78,7 +79,7 @@ function updateProcessingStep() {
     })(jQuery);
 }
 function currentlyProcessing() {
-    (function($) {
+    (function ($) {
         var currentlyProcessing = $('#currently-processing');
         let processingInterval;
 
@@ -86,19 +87,19 @@ function currentlyProcessing() {
         if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0) {
             let totalSc = parseInt(currentlyProcessing.html());
             updateProcessingStep()
-            processingInterval = setInterval(function() {
+            processingInterval = setInterval(function () {
                 updateProcessingStep(currentlyProcessing);
             }, 5000, currentlyProcessing)
         } else {
             $("#wcd-screenshots-done").show();
-            if($(processingInterval).length) {
+            if ($(processingInterval).length) {
                 clearInterval(processingInterval);
             }
         }
     })(jQuery)
 }
 
-(function( $ ) {
+(function ($) {
     'use strict';
 
     /**
@@ -151,11 +152,11 @@ function currentlyProcessing() {
 
     function getDifferenceBgColor(percent) {
         // early return if no difference in percent
-        if(parseFloat(percent) === 0.0) {
+        if (parseFloat(percent) === 0.0) {
             // Dark green
             return MM_BG_COLOR_DARK_GREEN;
         }
-        var pct =  1 - (percent / 100);
+        var pct = 1 - (percent / 100);
 
         var percentColors = [
             // #8C0000 - dark red
@@ -184,11 +185,11 @@ function currentlyProcessing() {
         return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
     }
 
-    $( document ).ready(function() {
+    $(document).ready(function () {
 
         // Filter URL tables
         let filterTables = $(".group_urls_container");
-        $.each(filterTables, function(i,e) {
+        $.each(filterTables, function (i, e) {
             $(e).find(".filter-url-table").on("keyup", function () {
                 var value = $(this).val().toLowerCase();
                 $(e).find('table tr.live-filter-row').filter(function () {
@@ -197,12 +198,12 @@ function currentlyProcessing() {
             });
         });
 
-        $(".codearea").each(function(index, item) {
+        $(".codearea").each(function (index, item) {
             wp.codeEditor.initialize(item);
         });
 
         // Init accordions
-        $(".accordion").each(function(index, item) {
+        $(".accordion").each(function (index, item) {
             $(item).accordion({
                 header: "h3",
                 collapsible: true,
@@ -216,8 +217,8 @@ function currentlyProcessing() {
 
         // Confirm message on leaving without saving form
         let formModified = 0;
-        $('form.wcd-frm-settings').change(function(){
-            formModified=1;
+        $('form.wcd-frm-settings').change(function () {
+            formModified = 1;
         });
         window.onbeforeunload = confirmExit;
 
@@ -227,34 +228,34 @@ function currentlyProcessing() {
             }
         }
 
-        $("button[type='submit']").click(function() {
+        $("button[type='submit']").click(function () {
             formModified = 0;
         });
 
         // Confirm deleting account
-        $('#delete-account').submit(function(){
-            return confirm( "Are you sure you want to reset your account? This cannot be undone.");
+        $('#delete-account').submit(function () {
+            return confirm("Are you sure you want to reset your account? This cannot be undone.");
         });
 
         // Confirm copy url settings
-        $("#copy-url-settings").submit(function() {
+        $("#copy-url-settings").submit(function () {
             let type = $("#copy-url-settings").data("to_group_type");
-            return confirm( "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.");
+            return confirm("Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.");
         });
 
         // Confirm taking pre screenshots
-        $('#frm-take-pre-sc').submit(function() {
-            return confirm( "Please confirm taking pre-update screenshots.");
+        $('#frm-take-pre-sc').submit(function () {
+            return confirm("Please confirm taking pre-update screenshots.");
         });
 
         // Confirm taking post screenshots
-        $('#frm-take-post-sc').submit(function() {
-            return confirm( "Please confirm to create change detections.");
+        $('#frm-take-post-sc').submit(function () {
+            return confirm("Please confirm to create change detections.");
         });
 
         // Confirm cancel manual checks
-        $('#frm-cancel-update-detection').submit(function() {
-            return confirm( "Are you sure you want to cancel the manual checks?");
+        $('#frm-cancel-update-detection').submit(function () {
+            return confirm("Are you sure you want to cancel the manual checks?");
         });
 
         // Change bg color of comparison percentages
@@ -263,9 +264,9 @@ function currentlyProcessing() {
         diffTile.css("background", bgColor);
 
         // Background color differences
-        $(".diff-tile").each( function() {
+        $(".diff-tile").each(function () {
             var diffPercent = $(this).data("diff_percent");
-            if( diffPercent > 0 ) {
+            if (diffPercent > 0) {
                 var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
                 $(this).css("background", bgColor);
             }
@@ -273,23 +274,23 @@ function currentlyProcessing() {
 
         $("#diff-container").twentytwenty();
 
-        $("#diff-container .comp-img").load( function() {
+        $("#diff-container .comp-img").load(function () {
             $("#diff-container").twentytwenty();
         });
 
-        $(".selected-urls").each(function(index, item) {
+        $(".selected-urls").each(function (index, item) {
             var postType = $(item).data("post_type");
             var selectedDesktop = ($(item).data("amount_selected_desktop"));
             var selectedMobile = ($(item).data("amount_selected_mobile"));
-            $("#selected-desktop-"+postType).html(selectedDesktop);
-            $("#selected-mobile-"+postType).html(selectedMobile);
+            $("#selected-desktop-" + postType).html(selectedDesktop);
+            $("#selected-mobile-" + postType).html(selectedMobile);
         });
 
         // Show local time in dropdowns
         var localDate = new Date();
         var timeDiff = localDate.getTimezoneOffset() / 60;
 
-        $(".select-time").each( function(i, e) {
+        $(".select-time").each(function (i, e) {
             let utcHour = parseInt($(this).val());
             let newDate = localDate.setHours(utcHour - timeDiff, 0);
             let localHour = new Date(newDate);
@@ -301,22 +302,22 @@ function currentlyProcessing() {
         });
 
         // Replace time with local time
-        $(".local-time").each( function(i,e) {
-            if($(this).data("date")) {
+        $(".local-time").each(function (i, e) {
+            if ($(this).data("date")) {
                 $(this).text(getLocalDateTime($(this).data("date")));
             }
         });
 
         // Replace date with local date
-        $(".local-date").each( function(i,e) {
-            if($(this).data("date")) {
+        $(".local-date").each(function (i, e) {
+            if ($(this).data("date")) {
                 $(this).text(getLocalDate($(this).data("date")));
             }
         });
 
         // Set time until next screenshots
         let autoEnabled = false;
-        if($("#auto-enabled").is(':checked')) {
+        if ($("#auto-enabled").is(':checked')) {
             autoEnabled = true;
         }
         let txtNextScIn = "No trackings active";
@@ -327,7 +328,7 @@ function currentlyProcessing() {
         $("#txt_next_sc_in").html("Currently");
         $("#next_sc_date").html("");
 
-        if(nextScDate && autoEnabled && amountSelectedTotal > 0) {
+        if (nextScDate && autoEnabled && amountSelectedTotal > 0) {
             let now = new Date($.now()); // summer/winter - time
             nextScIn = new Date(nextScDate * 1000); // format time
             nextScIn = new Date(nextScIn - now); // normal time
@@ -345,8 +346,8 @@ function currentlyProcessing() {
         var availableCredits = scLimit - scUsage;
         var scPerUrlUntilRenew = $("#sc_available_until_renew").data("auto_sc_per_url_until_renewal");
 
-        if(availableCredits <= 0) {
-            $("#next_sc_in").html("Not Tracking").css("color","#A00000");
+        if (availableCredits <= 0) {
+            $("#next_sc_in").html("Not Tracking").css("color", "#A00000");
             $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>");
         }
 
@@ -355,11 +356,11 @@ function currentlyProcessing() {
 
         // Update total credits on top of page
         $("#ajax_amount_total_sc").html("0");
-        if(amountSelectedTotal && autoEnabled) {
+        if (amountSelectedTotal && autoEnabled) {
             $("#ajax_amount_total_sc").html(amountSelectedTotal);
         }
 
-        if( amountSelectedTotal > availableCredits) {
+        if (amountSelectedTotal > availableCredits) {
             $("#sc_until_renew").addClass("exceeding");
             $("#sc_available_until_renew").addClass("exceeding");
         }
@@ -371,7 +372,7 @@ function currentlyProcessing() {
         // This needs to instantly be executed
         currentlyProcessing();
 
-        $(".ajax_update_comparison_status").click(function() {
+        $(".ajax_update_comparison_status").click(function () {
             let e = $(this);
             let status = $(this).data('status');
             let statusElement = $(e).parent().parent().find(".current_comparison_status");
@@ -387,14 +388,14 @@ function currentlyProcessing() {
             $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
 
             $.post(ajaxurl, data, function (response) {
-                if('failed' === response) {
+                if ('failed' === response) {
                     $(statusElement).html(initialStatusContent);
                     alert('Something went wrong. Please try again.');
                     return false;
                 }
 
                 let status_nice_name;
-                if( 'ok' === response) {
+                if ('ok' === response) {
                     status_nice_name = 'Ok';
                 } else if ('to_fix' === response) {
                     status_nice_name = 'To Fix';
@@ -406,12 +407,12 @@ function currentlyProcessing() {
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
                 $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
-                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_"+response);
+                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_" + response);
             });
 
         })
     });
-})( jQuery );
+})(jQuery);
 
 // We got jpeg images and png. So we load jpeg for faster page load.
 // If jpeg is not available, we load pngs. To not be stuck in the onerror-loop, we do this.
@@ -449,28 +450,28 @@ function sync_urls(force = 0) {
 function postUrl(postId) {
     let groupId = document.getElementsByName('group_id')[0]
     let data;
-    if(postId.startsWith('select')) {
-        const selectAllCheckbox = jQuery('#'+postId);
+    if (postId.startsWith('select')) {
+        const selectAllCheckbox = jQuery('#' + postId);
         //const type = selectAllCheckbox.data('type');
         const screensize = selectAllCheckbox.data('screensize');
 
-         data = {
+        data = {
             action: 'post_url',
             nonce: jQuery(selectAllCheckbox).data('nonce'),
-            group_id:  groupId.value,
+            group_id: groupId.value,
         }
 
-        let posts = jQuery("td.checkbox-"+screensize+" input[type='checkbox']");
+        let posts = jQuery("td.checkbox-" + screensize + " input[type='checkbox']");
 
-        jQuery(posts).each(function() {
-            data = { ...data, [screensize+"-"+jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
+        jQuery(posts).each(function () {
+            data = { ...data, [screensize + "-" + jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
         });
 
     } else {
         let desktop = document.getElementById("desktop-" + postId);
         let mobile = document.getElementById("mobile-" + postId);
 
-         data = {
+        data = {
             action: 'post_url',
             nonce: jQuery(desktop).data('nonce'),
             group_id: groupId.value,
@@ -480,7 +481,7 @@ function postUrl(postId) {
     }
 
     jQuery.post(ajaxurl, data, function (response) {
-      // TODO confirm saving.
+        // TODO confirm saving.
     });
 }
 
@@ -531,7 +532,7 @@ function wcdValidateFormManualSettings() {
 
     // Early return if auto update checks are disabled.
     var autoUpdateChecksEnabled = document.getElementById("auto_update_checks_enabled").checked;
-    if(!autoUpdateChecksEnabled) {
+    if (!autoUpdateChecksEnabled) {
         return true;
     }
 
@@ -543,14 +544,14 @@ function wcdValidateFormManualSettings() {
 
     // Validation weekday.
     var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');
-    if(
-        ! document.getElementsByName("auto_update_checks_monday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_tuesday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_wednesday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_thursday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_friday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_saturday")[1].checked &&
-        ! document.getElementsByName("auto_update_checks_sunday")[1].checked
+    if (
+        !document.getElementsByName("auto_update_checks_monday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_tuesday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_wednesday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_thursday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_friday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_saturday")[1].checked &&
+        !document.getElementsByName("auto_update_checks_sunday")[1].checked
     ) {
         jQuery(weekdayContainer).css("border", "2px solid #d63638");
         jQuery("#error-on-days-validation").css("display", "block");
@@ -564,7 +565,7 @@ function wcdValidateFormManualSettings() {
 
     // get all emails.
     var emailsElement = document.getElementsByName("auto_update_checks_emails")[0];
-    if(emailsElement.value !== "" ) {
+    if (emailsElement.value !== "") {
         // split by comma.
         let emails = emailsElement.value.split(",");
 
@@ -573,7 +574,7 @@ function wcdValidateFormManualSettings() {
             jQuery(emailsElement).css("border", "2px solid red");
             jQuery("#manual_checks_settings_accordion").css("border", "2px solid red");
             jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({behavior: "smooth"});
+            emailsElement.scrollIntoView({ behavior: "smooth" });
             return false;
         }
 
@@ -593,7 +594,7 @@ function wcdValidateFormManualSettings() {
 function wcdValidateFormAutoSettings() {
 
     // Check if monitoring is enabled.
-    if( 'on' !== document.getElementById("auto-enabled").value ) {
+    if ('on' !== document.getElementById("auto-enabled").value) {
         return true;
     }
 
@@ -604,13 +605,13 @@ function wcdValidateFormAutoSettings() {
     let emails = emailsElement.value.split(",");
 
     // Validate emails if it's filled.
-    if(emailsElement.value !== "" ) {
+    if (emailsElement.value !== "") {
         if (false === validateEmail(emails)) {
             // Validation failed.
             jQuery(emailsElement).css("border", "2px solid red");
             jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
             jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({behavior: "smooth"});
+            emailsElement.scrollIntoView({ behavior: "smooth" });
             return false;
 
         }
@@ -630,7 +631,7 @@ function validateEmail(emails) {
         emails[i] = emails[i].trim();
 
         // Validation failed
-        if(emails[i] === "" || ! emailRegex.test(emails[i]) ){
+        if (emails[i] === "" || !emailRegex.test(emails[i])) {
             return false;
         }
     }

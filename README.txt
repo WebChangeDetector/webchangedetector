@@ -52,9 +52,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 = 3.1.8 =
-* Fix: Error on new installations
+* Fix: Error for new installations
 * Fix: Warnings when there are no checks yet 
-* Fix: Selecting URLs the traditional way wasn't working   
+* Fix: Selecting URLs the traditional way 
+* Fix: Show processing URLs during manual checks
 
 = 3.1.7 =
 * Feature: Select urls in frontend from admin bar
