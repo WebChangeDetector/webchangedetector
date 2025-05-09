@@ -210,8 +210,8 @@
             // Prepare AJAX data - Needs to match what ajax_post_url expects
             // Based on get_url_settings code, it uses dynamic keys like 'desktop-<url_id>'
             var ajaxData = {
-                action: 'post_url', // Action from original onclick attribute
-                _ajax_nonce: wcdAdminBarData.nonce, // Use the *correct* nonce if it was different, otherwise keep localized one
+                action: 'post_url', // Action for the WordPress AJAX handler
+                nonce: wcdAdminBarData.postUrlNonce, // Use the dedicated nonce for post_url action
                 group_id: groupId,
             };
             // Only send the toggled device for the correct group

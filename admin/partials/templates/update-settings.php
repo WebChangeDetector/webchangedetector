@@ -71,81 +71,81 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 			</div>
 
 			<div id="auto_update_checks_settings">
-                <?php
-                // Determine core auto-update status, considering constant and site option.
-                $core_auto_update_enabled = false;
-                if ( defined( 'WP_AUTO_UPDATE_CORE' ) ) {
-                    // Constant overrides site option.
-                    if ( WP_AUTO_UPDATE_CORE === true || in_array( WP_AUTO_UPDATE_CORE, array( 'minor', 'beta', 'rc', 'development', 'branch-development' ), true ) ) {
-                        $core_auto_update_enabled = true;
-                    }
-                } else {
-                    // Check site option if constant is not defined.
-                    $core_update_setting = get_site_option( 'auto_update_core_major' );
-                    if ( 'enabled' === $core_update_setting ) {
-                        $core_auto_update_enabled = true;
-                    }
-                }
-                if ( ! function_exists( 'get_plugins' ) ) {
-                    require_once ABSPATH . 'wp-admin/includes/plugin.php';
-                }
-                $all_plugins         = get_plugins();
-                $plugins_auto_update = array();
-                $auto_update_plugins = get_site_option( 'auto_update_plugins' );
-                foreach ( $all_plugins as $plugin_file => $plugin_data ) {
-                    if ( is_array( $auto_update_plugins ) && in_array( $plugin_file, $auto_update_plugins, true ) ) {
-                        $plugins_auto_update[ $plugin_file ] = $plugin_data;
-                    }
-                }
-                $all_themes         = wp_get_themes();
-                $themes_auto_update = array();
-                $auto_update_themes = get_site_option( 'auto_update_themes' );
-                foreach ( $all_themes as $theme_slug => $theme_obj ) {
-                    if ( is_array( $auto_update_themes ) && in_array( $theme_slug, $auto_update_themes, true ) ) {
-                        $themes_auto_update[ $theme_slug ] = $theme_obj;
-                    }
-                }
-                $summary  = 'Core: ' . ( $core_auto_update_enabled ? 'Enabled' : 'Disabled' );
-                $summary .= ' | Plugins: ' . count( $plugins_auto_update );
-                $summary .= ' | Themes: ' . count( $themes_auto_update );
-                ?>
-                <div class="accordion " style="margin-bottom: 20px; border: 1px solid #ddd;">
-                    <div class="accordion-header" style="cursor:pointer; padding:10px;">
-                        <span class="accordion-icon dashicons dashicons-arrow-right-alt2"></span> Currently enabled auto-updates: <?php echo esc_html( $summary ); ?>
-                    </div>
-                    <div class="accordion-content" style="display:none; border:1px solid #ddd; padding:10px;">
-                        <h4>WordPress Core</h4>
-                        <p><?php echo $core_auto_update_enabled ? 'Core auto-update is enabled.' : 'Core auto-update is disabled.'; ?></p>
-                        <h4>Plugins</h4>
-                        <?php if ( ! empty( $plugins_auto_update ) ) : ?>
-                            <ul>
-                                <?php foreach ( $plugins_auto_update as $plugin_file => $plugin_data ) : ?>
-                                    <li><?php echo esc_html( $plugin_data['Name'] ); ?> (<?php echo esc_html( $plugin_data['Version'] ); ?>).</li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else : ?>
-                            <p>No plugins with auto-update enabled.</p>
-                        <?php endif; ?>
-                        <h4>Themes</h4>
-                        <?php if ( ! empty( $themes_auto_update ) ) : ?>
-                            <ul>
-                                <?php foreach ( $themes_auto_update as $theme_slug => $theme_obj ) : ?>
-                                    <li><?php echo esc_html( $theme_obj->get( 'Name' ) ); ?>.</li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else : ?>
-                            <p>No themes with auto-update enabled.</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <script>
-                jQuery(document).ready(function($){
-                    $('.accordion-header').on('click', function(){
-                        $(this).next('.accordion-content').slideToggle('fast');
-                        $(this).find('.accordion-icon').toggleClass('dashicons-arrow-right-alt2 dashicons-arrow-down-alt2');
-                    });
-                });
-                </script>
+				<?php
+				// Determine core auto-update status, considering constant and site option.
+				$core_auto_update_enabled = false;
+				if ( defined( 'WP_AUTO_UPDATE_CORE' ) ) {
+					// Constant overrides site option.
+					if ( WP_AUTO_UPDATE_CORE === true || in_array( WP_AUTO_UPDATE_CORE, array( 'minor', 'beta', 'rc', 'development', 'branch-development' ), true ) ) {
+						$core_auto_update_enabled = true;
+					}
+				} else {
+					// Check site option if constant is not defined.
+					$core_update_setting = get_site_option( 'auto_update_core_major' );
+					if ( 'enabled' === $core_update_setting ) {
+						$core_auto_update_enabled = true;
+					}
+				}
+				if ( ! function_exists( 'get_plugins' ) ) {
+					require_once ABSPATH . 'wp-admin/includes/plugin.php';
+				}
+				$all_plugins         = get_plugins();
+				$plugins_auto_update = array();
+				$auto_update_plugins = get_site_option( 'auto_update_plugins' );
+				foreach ( $all_plugins as $plugin_file => $plugin_data ) {
+					if ( is_array( $auto_update_plugins ) && in_array( $plugin_file, $auto_update_plugins, true ) ) {
+						$plugins_auto_update[ $plugin_file ] = $plugin_data;
+					}
+				}
+				$all_themes         = wp_get_themes();
+				$themes_auto_update = array();
+				$auto_update_themes = get_site_option( 'auto_update_themes' );
+				foreach ( $all_themes as $theme_slug => $theme_obj ) {
+					if ( is_array( $auto_update_themes ) && in_array( $theme_slug, $auto_update_themes, true ) ) {
+						$themes_auto_update[ $theme_slug ] = $theme_obj;
+					}
+				}
+				$summary  = 'Core: ' . ( $core_auto_update_enabled ? 'Enabled' : 'Disabled' );
+				$summary .= ' | Plugins: ' . count( $plugins_auto_update );
+				$summary .= ' | Themes: ' . count( $themes_auto_update );
+				?>
+				<div class="accordion " style="margin-bottom: 20px; border: 1px solid #ddd;">
+					<div class="accordion-header" style="cursor:pointer; padding:10px;">
+						<span class="accordion-icon dashicons dashicons-arrow-right-alt2"></span> Currently enabled auto-updates: <?php echo esc_html( $summary ); ?>
+					</div>
+					<div class="accordion-content" style="display:none; border:1px solid #ddd; padding:10px;">
+						<h4>WordPress Core</h4>
+						<p><?php echo $core_auto_update_enabled ? 'Core auto-update is enabled.' : 'Core auto-update is disabled.'; ?></p>
+						<h4>Plugins</h4>
+						<?php if ( ! empty( $plugins_auto_update ) ) : ?>
+							<ul>
+								<?php foreach ( $plugins_auto_update as $plugin_file => $plugin_data ) : ?>
+									<li><?php echo esc_html( $plugin_data['Name'] ); ?> (<?php echo esc_html( $plugin_data['Version'] ); ?>).</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php else : ?>
+							<p>No plugins with auto-update enabled.</p>
+						<?php endif; ?>
+						<h4>Themes</h4>
+						<?php if ( ! empty( $themes_auto_update ) ) : ?>
+							<ul>
+								<?php foreach ( $themes_auto_update as $theme_slug => $theme_obj ) : ?>
+									<li><?php echo esc_html( $theme_obj->get( 'Name' ) ); ?>.</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php else : ?>
+							<p>No themes with auto-update enabled.</p>
+						<?php endif; ?>
+					</div>
+				</div>
+				<script>
+				jQuery(document).ready(function($){
+					$('.accordion-header').on('click', function(){
+						$(this).next('.accordion-content').slideToggle('fast');
+						$(this).find('.accordion-icon').toggleClass('dashicons-arrow-right-alt2 dashicons-arrow-down-alt2');
+					});
+				});
+				</script>
 
 				<div class="setting-row toggle">
 					<label for="auto_update_checks_from" >Auto update times from </label>

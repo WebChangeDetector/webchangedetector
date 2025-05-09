@@ -508,37 +508,44 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$batches                       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
-					$filter_batches_in_comparisons = array();
-					foreach ( $batches['data'] as $batch ) {
-						$filter_batches_in_comparisons[] = $batch['id'];
+					$comparisons   = array();
+					$failed_queues = array();
+					$batches       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+					if ( ! empty( $batches['data'] ) ) {
+						$filter_batches_in_comparisons = array();
+						foreach ( $batches['data'] as $batch ) {
+							$filter_batches_in_comparisons[] = $batch['id'];
+						}
+						$filters_comparisons = array(
+							'batches'  => implode( ',', $filter_batches_in_comparisons ),
+							'per_page' => 999999,
+						);
+
+						// Get failed queues.
+						$batch_ids = array();
+						foreach ( $batches['data'] as $batch ) {
+							$batch_ids[] = $batch['id'];
+						}
+						$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
+
+						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
+
+						$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
+                                They are grouped by the type: Monitoring, Manual Checks or Auto Update Checks';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_change_detection_batches',
+							false,
+							'?page=webchangedetector-logs',
+							false,
+							'top top-plus-100 left-plus-300'
+						);
+						if ( ! empty( $comparisons['data'] ) ) {
+							$comparisons = $comparisons['data'];
+						}
 					}
 
-					$filters_comparisons = array(
-						'batches'  => implode( ',', $filter_batches_in_comparisons ),
-						'per_page' => 999999,
-					);
-
-					// Get failed queues.
-					$batch_ids = array();
-					foreach ( $batches['data'] as $batch ) {
-						$batch_ids[] = $batch['id'];
-					}
-					$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
-
-					$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
-
-					$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
-			                They are grouped by the type: Monitoring, Manual Checks or Auto Update Checks';
-					$wcd->print_wizard(
-						$wizard_text,
-						'wizard_change_detection_batches',
-						false,
-						'?page=webchangedetector-logs',
-						false,
-						'top top-plus-100 left-plus-300'
-					);
-					$wcd->compare_view_v2( $comparisons['data'], $failed_queues );
+					$wcd->compare_view_v2( $comparisons, $failed_queues );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );

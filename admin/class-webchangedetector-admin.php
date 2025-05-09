@@ -213,7 +213,8 @@ class WebChangeDetector_Admin {
 				'wcdAdminBarData', // Keep the same object name.
 				array(
 					'ajax_url'         => admin_url( 'admin-ajax.php' ),
-					'nonce'            => wp_create_nonce( 'wcd_admin_bar_nonce' ), // Use a specific nonce.
+					'nonce'            => wp_create_nonce( 'wcd_admin_bar_nonce' ), // Nonce for wcd_get_admin_bar_status action.
+					'postUrlNonce'     => wp_create_nonce( 'ajax-nonce' ),      // Nonce for post_url action (used by ajax_post_url).
 					'action'           => 'wcd_get_admin_bar_status', // Action name for the handler.
 					'loading_text'     => __( 'Loading WCD Status...', 'webchangedetector' ),
 					'error_text'       => __( 'Error loading status.', 'webchangedetector' ),
@@ -520,25 +521,26 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_post_url() {
-		// Check for the standard WordPress AJAX nonce key.
-		if ( ! isset( $_POST['_ajax_nonce'] ) ) {
-			// Send JSON error for consistency.
-			wp_send_json_error( 'Nonce missing' );
+		// Check for our specific nonce key sent from the URL settings toggles.
+		if ( ! isset( $_POST['nonce'] ) ) {
+			wp_send_json_error( 'Nonce missing or incorrect key.' );
 			die();
 		}
 
-		// Verify nonce using the specific action name used during creation.
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ), 'wcd_admin_bar_nonce' ) ) {
-			// Send JSON error.
+		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
+
+		// Verify nonce using the action name 'ajax-nonce' used during its creation in get_url_settings.
+		if ( ! wp_verify_nonce( $nonce, 'ajax-nonce' ) ) {
 			wp_send_json_error( 'Nonce verification failed.' );
-			die( 'Busted!' );
+			die();
 		}
 
 		// TODO: Add checks here to ensure other required $_POST fields exist.
 		// (e.g., group_id, url_id, desktop-*, mobile-*) before calling post_urls.
-		$this->post_urls( $_POST );
+		$this->post_urls( $_POST ); // WordPress handles unslashing for AJAX actions.
 
 		// post_urls echoes its own success/failure message (potentially HTML).
+		// For better AJAX practice, post_urls could return data, and this function could send a JSON response.
 
 		die();
 	}
@@ -2417,9 +2419,15 @@ class WebChangeDetector_Admin {
 		);
 		$website_details = $this->api_v1( $args );
 
+        // If we get unauthorized, we need to redirect to the no-account page.
+		if ( 'unauthorized' === $website_details ) {
+			return false;
+		}
+
 		if ( ! empty( $website_details[0] ) ) {
 			$website_details = $website_details[0];
 		}
+
 		if ( isset( $website_details['sync_url_types'] ) ) {
 			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
 		}
@@ -2778,20 +2786,6 @@ class WebChangeDetector_Admin {
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
-				$filter_batches = array(
-					'queue_type' => 'post,auto',
-					'per_page'   => 5,
-				);
-
-				$batches = WebChangeDetector_API_V2::get_batches( $filter_batches )['data'];
-
-				$filter_batches = array();
-				foreach ( $batches as $batch ) {
-					$filter_batches[] = $batch['id'];
-				}
-
-				$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-
 				$wizard_text = "<h2>Change Detections</h2>Your latest change detections will appear here. But first, let's do some checks and create some change detections.";
 				$this->print_wizard(
 					$wizard_text,
@@ -2801,7 +2795,28 @@ class WebChangeDetector_Admin {
 					false,
 					'bottom top-minus-200 left-plus-300'
 				);
-				$this->compare_view_v2( $recent_comparisons['data'] );
+
+				$filter_batches = array(
+					'queue_type' => 'post,auto',
+					'per_page'   => 5,
+				);
+
+				$batches            = WebChangeDetector_API_V2::get_batches( $filter_batches );
+				$recent_comparisons = array(); // init.
+
+				if ( ! empty( $batches['data'] ) ) {
+					$filter_batches = array();
+					foreach ( $batches['data'] as $batch ) {
+						$filter_batches[] = $batch['id'];
+					}
+
+					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
+					if ( ! empty( $recent_comparisons['data'] ) ) {
+						$recent_comparisons = $recent_comparisons['data'];
+					}
+				}
+
+				$this->compare_view_v2( $recent_comparisons );
 
 				if ( ! empty( $recent_comparisons ) ) {
 					?>
