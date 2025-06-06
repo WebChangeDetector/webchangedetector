@@ -1470,7 +1470,7 @@ class WebChangeDetector_Admin {
 
 		// Check if frontpage is already in the sync settings.
 		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'],
+			$website_details['sync_url_types'] ?? [],
 			function ( $item ) {
 				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
 			}
@@ -2946,7 +2946,7 @@ class WebChangeDetector_Admin {
 
 		$group_and_urls['urls']                = $urls['data'];
 		$group_and_urls['meta']                = $urls['meta'];
-		$group_and_urls['selected_urls_count'] = $urls['selected_urls_count'];
+		$group_and_urls['selected_urls_count'] = $urls['meta']['selected_urls_count'];
 
 		return $group_and_urls;
 	}
