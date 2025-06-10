@@ -154,6 +154,9 @@ class WebChangeDetector_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
+		
+		// Enqueue Driver.js CSS for the new wizard system.
+		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -179,6 +182,10 @@ class WebChangeDetector_Admin {
 		wp_enqueue_script( 'jquery-ui-accordion' );
 		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+		
+		// Enqueue Driver.js for the new wizard system.
+		wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
+		wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
 
 		// Load WP codemirror.
 		$css_settings              = array(
@@ -189,6 +196,12 @@ class WebChangeDetector_Admin {
 
 		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
 		// hooked to wp_enqueue_scripts for frontend loading.
+		
+		// Localize script with AJAX data for wizard
+		wp_localize_script( 'wcd-wizard', 'wcdWizardData', array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+		) );
 	}
 
 	/**
@@ -589,6 +602,28 @@ class WebChangeDetector_Admin {
 		$result = $this->update_comparison_status( esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
 		echo esc_html( $result['data']['status'] ) ?? 'failed';
 		die();
+	}
+
+	/**
+	 * AJAX handler to disable wizard.
+	 *
+	 * @return void
+	 */
+	public function ajax_disable_wizard() {
+		// Verify nonce for security.
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wcd_wizard_nonce' ) ) {
+			wp_send_json_error( 'Invalid nonce' );
+		}
+
+		// Check user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions' );
+		}
+
+		// Disable wizard by deleting the option.
+		delete_option( 'wcd_wizard' );
+
+		wp_send_json_success( 'Wizard disabled' );
 	}
 
 	/** Get queues for status processing and open.

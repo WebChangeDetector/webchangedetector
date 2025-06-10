@@ -1048,3 +1048,62 @@ Wizard
 .webchangedetector .slider.round:before {
     border-radius: 50%;
 }
+
+/* Driver.js Wizard Custom Styling 
+.wcd-wizard-popover {
+    box-shadow: 0 0 20px #666 !important;
+    border: 3px solid #fff !important;
+}
+
+.wcd-wizard-popover .driver-popover-title {
+    background: #01A0D2 !important;
+    color: #fff !important;
+    margin: -15px -15px 15px -15px !important;
+    padding: 15px !important;
+    font-weight: bold !important;
+}
+
+.wcd-wizard-popover .driver-popover-description {
+    color: #2d2d2d !important;
+    line-height: 1.5 !important;
+}
+
+.wcd-wizard-popover .driver-popover-footer button {
+    background: #01A0D2 !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 3px !important;
+    font-weight: bold !important;
+}
+
+.wcd-wizard-popover .driver-popover-footer button:hover {
+    background: #0073aa !important;
+}
+
+.wcd-wizard-popover .driver-popover-footer button:disabled {
+    background: #ccc !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
+.wcd-wizard-popover .driver-popover-progress-text {
+    color: #01A0D2 !important;
+    font-weight: bold !important;
+}
+
+.wcd-wizard-popover .driver-popover-close-btn {
+    color: #01A0D2 !important;
+    font-weight: bold !important;
+    font-size: 18px !important;
+}
+
+.wcd-wizard-popover .driver-popover-close-btn:hover {
+    color: #0073aa !important;
+}
+*/
+
+/* Hide legacy wizard elements when driver.js wizard is active */
+.driver-active .wcd-wizard {
+    display: none !important;
+}
