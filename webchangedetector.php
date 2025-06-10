@@ -17,7 +17,7 @@
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
  * Version:           3.1.10.1
  * GitHub Plugin URI: WebChangeDetector/wp-webchangedetector
- * GitHub Branch:     main
+ * GitHub Branch:     dev
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
