@@ -13,8 +13,4 @@
 	?>
 	Help
 </h2>
-<form method="post" action="">
-	<input type="hidden" name="wcd_action" value="enable_wizard">
-	<?php wp_nonce_field( 'enable_wizard' ); ?>
-	<input type="submit" class="button" value="Start Wizard">
-</form>
+<input type="button" class="button" value="Start Wizard" onclick="window.wcdStartWizard()">

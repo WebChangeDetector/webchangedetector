@@ -264,13 +264,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Perform actions.
 		switch ( $wcd_action ) {
-			case 'enable_wizard':
-				add_option( 'wcd_wizard', 'true', '', false );
-				break;
-
-			case 'disable_wizard':
-				delete_option( 'wcd_wizard' );
-				break;
 
 			case 'change_comparison_status':
 				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_id'], $postdata['status'] );
@@ -471,15 +464,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					</form>
 
 					<?php
-					$wizard_text = '<h2>Change Detections</h2>In this tab, you will see all your change detections.';
-					$wcd->print_wizard(
-						$wizard_text,
-						'wizard_change_detection_tab',
-						'wizard_change_detection_batches',
-						false,
-						true,
-						'top top-minus-50 left-plus-500'
-					);
 
 					$extra_filters          = array();
 					$extra_filters['paged'] = isset( $_GET['paged'] ) ? sanitize_key( wp_unslash( $_GET['paged'] ) ) : 1;
@@ -532,16 +516,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						
 					}
-                    $wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
-                                They are grouped by the type: Monitoring, Manual Checks or Auto Update Checks';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_change_detection_batches',
-							false,
-							'?page=webchangedetector-logs',
-							false,
-							'top top-plus-100 left-plus-300'
-						);
+                             
 						if ( ! empty( $comparisons['data'] ) ) {
 							$comparisons = $comparisons['data'];
 						}
@@ -671,15 +646,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-auto-settings':
-				$wizard_text = '<h2>Monitoring</h2>The monitoring checks your webpages automatically in intervals.';
-				$wcd->print_wizard(
-					$wizard_text,
-					'wizard_monitoring_tab',
-					'wizard_monitoring_settings',
-					false,
-					true,
-					'top left-plus-300'
-				);
 				?>
 				<div class="action-container">
 					<?php
@@ -695,15 +661,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-logs':
-				$wizard_text = '<h2>Queue</h2>In the queue you can see all the action which happened.';
-				$wcd->print_wizard(
-					$wizard_text,
-					'wizard_logs_tab',
-					'wizard_logs_log',
-					false,
-					true,
-					'top left-plus-650'
-				);
 
 				$paged = 1;
 				if ( isset( $_GET['paged'] ) ) {
@@ -728,16 +685,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'compare' => 'Change detection',
 				);
 
-				$wizard_text = '<h2>Queue</h2>Every Screenshot and every comparison are listed here. 
-                                If something failed, you can see it here too.';
-				$wcd->print_wizard(
-					$wizard_text,
-					'wizard_logs_log',
-					false,
-					'?page=webchangedetector-settings',
-					false,
-					'bottom top-minus-50 left-plus-500'
-				);
+                      
 				?>
 
 				<div class="action-container">
@@ -833,37 +781,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 					<div class="box-plain no-border">
 						<?php
-						$wizard_text = '<h2>Settings</h2>In this tab, you can find some more settings.';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_tab',
-							'wizard_settings_add_post_type',
-							false,
-							true,
-							'top left-plus-700'
-						);
 
-                        $wizard_text = '<h2>Post Types</h2>If you are missing urls from post types to select for the checks, you can add them here.';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_add_post_type',
-							'wizard_settings_upgrade',
-							'',
-							false,
-							true,
-							'top left-plus-900'
-						);
 
-						$wizard_text = '<h2>Upgrade for more checks</h2><p>If you run out of checks, you can upgrade your account here.</p>
-                                        Plans with 1000 checks / month start already at $7 per month.</p>';
-						$wcd->print_wizard(
-							$wizard_text,
-							'wizard_settings_upgrade',
-							'wizard_settings_finished',
-							false,
-							false,
-							'top left-plus-800'
-						);
+                                      
 						?>
 						<h2>URL Synchronization Settings</h2>
 						<table class="form-table">
@@ -1043,19 +963,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 					echo '<hr>';
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
-					$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector accout here.
-                                                Please don\'t share your API token with anyone. </p><p>
-                                                Resetting your API Token will allow you to switch accounts. Keep in mind to
-                                                save your API Token before the reset! </p><p>
-                                                When you login with your API token after the reset, all your settings will be still there.</p>';
-					$wcd->print_wizard(
-						$wizard_text,
-						'wizard_settings_account_details',
-						'wizard_settings_upgrade',
-						false,
-						false,
-						'left top-minus-400 left-plus-400'
-					);
+                                              
 				?>
 
 				</div>

@@ -69,8 +69,7 @@
             }
 
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('wcd-wizard') === 'true' ||
-                document.querySelector('#wizard_dashboard_welcome') !== null;
+            return urlParams.get('wcd-wizard') === 'true';
         }
 
         /**
@@ -469,11 +468,7 @@
                 this.startWizard();
             });
 
-            // Listen for wizard exit button clicks
-            $(document).on('click', 'input[value="Exit wizard"]', (e) => {
-                e.preventDefault();
-                this.stopWizard();
-            });
+            // Legacy wizard exit buttons have been removed
 
             // Handle wizard parameter in URL
             if (window.location.search.includes('wcd-wizard=true')) {
@@ -505,8 +500,6 @@
                 return;
             }
 
-            // Hide legacy wizard elements
-            $('.wcd-wizard').hide();
 
             // Update driver configuration with steps
             this.driver.setSteps(this.steps);
@@ -523,9 +516,6 @@
                 this.driver.destroy();
             }
             this.isActive = false;
-
-            // Show legacy wizard elements again
-            $('.wcd-wizard').show();
 
             // Send AJAX request to disable wizard
             if (typeof wcdWizardData !== 'undefined') {
@@ -548,8 +538,6 @@
                 });
             }
 
-            // Show legacy wizard elements again
-            $('.wcd-wizard').show();
         }
 
         /**

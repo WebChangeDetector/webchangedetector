@@ -7,25 +7,6 @@
 
 // Are we allowed to see the settings?
 if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) && $this->website_details['allowances']['manual_checks_settings'] ) {
-	$wizard_text = '<h2>Manual Checks & Auto Update Checks</h2>In this tab, you can make all settings for auto update checks and start manual checks.';
-	$this->print_wizard(
-		$wizard_text,
-		'wizard_manual_checks_tab',
-		'wizard_manual_checks_settings',
-		false,
-		true,
-		'top left-plus-200'
-	);
-
-	$wizard_text = '<h2>Settings</h2><p>If you want to check your Website during WP auto updates, you can enable this here. </p>';
-	$this->print_wizard(
-		$wizard_text,
-		'wizard_manual_checks_settings',
-		'wizard_manual_checks_urls',
-		false,
-		false,
-		'bottom  top-minus-150 left-plus-300'
-	);
 
 	$auto_update_settings = $this->website_details['auto_update_settings'];
 

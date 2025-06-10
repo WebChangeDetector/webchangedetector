@@ -33,8 +33,7 @@ class WebChangeDetector_Admin {
 		'add_post_type',
 		'filter_change_detections',
 		'change_comparison_status',
-		'enable_wizard',
-		'disable_wizard',
+					'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
 		'save_admin_bar_setting',
@@ -1878,28 +1877,7 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-			$wizard_text = '<h2>Select URLs</h2><p>In these accordions you find all URLs of your website. 
-                            Here you can select the URLs you want to check.</p><p>
-                            These settings are taken for manual checks and for auto update checks.</p><p>
-                            Your don\'t have to hit the \'save\' button here. Enabling and disabling URLs are saved automatically.</p>';
-			$this->print_wizard(
-				$wizard_text,
-				'wizard_manual_checks_urls',
-				'wizard_manual_checks_start',
-				false,
-				false,
-				'bottom top-minus-200 left-plus-400'
-			);
-
-			$wizard_text = '<h2>Select URLs</h2>All URLs which you select here will be monitored with settings before.';
-			$this->print_wizard(
-				$wizard_text,
-				'wizard_monitoring_urls',
-				false,
-				'?page=webchangedetector-change-detections',
-				false,
-				'bottom top-minus-100 left-plus-100'
-			);
+                           
 
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
@@ -2133,30 +2111,7 @@ class WebChangeDetector_Admin {
 		</div>
 
 		<?php
-		// Some more wizards windows.
-		if ( $monitoring_group ) {
-			$wizard_text = "<h2>Save</h2>Don't forget to save the settings.";
-			$this->print_wizard(
-				$wizard_text,
-				'wizard_save_monitoring',
-				false,
-				'?page=webchangedetector-change-detections',
-				false,
-				'bottom bottom-plus-100 left-minus-100'
-			);
-
-		} else {
-			$wizard_text = '<h2>Start Manual Checks</h2><p>When you want to do updates or other changes and check your selected websites, start the wizard here.</p><p>
-                            The wizard guides you through the process.</p>';
-			$this->print_wizard(
-				$wizard_text,
-				'wizard_manual_checks_start',
-				false,
-				'?page=webchangedetector-auto-settings',
-				false,
-				'bottom bottom-plus-50 right-minus-30'
-			);
-
+		if ( ! $monitoring_group ) {                          
 			// Start change detection button.
 			if ( $this->is_allowed( 'manual_checks_start' ) ) {
 				?>
@@ -2305,70 +2260,7 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
-	/** Print the wizard.
-	 *
-	 * @param string $text The wizard element text.
-	 * @param string $this_id Current wizard element id.
-	 * @param string $next_id Next wizard element id.
-	 * @param string $next_link Next wizard element url.
-	 * @param bool   $visible Is the wizard element visible by default.
-	 * @param string $extra_classes Extra css classes.
-	 * @return void
-	 */
-	public function print_wizard( $text, $this_id, $next_id = false, $next_link = false, $visible = false, $extra_classes = false ) {
-		if ( get_option( 'wcd_wizard' ) && $this->is_allowed( 'wizard_start' ) ) {
-			?>
-			<div id="<?php echo esc_html( $this_id ); ?>" class="wcd-wizard  <?php echo esc_html( $extra_classes ); ?>">
-				<?php
-				echo wp_kses(
-					$text,
-					array(
-						'h2' => true,
-						'br' => true,
-						'p'  => true,
-						'a'  => array(
-							'href'   => true,
-							'target' => true,
-						),
-					)
-				);
-				?>
-				<div style="margin-top: 20px; ">
-					<div style="float: left;">
-						<form method="post">
-							<input type="hidden" name="wcd_action" value="disable_wizard">
-							<?php wp_nonce_field( 'disable_wizard' ); ?>
-							<input type="submit" class="button button-danger"style="color: darkred;" href="" value="Exit wizard">
-						</form>
-
-					</div>
-					<?php if ( $next_id ) { ?>
-					<div style="float:right;">
-						<a style=" margin-left: auto; margin-right: 0;" class="button" href="" onclick="
-								jQuery('#<?php echo esc_html( $this_id ); ?>').fadeOut();
-								jQuery('#<?php echo esc_html( $next_id ); ?>').fadeIn();
-								document.getElementById('<?php echo esc_html( $next_id ); ?>').scrollIntoView({behavior: 'smooth'});
-								return false;">
-							Next
-						</a>
-					</div>
-					<?php } ?>
-					<?php if ( $next_link ) { ?>
-					<div style="float:right;">
-						<a style=" margin-left: auto; margin-right: 0;" class="button" href="<?php echo esc_html( $next_link ); ?>" >Next</a>
-					</div>
-						<div class="clear"></div>
-					<?php } ?>
-				</div>
-			</div>
-			<?php if ( $visible ) { ?>
-				<script>
-					jQuery("#<?php echo esc_html( $this_id ); ?>").show();
-				</script>
-				<?php
-			}
-		}
-	}
+	
 
 	/**
 	 * No-account page.
@@ -2700,16 +2592,7 @@ class WebChangeDetector_Admin {
 			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
 		}
 
-		$wizard_text = '<h2>Welcome to WebChange Detector</h2><p>This Wizard helps you to get started with your website Checks.</p><p>
-                        You can exit the wizard any time and restart it from the dashboard.</p>';
-		$this->print_wizard(
-			$wizard_text,
-			'wizard_dashboard_welcome',
-			'wizard_dashboard_account',
-			false,
-			true,
-			' top-plus-200 left-plus-400'
-		);
+                       
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
@@ -2726,23 +2609,10 @@ class WebChangeDetector_Admin {
 					<p>
 						Start the Wizard to see what you can do with WebChange Detector.
 					</p>
-					<form method="post" action="?page=webchangedetector">
-						<input type="hidden" name="wcd_action" value="enable_wizard">
-						<?php wp_nonce_field( 'enable_wizard' ); ?>
-						<input type="submit" class="button button-primary" value="Start Wizard">
-					</form>
+					<input type="button" class="button button-primary" value="Start Wizard" onclick="window.wcdStartWizard()">
 				<?php } ?>
 				</div>
 				<?php
-				$wizard_text = '<h2>Your Account</h2>See how many checks you have left and how many checks are used with your current settings until renewal.';
-				$this->print_wizard(
-					$wizard_text,
-					'wizard_dashboard_account',
-					'wizard_dashboard_change_detections',
-					false,
-					false,
-					'right top-plus-200 left-plus-100'
-				);
 
 				?>
 				<div class="box-half credit">
@@ -2821,15 +2691,6 @@ class WebChangeDetector_Admin {
 			<div>
 				<h2>Latest Change Detections</h2>
 				<?php
-				$wizard_text = "<h2>Change Detections</h2>Your latest change detections will appear here. But first, let's do some checks and create some change detections.";
-				$this->print_wizard(
-					$wizard_text,
-					'wizard_dashboard_change_detections',
-					false,
-					'?page=webchangedetector-update-settings&wcd-wizard=true',
-					false,
-					'bottom top-minus-200 left-plus-300'
-				);
 
 				$filter_batches = array(
 					'queue_type' => 'post,auto',

@@ -8,16 +8,7 @@
 // Are we allowed to see the settings?
 if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings'] ) && $this->website_details['allowances']['monitoring_checks_settings'] ) {
 	$enabled     = $group_and_urls['enabled'];
-	$wizard_text = '<h2>Monitoring Settings</h2><p>Do all settings for the monitoring.</p><p> 
-                                    Set the interval of the monitoring checks and the hour of when the checks should start.</p>';
-	$this->print_wizard(
-		$wizard_text,
-		'wizard_monitoring_settings',
-		'wizard_monitoring_urls',
-		false,
-		false,
-		'bottom  top-minus-100 left-plus-200'
-	);
+                                   
 	?>
 	<form class="wcd-frm-settings box-plain" action="admin.php?page=webchangedetector-auto-settings" method="post">
 		<input type="hidden" name="wcd_action" value="save_group_settings">
