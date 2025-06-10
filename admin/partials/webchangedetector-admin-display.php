@@ -435,7 +435,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				}
 				?>
 
-				<div class="action-container">
+				<div class="action-container wizard-change-detections">
 
 					<form method="get" style="margin-bottom: 20px;">
 						<input type="hidden" name="page" value="webchangedetector-change-detections">
@@ -688,7 +688,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
                       
 				?>
 
-				<div class="action-container">
+				<div class="action-container wizard-logs">
 					<table class="queue">
 						<tr>
 							<th></th>

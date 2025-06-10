@@ -2121,7 +2121,7 @@ class WebChangeDetector_Admin {
 						<input type="hidden" name="step" value="<?php echo esc_html( WCD_OPTION_UPDATE_STEP_PRE ); ?>">
 
 						<button
-								class="button button-primary"
+								class="button button-primary wizard-start-manual-checks"
 								style="float: right;"
 								type="submit"
 						>
@@ -2688,7 +2688,7 @@ class WebChangeDetector_Admin {
 				<div class="clear"></div>
 			</div>
 
-			<div>
+			<div class="wizard-dashboard-latest-change-detections">
 				<h2>Latest Change Detections</h2>
 				<?php
 

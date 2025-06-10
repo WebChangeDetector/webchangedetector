@@ -122,7 +122,7 @@ if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings']
 		</div>
 		<div class="clear"></div>
 		<button
-				class="button button-primary"
+				class="button button-primary wizard-save-auto-settings"
 				style="margin-top: 20px;"
 				type="submit"
 				onclick="return wcdValidateFormAutoSettings()">

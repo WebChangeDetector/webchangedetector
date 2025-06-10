@@ -182,7 +182,7 @@
         /**
          * Navigate to next wizard page
          */
-        navigateToPage(page, message = 'Continuing wizard...') {
+        navigateToPage(page) {
             // Show loading state
             if (this.driver && this.isActive) {
                 this.driver.destroy();
@@ -192,9 +192,9 @@
             const loadingDiv = document.createElement('div');
             loadingDiv.innerHTML = `
                 <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                           background: #01A0D2; color: white; padding: 20px; border-radius: 5px; 
+                           background: #266FCB; color: white; padding: 20px; border-radius: 5px; 
                            z-index: 10001; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
-                    <h3 style="margin: 0 0 10px 0; color: white;">${message}</h3>
+                    <h3 style="margin: 0 0 10px 0; color: white;">Continuing Wizard...</h3>
                     <div style="text-align: center;">Loading...</div>
                 </div>
             `;
@@ -217,9 +217,9 @@
             const loadingDiv = document.createElement('div');
             loadingDiv.innerHTML = `
                 <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                           background: #01A0D2; color: white; padding: 20px; border-radius: 5px; 
+                           background: #266FCB; color: white; padding: 20px; border-radius: 5px; 
                            z-index: 10001; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
-                    <h3 style="margin: 0 0 10px 0; color: white;">🎉 Wizard Complete!</h3>
+                    <h3 style="margin: 0 0 10px 0; color: white;">Wizard Complete!</h3>
                     <div style="text-align: center;">Returning to dashboard...</div>
                 </div>
             `;
@@ -251,7 +251,7 @@
         getDashboardSteps() {
             return [
                 {
-                    element: '.webchangedetector .box-plain',
+
                     popover: {
                         title: 'Welcome to WebChange Detector',
                         description: 'This wizard will help you get started with your website checks. You can exit the wizard any time and restart it from the dashboard.',
@@ -269,25 +269,16 @@
                     }
                 },
                 {
-                    element: () => {
-                        // Find h2 element containing "Latest Change Detections" text
-                        const h2Elements = document.querySelectorAll('.webchangedetector .dashboard h2');
-                        for (let h2 of h2Elements) {
-                            if (h2.textContent.includes('Latest Change Detections')) {
-                                return h2;
-                            }
-                        }
-                        return '.webchangedetector .dashboard h2'; // fallback
-                    },
+                    element: '.webchangedetector .wizard-dashboard-latest-change-detections',
                     popover: {
                         title: 'Change Detections',
                         description: 'Your latest change detections will appear here. But first, let\'s do some checks and create some change detections.',
                         side: 'top',
                         align: 'start',
-                        nextBtnText: 'Setup URLs →',
+                        nextBtnText: 'Next →',
                         onNextClick: (element, step, options) => {
                             // Navigate to URL selection page with wizard parameter
-                            this.navigateToPage('webchangedetector-update-settings', 'Setting up URL selection...');
+                            this.navigateToPage('webchangedetector-update-settings');
                         }
                     }
                 }
@@ -300,10 +291,10 @@
         getUrlSelectionSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-frm-settings h2',
+                    element: '.webchangedetector .wcd-frm-settings',
                     popover: {
-                        title: 'Select URLs',
-                        description: 'In these accordions you find all URLs of your website. Here you can select the URLs you want to check. These settings are taken for manual checks and for auto update checks.',
+                        title: 'Settings',
+                        description: 'Here you can configure the WP Auto Update Check settings and some settings for the manual checks, too. <br><br>Remember to enable the WP auto-updates for everything you want to update. <br><br>Don\'t forget to save the settings.',
                         side: 'bottom',
                         align: 'start'
                     }
@@ -312,22 +303,22 @@
                     element: '.webchangedetector .group_urls_container table',
                     popover: {
                         title: 'URL Selection Table',
-                        description: 'Use the toggles to select which URLs to monitor on desktop and mobile devices. Your selections are saved automatically.',
+                        description: 'Use the toggles to select which URLs to check on desktop and mobile devices. The toggle selections are automatically saved for the manual checks and for the auto update checks.',
                         side: 'top',
                         align: 'center'
                     }
                 },
                 {
-                    element: 'form[method="post"] input[value="Start manual checks >"]',
+                    element: '.webchangedetector .wizard-start-manual-checks',
                     popover: {
                         title: 'Start Manual Checks',
                         description: 'When you want to do updates or other changes and check your selected websites, start the wizard here. The wizard guides you through the process.',
                         side: 'left',
                         align: 'start',
-                        nextBtnText: 'Setup Monitoring →',
+                        nextBtnText: 'Next →',
                         onNextClick: (element, step, options) => {
                             // Navigate to monitoring settings page with wizard parameter
-                            this.navigateToPage('webchangedetector-auto-settings', 'Setting up monitoring...');
+                            this.navigateToPage('webchangedetector-auto-settings');
                         }
                     }
                 }
@@ -349,25 +340,26 @@
                     }
                 },
                 {
+                    element: '.webchangedetector .wizard-save-auto-settings',
+                    popover: {
+                        title: 'Save Settings',
+                        description: 'Don\'t forget to save the settings to activate your monitoring configuration.',
+                        side: 'left',
+                        align: 'start'
+
+                    }
+                },
+                {
                     element: '.webchangedetector .group_urls_container',
                     popover: {
                         title: 'Select URLs for Monitoring',
                         description: 'All URLs which you select here will be monitored with the settings configured above.',
                         side: 'top',
-                        align: 'start'
-                    }
-                },
-                {
-                    element: 'input[type="submit"][value*="Save"]',
-                    popover: {
-                        title: 'Save Settings',
-                        description: 'Don\'t forget to save the settings to activate your monitoring configuration.',
-                        side: 'left',
                         align: 'start',
-                        nextBtnText: 'View Results →',
+                        nextBtnText: 'Next →',
                         onNextClick: (element, step, options) => {
                             // Navigate to change detections page with wizard parameter
-                            this.navigateToPage('webchangedetector-change-detections', 'Viewing results...');
+                            this.navigateToPage('webchangedetector-change-detections');
                         }
                     }
                 }
@@ -380,16 +372,16 @@
         getChangeDetectionSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-section',
+                    element: '.webchangedetector .wizard-change-detections',
                     popover: {
                         title: 'Change Detections',
                         description: 'In this tab, you can see all your change detections. Here you can review and manage detected changes on your website.',
                         side: 'bottom',
                         align: 'start',
-                        nextBtnText: 'View Logs →',
+                        nextBtnText: 'Next →',
                         onNextClick: (element, step, options) => {
                             // Navigate to logs page with wizard parameter
-                            this.navigateToPage('webchangedetector-logs', 'Viewing logs...');
+                            this.navigateToPage('webchangedetector-logs');
                         }
                     }
                 }
@@ -402,16 +394,16 @@
         getLogsSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-section',
+                    element: '.webchangedetector .wizard-logs',
                     popover: {
                         title: 'Logs',
                         description: 'The logs section shows you a detailed history of all checks performed on your website. You can track when checks were run and see any issues that occurred.',
                         side: 'bottom',
                         align: 'start',
-                        nextBtnText: 'View Settings →',
+                        nextBtnText: 'Next →',
                         onNextClick: (element, step, options) => {
                             // Navigate to settings page with wizard parameter
-                            this.navigateToPage('webchangedetector-settings', 'Viewing settings...');
+                            this.navigateToPage('webchangedetector-settings');
                         }
                     }
                 }
@@ -430,8 +422,8 @@
                         description: 'In the settings tab, you can configure advanced options for WebChange Detector, manage your account preferences, and customize how the plugin behaves.',
                         side: 'bottom',
                         align: 'start',
-                        doneBtnText: 'Complete Setup →',
-                        nextBtnText: 'Complete Setup →',
+                        doneBtnText: 'Complete Wizard →',
+                        nextBtnText: 'Complete Wizard →',
                         onNextClick: (element, step, options) => {
                             // Complete the wizard and navigate back to dashboard without wizard parameter
                             this.completeWizard();
