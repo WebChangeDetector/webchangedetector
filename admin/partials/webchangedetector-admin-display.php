@@ -530,7 +530,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
-						$wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
+						
+					}
+                    $wizard_text = '<h2>The Change Detections</h2>You see all change detections in these accordions. 
                                 They are grouped by the type: Monitoring, Manual Checks or Auto Update Checks';
 						$wcd->print_wizard(
 							$wizard_text,
@@ -543,7 +545,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						if ( ! empty( $comparisons['data'] ) ) {
 							$comparisons = $comparisons['data'];
 						}
-					}
 
 					$wcd->compare_view_v2( $comparisons, $failed_queues );
 
@@ -840,6 +841,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							false,
 							true,
 							'top left-plus-700'
+						);
+
+                        $wizard_text = '<h2>Post Types</h2>If you are missing urls from post types to select for the checks, you can add them here.';
+						$wcd->print_wizard(
+							$wizard_text,
+							'wizard_settings_add_post_type',
+							'wizard_settings_upgrade',
+							'',
+							false,
+							true,
+							'top left-plus-900'
 						);
 
 						$wizard_text = '<h2>Upgrade for more checks</h2><p>If you run out of checks, you can upgrade your account here.</p>
