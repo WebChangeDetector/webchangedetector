@@ -2355,7 +2355,6 @@ class WebChangeDetector_Admin {
                 if(str_starts_with(rtrim($website['domain'], '/'), rtrim(WebChangeDetector_Admin::get_domain_from_site_url(), '/'))) {
                     $website_details = $website;
                     $website_details['sync_url_types'] = json_decode($website['sync_url_types'], 1) ?? [];
-                    $website_details['allowances'] = json_decode($website['allowances'], 1) ?? [];
                     break;
                 }
             }
