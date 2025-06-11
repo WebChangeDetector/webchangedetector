@@ -32,6 +32,24 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( array( 'action' => 'account' ), 'GET' );
 	}
 
+    public static function get_websites_v2() {
+        $args = array(
+            'action' => 'websites'
+        );
+        return self::api_v2( $args, 'GET' );
+    }
+
+    public static function get_website_v2($uuid = false) {
+        if(!$uuid) {
+            return false;
+        }
+
+        $args = array(
+            'action' => 'websites/' . $uuid
+        );
+        return self::api_v2( $args, 'GET' );
+    }
+
 	/** Sync urls.
 	 *
 	 * @param array $posts The posts to sync.

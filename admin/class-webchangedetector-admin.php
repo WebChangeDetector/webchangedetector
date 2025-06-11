@@ -821,7 +821,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function compare_view_v2( $compares, $failed_queues = false ) {
-		if ( empty( $compares ) ) {
+		if ( empty( $compares['data'] ) ) {
 			?>
 			<table style="width: 100%">
 				<tr>
@@ -2334,30 +2334,37 @@ class WebChangeDetector_Admin {
 		<?php
 	}
 
+
+
 	/**
 	 * Get Website details.
 	 *
 	 * @return array|bool The website details.
 	 */
 	public function get_website_details() {
+        static $website_details;
+
+        if(empty($website_details)) {
+            $websites = WebChangeDetector_API_V2::get_websites_v2();
+            
+            if(empty($websites['data'])) {
+                return 'No website details. Create them first.';
+            }
+
+            foreach($websites['data'] as $website) {
+                if(strpos($website['domain'],  WebChangeDetector_Admin::get_domain_from_site_url())) {
+                    $website_details = $website;
+                    $website_details['sync_url_types'] = json_decode($website['sync_url_types'], 1) ?? [];
+                    $website_details['allowances'] = json_decode($website['allowances'], 1) ?? [];
+
+                }
+            }
+        }
+
 		$args = array(
 			'action' => 'get_website_details',
 			// domain sent at mm_api.
 		);
-		$website_details = $this->api_v1( $args );
-
-		// If we get unauthorized, we need to redirect to the no-account page.
-		if ( 'unauthorized' === $website_details ) {
-			return false;
-		}
-
-		if ( ! empty( $website_details[0] ) ) {
-			$website_details = $website_details[0];
-		}
-
-		if ( isset( $website_details['sync_url_types'] ) ) {
-			$website_details['sync_url_types'] = json_decode( $website_details['sync_url_types'], 1 );
-		}
 
 		$update = false;
 

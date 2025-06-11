@@ -220,8 +220,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Update groups in case we have group ids from previous account. We need them for auto updates.
 		$groups = array(
-			'auto_detection_group'   => $wcd->website_details['auto_detection_group']['uuid'] ?? false,
-			'manual_detection_group' => $wcd->website_details['manual_detection_group']['uuid'] ?? false,
+			'auto_detection_group'   => $wcd->website_details['auto_detection_group'] ?? false,
+			'manual_detection_group' => $wcd->website_details['manual_detection_group'] ?? false,
 		);
 		update_option( WCD_WEBSITE_GROUPS, $groups, false );
 

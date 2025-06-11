@@ -1,15 +1,15 @@
 === Web Change Detector ===
 Contributors: Mike.Miler,Repat
-Tags: vrt, visual regression test, visual check, screenshots, auto-updates, monitoring
+Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.8.1
-Stable tag: 3.1.10.2
+Stable tag: 3.1.8.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
-## The #1 Visual Regression Test Tool For WordPress
+## The #1 Visual Regression Testing Tool For WordPress
 
 Check your website visually after **WP auto updates** to see if something broke with visual regression tests. Or monitor your website visually in intervals and get notified about any change.
 With WebChange Detector you can find any difference on your website
