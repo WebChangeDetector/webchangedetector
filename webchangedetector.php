@@ -17,7 +17,7 @@
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
  * Version:           3.1.8.5
  * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
- * Primary Branch:    dev
+ * Primary Branch:    main
  * Author:            Mike Miler
  * Author URI:        webchangedetector.com
  * License:           GPL-2.0+
@@ -38,6 +38,71 @@ if ( ! defined( 'WPINC' ) ) {
  */
 
 define( 'WEBCHANGEDETECTOR_VERSION', '3.1.8.5' );
+
+/**
+ * Set default branch preference for beta updates.
+ * Only enabled if Git Updater plugin is active.
+ * Can be overridden in wp-config.php by defining WCD_USE_DEV_BRANCH.
+ */
+if ( ! defined( 'WCD_USE_DEV_BRANCH' ) ) {
+	// Check if Git Updater plugin is active
+	$git_updater_active = false;
+	if ( function_exists( 'is_plugin_active' ) ) {
+		$git_updater_active = is_plugin_active( 'git-updater/git-updater.php' );
+	}
+	
+	define( 'WCD_USE_DEV_BRANCH', $git_updater_active );
+}
+
+/**
+ * Git Updater filter to set the primary branch based on WCD_USE_DEV_BRANCH setting.
+ * Only applies to this plugin (webchangedetector) and only when Git Updater is active.
+ *
+ * @param string $branch   The default branch.
+ * @param string $slug     The plugin slug.
+ * @return string The branch to use for updates.
+ */
+function wcd_set_git_updater_branch( $branch, $slug ) {
+	// Only apply to our plugin
+	if ( 'webchangedetector' !== $slug ) {
+		return $branch;
+	}
+	
+	// Return dev branch for beta updates, main for stable
+	return WCD_USE_DEV_BRANCH ? 'dev' : 'main';
+}
+
+// Only add filter if Git Updater is available
+if ( WCD_USE_DEV_BRANCH ) {
+	add_filter( 'gu_primary_branch', 'wcd_set_git_updater_branch', 10, 2 );
+}
+
+/**
+ * Display admin notice about current update mode.
+ * Only shown to administrators and only when in beta mode.
+ */
+function wcd_update_mode_admin_notice() {
+	// Only show when in beta mode
+	if ( ! WCD_USE_DEV_BRANCH ) {
+		return;
+	}
+	
+	// Only show to administrators
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	
+	// Only show on plugin pages
+	$screen = get_current_screen();
+	if ( ! $screen || ( strpos( $screen->id, 'webchangedetector' ) === false && $screen->id !== 'plugins' ) ) {
+		return;
+	}
+	
+	printf(
+		'<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> ⚠️ Currently running in <strong>Beta (dev branch)</strong> update mode. You will receive beta updates.</p></div>'
+	);
+}
+add_action( 'admin_notices', 'wcd_update_mode_admin_notice' );
 
 /**
  * The code that runs during plugin activation.
