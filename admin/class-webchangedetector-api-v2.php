@@ -66,7 +66,7 @@ class WebChangeDetector_API_V2 {
 	 * @param array $posts The posts to sync.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts ) {
+	public static function sync_urls( $posts, $collection_uuid = null ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
