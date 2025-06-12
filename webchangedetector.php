@@ -15,7 +15,7 @@
  * Plugin Name:       WebChange Detector
  * Plugin URI:        webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
- * Version:           3.1.8.6
+ * Version:           3.1.8.7
  * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
  * Primary Branch:    main
  * Author:            Mike Miler
@@ -32,12 +32,22 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
- * Currently plugin version.
- * Start at version 1.0.0 and use SemVer - https://semver.org
- * Rename this for your plugin and update it as you release new versions.
+ * Dynamically derive the current version from the plugin header so we only maintain it in one place.
  */
+if ( ! defined( 'WEBCHANGEDETECTOR_VERSION' ) ) {
+	if ( ! function_exists( 'get_file_data' ) ) {
+		// Ensure get_file_data is available on the front-end.
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
 
-define( 'WEBCHANGEDETECTOR_VERSION', '3.1.8.6' );
+	$wcd_plugin_data = get_file_data(
+		__FILE__,
+		array( 'Version' => 'Version' ),
+		false
+	);
+
+	define( 'WEBCHANGEDETECTOR_VERSION', isset( $wcd_plugin_data['Version'] ) ? $wcd_plugin_data['Version'] : '0.0.0' );
+}
 
 /**
  * Set default branch preference for beta updates.
