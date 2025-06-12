@@ -33,7 +33,7 @@ class WebChangeDetector_Admin {
 		'add_post_type',
 		'filter_change_detections',
 		'change_comparison_status',
-					'disable_wizard',
+		'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
 		'save_admin_bar_setting',
@@ -153,7 +153,7 @@ class WebChangeDetector_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
-		
+
 		// Enqueue Driver.js CSS for the new wizard system.
 		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
@@ -181,7 +181,7 @@ class WebChangeDetector_Admin {
 		wp_enqueue_script( 'jquery-ui-accordion' );
 		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-		
+
 		// Enqueue Driver.js for the new wizard system.
 		wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
 		wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
@@ -195,12 +195,16 @@ class WebChangeDetector_Admin {
 
 		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
 		// hooked to wp_enqueue_scripts for frontend loading.
-		
-		// Localize script with AJAX data for wizard
-		wp_localize_script( 'wcd-wizard', 'wcdWizardData', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-		) );
+
+		// Localize script with AJAX data for wizard.
+		wp_localize_script(
+			'wcd-wizard',
+			'wcdWizardData',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+			)
+		);
 	}
 
 	/**
@@ -1438,7 +1442,7 @@ class WebChangeDetector_Admin {
 		}
 
 		self::error_log( 'Starting Sync' );
-        update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
+		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		// Check if we got website_details or if we use the ones from the class.
 		$array = array(); // init.
@@ -1505,7 +1509,7 @@ class WebChangeDetector_Admin {
 
 		// Check if frontpage is already in the sync settings.
 		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'] ?? [],
+			$website_details['sync_url_types'] ?? array(),
 			function ( $item ) {
 				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
 			}
@@ -1584,10 +1588,10 @@ class WebChangeDetector_Admin {
 			$this->update_website_details( $website_details );
 		}
 
-        // Create uuid for sync urls.
-        $collection_uuid = wp_generate_uuid4();
-        
-        // Sync urls.
+		// Create uuid for sync urls.
+		$collection_uuid = wp_generate_uuid4();
+
+		// Sync urls.
 		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
 		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
@@ -1881,7 +1885,6 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-                           
 
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
@@ -2115,7 +2118,7 @@ class WebChangeDetector_Admin {
 		</div>
 
 		<?php
-		if ( ! $monitoring_group ) {                          
+		if ( ! $monitoring_group ) {
 			// Start change detection button.
 			if ( $this->is_allowed( 'manual_checks_start' ) ) {
 				?>
@@ -2264,7 +2267,7 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
-	
+
 
 	/**
 	 * No-account page.
@@ -2346,23 +2349,23 @@ class WebChangeDetector_Admin {
 	 * @return array|bool The website details.
 	 */
 	public function get_website_details() {
-        static $website_details;
+		static $website_details;
 
-        if(empty($website_details)) {
-            $websites = WebChangeDetector_API_V2::get_websites_v2();
-            
-            if(empty($websites['data'])) {
-                return 'No website details. Create them first.';
-            }
+		if ( empty( $website_details ) ) {
+			$websites = WebChangeDetector_API_V2::get_websites_v2();
 
-            foreach($websites['data'] as $website) {
-                if(str_starts_with(rtrim($website['domain'], '/'), rtrim(WebChangeDetector_Admin::get_domain_from_site_url(), '/'))) {
-                    $website_details = $website;
-                    $website_details['sync_url_types'] = json_decode($website['sync_url_types'], 1) ?? [];
-                    break;
-                }
-            }
-        }
+			if ( empty( $websites['data'] ) ) {
+				return 'No website details. Create them first.';
+			}
+
+			foreach ( $websites['data'] as $website ) {
+				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( self::get_domain_from_site_url(), '/' ) ) ) {
+					$website_details                   = $website;
+					$website_details['sync_url_types'] = json_decode( $website['sync_url_types'], 1 ) ?? array();
+					break;
+				}
+			}
+		}
 
 		$args = array(
 			'action' => 'get_website_details',
@@ -2602,7 +2605,6 @@ class WebChangeDetector_Admin {
 			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
 		}
 
-                       
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
@@ -2622,9 +2624,6 @@ class WebChangeDetector_Admin {
 					<input type="button" class="button button-primary" value="Start Wizard" onclick="window.wcdStartWizard()">
 				<?php } ?>
 				</div>
-				<?php
-
-				?>
 				<div class="box-half credit">
 					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
 						<p style="margin-top: 20px;">

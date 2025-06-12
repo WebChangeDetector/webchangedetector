@@ -7,8 +7,8 @@
 
 // Are we allowed to see the settings?
 if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings'] ) && $this->website_details['allowances']['monitoring_checks_settings'] ) {
-	$enabled     = $group_and_urls['enabled'];
-                                   
+	$enabled = $group_and_urls['enabled'];
+
 	?>
 	<form class="wcd-frm-settings box-plain" action="admin.php?page=webchangedetector-auto-settings" method="post">
 		<input type="hidden" name="wcd_action" value="save_group_settings">

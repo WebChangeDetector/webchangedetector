@@ -45,12 +45,12 @@ define( 'WEBCHANGEDETECTOR_VERSION', '3.1.8.6' );
  * Can be overridden in wp-config.php by defining WCD_USE_DEV_BRANCH.
  */
 if ( ! defined( 'WCD_USE_DEV_BRANCH' ) ) {
-	// Check if Git Updater plugin is active
+	// Check if Git Updater plugin is active.
 	$git_updater_active = false;
 	if ( function_exists( 'is_plugin_active' ) ) {
 		$git_updater_active = is_plugin_active( 'git-updater/git-updater.php' );
 	}
-	
+
 	define( 'WCD_USE_DEV_BRANCH', $git_updater_active );
 }
 
@@ -63,16 +63,16 @@ if ( ! defined( 'WCD_USE_DEV_BRANCH' ) ) {
  * @return string The branch to use for updates.
  */
 function wcd_set_git_updater_branch( $branch, $slug ) {
-	// Only apply to our plugin
+	// Only apply to our plugin.
 	if ( 'webchangedetector' !== $slug ) {
 		return $branch;
 	}
-	
-	// Return dev branch for beta updates, main for stable
+
+	// Return dev branch for beta updates, main for stable.
 	return WCD_USE_DEV_BRANCH ? 'dev' : 'main';
 }
 
-// Only add filter if Git Updater is available
+// Only add filter if Git Updater is available.
 if ( WCD_USE_DEV_BRANCH ) {
 	add_filter( 'gu_primary_branch', 'wcd_set_git_updater_branch', 10, 2 );
 }
@@ -82,22 +82,22 @@ if ( WCD_USE_DEV_BRANCH ) {
  * Only shown to administrators and only when in beta mode.
  */
 function wcd_update_mode_admin_notice() {
-	// Only show when in beta mode
+	// Only show when in beta mode.
 	if ( ! WCD_USE_DEV_BRANCH ) {
 		return;
 	}
-	
-	// Only show to administrators
+
+	// Only show to administrators.
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	
-	// Only show on plugin pages
+
+	// Only show on plugin pages.
 	$screen = get_current_screen();
-	if ( ! $screen || ( strpos( $screen->id, 'webchangedetector' ) === false && $screen->id !== 'plugins' ) ) {
+	if ( ! $screen || ( false === strpos( $screen->id, 'webchangedetector' ) && 'plugins' !== $screen->id ) ) {
 		return;
 	}
-	
+
 	printf(
 		'<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> ⚠️ Currently running in <strong>Beta (dev branch)</strong> update mode. You will receive beta updates.</p></div>'
 	);
