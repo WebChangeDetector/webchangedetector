@@ -88,11 +88,11 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param bool $delete_missing_urls Delete missing urls or not.
 	 */
-	public static function start_url_sync( $delete_missing_urls = true ) {
+	public static function start_url_sync( $delete_missing_urls = true, $collection_uuid = null ) {
 		return self::api_v2(
 			array(
 				'action'              => 'start-sync',
-				'collection_uuid'     => $collection_uuid,
+				'collection_uuid'     => $collection_uuid ,
 				'delete_missing_urls' => $delete_missing_urls,
 			)
 		);
