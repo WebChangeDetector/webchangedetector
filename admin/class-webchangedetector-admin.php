@@ -1584,8 +1584,12 @@ class WebChangeDetector_Admin {
 			$this->update_website_details( $website_details );
 		}
 
-		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls );
-		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true );
+        // Create uuid for sync urls.
+        $collection_uuid = wp_generate_uuid4();
+        
+        // Sync urls.
+		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
+		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
 		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
 

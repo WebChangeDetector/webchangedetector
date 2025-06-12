@@ -51,9 +51,11 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
-= 3.1.9 =
-* Fix: Amount of selected urls
+= 3.2.0 =
+* Fix: Message about no selected urls
+* Fix: Delete of url settings in rare cases
 * Improvement: New Wizard
+* Feature: Beta updates with Git Updater plugin
 
 = 3.1.8 =
 * Fix: Error for new installations

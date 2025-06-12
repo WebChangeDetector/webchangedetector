@@ -64,6 +64,7 @@ class WebChangeDetector_API_V2 {
 			'action'     => 'sync-urls',
 			'domain'     => WebChangeDetector_Admin::get_domain_from_site_url(),
 			'urls'       => $posts,
+            'collection_uuid' => $collection_uuid,
 			'multi_call' => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
 		);
 
@@ -80,7 +81,8 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2(
 			array(
 				'action'              => 'start-sync',
-				'delete_missing_urls' => $delete_missing_urls,
+				'collection_uuid'     => $collection_uuid,
+                'delete_missing_urls' => $delete_missing_urls,
 			)
 		);
 	}
