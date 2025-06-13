@@ -1914,13 +1914,19 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
+                                // Fix for old sync_url_types.
+								$sync_url_types = $this->website_details['sync_url_types'];
+								if ( is_string( $this->website_details['sync_url_types'] ) ) {
+									$sync_url_types = json_decode( $this->website_details['sync_url_types'], true );
+								}
+
+								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
 									<?php
 								}
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' !== $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -1938,7 +1944,7 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' === $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -2361,7 +2367,7 @@ class WebChangeDetector_Admin {
 			foreach ( $websites['data'] as $website ) {
 				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( self::get_domain_from_site_url(), '/' ) ) ) {
 					$website_details                   = $website;
-					$website_details['sync_url_types'] = $website['sync_url_types'] ?? array();
+					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 					break;
 				}
 			}
