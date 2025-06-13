@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.8.1
-Stable tag:3.2.0
+Stable tag:3.2.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,13 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 3.2.2 =
+* Fix when creating account
+
+= 3.2.1 =
+* Fix in sync
+
 = 3.2.0 =
 * Fix: Message about no selected urls
 * Fix: Delete of url settings in rare cases

@@ -1432,12 +1432,11 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function sync_posts( $force_sync = false, $website_details = false ) {
-
 		$last_sync     = get_option( 'wcd_last_urls_sync' );
 		$sync_interval = '+1 hour';
 
 		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > gmdate( 'U' ) ) {
+		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > date_i18n( 'U' ) ) {
 			// Returning last sync datetime.
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
@@ -2362,7 +2361,7 @@ class WebChangeDetector_Admin {
 			foreach ( $websites['data'] as $website ) {
 				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( self::get_domain_from_site_url(), '/' ) ) ) {
 					$website_details                   = $website;
-					$website_details['sync_url_types'] = json_decode( $website['sync_url_types'], 1 ) ?? array();
+					$website_details['sync_url_types'] = $website['sync_url_types'] ?? array();
 					break;
 				}
 			}
