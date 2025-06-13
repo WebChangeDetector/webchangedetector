@@ -63,7 +63,8 @@ class WebChangeDetector_API_V2 {
 
 	/** Sync urls.
 	 *
-	 * @param array $posts The posts to sync.
+	 * @param array  $posts The posts to sync.
+	 * @param string $collection_uuid The collection uuid.
 	 * @return false|mixed|string
 	 */
 	public static function sync_urls( $posts, $collection_uuid = null ) {
@@ -73,7 +74,7 @@ class WebChangeDetector_API_V2 {
 
 		$args = array(
 			'action'          => 'sync-urls',
-            'collection_uuid' => $collection_uuid,
+			'collection_uuid' => $collection_uuid,
 			'domain'          => WebChangeDetector_Admin::get_domain_from_site_url(),
 			'urls'            => $posts,
 			'multi_call'      => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
@@ -86,13 +87,14 @@ class WebChangeDetector_API_V2 {
 	/**
 	 * Start the sync with the already uploaded urls.
 	 *
-	 * @param bool $delete_missing_urls Delete missing urls or not.
+	 * @param bool   $delete_missing_urls Delete missing urls or not.
+	 * @param string $collection_uuid The collection uuid.
 	 */
 	public static function start_url_sync( $delete_missing_urls = true, $collection_uuid = null ) {
 		return self::api_v2(
 			array(
 				'action'              => 'start-sync',
-				'collection_uuid'     => $collection_uuid ,
+				'collection_uuid'     => $collection_uuid,
 				'delete_missing_urls' => $delete_missing_urls,
 			)
 		);
