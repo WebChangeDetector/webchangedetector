@@ -2722,7 +2722,8 @@ class WebChangeDetector_Admin {
 					}
 
 					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-					if ( ! empty( $recent_comparisons['data'] ) ) {
+                    
+					if ( isset( $recent_comparisons['data'] ) ) {
 						$recent_comparisons = $recent_comparisons['data'];
 					}
 				}
