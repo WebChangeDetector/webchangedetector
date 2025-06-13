@@ -515,7 +515,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
 					}
-
 					if ( ! empty( $comparisons['data'] ) ) {
 						$comparisons = $comparisons['data'];
 					}
