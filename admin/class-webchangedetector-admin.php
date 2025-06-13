@@ -825,7 +825,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function compare_view_v2( $compares, $failed_queues = false ) {
-        
+
 		if ( empty( $compares ) ) {
 			?>
 			<table style="width: 100%">
