@@ -998,6 +998,5 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
-		
 	} // wcd_webchangedetector_init.
 } // function_exists.

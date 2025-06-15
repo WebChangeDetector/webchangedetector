@@ -130,7 +130,7 @@ class WebChangeDetector_Admin {
 		// Register AJAX handler.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
 
-        // Add cron job for daily sync.
+		// Add cron job for daily sync.
 		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
 		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
@@ -168,8 +168,9 @@ class WebChangeDetector_Admin {
 	 * Register the JavaScript for the admin area.
 	 *
 	 * @since    1.0.0
+	 * @param string $hook_suffix The hook suffix for the current page.
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts( $hook_suffix ) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -183,36 +184,37 @@ class WebChangeDetector_Admin {
 		 * class.
 		 */
 
-         // Only load the js files when we are on the wcd page.
-        if(isset($_GET['page']) && strpos($_GET['page'], 'webchangedetector') === 0) {
-            wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-         
-            wp_enqueue_script( 'jquery-ui-accordion' );
-            wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-            wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+		// Only load the js files when we are on the wcd page.
 
-            // Enqueue Driver.js for the new wizard system.
-            wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-            wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 
-            // Load WP codemirror.
-            $css_settings              = array(
-                'type' => 'text/css',
-            );
-            $cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-            wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
 
-            // Localize script with AJAX data for wizard.
-            wp_localize_script(
-                'wcd-wizard',
-                'wcdWizardData',
-                array(
-                    'ajax_url' => admin_url( 'admin-ajax.php' ),
-                    'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-                )
-            );
-         }
-		
+			wp_enqueue_script( 'jquery-ui-accordion' );
+			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+
+			// Enqueue Driver.js for the new wizard system.
+			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
+			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+
+			// Load WP codemirror.
+			$css_settings              = array(
+				'type' => 'text/css',
+			);
+			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+
+			// Localize script with AJAX data for wizard.
+			wp_localize_script(
+				'wcd-wizard',
+				'wcdWizardData',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -1419,7 +1421,7 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-    /**
+	/**
 	 * Daily sync posts cron job.
 	 *
 	 * @return void
@@ -1903,7 +1905,8 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {?>
+			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+				?>
 
 			<div class="wcd-frm-settings box-plain">
 				<h2>Select URLs to Check<br><small></small></h2>
@@ -1926,7 +1929,7 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-                                // Fix for old sync_url_types.
+								// Fix for old sync_url_types.
 								$sync_url_types = $this->website_details['sync_url_types'];
 								if ( is_string( $this->website_details['sync_url_types'] ) ) {
 									$sync_url_types = json_decode( $this->website_details['sync_url_types'], true );
@@ -2729,7 +2732,7 @@ class WebChangeDetector_Admin {
 					}
 
 					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-                    
+
 					if ( isset( $recent_comparisons['data'] ) ) {
 						$recent_comparisons = $recent_comparisons['data'];
 					}
