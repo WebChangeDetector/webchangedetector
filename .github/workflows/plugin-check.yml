@@ -29,15 +29,50 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up WordPress
-        uses: 10up/action-wordpress-env@v1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          wp-version: 'latest'
-          plugin-dir: .
+          extensions: mysqli, pdo_mysql, mbstring, gd, curl, zip
+
+      - name: Download WordPress CLI
+        run: |
+          curl -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Download WordPress
+        run: |
+          wp core download --path=wordpress --allow-root
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..10}; do
+            mysqladmin -h 127.0.0.1 -u root -ppassword ping && break
+            echo "MySQL not ready yet. Retrying in 5 seconds..."
+            sleep 5
+          done
+
+      - name: Set up wp-config
+        working-directory: wordpress
+        run: |
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=127.0.0.1 --allow-root
+
+      - name: Install WordPress
+        working-directory: wordpress
+        run: |
+          wp core install --url=http://localhost --title=TestSite --admin_user=admin --admin_pass=admin --admin_email=admin@example.com --allow-root
+
+      - name: Move plugin into WordPress directory
+        run: |
+          mv ./* wordpress/wp-content/plugins/my-plugin
 
       - name: Activate plugin
-        run: wp plugin activate $(basename $GITHUB_WORKSPACE)
+        working-directory: wordpress
+        run: |
+          wp plugin activate my-plugin --allow-root
 
       - name: Run plugin check
-        run: wp plugin check $(basename $GITHUB_WORKSPACE) --format=json
+        working-directory: wordpress
+        run: |
+          wp plugin check my-plugin --allow-root
