@@ -45,6 +45,14 @@ jobs:
         run: |
           wp core download --path=wordpress --allow-root
 
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..10}; do
+            mysqladmin -h 127.0.0.1 -u root -ppassword ping && break
+            echo "MySQL not ready yet. Retrying in 5 seconds..."
+            sleep 5
+          done
+
       - name: Set up wp-config
         working-directory: wordpress
         run: |
