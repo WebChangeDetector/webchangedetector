@@ -129,6 +129,12 @@ class WebChangeDetector_Admin {
 
 		// Register AJAX handler.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
+
+        // Add cron job for daily sync.
+		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
+		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		}
 	}
 
 	/**
@@ -177,34 +183,36 @@ class WebChangeDetector_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'jquery-ui-accordion' );
-		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+         // Only load the js files when we are on the wcd page.
+        if(isset($_GET['page']) && strpos($_GET['page'], 'webchangedetector') === 0) {
+            wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+         
+            wp_enqueue_script( 'jquery-ui-accordion' );
+            wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
+            wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
 
-		// Enqueue Driver.js for the new wizard system.
-		wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-		wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+            // Enqueue Driver.js for the new wizard system.
+            wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
+            wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
 
-		// Load WP codemirror.
-		$css_settings              = array(
-			'type' => 'text/css',
-		);
-		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+            // Load WP codemirror.
+            $css_settings              = array(
+                'type' => 'text/css',
+            );
+            $cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+            wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
 
-		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
-		// hooked to wp_enqueue_scripts for frontend loading.
-
-		// Localize script with AJAX data for wizard.
-		wp_localize_script(
-			'wcd-wizard',
-			'wcdWizardData',
-			array(
-				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-			)
-		);
+            // Localize script with AJAX data for wizard.
+            wp_localize_script(
+                'wcd-wizard',
+                'wcdWizardData',
+                array(
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+                )
+            );
+         }
+		
 	}
 
 	/**
@@ -1411,6 +1419,16 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+    /**
+	 * Daily sync posts cron job.
+	 *
+	 * @return void
+	 */
+	public function daily_sync_posts_cron_job() {
+		// Setting force to true to ensure it runs regardless of last sync time.
+		$this->sync_posts();
+	}
+
 	/** Sync single post.
 	 *
 	 * @param array $single_post The sync array.
@@ -1436,7 +1454,7 @@ class WebChangeDetector_Admin {
 		$sync_interval = '+1 hour';
 
 		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > date_i18n( 'U' ) ) {
+		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) >= date_i18n( 'U' ) ) {
 			// Returning last sync datetime.
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
@@ -1885,9 +1903,7 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-
-			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
-				?>
+			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {?>
 
 			<div class="wcd-frm-settings box-plain">
 				<h2>Select URLs to Check<br><small></small></h2>
@@ -1895,11 +1911,7 @@ class WebChangeDetector_Admin {
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
 					Missing URLs? Select them from other post types and taxonomies by enabling them in the
 					<a href="?page=webchangedetector-settings">Settings</a><br>
-					Last url sync:
-					<span data-nonce='<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>' id='ajax_sync_urls_status' >
-						<?php echo esc_html( date_i18n( 'd.m.Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
-					</span>
-					<script>jQuery(document).ready(function() {sync_urls(); });</script>
+					
 				</p>
 				<input type="hidden" value="webchangedetector" name="page">
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
@@ -2372,11 +2384,6 @@ class WebChangeDetector_Admin {
 				}
 			}
 		}
-
-		$args = array(
-			'action' => 'get_website_details',
-			// domain sent at mm_api.
-		);
 
 		$update = false;
 

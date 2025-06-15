@@ -998,8 +998,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
-
-		// Add inline JavaScript for sync_urls function.
-		echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
+		
 	} // wcd_webchangedetector_init.
 } // function_exists.
