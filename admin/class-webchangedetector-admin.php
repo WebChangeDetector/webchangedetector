@@ -2733,6 +2733,7 @@ class WebChangeDetector_Admin {
 
 					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
 
+					// Only send the data to the view.
 					if ( isset( $recent_comparisons['data'] ) ) {
 						$recent_comparisons = $recent_comparisons['data'];
 					}
