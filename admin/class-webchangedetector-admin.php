@@ -33,7 +33,7 @@ class WebChangeDetector_Admin {
 		'add_post_type',
 		'filter_change_detections',
 		'change_comparison_status',
-					'disable_wizard',
+		'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
 		'save_admin_bar_setting',
@@ -129,6 +129,12 @@ class WebChangeDetector_Admin {
 
 		// Register AJAX handler.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
+
+		// Add cron job for daily sync.
+		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
+		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		}
 	}
 
 	/**
@@ -153,7 +159,7 @@ class WebChangeDetector_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
-		
+
 		// Enqueue Driver.js CSS for the new wizard system.
 		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
@@ -162,8 +168,9 @@ class WebChangeDetector_Admin {
 	 * Register the JavaScript for the admin area.
 	 *
 	 * @since    1.0.0
+	 * @param string $hook_suffix The hook suffix for the current page.
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts( $hook_suffix ) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -177,30 +184,37 @@ class WebChangeDetector_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'jquery-ui-accordion' );
-		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-		
-		// Enqueue Driver.js for the new wizard system.
-		wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-		wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+		// Only load the js files when we are on the wcd page.
 
-		// Load WP codemirror.
-		$css_settings              = array(
-			'type' => 'text/css',
-		);
-		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 
-		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
-		// hooked to wp_enqueue_scripts for frontend loading.
-		
-		// Localize script with AJAX data for wizard
-		wp_localize_script( 'wcd-wizard', 'wcdWizardData', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-		) );
+			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+
+			wp_enqueue_script( 'jquery-ui-accordion' );
+			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+
+			// Enqueue Driver.js for the new wizard system.
+			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
+			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+
+			// Load WP codemirror.
+			$css_settings              = array(
+				'type' => 'text/css',
+			);
+			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+
+			// Localize script with AJAX data for wizard.
+			wp_localize_script(
+				'wcd-wizard',
+				'wcdWizardData',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -821,7 +835,8 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function compare_view_v2( $compares, $failed_queues = false ) {
-		if ( empty( $compares['data'] ) ) {
+
+		if ( empty( $compares ) ) {
 			?>
 			<table style="width: 100%">
 				<tr>
@@ -1406,6 +1421,16 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+	/**
+	 * Daily sync posts cron job.
+	 *
+	 * @return void
+	 */
+	public function daily_sync_posts_cron_job() {
+		// Setting force to true to ensure it runs regardless of last sync time.
+		$this->sync_posts();
+	}
+
 	/** Sync single post.
 	 *
 	 * @param array $single_post The sync array.
@@ -1427,17 +1452,17 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function sync_posts( $force_sync = false, $website_details = false ) {
-
 		$last_sync     = get_option( 'wcd_last_urls_sync' );
 		$sync_interval = '+1 hour';
 
 		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > gmdate( 'U' ) ) {
+		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) >= date_i18n( 'U' ) ) {
 			// Returning last sync datetime.
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
 
 		self::error_log( 'Starting Sync' );
+		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		// Check if we got website_details or if we use the ones from the class.
 		$array = array(); // init.
@@ -1504,7 +1529,7 @@ class WebChangeDetector_Admin {
 
 		// Check if frontpage is already in the sync settings.
 		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'] ?? [],
+			$website_details['sync_url_types'] ?? array(),
 			function ( $item ) {
 				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
 			}
@@ -1583,11 +1608,14 @@ class WebChangeDetector_Admin {
 			$this->update_website_details( $website_details );
 		}
 
-		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls );
-		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true );
+		// Create uuid for sync urls.
+		$collection_uuid = wp_generate_uuid4();
+
+		// Sync urls.
+		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
+		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
 		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
-		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		return date_i18n( 'd/m/Y H:i' );
 	}
@@ -1877,8 +1905,6 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-                           
-
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
 
@@ -1888,11 +1914,7 @@ class WebChangeDetector_Admin {
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
 					Missing URLs? Select them from other post types and taxonomies by enabling them in the
 					<a href="?page=webchangedetector-settings">Settings</a><br>
-					Last url sync:
-					<span data-nonce='<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>' id='ajax_sync_urls_status' >
-						<?php echo esc_html( date_i18n( 'd.m.Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
-					</span>
-					<script>jQuery(document).ready(function() {sync_urls(); });</script>
+					
 				</p>
 				<input type="hidden" value="webchangedetector" name="page">
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
@@ -1907,13 +1929,19 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
+								// Fix for old sync_url_types.
+								$sync_url_types = $this->website_details['sync_url_types'];
+								if ( is_string( $this->website_details['sync_url_types'] ) ) {
+									$sync_url_types = json_decode( $this->website_details['sync_url_types'], true );
+								}
+
+								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
 									<?php
 								}
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' !== $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -1931,7 +1959,7 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' === $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -2111,7 +2139,7 @@ class WebChangeDetector_Admin {
 		</div>
 
 		<?php
-		if ( ! $monitoring_group ) {                          
+		if ( ! $monitoring_group ) {
 			// Start change detection button.
 			if ( $this->is_allowed( 'manual_checks_start' ) ) {
 				?>
@@ -2260,7 +2288,7 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
-	
+
 
 	/**
 	 * No-account page.
@@ -2342,28 +2370,23 @@ class WebChangeDetector_Admin {
 	 * @return array|bool The website details.
 	 */
 	public function get_website_details() {
-        static $website_details;
+		static $website_details;
 
-        if(empty($website_details)) {
-            $websites = WebChangeDetector_API_V2::get_websites_v2();
-            
-            if(empty($websites['data'])) {
-                return 'No website details. Create them first.';
-            }
+		if ( empty( $website_details ) ) {
+			$websites = WebChangeDetector_API_V2::get_websites_v2();
 
-            foreach($websites['data'] as $website) {
-                if(str_starts_with(rtrim($website['domain'], '/'), rtrim(WebChangeDetector_Admin::get_domain_from_site_url(), '/'))) {
-                    $website_details = $website;
-                    $website_details['sync_url_types'] = json_decode($website['sync_url_types'], 1) ?? [];
-                    break;
-                }
-            }
-        }
+			if ( empty( $websites['data'] ) ) {
+				return 'No website details. Create them first.';
+			}
 
-		$args = array(
-			'action' => 'get_website_details',
-			// domain sent at mm_api.
-		);
+			foreach ( $websites['data'] as $website ) {
+				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( self::get_domain_from_site_url(), '/' ) ) ) {
+					$website_details                   = $website;
+					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
+					break;
+				}
+			}
+		}
 
 		$update = false;
 
@@ -2598,7 +2621,6 @@ class WebChangeDetector_Admin {
 			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
 		}
 
-                       
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
@@ -2618,9 +2640,6 @@ class WebChangeDetector_Admin {
 					<input type="button" class="button button-primary" value="Start Wizard" onclick="window.wcdStartWizard()">
 				<?php } ?>
 				</div>
-				<?php
-
-				?>
 				<div class="box-half credit">
 					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
 						<p style="margin-top: 20px;">
@@ -2713,7 +2732,9 @@ class WebChangeDetector_Admin {
 					}
 
 					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-					if ( ! empty( $recent_comparisons['data'] ) ) {
+
+					// Only send the data to the view.
+					if ( isset( $recent_comparisons['data'] ) ) {
 						$recent_comparisons = $recent_comparisons['data'];
 					}
 				}

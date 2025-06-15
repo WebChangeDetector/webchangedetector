@@ -514,12 +514,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
-						
 					}
-                             
-						if ( ! empty( $comparisons['data'] ) ) {
-							$comparisons = $comparisons['data'];
-						}
+
+					// Only send the data to the view.
+					if ( isset( $comparisons['data'] ) ) {
+						$comparisons = $comparisons['data'];
+					}
 
 					$wcd->compare_view_v2( $comparisons, $failed_queues );
 
@@ -661,7 +661,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-logs':
-
 				$paged = 1;
 				if ( isset( $_GET['paged'] ) ) {
 					$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
@@ -685,7 +684,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'compare' => 'Change detection',
 				);
 
-                      
 				?>
 
 				<div class="action-container wizard-logs">
@@ -780,11 +778,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 
 					<div class="box-plain no-border">
-						<?php
-
-
-                                      
-						?>
 						<h2>URL Synchronization Settings</h2>
 						<table class="form-table">
 							<tr valign="top">
@@ -911,12 +904,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<th scope="row">URL Sync Status</th>
 								<td>
 									<p class="description" style="margin-bottom: 10px;">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
-									This works automatically in the background. When you add a webpage, you can start the sync manually.</p>
+									This works automatically in the background. If you feel like something is missing, you can sync the urls manually.</p>
 									<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
 											<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 										</span>
 									</p>
-									<button class="button button-secondary" onclick="sync_urls(1); return false;">Sync URLs Now</button>
+									<button class="button button-secondary button-sync-urls" onclick="sync_urls(1); return false;">Sync URLs Now</button>
 								</td>
 							</tr>
 						</table>
@@ -963,8 +956,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 					echo '<hr>';
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
-                                              
-				?>
+
+					?>
 
 				</div>
 				<div class="clear"></div>
@@ -1007,8 +1000,5 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
-
-		// Add inline JavaScript for sync_urls function.
-		echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
 	} // wcd_webchangedetector_init.
 } // function_exists.

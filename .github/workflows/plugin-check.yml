@@ -1,0 +1,78 @@
+name: Plugin Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  plugin-check:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -u root -ppassword"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, pdo_mysql, mbstring, gd, curl, zip
+
+      - name: Download WordPress CLI
+        run: |
+          curl -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Download WordPress
+        run: |
+          wp core download --path=wordpress --allow-root
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..10}; do
+            mysqladmin -h 127.0.0.1 -u root -ppassword ping && break
+            echo "MySQL not ready yet. Retrying in 5 seconds..."
+            sleep 5
+          done
+
+      - name: Set up wp-config
+        working-directory: wordpress
+        run: |
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=127.0.0.1 --allow-root
+
+      - name: Install WordPress
+        working-directory: wordpress
+        run: |
+          wp core install --url=http://localhost --title=TestSite --admin_user=admin --admin_pass=admin --admin_email=admin@example.com --allow-root
+
+      - name: Move plugin into WordPress directory
+        run: |
+          mv ./* wordpress/wp-content/plugins/my-plugin
+
+      - name: Activate plugin
+        working-directory: wordpress
+        run: |
+          wp plugin activate my-plugin --allow-root
+
+      - name: Run plugin check
+        working-directory: wordpress
+        run: |
+          wp plugin check my-plugin --allow-root
