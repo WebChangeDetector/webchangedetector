@@ -1,0 +1,43 @@
+name: Plugin Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  plugin-check:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -u root -ppassword"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up WordPress
+        uses: 10up/action-wordpress-env@v1
+        with:
+          php-version: '8.3'
+          wp-version: 'latest'
+          plugin-dir: .
+
+      - name: Activate plugin
+        run: wp plugin activate $(basename $GITHUB_WORKSPACE)
+
+      - name: Run plugin check
+        run: wp plugin check $(basename $GITHUB_WORKSPACE) --format=json
