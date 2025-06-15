@@ -902,7 +902,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<th scope="row">URL Sync Status</th>
 								<td>
 									<p class="description" style="margin-bottom: 10px;">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
-									This works automatically in the background. When you add a webpage, you can start the sync manually.</p>
+									This works automatically in the background. If you feel like something is missing, you can sync the urls manually.</p>
 									<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
 											<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 										</span>
