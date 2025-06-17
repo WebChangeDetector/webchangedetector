@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      db:
+      mysql:
         image: mysql:5.7
         env:
           MYSQL_ROOT_PASSWORD: password
@@ -19,7 +19,7 @@ jobs:
           MYSQL_USER: wp
           MYSQL_PASSWORD: password
         ports:
-          - 3306
+          - 3306:3306
         options: >-
           --health-cmd "mysqladmin ping -h localhost -u root -ppassword"
           --health-interval 10s
@@ -45,34 +45,39 @@ jobs:
         run: |
           wp core download --path=wordpress --allow-root
 
-      - name: Wait for MySQL to be ready
-        run: |
-          for i in {1..10}; do
-            mysqladmin -h 127.0.0.1 -u root -ppassword ping && break
-            echo "MySQL not ready yet. Retrying in 5 seconds..."
-            sleep 5
-          done
-
       - name: Set up wp-config
         working-directory: wordpress
         run: |
-          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=127.0.0.1 --allow-root
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=mysql --allow-root
 
       - name: Install WordPress
         working-directory: wordpress
         run: |
-          wp core install --url=http://localhost --title=TestSite --admin_user=admin --admin_pass=admin --admin_email=admin@example.com --allow-root
+          wp core install --url=http://localhost --title=TestSite --admin_user=admin --admin_password=admin --admin_email=admin@example.com --allow-root
 
       - name: Move plugin into WordPress directory
         run: |
-          mv ./* wordpress/wp-content/plugins/my-plugin
+          mkdir -p wordpress/wp-content/plugins/webchangedetector
+          mv $(ls | grep -v wordpress) wordpress/wp-content/plugins/webchangedetector
+          ls -ahl
 
       - name: Activate plugin
         working-directory: wordpress
         run: |
-          wp plugin activate my-plugin --allow-root
+          wp plugin activate webchangedetector --allow-root
 
-      - name: Run plugin check
+      - name: Plugin status
         working-directory: wordpress
         run: |
-          wp plugin check my-plugin --allow-root
+          wp plugin status webchangedetector --allow-root
+
+      - name: Composer install phpcs
+        working-directory: wordpress
+        run: |
+          cd ..
+          composer install
+
+      - name: Run PHPCS on plugin
+        working-directory: wordpress
+        run: |
+          ./vendor/bin/phpcs --standard=WordPress wordpress/wp-content/plugins/webchangedetector
