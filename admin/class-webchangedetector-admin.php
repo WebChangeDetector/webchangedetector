@@ -2162,7 +2162,7 @@ class WebChangeDetector_Admin {
 	}
 
 	/** Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
-	But it's not always available. So we take 'name' as fallback name.
+	 * But it's not always available. So we take 'name' as fallback name.
 	 *
 	 * @param object $post_type The post_type object.
 	 *
