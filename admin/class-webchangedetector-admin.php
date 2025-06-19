@@ -2462,7 +2462,7 @@ class WebChangeDetector_Admin {
 		return false;
 	}
 
-	/** Update website_details with current settings
+	/** Update website_details with current settings.
 	 *
 	 * @param bool $update_website_details Website details to update.
 	 *
@@ -2472,13 +2472,7 @@ class WebChangeDetector_Admin {
 		if ( ! $update_website_details ) {
 			$update_website_details = $this->website_details;
 		}
-
-		$this->api_v1(
-			array_merge(
-				array( 'action' => 'save_user_website' ),
-				$update_website_details
-			)
-		);
+        WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
 	}
 
 	/** Check if current account is allowed for view.
