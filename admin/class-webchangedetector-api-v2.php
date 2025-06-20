@@ -61,20 +61,20 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'GET' );
 	}
 
-    /**
-     * Update website.
-     *
-     * @param string $uuid The website uuid.
-     * @param array  $website_details The website details to update.
-     * @return mixed|string
-     */
-    public static function update_website_v2( $uuid, $website_details ) {
-        $args = array(
-            'action' => 'websites/' . $uuid,
-        );
-        $args = array_merge( $args, $website_details );
-        return self::api_v2( $args, 'PUT' );
-    }
+	/**
+	 * Update website.
+	 *
+	 * @param string $uuid The website uuid.
+	 * @param array  $website_details The website details to update.
+	 * @return mixed|string
+	 */
+	public static function update_website_v2( $uuid, $website_details ) {
+		$args = array(
+			'action' => 'websites/' . $uuid,
+		);
+		$args = array_merge( $args, $website_details );
+		return self::api_v2( $args, 'PUT' );
+	}
 
 	/** Sync urls.
 	 *

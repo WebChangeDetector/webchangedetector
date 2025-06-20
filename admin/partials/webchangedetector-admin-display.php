@@ -45,7 +45,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			}
 		}
 
-
 		// Unslash postdata.
 		foreach ( $_POST as $key => $post ) {
 			$key              = wp_unslash( $key );
@@ -492,18 +491,16 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					//$failed_queues = array();
-					$batches       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+					$batches = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					if ( ! empty( $batches['data'] ) ) {
 						// Get failed queues for all batches.
 						$batch_ids = array();
 						foreach ( $batches['data'] as $batch ) {
 							$batch_ids[] = $batch['id'];
 						}
-						
 					}
 
-					// Pass only batch data to create accordion containers, content will be loaded via AJAX
+					// Pass only batch data to create accordion containers, content will be loaded via AJAX.
 					$wcd->compare_view_v2( $batches['data'] ?? array() );
 
 					// Prepare pagination.

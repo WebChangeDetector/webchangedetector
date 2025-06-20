@@ -10,7 +10,7 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
-/** WCD Admin Class
+/** WCD Admin Class.
  */
 class WebChangeDetector_Admin {
 
@@ -47,9 +47,9 @@ class WebChangeDetector_Admin {
 	);
 
 	const VALID_GROUP_TYPES = array(
-		'all', // filter.
-		'generic', // filter.
-		'wordpress', // filter.
+		'all', // Filter.
+		'generic', // Filter.
+		'wordpress', // Filter.
 		'auto',
 		'post',
 		'update',
@@ -139,9 +139,9 @@ class WebChangeDetector_Admin {
 			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
 		}
 
-        // Set the group uuids
-        $this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[WCD_AUTO_DETECTION_GROUP] ?? false;
-        $this->manual_group_uuid = get_option( WCD_WEBSITE_GROUPS )[WCD_MANUAL_DETECTION_GROUP] ?? false;
+		// Set the group uuids.
+		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
 	}
 
 	/**
@@ -478,13 +478,13 @@ class WebChangeDetector_Admin {
 		$this->sync_single_post( $data );
 	}
 
-    /**
-     * Get the domain from wp site_url.
-     *
-     * @return string
-     */
+	/**
+	 * Get the domain from wp site_url.
+	 *
+	 * @return string
+	 */
 	public static function get_domain_from_site_url() {
-		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? ""), '/' ); // site might be in subdir.
+		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? '' ), '/' ); // Site might be in subdir.
 	}
 
 	/** Save the api token.
@@ -495,7 +495,7 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-        
+
 		if ( ! is_string( $api_token ) || strlen( $api_token ) < self::API_TOKEN_LENGTH ) {
 			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
@@ -552,16 +552,24 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
-	/** Ajax get processing queue
+	/** Ajax get processing queue.
 	 *
 	 * @return void
 	 */
 	public function ajax_get_processing_queue() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
 		echo wp_json_encode( $this->get_processing_queue_v2( get_option( 'wcd_manual_checks_batch' ) ) );
 		die();
 	}
 
-	/** Update selected url
+	/** Update selected url.
 	 *
 	 * @return void
 	 */
@@ -664,14 +672,23 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_get_batch_comparisons_view() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
 		// Get and sanitize the POST data.
-		$filters = $_POST['filters'] ?? [];
+		$filters = sanitize_text_field( wp_unslash( $_POST['filters'] ?? array() ) );
+
 		// Ensure filters is always an array.
 		if ( ! is_array( $filters ) ) {
-			$filters = [];
+			$filters = array();
 		}
-		$filters['batches'] = $_POST['batch_id'] ?? 0;
-		$filters['page'] = $_POST['page'] ?? 1;
+		$filters['batches'] = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
+		$filters['page']    = sanitize_text_field( wp_unslash( $_POST['page'] ?? 1 ) );
 
 		$filters = array_filter( $filters );
 
@@ -689,8 +706,16 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_load_failed_queues() {
-		$batch_id = $_POST['batch_id'] ?? 0;
-		
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		$batch_id = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
+
 		if ( empty( $batch_id ) ) {
 			echo '<div style="padding: 20px; text-align: center; color: #666;">Invalid batch ID.</div>';
 			wp_die();
@@ -714,13 +739,12 @@ class WebChangeDetector_Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
 		}
 
-		// Get group data for usage calculations
-        $auto_group = WebChangeDetector_API_V2::get_group_v2($this->monitoring_group_uuid)['data'] ?? [];
-        $update_group = WebChangeDetector_API_V2::get_group_v2($this->manual_group_uuid)['data'] ?? [];
-        
-		
+		// Get group data for usage calculations.
+		$auto_group   = WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'] ?? array();
+		$update_group = WebChangeDetector_API_V2::get_group_v2( $this->manual_group_uuid )['data'] ?? array();
+
 		$amount_auto_detection = 0;
-		if ( !empty( $auto_group['enabled'] ) ) {
+		if ( ! empty( $auto_group['enabled'] ) ) {
 			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
 		}
 
@@ -737,28 +761,30 @@ class WebChangeDetector_Admin {
 			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
 		}
 
-		// Get account data for renewal calculations
-		$client_account = $this->get_account();
+		// Get account data for renewal calculations.
+		$client_account       = $this->get_account();
 		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
 					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
 
 		$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
 		$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
 
-		wp_send_json_success( array(
-			'amount_auto_detection'  => $amount_auto_detection,
-			'max_auto_update_checks' => $max_auto_update_checks,
-			'checks_needed'          => $checks_needed,
-			'checks_available'       => $checks_available,
-			'checks_until_renewal'   => $checks_until_renewal,
-			// Debug info
-			'debug' => array(
-				'auto_group_enabled' => $auto_group['enabled'] ?? 'not set',
-				'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
-				'auto_group_urls' => $auto_group['selected_urls_count'] ?? 'not set',
-				'update_group_urls' => $update_group['selected_urls_count'] ?? 'not set',
-			),
-		) );
+		wp_send_json_success(
+			array(
+				'amount_auto_detection'  => $amount_auto_detection,
+				'max_auto_update_checks' => $max_auto_update_checks,
+				'checks_needed'          => $checks_needed,
+				'checks_available'       => $checks_available,
+				'checks_until_renewal'   => $checks_until_renewal,
+				// Debug info.
+				'debug'                  => array(
+					'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
+					'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
+					'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
+					'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
+				),
+			)
+		);
 	}
 
 	/** Get queues for status processing and open.
@@ -972,7 +998,7 @@ class WebChangeDetector_Admin {
 			return;
 		}
 
-		$compares = $comparisons['data'];
+		$compares   = $comparisons['data'];
 		$all_tokens = array();
 
 		foreach ( $compares as $compare ) {
@@ -1077,13 +1103,13 @@ class WebChangeDetector_Admin {
 						<?php
 						foreach ( $comparisons['meta']['links'] as $link ) {
 							$url_params = $this->get_params_of_url( $link['url'] );
-							$class  = ! $link['url'] || $link['active'] ? 'disabled' : '';
-							$page = $url_params['page'] ?? 1;
+							$class      = ! $link['url'] || $link['active'] ? 'disabled' : '';
+							$page       = $url_params['page'] ?? 1;
 							?>
 							<button class="ajax_paginate_batch_comparisons tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
 									data-page="<?php echo esc_html( $page ); ?>"
 									data-filters="<?php echo esc_attr( wp_json_encode( $filters ) ); ?>"
-									<?php echo ( $class === 'disabled' ) ? 'disabled' : ''; ?>>
+									<?php echo ( 'disabled' === $class ) ? 'disabled' : ''; ?>>
 								<?php echo esc_html( $link['label'] ); ?>
 							</button>
 							<?php
@@ -1104,12 +1130,19 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function load_failed_queues_view( $batch_id ) {
-		$failed_queues = WebChangeDetector_API_V2::get_queues_v2( [ $batch_id ], 'failed', [ 'per_page' => 100 ] );
-		
+		$failed_queues = WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
+
 		// Handle pagination for failed queues if needed.
 		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
 			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
-				$failed_queues_data = WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', [ 'per_page' => 100, 'page' => $i ] );
+				$failed_queues_data    = WebChangeDetector_API_V2::get_queues_v2(
+					$batch_id,
+					'failed',
+					array(
+						'per_page' => 100,
+						'page'     => $i,
+					)
+				);
 				$failed_queues['data'] = array_merge( $failed_queues['data'], $failed_queues_data['data'] );
 			}
 		}
@@ -1160,7 +1193,7 @@ class WebChangeDetector_Admin {
 
 	/** View of comparison overview.
 	 *
-	 * @param array $compares The compares.
+	 * @param array $batches The batches.
 	 * @param array $failed_queues Array with failed queues.
 	 * @return void
 	 */
@@ -1194,20 +1227,20 @@ class WebChangeDetector_Admin {
 				}
 			}
 
-			// Calculate needs_attention from batch statistics
+			// Calculate needs_attention from batch statistics.
 			$needs_attention = false;
 			if ( isset( $batch['statistics'] ) ) {
 				$stats = $batch['statistics'];
-				// If there are any non-ok statuses, needs attention
+				// If there are any non-ok statuses, needs attention.
 				if ( ( $stats['new'] ?? 0 ) > 0 || ( $stats['to_fix'] ?? 0 ) > 0 || $amount_failed > 0 ) {
 					$needs_attention = true;
 				}
 			}
 
-			// Get group from batch data - batches have group_id field
+			// Get group from batch data - batches have group_id field.
 			$batch_group = $batch['group_id'] ?? '';
-			
-			// Get created_at from batch data
+
+			// Get created_at from batch data.
 			$batch_finished_at = $batch['finished_at'] ?? 'processing...';
 			?>
 			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" style="margin-top: 20px;">
@@ -1244,9 +1277,9 @@ class WebChangeDetector_Admin {
 									?>
 									<br>
 									<small>
-										<?php 
+										<?php
 										if ( ! empty( $batch_finished_at ) ) {
-											echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $batch_finished_at ) ) ) ); 
+											echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $batch_finished_at ) ) ) );
 											echo ' ago (';
 											echo esc_html( get_date_from_gmt( $batch_finished_at ) );
 											echo ')';
@@ -1262,7 +1295,7 @@ class WebChangeDetector_Admin {
 						<div class="mm_accordion_content">
 							<div class="ajax_batch_comparisons_content">
 								<div class="ajax-loading-container">
-									<img decoding="async" src="<?php echo $this->get_wcd_plugin_url() ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<img decoding="async" src="<?php echo esc_url( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
 									<div style="text-align: center;">Loading</div>
 								</div>
 							</div>
@@ -1272,8 +1305,8 @@ class WebChangeDetector_Admin {
 			</div>
 			<?php
 		}
-		
-		// Auto-click first accordion if only one batch
+
+		// Auto-click first accordion if only one batch.
 		if ( 1 === count( $batches ) ) {
 			echo '<script>
 				jQuery(document).ready(function() {
@@ -2572,8 +2605,8 @@ class WebChangeDetector_Admin {
 		?>
 		<div class="no-account-page">
 			<div class="no-account">
-                <img src="<?php echo esc_url( $this->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
-                <h2>See what changed before your users do.</h2>
+				<img src="<?php echo esc_url( $this->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
+				<h2>See what changed before your users do.</h2>
 			</div>
 			<div class="highlight-wrapper">
 				<div class="highlight-container">
@@ -2619,7 +2652,7 @@ class WebChangeDetector_Admin {
 			}
 
 			foreach ( $websites['data'] as $website ) {
-				if ( str_starts_with( rtrim( $website['domain'] ?? "", '/' ), rtrim( self::get_domain_from_site_url() ?? "", '/' ) ) ) {
+				if ( str_starts_with( rtrim( $website['domain'] ?? '', '/' ), rtrim( self::get_domain_from_site_url() ?? '', '/' ) ) ) {
 					$website_details                   = $website;
 					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 					break;
@@ -2711,7 +2744,7 @@ class WebChangeDetector_Admin {
 		if ( ! $update_website_details ) {
 			$update_website_details = $this->website_details;
 		}
-        WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
+		WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
 	}
 
 	/** Check if current account is allowed for view.
@@ -2833,9 +2866,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account ) {
 
-		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load
-		$amount_auto_detection  = 0; // Will be loaded via AJAX
-		$max_auto_update_checks = 0; // Will be loaded via AJAX
+		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load.
+		$amount_auto_detection  = 0; // Will be loaded via AJAX.
+		$max_auto_update_checks = 0; // Will be loaded via AJAX.
 
 		?>
 		<div class="dashboard">
@@ -2910,8 +2943,8 @@ class WebChangeDetector_Admin {
 					'per_page'   => 5,
 				);
 
-				$batches            = WebChangeDetector_API_V2::get_batches( $filter_batches );
-				// Pass only batch data to create accordion containers, content will be loaded via AJAX
+				$batches = WebChangeDetector_API_V2::get_batches( $filter_batches );
+				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
 				$this->compare_view_v2( $batches['data'] ?? array() );
 
 				if ( ! empty( $batches['data'] ) ) {
@@ -3268,7 +3301,7 @@ class WebChangeDetector_Admin {
 				self::error_log( '[WCD Admin Bar AJAX] Failed to parse current URL for API search.' );
 			} else {
 				$host            = $parsed_url['host'];
-				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'] ?? "", '/' ) : '';
+				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'] ?? '', '/' ) : '';
 				$search_url_base = $host . $path;
 				self::error_log( '[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base );
 
@@ -3302,7 +3335,7 @@ class WebChangeDetector_Admin {
 				$url_filter = array(
 					'search' => $search_url_base,
 					'limit'  => 5,
-				); // Limit search results?
+				); // Limit search results?.
 
 				self::error_log( '[WCD Admin Bar AJAX] Searching manual group (' . $manual_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
 				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
@@ -3445,7 +3478,7 @@ class WebChangeDetector_Admin {
 			'<div class="wcd-admin-bar-slider">' .
 			'<label for="%s" class="wcd-slider-label">%s:</label>' . // TODO: Use localized label from wcdAdminBarData.
 			'<label class="wcd-switch">' .
-			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' . // Class for existing JS?
+			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' . // Class for existing JS?.
 			'<span class="wcd-slider-round"></span>' .
 			'</label>' .
 			'</div>',

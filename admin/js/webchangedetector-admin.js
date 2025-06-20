@@ -8,7 +8,8 @@ function updateProcessingStep() {
         var currentlyProcessing = $('#currently-processing');
 
         var data = {
-            action: 'get_processing_queue'
+            action: 'get_processing_queue',
+            nonce: wcdAjaxData.nonce
         };
 
         $.post(ajaxurl, data, function (response) {
