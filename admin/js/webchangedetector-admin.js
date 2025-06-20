@@ -215,9 +215,6 @@ function currentlyProcessing() {
             });
         });
 
-        // Initialize batch comparisons pagination
-        initBatchComparisonsPagination();
-
         // Confirm message on leaving without saving form
         let formModified = 0;
         $('form.wcd-frm-settings').change(function () {
@@ -379,12 +376,14 @@ function currentlyProcessing() {
         function loadBatchComparisons(element, batchId, page = 1, filters = null, shouldScroll = false) {
             const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
             const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+            const failedCount = batchContainer.data("failed_count");
 
             const args = {
                 action: 'get_batch_comparisons_view',
                 batch_id: batchId,
                 page: page,
-                filters: filters
+                filters: filters,
+                failed_count: failedCount
             }
 
             // Show loading placeholder
@@ -404,7 +403,7 @@ function currentlyProcessing() {
                 $(".diff-tile").each(function () {
                     var diffPercent = $(this).data("diff_percent");
                     if (diffPercent > 0) {
-                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
+                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"), $(this).data("threshold"));
                         $(this).css("background", bgColor);
                     }
                 });
@@ -425,57 +424,21 @@ function currentlyProcessing() {
             });
 
             // Handle initial accordion loading using jQuery UI accordion activate event
-            // Use a more specific selector that waits for accordion initialization
-            setTimeout(function () {
-                $(".accordion-container .accordion").off("accordionactivate.batchLoad").on("accordionactivate.batchLoad", function (event, ui) {
-                    console.log('Accordion activate event fired', ui);
-                    if (ui.newHeader && ui.newHeader.length > 0) {
-                        const batchContainer = ui.newHeader.closest(".accordion-container");
-                        const batchId = batchContainer.data("batch_id");
-                        const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
-
-                        console.log('Batch ID:', batchId, 'Content container found:', contentContainer.length);
-
-                        // Check if content is empty or contains only loading placeholder (initial load)
-                        if (contentContainer.length > 0) {
-                            const currentContent = contentContainer.html().trim();
-                            const hasLoadingContainer = contentContainer.find('.ajax-loading-container').length > 0;
-
-                            console.log('Content check - Empty:', contentContainer.is(':empty'), 'Content length:', currentContent.length, 'Has loading:', hasLoadingContainer);
-
-                            if (contentContainer.is(':empty') || currentContent === '' || hasLoadingContainer) {
-                                console.log('Loading batch comparisons for batch:', batchId);
-                                loadBatchComparisons(ui.newHeader, batchId, 1, null, false);
-                            } else {
-                                console.log('Content already loaded, skipping');
-                            }
-                        }
-                    }
-                });
-
-                // Also add a fallback for direct clicks in case the accordion event doesn't fire
-                $(".accordion-container .accordion h3").off("click.batchLoad").on("click.batchLoad", function () {
-                    const accordion = $(this).closest('.accordion');
-                    const batchContainer = $(this).closest(".accordion-container");
+            $(".accordion-container .accordion").off("accordionactivate.batchLoad").on("accordionactivate.batchLoad", function (event, ui) {
+                if (ui.newHeader.length > 0) {
+                    const batchContainer = ui.newHeader.closest(".accordion-container");
                     const batchId = batchContainer.data("batch_id");
                     const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+                    const currentContent = contentContainer.html().trim();
 
-                    console.log('Direct h3 click - Batch ID:', batchId);
-
-                    // Small delay to let accordion animation start
-                    setTimeout(function () {
-                        if (contentContainer.length > 0) {
-                            const currentContent = contentContainer.html().trim();
-                            const hasLoadingContainer = contentContainer.find('.ajax-loading-container').length > 0;
-
-                            if (contentContainer.is(':empty') || currentContent === '' || hasLoadingContainer) {
-                                console.log('Loading via direct click for batch:', batchId);
-                                loadBatchComparisons(accordion, batchId, 1, null, false);
-                            }
-                        }
-                    }, 100);
-                });
-            }, 100); // Small delay to ensure accordion is initialized
+                    // Only load if content is empty or contains only loading placeholder (initial load)
+                    if (contentContainer.is(':empty') ||
+                        currentContent === '' ||
+                        contentContainer.find('.ajax-loading-container').length > 0) {
+                        loadBatchComparisons(ui.newHeader, batchId, 1, null, false);
+                    }
+                }
+            });
         }
 
         // Toggle failed queues accordion and load content via AJAX.
@@ -569,6 +532,8 @@ function currentlyProcessing() {
             });
 
         })
+
+        initBatchComparisonsPagination();
     });
 })(jQuery);
 
