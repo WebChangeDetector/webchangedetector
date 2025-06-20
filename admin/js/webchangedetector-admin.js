@@ -384,7 +384,8 @@ function currentlyProcessing() {
                 batch_id: batchId,
                 page: page,
                 filters: filters,
-                failed_count: failedCount
+                failed_count: failedCount,
+                nonce: wcdAjaxData.nonce
             }
 
             // Show loading placeholder
@@ -480,7 +481,8 @@ function currentlyProcessing() {
                         type: 'POST',
                         data: {
                             action: 'load_failed_queues',
-                            batch_id: batchId
+                            batch_id: batchId,
+                            nonce: wcdAjaxData.nonce
                         },
                         success: function (response) {
                             loading.style.display = 'none';
