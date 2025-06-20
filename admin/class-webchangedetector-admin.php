@@ -1087,9 +1087,9 @@ class WebChangeDetector_Admin {
 	 * @param array $failed_queues Array with failed queues.
 	 * @return void
 	 */
-	public function compare_view_v2( $compares, $failed_queues = false ) {
+	public function compare_view_v2( $batches, $failed_queues = false ) {
 
-		if ( empty( $compares ) ) {
+		if ( empty( $batches ) ) {
 			?>
 			<table style="width: 100%">
 				<tr>
@@ -1103,22 +1103,10 @@ class WebChangeDetector_Admin {
 			return;
 		}
 
-		$all_tokens          = array();
-		$compares_in_batches = array();
-
-		foreach ( $compares as $compare ) {
-
-			$all_tokens[] = $compare['id'];
-
-			// Sort comparisons by batches.
-			$compares_in_batches[ $compare['batch'] ][] = $compare;
-			if ( 'ok' !== $compare['status'] ) {
-				$compares_in_batches[ $compare['batch'] ]['needs_attention'] = true;
-			}
-		}
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 
-		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
+		foreach ( $batches as $batch ) {
+			$batch_id = $batch['id'];
 
 			$amount_failed = 0;
 			if ( ! empty( $failed_queues['data'] ) ) {
@@ -1128,6 +1116,22 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
+
+			// Calculate needs_attention from batch statistics
+			$needs_attention = false;
+			if ( isset( $batch['statistics'] ) ) {
+				$stats = $batch['statistics'];
+				// If there are any non-ok statuses, needs attention
+				if ( ( $stats['new'] ?? 0 ) > 0 || ( $stats['to_fix'] ?? 0 ) > 0 || $amount_failed > 0 ) {
+					$needs_attention = true;
+				}
+			}
+
+			// Get group from batch data - batches have group_id field
+			$batch_group = $batch['group_id'] ?? '';
+			
+			// Get created_at from batch data
+			$batch_finished_at = $batch['finished_at'] ?? 'processing...';
 			?>
 			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" style="margin-top: 20px;">
 				<div class="accordion accordion-batch">
@@ -1136,7 +1140,7 @@ class WebChangeDetector_Admin {
 							<div style="display: inline-block;">
 								<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 									<?php
-									if ( array_key_exists( 'needs_attention', $compares_in_batch ) ) {
+									if ( $needs_attention ) {
 										$this->get_device_icon( 'warning', 'batch_needs_attention' );
 										echo '<small>Needs Attention</small>';
 									} else {
@@ -1150,7 +1154,7 @@ class WebChangeDetector_Admin {
 								</div>
 								<div class="accordion-batch-title-tile">
 									<?php
-									if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
+									if ( $batch_group === $this->monitoring_group_uuid ) {
 										$this->get_device_icon( 'auto-group' );
 										echo ' Monitoring Checks';
 									} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
@@ -1163,8 +1167,16 @@ class WebChangeDetector_Admin {
 									?>
 									<br>
 									<small>
-										<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
-										(<?php echo esc_html( get_date_from_gmt( ( $compares_in_batch[0]['created_at'] ) ) ); ?> )
+										<?php 
+										if ( ! empty( $batch_finished_at ) ) {
+											echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $batch_finished_at ) ) ) ); 
+											echo ' ago (';
+											echo esc_html( get_date_from_gmt( $batch_finished_at ) );
+											echo ')';
+										} else {
+											echo 'processing...';
+										}
+										?>
 									</small>
 								</div>
 								<div class="clear"></div>
@@ -1182,15 +1194,17 @@ class WebChangeDetector_Admin {
 				</div>
 			</div>
 			<?php
-			if ( 1 === count( $compares_in_batches ) ) {
-				echo '<script>
-					jQuery(document).ready(function() {
-						setTimeout(function() {
-							jQuery(".accordion h3").first().click();
-						}, 200);
-					});
-				</script>';
-			}
+		}
+		
+		// Auto-click first accordion if only one batch
+		if ( 1 === count( $batches ) ) {
+			echo '<script>
+				jQuery(document).ready(function() {
+					setTimeout(function() {
+						jQuery(".accordion h3").first().click();
+					}, 200);
+				});
+			</script>';
 		}
 	}
 
@@ -2865,25 +2879,10 @@ class WebChangeDetector_Admin {
 				);
 
 				$batches            = WebChangeDetector_API_V2::get_batches( $filter_batches );
-				$recent_comparisons = array(); // init.
+				// Pass only batch data to create accordion containers, content will be loaded via AJAX
+				$this->compare_view_v2( $batches['data'] ?? array() );
 
 				if ( ! empty( $batches['data'] ) ) {
-					$filter_batches = array();
-					foreach ( $batches['data'] as $batch ) {
-						$filter_batches[] = $batch['id'];
-					}
-
-					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-
-					// Only send the data to the view.
-					if ( isset( $recent_comparisons['data'] ) ) {
-						$recent_comparisons = $recent_comparisons['data'];
-					}
-				}
-
-				$this->compare_view_v2( $recent_comparisons );
-
-				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
 				<?php } ?>

@@ -492,36 +492,19 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$comparisons   = array();
 					$failed_queues = array();
 					$batches       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					if ( ! empty( $batches['data'] ) ) {
-						$filter_batches_in_comparisons = array();
-						foreach ( $batches['data'] as $batch ) {
-							$filter_batches_in_comparisons[] = $batch['id'];
-						}
-						$filters_comparisons = array(
-							'batches'  => implode( ',', $filter_batches_in_comparisons ),
-							'per_page' => 999999,
-						);
-
-						// Get failed queues.
+						// Get failed queues for all batches.
 						$batch_ids = array();
 						foreach ( $batches['data'] as $batch ) {
 							$batch_ids[] = $batch['id'];
 						}
 						$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
-
-						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
-
 					}
 
-					// Only send the data to the view.
-					if ( isset( $comparisons['data'] ) ) {
-						$comparisons = $comparisons['data'];
-					}
-
-					$wcd->compare_view_v2( $comparisons, $failed_queues );
+					// Pass only batch data to create accordion containers, content will be loaded via AJAX
+					$wcd->compare_view_v2( $batches['data'] ?? array(), $failed_queues );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
