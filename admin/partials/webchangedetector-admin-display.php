@@ -44,7 +44,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				return;
 			}
 		}
-		$wcd = new WebChangeDetector_Admin();
+
 
 		// Unslash postdata.
 		foreach ( $_POST as $key => $post ) {
@@ -114,7 +114,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get the account details.
-		$account_details = $wcd->get_account( true );
+		$account_details = $wcd->get_account();
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) {

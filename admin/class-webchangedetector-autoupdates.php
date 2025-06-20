@@ -16,9 +16,6 @@ new WebChangeDetector_Autoupdates();
  */
 class WebChangeDetector_Autoupdates {
 
-
-
-
 	/** Wp auto update lock name.
 	 *
 	 * @var string
