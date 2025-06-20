@@ -83,8 +83,10 @@ function currentlyProcessing() {
         var currentlyProcessing = $('#currently-processing');
         let processingInterval;
 
-        // Only show currently processing if there is something to process and check every 10 sec then
-        if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0) {
+        // Only show currently processing if we're on a manual checks page (not change detections) 
+        // and there is something to process and check every 10 sec then
+        var isManualChecksPage = $('#currently-processing-table').length > 0; // Manual checks page has this table
+        if (currentlyProcessing && parseInt(currentlyProcessing.html()) > 0 && isManualChecksPage) {
             let totalSc = parseInt(currentlyProcessing.html());
             updateProcessingStep()
             processingInterval = setInterval(function () {

@@ -492,7 +492,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$failed_queues = array();
+					//$failed_queues = array();
 					$batches       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					if ( ! empty( $batches['data'] ) ) {
 						// Get failed queues for all batches.
@@ -500,11 +500,11 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						foreach ( $batches['data'] as $batch ) {
 							$batch_ids[] = $batch['id'];
 						}
-						$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
+						
 					}
 
 					// Pass only batch data to create accordion containers, content will be loaded via AJAX
-					$wcd->compare_view_v2( $batches['data'] ?? array(), $failed_queues );
+					$wcd->compare_view_v2( $batches['data'] ?? array() );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );

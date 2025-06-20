@@ -1185,7 +1185,7 @@ class WebChangeDetector_Admin {
 						<div class="mm_accordion_content">
 							<div class="ajax_batch_comparisons_content">
 								<div class="ajax-loading-container">
-									<img decoding="async" src="/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<img decoding="async" src="<?php echo $this->get_wcd_plugin_url() ?>/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
 									<div style="text-align: center;">Loading</div>
 								</div>
 							</div>
