@@ -228,6 +228,13 @@
     width: 100%;
 }
 
+.webchangedetector .ajax_batch_comparisons_content .tablenav {
+    margin-top: 2px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    background: #fff;
+}
+
 .webchangedetector .comparison-tiles {
     display: flex;
 }

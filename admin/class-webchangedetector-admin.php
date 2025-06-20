@@ -994,7 +994,7 @@ class WebChangeDetector_Admin {
 		// Add pagination if needed.
 		if ( ! empty( $comparisons['meta']['links'] ) ) {
 			?>
-			<div class="tablenav" style="margin-top: 10px;">
+			<div class="tablenav" >
 				<div class="tablenav-pages">
 					<span class="pagination-links">
 						<?php
