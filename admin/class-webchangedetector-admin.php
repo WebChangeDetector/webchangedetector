@@ -28,7 +28,7 @@ class WebChangeDetector_Admin {
 		'logs',
 		'settings',
 		'show-compare',
-		'create_free_account',
+		'create_trial_account',
 		'update_detection_step',
 		'add_post_type',
 		'filter_change_detections',
@@ -389,7 +389,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return array|string
 	 */
-	public function create_free_account( $postdata ) {
+	public function create_trial_account( $postdata ) {
 
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
@@ -397,7 +397,7 @@ class WebChangeDetector_Admin {
 		$postdata['password'] = wp_hash_password( $postdata['password'] );
 		$args                 = array_merge(
 			array(
-				'action'            => 'add_free_account',
+				'action'            => 'add_trial_account',
 				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
 				'domain'            => $this->get_domain_from_site_url(),
 				'validation_string' => $validation_string,
@@ -2321,8 +2321,8 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		if ( isset( $_POST['wcd_action'] ) && 'create_free_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
-			check_admin_referer( 'create_free_account' );
+		if ( isset( $_POST['wcd_action'] ) && 'create_trial_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
+			check_admin_referer( 'create_trial_account' );
 		}
 
 		$first_name = isset( $_POST['name_first'] ) ? sanitize_text_field( wp_unslash( $_POST['name_first'] ) ) : wp_get_current_user()->user_firstname;
@@ -2344,8 +2344,8 @@ class WebChangeDetector_Admin {
 							Create your free account now and use WebChangeDetector with <br><strong>50 checks</strong> per month for free.<br>
 						</p>
 						<form class="frm_new_account" method="post">
-							<input type="hidden" name="wcd_action" value="create_free_account">
-							<?php wp_nonce_field( 'create_free_account' ); ?>
+							<input type="hidden" name="wcd_action" value="create_trial_account">
+							<?php wp_nonce_field( 'create_trial_account' ); ?>
 							<input type="text" name="name_first" placeholder="First Name" value="<?php echo esc_html( $first_name ); ?>" required>
 							<input type="text" name="name_last" placeholder="Last Name" value="<?php echo esc_html( $last_name ); ?>" required>
 							<input type="email" name="email" placeholder="Email" value="<?php echo esc_html( $email ); ?>" required>

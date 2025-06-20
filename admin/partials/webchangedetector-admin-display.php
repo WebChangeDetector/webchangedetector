@@ -55,7 +55,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Actions without API Token needed.
 		switch ( $wcd_action ) {
-			case 'create_free_account':
+			case 'create_trial_account':
 				// Validate if all required fields were sent.
 				if ( ! ( isset( $postdata['name_first'] ) && isset( $postdata['name_last'] ) && isset( $postdata['email'] ) && isset( $postdata['password'] ) ) ) {
 					echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
@@ -63,7 +63,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$api_token = $wcd->create_free_account( $postdata );
+				$api_token = $wcd->create_trial_account( $postdata );
 				$success   = $wcd->save_api_token( $postdata, $api_token );
 
 				if ( ! $success ) {
