@@ -215,6 +215,9 @@ function currentlyProcessing() {
             });
         });
 
+        // Initialize batch comparisons pagination
+        initBatchComparisonsPagination();
+
         // Confirm message on leaving without saving form
         let formModified = 0;
         $('form.wcd-frm-settings').change(function () {
@@ -371,6 +374,161 @@ function currentlyProcessing() {
 
         // This needs to instantly be executed
         currentlyProcessing();
+
+        // Load batch comparisons content and handle pagination
+        function loadBatchComparisons(element, batchId, page = 1, filters = null, shouldScroll = false) {
+            const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
+            const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+
+            const args = {
+                action: 'get_batch_comparisons_view',
+                batch_id: batchId,
+                page: page,
+                filters: filters
+            }
+
+            // Show loading placeholder
+            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
+
+            // Only scroll for pagination, not initial load
+            if (shouldScroll) {
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: batchContainer.offset().top
+                }, 500);
+            }
+
+            $.post(ajaxurl, args, function (response) {
+                contentContainer.html(response);
+
+                // Bg color for difference
+                $(".diff-tile").each(function () {
+                    var diffPercent = $(this).data("diff_percent");
+                    if (diffPercent > 0) {
+                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
+                        $(this).css("background", bgColor);
+                    }
+                });
+                initBatchComparisonsPagination();
+            });
+        }
+
+        // Initialize batch comparisons loading and pagination
+        function initBatchComparisonsPagination() {
+            // Handle pagination clicks
+            $(".ajax_paginate_batch_comparisons").off("click").on("click", function () {
+                const batchContainer = $(this).closest(".accordion-container");
+                const batchId = batchContainer.data("batch_id");
+                const page = $(this).data("page");
+                const filters = $(this).data("filters");
+
+                loadBatchComparisons($(this), batchId, page, filters, true);
+            });
+
+            // Handle initial accordion loading using jQuery UI accordion activate event
+            // Use a more specific selector that waits for accordion initialization
+            setTimeout(function () {
+                $(".accordion-container .accordion").off("accordionactivate.batchLoad").on("accordionactivate.batchLoad", function (event, ui) {
+                    console.log('Accordion activate event fired', ui);
+                    if (ui.newHeader && ui.newHeader.length > 0) {
+                        const batchContainer = ui.newHeader.closest(".accordion-container");
+                        const batchId = batchContainer.data("batch_id");
+                        const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+
+                        console.log('Batch ID:', batchId, 'Content container found:', contentContainer.length);
+
+                        // Check if content is empty or contains only loading placeholder (initial load)
+                        if (contentContainer.length > 0) {
+                            const currentContent = contentContainer.html().trim();
+                            const hasLoadingContainer = contentContainer.find('.ajax-loading-container').length > 0;
+
+                            console.log('Content check - Empty:', contentContainer.is(':empty'), 'Content length:', currentContent.length, 'Has loading:', hasLoadingContainer);
+
+                            if (contentContainer.is(':empty') || currentContent === '' || hasLoadingContainer) {
+                                console.log('Loading batch comparisons for batch:', batchId);
+                                loadBatchComparisons(ui.newHeader, batchId, 1, null, false);
+                            } else {
+                                console.log('Content already loaded, skipping');
+                            }
+                        }
+                    }
+                });
+
+                // Also add a fallback for direct clicks in case the accordion event doesn't fire
+                $(".accordion-container .accordion h3").off("click.batchLoad").on("click.batchLoad", function () {
+                    const accordion = $(this).closest('.accordion');
+                    const batchContainer = $(this).closest(".accordion-container");
+                    const batchId = batchContainer.data("batch_id");
+                    const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+
+                    console.log('Direct h3 click - Batch ID:', batchId);
+
+                    // Small delay to let accordion animation start
+                    setTimeout(function () {
+                        if (contentContainer.length > 0) {
+                            const currentContent = contentContainer.html().trim();
+                            const hasLoadingContainer = contentContainer.find('.ajax-loading-container').length > 0;
+
+                            if (contentContainer.is(':empty') || currentContent === '' || hasLoadingContainer) {
+                                console.log('Loading via direct click for batch:', batchId);
+                                loadBatchComparisons(accordion, batchId, 1, null, false);
+                            }
+                        }
+                    }, 100);
+                });
+            }, 100); // Small delay to ensure accordion is initialized
+        }
+
+        // Toggle failed queues accordion and load content via AJAX.
+        window.toggleFailedQueues = function (clickedElement, batchId) {
+            // Find the specific elements within this accordion
+            const accordionTitle = clickedElement; // The h3 element
+            const content = accordionTitle.parentElement.querySelector('.failed-queues-content');
+            const arrow = accordionTitle.querySelector('.accordion-arrow');
+            const tableContainer = accordionTitle.parentElement.querySelector('.failed-queues-table-container');
+            const loading = accordionTitle.parentElement.querySelector('.failed-queues-loading');
+
+            const $content = $(content);
+
+            if (!$content.is(':visible')) {
+                // Show accordion with slide down animation
+                $content.slideDown(300, function () {
+                    // Animation complete
+                });
+                // Rotate arrow 90 degrees to match parent accordion behavior
+                arrow.classList.remove('dashicons-arrow-right-alt2');
+                arrow.classList.add('dashicons-arrow-down-alt2');
+
+                // Check if content is already loaded
+                if (tableContainer.innerHTML === '') {
+                    // Show loading
+                    loading.style.display = 'block';
+
+                    // Load content via AJAX
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'load_failed_queues',
+                            batch_id: batchId
+                        },
+                        success: function (response) {
+                            loading.style.display = 'none';
+                            tableContainer.innerHTML = response;
+                        },
+                        error: function () {
+                            loading.style.display = 'none';
+                            tableContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Error loading failed URLs.</div>';
+                        }
+                    });
+                }
+            } else {
+                // Hide accordion with slide up animation
+                $content.slideUp(300);
+                // Reset arrow to pointing right
+                arrow.classList.remove('dashicons-arrow-down-alt2');
+                arrow.classList.add('dashicons-arrow-right-alt2');
+            }
+        }
 
         $(".ajax_update_comparison_status").click(function () {
             let e = $(this);

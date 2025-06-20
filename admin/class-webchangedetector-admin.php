@@ -127,8 +127,10 @@ class WebChangeDetector_Admin {
 		// Add hook for admin bar menu.
 		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right.
 
-		// Register AJAX handler.
+		// Register AJAX handlers.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
+		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
+		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
 
 		// Add cron job for daily sync.
 		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
@@ -640,6 +642,48 @@ class WebChangeDetector_Admin {
 		wp_send_json_success( 'Wizard disabled' );
 	}
 
+	/**
+	 * AJAX handler for loading batch comparisons view.
+	 *
+	 * @return void
+	 */
+	public function ajax_get_batch_comparisons_view() {
+		// Get and sanitize the POST data.
+		$filters = $_POST['filters'] ?? [];
+		// Ensure filters is always an array.
+		if ( ! is_array( $filters ) ) {
+			$filters = [];
+		}
+		$filters['batches'] = $_POST['batch_id'] ?? 0;
+		$filters['page'] = $_POST['page'] ?? 1;
+
+		$filters = array_filter( $filters );
+
+		// Get comparisons from API (no failed queues here - they load separately).
+		$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+
+		// Load the comparisons view without failed queues.
+		$this->load_comparisons_view( $filters['batches'], $comparisons, $filters );
+		wp_die();
+	}
+
+	/**
+	 * AJAX handler for loading failed queues view.
+	 *
+	 * @return void
+	 */
+	public function ajax_load_failed_queues() {
+		$batch_id = $_POST['batch_id'] ?? 0;
+		
+		if ( empty( $batch_id ) ) {
+			echo '<div style="padding: 20px; text-align: center; color: #666;">Invalid batch ID.</div>';
+			wp_die();
+		}
+
+		$this->load_failed_queues_view( $batch_id );
+		wp_die();
+	}
+
 	/** Get queues for status processing and open.
 	 *
 	 * @param string $batch_id The batch id.
@@ -829,6 +873,214 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+	/**
+	 * Load comparisons view for a specific batch via AJAX.
+	 *
+	 * @param string $batch_id The batch ID.
+	 * @param array  $comparisons The comparisons data.
+	 * @param array  $filters The filters applied.
+	 * @return void
+	 */
+	public function load_comparisons_view( $batch_id, $comparisons, $filters ) {
+		if ( empty( $comparisons['data'] ) ) {
+			?>
+			<table style="width: 100%">
+				<tr>
+					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
+						<strong>No comparisons found for this batch.</strong>
+					</td>
+				</tr>
+			</table>
+			<?php
+			return;
+		}
+
+		$compares = $comparisons['data'];
+		$all_tokens = array();
+
+		foreach ( $compares as $compare ) {
+			$all_tokens[] = $compare['id'];
+		}
+
+		?>
+		<table class="toggle" style="width: 100%">
+			<tr>
+				<th style="min-width: 120px;">Status</th>
+				<th style="width: 100%">URL</th>
+				<th style="min-width: 150px">Compared Screenshots</th>
+				<th style="min-width: 50px">Difference</th>
+				<th>Show</th>
+			</tr>
+
+			<?php
+			// Show comparisons.
+			foreach ( $compares as $compare ) {
+				if ( empty( $compare['status'] ) ) {
+					$compare['status'] = 'new';
+				}
+
+				$class = 'no-difference'; // init.
+				if ( $compare['difference_percent'] ) {
+					$class = 'is-difference';
+				}
+
+				?>
+				<tr>
+					<td>
+						<div class="comparison_status_container">
+							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+								<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+							</span>
+							<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
+								<strong>Change Status to:</strong><br>
+								<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="ok"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="ok"
+										class="ajax_update_comparison_status comparison_status comparison_status_ok"
+										onclick="return false;">Ok</button>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="to_fix"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="to_fix"
+										class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
+										onclick="return false;">To Fix</button>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="false_positive"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="false_positive"
+										class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+										onclick="return false;">False Positive</button>
+							</div>
+						</div>
+					</td>
+					<td>
+						<strong>
+							<?php
+							if ( ! empty( $compare['html_title'] ) ) {
+								echo esc_html( $compare['html_title'] ) . '<br>';
+							}
+							?>
+						</strong>
+						<?php
+						echo esc_url( $compare['url'] ) . '<br>';
+						$this->get_device_icon( $compare['device'] );
+						echo esc_html( ucfirst( $compare['device'] ) );
+						?>
+					</td>
+					<td>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
+					</td>
+					<td class="<?php echo esc_html( $class ); ?> diff-tile"
+						data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
+						<?php echo esc_html( $compare['difference_percent'] ); ?>%
+					</td>
+					<td>
+						<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
+							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+							<input type="submit" value="Show" class="button">
+						</form>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+		<?php
+		// Add pagination if needed.
+		if ( ! empty( $comparisons['meta']['links'] ) ) {
+			?>
+			<div class="tablenav" style="margin-top: 10px;">
+				<div class="tablenav-pages">
+					<span class="pagination-links">
+						<?php
+						foreach ( $comparisons['meta']['links'] as $link ) {
+							$url_params = $this->get_params_of_url( $link['url'] );
+							$class  = ! $link['url'] || $link['active'] ? 'disabled' : '';
+							$page = $url_params['page'] ?? 1;
+							?>
+							<button class="ajax_paginate_batch_comparisons tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
+									data-page="<?php echo esc_html( $page ); ?>"
+									data-filters="<?php echo esc_attr( wp_json_encode( $filters ) ); ?>"
+									<?php echo ( $class === 'disabled' ) ? 'disabled' : ''; ?>>
+								<?php echo esc_html( $link['label'] ); ?>
+							</button>
+							<?php
+						}
+						?>
+					</span>
+					<span class="displaying-num"><?php echo esc_html( $comparisons['meta']['total'] ?? 0 ); ?> items</span>
+				</div>
+			</div>
+			<?php
+		}
+	}
+
+	/**
+	 * Load failed queues view for a specific batch via AJAX.
+	 *
+	 * @param string $batch_id The batch ID.
+	 * @return void
+	 */
+	public function load_failed_queues_view( $batch_id ) {
+		$failed_queues = WebChangeDetector_API_V2::get_queues_v2( [ $batch_id ], 'failed', [ 'per_page' => 100 ] );
+		
+		// Handle pagination for failed queues if needed.
+		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
+			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
+				$failed_queues_data = WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', [ 'per_page' => 100, 'page' => $i ] );
+				$failed_queues['data'] = array_merge( $failed_queues['data'], $failed_queues_data['data'] );
+			}
+		}
+
+		if ( empty( $failed_queues['data'] ) ) {
+			echo '<div style="padding: 20px; text-align: center; color: #666;">No failed URLs found for this batch.</div>';
+			return;
+		}
+		?>
+		<table class="toggle" style="margin: 0;">
+			<tr class="table-headline-row">
+				<th>Status</th>
+				<th style="width:auto">URL</th>
+				<th style="width:250px">Compared Screenshots</th>
+				<th style="width:100px">Difference</th>
+			</tr>
+			<?php
+			foreach ( $failed_queues['data'] as $failed_queue ) {
+				if ( $batch_id === $failed_queue['batch'] ) {
+					?>
+					<tr style="background-color: rgba(220, 50, 50, 0.1);">
+						<td>
+							<div class="comparison_status_container">
+								<span class="current_comparison_status comparison_status comparison_status_failed">
+									<?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?>
+								</span>
+							</div>
+						</td>
+						<td>
+							<?php
+							if ( ! empty( $failed_queue['html_title'] ) ) {
+								echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
+							}
+							$this->get_device_icon( $failed_queue['device'] );
+							echo esc_html( $failed_queue['url_link'] );
+							?>
+						</td>
+						<td class="table-row-compared-screenshots-failed">n/a</td>
+						<td class="table-row-diff-tile-failed"><div style="text-align: center;">n/a</div></td>
+					</tr>
+					<?php
+				}
+			}
+			?>
+		</table>
+		<?php
+	}
+
 	/** View of comparison overview.
 	 *
 	 * @param array $compares The compares.
@@ -877,170 +1129,67 @@ class WebChangeDetector_Admin {
 				}
 			}
 			?>
-			<div class="accordion accordion-batch" style="margin-top: 20px;">
-				<div class="mm_accordion_title">
-					<h3>
-						<div style="display: inline-block;">
-							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
-								<?php
-								if ( array_key_exists( 'needs_attention', $compares_in_batch ) ) {
-									$this->get_device_icon( 'warning', 'batch_needs_attention' );
-									echo '<small>Needs Attention</small>';
-								} else {
-									$this->get_device_icon( 'check', 'batch_is_ok' );
-									echo '<small>Looks Good</small>';
-								}
-								if ( $amount_failed ) {
-									echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
-								}
-								?>
-							</div>
-							<div class="accordion-batch-title-tile">
-								<?php
-								if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
-									$this->get_device_icon( 'auto-group' );
-									echo ' Monitoring Checks';
-								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
-									$this->get_device_icon( 'auto-update-group' );
-									echo ' Auto Update Checks';
-								} else {
-									$this->get_device_icon( 'update-group' );
-									echo ' Manual Checks';
-								}
-								?>
-								<br>
-								<small>
-									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
-									(<?php echo esc_html( get_date_from_gmt( ( $compares_in_batch[0]['created_at'] ) ) ); ?> )
-								</small>
-							</div>
-							<div class="clear"></div>
-						</div>
-					</h3>
-					<div class="mm_accordion_content">
-						<table class="toggle" style="width: 100%">
-							<tr>
-								<th style="min-width: 120px;">Status</th>
-								<th style="width: 100%">URL</th>
-								<th style="min-width: 150px">Compared Screenshots</th>
-								<th style="min-width: 50px">Difference</th>
-								<th>Show</th>
-							</tr>
-
-							<?php
-							if ( $failed_queues ) {
-								foreach ( $failed_queues['data'] as $failed_queue ) {
-									if ( $batch_id === $failed_queue['batch'] ) {
-										?>
-										<tr style="background-color: rgba(220, 50, 50, 0.28)">
-											<td>
-												<div class="comparison_status_container">
-													<span class="current_comparison_status comparison_status comparison_status_failed"><?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?></span>
-												</div>
-											</td>
-											<td>
-											<?php
-											if ( ! empty( $failed_queue['html_title'] ) ) {
-												echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
-											}
-												echo esc_html( $this->get_device_icon( $failed_queue['device'] ) . $failed_queue['url_link'] );
-											?>
-											</td>
-											<td colspan="3">
-												<strong>Creating Change Detection failed.</strong><br> Please check the URL.
-											</td>
-
-										</tr>
-
-										<?php
+			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" style="margin-top: 20px;">
+				<div class="accordion accordion-batch">
+					<div class="mm_accordion_title">
+						<h3>
+							<div style="display: inline-block;">
+								<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
+									<?php
+									if ( array_key_exists( 'needs_attention', $compares_in_batch ) ) {
+										$this->get_device_icon( 'warning', 'batch_needs_attention' );
+										echo '<small>Needs Attention</small>';
+									} else {
+										$this->get_device_icon( 'check', 'batch_is_ok' );
+										echo '<small>Looks Good</small>';
 									}
-								}
-							}
-
-							foreach ( $compares_in_batch as $key => $compare ) {
-								if ( 'needs_attention' === $key ) {
-									continue;
-								}
-								if ( empty( $compare['status'] ) ) {
-									$compare['status'] = 'new';
-								}
-
-								$class = 'no-difference'; // init.
-								if ( $compare['difference_percent'] ) {
-									$class = 'is-difference';
-								}
-
-								?>
-								<tr>
-									<td>
-										<div class="comparison_status_container">
-											<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-												<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
-											</span>
-											<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
-												<strong>Change Status to:</strong><br>
-												<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="ok"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="ok"
-														class="ajax_update_comparison_status comparison_status comparison_status_ok"
-														onclick="return false;">Ok</button>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="to_fix"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="to_fix"
-														class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
-														onclick="return false;">To Fix</button>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="false_positive"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="false_positive"
-														class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
-														onclick="return false;">False Positive</button>
-											</div>
-										</div>
-									</td>
-									<td>
-										<strong>
-											<?php
-											if ( ! empty( $compare['html_title'] ) ) {
-												echo esc_html( $compare['html_title'] ) . '<br>';
-											}
-											?>
-										</strong>
-										<?php
-										echo esc_url( $compare['url'] ) . '<br>';
-										$this->get_device_icon( $compare['device'] );
-										echo esc_html( ucfirst( $compare['device'] ) );
-										?>
-									</td>
-									<td>
-										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
-										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
-									</td>
-									<td class="<?php echo esc_html( $class ); ?> diff-tile"
-										data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
-										<?php echo esc_html( $compare['difference_percent'] ); ?>%
-									</td>
-									<td>
-										<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
-											<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-											<input type="submit" value="Show" class="button">
-										</form>
-									</td>
-								</tr>
-							<?php } ?>
-						</table>
+									if ( $amount_failed ) {
+										echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
+									}
+									?>
+								</div>
+								<div class="accordion-batch-title-tile">
+									<?php
+									if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
+										$this->get_device_icon( 'auto-group' );
+										echo ' Monitoring Checks';
+									} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
+										$this->get_device_icon( 'auto-update-group' );
+										echo ' Auto Update Checks';
+									} else {
+										$this->get_device_icon( 'update-group' );
+										echo ' Manual Checks';
+									}
+									?>
+									<br>
+									<small>
+										<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
+										(<?php echo esc_html( get_date_from_gmt( ( $compares_in_batch[0]['created_at'] ) ) ); ?> )
+									</small>
+								</div>
+								<div class="clear"></div>
+							</div>
+						</h3>
+						<div class="mm_accordion_content">
+							<div class="ajax_batch_comparisons_content">
+								<div class="ajax-loading-container">
+									<img decoding="async" src="/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<div style="text-align: center;">Loading</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 			<?php
 			if ( 1 === count( $compares_in_batches ) ) {
-				echo '<script>jQuery(document).ready(function() {jQuery(".accordion h3").click();});</script>';
+				echo '<script>
+					jQuery(document).ready(function() {
+						setTimeout(function() {
+							jQuery(".accordion h3").first().click();
+						}, 200);
+					});
+				</script>';
 			}
 		}
 	}
