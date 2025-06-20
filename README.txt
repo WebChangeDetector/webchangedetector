@@ -36,7 +36,7 @@ With our visual regression tests for WordPress you can make sure your website lo
 *   **Share the change detection link** with your web designer to fix issues.
 
 ### Free Plan Limitations
-*   Get **50 checks per month** for the visual regression tests.
+*   Get **1000 checks for the first month** and 50 checks after for free.
 *   Monitoring only works in 24h intervals.
 
 ### Premium Plans

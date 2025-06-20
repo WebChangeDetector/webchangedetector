@@ -460,13 +460,13 @@ class WebChangeDetector_Admin {
 		$this->sync_single_post( $data );
 	}
 
-		/**
-		 * Get the domain from wp site_url.
-		 *
-		 * @return string
-		 */
+    /**
+     * Get the domain from wp site_url.
+     *
+     * @return string
+     */
 	public static function get_domain_from_site_url() {
-		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ), '/' ); // site might be in subdir.
+		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? ""), '/' ); // site might be in subdir.
 	}
 
 	/** Save the api token.
@@ -477,6 +477,7 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function save_api_token( $postdata, $api_token ) {
+        
 		if ( ! is_string( $api_token ) || strlen( $api_token ) < self::API_TOKEN_LENGTH ) {
 			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
@@ -2330,18 +2331,16 @@ class WebChangeDetector_Admin {
 		$email      = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : wp_get_current_user()->user_email;
 		?>
 		<div class="no-account-page">
-			<div class="status_bar no-account" >
-				<h2>Get Started</h2>
-				With WebChangeDetector you can check your website before after installing updates. See all changes
-				highlighted in a screenshot and fix issues before anyone else see them. You can also monitor changes
-				on your website automatically and get notified when something changed.
+			<div class="no-account">
+                <img src="<?php echo esc_url( $this->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
+                <h2>See what changed before your users do.</h2>
 			</div>
 			<div class="highlight-wrapper">
 				<div class="highlight-container">
 					<div class="highlight-inner">
 						<h2>Create Free Account</h2>
 						<p>
-							Create your free account now and use WebChangeDetector with <br><strong>50 checks</strong> per month for free.<br>
+							Create your free account with <br><strong>1000 checks</strong> in the first month and <strong>50 checks</strong> after.<br>
 						</p>
 						<form class="frm_new_account" method="post">
 							<input type="hidden" name="wcd_action" value="create_trial_account">
@@ -2380,7 +2379,7 @@ class WebChangeDetector_Admin {
 			}
 
 			foreach ( $websites['data'] as $website ) {
-				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( self::get_domain_from_site_url(), '/' ) ) ) {
+				if ( str_starts_with( rtrim( $website['domain'] ?? "", '/' ), rtrim( self::get_domain_from_site_url() ?? "", '/' ) ) ) {
 					$website_details                   = $website;
 					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 					break;
@@ -3089,7 +3088,7 @@ class WebChangeDetector_Admin {
 				self::error_log( '[WCD Admin Bar AJAX] Failed to parse current URL for API search.' );
 			} else {
 				$host            = $parsed_url['host'];
-				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'], '/' ) : '';
+				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'] ?? "", '/' ) : '';
 				$search_url_base = $host . $path;
 				self::error_log( '[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base );
 
