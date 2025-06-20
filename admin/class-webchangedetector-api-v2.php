@@ -516,11 +516,6 @@ class WebChangeDetector_API_V2 {
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.
 
-		// Increase timeout for php.ini.
-		if ( ! ini_get( 'safe_mode' ) ) {
-			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
-		}
-
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {

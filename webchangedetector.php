@@ -10,16 +10,17 @@
  * @link              webchangedetector.com
  * @since             0.1
  * @package           WebChangeDetector
+ * @author            Mike Miler
  *
  * @wordpress-plugin
- * Plugin Name:       WebChange Detector
- * Plugin URI:        webchangedetector.com
+ * Plugin Name:       Web Change Detector
+ * Plugin URI:        https://www.webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
  * Version:           3.2.4.8
  * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
  * Primary Branch:    main
  * Author:            Mike Miler
- * Author URI:        webchangedetector.com
+ * Author URI:        https://www.webchangedetector.com
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       webchangedetector

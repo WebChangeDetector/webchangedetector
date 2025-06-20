@@ -1970,6 +1970,8 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function create_website_and_groups() {
+
+
 		// Create group if it doesn't exist yet.
 		$args = array(
 			'action' => 'add_website_groups',
@@ -3115,11 +3117,6 @@ class WebChangeDetector_Admin {
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
 		$post['domain'] = self::get_domain_from_site_url();
 		$post['wp_id']  = get_current_user_id();
-
-		// Increase timeout for php.ini.
-		if ( ! ini_get( 'safe_mode' ) ) {
-			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
-		}
 
 		$args = array(
 			'timeout' => WCD_REQUEST_TIMEOUT,
