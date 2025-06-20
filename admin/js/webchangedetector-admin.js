@@ -407,6 +407,13 @@ function currentlyProcessing() {
                         $(this).css("background", bgColor);
                     }
                 });
+
+                // Refresh the accordion to recalculate heights and prevent overlapping
+                const accordion = batchContainer.find(".accordion");
+                if (accordion.length > 0) {
+                    accordion.accordion("refresh");
+                }
+
                 initBatchComparisonsPagination();
             });
         }
