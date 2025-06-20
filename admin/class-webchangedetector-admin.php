@@ -131,12 +131,17 @@ class WebChangeDetector_Admin {
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
 		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
 		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
+		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
 
 		// Add cron job for daily sync.
 		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
 		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
 		}
+
+        // Set the group uuids
+        $this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[WCD_AUTO_DETECTION_GROUP] ?? false;
+        $this->manual_group_uuid = get_option( WCD_WEBSITE_GROUPS )[WCD_MANUAL_DETECTION_GROUP] ?? false;
 	}
 
 	/**
@@ -684,6 +689,59 @@ class WebChangeDetector_Admin {
 		wp_die();
 	}
 
+	/**
+	 * AJAX handler to get dashboard usage statistics.
+	 *
+	 * @return void
+	 */
+	public function ajax_get_dashboard_usage_stats() {
+		// Get group data for usage calculations
+        $auto_group = WebChangeDetector_API_V2::get_group_v2($this->monitoring_group_uuid)['data'] ?? [];
+        $update_group = WebChangeDetector_API_V2::get_group_v2($this->manual_group_uuid)['data'] ?? [];
+        
+		
+		$amount_auto_detection = 0;
+		if ( !empty( $auto_group['enabled'] ) ) {
+			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
+		}
+
+		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
+		$max_auto_update_checks  = 0;
+		$amount_auto_update_days = 0;
+
+		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			foreach ( self::WEEKDAYS as $weekday ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
+					++$amount_auto_update_days;
+				}
+			}
+			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
+		}
+
+		// Get account data for renewal calculations
+		$client_account = $this->get_account();
+		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
+					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
+
+		$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
+		$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
+
+		wp_send_json_success( array(
+			'amount_auto_detection'  => $amount_auto_detection,
+			'max_auto_update_checks' => $max_auto_update_checks,
+			'checks_needed'          => $checks_needed,
+			'checks_available'       => $checks_available,
+			'checks_until_renewal'   => $checks_until_renewal,
+			// Debug info
+			'debug' => array(
+				'auto_group_enabled' => $auto_group['enabled'] ?? 'not set',
+				'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
+				'auto_group_urls' => $auto_group['selected_urls_count'] ?? 'not set',
+				'update_group_urls' => $update_group['selected_urls_count'] ?? 'not set',
+			),
+		) );
+	}
+
 	/** Get queues for status processing and open.
 	 *
 	 * @param string $batch_id The batch id.
@@ -1185,7 +1243,7 @@ class WebChangeDetector_Admin {
 						<div class="mm_accordion_content">
 							<div class="ajax_batch_comparisons_content">
 								<div class="ajax-loading-container">
-									<img decoding="async" src="<?php echo $this->get_wcd_plugin_url() ?>/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<img decoding="async" src="<?php echo $this->get_wcd_plugin_url() ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
 									<div style="text-align: center;">Loading</div>
 								</div>
 							</div>
@@ -2756,26 +2814,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account ) {
 
-		$auto_group   = $this->get_group_and_urls( $this->monitoring_group_uuid, array( 'per_page' => 1 ) );
-		$update_group = $this->get_group_and_urls( $this->manual_group_uuid, array( 'per_page' => 1 ) );
-
-		$amount_auto_detection = 0;
-		if ( $auto_group['enabled'] ) {
-			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
-		}
-
-		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
-		$max_auto_update_checks  = 0;
-		$amount_auto_update_days = 0;
-
-		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-					++$amount_auto_update_days;
-				}
-			}
-			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
-		}
+		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load
+		$amount_auto_detection  = 0; // Will be loaded via AJAX
+		$max_auto_update_checks = 0; // Will be loaded via AJAX
 
 		?>
 		<div class="dashboard">
@@ -2820,49 +2861,21 @@ class WebChangeDetector_Admin {
 						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
 					</div>
 					<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
-					<p>
+					<p id="wcd-monitoring-stats">
 						<strong>Monitoring: </strong>
-						<?php
-						if ( $amount_auto_detection > 0 ) {
-							?>
-							<span style="color: green; font-weight: 900;">On</span> (≈ <?php echo esc_html( $amount_auto_detection ) . ' checks / month)'; ?>
-						<?php } else { ?>
-							<span style="color: red; font-weight: 900">Off</span>
-							<?php
-						}
-						$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
-									( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
-
-						?>
+						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
 					<?php } ?>
 
 					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
-					<p>
+					<p id="wcd-auto-update-stats">
 						<strong>Auto update checks: </strong>
-						<?php
-						if ( $max_auto_update_checks > 0 ) {
-							?>
-							<span style="color: green; font-weight: 900;">On</span> (≈ <?php echo esc_html( $max_auto_update_checks ) . ' checks / month)'; ?>
-						<?php } else { ?>
-							<span style="color: red; font-weight: 900">Off</span>
-						<?php } ?>
+						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
-						<?php
-					}
-					$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
-					$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
-					if ( $checks_needed > $checks_available ) {
-						?>
-						<span class="notice notice-warning" style="display:block; padding: 10px;">
-							<?php $this->get_device_icon( 'warning' ); ?>
-							<strong>You might run out of checks before renewal day. </strong><br>
-							Current settings require up to <?php echo esc_html( number_format( $checks_needed - $checks_available, 0 ) ); ?> more checks. <br>
-							<?php if ( ! $client_account['is_subaccount'] ) { ?>
-								<a href="<?php echo esc_html( $this->get_upgrade_url() ); ?>">Upgrade your account now.</a>
-							<?php } ?>
-						</span>
 					<?php } ?>
+
+					<!-- Usage warning will be loaded via AJAX -->
+					<div id="wcd-usage-warning"></div>
 
 
 				</div>
