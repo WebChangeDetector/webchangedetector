@@ -221,6 +221,17 @@ class WebChangeDetector_Admin {
 					'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
 				)
 			);
+
+			// Localize script with AJAX data for dashboard usage stats.
+			wp_localize_script(
+				$this->plugin_name,
+				'wcdAjaxData',
+				array(
+					'ajax_url'   => admin_url( 'admin-ajax.php' ),
+					'nonce'      => wp_create_nonce( 'ajax-nonce' ),
+					'plugin_url' => plugin_dir_url( __FILE__ ),
+				)
+			);
 		}
 	}
 
@@ -695,6 +706,14 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function ajax_get_dashboard_usage_stats() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
 		// Get group data for usage calculations
         $auto_group = WebChangeDetector_API_V2::get_group_v2($this->monitoring_group_uuid)['data'] ?? [];
         $update_group = WebChangeDetector_API_V2::get_group_v2($this->manual_group_uuid)['data'] ?? [];

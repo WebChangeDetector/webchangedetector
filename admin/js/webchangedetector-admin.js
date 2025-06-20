@@ -387,7 +387,7 @@ function currentlyProcessing() {
             }
 
             // Show loading placeholder
-            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="/wp-content/plugins/webchangedetector/admin/img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
+            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="' + wcdAjaxData.plugin_url + 'img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
 
             // Only scroll for pagination, not initial load
             if (shouldScroll) {
@@ -557,7 +557,8 @@ function currentlyProcessing() {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'get_dashboard_usage_stats'
+                action: 'get_dashboard_usage_stats',
+                nonce: wcdAjaxData.nonce
             },
             success: function (response) {
 
@@ -565,8 +566,7 @@ function currentlyProcessing() {
                     const data = response.data;
 
                     // Debug logging
-                    console.log('Dashboard usage stats response:', data);
-                    console.log(data);
+
                     // Update monitoring stats
                     const monitoringElement = $('#wcd-monitoring-stats');
                     if (monitoringElement.length > 0) {
@@ -637,7 +637,7 @@ function sync_urls(force = 0) {
     };
 
     // Loading icon to show we are checking if we have to sync.
-    jQuery('#ajax_sync_urls_status').append(" <img style='width: 10px' src='/wp-content/plugins/webchangedetector/admin/img/loader.gif'>");
+    jQuery('#ajax_sync_urls_status').append(" <img style='width: 10px' src='" + wcdAjaxData.plugin_url + "img/loader.gif'>");
 
     // Show the button as disabled.
     jQuery('.button-sync-urls').prop('disabled', true);
