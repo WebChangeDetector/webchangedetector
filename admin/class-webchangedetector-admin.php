@@ -132,6 +132,7 @@ class WebChangeDetector_Admin {
 		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
 		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
 		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
+		add_action( 'wp_ajax_create_website_and_groups_ajax', array( $this, 'ajax_create_website_and_groups' ) );
 
 		// Add cron job for daily sync.
 		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
@@ -723,6 +724,56 @@ class WebChangeDetector_Admin {
 
 		$this->load_failed_queues_view( $batch_id );
 		wp_die();
+	}
+
+	/**
+	 * AJAX handler for creating website and groups.
+	 *
+	 * @return void
+	 */
+	public function ajax_create_website_and_groups() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			// Create website and groups.
+			$creation_response = $this->create_website_and_groups();
+			
+            // If the website was created successfully, we can proceed.
+			if ( ! empty( $creation_response['website'] ) ) {
+				// Set website details for subsequent operations.
+                $this->website_details = $creation_response['website'];
+				
+				// Make the initial post sync.
+				$sync_response = $this->sync_posts( true );
+				
+				// If only the frontpage is allowed, we activate the URLs.
+				if ( $this->is_allowed( 'only_frontpage' ) ) {
+					$urls = $this->get_group_and_urls( $this->manual_group_uuid )['urls'];
+					if ( ! empty( $urls[0] ) ) {
+						$update_urls = array(
+							'desktop-' . $urls[0]['url_id'] => 1,
+							'mobile-' . $urls[0]['url_id']  => 1,
+							'group_id'                      => $this->manual_group_uuid,
+						);
+						$this->post_urls( $update_urls );
+					}
+				}
+
+				wp_send_json_success( array( 'message' => __( 'Account created successfully.', 'webchangedetector' ) ) );
+			} else {
+				$this->error_log( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
+				wp_send_json_error( array( 'message' => __( 'Failed to create website and groups.', 'webchangedetector' ) ) );
+			}
+		} catch ( Exception $e ) {
+			$this->error_log( "Exception during website creation: " . $e->getMessage() );
+			wp_send_json_error( array( 'message' => __( 'An error occurred during account creation.', 'webchangedetector' ) ) );
+		}
 	}
 
 	/**
@@ -1746,6 +1797,8 @@ class WebChangeDetector_Admin {
 
 		// We only sync the frontpage.
 		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
+            
+            error_log( "only frontpage: " . print_r( $website_details['allowances']['only_frontpage'], true ) );
 			$array['frontpage%%Frontpage'][] = array(
 				'url'        => $this::get_domain_from_site_url(),
 				'html_title' => get_bloginfo( 'name' ),

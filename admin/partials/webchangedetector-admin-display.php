@@ -27,6 +27,18 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Start view.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
+		
+		// Add loading overlay for account creation.
+		?>
+		<div id="wcd-loading-overlay" style="display: none;">
+			<div class="wcd-loading-content">
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
+				<p class="wcd-loading-text">We're getting your account ready</p>
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
+			</div>
+		</div>
+		<?php
+		
 		echo '<h1>WebChange Detector</h1>';
 
 		// Validate wcd_action and nonce.
@@ -156,32 +168,50 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Create new ones if we don't have them yet.
 		if ( ! $wcd->website_details ) {
-			$creation_response = $wcd->create_website_and_groups();
-			
-			// Use website details from creation response instead of making another API call.
-			if ( ! empty( $creation_response['website'] ) ) {
-				$wcd->website_details = $creation_response['website'];
-			} else {
-				WebChangeDetector_Admin::error_log( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
-				return "Sorry, something went wrong. Please contact us and we'll help you out.";
-			}
-
-			// Make the inital post sync.
-			// TODO: make this asyncron and show loading screen.
-			$wcd->sync_posts( true );
-
-			// If only the frontpage is allowed, we activate the URLs.
-			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
-				$urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid )['urls'];
-				if ( ! empty( $urls[0] ) ) {
-					$update_urls = array(
-						'desktop-' . $urls[0]['url_id'] => 1,
-						'mobile-' . $urls[0]['url_id']  => 1,
-						'group_id'                      => $wcd->website_details['manual_detection_group']['uuid'],
-					);
-					$wcd->post_urls( $update_urls );
-				}
-			}
+			// Show loading screen and trigger AJAX account creation.
+			?>
+			<script type="text/javascript">
+				document.addEventListener('DOMContentLoaded', function() {
+					// Show loading overlay immediately
+					document.getElementById('wcd-loading-overlay').style.display = 'flex';
+					
+					// Make AJAX request to create website and groups
+					var xhr = new XMLHttpRequest();
+					xhr.open('POST', ajaxurl, true);
+					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+					
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState === 4) {
+							if (xhr.status === 200) {
+								try {
+									var response = JSON.parse(xhr.responseText);
+									if (response.success) {
+										// Account created successfully, reload the page
+										window.location.reload();
+									} else {
+										// Hide loading and show error
+										document.getElementById('wcd-loading-overlay').style.display = 'none';
+										alert('Error creating account: ' + (response.data.message || 'Unknown error'));
+									}
+								} catch (e) {
+									// Hide loading and show error
+									document.getElementById('wcd-loading-overlay').style.display = 'none';
+									alert('Error processing response. Please try again.');
+								}
+							} else {
+								// Hide loading and show error
+								document.getElementById('wcd-loading-overlay').style.display = 'none';
+								alert('Network error. Please try again.');
+							}
+						}
+					};
+					
+					var data = 'action=create_website_and_groups_ajax&nonce=' + encodeURIComponent(wcdAjaxData.nonce);
+					xhr.send(data);
+				});
+			</script>
+			<?php
+			return; // Don't continue with the rest of the page rendering
 		}
 
 		// Check if website details are available.
