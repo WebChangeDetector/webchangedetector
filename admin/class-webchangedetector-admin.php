@@ -10,7 +10,7 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
-/** WCD Admin Class
+/** WCD Admin Class.
  */
 class WebChangeDetector_Admin {
 
@@ -28,12 +28,12 @@ class WebChangeDetector_Admin {
 		'logs',
 		'settings',
 		'show-compare',
-		'create_free_account',
+		'create_trial_account',
 		'update_detection_step',
 		'add_post_type',
 		'filter_change_detections',
 		'change_comparison_status',
-					'disable_wizard',
+		'disable_wizard',
 		'start_manual_checks',
 		'sync_urls',
 		'save_admin_bar_setting',
@@ -47,9 +47,9 @@ class WebChangeDetector_Admin {
 	);
 
 	const VALID_GROUP_TYPES = array(
-		'all', // filter.
-		'generic', // filter.
-		'wordpress', // filter.
+		'all', // Filter.
+		'generic', // Filter.
+		'wordpress', // Filter.
 		'auto',
 		'post',
 		'update',
@@ -127,8 +127,22 @@ class WebChangeDetector_Admin {
 		// Add hook for admin bar menu.
 		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right.
 
-		// Register AJAX handler.
+		// Register AJAX handlers.
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
+		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
+		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
+		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
+		add_action( 'wp_ajax_create_website_and_groups_ajax', array( $this, 'ajax_create_website_and_groups' ) );
+
+		// Add cron job for daily sync.
+		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
+		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		}
+
+		// Set the group uuids.
+		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
 	}
 
 	/**
@@ -153,7 +167,7 @@ class WebChangeDetector_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
-		
+
 		// Enqueue Driver.js CSS for the new wizard system.
 		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
@@ -162,8 +176,9 @@ class WebChangeDetector_Admin {
 	 * Register the JavaScript for the admin area.
 	 *
 	 * @since    1.0.0
+	 * @param string $hook_suffix The hook suffix for the current page.
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts( $hook_suffix ) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -177,30 +192,48 @@ class WebChangeDetector_Admin {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'jquery-ui-accordion' );
-		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-		
-		// Enqueue Driver.js for the new wizard system.
-		wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-		wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+		// Only load the js files when we are on the wcd page.
 
-		// Load WP codemirror.
-		$css_settings              = array(
-			'type' => 'text/css',
-		);
-		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 
-		// NOTE: Admin bar script enqueue moved to enqueue_admin_bar_scripts method
-		// hooked to wp_enqueue_scripts for frontend loading.
-		
-		// Localize script with AJAX data for wizard
-		wp_localize_script( 'wcd-wizard', 'wcdWizardData', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-		) );
+			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+
+			wp_enqueue_script( 'jquery-ui-accordion' );
+			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+
+			// Enqueue Driver.js for the new wizard system.
+			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
+			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+
+			// Load WP codemirror.
+			$css_settings              = array(
+				'type' => 'text/css',
+			);
+			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+
+			// Localize script with AJAX data for wizard.
+			wp_localize_script(
+				'wcd-wizard',
+				'wcdWizardData',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
+				)
+			);
+
+			// Localize script with AJAX data for dashboard usage stats.
+			wp_localize_script(
+				$this->plugin_name,
+				'wcdAjaxData',
+				array(
+					'ajax_url'   => admin_url( 'admin-ajax.php' ),
+					'nonce'      => wp_create_nonce( 'ajax-nonce' ),
+					'plugin_url' => plugin_dir_url( __FILE__ ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -375,7 +408,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return array|string
 	 */
-	public function create_free_account( $postdata ) {
+	public function create_trial_account( $postdata ) {
 
 		// Generate validation string.
 		$validation_string = wp_generate_password( 40 );
@@ -383,7 +416,7 @@ class WebChangeDetector_Admin {
 		$postdata['password'] = wp_hash_password( $postdata['password'] );
 		$args                 = array_merge(
 			array(
-				'action'            => 'add_free_account',
+				'action'            => 'add_trial_account',
 				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
 				'domain'            => $this->get_domain_from_site_url(),
 				'validation_string' => $validation_string,
@@ -446,13 +479,13 @@ class WebChangeDetector_Admin {
 		$this->sync_single_post( $data );
 	}
 
-		/**
-		 * Get the domain from wp site_url.
-		 *
-		 * @return string
-		 */
+	/**
+	 * Get the domain from wp site_url.
+	 *
+	 * @return string
+	 */
 	public static function get_domain_from_site_url() {
-		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ), '/' ); // site might be in subdir.
+		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? '' ), '/' ); // Site might be in subdir.
 	}
 
 	/** Save the api token.
@@ -463,6 +496,7 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function save_api_token( $postdata, $api_token ) {
+
 		if ( ! is_string( $api_token ) || strlen( $api_token ) < self::API_TOKEN_LENGTH ) {
 			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
@@ -519,16 +553,24 @@ class WebChangeDetector_Admin {
 		return true;
 	}
 
-	/** Ajax get processing queue
+	/** Ajax get processing queue.
 	 *
 	 * @return void
 	 */
 	public function ajax_get_processing_queue() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
 		echo wp_json_encode( $this->get_processing_queue_v2( get_option( 'wcd_manual_checks_batch' ) ) );
 		die();
 	}
 
-	/** Update selected url
+	/** Update selected url.
 	 *
 	 * @return void
 	 */
@@ -623,6 +665,177 @@ class WebChangeDetector_Admin {
 		delete_option( 'wcd_wizard' );
 
 		wp_send_json_success( 'Wizard disabled' );
+	}
+
+	/**
+	 * AJAX handler for loading batch comparisons view.
+	 *
+	 * @return void
+	 */
+	public function ajax_get_batch_comparisons_view() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		// Get and sanitize the POST data.
+		$filters = sanitize_text_field( wp_unslash( $_POST['filters'] ?? array() ) );
+
+		// Ensure filters is always an array.
+		if ( ! is_array( $filters ) ) {
+			$filters = array();
+		}
+		$filters['batches'] = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
+		$filters['page']    = sanitize_text_field( wp_unslash( $_POST['page'] ?? 1 ) );
+
+		$filters = array_filter( $filters );
+
+		// Get comparisons from API (no failed queues here - they load separately).
+		$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+
+		// Load the comparisons view without failed queues.
+		$this->load_comparisons_view( $filters['batches'], $comparisons, $filters );
+		wp_die();
+	}
+
+	/**
+	 * AJAX handler for loading failed queues view.
+	 *
+	 * @return void
+	 */
+	public function ajax_load_failed_queues() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		$batch_id = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
+
+		if ( empty( $batch_id ) ) {
+			echo '<div style="padding: 20px; text-align: center; color: #666;">Invalid batch ID.</div>';
+			wp_die();
+		}
+
+		$this->load_failed_queues_view( $batch_id );
+		wp_die();
+	}
+
+	/**
+	 * AJAX handler for creating website and groups.
+	 *
+	 * @return void
+	 */
+	public function ajax_create_website_and_groups() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			// Create website and groups.
+			$creation_response = $this->create_website_and_groups();
+			
+            // If the website was created successfully, we can proceed.
+			if ( ! empty( $creation_response['website'] ) ) {
+				// Set website details for subsequent operations.
+                $this->website_details = $creation_response['website'];
+				
+				// Make the initial post sync.
+				$sync_response = $this->sync_posts( true );
+				
+				// If only the frontpage is allowed, we activate the URLs.
+				if ( $this->is_allowed( 'only_frontpage' ) ) {
+					$urls = $this->get_group_and_urls( $this->manual_group_uuid )['urls'];
+					if ( ! empty( $urls[0] ) ) {
+						$update_urls = array(
+							'desktop-' . $urls[0]['url_id'] => 1,
+							'mobile-' . $urls[0]['url_id']  => 1,
+							'group_id'                      => $this->manual_group_uuid,
+						);
+						$this->post_urls( $update_urls );
+					}
+				}
+
+				wp_send_json_success( array( 'message' => __( 'Account created successfully.', 'webchangedetector' ) ) );
+			} else {
+				$this->error_log( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
+				wp_send_json_error( array( 'message' => __( 'Failed to create website and groups.', 'webchangedetector' ) ) );
+			}
+		} catch ( Exception $e ) {
+			$this->error_log( "Exception during website creation: " . $e->getMessage() );
+			wp_send_json_error( array( 'message' => __( 'An error occurred during account creation.', 'webchangedetector' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to get dashboard usage statistics.
+	 *
+	 * @return void
+	 */
+	public function ajax_get_dashboard_usage_stats() {
+		// Verify nonce for security.
+		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		// Get group data for usage calculations.
+		$auto_group   = WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'] ?? array();
+		$update_group = WebChangeDetector_API_V2::get_group_v2( $this->manual_group_uuid )['data'] ?? array();
+
+		$amount_auto_detection = 0;
+		if ( ! empty( $auto_group['enabled'] ) ) {
+			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
+		}
+
+		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
+		$max_auto_update_checks  = 0;
+		$amount_auto_update_days = 0;
+
+		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			foreach ( self::WEEKDAYS as $weekday ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
+					++$amount_auto_update_days;
+				}
+			}
+			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
+		}
+
+		// Get account data for renewal calculations.
+		$client_account       = $this->get_account();
+		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
+					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
+
+		$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
+		$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
+
+		wp_send_json_success(
+			array(
+				'amount_auto_detection'  => $amount_auto_detection,
+				'max_auto_update_checks' => $max_auto_update_checks,
+				'checks_needed'          => $checks_needed,
+				'checks_available'       => $checks_available,
+				'checks_until_renewal'   => $checks_until_renewal,
+				// Debug info.
+				'debug'                  => array(
+					'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
+					'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
+					'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
+					'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
+				),
+			)
+		);
 	}
 
 	/** Get queues for status processing and open.
@@ -814,14 +1027,230 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+	/**
+	 * Load comparisons view for a specific batch via AJAX.
+	 *
+	 * @param string $batch_id The batch ID.
+	 * @param array  $comparisons The comparisons data.
+	 * @param array  $filters The filters applied.
+	 * @return void
+	 */
+	public function load_comparisons_view( $batch_id, $comparisons, $filters ) {
+		if ( empty( $comparisons['data'] ) ) {
+			?>
+			<table style="width: 100%">
+				<tr>
+					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
+						<strong>No comparisons found for this batch.</strong>
+					</td>
+				</tr>
+			</table>
+			<?php
+			return;
+		}
+
+		$compares   = $comparisons['data'];
+		$all_tokens = array();
+
+		foreach ( $compares as $compare ) {
+			$all_tokens[] = $compare['id'];
+		}
+
+		?>
+		<table class="toggle" style="width: 100%">
+			<tr>
+				<th style="min-width: 120px;">Status</th>
+				<th style="width: 100%">URL</th>
+				<th style="min-width: 150px">Compared Screenshots</th>
+				<th style="min-width: 50px">Difference</th>
+				<th>Show</th>
+			</tr>
+
+			<?php
+			// Show comparisons.
+			foreach ( $compares as $compare ) {
+				if ( empty( $compare['status'] ) ) {
+					$compare['status'] = 'new';
+				}
+
+				$class = 'no-difference'; // init.
+				if ( $compare['difference_percent'] ) {
+					$class = 'is-difference';
+				}
+
+				?>
+				<tr>
+					<td>
+						<div class="comparison_status_container">
+							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
+								<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+							</span>
+							<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
+								<strong>Change Status to:</strong><br>
+								<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="ok"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="ok"
+										class="ajax_update_comparison_status comparison_status comparison_status_ok"
+										onclick="return false;">Ok</button>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="to_fix"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="to_fix"
+										class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
+										onclick="return false;">To Fix</button>
+								<button name="status"
+										data-id="<?php echo esc_html( $compare['id'] ); ?>"
+										data-status="false_positive"
+										data-nonce="<?php echo esc_html( $nonce ); ?>"
+										value="false_positive"
+										class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+										onclick="return false;">False Positive</button>
+							</div>
+						</div>
+					</td>
+					<td>
+						<strong>
+							<?php
+							if ( ! empty( $compare['html_title'] ) ) {
+								echo esc_html( $compare['html_title'] ) . '<br>';
+							}
+							?>
+						</strong>
+						<?php
+						echo esc_url( $compare['url'] ) . '<br>';
+						$this->get_device_icon( $compare['device'] );
+						echo esc_html( ucfirst( $compare['device'] ) );
+						?>
+					</td>
+					<td>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
+					</td>
+					<td class="<?php echo esc_html( $class ); ?> diff-tile"
+						data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
+						<?php echo esc_html( $compare['difference_percent'] ); ?>%
+					</td>
+					<td>
+						<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
+							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+							<input type="submit" value="Show" class="button">
+						</form>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+		<?php
+		// Add pagination if needed.
+		if ( ! empty( $comparisons['meta']['links'] ) ) {
+			?>
+			<div class="tablenav" >
+				<div class="tablenav-pages">
+					<span class="pagination-links">
+						<?php
+						foreach ( $comparisons['meta']['links'] as $link ) {
+							$url_params = $this->get_params_of_url( $link['url'] );
+							$class      = ! $link['url'] || $link['active'] ? 'disabled' : '';
+							$page       = $url_params['page'] ?? 1;
+							?>
+							<button class="ajax_paginate_batch_comparisons tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
+									data-page="<?php echo esc_html( $page ); ?>"
+									data-filters="<?php echo esc_attr( wp_json_encode( $filters ) ); ?>"
+									<?php echo ( 'disabled' === $class ) ? 'disabled' : ''; ?>>
+								<?php echo esc_html( $link['label'] ); ?>
+							</button>
+							<?php
+						}
+						?>
+					</span>
+					<span class="displaying-num"><?php echo esc_html( $comparisons['meta']['total'] ?? 0 ); ?> items</span>
+				</div>
+			</div>
+			<?php
+		}
+	}
+
+	/**
+	 * Load failed queues view for a specific batch via AJAX.
+	 *
+	 * @param string $batch_id The batch ID.
+	 * @return void
+	 */
+	public function load_failed_queues_view( $batch_id ) {
+		$failed_queues = WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
+
+		// Handle pagination for failed queues if needed.
+		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
+			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
+				$failed_queues_data    = WebChangeDetector_API_V2::get_queues_v2(
+					$batch_id,
+					'failed',
+					array(
+						'per_page' => 100,
+						'page'     => $i,
+					)
+				);
+				$failed_queues['data'] = array_merge( $failed_queues['data'], $failed_queues_data['data'] );
+			}
+		}
+
+		if ( empty( $failed_queues['data'] ) ) {
+			echo '<div style="padding: 20px; text-align: center; color: #666;">No failed URLs found for this batch.</div>';
+			return;
+		}
+		?>
+		<table class="toggle" style="margin: 0;">
+			<tr class="table-headline-row">
+				<th>Status</th>
+				<th style="width:auto">URL</th>
+				<th style="width:250px">Compared Screenshots</th>
+				<th style="width:100px">Difference</th>
+			</tr>
+			<?php
+			foreach ( $failed_queues['data'] as $failed_queue ) {
+				if ( $batch_id === $failed_queue['batch'] ) {
+					?>
+					<tr style="background-color: rgba(220, 50, 50, 0.1);">
+						<td>
+							<div class="comparison_status_container">
+								<span class="current_comparison_status comparison_status comparison_status_failed">
+									<?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?>
+								</span>
+							</div>
+						</td>
+						<td>
+							<?php
+							if ( ! empty( $failed_queue['html_title'] ) ) {
+								echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
+							}
+							$this->get_device_icon( $failed_queue['device'] );
+							echo esc_html( $failed_queue['url_link'] );
+							?>
+						</td>
+						<td class="table-row-compared-screenshots-failed">n/a</td>
+						<td class="table-row-diff-tile-failed"><div style="text-align: center;">n/a</div></td>
+					</tr>
+					<?php
+				}
+			}
+			?>
+		</table>
+		<?php
+	}
+
 	/** View of comparison overview.
 	 *
-	 * @param array $compares The compares.
+	 * @param array $batches The batches.
 	 * @param array $failed_queues Array with failed queues.
 	 * @return void
 	 */
-	public function compare_view_v2( $compares, $failed_queues = false ) {
-		if ( empty( $compares['data'] ) ) {
+	public function compare_view_v2( $batches, $failed_queues = false ) {
+
+		if ( empty( $batches ) ) {
 			?>
 			<table style="width: 100%">
 				<tr>
@@ -835,22 +1264,10 @@ class WebChangeDetector_Admin {
 			return;
 		}
 
-		$all_tokens          = array();
-		$compares_in_batches = array();
-
-		foreach ( $compares as $compare ) {
-
-			$all_tokens[] = $compare['id'];
-
-			// Sort comparisons by batches.
-			$compares_in_batches[ $compare['batch'] ][] = $compare;
-			if ( 'ok' !== $compare['status'] ) {
-				$compares_in_batches[ $compare['batch'] ]['needs_attention'] = true;
-			}
-		}
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 
-		foreach ( $compares_in_batches as $batch_id => $compares_in_batch ) {
+		foreach ( $batches as $batch ) {
+			$batch_id = $batch['id'];
 
 			$amount_failed = 0;
 			if ( ! empty( $failed_queues['data'] ) ) {
@@ -860,172 +1277,95 @@ class WebChangeDetector_Admin {
 					}
 				}
 			}
+
+			// Calculate needs_attention from batch statistics.
+			$needs_attention = false;
+			if ( isset( $batch['statistics'] ) ) {
+				$stats = $batch['statistics'];
+				// If there are any non-ok statuses, needs attention.
+				if ( ( $stats['new'] ?? 0 ) > 0 || ( $stats['to_fix'] ?? 0 ) > 0 || $amount_failed > 0 ) {
+					$needs_attention = true;
+				}
+			}
+
+			// Get group from batch data - batches have group_id field.
+			$batch_group = $batch['group_id'] ?? '';
+
+			// Get created_at from batch data.
+			$batch_finished_at = $batch['finished_at'] ?? 'processing...';
 			?>
-			<div class="accordion accordion-batch" style="margin-top: 20px;">
-				<div class="mm_accordion_title">
-					<h3>
-						<div style="display: inline-block;">
-							<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
-								<?php
-								if ( array_key_exists( 'needs_attention', $compares_in_batch ) ) {
-									$this->get_device_icon( 'warning', 'batch_needs_attention' );
-									echo '<small>Needs Attention</small>';
-								} else {
-									$this->get_device_icon( 'check', 'batch_is_ok' );
-									echo '<small>Looks Good</small>';
-								}
-								if ( $amount_failed ) {
-									echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
-								}
-								?>
-							</div>
-							<div class="accordion-batch-title-tile">
-								<?php
-								if ( $compares_in_batch[0]['group'] === $this->monitoring_group_uuid ) {
-									$this->get_device_icon( 'auto-group' );
-									echo ' Monitoring Checks';
-								} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
-									$this->get_device_icon( 'auto-update-group' );
-									echo ' Auto Update Checks';
-								} else {
-									$this->get_device_icon( 'update-group' );
-									echo ' Manual Checks';
-								}
-								?>
-								<br>
-								<small>
-									<?php echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $compares_in_batch[0]['created_at'] ) ) ) ); ?> ago
-									(<?php echo esc_html( get_date_from_gmt( ( $compares_in_batch[0]['created_at'] ) ) ); ?> )
-								</small>
-							</div>
-							<div class="clear"></div>
-						</div>
-					</h3>
-					<div class="mm_accordion_content">
-						<table class="toggle" style="width: 100%">
-							<tr>
-								<th style="min-width: 120px;">Status</th>
-								<th style="width: 100%">URL</th>
-								<th style="min-width: 150px">Compared Screenshots</th>
-								<th style="min-width: 50px">Difference</th>
-								<th>Show</th>
-							</tr>
-
-							<?php
-							if ( $failed_queues ) {
-								foreach ( $failed_queues['data'] as $failed_queue ) {
-									if ( $batch_id === $failed_queue['batch'] ) {
-										?>
-										<tr style="background-color: rgba(220, 50, 50, 0.28)">
-											<td>
-												<div class="comparison_status_container">
-													<span class="current_comparison_status comparison_status comparison_status_failed"><?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?></span>
-												</div>
-											</td>
-											<td>
-											<?php
-											if ( ! empty( $failed_queue['html_title'] ) ) {
-												echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
-											}
-												echo esc_html( $this->get_device_icon( $failed_queue['device'] ) . $failed_queue['url_link'] );
-											?>
-											</td>
-											<td colspan="3">
-												<strong>Creating Change Detection failed.</strong><br> Please check the URL.
-											</td>
-
-										</tr>
-
-										<?php
+			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" style="margin-top: 20px;">
+				<div class="accordion accordion-batch">
+					<div class="mm_accordion_title">
+						<h3>
+							<div style="display: inline-block;">
+								<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
+									<?php
+									if ( $needs_attention ) {
+										$this->get_device_icon( 'warning', 'batch_needs_attention' );
+										echo '<small>Needs Attention</small>';
+									} else {
+										$this->get_device_icon( 'check', 'batch_is_ok' );
+										echo '<small>Looks Good</small>';
 									}
-								}
-							}
-
-							foreach ( $compares_in_batch as $key => $compare ) {
-								if ( 'needs_attention' === $key ) {
-									continue;
-								}
-								if ( empty( $compare['status'] ) ) {
-									$compare['status'] = 'new';
-								}
-
-								$class = 'no-difference'; // init.
-								if ( $compare['difference_percent'] ) {
-									$class = 'is-difference';
-								}
-
-								?>
-								<tr>
-									<td>
-										<div class="comparison_status_container">
-											<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-												<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
-											</span>
-											<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
-												<strong>Change Status to:</strong><br>
-												<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="ok"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="ok"
-														class="ajax_update_comparison_status comparison_status comparison_status_ok"
-														onclick="return false;">Ok</button>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="to_fix"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="to_fix"
-														class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
-														onclick="return false;">To Fix</button>
-												<button name="status"
-														data-id="<?php echo esc_html( $compare['id'] ); ?>"
-														data-status="false_positive"
-														data-nonce="<?php echo esc_html( $nonce ); ?>"
-														value="false_positive"
-														class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
-														onclick="return false;">False Positive</button>
-											</div>
-										</div>
-									</td>
-									<td>
-										<strong>
-											<?php
-											if ( ! empty( $compare['html_title'] ) ) {
-												echo esc_html( $compare['html_title'] ) . '<br>';
-											}
-											?>
-										</strong>
+									if ( $amount_failed ) {
+										echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
+									}
+									?>
+								</div>
+								<div class="accordion-batch-title-tile">
+									<?php
+									if ( $batch_group === $this->monitoring_group_uuid ) {
+										$this->get_device_icon( 'auto-group' );
+										echo ' Monitoring Checks';
+									} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
+										$this->get_device_icon( 'auto-update-group' );
+										echo ' Auto Update Checks';
+									} else {
+										$this->get_device_icon( 'update-group' );
+										echo ' Manual Checks';
+									}
+									?>
+									<br>
+									<small>
 										<?php
-										echo esc_url( $compare['url'] ) . '<br>';
-										$this->get_device_icon( $compare['device'] );
-										echo esc_html( ucfirst( $compare['device'] ) );
+										if ( ! empty( $batch_finished_at ) ) {
+											echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $batch_finished_at ) ) ) );
+											echo ' ago (';
+											echo esc_html( get_date_from_gmt( $batch_finished_at ) );
+											echo ')';
+										} else {
+											echo 'processing...';
+										}
 										?>
-									</td>
-									<td>
-										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
-										<div  ><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
-									</td>
-									<td class="<?php echo esc_html( $class ); ?> diff-tile"
-										data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
-										<?php echo esc_html( $compare['difference_percent'] ); ?>%
-									</td>
-									<td>
-										<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
-											<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-											<input type="submit" value="Show" class="button">
-										</form>
-									</td>
-								</tr>
-							<?php } ?>
-						</table>
+									</small>
+								</div>
+								<div class="clear"></div>
+							</div>
+						</h3>
+						<div class="mm_accordion_content">
+							<div class="ajax_batch_comparisons_content">
+								<div class="ajax-loading-container">
+									<img decoding="async" src="<?php echo esc_url( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<div style="text-align: center;">Loading</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 			<?php
-			if ( 1 === count( $compares_in_batches ) ) {
-				echo '<script>jQuery(document).ready(function() {jQuery(".accordion h3").click();});</script>';
-			}
+		}
+
+		// Auto-click first accordion if only one batch.
+		if ( 1 === count( $batches ) ) {
+			echo '<script>
+				jQuery(document).ready(function() {
+					setTimeout(function() {
+						jQuery(".accordion h3").first().click();
+					}, 200);
+				});
+			</script>';
 		}
 	}
 
@@ -1406,6 +1746,16 @@ class WebChangeDetector_Admin {
 		}
 	}
 
+	/**
+	 * Daily sync posts cron job.
+	 *
+	 * @return void
+	 */
+	public function daily_sync_posts_cron_job() {
+		// Setting force to true to ensure it runs regardless of last sync time.
+		$this->sync_posts();
+	}
+
 	/** Sync single post.
 	 *
 	 * @param array $single_post The sync array.
@@ -1427,17 +1777,17 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function sync_posts( $force_sync = false, $website_details = false ) {
-
 		$last_sync     = get_option( 'wcd_last_urls_sync' );
 		$sync_interval = '+1 hour';
 
 		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) > gmdate( 'U' ) ) {
+		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) >= date_i18n( 'U' ) ) {
 			// Returning last sync datetime.
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
 
 		self::error_log( 'Starting Sync' );
+		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		// Check if we got website_details or if we use the ones from the class.
 		$array = array(); // init.
@@ -1447,6 +1797,8 @@ class WebChangeDetector_Admin {
 
 		// We only sync the frontpage.
 		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
+            
+            error_log( "only frontpage: " . print_r( $website_details['allowances']['only_frontpage'], true ) );
 			$array['frontpage%%Frontpage'][] = array(
 				'url'        => $this::get_domain_from_site_url(),
 				'html_title' => get_bloginfo( 'name' ),
@@ -1504,7 +1856,7 @@ class WebChangeDetector_Admin {
 
 		// Check if frontpage is already in the sync settings.
 		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'] ?? [],
+			$website_details['sync_url_types'] ?? array(),
 			function ( $item ) {
 				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
 			}
@@ -1583,11 +1935,14 @@ class WebChangeDetector_Admin {
 			$this->update_website_details( $website_details );
 		}
 
-		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls );
-		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true );
+		// Create uuid for sync urls.
+		$collection_uuid = wp_generate_uuid4();
+
+		// Sync urls.
+		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
+		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
 		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
 		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
-		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		return date_i18n( 'd/m/Y H:i' );
 	}
@@ -1668,13 +2023,109 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function create_website_and_groups() {
-		// Create group if it doesn't exist yet.
-		$args = array(
-			'action' => 'add_website_groups',
-			'cms'    => 'wordpress',
-			// domain sent at mm_api.
+		$domain = self::get_domain_from_site_url();
+		
+		// Create monitoring group.
+		$monitoring_group_args = array(
+			'name'        => $domain,
+			'monitoring'  => true,
+			'enabled'     => true,
 		);
-		return $this->api_v1( $args );
+		
+		$monitoring_group_response = WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
+		
+		// Create manual checks group.
+		$manual_group_args = array(
+			'name'       => $domain,
+			'monitoring' => false,
+			'enabled'    => true,
+		);
+		
+		$manual_group_response = WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
+		
+		// Check if both groups were created successfully.
+		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
+			// Create the website with the group IDs.
+			$website_response = WebChangeDetector_API_V2::create_website_v2(
+				$domain,
+				$manual_group_response['data']['id'],
+				$monitoring_group_response['data']['id']
+			);
+			
+			// Check if website was created successfully.
+            if ( ! empty( $website_response['data']['id'] ) ) {
+                // Save group IDs to wp_options.
+                $groups = array(
+                    WCD_AUTO_DETECTION_GROUP   => $monitoring_group_response['data']['id'],
+                    WCD_MANUAL_DETECTION_GROUP => $manual_group_response['data']['id'],
+                );
+                
+                update_option( WCD_WEBSITE_GROUPS, $groups, false );
+
+                // Directly set the group IDs to the class properties.
+                $this->monitoring_group_uuid = $monitoring_group_response['data']['id'];
+                $this->manual_group_uuid = $manual_group_response['data']['id'];
+                
+                // Ensure website details include default settings to avoid unnecessary API calls later.
+                $website_data = $website_response['data'];
+                
+                // Set default sync types if not present.
+                if ( empty( $website_data['sync_url_types'] ) ) {
+                    $website_data['sync_url_types'] = array(
+                        array(
+                            'url_type_slug'  => 'types',
+                            'url_type_name'  => 'Post Types',
+                            'post_type_slug' => 'posts',
+                            'post_type_name' => 'Posts',
+                        ),
+                        array(
+                            'url_type_slug'  => 'types',
+                            'url_type_name'  => 'Post Types',
+                            'post_type_slug' => 'pages',
+                            'post_type_name' => 'Pages',
+                        ),
+                    );
+                }
+                
+                // Set default auto update settings if not present.
+                if ( empty( $website_data['auto_update_settings'] ) ) {
+                    $website_data['auto_update_settings'] = array(
+                        'auto_update_checks_enabled'   => '0',
+                        'auto_update_checks_from'      => gmdate( 'H:i' ),
+                        'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
+                        'auto_update_checks_monday'    => '1',
+                        'auto_update_checks_tuesday'   => '1',
+                        'auto_update_checks_wednesday' => '1',
+                        'auto_update_checks_thursday'  => '1',
+                        'auto_update_checks_friday'    => '1',
+                        'auto_update_checks_saturday'  => '0',
+                        'auto_update_checks_sunday'    => '0',
+                        'auto_update_checks_emails'    => get_option( 'admin_email' ),
+                    );
+                }
+
+                // Return success response with complete website data.
+                return array(
+                    'website'          => $website_data,
+                    'monitoring_group' => $monitoring_group_response['data'],
+                    'manual_group'     => $manual_group_response['data'],
+                );
+            } else {
+                // Return error if website couldn't be created.
+                return array(
+                    'error'            => 'Failed to create website',
+                    'website_response' => $website_response,
+                );
+            }
+        }
+        
+		
+        // Return error if groups couldn't be created.
+        return array(
+            'error'              => 'Failed to create groups',
+            'monitoring_response' => $monitoring_group_response,
+            'manual_response'     => $manual_group_response,
+        );
 	}
 
 	/** Get params of an url.
@@ -1877,8 +2328,6 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-                           
-
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
 
@@ -1888,11 +2337,7 @@ class WebChangeDetector_Admin {
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
 					Missing URLs? Select them from other post types and taxonomies by enabling them in the
 					<a href="?page=webchangedetector-settings">Settings</a><br>
-					Last url sync:
-					<span data-nonce='<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>' id='ajax_sync_urls_status' >
-						<?php echo esc_html( date_i18n( 'd.m.Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
-					</span>
-					<script>jQuery(document).ready(function() {sync_urls(); });</script>
+					
 				</p>
 				<input type="hidden" value="webchangedetector" name="page">
 				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
@@ -1907,13 +2352,19 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $this->website_details['sync_url_types'], 'post_type_slug' ), true ) ) {
+								// Fix for old sync_url_types.
+								$sync_url_types = $this->website_details['sync_url_types'];
+								if ( is_string( $this->website_details['sync_url_types'] ) ) {
+									$sync_url_types = json_decode( $this->website_details['sync_url_types'], true );
+								}
+
+								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
 									<?php
 								}
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' !== $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -1931,7 +2382,7 @@ class WebChangeDetector_Admin {
 								<?php
 								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
 
-								foreach ( $this->website_details['sync_url_types'] as $url_type ) {
+								foreach ( $sync_url_types as $url_type ) {
 									if ( 'types' === $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -2111,7 +2562,7 @@ class WebChangeDetector_Admin {
 		</div>
 
 		<?php
-		if ( ! $monitoring_group ) {                          
+		if ( ! $monitoring_group ) {
 			// Start change detection button.
 			if ( $this->is_allowed( 'manual_checks_start' ) ) {
 				?>
@@ -2134,7 +2585,7 @@ class WebChangeDetector_Admin {
 	}
 
 	/** Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
-	But it's not always available. So we take 'name' as fallback name.
+	 * But it's not always available. So we take 'name' as fallback name.
 	 *
 	 * @param object $post_type The post_type object.
 	 *
@@ -2260,7 +2711,7 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
-	
+
 
 	/**
 	 * No-account page.
@@ -2293,8 +2744,8 @@ class WebChangeDetector_Admin {
 			}
 		}
 
-		if ( isset( $_POST['wcd_action'] ) && 'create_free_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
-			check_admin_referer( 'create_free_account' );
+		if ( isset( $_POST['wcd_action'] ) && 'create_trial_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
+			check_admin_referer( 'create_trial_account' );
 		}
 
 		$first_name = isset( $_POST['name_first'] ) ? sanitize_text_field( wp_unslash( $_POST['name_first'] ) ) : wp_get_current_user()->user_firstname;
@@ -2302,22 +2753,20 @@ class WebChangeDetector_Admin {
 		$email      = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : wp_get_current_user()->user_email;
 		?>
 		<div class="no-account-page">
-			<div class="status_bar no-account" >
-				<h2>Get Started</h2>
-				With WebChangeDetector you can check your website before after installing updates. See all changes
-				highlighted in a screenshot and fix issues before anyone else see them. You can also monitor changes
-				on your website automatically and get notified when something changed.
+			<div class="no-account">
+				<img src="<?php echo esc_url( $this->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
+				<h2>See what changed before your users do.</h2>
 			</div>
 			<div class="highlight-wrapper">
 				<div class="highlight-container">
 					<div class="highlight-inner">
 						<h2>Create Free Account</h2>
 						<p>
-							Create your free account now and use WebChangeDetector with <br><strong>50 checks</strong> per month for free.<br>
+							Create your free account with <br><strong>1000 checks</strong> in the first month and <strong>50 checks</strong> after.<br>
 						</p>
 						<form class="frm_new_account" method="post">
-							<input type="hidden" name="wcd_action" value="create_free_account">
-							<?php wp_nonce_field( 'create_free_account' ); ?>
+							<input type="hidden" name="wcd_action" value="create_trial_account">
+							<?php wp_nonce_field( 'create_trial_account' ); ?>
 							<input type="text" name="name_first" placeholder="First Name" value="<?php echo esc_html( $first_name ); ?>" required>
 							<input type="text" name="name_last" placeholder="Last Name" value="<?php echo esc_html( $last_name ); ?>" required>
 							<input type="email" name="email" placeholder="Email" value="<?php echo esc_html( $email ); ?>" required>
@@ -2342,28 +2791,23 @@ class WebChangeDetector_Admin {
 	 * @return array|bool The website details.
 	 */
 	public function get_website_details() {
-        static $website_details;
+		static $website_details;
 
-        if(empty($website_details)) {
-            $websites = WebChangeDetector_API_V2::get_websites_v2();
-            
-            if(empty($websites['data'])) {
-                return 'No website details. Create them first.';
-            }
+		if ( empty( $website_details ) ) {
+			$websites = WebChangeDetector_API_V2::get_websites_v2();
 
-            foreach($websites['data'] as $website) {
-                if(str_starts_with(rtrim($website['domain'], '/'), rtrim(WebChangeDetector_Admin::get_domain_from_site_url(), '/'))) {
-                    $website_details = $website;
-                    $website_details['sync_url_types'] = json_decode($website['sync_url_types'], 1) ?? [];
-                    break;
-                }
-            }
-        }
+			if ( empty( $websites['data'] ) ) {
+				return 'No website details. Create them first.';
+			}
 
-		$args = array(
-			'action' => 'get_website_details',
-			// domain sent at mm_api.
-		);
+			foreach ( $websites['data'] as $website ) {
+				if ( str_starts_with( rtrim( $website['domain'] ?? '', '/' ), rtrim( self::get_domain_from_site_url() ?? '', '/' ) ) ) {
+					$website_details                   = $website;
+					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
+					break;
+				}
+			}
+		}
 
 		$update = false;
 
@@ -2401,19 +2845,23 @@ class WebChangeDetector_Admin {
 		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
 			$update                                  = true;
 			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => '0',
+				'auto_update_checks_enabled'   => true,
 				'auto_update_checks_from'      => gmdate( 'H:i' ),
 				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => '1',
-				'auto_update_checks_tuesday'   => '1',
-				'auto_update_checks_wednesday' => '1',
-				'auto_update_checks_thursday'  => '1',
-				'auto_update_checks_friday'    => '1',
-				'auto_update_checks_saturday'  => '0',
-				'auto_update_checks_sunday'    => '0',
+				'auto_update_checks_monday'    => true,
+				'auto_update_checks_tuesday'   => true,
+				'auto_update_checks_wednesday' => true,
+				'auto_update_checks_thursday'  => true,
+				'auto_update_checks_friday'    => true,
+				'auto_update_checks_saturday'  => true,
+				'auto_update_checks_sunday'    => true,
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
+
+            // Get local auto update settings from option.
 			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
+
+            // If local auto update settings exist, merge them with the default settings. We don't need them locally anymore.
 			if ( $local_auto_update_settings && is_array( $local_auto_update_settings ) ) {
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
 				$website_details['auto_update_settings'] = array_merge( $website_details['auto_update_settings'], $local_auto_update_settings );
@@ -2439,7 +2887,7 @@ class WebChangeDetector_Admin {
 		return false;
 	}
 
-	/** Update website_details with current settings
+	/** Update website_details with current settings.
 	 *
 	 * @param bool $update_website_details Website details to update.
 	 *
@@ -2449,13 +2897,7 @@ class WebChangeDetector_Admin {
 		if ( ! $update_website_details ) {
 			$update_website_details = $this->website_details;
 		}
-
-		$this->api_v1(
-			array_merge(
-				array( 'action' => 'save_user_website' ),
-				$update_website_details
-			)
-		);
+		WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
 	}
 
 	/** Check if current account is allowed for view.
@@ -2577,28 +3019,13 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_dashboard_view( $client_account ) {
 
-		$auto_group   = $this->get_group_and_urls( $this->monitoring_group_uuid, array( 'per_page' => 1 ) );
-		$update_group = $this->get_group_and_urls( $this->manual_group_uuid, array( 'per_page' => 1 ) );
+		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load.
+		$amount_auto_detection  = 0; // Will be loaded via AJAX.
+		$max_auto_update_checks = 0; // Will be loaded via AJAX.
 
-		$amount_auto_detection = 0;
-		if ( $auto_group['enabled'] ) {
-			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
-		}
+		// Check if this is the first time visiting the dashboard.
+		$first_time_visit = $this->is_first_time_dashboard_visit();
 
-		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
-		$max_auto_update_checks  = 0;
-		$amount_auto_update_days = 0;
-
-		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-					++$amount_auto_update_days;
-				}
-			}
-			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
-		}
-
-                       
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
@@ -2618,9 +3045,6 @@ class WebChangeDetector_Admin {
 					<input type="button" class="button button-primary" value="Start Wizard" onclick="window.wcdStartWizard()">
 				<?php } ?>
 				</div>
-				<?php
-
-				?>
 				<div class="box-half credit">
 					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
 						<p style="margin-top: 20px;">
@@ -2645,49 +3069,21 @@ class WebChangeDetector_Admin {
 						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
 					</div>
 					<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
-					<p>
+					<p id="wcd-monitoring-stats">
 						<strong>Monitoring: </strong>
-						<?php
-						if ( $amount_auto_detection > 0 ) {
-							?>
-							<span style="color: green; font-weight: 900;">On</span> (≈ <?php echo esc_html( $amount_auto_detection ) . ' checks / month)'; ?>
-						<?php } else { ?>
-							<span style="color: red; font-weight: 900">Off</span>
-							<?php
-						}
-						$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
-									( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
-
-						?>
+						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
 					<?php } ?>
 
 					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
-					<p>
+					<p id="wcd-auto-update-stats">
 						<strong>Auto update checks: </strong>
-						<?php
-						if ( $max_auto_update_checks > 0 ) {
-							?>
-							<span style="color: green; font-weight: 900;">On</span> (≈ <?php echo esc_html( $max_auto_update_checks ) . ' checks / month)'; ?>
-						<?php } else { ?>
-							<span style="color: red; font-weight: 900">Off</span>
-						<?php } ?>
+						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
-						<?php
-					}
-					$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
-					$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
-					if ( $checks_needed > $checks_available ) {
-						?>
-						<span class="notice notice-warning" style="display:block; padding: 10px;">
-							<?php $this->get_device_icon( 'warning' ); ?>
-							<strong>You might run out of checks before renewal day. </strong><br>
-							Current settings require up to <?php echo esc_html( number_format( $checks_needed - $checks_available, 0 ) ); ?> more checks. <br>
-							<?php if ( ! $client_account['is_subaccount'] ) { ?>
-								<a href="<?php echo esc_html( $this->get_upgrade_url() ); ?>">Upgrade your account now.</a>
-							<?php } ?>
-						</span>
 					<?php } ?>
+
+					<!-- Usage warning will be loaded via AJAX -->
+					<div id="wcd-usage-warning"></div>
 
 
 				</div>
@@ -2703,24 +3099,11 @@ class WebChangeDetector_Admin {
 					'per_page'   => 5,
 				);
 
-				$batches            = WebChangeDetector_API_V2::get_batches( $filter_batches );
-				$recent_comparisons = array(); // init.
+				$batches = WebChangeDetector_API_V2::get_batches( $filter_batches );
+				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
+				$this->compare_view_v2( $batches['data'] ?? array() );
 
 				if ( ! empty( $batches['data'] ) ) {
-					$filter_batches = array();
-					foreach ( $batches['data'] as $batch ) {
-						$filter_batches[] = $batch['id'];
-					}
-
-					$recent_comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => implode( ',', $filter_batches ) ) );
-					if ( ! empty( $recent_comparisons['data'] ) ) {
-						$recent_comparisons = $recent_comparisons['data'];
-					}
-				}
-
-				$this->compare_view_v2( $recent_comparisons );
-
-				if ( ! empty( $recent_comparisons ) ) {
 					?>
 					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
 				<?php } ?>
@@ -2728,6 +3111,19 @@ class WebChangeDetector_Admin {
 
 			<div class="clear"></div>
 		</div>
+		
+		<?php if ( $first_time_visit && $this->is_allowed( 'wizard_start' ) ) { ?>
+		<script type="text/javascript">
+			jQuery(document).ready(function($) {
+				// Auto-start wizard for first-time users after a short delay
+				setTimeout(function() {
+					if (typeof window.wcdStartWizard === 'function') {
+						window.wcdStartWizard();
+					}
+				}, 1000); // 1 second delay to ensure page is fully loaded
+			});
+		</script>
+		<?php } ?>
 		<?php
 	}
 
@@ -2829,6 +3225,34 @@ class WebChangeDetector_Admin {
 		return false;
 	}
 
+	/**
+	 * Check if this is the user's first time visiting the dashboard.
+	 *
+	 * @return bool
+	 */
+	public function is_first_time_dashboard_visit() {
+		$user_id = get_current_user_id();
+		$option_key = 'wcd_first_time_visit_' . $user_id;
+		
+		// Check if the user has visited before.
+		$has_visited = get_option( $option_key, false );
+		
+		if ( ! $has_visited ) {
+			// Additional check: Only show wizard if user doesn't have significant activity yet.
+			// This prevents wizard from showing for users who might have reset their settings.
+			$client_account = $this->get_account();
+			$has_activity = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
+			
+			if ( ! $has_activity ) {
+				// Mark as visited for future requests.
+				update_option( $option_key, true );
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
 	/** Get group details and its urls.
 	 *
 	 * @param string $group_uuid The group id.
@@ -2888,11 +3312,6 @@ class WebChangeDetector_Admin {
 		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
 		$post['domain'] = self::get_domain_from_site_url();
 		$post['wp_id']  = get_current_user_id();
-
-		// Increase timeout for php.ini.
-		if ( ! ini_get( 'safe_mode' ) ) {
-			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
-		}
 
 		$args = array(
 			'timeout' => WCD_REQUEST_TIMEOUT,
@@ -3074,7 +3493,7 @@ class WebChangeDetector_Admin {
 				self::error_log( '[WCD Admin Bar AJAX] Failed to parse current URL for API search.' );
 			} else {
 				$host            = $parsed_url['host'];
-				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'], '/' ) : '';
+				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'] ?? '', '/' ) : '';
 				$search_url_base = $host . $path;
 				self::error_log( '[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base );
 
@@ -3108,7 +3527,7 @@ class WebChangeDetector_Admin {
 				$url_filter = array(
 					'search' => $search_url_base,
 					'limit'  => 5,
-				); // Limit search results?
+				); // Limit search results?.
 
 				self::error_log( '[WCD Admin Bar AJAX] Searching manual group (' . $manual_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
 				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
@@ -3251,7 +3670,7 @@ class WebChangeDetector_Admin {
 			'<div class="wcd-admin-bar-slider">' .
 			'<label for="%s" class="wcd-slider-label">%s:</label>' . // TODO: Use localized label from wcdAdminBarData.
 			'<label class="wcd-switch">' .
-			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' . // Class for existing JS?
+			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' . // Class for existing JS?.
 			'<span class="wcd-slider-round"></span>' .
 			'</label>' .
 			'</div>',

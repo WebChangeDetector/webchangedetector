@@ -1,0 +1,83 @@
+name: Plugin Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  plugin-check:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -u root -ppassword"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, pdo_mysql, mbstring, gd, curl, zip
+
+      - name: Download WordPress CLI
+        run: |
+          curl -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Download WordPress
+        run: |
+          wp core download --path=wordpress --allow-root
+
+      - name: Set up wp-config
+        working-directory: wordpress
+        run: |
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=mysql --allow-root
+
+      - name: Install WordPress
+        working-directory: wordpress
+        run: |
+          wp core install --url=http://localhost --title=TestSite --admin_user=admin --admin_password=admin --admin_email=admin@example.com --allow-root
+
+      - name: Move plugin into WordPress directory
+        run: |
+          mkdir -p wordpress/wp-content/plugins/webchangedetector
+          mv $(ls | grep -v wordpress) wordpress/wp-content/plugins/webchangedetector
+          ls -ahl
+
+      - name: Activate plugin
+        working-directory: wordpress
+        run: |
+          wp plugin activate webchangedetector --allow-root
+
+      - name: Plugin status
+        working-directory: wordpress
+        run: |
+          wp plugin status webchangedetector --allow-root
+
+      - name: Composer install phpcs
+        working-directory: wordpress
+        run: |
+          cd ..
+          composer install
+
+      - name: Run PHPCS on plugin
+        working-directory: wordpress
+        run: |
+          ./vendor/bin/phpcs --standard=WordPress wordpress/wp-content/plugins/webchangedetector

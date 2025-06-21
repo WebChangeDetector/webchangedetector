@@ -27,6 +27,18 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Start view.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
+		
+		// Add loading overlay for account creation.
+		?>
+		<div id="wcd-loading-overlay" style="display: none;">
+			<div class="wcd-loading-content">
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
+				<p class="wcd-loading-text">We're getting your account ready</p>
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
+			</div>
+		</div>
+		<?php
+		
 		echo '<h1>WebChange Detector</h1>';
 
 		// Validate wcd_action and nonce.
@@ -44,7 +56,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				return;
 			}
 		}
-		$wcd = new WebChangeDetector_Admin();
 
 		// Unslash postdata.
 		foreach ( $_POST as $key => $post ) {
@@ -55,7 +66,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Actions without API Token needed.
 		switch ( $wcd_action ) {
-			case 'create_free_account':
+			case 'create_trial_account':
 				// Validate if all required fields were sent.
 				if ( ! ( isset( $postdata['name_first'] ) && isset( $postdata['name_last'] ) && isset( $postdata['email'] ) && isset( $postdata['password'] ) ) ) {
 					echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
@@ -63,7 +74,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$api_token = $wcd->create_free_account( $postdata );
+				$api_token = $wcd->create_trial_account( $postdata );
 				$success   = $wcd->save_api_token( $postdata, $api_token );
 
 				if ( ! $success ) {
@@ -114,7 +125,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get the account details.
-		$account_details = $wcd->get_account( true );
+		$account_details = $wcd->get_account();
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) {
@@ -157,30 +168,50 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Create new ones if we don't have them yet.
 		if ( ! $wcd->website_details ) {
-			$success              = $wcd->create_website_and_groups();
-			$wcd->website_details = $wcd->get_website_details();
-
-			if ( ! $wcd->website_details ) {
-				WebChangeDetector_Admin::error_log( "Can't get website_details." );
-				// TODO Exit with a proper error message.
-			}
-
-			// Make the inital post sync.
-			// TODO: make this asyncron and show loading screen.
-			$wcd->sync_posts( true );
-
-			// If only the frontpage is allowed, we activate the URLs.
-			if ( $wcd->is_allowed( 'only_frontpage' ) ) {
-				$urls = $wcd->get_group_and_urls( $wcd->manual_group_uuid )['urls'];
-				if ( ! empty( $urls[0] ) ) {
-					$update_urls = array(
-						'desktop-' . $urls[0]['url_id'] => 1,
-						'mobile-' . $urls[0]['url_id']  => 1,
-						'group_id'                      => $wcd->website_details['manual_detection_group']['uuid'],
-					);
-					$wcd->post_urls( $update_urls );
-				}
-			}
+			// Show loading screen and trigger AJAX account creation.
+			?>
+			<script type="text/javascript">
+				document.addEventListener('DOMContentLoaded', function() {
+					// Show loading overlay immediately
+					document.getElementById('wcd-loading-overlay').style.display = 'flex';
+					
+					// Make AJAX request to create website and groups
+					var xhr = new XMLHttpRequest();
+					xhr.open('POST', ajaxurl, true);
+					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+					
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState === 4) {
+							if (xhr.status === 200) {
+								try {
+									var response = JSON.parse(xhr.responseText);
+									if (response.success) {
+										// Account created successfully, reload the page
+										window.location.reload();
+									} else {
+										// Hide loading and show error
+										document.getElementById('wcd-loading-overlay').style.display = 'none';
+										alert('Error creating account: ' + (response.data.message || 'Unknown error'));
+									}
+								} catch (e) {
+									// Hide loading and show error
+									document.getElementById('wcd-loading-overlay').style.display = 'none';
+									alert('Error processing response. Please try again.');
+								}
+							} else {
+								// Hide loading and show error
+								document.getElementById('wcd-loading-overlay').style.display = 'none';
+								alert('Network error. Please try again.');
+							}
+						}
+					};
+					
+					var data = 'action=create_website_and_groups_ajax&nonce=' + encodeURIComponent(wcdAjaxData.nonce);
+					xhr.send(data);
+				});
+			</script>
+			<?php
+			return; // Don't continue with the rest of the page rendering
 		}
 
 		// Check if website details are available.
@@ -492,36 +523,17 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$comparisons   = array();
-					$failed_queues = array();
-					$batches       = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+					$batches = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					if ( ! empty( $batches['data'] ) ) {
-						$filter_batches_in_comparisons = array();
-						foreach ( $batches['data'] as $batch ) {
-							$filter_batches_in_comparisons[] = $batch['id'];
-						}
-						$filters_comparisons = array(
-							'batches'  => implode( ',', $filter_batches_in_comparisons ),
-							'per_page' => 999999,
-						);
-
-						// Get failed queues.
+						// Get failed queues for all batches.
 						$batch_ids = array();
 						foreach ( $batches['data'] as $batch ) {
 							$batch_ids[] = $batch['id'];
 						}
-						$failed_queues = WebChangeDetector_API_V2::get_queues_v2( $batch_ids, 'failed' );
-
-						$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
-
-						
 					}
-                             
-						if ( ! empty( $comparisons['data'] ) ) {
-							$comparisons = $comparisons['data'];
-						}
 
-					$wcd->compare_view_v2( $comparisons, $failed_queues );
+					// Pass only batch data to create accordion containers, content will be loaded via AJAX.
+					$wcd->compare_view_v2( $batches['data'] ?? array() );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
@@ -661,7 +673,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-logs':
-
 				$paged = 1;
 				if ( isset( $_GET['paged'] ) ) {
 					$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
@@ -685,7 +696,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					'compare' => 'Change detection',
 				);
 
-                      
 				?>
 
 				<div class="action-container wizard-logs">
@@ -780,11 +790,6 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				<div class="action-container">
 
 					<div class="box-plain no-border">
-						<?php
-
-
-                                      
-						?>
 						<h2>URL Synchronization Settings</h2>
 						<table class="form-table">
 							<tr valign="top">
@@ -911,12 +916,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								<th scope="row">URL Sync Status</th>
 								<td>
 									<p class="description" style="margin-bottom: 10px;">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
-									This works automatically in the background. When you add a webpage, you can start the sync manually.</p>
+									This works automatically in the background. If you feel like something is missing, you can sync the urls manually.</p>
 									<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
 											<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 										</span>
 									</p>
-									<button class="button button-secondary" onclick="sync_urls(1); return false;">Sync URLs Now</button>
+									<button class="button button-secondary button-sync-urls" onclick="sync_urls(1); return false;">Sync URLs Now</button>
 								</td>
 							</tr>
 						</table>
@@ -963,8 +968,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 					echo '<hr>';
 					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
-                                              
-				?>
+
+					?>
 
 				</div>
 				<div class="clear"></div>
@@ -1007,8 +1012,5 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		echo '</div>'; // closing from div webchangedetector.
 		echo '</div>'; // closing wrap.
-
-		// Add inline JavaScript for sync_urls function.
-		echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
 	} // wcd_webchangedetector_init.
 } // function_exists.

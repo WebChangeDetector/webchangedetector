@@ -8,16 +8,17 @@ function updateProcessingStep() {
         var currentlyProcessing = $('#currently-processing');
 
         var data = {
-            action: 'get_processing_queue'
+            action: 'get_processing_queue',
+            nonce: wcdAjaxData.nonce
         };
 
         $.post(ajaxurl, data, function (response) {
 
             response = JSON.parse(response);
 
-            console.log(response);
             // Calculate all
-            let currentlyInQueueAmount = response.meta.total;
+
+            let currentlyInQueueAmount = response.meta.total ?? 0;
             let currentlyProcessingSc = [];
             let actuallyProcessingSc = [];
 
@@ -372,6 +373,136 @@ function currentlyProcessing() {
         // This needs to instantly be executed
         currentlyProcessing();
 
+        // Load batch comparisons content and handle pagination
+        function loadBatchComparisons(element, batchId, page = 1, filters = null, shouldScroll = false) {
+            const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
+            const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+            const failedCount = batchContainer.data("failed_count");
+
+            const args = {
+                action: 'get_batch_comparisons_view',
+                batch_id: batchId,
+                page: page,
+                filters: filters,
+                failed_count: failedCount,
+                nonce: wcdAjaxData.nonce
+            }
+
+            // Show loading placeholder
+            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="' + wcdAjaxData.plugin_url + 'img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
+
+            // Only scroll for pagination, not initial load
+            if (shouldScroll) {
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: batchContainer.offset().top
+                }, 500);
+            }
+
+            $.post(ajaxurl, args, function (response) {
+                contentContainer.html(response);
+
+                // Bg color for difference
+                $(".diff-tile").each(function () {
+                    var diffPercent = $(this).data("diff_percent");
+                    if (diffPercent > 0) {
+                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"), $(this).data("threshold"));
+                        $(this).css("background", bgColor);
+                    }
+                });
+
+                // Refresh the accordion to recalculate heights and prevent overlapping
+                const accordion = batchContainer.find(".accordion");
+                if (accordion.length > 0) {
+                    accordion.accordion("refresh");
+                }
+
+                initBatchComparisonsPagination();
+            });
+        }
+
+        // Initialize batch comparisons loading and pagination
+        function initBatchComparisonsPagination() {
+            // Handle pagination clicks
+            $(".ajax_paginate_batch_comparisons").off("click").on("click", function () {
+                const batchContainer = $(this).closest(".accordion-container");
+                const batchId = batchContainer.data("batch_id");
+                const page = $(this).data("page");
+                const filters = $(this).data("filters");
+
+                loadBatchComparisons($(this), batchId, page, filters, true);
+            });
+
+            // Handle initial accordion loading using jQuery UI accordion activate event
+            $(".accordion-container .accordion").off("accordionactivate.batchLoad").on("accordionactivate.batchLoad", function (event, ui) {
+                if (ui.newHeader.length > 0) {
+                    const batchContainer = ui.newHeader.closest(".accordion-container");
+                    const batchId = batchContainer.data("batch_id");
+                    const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
+                    const currentContent = contentContainer.html().trim();
+
+                    // Only load if content is empty or contains only loading placeholder (initial load)
+                    if (contentContainer.is(':empty') ||
+                        currentContent === '' ||
+                        contentContainer.find('.ajax-loading-container').length > 0) {
+                        loadBatchComparisons(ui.newHeader, batchId, 1, null, false);
+                    }
+                }
+            });
+        }
+
+        // Toggle failed queues accordion and load content via AJAX.
+        window.toggleFailedQueues = function (clickedElement, batchId) {
+            // Find the specific elements within this accordion
+            const accordionTitle = clickedElement; // The h3 element
+            const content = accordionTitle.parentElement.querySelector('.failed-queues-content');
+            const arrow = accordionTitle.querySelector('.accordion-arrow');
+            const tableContainer = accordionTitle.parentElement.querySelector('.failed-queues-table-container');
+            const loading = accordionTitle.parentElement.querySelector('.failed-queues-loading');
+
+            const $content = $(content);
+
+            if (!$content.is(':visible')) {
+                // Show accordion with slide down animation
+                $content.slideDown(300, function () {
+                    // Animation complete
+                });
+                // Rotate arrow 90 degrees to match parent accordion behavior
+                arrow.classList.remove('dashicons-arrow-right-alt2');
+                arrow.classList.add('dashicons-arrow-down-alt2');
+
+                // Check if content is already loaded
+                if (tableContainer.innerHTML === '') {
+                    // Show loading
+                    loading.style.display = 'block';
+
+                    // Load content via AJAX
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'load_failed_queues',
+                            batch_id: batchId,
+                            nonce: wcdAjaxData.nonce
+                        },
+                        success: function (response) {
+                            loading.style.display = 'none';
+                            tableContainer.innerHTML = response;
+                        },
+                        error: function () {
+                            loading.style.display = 'none';
+                            tableContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Error loading failed URLs.</div>';
+                        }
+                    });
+                }
+            } else {
+                // Hide accordion with slide up animation
+                $content.slideUp(300);
+                // Reset arrow to pointing right
+                arrow.classList.remove('dashicons-arrow-down-alt2');
+                arrow.classList.add('dashicons-arrow-right-alt2');
+            }
+        }
+
         $(".ajax_update_comparison_status").click(function () {
             let e = $(this);
             let status = $(this).data('status');
@@ -411,7 +542,78 @@ function currentlyProcessing() {
             });
 
         })
+
+        initBatchComparisonsPagination();
+
+        // Load dashboard usage statistics asynchronously
+        loadDashboardUsageStats();
     });
+
+    // Function to load dashboard usage statistics via AJAX
+    function loadDashboardUsageStats() {
+        // Only load if we're on the dashboard page and the elements exist
+        if ($('#wcd-monitoring-stats, #wcd-auto-update-stats').length === 0) {
+            return;
+        }
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'get_dashboard_usage_stats',
+                nonce: wcdAjaxData.nonce
+            },
+            success: function (response) {
+
+                if (response.success && response.data) {
+                    const data = response.data;
+
+                    // Debug logging
+
+                    // Update monitoring stats
+                    const monitoringElement = $('#wcd-monitoring-stats');
+                    if (monitoringElement.length > 0) {
+                        if (data.amount_auto_detection > 0) {
+                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.amount_auto_detection + ' checks / month)');
+                        } else {
+                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: red; font-weight: 900">Off</span>');
+                        }
+                    }
+
+                    // Update auto-update stats
+                    const autoUpdateElement = $('#wcd-auto-update-stats');
+                    if (autoUpdateElement.length > 0) {
+                        if (data.max_auto_update_checks > 0) {
+                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
+                        } else {
+                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: red; font-weight: 900">Off</span>');
+                        }
+                    }
+
+                    // Update usage warning
+                    const warningElement = $('#wcd-usage-warning');
+                    if (warningElement.length > 0 && data.checks_needed > data.checks_available) {
+                        const shortfall = Math.round(data.checks_needed - data.checks_available);
+                        let warningHtml = '<span class="notice notice-warning" style="display:block; padding: 10px;">' +
+                            '<span class="dashicons dashicons-warning"></span>' +
+                            '<strong>You might run out of checks before renewal day. </strong><br>' +
+                            'Current settings require up to ' + shortfall + ' more checks. <br>';
+
+                        // Add upgrade link if not a subaccount (we'll assume it's available)
+                        // Note: We can't access PHP variables here, so this would need to be passed differently
+                        // For now, we'll include it and it will only show if the upgrade URL is available
+                        warningHtml += '</span>';
+                        warningElement.html(warningHtml);
+                    }
+                }
+            },
+            error: function () {
+                // Show error state
+                $('#wcd-monitoring-stats').html('<strong>Monitoring: </strong><span style="color: #666;">Error loading stats</span>');
+                $('#wcd-auto-update-stats').html('<strong>Auto update checks: </strong><span style="color: #666;">Error loading stats</span>');
+            }
+        });
+    }
 })(jQuery);
 
 // We got jpeg images and png. So we load jpeg for faster page load.
@@ -438,11 +640,15 @@ function sync_urls(force = 0) {
     };
 
     // Loading icon to show we are checking if we have to sync.
-    jQuery('#ajax_sync_urls_status').append("<img style='width: 10px' src='/wp-content/plugins/webchangedetector/admin/img/loader.gif'>");
+    jQuery('#ajax_sync_urls_status').append(" <img style='width: 10px' src='" + wcdAjaxData.plugin_url + "img/loader.gif'>");
+
+    // Show the button as disabled.
+    jQuery('.button-sync-urls').prop('disabled', true);
 
     jQuery.post(ajaxurl, data, function (response) {
         // We get the last sync date as response.
         jQuery('#ajax_sync_urls_status').html(response);
+        jQuery('.button-sync-urls').prop('disabled', false);
         return response;
     });
 }

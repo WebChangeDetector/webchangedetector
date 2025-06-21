@@ -32,39 +32,85 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( array( 'action' => 'account' ), 'GET' );
 	}
 
-    public static function get_websites_v2() {
-        $args = array(
-            'action' => 'websites'
-        );
-        return self::api_v2( $args, 'GET' );
-    }
+	/**
+	 * Get websites.
+	 *
+	 * @return mixed|string
+	 */
+	public static function get_websites_v2() {
+		$args = array(
+			'action' => 'websites',
+		);
+		return self::api_v2( $args, 'GET' );
+	}
 
-    public static function get_website_v2($uuid = false) {
-        if(!$uuid) {
-            return false;
-        }
+	/**
+	 * Get website.
+	 *
+	 * @param string $uuid The website uuid.
+	 * @return mixed|string
+	 */
+	public static function get_website_v2( $uuid = false ) {
+		if ( ! $uuid ) {
+			return false;
+		}
 
-        $args = array(
-            'action' => 'websites/' . $uuid
-        );
-        return self::api_v2( $args, 'GET' );
-    }
+		$args = array(
+			'action' => 'websites/' . $uuid,
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/**
+	 * Update website.
+	 *
+	 * @param string $uuid The website uuid.
+	 * @param array  $website_details The website details to update.
+	 * @return mixed|string
+	 */
+	public static function update_website_v2( $uuid, $website_details ) {
+		$args = array(
+			'action' => 'websites/' . $uuid,
+		);
+		$args = array_merge( $args, $website_details );
+		return self::api_v2( $args, 'PUT' );
+	}
+
+	/**
+	 * Create website.
+	 *
+	 * @param string $domain The domain for the website.
+	 * @param string $manual_detection_group_id The manual detection group ID.
+	 * @param string $auto_detection_group_id The auto detection group ID.
+	 * @return mixed|string
+	 */
+	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id ) {
+		$args = array(
+			'action'                    => 'websites',
+			'domain'                    => $domain,
+			'manual_detection_group_id' => $manual_detection_group_id,
+			'auto_detection_group_id'   => $auto_detection_group_id,
+		);
+		return self::api_v2( $args, 'POST' );
+	}
 
 	/** Sync urls.
 	 *
-	 * @param array $posts The posts to sync.
+	 * @param array  $posts The posts to sync.
+	 * @param string $collection_uuid The collection uuid.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts ) {
+	public static function sync_urls( $posts, $collection_uuid = null ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
 
 		$args = array(
-			'action'     => 'sync-urls',
-			'domain'     => WebChangeDetector_Admin::get_domain_from_site_url(),
-			'urls'       => $posts,
-			'multi_call' => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
+			'action'          => 'sync-urls',
+			'collection_uuid' => $collection_uuid,
+			'domain'          => WebChangeDetector_Admin::get_domain_from_site_url(),
+			'urls'            => $posts,
+			'multi_call'      => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
 		);
 
 		// Upload urls.
@@ -74,12 +120,14 @@ class WebChangeDetector_API_V2 {
 	/**
 	 * Start the sync with the already uploaded urls.
 	 *
-	 * @param bool $delete_missing_urls Delete missing urls or not.
+	 * @param bool   $delete_missing_urls Delete missing urls or not.
+	 * @param string $collection_uuid The collection uuid.
 	 */
-	public static function start_url_sync( $delete_missing_urls = true ) {
+	public static function start_url_sync( $delete_missing_urls = true, $collection_uuid = null ) {
 		return self::api_v2(
 			array(
 				'action'              => 'start-sync',
+				'collection_uuid'     => $collection_uuid,
 				'delete_missing_urls' => $delete_missing_urls,
 			)
 		);
@@ -485,11 +533,6 @@ class WebChangeDetector_API_V2 {
 
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.
-
-		// Increase timeout for php.ini.
-		if ( ! ini_get( 'safe_mode' ) ) {
-			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
-		}
 
 		if ( $multicall ) {
 			$args = array();

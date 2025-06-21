@@ -40,13 +40,19 @@
 	</div>
 	<div class="comparison-tile comparison-url-tile">
 		<?php
+
+		// Show the html title.
 		if ( ! empty( $compare['html_title'] ) ) {
 			echo '<strong>' . esc_html( $compare['html_title'] ) . '</strong><br>';
 		}
+
+		// Replace the protocol of the url with the protocol of the home url.
+		$protocol          = wp_parse_url( get_option( 'home' ), PHP_URL_SCHEME );
+		$url_with_protocol = esc_url( $protocol . '://' . preg_replace( '/^https?:\/\//', '', $compare['url'] ) );
 		?>
 
-		<a href="http://<?php echo esc_url( $compare['url'] ); ?>" target="_blank" >
-			<?php echo esc_url( $compare['url'] ); ?>
+		<a href="<?php echo esc_url( $url_with_protocol ); ?>" target="_blank" >
+			<?php echo esc_url( $url_with_protocol ); ?>
 		</a>
 		<br>
 		<?php $public_link = $this->app_url() . 'show-change-detection/?token=' . $public_token; ?>
