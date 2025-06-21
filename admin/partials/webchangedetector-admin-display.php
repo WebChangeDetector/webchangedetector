@@ -156,12 +156,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Create new ones if we don't have them yet.
 		if ( ! $wcd->website_details ) {
-			$success              = $wcd->create_website_and_groups();
-			$wcd->website_details = $wcd->get_website_details();
-
-			if ( ! $wcd->website_details ) {
-				WebChangeDetector_Admin::error_log( "Can't get website_details." );
-				// TODO Exit with a proper error message.
+			$creation_response = $wcd->create_website_and_groups();
+			
+			// Use website details from creation response instead of making another API call.
+			if ( ! empty( $creation_response['website'] ) ) {
+				$wcd->website_details = $creation_response['website'];
+			} else {
+				WebChangeDetector_Admin::error_log( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
+				return "Sorry, something went wrong. Please contact us and we'll help you out.";
 			}
 
 			// Make the inital post sync.

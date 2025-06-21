@@ -76,6 +76,24 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/**
+	 * Create website.
+	 *
+	 * @param string $domain The domain for the website.
+	 * @param string $manual_detection_group_id The manual detection group ID.
+	 * @param string $auto_detection_group_id The auto detection group ID.
+	 * @return mixed|string
+	 */
+	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id ) {
+		$args = array(
+			'action'                    => 'websites',
+			'domain'                    => $domain,
+			'manual_detection_group_id' => $manual_detection_group_id,
+			'auto_detection_group_id'   => $auto_detection_group_id,
+		);
+		return self::api_v2( $args, 'POST' );
+	}
+
 	/** Sync urls.
 	 *
 	 * @param array  $posts The posts to sync.

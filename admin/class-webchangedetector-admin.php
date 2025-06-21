@@ -1970,15 +1970,109 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function create_website_and_groups() {
-
-
-		// Create group if it doesn't exist yet.
-		$args = array(
-			'action' => 'add_website_groups',
-			'cms'    => 'wordpress',
-			// domain sent at mm_api.
+		$domain = self::get_domain_from_site_url();
+		
+		// Create monitoring group.
+		$monitoring_group_args = array(
+			'name'        => $domain,
+			'monitoring'  => true,
+			'enabled'     => true,
 		);
-		return $this->api_v1( $args );
+		
+		$monitoring_group_response = WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
+		
+		// Create manual checks group.
+		$manual_group_args = array(
+			'name'       => $domain,
+			'monitoring' => false,
+			'enabled'    => true,
+		);
+		
+		$manual_group_response = WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
+		
+		// Check if both groups were created successfully.
+		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
+			// Create the website with the group IDs.
+			$website_response = WebChangeDetector_API_V2::create_website_v2(
+				$domain,
+				$manual_group_response['data']['id'],
+				$monitoring_group_response['data']['id']
+			);
+			
+			// Check if website was created successfully.
+            if ( ! empty( $website_response['data']['id'] ) ) {
+                // Save group IDs to wp_options.
+                $groups = array(
+                    WCD_AUTO_DETECTION_GROUP   => $monitoring_group_response['data']['id'],
+                    WCD_MANUAL_DETECTION_GROUP => $manual_group_response['data']['id'],
+                );
+                
+                update_option( WCD_WEBSITE_GROUPS, $groups, false );
+
+                // Directly set the group IDs to the class properties.
+                $this->monitoring_group_uuid = $monitoring_group_response['data']['id'];
+                $this->manual_group_uuid = $manual_group_response['data']['id'];
+                
+                // Ensure website details include default settings to avoid unnecessary API calls later.
+                $website_data = $website_response['data'];
+                
+                // Set default sync types if not present.
+                if ( empty( $website_data['sync_url_types'] ) ) {
+                    $website_data['sync_url_types'] = array(
+                        array(
+                            'url_type_slug'  => 'types',
+                            'url_type_name'  => 'Post Types',
+                            'post_type_slug' => 'posts',
+                            'post_type_name' => 'Posts',
+                        ),
+                        array(
+                            'url_type_slug'  => 'types',
+                            'url_type_name'  => 'Post Types',
+                            'post_type_slug' => 'pages',
+                            'post_type_name' => 'Pages',
+                        ),
+                    );
+                }
+                
+                // Set default auto update settings if not present.
+                if ( empty( $website_data['auto_update_settings'] ) ) {
+                    $website_data['auto_update_settings'] = array(
+                        'auto_update_checks_enabled'   => '0',
+                        'auto_update_checks_from'      => gmdate( 'H:i' ),
+                        'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
+                        'auto_update_checks_monday'    => '1',
+                        'auto_update_checks_tuesday'   => '1',
+                        'auto_update_checks_wednesday' => '1',
+                        'auto_update_checks_thursday'  => '1',
+                        'auto_update_checks_friday'    => '1',
+                        'auto_update_checks_saturday'  => '0',
+                        'auto_update_checks_sunday'    => '0',
+                        'auto_update_checks_emails'    => get_option( 'admin_email' ),
+                    );
+                }
+
+                // Return success response with complete website data.
+                return array(
+                    'website'          => $website_data,
+                    'monitoring_group' => $monitoring_group_response['data'],
+                    'manual_group'     => $manual_group_response['data'],
+                );
+            } else {
+                // Return error if website couldn't be created.
+                return array(
+                    'error'            => 'Failed to create website',
+                    'website_response' => $website_response,
+                );
+            }
+        }
+        
+		
+        // Return error if groups couldn't be created.
+        return array(
+            'error'              => 'Failed to create groups',
+            'monitoring_response' => $monitoring_group_response,
+            'manual_response'     => $manual_group_response,
+        );
 	}
 
 	/** Get params of an url.
@@ -2698,19 +2792,23 @@ class WebChangeDetector_Admin {
 		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
 			$update                                  = true;
 			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => '0',
+				'auto_update_checks_enabled'   => true,
 				'auto_update_checks_from'      => gmdate( 'H:i' ),
 				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => '1',
-				'auto_update_checks_tuesday'   => '1',
-				'auto_update_checks_wednesday' => '1',
-				'auto_update_checks_thursday'  => '1',
-				'auto_update_checks_friday'    => '1',
-				'auto_update_checks_saturday'  => '0',
-				'auto_update_checks_sunday'    => '0',
+				'auto_update_checks_monday'    => true,
+				'auto_update_checks_tuesday'   => true,
+				'auto_update_checks_wednesday' => true,
+				'auto_update_checks_thursday'  => true,
+				'auto_update_checks_friday'    => true,
+				'auto_update_checks_saturday'  => true,
+				'auto_update_checks_sunday'    => true,
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
+
+            // Get local auto update settings from option.
 			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
+
+            // If local auto update settings exist, merge them with the default settings. We don't need them locally anymore.
 			if ( $local_auto_update_settings && is_array( $local_auto_update_settings ) ) {
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
 				$website_details['auto_update_settings'] = array_merge( $website_details['auto_update_settings'], $local_auto_update_settings );
