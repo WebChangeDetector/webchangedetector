@@ -3023,6 +3023,9 @@ class WebChangeDetector_Admin {
 		$amount_auto_detection  = 0; // Will be loaded via AJAX.
 		$max_auto_update_checks = 0; // Will be loaded via AJAX.
 
+		// Check if this is the first time visiting the dashboard.
+		$first_time_visit = $this->is_first_time_dashboard_visit();
+
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
@@ -3108,6 +3111,19 @@ class WebChangeDetector_Admin {
 
 			<div class="clear"></div>
 		</div>
+		
+		<?php if ( $first_time_visit && $this->is_allowed( 'wizard_start' ) ) { ?>
+		<script type="text/javascript">
+			jQuery(document).ready(function($) {
+				// Auto-start wizard for first-time users after a short delay
+				setTimeout(function() {
+					if (typeof window.wcdStartWizard === 'function') {
+						window.wcdStartWizard();
+					}
+				}, 1000); // 1 second delay to ensure page is fully loaded
+			});
+		</script>
+		<?php } ?>
 		<?php
 	}
 
@@ -3206,6 +3222,34 @@ class WebChangeDetector_Admin {
 		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
 			return true;
 		}
+		return false;
+	}
+
+	/**
+	 * Check if this is the user's first time visiting the dashboard.
+	 *
+	 * @return bool
+	 */
+	public function is_first_time_dashboard_visit() {
+		$user_id = get_current_user_id();
+		$option_key = 'wcd_first_time_visit_' . $user_id;
+		
+		// Check if the user has visited before.
+		$has_visited = get_option( $option_key, false );
+		
+		if ( ! $has_visited ) {
+			// Additional check: Only show wizard if user doesn't have significant activity yet.
+			// This prevents wizard from showing for users who might have reset their settings.
+			$client_account = $this->get_account();
+			$has_activity = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
+			
+			if ( ! $has_activity ) {
+				// Mark as visited for future requests.
+				update_option( $option_key, true );
+				return true;
+			}
+		}
+		
 		return false;
 	}
 

@@ -194,7 +194,7 @@
                 <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                            background: #266FCB; color: white; padding: 20px; border-radius: 5px; 
                            z-index: 10001; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
-                    <h3 style="margin: 0 0 10px 0; color: white;">Continuing Wizard...</h3>
+                    <h3 style="margin: 0 0 10px 0; color: white;">Let’s continue on the next page.</h3>
                     <div style="text-align: center;">Loading...</div>
                 </div>
             `;
