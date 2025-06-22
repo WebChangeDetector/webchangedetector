@@ -10,6 +10,8 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
+namespace WebChangeDetector;
+
 /** WCD Admin Class.
  */
 class WebChangeDetector_Admin {
@@ -116,6 +118,42 @@ class WebChangeDetector_Admin {
 	 * @var array Urls to sync.
 	 */
 	private $sync_urls;
+
+	/**
+	 * Screenshots handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_Admin_Screenshots $screenshots_handler Screenshots management.
+	 */
+	private $screenshots_handler;
+
+	/**
+	 * API Manager instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_API_Manager $api_manager API communication handler.
+	 */
+	private $api_manager;
+
+	/**
+	 * Account handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_Admin_Account $account_handler Account management.
+	 */
+	private $account_handler;
+
+	/**
+	 * WordPress integration handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_Admin_WordPress $wordpress_handler WordPress integration.
+	 */
+	private $wordpress_handler;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -124,16 +162,7 @@ class WebChangeDetector_Admin {
 	 */
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
-		// Add hook for admin bar menu.
-		add_action( 'admin_bar_menu', array( $this, 'wcd_admin_bar_menu' ), 999 ); // High priority to appear on the right.
-
-		// Register AJAX handlers.
-		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
-		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
-		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
-		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
-		add_action( 'wp_ajax_create_website_and_groups_ajax', array( $this, 'ajax_create_website_and_groups' ) );
-
+		
 		// Add cron job for daily sync.
 		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
 		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
@@ -143,6 +172,12 @@ class WebChangeDetector_Admin {
 		// Set the group uuids.
 		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+
+		// Initialize specialized handlers.
+		$this->api_manager = new WebChangeDetector_API_Manager();
+		$this->account_handler = new WebChangeDetector_Admin_Account( $this->api_manager );
+		$this->wordpress_handler = new WebChangeDetector_Admin_WordPress( $this->plugin_name, $this->version, $this );
+		$this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this );
 	}
 
 	/**
@@ -151,25 +186,8 @@ class WebChangeDetector_Admin {
 	 * @since    1.0.0
 	 */
 	public function enqueue_styles() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in WebChangeDetector_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The WebChangeDetector_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-		wp_enqueue_style( 'jquery-ui-accordion' );
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
-		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
-		wp_enqueue_style( 'wp-codemirror' );
-
-		// Enqueue Driver.js CSS for the new wizard system.
-		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::enqueue_styles' );
+		$this->wordpress_handler->enqueue_styles();
 	}
 
 	/**
@@ -179,61 +197,8 @@ class WebChangeDetector_Admin {
 	 * @param string $hook_suffix The hook suffix for the current page.
 	 */
 	public function enqueue_scripts( $hook_suffix ) {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in WebChangeDetector_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The WebChangeDetector_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
-		// Only load the js files when we are on the wcd page.
-
-		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
-
-			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-
-			wp_enqueue_script( 'jquery-ui-accordion' );
-			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-
-			// Enqueue Driver.js for the new wizard system.
-			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
-
-			// Load WP codemirror.
-			$css_settings              = array(
-				'type' => 'text/css',
-			);
-			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
-
-			// Localize script with AJAX data for wizard.
-			wp_localize_script(
-				'wcd-wizard',
-				'wcdWizardData',
-				array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'wcd_wizard_nonce' ),
-				)
-			);
-
-			// Localize script with AJAX data for dashboard usage stats.
-			wp_localize_script(
-				$this->plugin_name,
-				'wcdAjaxData',
-				array(
-					'ajax_url'   => admin_url( 'admin-ajax.php' ),
-					'nonce'      => wp_create_nonce( 'ajax-nonce' ),
-					'plugin_url' => plugin_dir_url( __FILE__ ),
-				)
-			);
-		}
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::enqueue_scripts' );
+		$this->wordpress_handler->enqueue_scripts( $hook_suffix );
 	}
 
 	/**
@@ -242,37 +207,8 @@ class WebChangeDetector_Admin {
 	 * @since 3.1.7 Updated for AJAX loading
 	 */
 	public function enqueue_admin_bar_scripts() {
-		// Check if admin bar menu is disabled in settings.
-		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
-			return;
-		}
-		// Enqueue admin bar specific script only when needed.
-		if ( is_admin_bar_showing() && ! is_admin() && current_user_can( 'manage_options' ) ) {
-			$admin_bar_script_handle = 'webchangedetector-admin-bar'; // Use existing handle if webchangedetector-admin-bar.js exists
-			// Ensure the script is registered/enqueued correctly.
-			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true ); // Load in footer.
-
-			// Localize script with necessary data for AJAX.
-			wp_localize_script(
-				$admin_bar_script_handle,
-				'wcdAdminBarData', // Keep the same object name.
-				array(
-					'ajax_url'         => admin_url( 'admin-ajax.php' ),
-					'nonce'            => wp_create_nonce( 'wcd_admin_bar_nonce' ), // Nonce for wcd_get_admin_bar_status action.
-					'postUrlNonce'     => wp_create_nonce( 'ajax-nonce' ),      // Nonce for post_url action (used by ajax_post_url).
-					'action'           => 'wcd_get_admin_bar_status', // Action name for the handler.
-					'loading_text'     => __( 'Loading WCD Status...', 'webchangedetector' ),
-					'error_text'       => __( 'Error loading status.', 'webchangedetector' ),
-					'not_tracked_text' => __( 'URL not tracked by WCD', 'webchangedetector' ),
-					'manual_label'     => __( 'Manual / Auto Update Checks', 'webchangedetector' ),
-					'monitoring_label' => __( 'Monitoring', 'webchangedetector' ),
-					'desktop_label'    => __( 'Desktop', 'webchangedetector' ),
-					'mobile_label'     => __( 'Mobile', 'webchangedetector' ),
-					'dashboard_label'  => __( 'WCD Dashboard', 'webchangedetector' ),
-					'dashboard_url'    => admin_url( 'admin.php?page=webchangedetector' ),
-				)
-			);
-		}
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::enqueue_admin_bar_scripts' );
+		$this->wordpress_handler->enqueue_admin_bar_scripts();
 	}
 
 	/** Website details.
@@ -286,112 +222,8 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function wcd_plugin_setup_menu() {
-
-		require_once 'partials/webchangedetector-admin-display.php';
-
-		// We get the allowances from the options as the website_details are not there yet.
-		$allowances = get_option( WCD_ALLOWANCES );
-
-		add_menu_page(
-			'WebChange Detector',
-			'WebChange Detector',
-			'manage_options',
-			'webchangedetector',
-			'wcd_webchangedetector_init',
-			plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg'
-		);
-		add_submenu_page(
-			'webchangedetector',
-			'Dashboard',
-			'Dashboard',
-			'manage_options',
-			'webchangedetector',
-			'wcd_webchangedetector_init'
-		);
-
-		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Change Detections',
-				'Change Detections',
-				'manage_options',
-				'webchangedetector-change-detections',
-				'wcd_webchangedetector_init'
-			);
-		}
-		if ( is_array( $allowances ) && $allowances['manual_checks_view'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Manual Checks & Auto Update Checks',
-				'Manual Checks & Auto Update Checks',
-				'manage_options',
-				'webchangedetector-update-settings',
-				'wcd_webchangedetector_init'
-			);
-		}
-		if ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Monitoring',
-				'Monitoring',
-				'manage_options',
-				'webchangedetector-auto-settings',
-				'wcd_webchangedetector_init'
-			);
-		}
-		if ( is_array( $allowances ) && $allowances['logs_view'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Queue',
-				'Queue',
-				'manage_options',
-				'webchangedetector-logs',
-				'wcd_webchangedetector_init'
-			);
-		}
-		if ( is_array( $allowances ) && $allowances['settings_view'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Settings',
-				'Settings',
-				'manage_options',
-				'webchangedetector-settings',
-				'wcd_webchangedetector_init'
-			);
-		}
-		if ( is_array( $allowances ) && $allowances['upgrade_account'] ) {
-			add_submenu_page(
-				'webchangedetector',
-				'Upgrade Account',
-				'Upgrade Account',
-				'manage_options',
-				$this->get_upgrade_url()
-			);
-		}
-		add_submenu_page(
-			null,
-			'Show Change Detection',
-			'Show Change Detection',
-			'manage_options',
-			'webchangedetector-show-detection',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			null,
-			'Show Screenshot',
-			'Show Screenshot',
-			'manage_options',
-			'webchangedetector-show-screenshot',
-			'wcd_webchangedetector_init'
-		);
-		add_submenu_page(
-			null,
-			'No billing account found',
-			'No billing account found',
-			'manage_options',
-			'webchangedetector-no-billing-account',
-			'wcd_webchangedetector_init'
-		);
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_plugin_setup_menu' );
+		$this->wordpress_handler->wcd_plugin_setup_menu();
 	}
 
 	/** Get wcd plugin dir.
@@ -399,7 +231,8 @@ class WebChangeDetector_Admin {
 	 * @return string
 	 */
 	public function get_wcd_plugin_url() {
-		return plugin_dir_url( __FILE__ ) . '../';
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::get_wcd_plugin_url' );
+		return $this->wordpress_handler->get_wcd_plugin_url();
 	}
 
 	/** Create a new free account.
@@ -409,23 +242,8 @@ class WebChangeDetector_Admin {
 	 * @return array|string
 	 */
 	public function create_trial_account( $postdata ) {
-
-		// Generate validation string.
-		$validation_string = wp_generate_password( 40 );
-		update_option( WCD_VERIFY_SECRET, $validation_string, false );
-		$postdata['password'] = wp_hash_password( $postdata['password'] );
-		$args                 = array_merge(
-			array(
-				'action'            => 'add_trial_account',
-				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
-				'domain'            => $this->get_domain_from_site_url(),
-				'validation_string' => $validation_string,
-				'cms'               => 'wp',
-			),
-			$postdata
-		);
-
-		return $this->api_v1( $args, true );
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::create_trial_account' );
+		return $this->account_handler->create_trial_account( $postdata );
 	}
 
 	/** Sync url after update.
@@ -436,47 +254,8 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function update_post( $post_id, $post_after, $post_before ) {
-		// Check if it's a revision or an autosave to avoid unnecessary requests and if the post is publish.
-		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) || 'publish' !== $post_after->post_status ) {
-			return;
-		}
-
-		$post_after_title      = get_the_title( $post_after );
-		$post_before_title     = get_the_title( $post_before );
-		$post_after_permalink  = get_permalink( $post_after );
-		$post_before_permalink = get_permalink( $post_before );
-		if ( $post_after_title === $post_before_title && $post_after_permalink === $post_before_permalink ) {
-			return;
-		}
-
-		// Get the post type, title, and URL.
-		$post_type = get_post_type_object( $post_after->post_type );
-
-		$post_category   = $this->get_post_type_name( $this->get_post_type_slug( $post_type ) );
-		$post_title      = get_the_title( $post_id );
-		$post_before_url = get_permalink( $post_before );
-		$post_after_url  = get_permalink( $post_after );
-
-		// Check if we sync this post_type.
-		$website_details = $this->get_website_details();
-		$to_sync         = false;
-		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-			if ( $post_category === $sync_url_type['post_type_name'] ) {
-				$to_sync = true;
-			}
-		}
-		if ( ! $to_sync ) {
-			return;
-		}
-
-		// Prepare the data to send.
-		$data[][ 'types%%' . $post_category ][] = array(
-			'html_title' => $post_title,
-			'url'        => $this->remove_url_protocol( $post_before_url ),
-			'new_url'    => $this->remove_url_protocol( $post_after_url ),
-		);
-
-		$this->sync_single_post( $data );
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::update_post' );
+		$this->wordpress_handler->update_post( $post_id, $post_after, $post_before );
 	}
 
 	/**
@@ -496,26 +275,8 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-
-		if ( ! is_string( $api_token ) || strlen( $api_token ) < self::API_TOKEN_LENGTH ) {
-			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
-				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
-			} else {
-				echo '<div class="notice notice-error">
-                        <p>The API Token is invalid. Please try again or contact us if the error persists</p>
-                        </div>';
-			}
-			$this->get_no_account_page();
-			return false;
-		}
-
-		// Save email address on account creation for showing on activate account page.
-		if ( ! empty( $postdata['email'] ) ) {
-			update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( wp_unslash( $postdata['email'] ) ), false );
-		}
-		update_option( WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field( $api_token ), false );
-
-		return true;
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::save_api_token' );
+		return $this->account_handler->save_api_token( $postdata, $api_token );
 	}
 
 	/** Get account details.
@@ -524,24 +285,8 @@ class WebChangeDetector_Admin {
 	 * @return array|string|bool
 	 */
 	public function get_account( $force = false ) {
-
-		static $account_details;
-		if ( $account_details && ! $force ) {
-			return $account_details;
-		}
-
-		$account_details = WebChangeDetector_API_V2::get_account_v2();
-
-		if ( ! empty( $account_details['data'] ) ) {
-			$account_details                 = $account_details['data'];
-			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
-			return $account_details;
-		}
-		if ( ! empty( $account_details['message'] ) ) {
-			return $account_details['message'];
-		}
-
-		return false;
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::get_account' );
+		return $this->account_handler->get_account( $force );
 	}
 
 	/** Sync Post if permalink changed. Currently deactivated.
@@ -549,15 +294,18 @@ class WebChangeDetector_Admin {
 	 * @return array|false|mixed|string
 	 */
 	public function wcd_sync_post_after_save() {
-		$this->sync_posts( true );
-		return true;
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_sync_post_after_save' );
+		return $this->wordpress_handler->wcd_sync_post_after_save();
 	}
 
 	/** Ajax get processing queue.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_processing_queue() instead.
 	 */
 	public function ajax_get_processing_queue() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_processing_queue' );
+		
 		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
@@ -573,8 +321,11 @@ class WebChangeDetector_Admin {
 	/** Update selected url.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_post_url() instead.
 	 */
 	public function ajax_post_url() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_post_url' );
+		
 		// Check for our specific nonce key sent from the URL settings toggles.
 		if ( ! isset( $_POST['nonce'] ) ) {
 			wp_send_json_error( 'Nonce missing or incorrect key.' );
@@ -602,8 +353,10 @@ class WebChangeDetector_Admin {
 	/** Sync posts via ajax.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_sync_urls() instead.
 	 */
 	public function ajax_sync_urls() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_sync_urls' );
 		if ( ! isset( $_POST['nonce'] ) ) {
 			echo 'POST Params missing';
 			die();
@@ -616,7 +369,7 @@ class WebChangeDetector_Admin {
 		}
 
 		$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
-		self::error_log( 'Force? ' . (bool) $force );
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force );
 		$response = $this->sync_posts( (bool) $force, $this->get_website_details() );
 		if ( $response ) {
 			echo esc_html( $response );
@@ -627,8 +380,10 @@ class WebChangeDetector_Admin {
 	/** Ajax update comparison status.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_update_comparison_status() instead.
 	 */
 	public function ajax_update_comparison_status() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_update_comparison_status' );
 		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['status'] ) || ! isset( $_POST['nonce'] ) ) {
 			echo 'POST Params missing';
 			die();
@@ -649,8 +404,10 @@ class WebChangeDetector_Admin {
 	 * AJAX handler to disable wizard.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_disable_wizard() instead.
 	 */
 	public function ajax_disable_wizard() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_disable_wizard' );
 		// Verify nonce for security.
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wcd_wizard_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce' );
@@ -671,8 +428,10 @@ class WebChangeDetector_Admin {
 	 * AJAX handler for loading batch comparisons view.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_batch_comparisons_view() instead.
 	 */
 	public function ajax_get_batch_comparisons_view() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_batch_comparisons_view' );
 		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
@@ -694,7 +453,7 @@ class WebChangeDetector_Admin {
 		$filters = array_filter( $filters );
 
 		// Get comparisons from API (no failed queues here - they load separately).
-		$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters );
+		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filters );
 
 		// Load the comparisons view without failed queues.
 		$this->load_comparisons_view( $filters['batches'], $comparisons, $filters );
@@ -705,8 +464,10 @@ class WebChangeDetector_Admin {
 	 * AJAX handler for loading failed queues view.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_load_failed_queues() instead.
 	 */
 	public function ajax_load_failed_queues() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_load_failed_queues' );
 		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
@@ -730,8 +491,10 @@ class WebChangeDetector_Admin {
 	 * AJAX handler for creating website and groups.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_create_website_and_groups() instead.
 	 */
 	public function ajax_create_website_and_groups() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_create_website_and_groups' );
 		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
@@ -767,11 +530,11 @@ class WebChangeDetector_Admin {
 
 				wp_send_json_success( array( 'message' => __( 'Account created successfully.', 'webchangedetector' ) ) );
 			} else {
-				$this->error_log( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
 				wp_send_json_error( array( 'message' => __( 'Failed to create website and groups.', 'webchangedetector' ) ) );
 			}
 		} catch ( Exception $e ) {
-			$this->error_log( "Exception during website creation: " . $e->getMessage() );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Exception during website creation: " . $e->getMessage() );
 			wp_send_json_error( array( 'message' => __( 'An error occurred during account creation.', 'webchangedetector' ) ) );
 		}
 	}
@@ -780,8 +543,10 @@ class WebChangeDetector_Admin {
 	 * AJAX handler to get dashboard usage statistics.
 	 *
 	 * @return void
+	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_dashboard_usage_stats() instead.
 	 */
 	public function ajax_get_dashboard_usage_stats() {
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_dashboard_usage_stats' );
 		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
@@ -791,8 +556,8 @@ class WebChangeDetector_Admin {
 		}
 
 		// Get group data for usage calculations.
-		$auto_group   = WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'] ?? array();
-		$update_group = WebChangeDetector_API_V2::get_group_v2( $this->manual_group_uuid )['data'] ?? array();
+		$auto_group   = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'] ?? array();
+		$update_group = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->manual_group_uuid )['data'] ?? array();
 
 		$amount_auto_detection = 0;
 		if ( ! empty( $auto_group['enabled'] ) ) {
@@ -813,7 +578,7 @@ class WebChangeDetector_Admin {
 		}
 
 		// Get account data for renewal calculations.
-		$client_account       = $this->get_account();
+		$client_account       = $this->account_handler->get_account();
 		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
 					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
 
@@ -845,7 +610,7 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function get_processing_queue_v2( $batch_id = false, $per_page = 30 ) {
-		return WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing,open', false, array( 'per_page' => $per_page ) );
+		return \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing,open', false, array( 'per_page' => $per_page ) );
 	}
 
 	/** Update monitoring group settings.
@@ -855,7 +620,7 @@ class WebChangeDetector_Admin {
 	 * @return array|string
 	 */
 	public function update_monitoring_settings( $group_data ) {
-		$monitoring_settings = WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'];
+		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'];
 
 		$args = array(
 			'monitoring'    => true,
@@ -871,7 +636,7 @@ class WebChangeDetector_Admin {
 			$args['css'] = sanitize_textarea_field( $group_data['css'] );
 		}
 
-		return WebChangeDetector_API_V2::update_group( $this->monitoring_group_uuid, $args );
+		return \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->monitoring_group_uuid, $args );
 	}
 
 	/** Update group settings.
@@ -904,7 +669,7 @@ class WebChangeDetector_Admin {
 			$args['css'] = sanitize_textarea_field( $postdata['css'] ); // there is no css sanitation.
 		}
 
-		return ( WebChangeDetector_API_V2::update_group( $this->manual_group_uuid, $args ) );
+		return ( \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->manual_group_uuid, $args ) );
 	}
 
 	/** Get the upgrade url.
@@ -912,22 +677,8 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string|null
 	 */
 	public function get_upgrade_url() {
-
-		static $upgrade_url;
-		if ( $upgrade_url ) {
-			return $upgrade_url;
-		}
-
-		$account_details = $this->get_account();
-
-		if ( ! $this->is_allowed( 'upgrade_account' ) || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
-			return '?page=webchangedetector-no-billing-account';
-		}
-
-		$upgrade_url = $this->billing_url() . '?secret=' . $account_details['magic_login_secret'];
-		update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
-
-		return $upgrade_url;
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_upgrade_url' );
+		return $this->account_handler->get_upgrade_url();
 	}
 
 	/** Output a wp icon.
@@ -938,6 +689,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function get_device_icon( $icon, $css_class = '' ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon' );
 		$output = '';
 		if ( 'thumbnail' === $icon ) {
 			$output = '<span class="dashicons dashicons-camera-alt"></span>';
@@ -1004,7 +756,8 @@ class WebChangeDetector_Admin {
 	 * @return false|mixed|string
 	 */
 	public function update_comparison_status( $id, $status ) {
-		return WebChangeDetector_API_V2::update_comparison_v2( $id, $status );
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Screenshots::update_comparison_status' );
+		return $this->screenshots_handler->update_comparison_status( $id, $status );
 	}
 
 	/** Nice names for comparison status.
@@ -1013,18 +766,8 @@ class WebChangeDetector_Admin {
 	 * @return string
 	 */
 	public function comparison_status_nice_name( $status ) {
-		switch ( $status ) {
-			case 'ok':
-				return 'Ok';
-			case 'to_fix':
-				return 'To Fix';
-			case 'false_positive':
-				return 'False Positive';
-			case 'failed':
-				return 'Failed';
-			default:
-				return 'new';
-		}
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name' );
+		return \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $status );
 	}
 
 	/**
@@ -1083,7 +826,7 @@ class WebChangeDetector_Admin {
 					<td>
 						<div class="comparison_status_container">
 							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-								<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+								<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $compare['status'] ) ); ?>
 							</span>
 							<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
 								<strong>Change Status to:</strong><br>
@@ -1122,7 +865,7 @@ class WebChangeDetector_Admin {
 						</strong>
 						<?php
 						echo esc_url( $compare['url'] ) . '<br>';
-						$this->get_device_icon( $compare['device'] );
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $compare['device'] );
 						echo esc_html( ucfirst( $compare['device'] ) );
 						?>
 					</td>
@@ -1181,12 +924,12 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function load_failed_queues_view( $batch_id ) {
-		$failed_queues = WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
+		$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
 
 		// Handle pagination for failed queues if needed.
 		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
 			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
-				$failed_queues_data    = WebChangeDetector_API_V2::get_queues_v2(
+				$failed_queues_data    = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2(
 					$batch_id,
 					'failed',
 					array(
@@ -1218,7 +961,7 @@ class WebChangeDetector_Admin {
 						<td>
 							<div class="comparison_status_container">
 								<span class="current_comparison_status comparison_status comparison_status_failed">
-									<?php echo esc_html( $this->comparison_status_nice_name( 'failed' ) ); ?>
+									<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( 'failed' ) ); ?>
 								</span>
 							</div>
 						</td>
@@ -1227,7 +970,7 @@ class WebChangeDetector_Admin {
 							if ( ! empty( $failed_queue['html_title'] ) ) {
 								echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
 							}
-							$this->get_device_icon( $failed_queue['device'] );
+							\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $failed_queue['device'] );
 							echo esc_html( $failed_queue['url_link'] );
 							?>
 						</td>
@@ -1302,10 +1045,10 @@ class WebChangeDetector_Admin {
 								<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 									<?php
 									if ( $needs_attention ) {
-										$this->get_device_icon( 'warning', 'batch_needs_attention' );
+										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'warning', 'batch_needs_attention' );
 										echo '<small>Needs Attention</small>';
 									} else {
-										$this->get_device_icon( 'check', 'batch_is_ok' );
+										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'check', 'batch_is_ok' );
 										echo '<small>Looks Good</small>';
 									}
 									if ( $amount_failed ) {
@@ -1316,13 +1059,13 @@ class WebChangeDetector_Admin {
 								<div class="accordion-batch-title-tile">
 									<?php
 									if ( $batch_group === $this->monitoring_group_uuid ) {
-										$this->get_device_icon( 'auto-group' );
+										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' );
 										echo ' Monitoring Checks';
 									} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
-										$this->get_device_icon( 'auto-update-group' );
+										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-update-group' );
 										echo ' Auto Update Checks';
 									} else {
-										$this->get_device_icon( 'update-group' );
+										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' );
 										echo ' Manual Checks';
 									}
 									?>
@@ -1346,7 +1089,7 @@ class WebChangeDetector_Admin {
 						<div class="mm_accordion_content">
 							<div class="ajax_batch_comparisons_content">
 								<div class="ajax-loading-container">
-									<img decoding="async" src="<?php echo esc_url( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
+									<img decoding="async" src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
 									<div style="text-align: center;">Loading</div>
 								</div>
 							</div>
@@ -1389,7 +1132,7 @@ class WebChangeDetector_Admin {
 			$token = sanitize_text_field( wp_unslash( $_GET['id'] ) );
 		}
 		if ( isset( $token ) ) {
-			$compare = WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
+			$compare = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
 
 			$public_token = $compare['token'];
 			$all_tokens   = array();
@@ -1613,7 +1356,7 @@ class WebChangeDetector_Admin {
 			$posts_per_batch = 1000;  // Number of posts to retrieve per query.
 
 			do {
-				self::error_log( 'Getting next chunk. Offset: ' . $offset );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Getting next chunk. Offset: ' . $offset );
 				// Set up WP_Query arguments.
 				$args = array(
 					'post_type'      => $single_post_type,  // Pass the array of post types.
@@ -1645,7 +1388,7 @@ class WebChangeDetector_Admin {
 
 					// Add the data to the main array.
 					$all_posts_data[ 'types%%' . $post_type_label ][] = array(
-						'url'        => $this->remove_url_protocol( $url ),
+						'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url ),
 						'html_title' => $post_title,
 					);
 				}
@@ -1655,7 +1398,7 @@ class WebChangeDetector_Admin {
 
 				// Increment the offset for the next batch.
 				$offset += $posts_per_batch;
-				self::error_log( 'Sending Posts.' );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sending Posts.' );
 
 				// Call uploadUrls after every batch.
 				$this->upload_urls_in_batches( $all_posts_data );
@@ -1718,7 +1461,7 @@ class WebChangeDetector_Admin {
 
 				// Add the data to the main array.
 				$all_terms_data[ 'taxonomy%%' . $taxonomy_label ][] = array(
-					'url'        => $this->remove_url_protocol( $url ),
+					'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url ),
 					'html_title' => $term->name,
 				);
 			}
@@ -1752,8 +1495,8 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function daily_sync_posts_cron_job() {
-		// Setting force to true to ensure it runs regardless of last sync time.
-		$this->sync_posts();
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::daily_sync_posts_cron_job' );
+		$this->wordpress_handler->daily_sync_posts_cron_job();
 	}
 
 	/** Sync single post.
@@ -1763,9 +1506,9 @@ class WebChangeDetector_Admin {
 	 */
 	public function sync_single_post( $single_post ) {
 		if ( ! empty( $single_post ) ) {
-			self::error_log( 'Start single url sync' );
-			$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $single_post );
-			$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( false );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Start single url sync' );
+			$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $single_post );
+			$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( false );
 
 		}
 	}
@@ -1786,7 +1529,7 @@ class WebChangeDetector_Admin {
 			return date_i18n( 'd.m.Y H:i', $last_sync );
 		}
 
-		self::error_log( 'Starting Sync' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting Sync' );
 		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
 		// Check if we got website_details or if we use the ones from the class.
@@ -1798,7 +1541,7 @@ class WebChangeDetector_Admin {
 		// We only sync the frontpage.
 		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
             
-            error_log( "only frontpage: " . print_r( $website_details['allowances']['only_frontpage'], true ) );
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "only frontpage: " . print_r( $website_details['allowances']['only_frontpage'], true ) );
 			$array['frontpage%%Frontpage'][] = array(
 				'url'        => $this::get_domain_from_site_url(),
 				'html_title' => get_bloginfo( 'name' ),
@@ -1813,7 +1556,7 @@ class WebChangeDetector_Admin {
 			// Get all WP post_types.
 			$post_types = get_post_types( array( 'public' => true ), 'objects' );
 			foreach ( $post_types as $post_type ) {
-				$wp_post_type_slug = $this->get_post_type_slug( $post_type );
+				$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 
 				// Get the right name for the request.
 
@@ -1837,7 +1580,7 @@ class WebChangeDetector_Admin {
 			foreach ( $taxonomies as $taxonomy ) {
 
 				// Depending on if we have 'rest_base' name we use this one or the 'name'.
-				$wp_taxonomy_slug = $this->get_taxonomy_slug( $taxonomy );
+				$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $taxonomy );
 
 				// Get the terms names.
 				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
@@ -1880,7 +1623,7 @@ class WebChangeDetector_Admin {
 
 						// Store the title in the array with the language code as the key.
 						$array['frontpage%%Frontpage'][] = array(
-							'url'        => self::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
+							'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
 							'html_title' => get_bloginfo( 'name' ),
 						);
 					}
@@ -1899,7 +1642,7 @@ class WebChangeDetector_Admin {
 						// Check if home_url is available in the language info.
 						if ( ! empty( $language->home_url ) ) {
 							$array['frontpage%%Frontpage'][] = array(
-								'url'        => self::remove_url_protocol( $language->home_url ),
+								'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $language->home_url ),
 								'html_title' => get_bloginfo( 'name' ),
 							);
 						}
@@ -1907,7 +1650,7 @@ class WebChangeDetector_Admin {
 				}
 			} else {
 				$array['frontpage%%Frontpage'][] = array(
-					'url'        => self::remove_url_protocol( get_option( 'home' ) ),
+					'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( get_option( 'home' ) ),
 					'html_title' => get_bloginfo( 'name' ),
 				);
 			}
@@ -1939,10 +1682,10 @@ class WebChangeDetector_Admin {
 		$collection_uuid = wp_generate_uuid4();
 
 		// Sync urls.
-		$response_sync_urls      = WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
-		$response_start_url_sync = WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
-		self::error_log( 'Response upload URLs: ' . $response_sync_urls );
-		self::error_log( 'Response Start URL sync: ' . $response_start_url_sync );
+		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
+		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . $response_sync_urls );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . $response_start_url_sync );
 
 		return date_i18n( 'd/m/Y H:i' );
 	}
@@ -1953,6 +1696,7 @@ class WebChangeDetector_Admin {
 	 * @return string
 	 */
 	public function remove_url_protocol( $url ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol' );
 		return substr( $url, strpos( $url, '//' ) + 2 );
 	}
 
@@ -1974,7 +1718,7 @@ class WebChangeDetector_Admin {
 
 					<h2> Account</h2>
 					<p>
-						Your email address: <strong><?php echo esc_html( $this->get_account()['email'] ); ?></strong><br>
+						Your email address: <strong><?php echo esc_html( $this->account_handler->get_account()['email'] ); ?></strong><br>
 						Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
 					</p>
 					<p>
@@ -2032,7 +1776,7 @@ class WebChangeDetector_Admin {
 			'enabled'     => true,
 		);
 		
-		$monitoring_group_response = WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
+		$monitoring_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
 		
 		// Create manual checks group.
 		$manual_group_args = array(
@@ -2041,12 +1785,12 @@ class WebChangeDetector_Admin {
 			'enabled'    => true,
 		);
 		
-		$manual_group_response = WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
+		$manual_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
 		
 		// Check if both groups were created successfully.
 		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
 			// Create the website with the group IDs.
-			$website_response = WebChangeDetector_API_V2::create_website_v2(
+			$website_response = \WebChangeDetector\WebChangeDetector_API_V2::create_website_v2(
 				$domain,
 				$manual_group_response['data']['id'],
 				$monitoring_group_response['data']['id']
@@ -2209,7 +1953,7 @@ class WebChangeDetector_Admin {
 		}
 
 		// Calculate screenshots until renewal.
-		$days_until_renewal = gmdate( 'd', gmdate( 'U', strtotime( $this->get_account()['renewal_at'] ) ) - gmdate( 'U' ) );
+		$days_until_renewal = gmdate( 'd', gmdate( 'U', strtotime( $this->account_handler->get_account()['renewal_at'] ) ) - gmdate( 'U' ) );
 
 		$amount_group_sc_per_day = $group['selected_urls_count'] * $amount_sc_per_day * $days_until_renewal;
 
@@ -2278,11 +2022,11 @@ class WebChangeDetector_Admin {
 
 		$pagination_params = array();
 		if ( ! empty( $_GET['post-type'] ) ) {
-			$filters['category']            = $this->get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
+								$filters['category']            = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
 			$pagination_params['post-type'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
 		}
 		if ( ! empty( $_GET['taxonomy'] ) ) {
-			$filters['category']           = $this->get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
+							$filters['category']           = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
 			$pagination_params['taxonomy'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
 
 		}
@@ -2371,7 +2115,7 @@ class WebChangeDetector_Admin {
 									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
 									?>
 									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-										<?php echo esc_html( $this->get_post_type_name( $url_type['post_type_slug'] ) ); ?>
+										<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( $url_type['post_type_slug'] ) ); ?>
 									</option>
 								<?php } ?>
 							</select>
@@ -2389,7 +2133,7 @@ class WebChangeDetector_Admin {
 									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
 									?>
 									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-										<?php echo esc_html( $this->get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
+										<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
 									</option>
 								<?php } ?>
 							</select>
@@ -2419,8 +2163,8 @@ class WebChangeDetector_Admin {
 
 						<table class="no-margin filter-table">
 							<tr>
-								<th style="min-width: 50px; text-align: center;"><?php $this->get_device_icon( 'desktop' ); ?><br>Desktop</th>
-								<th style="min-width: 50px; text-align: center;"><?php $this->get_device_icon( 'mobile' ); ?> Mobile</th>
+												<th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'desktop' ); ?><br>Desktop</th>
+				<th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'mobile' ); ?> Mobile</th>
 								<th style="width: 100%">URL</th>
 								<th style="min-width: 90px">Post type</th>
 							</tr>
@@ -2592,6 +2336,7 @@ class WebChangeDetector_Admin {
 	 * @return string|bool
 	 */
 	public function get_post_type_slug( $post_type ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug' );
 
 		$wp_post_type_slug = $post_type->rest_base;
 		if ( ! $wp_post_type_slug ) {
@@ -2607,6 +2352,7 @@ class WebChangeDetector_Admin {
 	 * @return string|bool
 	 */
 	public function get_post_type_name( $post_type_slug ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name' );
 		if ( 'frontpage' === $post_type_slug ) {
 			return 'Frontpage';
 		}
@@ -2614,7 +2360,7 @@ class WebChangeDetector_Admin {
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 
 		foreach ( $post_types as $post_type ) {
-			$wp_post_type_slug = $this->get_post_type_slug( $post_type );
+							$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 
 			if ( $wp_post_type_slug === $post_type_slug ) {
 				return $post_type->labels->name;
@@ -2630,6 +2376,7 @@ class WebChangeDetector_Admin {
 	 * @return string|bool
 	 */
 	public function get_taxonomy_slug( $taxonomy ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug' );
 		$wp_taxonomy_slug = $taxonomy->rest_base;
 		if ( ! $wp_taxonomy_slug ) {
 			$wp_taxonomy_slug = $taxonomy->name;
@@ -2644,13 +2391,14 @@ class WebChangeDetector_Admin {
 	 * @return string|bool
 	 */
 	public function get_taxonomy_name( $taxonomy_slug ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name' );
 		static $taxonomies;
 		if ( ! $taxonomies ) {
 			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
 		}
 
 		foreach ( $taxonomies as $post_type ) {
-			$wp_taxonomy_slug = $this->get_taxonomy_slug( $post_type );
+			$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $post_type );
 
 			if ( $wp_taxonomy_slug === $taxonomy_slug ) {
 				return $post_type->labels->name;
@@ -2705,7 +2453,7 @@ class WebChangeDetector_Admin {
 		}
 
 		$group_id_website_details = sanitize_text_field( $postdata['group_id'] );
-		WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
+		\WebChangeDetector\WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 
 		// TODO Make return to show the result.
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
@@ -2754,7 +2502,7 @@ class WebChangeDetector_Admin {
 		?>
 		<div class="no-account-page">
 			<div class="no-account">
-				<img src="<?php echo esc_url( $this->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
+				<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
 				<h2>See what changed before your users do.</h2>
 			</div>
 			<div class="highlight-wrapper">
@@ -2794,7 +2542,7 @@ class WebChangeDetector_Admin {
 		static $website_details;
 
 		if ( empty( $website_details ) ) {
-			$websites = WebChangeDetector_API_V2::get_websites_v2();
+			$websites = \WebChangeDetector\WebChangeDetector_API_V2::get_websites_v2();
 
 			if ( empty( $websites['data'] ) ) {
 				return 'No website details. Create them first.';
@@ -2829,13 +2577,13 @@ class WebChangeDetector_Admin {
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
 						'post_type_slug' => 'posts',
-						'post_type_name' => $this->get_post_type_name( 'posts' ),
+						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'posts' ),
 					),
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
 						'post_type_slug' => 'pages',
-						'post_type_name' => $this->get_post_type_name( 'pages' ),
+						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'pages' ),
 					),
 				);
 			}
@@ -2881,6 +2629,7 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function is_json( $data ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::is_json' );
 		if ( ! empty( $data ) ) {
 			return is_string( $data ) && is_array( json_decode( $data, true ) );
 		}
@@ -2897,7 +2646,7 @@ class WebChangeDetector_Admin {
 		if ( ! $update_website_details ) {
 			$update_website_details = $this->website_details;
 		}
-		WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
+		\WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
 	}
 
 	/** Check if current account is allowed for view.
@@ -2930,7 +2679,7 @@ class WebChangeDetector_Admin {
 		}
 
 		// Disable upgrade account for subaccounts.
-		if ( ! empty( $this->get_account()['is_subaccount'] ) && $this->get_account()['is_subaccount'] ) {
+		if ( ! empty( $this->account_handler->get_account()['is_subaccount'] ) && $this->account_handler->get_account()['is_subaccount'] ) {
 			$allowances['upgrade_account'] = 0;
 		}
 
@@ -2966,43 +2715,43 @@ class WebChangeDetector_Admin {
 				<?php if ( $this->is_allowed( 'dashboard_view' ) ) { ?>
 				<a href="?page=webchangedetector"
 					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'dashboard' ); ?> Dashboard
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> Dashboard
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
 					<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'auto-group' ); ?> Monitoring
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> Monitoring
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'change_detections_view' ) ) { ?>
 					<a href="?page=webchangedetector-change-detections"
 					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'change-detections' ); ?> Change Detections
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> Change Detections
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'logs_view' ) ) { ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'logs' ); ?> Queue
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> Queue
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'settings_view' ) ) { ?>
 				<a href="?page=webchangedetector-settings"
 					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php $this->get_device_icon( 'settings' ); ?> Settings
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> Settings
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'upgrade_account' ) ) { ?>
 				<a href="<?php echo esc_url( $this->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
-					<?php $this->get_device_icon( 'upgrade' ); ?> Upgrade Account
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> Upgrade Account
 				</a>
 				<?php } ?>
 			</h2>
@@ -3024,14 +2773,14 @@ class WebChangeDetector_Admin {
 		$max_auto_update_checks = 0; // Will be loaded via AJAX.
 
 		// Check if this is the first time visiting the dashboard.
-		$first_time_visit = $this->is_first_time_dashboard_visit();
+		$first_time_visit = $this->account_handler->is_first_time_dashboard_visit();
 
 		?>
 		<div class="dashboard">
 			<div class="no-border box-plain">
 				<div class="box-half no-border">
 					<p>
-						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
+						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
 					</p>
 					<hr>
 					<p>
@@ -3071,14 +2820,14 @@ class WebChangeDetector_Admin {
 					<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
 					<p id="wcd-monitoring-stats">
 						<strong>Monitoring: </strong>
-						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
+						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
 					<?php } ?>
 
 					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
 					<p id="wcd-auto-update-stats">
 						<strong>Auto update checks: </strong>
-						<img src="<?php echo esc_html( $this->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
+						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
 					<?php } ?>
 
@@ -3099,7 +2848,7 @@ class WebChangeDetector_Admin {
 					'per_page'   => 5,
 				);
 
-				$batches = WebChangeDetector_API_V2::get_batches( $filter_batches );
+				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( $filter_batches );
 				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
 				$this->compare_view_v2( $batches['data'] ?? array() );
 
@@ -3194,10 +2943,8 @@ class WebChangeDetector_Admin {
 	 * @return string
 	 */
 	public function app_url() {
-		if ( defined( 'WCD_APP_DOMAIN' ) && is_string( WCD_APP_DOMAIN ) && ! empty( WCD_APP_DOMAIN ) ) {
-			return WCD_APP_DOMAIN;
-		}
-		return 'https://www.webchangedetector.com/';
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_app_url' );
+		return $this->account_handler->get_app_url();
 	}
 
 	/**
@@ -3206,10 +2953,8 @@ class WebChangeDetector_Admin {
 	 * @return string
 	 */
 	public function billing_url() {
-		if ( defined( 'WCD_BILLING_DOMAIN' ) && is_string( WCD_BILLING_DOMAIN ) && ! empty( WCD_BILLING_DOMAIN ) ) {
-			return WCD_BILLING_DOMAIN;
-		}
-		return $this->app_url() . 'billing/';
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_billing_url' );
+		return $this->account_handler->get_billing_url();
 	}
 
 	/**
@@ -3217,13 +2962,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return bool
 	 */
-	public function dev() {
-		// if either .test or dev. can be found in the URL, we're developing -  wouldn't work if plugin client domain matches these criteria.
-		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
-			return true;
-		}
-		return false;
-	}
+
 
 	/**
 	 * Check if this is the user's first time visiting the dashboard.
@@ -3231,26 +2970,8 @@ class WebChangeDetector_Admin {
 	 * @return bool
 	 */
 	public function is_first_time_dashboard_visit() {
-		$user_id = get_current_user_id();
-		$option_key = 'wcd_first_time_visit_' . $user_id;
-		
-		// Check if the user has visited before.
-		$has_visited = get_option( $option_key, false );
-		
-		if ( ! $has_visited ) {
-			// Additional check: Only show wizard if user doesn't have significant activity yet.
-			// This prevents wizard from showing for users who might have reset their settings.
-			$client_account = $this->get_account();
-			$has_activity = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
-			
-			if ( ! $has_activity ) {
-				// Mark as visited for future requests.
-				update_option( $option_key, true );
-				return true;
-			}
-		}
-		
-		return false;
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::is_first_time_dashboard_visit' );
+		return $this->account_handler->is_first_time_dashboard_visit();
 	}
 
 	/** Get group details and its urls.
@@ -3262,12 +2983,12 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_group_and_urls( $group_uuid, $url_filter = array() ) {
 
-		$group_and_urls = WebChangeDetector_API_V2::get_group_v2( $group_uuid )['data'];
-		$urls           = WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
+		$group_and_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $group_uuid )['data'];
+		$urls           = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 
 		if ( empty( $urls['data'] ) ) {
 			$this->sync_posts( true );
-			$urls = WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
+			$urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 		}
 
 		$group_and_urls['urls']                = $urls['data'];
@@ -3325,7 +3046,7 @@ class WebChangeDetector_Admin {
 			),
 		);
 
-		self::error_log( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
 		if ( $is_web ) {
 			$response = wp_remote_post( $url_web, $args );
 		} else {
@@ -3365,8 +3086,10 @@ class WebChangeDetector_Admin {
 	 * Debug logging for dev
 	 *
 	 * @param string $log The log message.
+	 * @deprecated 1.0.0 Use \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error() instead.
 	 */
 	public static function error_log( $log ) {
+		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error' );
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true && defined( 'WCD_DEV' ) && WCD_DEV ) {
 			// phpcs:disable WordPress.PHP.DevelopmentFunctions
 
@@ -3381,51 +3104,8 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function wcd_admin_bar_menu( $wp_admin_bar ) {
-		// Check if admin bar menu is disabled in settings.
-		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
-			return;
-		}
-
-		// Only show for admins on the frontend, and not on admin pages themselves.
-		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
-
-			// Get icon URL.
-			$icon_url = plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg';
-			// Prepare title with icon.
-			$wcd_title = sprintf(
-				'<img src="%s" alt="WCD Logo" style="height: 16px; width: auto; vertical-align: middle; margin-right: 5px;" /> WCD',
-				esc_url( $icon_url )
-			);
-
-			// Add top level node.
-			$wp_admin_bar->add_node(
-				array(
-					'id'    => 'wcd-admin-bar',
-					'title' => $wcd_title, // Use the title with the image.
-					'href'  => admin_url( 'admin.php?page=webchangedetector' ),
-				)
-			);
-
-			// Add Dashboard link (static).
-			$wp_admin_bar->add_node(
-				array(
-					'parent' => 'wcd-admin-bar',
-					'id'     => 'wcd-dashboard',
-					'title'  => __( 'WCD Dashboard', 'webchangedetector' ),
-					'href'   => admin_url( 'admin.php?page=webchangedetector' ),
-				)
-			);
-
-			// Add a placeholder node that JS will replace. Give it a specific ID.
-			$wp_admin_bar->add_node(
-				array(
-					'parent' => 'wcd-admin-bar',
-					'id'     => 'wcd-status-placeholder', // ID for JS to target.
-					'title'  => __( 'Loading WCD Status...', 'webchangedetector' ), // Initial text.
-					'href'   => false,
-				)
-			);
-		}
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_admin_bar_menu' );
+		$this->wordpress_handler->wcd_admin_bar_menu( $wp_admin_bar );
 	}
 
 	/**
@@ -3434,208 +3114,8 @@ class WebChangeDetector_Admin {
 	 * @since 3.1.7
 	 */
 	public function ajax_get_wcd_admin_bar_status() {
-		// 1. Verify Nonce and User Caps.
-		check_ajax_referer( 'wcd_admin_bar_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			self::error_log( '[WCD Admin Bar AJAX] Permission denied.' );
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		// 2. Get Current URL from request
-		$current_url_full = isset( $_POST['current_url'] ) ? esc_url_raw( wp_unslash( $_POST['current_url'] ) ) : null;
-		if ( ! $current_url_full ) {
-			self::error_log( '[WCD Admin Bar AJAX] Missing current URL.' );
-			wp_send_json_error( array( 'message' => __( 'Missing current URL.', 'webchangedetector' ) ), 400 );
-		}
-		self::error_log( '[WCD Admin Bar AJAX] Received URL: ' . $current_url_full );
-
-		// 3. Core Logic (Moved from original wcd_admin_bar_menu).
-		$wcd_groups            = get_option( WCD_WEBSITE_GROUPS );
-		$manual_group_uuid     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? null;
-		$monitoring_group_uuid = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? null;
-
-		// Add fallback logic if needed, similar to original function.
-		if ( ! $manual_group_uuid || ! $monitoring_group_uuid ) {
-			self::error_log( '[WCD Admin Bar AJAX] Missing Group UUIDs in options.' );
-			// Consider trying get_website_details() here if options fail.
-			wp_send_json_error( array( 'message' => __( 'Missing Group UUID configuration.', 'webchangedetector' ) ), 500 );
-		}
-		self::error_log( '[WCD Admin Bar AJAX] Group UUIDs - Manual: ' . $manual_group_uuid . ', Monitoring: ' . $monitoring_group_uuid );
-
-		// Get Post ID (if applicable).
-		$post_id = url_to_postid( $current_url_full );
-		self::error_log( '[WCD Admin Bar AJAX] URL to Post ID (' . $current_url_full . '): ' . ( $post_id ? $post_id : 'Not Found' ) );
-
-		// Get WCD URL UUID (`url_id`).
-		$wcd_url_id          = null;
-		$found_via_api       = false;
-		$manual_url_data     = null;
-		$monitoring_url_data = null;
-
-		// Try post meta first if we have a post ID.
-		if ( $post_id ) {
-			$wcd_url_id = get_post_meta( $post_id, 'wcd_url_uuid', true );
-			if ( $wcd_url_id ) {
-				self::error_log( '[WCD Admin Bar AJAX] Found url_id in post meta (' . $post_id . '): ' . $wcd_url_id );
-			} else {
-				self::error_log( '[WCD Admin Bar AJAX] url_id not found in post meta for post ' . $post_id );
-			}
-		} else {
-			self::error_log( '[WCD Admin Bar AJAX] No post ID found, cannot check post meta.' );
-		}
-
-		// If not found in meta, try API lookup using normalized URL.
-		if ( empty( $wcd_url_id ) ) {
-			self::error_log( '[WCD Admin Bar AJAX] url_id not found in meta, trying API lookup.' );
-			$parsed_url = wp_parse_url( $current_url_full );
-			if ( ! $parsed_url || empty( $parsed_url['host'] ) ) {
-				$search_url_base = null;
-				self::error_log( '[WCD Admin Bar AJAX] Failed to parse current URL for API search.' );
-			} else {
-				$host            = $parsed_url['host'];
-				$path            = isset( $parsed_url['path'] ) ? rtrim( $parsed_url['path'] ?? '', '/' ) : '';
-				$search_url_base = $host . $path;
-				self::error_log( '[WCD Admin Bar AJAX] Prepared search_url_base for API: ' . $search_url_base );
-
-			}
-
-			if ( ! empty( $search_url_base ) ) {
-				// Re-define the helper function locally or move it to a class method.
-				$find_exact_match = function ( $api_results, $target_normalized_url ) {
-					if ( empty( $api_results['data'] ) || ! is_array( $api_results['data'] ) ) {
-						return null;
-					}
-					self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Searching in ' . count( $api_results['data'] ) . ' results for ' . $target_normalized_url );
-					foreach ( $api_results['data'] as $item ) {
-						if ( empty( $item['url'] ) ) {
-							continue;
-						}
-						$api_url_no_protocol = preg_replace( '(^https?://)', '', $item['url'] );
-						$api_url_parts       = explode( '?', $api_url_no_protocol );
-						$api_url_no_query    = $api_url_parts[0];
-						$normalized_api_url  = rtrim( $api_url_no_query, '/' );
-						self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Comparing ' . $normalized_api_url . ' with ' . $target_normalized_url );
-						if ( $normalized_api_url === $target_normalized_url ) {
-							self::error_log( '[WCD Admin Bar AJAX] find_exact_match: Found match! ID: ' . $item['id'] );
-							return $item;
-						}
-					}
-					self::error_log( '[WCD Admin Bar AJAX] find_exact_match: No exact match found.' );
-					return null;
-				};
-
-				$url_filter = array(
-					'search' => $search_url_base,
-					'limit'  => 5,
-				); // Limit search results?.
-
-				self::error_log( '[WCD Admin Bar AJAX] Searching manual group (' . $manual_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
-				$manual_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
-				$manual_match      = $find_exact_match( $manual_group_urls, $search_url_base );
-
-				self::error_log( '[WCD Admin Bar AJAX] Searching monitoring group (' . $monitoring_group_uuid . ') with filter: ' . wp_json_encode( $url_filter ) );
-				$monitoring_group_urls = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
-				$monitoring_match      = $find_exact_match( $monitoring_group_urls, $search_url_base );
-
-				// Prioritize manual match.
-				$matched_api_data = $manual_match ? $manual_match : $monitoring_match;
-				if ( $matched_api_data ) {
-					$wcd_url_id    = $matched_api_data['id'] ?? null;
-					$found_via_api = true;
-					$source_group  = $manual_match ? 'Manual' : 'Monitoring';
-					self::error_log( '[WCD Admin Bar AJAX] Found url_id via API search: ' . $wcd_url_id . ' (Source Group: ' . $source_group . ')' );
-
-					if ( $manual_match && $wcd_url_id === $manual_match['id'] ) {
-						$manual_url_data = $manual_match;
-						self::error_log( '[WCD Admin Bar AJAX] API search result assigned to manual_url_data.' );
-					}
-					// Assign to monitoring_url_data if it was the source.
-					if ( $monitoring_match && ! $manual_match && $wcd_url_id === $monitoring_match['id'] ) {
-						$monitoring_url_data = $monitoring_match;
-						self::error_log( '[WCD Admin Bar AJAX] API search result assigned to monitoring_url_data.' );
-					}
-
-					// Save to post meta if applicable and we found a post ID.
-					if ( $wcd_url_id && $post_id ) {
-						self::error_log( '[WCD Admin Bar AJAX] Saving found url_id (' . $wcd_url_id . ') to post meta for post ' . $post_id );
-						update_post_meta( $post_id, 'wcd_url_uuid', $wcd_url_id );
-					}
-				} else {
-					self::error_log( '[WCD Admin Bar AJAX] No match found via API search.' );
-				}
-			} else {
-				self::error_log( '[WCD Admin Bar AJAX] Search URL base was empty, skipping API search.' );
-			}
-		} // End API lookup block.
-
-		// Check if URL is Tracked.
-		if ( ! $wcd_url_id ) {
-			self::error_log( '[WCD Admin Bar AJAX] URL not tracked (no ID found).' );
-			wp_send_json_success( array( 'tracked' => false ) ); // Send success, but indicate not tracked.
-		}
-		self::error_log( '[WCD Admin Bar AJAX] URL is tracked. ID: ' . $wcd_url_id . ' (Found via API: ' . ( $found_via_api ? 'Yes' : 'No (Meta)' ) . ')' );
-
-		// Get Desktop/Mobile Status for both groups.
-		$url_id_filter = array(
-			'url_ids' => $wcd_url_id,
-			'limit'   => 1,
-		);
-
-		if ( ! $found_via_api ) {
-			// ID was from post meta, fetch both groups using the ID.
-			self::error_log( '[WCD Admin Bar AJAX] Fetching status for ID from meta. Filter: ' . wp_json_encode( $url_id_filter ) );
-			self::error_log( '[WCD Admin Bar AJAX] Fetching manual group (' . $manual_group_uuid . ') data.' );
-			$manual_check    = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
-			$manual_url_data = $manual_check['data'][0] ?? null;
-			self::error_log( '[WCD Admin Bar AJAX] Manual Data fetched: ' . ( $manual_url_data ? 'Found' : 'Not Found' ) );
-
-			self::error_log( '[WCD Admin Bar AJAX] Fetching monitoring group (' . $monitoring_group_uuid . ') data.' );
-			$monitoring_check    = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
-			$monitoring_url_data = $monitoring_check['data'][0] ?? null;
-			self::error_log( '[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ( $monitoring_url_data ? 'Found' : 'Not Found' ) );
-
-		} else {
-			// ID was from API search, we might have one group's data already, fetch the other if needed.
-			self::error_log( '[WCD Admin Bar AJAX] Fetching status for ID from API search. Checking if other group needed.' );
-			self::error_log( '[WCD Admin Bar AJAX] Pre-fetch check - Manual Data: ' . ( $manual_url_data ? 'Exists' : 'NULL' ) . ', Monitoring Data: ' . ( $monitoring_url_data ? 'Exists' : 'NULL' ) );
-
-			if ( ! $monitoring_url_data ) { // Need monitoring group data (either manual was found, or neither - though unlikely if found_via_api is true).
-				self::error_log( '[WCD Admin Bar AJAX] Fetching missing monitoring group (' . $monitoring_group_uuid . ') data. Filter: ' . wp_json_encode( $url_id_filter ) );
-				$monitoring_check    = WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_id_filter );
-				$monitoring_url_data = $monitoring_check['data'][0] ?? null;
-				self::error_log( '[WCD Admin Bar AJAX] Monitoring Data fetched: ' . ( $monitoring_url_data ? 'Found' : 'Not Found' ) );
-			}
-
-			if ( ! $manual_url_data ) { // Need manual group data.
-				self::error_log( '[WCD Admin Bar AJAX] Fetching missing manual group (' . $manual_group_uuid . ') data. Filter: ' . wp_json_encode( $url_id_filter ) );
-				$manual_check    = WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_id_filter );
-				$manual_url_data = $manual_check['data'][0] ?? null;
-				self::error_log( '[WCD Admin Bar AJAX] Manual Data fetched: ' . ( $manual_url_data ? 'Found' : 'Not Found' ) );
-			}
-		}
-
-		self::error_log( '[WCD Admin Bar AJAX] Manual Data: ' . wp_json_encode( $manual_url_data ) );
-
-		// 4. Prepare JSON Response Data.
-		$response_data = array(
-			'tracked'               => true,
-			'wcd_url_id'            => $wcd_url_id,
-			'manual_group_uuid'     => $manual_group_uuid,
-			'monitoring_group_uuid' => $monitoring_group_uuid,
-			'manual_status'         => array(
-				'desktop' => ! empty( $manual_url_data['desktop'] ),
-				'mobile'  => ! empty( $manual_url_data['mobile'] ),
-			),
-			'monitoring_status'     => array(
-				'desktop' => ! empty( $monitoring_url_data['desktop'] ),
-				'mobile'  => ! empty( $monitoring_url_data['mobile'] ),
-			),
-			'current_url'           => $current_url_full, // Pass original URL back.
-		);
-		self::error_log( '[WCD Admin Bar AJAX] Sending success response: ' . wp_json_encode( $response_data ) );
-
-		// 5. Send JSON Response.
-		wp_send_json_success( $response_data );
+		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::ajax_get_wcd_admin_bar_status' );
+		$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
 	}
 
 	/** Generate HTML for a single slider.
@@ -3650,7 +3130,7 @@ class WebChangeDetector_Admin {
 	 * @param string|null $group_id WCD Group ID.
 	 * @return string HTML for the slider.
 	 */
-	private function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
+	public function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
 		$checked = $is_enabled ? 'checked' : '';
 		$label   = ucfirst( $device ); // Consider using localized labels passed to JS.
 		$id      = sprintf( 'wcd-slider-%s-%s-%s', $type, $device, str_replace( array( '.', ':', '/' ), '-', $url_id ?? wp_generate_password( 5, false ) ) ); // Make ID more unique for AJAX.

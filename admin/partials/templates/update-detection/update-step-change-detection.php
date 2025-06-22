@@ -24,7 +24,7 @@ require 'update-step-tiles.php';
 </form>
 
 <?php
-	$batches = WebChangeDetector_API_V2::get_batches();
+	$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches();
 	$batch   = array_slice( $batches['data'], 0, 1 );
 
 	// Pass only batch data to create accordion containers, content will be loaded via AJAX.

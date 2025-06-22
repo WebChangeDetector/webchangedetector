@@ -27,6 +27,8 @@
  * Domain Path:       /languages
  */
 
+namespace WebChangeDetector;
+
 // If this file is called directly, abort.
 if ( ! defined( 'WPINC' ) ) {
 	die;
@@ -85,7 +87,7 @@ function wcd_set_git_updater_branch( $branch, $slug ) {
 
 // Only add filter if Git Updater is available.
 if ( WCD_USE_DEV_BRANCH ) {
-	add_filter( 'gu_primary_branch', 'wcd_set_git_updater_branch', 10, 2 );
+	add_filter( 'gu_primary_branch', __NAMESPACE__ . '\wcd_set_git_updater_branch', 10, 2 );
 }
 
 /**
@@ -113,7 +115,7 @@ function wcd_update_mode_admin_notice() {
 		'<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> ⚠️ Currently running in <strong>Beta (dev branch)</strong> update mode. You will receive beta updates.</p></div>'
 	);
 }
-add_action( 'admin_notices', 'wcd_update_mode_admin_notice' );
+add_action( 'admin_notices', __NAMESPACE__ . '\wcd_update_mode_admin_notice' );
 
 /**
  * The code that runs during plugin activation.
@@ -133,8 +135,8 @@ function deactivate_webchangedetector() {
 	WebChangeDetector_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_webchangedetector' );
-register_deactivation_hook( __FILE__, 'deactivate_webchangedetector' );
+register_activation_hook( __FILE__, __NAMESPACE__ . '\activate_webchangedetector' );
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\deactivate_webchangedetector' );
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -157,29 +159,5 @@ function run_webchangedetector() {
 }
 
 
-if ( ! function_exists( 'dd' ) ) {
-	/**
-	 * Dump and die function.
-	 *
-	 * @param mixed ...$output The output.
-	 *
-	 * @return void
-	 */
-	function dd( ...$output ) {
-		// this is PHP 5.6+.
-		echo '<pre>';
-		foreach ( $output as $o ) {
-			if ( is_array( $o ) || is_object( $o ) ) {
-				// phpcs:disable WordPress.PHP.DevelopmentFunctions
-				print_r( $o );
-				// phpcs:enable
-				continue;
-			}
-			echo esc_html( $o );
-		}
-		echo '</pre>';
-		die();
-	}
-}
 
 run_webchangedetector();

@@ -14,7 +14,7 @@
 		<div id="currently-processing" style="font-size: 50px; line-height: 50px; font-weight: 700;"><?php echo esc_html( $sc_processing['meta']['total'] ); ?></div>
 		<p><strong>Screenshot(s) in progress.</strong></p>
 		<p>
-			<img src="<?php echo esc_url( $wcd->get_wcd_plugin_url() . 'admin/img/loading-bar.gif' ); ?>" style="height: 15px;">
+			<img src="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Admin_WordPress::get_wcd_plugin_url() . 'admin/img/loading-bar.gif' ); ?>" style="height: 15px;">
 		</p>
 		<p>You can leave this page and return later. <br>The screenshots are taken in the background.</p>
 	</div>

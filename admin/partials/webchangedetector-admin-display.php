@@ -20,9 +20,13 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 */
 	function wcd_webchangedetector_init() {
 		global $wpdb;
-		$wcd                  = new WebChangeDetector_Admin();
+		$wcd                  = new \WebChangeDetector\WebChangeDetector_Admin();
 		$wcd->website_details = $wcd->get_website_details();
 		$api_token            = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+
+		// Initialize shared handler instances to avoid duplication.
+		$api_manager     = new \WebChangeDetector\WebChangeDetector_API_Manager();
+		$account_handler = new \WebChangeDetector\WebChangeDetector_Admin_Account( $api_manager );
 
 		// Start view.
 		echo '<div class="wrap">';
@@ -47,7 +51,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		if ( isset( $_POST['wcd_action'] ) ) {
 			$wcd_action = sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) );
 			check_admin_referer( $wcd_action );
-			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
+			if ( ! is_string( $wcd_action ) || ! in_array( $wcd_action, \WebChangeDetector\WebChangeDetector_Admin::VALID_WCD_ACTIONS, true ) ) {
 				?>
 				<div class="error notice">
 					<p>Ooops! There was an unknown action called. Please contact us if this issue persists.</p>
@@ -74,8 +78,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$api_token = $wcd->create_trial_account( $postdata );
-				$success   = $wcd->save_api_token( $postdata, $api_token );
+				$api_token = $account_handler->create_trial_account( $postdata );
+				$success   = $account_handler->save_api_token( $postdata, $api_token );
 
 				if ( ! $success ) {
 					return false;
@@ -98,7 +102,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return true;
 				}
 
-				$wcd->save_api_token( $postdata, $postdata['api_token'] );
+				$account_handler->save_api_token( $postdata, $postdata['api_token'] );
 				break;
 
 			case 'save_api_token':
@@ -108,7 +112,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					return false;
 				}
 
-				$wcd->save_api_token( $postdata, $postdata['api_token'] );
+				$account_handler->save_api_token( $postdata, $postdata['api_token'] );
 				break;
 		}
 
@@ -125,7 +129,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get the account details.
-		$account_details = $wcd->get_account();
+		$account_details = $account_handler->get_account();
 
 		// Show error message if we didn't get response from API.
 		if ( empty( $account_details ) ) {
@@ -242,7 +246,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		if ( ! empty( $wcd->website_details['allowances'] ) ) {
 
 			// Disable upgrade account for subaccounts.
-			if ( ! empty( $wcd->get_account()['is_subaccount'] ) && $wcd->get_account()['is_subaccount'] ) {
+			if ( ! empty( $account_details['is_subaccount'] ) && $account_details['is_subaccount'] ) {
 				$allowances['upgrade_account'] = 0;
 			}
 
@@ -297,7 +301,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		switch ( $wcd_action ) {
 
 			case 'change_comparison_status':
-				WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_id'], $postdata['status'] );
+				\WebChangeDetector\WebChangeDetector_API_V2::update_comparison_v2( $postdata['comparison_id'], $postdata['status'] );
 				break;
 
 			case 'add_post_type':
@@ -313,12 +317,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			case 'take_screenshots':
 				$sc_type = sanitize_text_field( $postdata['sc_type'] );
 
-				if ( ! in_array( $sc_type, WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
+				if ( ! in_array( $sc_type, \WebChangeDetector\WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
 					echo '<div class="error notice"><p>Wrong Screenshot type.</p></div>';
 					return false;
 				}
 
-				$results = WebChangeDetector_API_V2::take_screenshot_v2( $wcd->manual_group_uuid, $sc_type );
+				$results = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $wcd->manual_group_uuid, $sc_type );
 				if ( isset( $results['batch'] ) ) {
 					update_option( 'wcd_manual_checks_batch', $results['batch'] );
 					if ( 'pre' === $sc_type ) {
@@ -357,7 +361,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		}
 
 		// Get updated account and website data.
-		$account_details = $wcd->get_account();
+		$account_details = $account_handler->get_account();
 
 		// Error message if api didn't return account details.
 		if ( empty( $account_details['status'] ) ) {
@@ -377,7 +381,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			?>
 			<div class="error notice">
 				<h3>Your account status is <?php echo esc_html( $err_msg ); ?></h3>
-				<p>Please <a href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>">Upgrade</a> to re-activate your account.</p>
+				<p>Please <a href="<?php echo esc_url( $account_handler->get_upgrade_url() ); ?>">Upgrade</a> to re-activate your account.</p>
 				<p>To use a different account, please reset the API token.</p>
 				<form method="post">
 					<input type="hidden" name="wcd_action" value="reset_api_token">
@@ -445,7 +449,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$group_type = false;
 				if ( isset( $_GET['group_type'] ) ) {
 					$group_type = sanitize_text_field( wp_unslash( $_GET['group_type'] ) );
-					if ( ! empty( $group_type ) && ! in_array( $group_type, WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
+					if ( ! empty( $group_type ) && ! in_array( $group_type, \WebChangeDetector\WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
 						echo '<div class="error notice"><p>Invalid group_type.</p></div>';
 						return false;
 					}
@@ -454,7 +458,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				$status = false;
 				if ( isset( $_GET['status'] ) ) {
 					$status = sanitize_text_field( wp_unslash( $_GET['status'] ) );
-					if ( ! empty( $status ) && ! empty( array_diff( explode( ',', $status ), WebChangeDetector_Admin::VALID_COMPARISON_STATUS ) ) ) {
+					if ( ! empty( $status ) && ! empty( array_diff( explode( ',', $status ), \WebChangeDetector\WebChangeDetector_Admin::VALID_COMPARISON_STATUS ) ) ) {
 						echo '<div class="error notice"><p>Invalid status.</p></div>';
 						return false;
 					}
@@ -523,7 +527,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						$extra_filters['above_threshold'] = (bool) $difference_only;
 					}
 
-					$batches = WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+					$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
 					if ( ! empty( $batches['data'] ) ) {
 						// Get failed queues for all batches.
 						$batch_ids = array();
@@ -684,7 +688,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					$filter_groups = implode( ',', $groups );
 				}
 
-				$queues = WebChangeDetector_API_V2::get_queues_v2( false, false, $filter_groups, array( 'page' => $paged ) );
+				$queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( false, false, $filter_groups, array( 'page' => $paged ) );
 
 				$queues_meta = $queues['meta'];
 				$queues      = $queues['data'];
@@ -715,7 +719,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
 								echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
 								echo '<td>';
-								$wcd->get_device_icon( $queue['device'] );
+								\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $queue['device'] );
 								echo '</td>';
 								echo '<td>
                                             <span class="html-title queue"> ' . esc_html( $queue['html_title'] ) . '</span><br>
@@ -803,7 +807,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									$post_types           = get_post_types( array( 'public' => true ), 'objects' );
 									$available_post_types = array();
 									foreach ( $post_types as $post_type ) {
-										$wp_post_type_slug = $wcd->get_post_type_slug( $post_type );
+										$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 										$show_type         = false;
 										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
@@ -825,8 +829,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 											<select name="post_type">
 												<?php
 												foreach ( $available_post_types as $available_post_type ) {
-													$current_post_type_slug = $wcd->get_post_type_slug( $available_post_type );
-													$current_post_type_name = $wcd->get_post_type_name( $current_post_type_slug );
+													$current_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $available_post_type );
+													$current_post_type_name = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( $current_post_type_slug );
 													$add_post_type          = wp_json_encode(
 														array(
 															array(
@@ -863,7 +867,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									$taxonomies           = get_taxonomies( array( 'public' => true ), 'objects' );
 									$available_taxonomies = array(); // Reset for taxonomies.
 									foreach ( $taxonomies as $taxonomy ) {
-										$wp_taxonomy_slug = $wcd->get_taxonomy_slug( $taxonomy );
+										$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $taxonomy );
 										$show_taxonomy    = false;
 										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
@@ -885,8 +889,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 											<select name="post_type">
 												<?php
 												foreach ( $available_taxonomies as $available_taxonomy ) {
-													$current_taxonomy_slug = $wcd->get_taxonomy_slug( $available_taxonomy ); // Use correct function.
-													$current_taxonomy_name = $wcd->get_taxonomy_name( $current_taxonomy_slug );
+													$current_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $available_taxonomy ); // Use correct function.
+													$current_taxonomy_name = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( $current_taxonomy_slug );
 													$add_post_type         = wp_json_encode(
 														array(
 															array(
@@ -962,7 +966,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>
 							<p>If you need more checks, please upgrade your account with the button below.</p>
-							<a class="button" href="<?php echo esc_url( $wcd->get_upgrade_url() ); ?>">Upgrade</a>
+							<a class="button" href="<?php echo esc_url( $account_handler->get_upgrade_url() ); ?>">Upgrade</a>
 						</div>
 						<?php
 					}

@@ -1,0 +1,553 @@
+<?php
+/**
+ * WebChange Detector Admin Account Management Class
+ *
+ * This class handles all account and API management functionality for the WebChange Detector plugin.
+ * Extracted from the main admin class as part of the refactoring process to improve code organization
+ * and maintainability following WordPress coding standards.
+ *
+ * @link       https://webchangedetector.com
+ * @since      1.0.0
+ *
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/admin
+ */
+
+namespace WebChangeDetector;
+
+/**
+ * The account management functionality of the plugin.
+ *
+ * Defines all functionality related to user accounts, API tokens, billing,
+ * and authentication for the WebChange Detector service.
+ *
+ * @package    WebChangeDetector
+ * @subpackage WebChangeDetector/admin
+ * @author     Mike Miler <mike@webchangedetector.com>
+ * @since      1.0.0
+ */
+class WebChangeDetector_Admin_Account {
+
+	/**
+	 * The API manager instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_API_Manager    $api_manager    API communication handler.
+	 */
+	private $api_manager;
+
+	/**
+	 * Initialize the class and set its properties.
+	 *
+	 * @since    1.0.0
+	 * @param    WebChangeDetector_API_Manager    $api_manager    The API manager instance.
+	 */
+	public function __construct( $api_manager ) {
+		$this->api_manager = $api_manager;
+	}
+
+	/**
+	 * Create a trial account for the user.
+	 *
+	 * Handles the creation of a new trial account by generating a validation string,
+	 * hashing the password, and sending the request to the WebChange Detector API.
+	 *
+	 * @since    1.0.0
+	 * @param    array    $postdata    The form data containing user information.
+	 * @return   string|array          The API response or error message.
+	 */
+	public function create_trial_account( $postdata ) {
+		// Generate validation string.
+		$validation_string = wp_generate_password( 40 );
+		update_option( WCD_VERIFY_SECRET, $validation_string, false );
+		$postdata['password'] = wp_hash_password( $postdata['password'] );
+		
+		$args = array_merge(
+			array(
+				'action'            => 'add_trial_account',
+				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
+				'domain'            => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+				'validation_string' => $validation_string,
+				'cms'               => 'wp',
+			),
+			$postdata
+		);
+
+		return $this->api_v1( $args, true );
+	}
+
+	/**
+	 * Save the API token to the WordPress database.
+	 *
+	 * Validates the API token and saves it along with the user's email address
+	 * for account activation purposes.
+	 *
+	 * @since    1.0.0
+	 * @param    array     $postdata     The form data containing user information.
+	 * @param    string    $api_token    The API token to save.
+	 * @return   bool                    True if saved successfully, false otherwise.
+	 */
+	public function save_api_token( $postdata, $api_token ) {
+		if ( ! is_string( $api_token ) || strlen( $api_token ) < 40 ) { // API_TOKEN_LENGTH constant
+			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
+				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error">
+                        <p>' . esc_html__( 'The API Token is invalid. Please try again or contact us if the error persists', 'webchangedetector' ) . '</p>
+                        </div>';
+			}
+			$this->get_no_account_page();
+			return false;
+		}
+
+		// Save email address on account creation for showing on activate account page.
+		if ( ! empty( $postdata['email'] ) ) {
+			update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( wp_unslash( $postdata['email'] ) ), false );
+		}
+		update_option( WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field( $api_token ), false );
+
+		return true;
+	}
+
+	/**
+	 * Get account details from the API.
+	 *
+	 * Retrieves account information from the WebChange Detector API,
+	 * with caching support to avoid unnecessary API calls.
+	 *
+	 * @since    1.0.0
+	 * @param    bool    $force    Force fresh data from API, bypassing cache.
+	 * @return   array|string|bool Account data array, error message string, or false on failure.
+	 */
+	public function get_account( $force = false ) {
+		static $account_details;
+		if ( $account_details && ! $force ) {
+			return $account_details;
+		}
+
+		$account_details = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2();
+
+		if ( ! empty( $account_details['data'] ) ) {
+			$account_details                 = $account_details['data'];
+			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
+			return $account_details;
+		}
+		if ( ! empty( $account_details['message'] ) ) {
+			return $account_details['message'];
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the upgrade URL for the user's account.
+	 *
+	 * Constructs the billing upgrade URL using the user's magic login secret
+	 * for seamless authentication to the billing system.
+	 *
+	 * @since    1.0.0
+	 * @return   string    The upgrade URL or no-billing-account page reference.
+	 */
+	public function get_upgrade_url() {
+		static $upgrade_url;
+		if ( $upgrade_url ) {
+			return $upgrade_url;
+		}
+
+		$account_details = $this->get_account();
+
+		if ( ! $this->is_allowed( 'upgrade_account' ) || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
+			return '?page=webchangedetector-no-billing-account';
+		}
+
+		$upgrade_url = $this->get_billing_url() . '?secret=' . $account_details['magic_login_secret'];
+		update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
+
+		return $upgrade_url;
+	}
+
+	/**
+	 * Get the main application URL.
+	 *
+	 * Returns the WebChange Detector application URL, with support for
+	 * custom domains in development environments.
+	 *
+	 * @since    1.0.0
+	 * @return   string    The application URL.
+	 */
+	public function get_app_url() {
+		if ( defined( 'WCD_APP_DOMAIN' ) && is_string( WCD_APP_DOMAIN ) && ! empty( WCD_APP_DOMAIN ) ) {
+			return WCD_APP_DOMAIN;
+		}
+		return 'https://www.webchangedetector.com/';
+	}
+
+	/**
+	 * Get the billing system URL.
+	 *
+	 * Returns the URL for the billing system, with support for custom
+	 * billing domains in development environments.
+	 *
+	 * @since    1.0.0
+	 * @return   string    The billing URL.
+	 */
+	public function get_billing_url() {
+		if ( defined( 'WCD_BILLING_DOMAIN' ) && is_string( WCD_BILLING_DOMAIN ) && ! empty( WCD_BILLING_DOMAIN ) ) {
+			return WCD_BILLING_DOMAIN;
+		}
+		return $this->get_app_url() . 'billing/';
+	}
+
+	/**
+	 * Generate the API token form HTML.
+	 *
+	 * Creates the form interface for users to enter their API token
+	 * for connecting their WordPress site to WebChange Detector.
+	 *
+	 * @since    1.0.0
+	 * @param    string|bool    $api_token    Existing API token or false.
+	 * @return   void                         Outputs the form HTML.
+	 */
+	public function get_api_token_form( $api_token = false ) {
+		$nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' );
+		?>
+		<div class="wcd-form-container">
+			<h2><?php esc_html_e( 'Connect Your API Token', 'webchangedetector' ); ?></h2>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'wcd_api_token_nonce', 'wcd_api_token_nonce' ); ?>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="api_token"><?php esc_html_e( 'API Token', 'webchangedetector' ); ?></label>
+						</th>
+						<td>
+							<input name="api_token" type="text" id="api_token" 
+								   value="<?php echo esc_attr( $api_token ? $api_token : '' ); ?>" 
+								   class="regular-text" placeholder="<?php esc_attr_e( 'Enter your API token here', 'webchangedetector' ); ?>" />
+							<p class="description">
+								<?php esc_html_e( 'You can find your API token in your WebChange Detector account dashboard.', 'webchangedetector' ); ?>
+							</p>
+						</td>
+					</tr>
+				</table>
+				<?php submit_button( __( 'Save API Token', 'webchangedetector' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Display the no account page.
+	 *
+	 * Shows the registration/login interface when users don't have
+	 * a valid account or API token configured.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $api_token    Optional API token for pre-filling forms.
+	 * @return   void                    Outputs the no account page HTML.
+	 */
+	public function get_no_account_page( $api_token = '' ) {
+		?>
+		<div class="wcd-no-account-container">
+			<div class="wcd-header">
+				<h1><?php esc_html_e( 'Welcome to WebChange Detector', 'webchangedetector' ); ?></h1>
+				<p><?php esc_html_e( 'Monitor your website for visual changes automatically', 'webchangedetector' ); ?></p>
+			</div>
+			
+			<div class="wcd-account-options">
+				<div class="wcd-create-account">
+					<h3><?php esc_html_e( 'Create Free Account', 'webchangedetector' ); ?></h3>
+					<p><?php esc_html_e( 'Get started with a free trial account', 'webchangedetector' ); ?></p>
+					<button class="button button-primary" onclick="wcdShowCreateAccount()">
+						<?php esc_html_e( 'Create Free Account', 'webchangedetector' ); ?>
+					</button>
+				</div>
+				
+				<div class="wcd-existing-account">
+					<h3><?php esc_html_e( 'Have an Account?', 'webchangedetector' ); ?></h3>
+					<p><?php esc_html_e( 'Connect your existing account with an API token', 'webchangedetector' ); ?></p>
+					<button class="button" onclick="wcdShowApiTokenForm()">
+						<?php esc_html_e( 'Enter API Token', 'webchangedetector' ); ?>
+					</button>
+				</div>
+			</div>
+			
+			<div id="wcd-create-account-form" style="display: none;">
+				<?php $this->get_create_account_form(); ?>
+			</div>
+			
+			<div id="wcd-api-token-form" style="display: none;">
+				<?php $this->get_api_token_form( $api_token ); ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Display the account activation page.
+	 *
+	 * Shows instructions and interface for users to activate their
+	 * newly created accounts.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $error    Optional error message to display.
+	 * @return   void               Outputs the activation page HTML.
+	 */
+	public function show_activate_account( $error ) {
+		$account_email = get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, '' );
+		?>
+		<div class="wcd-activate-account">
+			<h2><?php esc_html_e( 'Activate Your Account', 'webchangedetector' ); ?></h2>
+			
+			<?php if ( ! empty( $error ) ) : ?>
+				<div class="notice notice-error">
+					<p><?php echo esc_html( $error ); ?></p>
+				</div>
+			<?php endif; ?>
+			
+			<div class="wcd-activation-instructions">
+				<p><?php esc_html_e( 'Please check your email and click the activation link to complete your account setup.', 'webchangedetector' ); ?></p>
+				
+				<?php if ( $account_email ) : ?>
+					<p><?php printf( esc_html__( 'We sent the activation email to: %s', 'webchangedetector' ), '<strong>' . esc_html( $account_email ) . '</strong>' ); ?></p>
+				<?php endif; ?>
+				
+				<p><?php esc_html_e( 'After activation, return here and refresh the page to access your dashboard.', 'webchangedetector' ); ?></p>
+			</div>
+			
+			<div class="wcd-activation-actions">
+				<button class="button button-primary" onclick="location.reload()">
+					<?php esc_html_e( 'I Have Activated My Account', 'webchangedetector' ); ?>
+				</button>
+				<a href="<?php echo esc_url( $this->get_app_url() . 'support' ); ?>" class="button" target="_blank">
+					<?php esc_html_e( 'Need Help?', 'webchangedetector' ); ?>
+				</a>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Check if development mode is enabled.
+	 *
+	 * Determines if the plugin is running in development mode based on
+	 * configuration constants or URL patterns.
+	 *
+	 * @since    1.0.0
+	 * @return   bool    True if in development mode, false otherwise.
+	 */
+	public function is_dev_mode() {
+		// If either .test or dev. can be found in the URL, we're developing - wouldn't work if plugin client domain matches these criteria.
+		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Check if this is the user's first time visiting the dashboard.
+	 *
+	 * Determines whether to show the setup wizard based on user visit history
+	 * and account activity level.
+	 *
+	 * @since    1.0.0
+	 * @return   bool    True if first visit, false otherwise.
+	 */
+	public function is_first_time_dashboard_visit() {
+		$user_id = get_current_user_id();
+		$option_key = 'wcd_first_time_visit_' . $user_id;
+		
+		// Check if the user has visited before.
+		$has_visited = get_option( $option_key, false );
+		
+		if ( ! $has_visited ) {
+			// Additional check: Only show wizard if user doesn't have significant activity yet.
+			// This prevents wizard from showing for users who might have reset their settings.
+			$client_account = $this->get_account();
+			$has_activity = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
+			
+			if ( ! $has_activity ) {
+				// Mark as visited for future requests.
+				update_option( $option_key, true );
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Call to V1 API.
+	 *
+	 * Makes authenticated requests to the WebChange Detector V1 API
+	 * with proper error handling and response processing.
+	 *
+	 * @since    1.0.0
+	 * @param    array    $post     Request data.
+	 * @param    bool     $is_web   Is web request.
+	 * @return   string|array       API response or error message.
+	 */
+	public function api_v1( $post, $is_web = false ) {
+		$url     = 'https://api.webchangedetector.com/api/v1/'; // init for production.
+		$url_web = 'https://api.webchangedetector.com/';
+
+		// This is where it can be changed to a local/dev address.
+		if ( defined( 'WCD_API_URL' ) && is_string( WCD_API_URL ) && ! empty( WCD_API_URL ) ) {
+			$url = WCD_API_URL;
+		}
+
+		// Overwrite $url if it is a get request.
+		if ( $is_web && defined( 'WCD_API_URL_WEB' ) && is_string( WCD_API_URL_WEB ) && ! empty( WCD_API_URL_WEB ) ) {
+			$url_web = WCD_API_URL_WEB;
+		}
+
+		$url     .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$url_web .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
+		$action   = $post['action']; // For debugging.
+
+		// Get API Token from WP DB.
+		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
+
+		unset( $post['action'] ); // don't need to send as action as it's now the url.
+		unset( $post['api_token'] ); // just in case.
+
+		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
+		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
+		$post['domain'] = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url();
+		$post['wp_id']  = get_current_user_id();
+
+		$args = array(
+			'timeout' => WCD_REQUEST_TIMEOUT,
+			'body'    => $post,
+			'headers' => array(
+				'Accept'        => 'application/json',
+				'Authorization' => 'Bearer ' . $api_token,
+				'x-wcd-domain'  => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+				'x-wcd-wp-id'   => get_current_user_id(),
+				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+			),
+		);
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
+		if ( $is_web ) {
+			$response = wp_remote_post( $url_web, $args );
+		} else {
+			$response = wp_remote_post( $url, $args );
+		}
+
+		$body          = wp_remote_retrieve_body( $response );
+		$response_code = (int) wp_remote_retrieve_response_code( $response );
+
+		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
+
+		// `message` is part of the Laravel Stacktrace.
+		if ( 400 === $response_code &&
+			is_array( $decoded_body ) &&
+			array_key_exists( 'message', $decoded_body ) &&
+			'plugin_update_required' === $decoded_body['message'] ) {
+			return 'update plugin';
+		}
+
+		if ( 500 === $response_code && 'account_details' === $action ) {
+			return 'activate account';
+		}
+
+		if ( 401 === $response_code ) {
+			return 'unauthorized';
+		}
+
+		// if parsing JSON into $decoded_body was without error.
+		if ( JSON_ERROR_NONE === json_last_error() ) {
+			return $decoded_body;
+		}
+
+		return $body;
+	}
+
+	/**
+	 * Check if a feature is allowed for the current account.
+	 *
+	 * Wrapper method for permission checking - will be implemented
+	 * to check against account capabilities and feature flags.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $allowed    The feature to check permission for.
+	 * @return   bool                  True if allowed, false otherwise.
+	 */
+	private function is_allowed( $allowed ) {
+		// This method would be implemented based on the actual is_allowed logic
+		// from the main class - placeholder for now
+		return true;
+	}
+
+	/**
+	 * Generate the create account form HTML.
+	 *
+	 * Private helper method to render the account creation form
+	 * with proper validation and security measures.
+	 *
+	 * @since    1.0.0
+	 * @return   void    Outputs the create account form HTML.
+	 */
+	private function get_create_account_form() {
+		$nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'wcd_create_account_nonce' );
+		?>
+		<div class="wcd-create-account-form">
+			<h3><?php esc_html_e( 'Create Your Free Account', 'webchangedetector' ); ?></h3>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'wcd_create_account_nonce', 'wcd_create_account_nonce' ); ?>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="email"><?php esc_html_e( 'Email Address', 'webchangedetector' ); ?></label>
+						</th>
+						<td>
+							<input name="email" type="email" id="email" class="regular-text" required />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="password"><?php esc_html_e( 'Password', 'webchangedetector' ); ?></label>
+						</th>
+						<td>
+							<input name="password" type="password" id="password" class="regular-text" required />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="first_name"><?php esc_html_e( 'First Name', 'webchangedetector' ); ?></label>
+						</th>
+						<td>
+							<input name="first_name" type="text" id="first_name" class="regular-text" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="last_name"><?php esc_html_e( 'Last Name', 'webchangedetector' ); ?></label>
+						</th>
+						<td>
+							<input name="last_name" type="text" id="last_name" class="regular-text" />
+						</td>
+					</tr>
+				</table>
+				<p class="wcd-terms">
+					<label>
+						<input type="checkbox" name="accept_terms" required />
+						<?php 
+						printf( 
+							esc_html__( 'I agree to the %1$sTerms of Service%2$s and %3$sPrivacy Policy%4$s', 'webchangedetector' ),
+							'<a href="' . esc_url( $this->get_app_url() . 'terms' ) . '" target="_blank">',
+							'</a>',
+							'<a href="' . esc_url( $this->get_app_url() . 'privacy' ) . '" target="_blank">',
+							'</a>'
+						);
+						?>
+					</label>
+				</p>
+				<?php submit_button( __( 'Create Free Account', 'webchangedetector' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+} 

@@ -9,6 +9,8 @@
  * @subpackage WebChangeDetector/public
  */
 
+namespace WebChangeDetector;
+
 /**
  * The public-facing functionality of the plugin.
  *

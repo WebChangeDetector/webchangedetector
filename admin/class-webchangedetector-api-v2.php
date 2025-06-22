@@ -7,6 +7,8 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
+namespace WebChangeDetector;
+
 use WpOrg\Requests\Transport\Curl;
 
 /**
@@ -552,8 +554,8 @@ class WebChangeDetector_API_V2 {
 				);
 			}
 			if ( ! empty( $args ) ) {
-				WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
-				$responses = WpOrg\Requests\Requests::request_multiple(
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
+				$responses = \WpOrg\Requests\Requests::request_multiple(
 					$args,
 					array(
 						'data-format' => 'data',
@@ -563,12 +565,12 @@ class WebChangeDetector_API_V2 {
 				foreach ( $responses as $response ) {
 					++$i;
 					if ( isset( $response->headers['date'] ) ) {
-						WebChangeDetector_Admin::error_log( "Responsetime Request $i: " . $response->headers['date'] );
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Responsetime Request $i: " . $response->headers['date'] );
 					}
 				}
 
 				$response_code = (int) wp_remote_retrieve_response_code( $responses );
-				WebChangeDetector_Admin::error_log( ' Response code curl-multi-call: ' . $response_code );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' Response code curl-multi-call: ' . $response_code );
 
 			}
 		} else {
@@ -586,7 +588,7 @@ class WebChangeDetector_API_V2 {
 			);
 
 			$log_args = $args;
-			WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
 
 			if ( $is_web ) {
 				$response = wp_remote_request( $url_web, $args );
@@ -600,15 +602,15 @@ class WebChangeDetector_API_V2 {
 			$body          = wp_remote_retrieve_body( $response );
 			$response_code = (int) wp_remote_retrieve_response_code( $response );
 
-			WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Responsecode: ' . $response_code );
 			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 			if ( 200 !== $response_code ) {
 				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
 					// phpcs:ignore
-					WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $decoded_body, 1 ) );
 				} else {
 					// phpcs:ignore
-					WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $body, 1 ) );
 				}
 			}
 		}
