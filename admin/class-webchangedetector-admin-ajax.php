@@ -42,6 +42,14 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	private $admin;
 
+    /**
+     * The account handler instance.
+     *
+     * @since 1.0.0
+     * @var WebChangeDetector_Admin_Account
+     */
+    private $account_handler;
+
 	/**
 	 * Constructor.
 	 *
@@ -51,6 +59,7 @@ class WebChangeDetector_Admin_AJAX {
 	public function __construct( $admin = null ) {
 		$this->admin       = $admin;
 		$this->api_manager = new WebChangeDetector_API_Manager();
+        $this->account_handler = new WebChangeDetector_Admin_Account( $this->admin );
 	}
 
 	/**
@@ -154,10 +163,10 @@ class WebChangeDetector_Admin_AJAX {
 		}
 
 		// Delegate to main admin class for now (will be refactored later)
-		if ( $this->admin && method_exists( $this->admin, 'sync_posts' ) && method_exists( $this->admin, 'get_website_details' ) ) {
+		if ( $this->admin && method_exists( $this->admin, 'sync_posts' ) && method_exists( $this->admin->settings_handler, 'get_website_details' ) ) {
 			$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force );
-			$response = $this->admin->sync_posts( (bool) $force, $this->admin->get_website_details() );
+			$response = $this->admin->wordpress_handler->sync_posts( (bool) $force, $this->admin->settings_handler->get_website_details() );
 			if ( $response ) {
 				echo esc_html( $response );
 			}
@@ -344,29 +353,60 @@ class WebChangeDetector_Admin_AJAX {
 	 * @since 1.0.0
 	 */
 	public function ajax_get_dashboard_usage_stats() {
-		// Verify nonce for security
+		// Verify nonce for security.
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
 
-		// Verify user capabilities
-		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
 		}
 
-		// Get basic stats - this could be moved to use API Manager later
-		$stats = array(
-			'monitoring' => array(
-				'enabled' => false,
-				'urls_count' => 0,
-				'last_check' => '',
-			),
-			'auto_update' => array(
-				'enabled' => false,
-				'urls_count' => 0,
-				'last_check' => '',
-			),
-		);
+		// Get group data for usage calculations.
+		$auto_group   = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'] ?? array();
+		$update_group = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->manual_group_uuid )['data'] ?? array();
 
-		wp_send_json_success( $stats );
+		$amount_auto_detection = 0;
+		if ( ! empty( $auto_group['enabled'] ) ) {
+			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
+		}
+
+		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
+		$max_auto_update_checks  = 0;
+		$amount_auto_update_days = 0;
+
+		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			foreach ( \WebChangeDetector\WebChangeDetector_Admin::WEEKDAYS as $weekday ) {
+				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
+					++$amount_auto_update_days;
+				}
+			}
+			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
+		}
+
+		// Get account data for renewal calculations.
+		$client_account       = $this->account_handler->get_account();
+		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
+					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
+
+		$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
+		$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
+
+		wp_send_json_success(
+			array(
+				'amount_auto_detection'  => $amount_auto_detection,
+				'max_auto_update_checks' => $max_auto_update_checks,
+				'checks_needed'          => $checks_needed,
+				'checks_available'       => $checks_available,
+				'checks_until_renewal'   => $checks_until_renewal,
+				// Debug info.
+				'debug'                  => array(
+					'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
+					'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
+					'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
+					'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
+				),
+			)
+		);
 	}
 
 	/**

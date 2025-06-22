@@ -117,16 +117,16 @@ class WebChangeDetector_Admin {
 	 *
 	 * @var array Urls to sync.
 	 */
-	private $sync_urls;
+	public $sync_urls;
 
 	/**
 	 * Screenshots handler instance.
 	 *
 	 * @since    1.0.0
-	 * @access   private
+	 * @access   public
 	 * @var      WebChangeDetector_Admin_Screenshots $screenshots_handler Screenshots management.
 	 */
-	private $screenshots_handler;
+	public $screenshots_handler;
 
 	/**
 	 * API Manager instance.
@@ -141,19 +141,37 @@ class WebChangeDetector_Admin {
 	 * Account handler instance.
 	 *
 	 * @since    1.0.0
-	 * @access   private
+	 * @access   public
 	 * @var      WebChangeDetector_Admin_Account $account_handler Account management.
 	 */
-	private $account_handler;
+	public $account_handler;
 
 	/**
 	 * WordPress integration handler instance.
 	 *
 	 * @since    1.0.0
-	 * @access   private
+	 * @access   public
 	 * @var      WebChangeDetector_Admin_WordPress $wordpress_handler WordPress integration.
 	 */
-	private $wordpress_handler;
+	public $wordpress_handler;
+
+	/**
+	 * Settings handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Admin_Settings $settings_handler Settings management.
+	 */
+	public $settings_handler;
+
+	/**
+	 * Dashboard handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Admin_Dashboard $dashboard_handler Dashboard management.
+	 */
+	public $dashboard_handler;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -163,53 +181,29 @@ class WebChangeDetector_Admin {
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
 		
-		// Add cron job for daily sync.
-		add_action( 'wcd_daily_sync_event', array( $this, 'daily_sync_posts_cron_job' ) );
-		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
-			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
-		}
-
 		// Set the group uuids.
 		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+
+		// Initialize sync_urls array.
+		$this->sync_urls = array();
 
 		// Initialize specialized handlers.
 		$this->api_manager = new WebChangeDetector_API_Manager();
 		$this->account_handler = new WebChangeDetector_Admin_Account( $this->api_manager );
 		$this->wordpress_handler = new WebChangeDetector_Admin_WordPress( $this->plugin_name, $this->version, $this );
 		$this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this );
+		$this->settings_handler = new WebChangeDetector_Admin_Settings( $this );
+		$this->dashboard_handler = new WebChangeDetector_Admin_Dashboard( $this, $this->api_manager, $this->wordpress_handler );
+		
+		// Add cron job for daily sync (after WordPress handler is initialized).
+		add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
+		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		}
 	}
 
-	/**
-	 * Register the stylesheets for the admin area.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_styles() {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::enqueue_styles' );
-		$this->wordpress_handler->enqueue_styles();
-	}
 
-	/**
-	 * Register the JavaScript for the admin area.
-	 *
-	 * @since    1.0.0
-	 * @param string $hook_suffix The hook suffix for the current page.
-	 */
-	public function enqueue_scripts( $hook_suffix ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::enqueue_scripts' );
-		$this->wordpress_handler->enqueue_scripts( $hook_suffix );
-	}
-
-	/**
-	 * Register the JavaScript for the admin bar on the frontend.
-	 *
-	 * @since 3.1.7 Updated for AJAX loading
-	 */
-	public function enqueue_admin_bar_scripts() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::enqueue_admin_bar_scripts' );
-		$this->wordpress_handler->enqueue_admin_bar_scripts();
-	}
 
 	/** Website details.
 	 *
@@ -217,46 +211,7 @@ class WebChangeDetector_Admin {
 	 */
 	public $website_details;
 
-	/** Add WCD to backend navigation (called by hook in includes/class-webchangedetector.php).
-	 *
-	 * @return void
-	 */
-	public function wcd_plugin_setup_menu() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_plugin_setup_menu' );
-		$this->wordpress_handler->wcd_plugin_setup_menu();
-	}
 
-	/** Get wcd plugin dir.
-	 *
-	 * @return string
-	 */
-	public function get_wcd_plugin_url() {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_WordPress::get_wcd_plugin_url' );
-		return $this->wordpress_handler->get_wcd_plugin_url();
-	}
-
-	/** Create a new free account.
-	 *
-	 * @param array $postdata the postdata.
-	 *
-	 * @return array|string
-	 */
-	public function create_trial_account( $postdata ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::create_trial_account' );
-		return $this->account_handler->create_trial_account( $postdata );
-	}
-
-	/** Sync url after update.
-	 *
-	 * @param int    $post_id The post_id.
-	 * @param object $post_after The post after update.
-	 * @param object $post_before The post before update.
-	 * @return void
-	 */
-	public function update_post( $post_id, $post_after, $post_before ) {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::update_post' );
-		$this->wordpress_handler->update_post( $post_id, $post_after, $post_before );
-	}
 
 	/**
 	 * Get the domain from wp site_url.
@@ -266,342 +221,7 @@ class WebChangeDetector_Admin {
 	public static function get_domain_from_site_url() {
 		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? '' ), '/' ); // Site might be in subdir.
 	}
-
-	/** Save the api token.
-	 *
-	 * @param array  $postdata The postdata.
-	 * @param string $api_token The api token.
-	 *
-	 * @return bool
-	 */
-	public function save_api_token( $postdata, $api_token ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::save_api_token' );
-		return $this->account_handler->save_api_token( $postdata, $api_token );
-	}
-
-	/** Get account details.
-	 *
-	 * @param bool $force Force account data from api.
-	 * @return array|string|bool
-	 */
-	public function get_account( $force = false ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Account::get_account' );
-		return $this->account_handler->get_account( $force );
-	}
-
-	/** Sync Post if permalink changed. Currently deactivated.
-	 *
-	 * @return array|false|mixed|string
-	 */
-	public function wcd_sync_post_after_save() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_sync_post_after_save' );
-		return $this->wordpress_handler->wcd_sync_post_after_save();
-	}
-
-	/** Ajax get processing queue.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_processing_queue() instead.
-	 */
-	public function ajax_get_processing_queue() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_processing_queue' );
-		
-		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
-
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		echo wp_json_encode( $this->get_processing_queue_v2( get_option( 'wcd_manual_checks_batch' ) ) );
-		die();
-	}
-
-	/** Update selected url.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_post_url() instead.
-	 */
-	public function ajax_post_url() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_post_url' );
-		
-		// Check for our specific nonce key sent from the URL settings toggles.
-		if ( ! isset( $_POST['nonce'] ) ) {
-			wp_send_json_error( 'Nonce missing or incorrect key.' );
-			die();
-		}
-
-		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
-
-		// Verify nonce using the action name 'ajax-nonce' used during its creation in get_url_settings.
-		if ( ! wp_verify_nonce( $nonce, 'ajax-nonce' ) ) {
-			wp_send_json_error( 'Nonce verification failed.' );
-			die();
-		}
-
-		// TODO: Add checks here to ensure other required $_POST fields exist.
-		// (e.g., group_id, url_id, desktop-*, mobile-*) before calling post_urls.
-		$this->post_urls( $_POST ); // WordPress handles unslashing for AJAX actions.
-
-		// post_urls echoes its own success/failure message (potentially HTML).
-		// For better AJAX practice, post_urls could return data, and this function could send a JSON response.
-
-		die();
-	}
-
-	/** Sync posts via ajax.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_sync_urls() instead.
-	 */
-	public function ajax_sync_urls() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_sync_urls' );
-		if ( ! isset( $_POST['nonce'] ) ) {
-			echo 'POST Params missing';
-			die();
-		}
-
-		// Verify nonce.
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
-			echo 'Nonce verify failed';
-			die( 'Busted!' );
-		}
-
-		$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force );
-		$response = $this->sync_posts( (bool) $force, $this->get_website_details() );
-		if ( $response ) {
-			echo esc_html( $response );
-		}
-		wp_die();
-	}
-
-	/** Ajax update comparison status.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_update_comparison_status() instead.
-	 */
-	public function ajax_update_comparison_status() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_update_comparison_status' );
-		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['status'] ) || ! isset( $_POST['nonce'] ) ) {
-			echo 'POST Params missing';
-			die();
-		}
-
-		// Verify nonce.
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
-			echo 'Nonce verify failed';
-			die( 'Busted!' );
-		}
-
-		$result = $this->update_comparison_status( esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) );
-		echo esc_html( $result['data']['status'] ) ?? 'failed';
-		die();
-	}
-
-	/**
-	 * AJAX handler to disable wizard.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_disable_wizard() instead.
-	 */
-	public function ajax_disable_wizard() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_disable_wizard' );
-		// Verify nonce for security.
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wcd_wizard_nonce' ) ) {
-			wp_send_json_error( 'Invalid nonce' );
-		}
-
-		// Check user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Insufficient permissions' );
-		}
-
-		// Disable wizard by deleting the option.
-		delete_option( 'wcd_wizard' );
-
-		wp_send_json_success( 'Wizard disabled' );
-	}
-
-	/**
-	 * AJAX handler for loading batch comparisons view.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_batch_comparisons_view() instead.
-	 */
-	public function ajax_get_batch_comparisons_view() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_batch_comparisons_view' );
-		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
-
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		// Get and sanitize the POST data.
-		$filters = sanitize_text_field( wp_unslash( $_POST['filters'] ?? array() ) );
-
-		// Ensure filters is always an array.
-		if ( ! is_array( $filters ) ) {
-			$filters = array();
-		}
-		$filters['batches'] = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
-		$filters['page']    = sanitize_text_field( wp_unslash( $_POST['page'] ?? 1 ) );
-
-		$filters = array_filter( $filters );
-
-		// Get comparisons from API (no failed queues here - they load separately).
-		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filters );
-
-		// Load the comparisons view without failed queues.
-		$this->load_comparisons_view( $filters['batches'], $comparisons, $filters );
-		wp_die();
-	}
-
-	/**
-	 * AJAX handler for loading failed queues view.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_load_failed_queues() instead.
-	 */
-	public function ajax_load_failed_queues() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_load_failed_queues' );
-		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
-
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		$batch_id = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? 0 ) );
-
-		if ( empty( $batch_id ) ) {
-			echo '<div style="padding: 20px; text-align: center; color: #666;">Invalid batch ID.</div>';
-			wp_die();
-		}
-
-		$this->load_failed_queues_view( $batch_id );
-		wp_die();
-	}
-
-	/**
-	 * AJAX handler for creating website and groups.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_create_website_and_groups() instead.
-	 */
-	public function ajax_create_website_and_groups() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_create_website_and_groups' );
-		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
-
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		try {
-			// Create website and groups.
-			$creation_response = $this->create_website_and_groups();
-			
-            // If the website was created successfully, we can proceed.
-			if ( ! empty( $creation_response['website'] ) ) {
-				// Set website details for subsequent operations.
-                $this->website_details = $creation_response['website'];
-				
-				// Make the initial post sync.
-				$sync_response = $this->sync_posts( true );
-				
-				// If only the frontpage is allowed, we activate the URLs.
-				if ( $this->is_allowed( 'only_frontpage' ) ) {
-					$urls = $this->get_group_and_urls( $this->manual_group_uuid )['urls'];
-					if ( ! empty( $urls[0] ) ) {
-						$update_urls = array(
-							'desktop-' . $urls[0]['url_id'] => 1,
-							'mobile-' . $urls[0]['url_id']  => 1,
-							'group_id'                      => $this->manual_group_uuid,
-						);
-						$this->post_urls( $update_urls );
-					}
-				}
-
-				wp_send_json_success( array( 'message' => __( 'Account created successfully.', 'webchangedetector' ) ) );
-			} else {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Can't create website and groups. Response: " . wp_json_encode( $creation_response ) );
-				wp_send_json_error( array( 'message' => __( 'Failed to create website and groups.', 'webchangedetector' ) ) );
-			}
-		} catch ( Exception $e ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Exception during website creation: " . $e->getMessage() );
-			wp_send_json_error( array( 'message' => __( 'An error occurred during account creation.', 'webchangedetector' ) ) );
-		}
-	}
-
-	/**
-	 * AJAX handler to get dashboard usage statistics.
-	 *
-	 * @return void
-	 * @deprecated 1.0.0 Use WebChangeDetector_Admin_AJAX::ajax_get_dashboard_usage_stats() instead.
-	 */
-	public function ajax_get_dashboard_usage_stats() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_AJAX::ajax_get_dashboard_usage_stats' );
-		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
-
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
-		}
-
-		// Get group data for usage calculations.
-		$auto_group   = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'] ?? array();
-		$update_group = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->manual_group_uuid )['data'] ?? array();
-
-		$amount_auto_detection = 0;
-		if ( ! empty( $auto_group['enabled'] ) ) {
-			$amount_auto_detection += WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
-		}
-
-		$auto_update_settings    = WebChangeDetector_Autoupdates::get_auto_update_settings();
-		$max_auto_update_checks  = 0;
-		$amount_auto_update_days = 0;
-
-		if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-			foreach ( self::WEEKDAYS as $weekday ) {
-				if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) && ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-					++$amount_auto_update_days;
-				}
-			}
-			$max_auto_update_checks = $update_group['selected_urls_count'] * $amount_auto_update_days * 4; // multiplied by weekdays in a month.
-		}
-
-		// Get account data for renewal calculations.
-		$client_account       = $this->account_handler->get_account();
-		$checks_until_renewal = $amount_auto_detection / WCD_SECONDS_IN_MONTH *
-					( gmdate( 'U', strtotime( $client_account['renewal_at'] ) ) - gmdate( 'U' ) );
-
-		$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
-		$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
-
-		wp_send_json_success(
-			array(
-				'amount_auto_detection'  => $amount_auto_detection,
-				'max_auto_update_checks' => $max_auto_update_checks,
-				'checks_needed'          => $checks_needed,
-				'checks_available'       => $checks_available,
-				'checks_until_renewal'   => $checks_until_renewal,
-				// Debug info.
-				'debug'                  => array(
-					'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
-					'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
-					'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
-					'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
-				),
-			)
-		);
-	}
+	
 
 	/** Get queues for status processing and open.
 	 *
@@ -613,594 +233,21 @@ class WebChangeDetector_Admin {
 		return \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing,open', false, array( 'per_page' => $per_page ) );
 	}
 
-	/** Update monitoring group settings.
-	 *
-	 * @param array $group_data The postdata.
-	 *
-	 * @return array|string
-	 */
-	public function update_monitoring_settings( $group_data ) {
-		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->monitoring_group_uuid )['data'];
 
-		$args = array(
-			'monitoring'    => true,
-			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
-			'interval_in_h' => ! isset( $group_data['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $group_data['interval_in_h'] ),
-			'enabled'       => ( isset( $group_data['enabled'] ) && 'on' === $group_data['enabled'] ) ? 1 : 0,
-			'alert_emails'  => ! isset( $group_data['alert_emails'] ) ? $monitoring_settings['alert_emails'] : explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ),
-			'name'          => ! isset( $group_data['group_name'] ) ? $monitoring_settings['name'] : sanitize_text_field( $group_data['group_name'] ),
-			'threshold'     => ! isset( $group_data['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $group_data['threshold'] ),
-		);
 
-		if ( ! empty( $group_data['css'] ) ) {
-			$args['css'] = sanitize_textarea_field( $group_data['css'] );
-		}
 
-		return \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->monitoring_group_uuid, $args );
-	}
 
-	/** Update group settings.
-	 *
-	 * @param array $postdata The postdata.
-	 *
-	 * @return array|string
-	 */
-	public function update_manual_check_group_settings( $postdata ) {
 
-		// Saving auto update settings.
-		$auto_update_settings = array();
-		foreach ( $postdata as $key => $value ) {
-			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
-				$auto_update_settings[ $key ] = $value;
-			}
-		}
-		$this->website_details['auto_update_settings'] = $auto_update_settings;
-		$this->update_website_details( $this->website_details );
 
-		do_action( 'wcd_save_update_group_settings', $postdata );
 
-		// Update group settings in api.
-		$args = array(
-			'name'      => $postdata['group_name'],
-			'threshold' => sanitize_text_field( $postdata['threshold'] ),
-		);
 
-		if ( ! empty( $postdata['css'] ) ) {
-			$args['css'] = sanitize_textarea_field( $postdata['css'] ); // there is no css sanitation.
-		}
 
-		return ( \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->manual_group_uuid, $args ) );
-	}
 
-	/** Get the upgrade url.
-	 *
-	 * @return false|mixed|string|null
-	 */
-	public function get_upgrade_url() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_upgrade_url' );
-		return $this->account_handler->get_upgrade_url();
-	}
+	// Moved to Dashboard handler
 
-	/** Output a wp icon.
-	 *
-	 * @param string $icon Name of the icon.
-	 * @param string $css_class Additional css classes.
-	 *
-	 * @return void
-	 */
-	public function get_device_icon( $icon, $css_class = '' ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon' );
-		$output = '';
-		if ( 'thumbnail' === $icon ) {
-			$output = '<span class="dashicons dashicons-camera-alt"></span>';
-		}
-		if ( 'desktop' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-laptop"></span>';
-		}
-		if ( 'mobile' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-smartphone"></span>';
-		}
-		if ( 'page' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-media-default"></span>';
-		}
-		if ( 'change-detections' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-view-site"></span>';
-		}
-		if ( 'dashboard' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-home"></span>';
-		}
-		if ( 'logs' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-menu-alt"></span>';
-		}
-		if ( 'settings' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-generic"></span>';
-		}
-		if ( 'website-settings' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-widgets-menus"></span>';
-		}
-		if ( 'help' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-editor-help"></span>';
-		}
-		if ( 'auto-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-clock"></span>';
-		}
-		if ( 'update-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
-		}
-		if ( 'auto-update-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
-		}
-		if ( 'trash' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
-		}
-		if ( 'check' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
-		}
-		if ( 'fail' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
-		}
-		if ( 'warning' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
-		}
-		if ( 'upgrade' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
-		}
+	
 
-		echo wp_kses( $output, array( 'span' => array( 'class' => array() ) ) );
-	}
 
-	/** Update comparison status.
-	 *
-	 * @param string $id The comparison uuid.
-	 * @param string $status One of new, ok, to_fix or false_positive.
-	 * @return false|mixed|string
-	 */
-	public function update_comparison_status( $id, $status ) {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Screenshots::update_comparison_status' );
-		return $this->screenshots_handler->update_comparison_status( $id, $status );
-	}
-
-	/** Nice names for comparison status.
-	 *
-	 * @param string $status The status.
-	 * @return string
-	 */
-	public function comparison_status_nice_name( $status ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name' );
-		return \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $status );
-	}
-
-	/**
-	 * Load comparisons view for a specific batch via AJAX.
-	 *
-	 * @param string $batch_id The batch ID.
-	 * @param array  $comparisons The comparisons data.
-	 * @param array  $filters The filters applied.
-	 * @return void
-	 */
-	public function load_comparisons_view( $batch_id, $comparisons, $filters ) {
-		if ( empty( $comparisons['data'] ) ) {
-			?>
-			<table style="width: 100%">
-				<tr>
-					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
-						<strong>No comparisons found for this batch.</strong>
-					</td>
-				</tr>
-			</table>
-			<?php
-			return;
-		}
-
-		$compares   = $comparisons['data'];
-		$all_tokens = array();
-
-		foreach ( $compares as $compare ) {
-			$all_tokens[] = $compare['id'];
-		}
-
-		?>
-		<table class="toggle" style="width: 100%">
-			<tr>
-				<th style="min-width: 120px;">Status</th>
-				<th style="width: 100%">URL</th>
-				<th style="min-width: 150px">Compared Screenshots</th>
-				<th style="min-width: 50px">Difference</th>
-				<th>Show</th>
-			</tr>
-
-			<?php
-			// Show comparisons.
-			foreach ( $compares as $compare ) {
-				if ( empty( $compare['status'] ) ) {
-					$compare['status'] = 'new';
-				}
-
-				$class = 'no-difference'; // init.
-				if ( $compare['difference_percent'] ) {
-					$class = 'is-difference';
-				}
-
-				?>
-				<tr>
-					<td>
-						<div class="comparison_status_container">
-							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-								<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $compare['status'] ) ); ?>
-							</span>
-							<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
-								<strong>Change Status to:</strong><br>
-								<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
-								<button name="status"
-										data-id="<?php echo esc_html( $compare['id'] ); ?>"
-										data-status="ok"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										value="ok"
-										class="ajax_update_comparison_status comparison_status comparison_status_ok"
-										onclick="return false;">Ok</button>
-								<button name="status"
-										data-id="<?php echo esc_html( $compare['id'] ); ?>"
-										data-status="to_fix"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										value="to_fix"
-										class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
-										onclick="return false;">To Fix</button>
-								<button name="status"
-										data-id="<?php echo esc_html( $compare['id'] ); ?>"
-										data-status="false_positive"
-										data-nonce="<?php echo esc_html( $nonce ); ?>"
-										value="false_positive"
-										class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
-										onclick="return false;">False Positive</button>
-							</div>
-						</div>
-					</td>
-					<td>
-						<strong>
-							<?php
-							if ( ! empty( $compare['html_title'] ) ) {
-								echo esc_html( $compare['html_title'] ) . '<br>';
-							}
-							?>
-						</strong>
-						<?php
-						echo esc_url( $compare['url'] ) . '<br>';
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $compare['device'] );
-						echo esc_html( ucfirst( $compare['device'] ) );
-						?>
-					</td>
-					<td>
-						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'] ) ); ?></div>
-						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'] ) ); ?></div>
-					</td>
-					<td class="<?php echo esc_html( $class ); ?> diff-tile"
-						data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
-						<?php echo esc_html( $compare['difference_percent'] ); ?>%
-					</td>
-					<td>
-						<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
-							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-							<input type="submit" value="Show" class="button">
-						</form>
-					</td>
-				</tr>
-			<?php } ?>
-		</table>
-
-		<?php
-		// Add pagination if needed.
-		if ( ! empty( $comparisons['meta']['links'] ) ) {
-			?>
-			<div class="tablenav" >
-				<div class="tablenav-pages">
-					<span class="pagination-links">
-						<?php
-						foreach ( $comparisons['meta']['links'] as $link ) {
-							$url_params = $this->get_params_of_url( $link['url'] );
-							$class      = ! $link['url'] || $link['active'] ? 'disabled' : '';
-							$page       = $url_params['page'] ?? 1;
-							?>
-							<button class="ajax_paginate_batch_comparisons tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
-									data-page="<?php echo esc_html( $page ); ?>"
-									data-filters="<?php echo esc_attr( wp_json_encode( $filters ) ); ?>"
-									<?php echo ( 'disabled' === $class ) ? 'disabled' : ''; ?>>
-								<?php echo esc_html( $link['label'] ); ?>
-							</button>
-							<?php
-						}
-						?>
-					</span>
-					<span class="displaying-num"><?php echo esc_html( $comparisons['meta']['total'] ?? 0 ); ?> items</span>
-				</div>
-			</div>
-			<?php
-		}
-	}
-
-	/**
-	 * Load failed queues view for a specific batch via AJAX.
-	 *
-	 * @param string $batch_id The batch ID.
-	 * @return void
-	 */
-	public function load_failed_queues_view( $batch_id ) {
-		$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
-
-		// Handle pagination for failed queues if needed.
-		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
-			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
-				$failed_queues_data    = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2(
-					$batch_id,
-					'failed',
-					array(
-						'per_page' => 100,
-						'page'     => $i,
-					)
-				);
-				$failed_queues['data'] = array_merge( $failed_queues['data'], $failed_queues_data['data'] );
-			}
-		}
-
-		if ( empty( $failed_queues['data'] ) ) {
-			echo '<div style="padding: 20px; text-align: center; color: #666;">No failed URLs found for this batch.</div>';
-			return;
-		}
-		?>
-		<table class="toggle" style="margin: 0;">
-			<tr class="table-headline-row">
-				<th>Status</th>
-				<th style="width:auto">URL</th>
-				<th style="width:250px">Compared Screenshots</th>
-				<th style="width:100px">Difference</th>
-			</tr>
-			<?php
-			foreach ( $failed_queues['data'] as $failed_queue ) {
-				if ( $batch_id === $failed_queue['batch'] ) {
-					?>
-					<tr style="background-color: rgba(220, 50, 50, 0.1);">
-						<td>
-							<div class="comparison_status_container">
-								<span class="current_comparison_status comparison_status comparison_status_failed">
-									<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( 'failed' ) ); ?>
-								</span>
-							</div>
-						</td>
-						<td>
-							<?php
-							if ( ! empty( $failed_queue['html_title'] ) ) {
-								echo '<strong>' . esc_html( $failed_queue['html_title'] ) . '</strong><br>';
-							}
-							\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $failed_queue['device'] );
-							echo esc_html( $failed_queue['url_link'] );
-							?>
-						</td>
-						<td class="table-row-compared-screenshots-failed">n/a</td>
-						<td class="table-row-diff-tile-failed"><div style="text-align: center;">n/a</div></td>
-					</tr>
-					<?php
-				}
-			}
-			?>
-		</table>
-		<?php
-	}
-
-	/** View of comparison overview.
-	 *
-	 * @param array $batches The batches.
-	 * @param array $failed_queues Array with failed queues.
-	 * @return void
-	 */
-	public function compare_view_v2( $batches, $failed_queues = false ) {
-
-		if ( empty( $batches ) ) {
-			?>
-			<table style="width: 100%">
-				<tr>
-					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
-						<strong>No change detections (yet).</strong><br>
-						Try different filters to show change detections.
-					</td>
-				</tr>
-			</table>
-			<?php
-			return;
-		}
-
-		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
-
-		foreach ( $batches as $batch ) {
-			$batch_id = $batch['id'];
-
-			$amount_failed = 0;
-			if ( ! empty( $failed_queues['data'] ) ) {
-				foreach ( $failed_queues['data'] as $failed_queue ) {
-					if ( $failed_queue['batch'] === $batch_id ) {
-						++$amount_failed;
-					}
-				}
-			}
-
-			// Calculate needs_attention from batch statistics.
-			$needs_attention = false;
-			if ( isset( $batch['statistics'] ) ) {
-				$stats = $batch['statistics'];
-				// If there are any non-ok statuses, needs attention.
-				if ( ( $stats['new'] ?? 0 ) > 0 || ( $stats['to_fix'] ?? 0 ) > 0 || $amount_failed > 0 ) {
-					$needs_attention = true;
-				}
-			}
-
-			// Get group from batch data - batches have group_id field.
-			$batch_group = $batch['group_id'] ?? '';
-
-			// Get created_at from batch data.
-			$batch_finished_at = $batch['finished_at'] ?? 'processing...';
-			?>
-			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" style="margin-top: 20px;">
-				<div class="accordion accordion-batch">
-					<div class="mm_accordion_title">
-						<h3>
-							<div style="display: inline-block;">
-								<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
-									<?php
-									if ( $needs_attention ) {
-										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'warning', 'batch_needs_attention' );
-										echo '<small>Needs Attention</small>';
-									} else {
-										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'check', 'batch_is_ok' );
-										echo '<small>Looks Good</small>';
-									}
-									if ( $amount_failed ) {
-										echo "<div style='font-size: 14px; color: darkred'> " . esc_html( $amount_failed ) . ( $amount_failed > 1 ? ' checks' : ' check' ) . ' failed</div>';
-									}
-									?>
-								</div>
-								<div class="accordion-batch-title-tile">
-									<?php
-									if ( $batch_group === $this->monitoring_group_uuid ) {
-										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' );
-										echo ' Monitoring Checks';
-									} elseif ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
-										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-update-group' );
-										echo ' Auto Update Checks';
-									} else {
-										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' );
-										echo ' Manual Checks';
-									}
-									?>
-									<br>
-									<small>
-										<?php
-										if ( ! empty( $batch_finished_at ) ) {
-											echo esc_html( human_time_diff( gmdate( 'U' ), gmdate( 'U', strtotime( $batch_finished_at ) ) ) );
-											echo ' ago (';
-											echo esc_html( get_date_from_gmt( $batch_finished_at ) );
-											echo ')';
-										} else {
-											echo 'processing...';
-										}
-										?>
-									</small>
-								</div>
-								<div class="clear"></div>
-							</div>
-						</h3>
-						<div class="mm_accordion_content">
-							<div class="ajax_batch_comparisons_content">
-								<div class="ajax-loading-container">
-									<img decoding="async" src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="margin-left: calc(50% - 10px)">
-									<div style="text-align: center;">Loading</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
-
-		// Auto-click first accordion if only one batch.
-		if ( 1 === count( $batches ) ) {
-			echo '<script>
-				jQuery(document).ready(function() {
-					setTimeout(function() {
-						jQuery(".accordion h3").first().click();
-					}, 200);
-				});
-			</script>';
-		}
-	}
-
-	/** Get comparison.
-	 *
-	 * @param array $postdata The postdata.
-	 * @param bool  $hide_switch Is deprecated.
-	 * @param bool  $whitelabel Is deprecated.
-	 *
-	 * @return void
-	 */
-	public function get_comparison_by_token( $postdata, $hide_switch = false, $whitelabel = false ) {
-		$token = $postdata['token'] ?? null;
-
-		if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
-			echo 'Something went wrong. Please try again.';
-			wp_die();
-		}
-
-		if ( ! $token && ! empty( $_GET['id'] ) ) {
-			$token = sanitize_text_field( wp_unslash( $_GET['id'] ) );
-		}
-		if ( isset( $token ) ) {
-			$compare = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
-
-			$public_token = $compare['token'];
-			$all_tokens   = array();
-			if ( ! empty( $postdata['all_tokens'] ) ) {
-				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
-
-				$before_current_token = array();
-				$after_current_token  = array();
-				$is_after             = false;
-				foreach ( $all_tokens as $current_token ) {
-					if ( $current_token !== $token ) {
-						if ( $is_after ) {
-							$after_current_token[] = $current_token;
-						} else {
-							$before_current_token[] = $current_token;
-						}
-					} else {
-						$is_after = true;
-					}
-				}
-			}
-
-			if ( ! $hide_switch ) {
-				echo '<style>#comp-switch {display: none !important;}</style>';
-			}
-			echo '<div style="padding: 0 20px;">';
-			if ( ! $whitelabel ) {
-				echo '<style>.public-detection-logo {display: none;}</style>';
-			}
-			$before_token = ! empty( $before_current_token ) ? $before_current_token[ max( array_keys( $before_current_token ) ) ] : null;
-			$after_token  = $after_current_token[0] ?? null;
-			?>
-			<!-- Previous and next buttons -->
-			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
-				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
-					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-					<button class="button" type="submit" name="token"
-							value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> < Previous </button>
-				</form>
-				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
-					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
-					<button class="button" type="submit" name="token"
-							value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>> Next > </button>
-				</form>
-			</div>
-			<?php
-			include 'partials/templates/show-change-detection.php';
-			echo '</div>';
-
-		} else {
-			echo '<p class="notice notice-error" style="padding: 10px;">Ooops! There was no change detection selected. Please go to 
-                <a href="?page=webchangedetector-change-detections">Change Detections</a> and select a change detection
-                to show.</p>';
-		}
-	}
-
-	/** Get screenshot.
-	 *
-	 * @param array $postdata The postdata.
-	 * @return void
-	 */
-	public function get_screenshot( $postdata = false ) {
-		if ( ! isset( $postdata['img_url'] ) ) {
-			echo '<p class="notice notice-error" style="padding: 10px;">
-                    Sorry, we couldn\'t find the screenshot. Please try again.</p>';
-		}
-		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . esc_url( $postdata['img_url'] ) . '"></div>';
-	}
 
 	/** Add Post type to website.
 	 *
@@ -1208,134 +255,17 @@ class WebChangeDetector_Admin {
 	 *
 	 * @return void
 	 */
-	public function add_post_type( $postdata ) {
-		$post_type                               = json_decode( stripslashes( $postdata['post_type'] ), true );
-		$this->website_details['sync_url_types'] = array_merge( $post_type, $this->website_details['sync_url_types'] );
+// Moved to WordPress handler
 
-		$this->update_website_details();
-		$this->sync_posts( true );
-	}
+	// Moved to WordPress handler
 
-	/** Get posts
-	 *
-	 * @param string $posttype The posttype.
-	 *
-	 * @return int[]|WP_Post[]
-	 */
-	public function get_posts( $posttype ) {
-		$args           = array(
-			'post_type'   => $posttype,
-			'post_status' => array( 'publish', 'inherit' ),
-			'numberposts' => -1,
-			'order'       => 'ASC',
-			'orderby'     => 'title',
-		);
-		$wpml_languages = $this->get_wpml_languages();
+	// Moved to WordPress handler
 
-		if ( ! $wpml_languages ) {
-			$posts = get_posts( $args );
+	// Moved to WordPress handler
 
-		} else {
-			$posts = array();
-			foreach ( $wpml_languages['languages'] as $language ) {
-				do_action( 'wpml_switch_language', $language['code'] );
-				$posts = array_merge( $posts, get_posts( $args ) );
-			}
-			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
-		}
+	// Moved to WordPress handler
 
-		return $this->filter_unique_posts_by_id( $posts );
-	}
-
-	/** Filter duplicate post_ids.
-	 *
-	 * @param array $posts The posts.
-	 * @return array
-	 */
-	public function filter_unique_posts_by_id( $posts ) {
-		$unique_posts = array();
-		$post_ids     = array();
-
-		foreach ( $posts as $post ) {
-			unset( $post->post_content ); // Don't need to send to much unnessesary data.
-			if ( ! in_array( $post->ID, $post_ids, true ) ) {
-				$post_ids[]     = $post->ID;
-				$unique_posts[] = $post;
-			}
-		}
-
-		return $unique_posts;
-	}
-
-	/** Filter duplicate terms.
-	 *
-	 * @param array $terms The terms.
-	 * @return array
-	 */
-	public function filter_unique_terms_by_id( $terms ) {
-		$unique_terms = array();
-		$term_ids     = array();
-
-		foreach ( $terms as $term ) {
-			if ( ! in_array( $term->term_id, $term_ids, true ) ) {
-				$term_ids[]     = $term->term_id;
-				$unique_terms[] = $term;
-			}
-		}
-
-		return $unique_terms;
-	}
-
-	/** Get terms.
-	 *
-	 * @param string $taxonomy the taxonomy.
-	 *
-	 * @return array|int[]|string|string[]|WP_Error|WP_Term[]
-	 */
-	public function get_terms( $taxonomy ) {
-		$args = array(
-			'number'        => '0',
-			'taxonomy'      => $taxonomy,
-			'hide_empty'    => false,
-			'wpml_language' => 'de',
-		);
-
-		// Get terms for all languages if WPML is enabled.
-		$wpml_languages = $this->get_wpml_languages();
-
-		// If we don't have languages, we can return the terms.
-		if ( ! $wpml_languages ) {
-			$terms = get_terms( $args );
-
-			// With languages, we loop through them and return all of them.
-		} else {
-			$terms = array();
-			foreach ( $wpml_languages['languages'] as $language ) {
-				do_action( 'wpml_switch_language', $language['code'] );
-				$terms = array_merge( $terms, get_terms( $args ) );
-			}
-			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
-		}
-		return $this->filter_unique_terms_by_id( $terms );
-	}
-
-	/** Check if wpml is active and return all languages and the active one.
-	 *
-	 * @return array|false|void[]
-	 */
-	public function get_wpml_languages() {
-		if ( ! class_exists( 'SitePress' ) ) {
-			return false;
-		}
-		$languages        = apply_filters( 'wpml_active_languages', null );
-		$current_language = apply_filters( 'wpml_current_language', null );
-		return array_merge(
-			array(
-				'current_language' => $current_language,
-				'languages'        => $languages,
-			)
-		);
-	}
+	// Moved to WordPress handler
 
 	/** Get the posts.
 	 *
@@ -1366,7 +296,7 @@ class WebChangeDetector_Admin {
 				);
 
 				// Create a new query.
-				$query = new WP_Query( $args );
+				$query = new \WP_Query( $args );
 
 				// If no posts, break the loop.
 				if ( ! $query->have_posts() ) {
@@ -1489,274 +419,13 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-	/**
-	 * Daily sync posts cron job.
-	 *
-	 * @return void
-	 */
-	public function daily_sync_posts_cron_job() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::daily_sync_posts_cron_job' );
-		$this->wordpress_handler->daily_sync_posts_cron_job();
-	}
+	// Moved to WordPress handler
 
-	/** Sync single post.
-	 *
-	 * @param array $single_post The sync array.
-	 * @return true|void
-	 */
-	public function sync_single_post( $single_post ) {
-		if ( ! empty( $single_post ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Start single url sync' );
-			$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $single_post );
-			$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( false );
+	// Moved to WordPress handler
 
-		}
-	}
 
-	/** Sync posts with api.
-	 *
-	 * @param bool       $force_sync Skip cache and force sync.
-	 * @param array|bool $website_details The website_details or false.
-	 * @return bool
-	 */
-	public function sync_posts( $force_sync = false, $website_details = false ) {
-		$last_sync     = get_option( 'wcd_last_urls_sync' );
-		$sync_interval = '+1 hour';
 
-		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) >= date_i18n( 'U' ) ) {
-			// Returning last sync datetime.
-			return date_i18n( 'd.m.Y H:i', $last_sync );
-		}
 
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting Sync' );
-		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
-
-		// Check if we got website_details or if we use the ones from the class.
-		$array = array(); // init.
-		if ( ! $website_details ) {
-			$website_details = $this->website_details;
-		}
-
-		// We only sync the frontpage.
-		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
-            
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "only frontpage: " . print_r( $website_details['allowances']['only_frontpage'], true ) );
-			$array['frontpage%%Frontpage'][] = array(
-				'url'        => $this::get_domain_from_site_url(),
-				'html_title' => get_bloginfo( 'name' ),
-			);
-			$this->upload_urls_in_batches( $array );
-			return true;
-		}
-
-		// Init sync urls if we don't have them yet.
-		if ( ! empty( $website_details['sync_url_types'] ) ) {
-
-			// Get all WP post_types.
-			$post_types = get_post_types( array( 'public' => true ), 'objects' );
-			foreach ( $post_types as $post_type ) {
-				$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
-
-				// Get the right name for the request.
-
-				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
-
-						// The 'get_posts' function needs 'name' instead of 'rest_base'.
-						$post_type_names[] = $post_type->name;
-					}
-				}
-			}
-
-			if ( ! empty( $post_type_names ) ) {
-				$this->get_all_posts_data( $post_type_names );
-			}
-
-			// Get all WP taxonomies.
-			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-
-			$taxonomy_post_names = array();
-			foreach ( $taxonomies as $taxonomy ) {
-
-				// Depending on if we have 'rest_base' name we use this one or the 'name'.
-				$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $taxonomy );
-
-				// Get the terms names.
-				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
-						$taxonomy_post_names[] = $taxonomy->name;
-					}
-				}
-			}
-
-			if ( ! empty( $taxonomy_post_names ) ) {
-				$this->get_all_terms_data( $taxonomy_post_names );
-			}
-		}
-
-		$active_plugins = get_option( 'active_plugins' );
-
-		// Check if frontpage is already in the sync settings.
-		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'] ?? array(),
-			function ( $item ) {
-				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
-			}
-		);
-
-		// If blog is set as home page.
-		if ( ! get_option( 'page_on_front' ) ) {
-
-			// WPML fix.
-			if ( $active_plugins && in_array( WCD_WPML_PLUGIN_FILE, $active_plugins, true ) ) {
-				$languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
-
-				if ( ! empty( $languages ) ) {
-
-					// Store the current language to switch back later.
-					$current_lang = apply_filters( 'wpml_current_language', null );
-					foreach ( $languages as $lang_code => $lang_info ) {
-
-						// Switch to each language.
-						do_action( 'wpml_switch_language', $lang_code );
-
-						// Store the title in the array with the language code as the key.
-						$array['frontpage%%Frontpage'][] = array(
-							'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
-							'html_title' => get_bloginfo( 'name' ),
-						);
-					}
-
-					// Switch back to the original language.
-					do_action( 'wpml_switch_language', $current_lang );
-				}
-
-				// Polylang fix.
-			} elseif ( $active_plugins && in_array( WCD_POLYLANG_PLUGIN_FILE, $active_plugins, true ) ) {
-				if ( isset( $GLOBALS['polylang'] ) ) {
-					$languages = $GLOBALS['polylang']->model->get_languages_list();
-
-					foreach ( $languages as $language ) {
-
-						// Check if home_url is available in the language info.
-						if ( ! empty( $language->home_url ) ) {
-							$array['frontpage%%Frontpage'][] = array(
-								'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $language->home_url ),
-								'html_title' => get_bloginfo( 'name' ),
-							);
-						}
-					}
-				}
-			} else {
-				$array['frontpage%%Frontpage'][] = array(
-					'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( get_option( 'home' ) ),
-					'html_title' => get_bloginfo( 'name' ),
-				);
-			}
-
-			// Add frontpage if it's not yet in the sync_url_types array.
-			if ( empty( $frontpage_exists ) ) {
-				$website_details['sync_url_types'][] = array(
-					'url_type_slug'  => 'types',
-					'url_type_name'  => 'frontpage',
-					'post_type_slug' => 'frontpage',
-					'post_type_name' => 'Frontpage',
-				);
-				$this->update_website_details( $website_details );
-			}
-
-			if ( ! empty( $array ) ) {
-				$this->upload_urls_in_batches( $array );
-			}
-		} elseif ( $frontpage_exists ) {
-			foreach ( $website_details['sync_url_types'] as $key => $sync_types_values ) {
-				if ( 'frontpage' === $sync_types_values['post_type_slug'] ) {
-					unset( $website_details['sync_url_types'][ $key ] );
-				}
-			}
-			$this->update_website_details( $website_details );
-		}
-
-		// Create uuid for sync urls.
-		$collection_uuid = wp_generate_uuid4();
-
-		// Sync urls.
-		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->sync_urls, $collection_uuid );
-		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . $response_sync_urls );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . $response_start_url_sync );
-
-		return date_i18n( 'd/m/Y H:i' );
-	}
-
-	/** Remove the protocol from an url.
-	 *
-	 * @param string $url The URL.
-	 * @return string
-	 */
-	public function remove_url_protocol( $url ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol' );
-		return substr( $url, strpos( $url, '//' ) + 2 );
-	}
-
-	/** Get api token form.
-	 *
-	 * @param string $api_token The api token.
-	 *
-	 * @return void
-	 */
-	public function get_api_token_form( $api_token = false ) {
-
-		if ( $api_token ) {
-			?>
-			<div class="box-plain no-border">
-				<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
-					onsubmit="return confirm('Are sure you want to reset the API token?');">
-					<input type="hidden" name="wcd_action" value="reset_api_token">
-					<?php wp_nonce_field( 'reset_api_token' ); ?>
-
-					<h2> Account</h2>
-					<p>
-						Your email address: <strong><?php echo esc_html( $this->account_handler->get_account()['email'] ); ?></strong><br>
-						Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
-					</p>
-					<p>
-						With resetting the API Token, auto detections still continue and your settings will
-						be still available when you use the same api token with this website again.
-					</p>
-					<input type="submit" value="Reset API Token" class="button button-delete"><br>
-				</form>
-			</div>
-			<div class="box-plain no-border">
-				<h2>Delete Account</h2>
-				<p>To delete your account completely, please login to your account at
-					<a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.
-				</p>
-			</div>
-			<?php
-		} else {
-			if ( isset( $_POST['wcd_action'] ) && 'save_api_token' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
-				check_admin_referer( 'save_api_token' );
-			}
-			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
-			?>
-			<div class="highlight-container">
-				<form class="frm_use_api_token highlight-inner no-bg" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
-					<input type="hidden" name="wcd_action" value="save_api_token">
-					<?php wp_nonce_field( 'save_api_token' ); ?>
-					<h2>Use Existing API Token</h2>
-					<p>
-						Use the API token of your existing account. To get your API token, please login to your account at
-						<a href="<?php echo esc_url( $this->app_url() ); ?>login" target="_blank">webchangedetector.com</a>
-					</p>
-					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" required>
-					<input type="submit" value="Save" class="button button-primary">
-				</form>
-			</div>
-			<?php
-		}
-	}
 
 	/**
 	 * Creates Websites and Groups
@@ -2072,7 +741,7 @@ class WebChangeDetector_Admin {
 			}
 
 			// Select URLs section.
-			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+			if ( ( ! $monitoring_group && $this->settings_handler->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->settings_handler->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
 
 			<div class="wcd-frm-settings box-plain">
@@ -2308,7 +977,7 @@ class WebChangeDetector_Admin {
 		<?php
 		if ( ! $monitoring_group ) {
 			// Start change detection button.
-			if ( $this->is_allowed( 'manual_checks_start' ) ) {
+			if ( $this->settings_handler->is_allowed( 'manual_checks_start' ) ) {
 				?>
 					<form method="post">
 						<?php wp_nonce_field( 'start_manual_checks' ); ?>
@@ -2328,84 +997,7 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-	/** Get available post_types. We use 'rest_base' names if available as this is used by WP REST API too.
-	 * But it's not always available. So we take 'name' as fallback name.
-	 *
-	 * @param object $post_type The post_type object.
-	 *
-	 * @return string|bool
-	 */
-	public function get_post_type_slug( $post_type ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug' );
 
-		$wp_post_type_slug = $post_type->rest_base;
-		if ( ! $wp_post_type_slug ) {
-			$wp_post_type_slug = $post_type->name;
-		}
-		return $wp_post_type_slug ?? false;
-	}
-
-	/**
-	 * Get name of the post_type
-	 *
-	 * @param string $post_type_slug The post_type slug.
-	 * @return string|bool
-	 */
-	public function get_post_type_name( $post_type_slug ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name' );
-		if ( 'frontpage' === $post_type_slug ) {
-			return 'Frontpage';
-		}
-
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
-
-		foreach ( $post_types as $post_type ) {
-							$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
-
-			if ( $wp_post_type_slug === $post_type_slug ) {
-				return $post_type->labels->name;
-			}
-		}
-		return false;
-	}
-
-	/** Get the right taxonomy slug which we use in WCD.
-	 *
-	 * @param object $taxonomy The taxonomy object.
-	 *
-	 * @return string|bool
-	 */
-	public function get_taxonomy_slug( $taxonomy ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug' );
-		$wp_taxonomy_slug = $taxonomy->rest_base;
-		if ( ! $wp_taxonomy_slug ) {
-			$wp_taxonomy_slug = $taxonomy->name;
-		}
-		return $wp_taxonomy_slug ?? false;
-	}
-
-	/**
-	 * Get name of the taxonomy
-	 *
-	 * @param string $taxonomy_slug The taxonomy slug.
-	 * @return string|bool
-	 */
-	public function get_taxonomy_name( $taxonomy_slug ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name' );
-		static $taxonomies;
-		if ( ! $taxonomies ) {
-			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-		}
-
-		foreach ( $taxonomies as $post_type ) {
-			$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $post_type );
-
-			if ( $wp_taxonomy_slug === $taxonomy_slug ) {
-				return $post_type->labels->name;
-			}
-		}
-		return false;
-	}
 
 	/** Save url settings.
 	 *  TODO: Optional save settings for monitoring and manual checks.
@@ -2461,239 +1053,17 @@ class WebChangeDetector_Admin {
 
 
 
-	/**
-	 * No-account page.
-	 *
-	 * @param string $api_token The api token.
-	 */
-	public function get_no_account_page( $api_token = '' ) {
-		$user      = wp_get_current_user();
-		$user_meta = get_user_meta( $user->ID );
-
-		// If we have a reseller url, we get the api token from there.
-		if ( defined( 'WCD_RESELLER_URL' ) && WCD_RESELLER_URL ) {
-			$body_args = array(
-				'name_first' => ! empty( $user_meta['first_name'][0] ) ? $user_meta['first_name'][0] : 'n/a',
-				'name_last'  => ! empty( $user_meta['last_name'][0] ) ? $user_meta['last_name'][0] : 'n/a',
-				'email'      => $user->user_email,
-				'domain'     => self::get_domain_from_site_url(),
-			);
-
-			$response   = wp_remote_post( WCD_RESELLER_URL, array( 'body' => $body_args ) );
-			$subaccount = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! empty( $subaccount['api_token'] ) ) {
-				$this->save_api_token( $subaccount, $subaccount['api_token'] );
-
-				wp_safe_redirect( '/wp-admin/admin.php?page=webchangedetector' );
-				exit;
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( wp_remote_retrieve_body( $response ) ) . '</p></div>';
-				return;
-			}
-		}
-
-		if ( isset( $_POST['wcd_action'] ) && 'create_trial_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
-			check_admin_referer( 'create_trial_account' );
-		}
-
-		$first_name = isset( $_POST['name_first'] ) ? sanitize_text_field( wp_unslash( $_POST['name_first'] ) ) : wp_get_current_user()->user_firstname;
-		$last_name  = isset( $_POST['name_last'] ) ? sanitize_text_field( wp_unslash( $_POST['name_last'] ) ) : wp_get_current_user()->user_lastname;
-		$email      = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : wp_get_current_user()->user_email;
-		?>
-		<div class="no-account-page">
-			<div class="no-account">
-				<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-logo">
-				<h2>See what changed before your users do.</h2>
-			</div>
-			<div class="highlight-wrapper">
-				<div class="highlight-container">
-					<div class="highlight-inner">
-						<h2>Create Free Account</h2>
-						<p>
-							Create your free account with <br><strong>1000 checks</strong> in the first month and <strong>50 checks</strong> after.<br>
-						</p>
-						<form class="frm_new_account" method="post">
-							<input type="hidden" name="wcd_action" value="create_trial_account">
-							<?php wp_nonce_field( 'create_trial_account' ); ?>
-							<input type="text" name="name_first" placeholder="First Name" value="<?php echo esc_html( $first_name ); ?>" required>
-							<input type="text" name="name_last" placeholder="Last Name" value="<?php echo esc_html( $last_name ); ?>" required>
-							<input type="email" name="email" placeholder="Email" value="<?php echo esc_html( $email ); ?>" required>
-							<input type="password" name="password" placeholder="Password" required>
-
-							<input type="submit" class="button-primary" value="Create Free Account">
-						</form>
-					</div>
-				</div>
-
-				<?php $this->get_api_token_form( $api_token ); ?>
-			</div>
-		</div>
-		<?php
-	}
 
 
 
-	/**
-	 * Get Website details.
-	 *
-	 * @return array|bool The website details.
-	 */
-	public function get_website_details() {
-		static $website_details;
 
-		if ( empty( $website_details ) ) {
-			$websites = \WebChangeDetector\WebChangeDetector_API_V2::get_websites_v2();
 
-			if ( empty( $websites['data'] ) ) {
-				return 'No website details. Create them first.';
-			}
 
-			foreach ( $websites['data'] as $website ) {
-				if ( str_starts_with( rtrim( $website['domain'] ?? '', '/' ), rtrim( self::get_domain_from_site_url() ?? '', '/' ) ) ) {
-					$website_details                   = $website;
-					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
-					break;
-				}
-			}
-		}
 
-		$update = false;
 
-		// Set default sync types.
-		if ( ! empty( $website_details ) && empty( $website_details['sync_url_types'] ) ) {
-			$update = true;
-			if ( $this->is_allowed( 'only_frontpage' ) ) {
-				$website_details['sync_url_types'] = array(
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'frontpage',
-						'post_type_slug' => 'frontpage',
-						'post_type_name' => 'Frontpage',
-					),
-				);
-			} else {
-				$website_details['sync_url_types'] = array(
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'posts',
-						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'posts' ),
-					),
-					array(
-						'url_type_slug'  => 'types',
-						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'pages',
-						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'pages' ),
-					),
-				);
-			}
-		}
 
-		// Set default auto update settings.
-		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
-			$update                                  = true;
-			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => true,
-				'auto_update_checks_from'      => gmdate( 'H:i' ),
-				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => true,
-				'auto_update_checks_tuesday'   => true,
-				'auto_update_checks_wednesday' => true,
-				'auto_update_checks_thursday'  => true,
-				'auto_update_checks_friday'    => true,
-				'auto_update_checks_saturday'  => true,
-				'auto_update_checks_sunday'    => true,
-				'auto_update_checks_emails'    => get_option( 'admin_email' ),
-			);
 
-            // Get local auto update settings from option.
-			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
 
-            // If local auto update settings exist, merge them with the default settings. We don't need them locally anymore.
-			if ( $local_auto_update_settings && is_array( $local_auto_update_settings ) ) {
-				delete_option( WCD_AUTO_UPDATE_SETTINGS );
-				$website_details['auto_update_settings'] = array_merge( $website_details['auto_update_settings'], $local_auto_update_settings );
-			}
-		}
-
-		if ( $update ) {
-			$this->update_website_details( $website_details );
-		}
-
-		return $website_details ?? false;
-	}
-
-	/** Check if string is json.
-	 *
-	 * @param string $data The string to check.
-	 * @return bool
-	 */
-	public function is_json( $data ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::is_json' );
-		if ( ! empty( $data ) ) {
-			return is_string( $data ) && is_array( json_decode( $data, true ) );
-		}
-		return false;
-	}
-
-	/** Update website_details with current settings.
-	 *
-	 * @param bool $update_website_details Website details to update.
-	 *
-	 * @return void
-	 */
-	public function update_website_details( $update_website_details = false ) {
-		if ( ! $update_website_details ) {
-			$update_website_details = $this->website_details;
-		}
-		\WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
-	}
-
-	/** Check if current account is allowed for view.
-	 *
-	 * @param string $allowed The allowance string.
-	 * @return mixed|true
-	 */
-	public function is_allowed( $allowed ) {
-		$allowances = $this->website_details['allowances'] ?? false;
-
-		// Set default allowances if we don't have any yet. Shouldn't happen as they come from the api.
-		if ( empty( $allowances ) ) {
-			$allowances = array(
-				'change_detections_view'     => 1,
-				'manual_checks_view'         => 1,
-				'manual_checks_start'        => 1,
-				'manual_checks_settings'     => 1,
-				'manual_checks_urls'         => 1,
-				'monitoring_checks_view'     => 1,
-				'monitoring_checks_settings' => 1,
-				'monitoring_checks_urls'     => 1,
-				'logs_view'                  => 1,
-				'settings_view'              => 1,
-				'settings_add_urls'          => 1,
-				'settings_account_settings'  => 1,
-				'upgrade_account'            => 1,
-				'wizard_start'               => 1,
-				'only_frontpage'             => 0,
-			);
-		}
-
-		// Disable upgrade account for subaccounts.
-		if ( ! empty( $this->account_handler->get_account()['is_subaccount'] ) && $this->account_handler->get_account()['is_subaccount'] ) {
-			$allowances['upgrade_account'] = 0;
-		}
-
-		// need them as option for the admin menu.
-		update_option( WCD_ALLOWANCES, ( $allowances ) );
-
-		// Return allowance value if exists.
-		if ( array_key_exists( $allowed, $allowances ) ) {
-			return $allowances[ $allowed ];
-		}
-
-		// Shouldn't get here. But if so, we allow.
-		return true;
-	}
 
 	/** View of tabs
 	 *
@@ -2712,44 +1082,44 @@ class WebChangeDetector_Admin {
 		?>
 		<div class="wrap">
 			<h2 class="nav-tab-wrapper">
-				<?php if ( $this->is_allowed( 'dashboard_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'dashboard_view' ) ) { ?>
 				<a href="?page=webchangedetector"
 					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> Dashboard
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>
 					<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> Monitoring
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'change_detections_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'change_detections_view' ) ) { ?>
 					<a href="?page=webchangedetector-change-detections"
 					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> Change Detections
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'logs_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'logs_view' ) ) { ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> Queue
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'settings_view' ) ) { ?>
+				<?php if ( $this->settings_handler->is_allowed( 'settings_view' ) ) { ?>
 				<a href="?page=webchangedetector-settings"
 					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> Settings
 				</a>
 				<?php } ?>
-				<?php if ( $this->is_allowed( 'upgrade_account' ) ) { ?>
-				<a href="<?php echo esc_url( $this->get_upgrade_url() ); ?>" target="_blank"
+				<?php if ( $this->settings_handler->is_allowed( 'upgrade_account' ) ) { ?>
+				<a href="<?php echo esc_url( $this->account_handler->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> Upgrade Account
 				</a>
@@ -2761,201 +1131,11 @@ class WebChangeDetector_Admin {
 	}
 
 	/** Get the dashboard view.
-	 *
-	 * @param array $client_account Account data.
-	 *
-	 * @return void
-	 */
-	public function get_dashboard_view( $client_account ) {
+	// Moved to Dashboard handler
 
-		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load.
-		$amount_auto_detection  = 0; // Will be loaded via AJAX.
-		$max_auto_update_checks = 0; // Will be loaded via AJAX.
-
-		// Check if this is the first time visiting the dashboard.
-		$first_time_visit = $this->account_handler->is_first_time_dashboard_visit();
-
-		?>
-		<div class="dashboard">
-			<div class="no-border box-plain">
-				<div class="box-half no-border">
-					<p>
-						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
-					</p>
-					<hr>
-					<p>
-						Perform visual checks (visual regression tests) on your WordPress website to find
-						unwanted visual changes on your web pages before anyone else sees them.
-					</p>
-					<?php if ( $this->is_allowed( 'wizard_start' ) ) { ?>
-					<p>
-						Start the Wizard to see what you can do with WebChange Detector.
-					</p>
-					<input type="button" class="button button-primary" value="Start Wizard" onclick="window.wcdStartWizard()">
-				<?php } ?>
-				</div>
-				<div class="box-half credit">
-					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
-						<p style="margin-top: 20px;">
-							<strong>Your Plan:</strong>
-							<?php echo esc_html( $client_account['plan_name'] ); ?>
-							(renews on: <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?>)
-						</p>
-					<?php } ?>
-					<p style="margin-top:10px;">
-						<strong>Used checks:</strong>
-						<?php
-						$usage_percent = 0;
-						if ( ! empty( $client_account['checks_limit'] ) ) {
-							$usage_percent = number_format( $client_account['checks_done'] / $client_account['checks_limit'] * 100, 1 );
-						}
-						?>
-						<?php echo esc_html( $client_account['checks_done'] ); ?> /
-						<?php echo esc_html( $client_account['checks_limit'] ); ?>
-					</p>
-					<div style="width: 100%; background: #aaa; height: 20px; display: inline-block; position: relative; text-align: center;">
-						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
-						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
-					</div>
-					<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
-					<p id="wcd-monitoring-stats">
-						<strong>Monitoring: </strong>
-						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
-					</p>
-					<?php } ?>
-
-					<?php if ( $this->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
-					<p id="wcd-auto-update-stats">
-						<strong>Auto update checks: </strong>
-						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
-					</p>
-					<?php } ?>
-
-					<!-- Usage warning will be loaded via AJAX -->
-					<div id="wcd-usage-warning"></div>
+	// Moved to Dashboard handler
 
 
-				</div>
-				<div class="clear"></div>
-			</div>
-
-			<div class="wizard-dashboard-latest-change-detections">
-				<h2>Latest Change Detections</h2>
-				<?php
-
-				$filter_batches = array(
-					'queue_type' => 'post,auto',
-					'per_page'   => 5,
-				);
-
-				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( $filter_batches );
-				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
-				$this->compare_view_v2( $batches['data'] ?? array() );
-
-				if ( ! empty( $batches['data'] ) ) {
-					?>
-					<p><a class="button" href="?page=webchangedetector-change-detections">Show All Change Detections</a></p>
-				<?php } ?>
-			</div>
-
-			<div class="clear"></div>
-		</div>
-		
-		<?php if ( $first_time_visit && $this->is_allowed( 'wizard_start' ) ) { ?>
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				// Auto-start wizard for first-time users after a short delay
-				setTimeout(function() {
-					if (typeof window.wcdStartWizard === 'function') {
-						window.wcdStartWizard();
-					}
-				}, 1000); // 1 second delay to ensure page is fully loaded
-			});
-		</script>
-		<?php } ?>
-		<?php
-	}
-
-	/** Show activate account.
-	 *
-	 * @param string $error The error.
-	 * @return false
-	 */
-	public function show_activate_account( $error ) {
-
-		if ( 'ActivateAccount' === $error ) {
-			?>
-			<div class="notice notice-info">
-				<p>Please <strong>activate</strong> your account.</p>
-			</div>
-			<div class="activate-account highlight-container" >
-			<div class="highlight-inner">
-				<h2>
-					Activate account
-				</h2>
-				<p>
-					We just sent you an activation mail.
-				</p>
-				<?php if ( get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL ) ) { ?>
-					<div style="margin: 0 auto; padding: 15px; border-radius: 5px;background: #5db85c; color: #fff; max-width: 400px;">
-						<span id="activation_email" style="font-weight: 700;"><?php echo esc_html( get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL ) ); ?></span>
-					</div>
-				<?php } ?>
-				<p>
-					After clicking the activation link in the mail, your account is ready.
-					Check your spam folder if you cannot find the activation mail in your inbox.
-				</p>
-			</div>
-			<div>
-				<h2>You didn't receive the email?</h2>
-				<p>
-					Please contact us at <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>
-					or use our live chat at <a href="https://www.webchangedetector.com">webchangedetector.com</a>.
-					We are happy to help.
-				</p>
-				<p>To reset your account, please click the button below. </p>
-				<form id="delete-account" method="post">
-					<input type="hidden" name="wcd_action" value="reset_api_token">
-					<?php wp_nonce_field( 'reset_api_token' ); ?>
-					<input type="submit" class="button-delete" value="Reset Account">
-				</form>
-
-			</div>
-		</div>
-			<?php
-		}
-
-		if ( 'unauthorized' === $error ) {
-			?>
-			<div class="notice notice-error">
-				<p>The API token is not valid. Please reset the API token and enter a valid one.</p>
-			</div>
-			<?php
-			$this->get_no_account_page();
-		}
-
-		return false;
-	}
-
-	/**
-	 * App Domain can be set outside this plugin for development
-	 *
-	 * @return string
-	 */
-	public function app_url() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_app_url' );
-		return $this->account_handler->get_app_url();
-	}
-
-	/**
-	 * App Domain can be set outside this plugin for development
-	 *
-	 * @return string
-	 */
-	public function billing_url() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::get_billing_url' );
-		return $this->account_handler->get_billing_url();
-	}
 
 	/**
 	 * If in development mode
@@ -2964,15 +1144,7 @@ class WebChangeDetector_Admin {
 	 */
 
 
-	/**
-	 * Check if this is the user's first time visiting the dashboard.
-	 *
-	 * @return bool
-	 */
-	public function is_first_time_dashboard_visit() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_Account::is_first_time_dashboard_visit' );
-		return $this->account_handler->is_first_time_dashboard_visit();
-	}
+
 
 	/** Get group details and its urls.
 	 *
@@ -2987,7 +1159,7 @@ class WebChangeDetector_Admin {
 		$urls           = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 
 		if ( empty( $urls['data'] ) ) {
-			$this->sync_posts( true );
+			$this->wordpress_handler->sync_posts( true );
 			$urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 		}
 
@@ -3082,41 +1254,7 @@ class WebChangeDetector_Admin {
 		return $body;
 	}
 
-	/**
-	 * Debug logging for dev
-	 *
-	 * @param string $log The log message.
-	 * @deprecated 1.0.0 Use \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error() instead.
-	 */
-	public static function error_log( $log ) {
-		_deprecated_function( __METHOD__, '1.0.0', '\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error' );
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true && defined( 'WCD_DEV' ) && WCD_DEV ) {
-			// phpcs:disable WordPress.PHP.DevelopmentFunctions
 
-			error_log( $log );
-			// phpcs:enable
-		}
-	}
-
-	/** Add items to the admin bar.
-	 *
-	 * @param WP_Admin_Bar $wp_admin_bar WP_Admin_Bar instance.
-	 * @return void
-	 */
-	public function wcd_admin_bar_menu( $wp_admin_bar ) {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::wcd_admin_bar_menu' );
-		$this->wordpress_handler->wcd_admin_bar_menu( $wp_admin_bar );
-	}
-
-	/**
-	 * AJAX handler to get WCD status for the admin bar.
-	 *
-	 * @since 3.1.7
-	 */
-	public function ajax_get_wcd_admin_bar_status() {
-		_deprecated_function( __METHOD__, '1.0.0', 'WebChangeDetector_Admin_WordPress::ajax_get_wcd_admin_bar_status' );
-		$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
-	}
 
 	/** Generate HTML for a single slider.
 	 * (This function might be used by JS via another AJAX call, or JS might replicate the HTML.

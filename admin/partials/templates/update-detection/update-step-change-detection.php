@@ -28,5 +28,5 @@ require 'update-step-tiles.php';
 	$batch   = array_slice( $batches['data'], 0, 1 );
 
 	// Pass only batch data to create accordion containers, content will be loaded via AJAX.
-	$wcd->compare_view_v2( $batch );
+	$wcd->dashboard_handler->compare_view_v2( $batch );
 ?>

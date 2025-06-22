@@ -20,8 +20,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 	 */
 	function wcd_webchangedetector_init() {
 		global $wpdb;
-		$wcd                  = new \WebChangeDetector\WebChangeDetector_Admin();
-		$wcd->website_details = $wcd->get_website_details();
+			$wcd                  = new \WebChangeDetector\WebChangeDetector_Admin();
+	$wcd->website_details = $wcd->settings_handler->get_website_details();
 		$api_token            = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
 
 		// Initialize shared handler instances to avoid duplication.
@@ -75,7 +75,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				// Validate if all required fields were sent.
 				if ( ! ( isset( $postdata['name_first'] ) && isset( $postdata['name_last'] ) && isset( $postdata['email'] ) && isset( $postdata['password'] ) ) ) {
 					echo '<div class="notice notice-error"><p>Please fill all required fields.</p></div>';
-					$wcd->get_no_account_page();
+					$account_handler->get_no_account_page();
 					return false;
 				}
 
@@ -99,7 +99,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 're-add-api-token':
 				if ( empty( $postdata['api_token'] ) ) {
-					$wcd->get_no_account_page();
+					$account_handler->get_no_account_page();
 					return true;
 				}
 
@@ -109,7 +109,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			case 'save_api_token':
 				if ( empty( $postdata['api_token'] ) ) {
 					echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
-					$wcd->get_no_account_page();
+					$account_handler->get_no_account_page();
 					return false;
 				}
 
@@ -125,7 +125,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// We still don't have an api_token.
 		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
-			$wcd->get_no_account_page();
+			$account_handler->get_no_account_page();
 			return false;
 		}
 
@@ -164,12 +164,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 		// Check if account is activated and if the api key is authorized.
 		if ( 'ActivateAccount' === $account_details || 'activate account' === $account_details || 'unauthorized' === $account_details ) {
-			$wcd->show_activate_account( $account_details );
+							$wcd->dashboard_handler->show_activate_account( $account_details );
 			return false;
 		}
 
 		// Get website details.
-		$wcd->website_details = $wcd->get_website_details();
+		$wcd->website_details = $wcd->settings_handler->get_website_details();
 
 		// Create new ones if we don't have them yet.
 		if ( ! $wcd->website_details ) {
@@ -306,7 +306,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				break;
 
 			case 'add_post_type':
-				$wcd->add_post_type( $postdata );
+				$wcd->wordpress_handler->add_post_type( $postdata );
 				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
 				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
@@ -338,9 +338,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 			case 'save_group_settings':
 				if ( ! empty( $postdata['monitoring'] ) ) {
-					$wcd->update_monitoring_settings( $postdata );
+					$wcd->settings_handler->update_monitoring_settings( $postdata );
 				} else {
-					$wcd->update_manual_check_group_settings( $postdata );
+					$wcd->settings_handler->update_manual_check_group_settings( $postdata );
 				}
 				break;
 
@@ -417,7 +417,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 			 */
 
 			case 'webchangedetector':
-				$wcd->get_dashboard_view( $account_details );
+				$wcd->dashboard_handler->get_dashboard_view( $account_details );
 				break;
 
 				/********************
@@ -425,7 +425,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-change-detections':
-				if ( ! $wcd->is_allowed( 'change_detections_view' ) ) {
+				if ( ! $wcd->settings_handler->is_allowed( 'change_detections_view' ) ) {
 					break;
 				}
 
@@ -538,7 +538,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 					}
 
 					// Pass only batch data to create accordion containers, content will be loaded via AJAX.
-					$wcd->compare_view_v2( $batches['data'] ?? array() );
+					$wcd->dashboard_handler->compare_view_v2( $batches['data'] ?? array() );
 
 					// Prepare pagination.
 					unset( $extra_filters['paged'] );
@@ -579,7 +579,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-update-settings':
-				if ( ! $wcd->is_allowed( 'manual_checks_view' ) ) {
+				if ( ! $wcd->settings_handler->is_allowed( 'manual_checks_view' ) ) {
 					break;
 				}
 
@@ -791,6 +791,8 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 */
 
 			case 'webchangedetector-settings':
+				// Ensure website_details is populated for settings page.
+				$wcd->website_details = $wcd->settings_handler->get_website_details();
 				?>
 				<div class="action-container">
 
@@ -807,12 +809,16 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									// Add post types form.
 									$post_types           = get_post_types( array( 'public' => true ), 'objects' );
 									$available_post_types = array();
+									
 									foreach ( $post_types as $post_type ) {
 										$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 										$show_type         = false;
 										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-												if ( $wp_post_type_slug && $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
+												// Check if this post type is already synced with url_type_slug = 'types'
+												if ( $wp_post_type_slug && 
+													 $sync_url_type['post_type_slug'] === $wp_post_type_slug && 
+													 $sync_url_type['url_type_slug'] === 'types' ) {
 													$show_type = true;
 													break; // Found, no need to check further for this post type.
 												}
@@ -872,7 +878,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 										$show_taxonomy    = false;
 										if ( ! empty( $wcd->website_details['sync_url_types'] ) ) { // Check if sync_url_types exists.
 											foreach ( $wcd->website_details['sync_url_types'] as $sync_url_type ) {
-												if ( $wp_taxonomy_slug && $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
+												// Check if this taxonomy is already synced with url_type_slug = 'taxonomies'
+												if ( $wp_taxonomy_slug && 
+													 $sync_url_type['post_type_slug'] === $wp_taxonomy_slug && 
+													 $sync_url_type['url_type_slug'] === 'taxonomies' ) {
 													$show_taxonomy = true;
 													break; // Found, no need to check further for this taxonomy.
 												}
@@ -962,7 +971,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						echo '<div class="error notice">
                         <p>Please enter a valid API Token.</p>
                     </div>';
-					} elseif ( $wcd->is_allowed( 'upgrade_account' ) ) {
+					} elseif ( $wcd->settings_handler->is_allowed( 'upgrade_account' ) ) {
 						?>
 						<div class="box-plain no-border">
 							<h2>Need more checks?</h2>
@@ -972,7 +981,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 						<?php
 					}
 					echo '<hr>';
-					$wcd->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
+					$wcd->account_handler->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 
 					?>
 
@@ -986,14 +995,14 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 * Show compare
 				 */
 			case 'webchangedetector-show-detection':
-				$wcd->get_comparison_by_token( $postdata );
+									$wcd->screenshots_handler->get_comparison_by_token( $postdata );
 				break;
 
 				/***************
 				 * Show screenshot
 				 */
 			case 'webchangedetector-show-screenshot':
-				$wcd->get_screenshot( $postdata );
+									$wcd->screenshots_handler->get_screenshot( $postdata );
 				break;
 
 				/***************

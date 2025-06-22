@@ -462,7 +462,7 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		$wcd                  = new WebChangeDetector_Admin();
-		$auto_update_settings = $wcd->get_website_details()['auto_update_settings'];
+		$auto_update_settings = $wcd->settings_handler->get_website_details()['auto_update_settings'];
 
 		// Enable auto-update checks if the defines are set.
 		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {

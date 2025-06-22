@@ -16,7 +16,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 <div class="wcd-step-container wcd-section">
 	<div class="wcd-highlight-bg done">
 		<h2>
-			<?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>
+			<?php $utils_handler->get_device_icon( 'check', 'screenshots-done-icon' ); ?>
 			<strong><?php echo esc_html( $group_urls['meta']['selected_urls_count'] ); ?></strong> URL(s) selected
 		</h2>
 	</div>

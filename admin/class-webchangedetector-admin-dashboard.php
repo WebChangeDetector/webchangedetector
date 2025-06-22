@@ -94,7 +94,7 @@ class WebChangeDetector_Admin_Dashboard {
 					<p>
 						<?php echo esc_html__( 'Perform visual checks (visual regression tests) on your WordPress website to find unwanted visual changes on your web pages before anyone else sees them.', 'webchangedetector' ); ?>
 					</p>
-					<?php if ( $this->admin->is_allowed( 'wizard_start' ) ) { ?>
+					<?php if ( $this->admin->settings_handler->is_allowed( 'wizard_start' ) ) { ?>
 					<p>
 						<?php echo esc_html__( 'Start the Wizard to see what you can do with WebChange Detector.', 'webchangedetector' ); ?>
 					</p>
@@ -124,14 +124,14 @@ class WebChangeDetector_Admin_Dashboard {
 						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
 						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
 					</div>
-					<?php if ( $this->admin->is_allowed( 'monitoring_checks_view' ) ) { ?>
+					<?php if ( $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>
 					<p id="wcd-monitoring-stats">
 						<strong><?php echo esc_html__( 'Monitoring:', 'webchangedetector' ); ?> </strong>
 						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 					</p>
 					<?php } ?>
 
-					<?php if ( $this->admin->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
+					<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
 					<p id="wcd-auto-update-stats">
 						<strong><?php echo esc_html__( 'Auto update checks:', 'webchangedetector' ); ?> </strong>
 						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
@@ -167,7 +167,7 @@ class WebChangeDetector_Admin_Dashboard {
 			<div class="clear"></div>
 		</div>
 		
-		<?php if ( $first_time_visit && $this->admin->is_allowed( 'wizard_start' ) ) { ?>
+		<?php if ( $first_time_visit && $this->admin->settings_handler->is_allowed( 'wizard_start' ) ) { ?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
 				// Auto-start wizard for first-time users after a short delay.
@@ -242,7 +242,7 @@ class WebChangeDetector_Admin_Dashboard {
 				<p><?php echo esc_html__( 'The API token is not valid. Please reset the API token and enter a valid one.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
-			$this->get_no_account_page();
+			$this->admin->account_handler->get_no_account_page();
 		}
 
 		return false;
@@ -255,13 +255,26 @@ class WebChangeDetector_Admin_Dashboard {
 	 * @return   bool True if first time visit, false otherwise.
 	 */
 	public function is_first_time_dashboard_visit() {
-		$first_time_visit = get_option( 'wcd_first_time_dashboard_visit', true );
+		$user_id = get_current_user_id();
+		$meta_key = 'wcd_first_time_dashboard_visit';
 		
-		if ( $first_time_visit ) {
-			update_option( 'wcd_first_time_dashboard_visit', false );
+		// Debug: Allow resetting first-time visit with URL parameter
+		if ( isset( $_GET['wcd_reset_first_time'] ) && current_user_can( 'manage_options' ) ) {
+			delete_user_meta( $user_id, $meta_key );
+			wp_redirect( remove_query_arg( 'wcd_reset_first_time' ) );
+			exit;
+		}
+		
+		// Check user meta first (per-user setting)
+		$user_visited = get_user_meta( $user_id, $meta_key, true );
+		
+		if ( 'visited' !== $user_visited ) {
+			// Mark user as visited
+			update_user_meta( $user_id, $meta_key, 'visited' );
 			return true;
 		}
 		
+		// User has already visited
 		return false;
 	}
 
@@ -720,7 +733,7 @@ class WebChangeDetector_Admin_Dashboard {
 			$response   = wp_remote_post( WCD_RESELLER_URL, array( 'body' => $body_args ) );
 			$subaccount = json_decode( wp_remote_retrieve_body( $response ), true );
 			if ( ! empty( $subaccount['api_token'] ) ) {
-				$this->admin->save_api_token( $subaccount, $subaccount['api_token'] );
+				$this->admin->account_handler->save_api_token( $subaccount, $subaccount['api_token'] );
 
 				wp_safe_redirect( '/wp-admin/admin.php?page=webchangedetector' );
 				exit;
@@ -763,7 +776,7 @@ class WebChangeDetector_Admin_Dashboard {
 					</div>
 				</div>
 
-				<?php $this->admin->get_api_token_form( $api_token ); ?>
+				<?php $this->admin->account_handler->get_api_token_form( $api_token ); ?>
 			</div>
 		</div>
 		<?php

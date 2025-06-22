@@ -89,7 +89,7 @@ class WebChangeDetector_Admin_Account {
 	 * @return   bool                    True if saved successfully, false otherwise.
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-		if ( ! is_string( $api_token ) || strlen( $api_token ) < 40 ) { // API_TOKEN_LENGTH constant
+		if ( ! is_string( $api_token ) || strlen( $api_token ) < 10 ) { // API_TOKEN_LENGTH constant from original
 			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
 			} else {
@@ -210,31 +210,54 @@ class WebChangeDetector_Admin_Account {
 	 * @return   void                         Outputs the form HTML.
 	 */
 	public function get_api_token_form( $api_token = false ) {
-		$nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' );
-		?>
-		<div class="wcd-form-container">
-			<h2><?php esc_html_e( 'Connect Your API Token', 'webchangedetector' ); ?></h2>
-			<form method="post" action="">
-				<?php wp_nonce_field( 'wcd_api_token_nonce', 'wcd_api_token_nonce' ); ?>
-				<table class="form-table">
-					<tr>
-						<th scope="row">
-							<label for="api_token"><?php esc_html_e( 'API Token', 'webchangedetector' ); ?></label>
-						</th>
-						<td>
-							<input name="api_token" type="text" id="api_token" 
-								   value="<?php echo esc_attr( $api_token ? $api_token : '' ); ?>" 
-								   class="regular-text" placeholder="<?php esc_attr_e( 'Enter your API token here', 'webchangedetector' ); ?>" />
-							<p class="description">
-								<?php esc_html_e( 'You can find your API token in your WebChange Detector account dashboard.', 'webchangedetector' ); ?>
-							</p>
-						</td>
-					</tr>
-				</table>
-				<?php submit_button( __( 'Save API Token', 'webchangedetector' ) ); ?>
-			</form>
-		</div>
-		<?php
+		if ( $api_token ) {
+			?>
+			<div class="box-plain no-border">
+				<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
+					onsubmit="return confirm('Are sure you want to reset the API token?');">
+					<input type="hidden" name="wcd_action" value="reset_api_token">
+					<?php wp_nonce_field( 'reset_api_token' ); ?>
+
+					<h2> Account</h2>
+					<p>
+						Your email address: <strong><?php echo esc_html( $this->get_account()['email'] ); ?></strong><br>
+						Your API Token: <strong><?php echo esc_html( $api_token ); ?></strong>
+					</p>
+					<p>
+						With resetting the API Token, auto detections still continue and your settings will
+						be still available when you use the same api token with this website again.
+					</p>
+					<input type="submit" value="Reset API Token" class="button button-delete"><br>
+				</form>
+			</div>
+			<div class="box-plain no-border">
+				<h2>Delete Account</h2>
+				<p>To delete your account completely, please login to your account at
+					<a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.
+				</p>
+			</div>
+			<?php
+		} else {
+			if ( isset( $_POST['wcd_action'] ) && 'save_api_token' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
+				check_admin_referer( 'save_api_token' );
+			}
+			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
+			?>
+			<div class="highlight-container">
+				<form class="frm_use_api_token highlight-inner no-bg" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
+					<input type="hidden" name="wcd_action" value="save_api_token">
+					<?php wp_nonce_field( 'save_api_token' ); ?>
+					<h2>Use Existing API Token</h2>
+					<p>
+						Use the API token of your existing account. To get your API token, please login to your account at
+						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>
+					</p>
+					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" required>
+					<input type="submit" value="Save" class="button button-primary">
+				</form>
+			</div>
+			<?php
+		}
 	}
 
 	/**
