@@ -76,13 +76,16 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   array|string    The API response or error message.
 	 */
 	public function update_monitoring_settings( $group_data ) {
+		// Debug: Log what we received for monitoring settings
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . print_r( $group_data, true ) );
+		
 		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
 
 		$args = array(
 			'monitoring'    => true,
 			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
 			'interval_in_h' => ! isset( $group_data['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $group_data['interval_in_h'] ),
-			'enabled'       => ( isset( $group_data['enabled'] ) && 'on' === $group_data['enabled'] ) ? 1 : 0,
+			'enabled'       => ( isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ) ) ? 1 : 0,
 			'alert_emails'  => ! isset( $group_data['alert_emails'] ) ? $monitoring_settings['alert_emails'] : explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ),
 			'name'          => ! isset( $group_data['group_name'] ) ? $monitoring_settings['name'] : sanitize_text_field( $group_data['group_name'] ),
 			'threshold'     => ! isset( $group_data['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $group_data['threshold'] ),
@@ -92,7 +95,16 @@ class WebChangeDetector_Admin_Settings {
 			$args['css'] = sanitize_textarea_field( $group_data['css'] );
 		}
 
-		return \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->admin->monitoring_group_uuid, $args );
+		// Debug: Log what we're sending to the API
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . print_r( $args, true ) );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid );
+
+		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->admin->monitoring_group_uuid, $args );
+		
+		// Debug: Log the API response
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . print_r( $result, true ) );
+		
+		return $result;
 	}
 
 	/**
@@ -103,6 +115,9 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   array|string    The API response or error message.
 	 */
 	public function update_manual_check_group_settings( $postdata ) {
+		// Debug: Log what we received
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'POST data received: ' . print_r( $postdata, true ) );
+		
 		// Saving auto update settings.
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
@@ -110,9 +125,20 @@ class WebChangeDetector_Admin_Settings {
 				$auto_update_settings[ $key ] = $value;
 			}
 		}
-		$website_details = $this->admin->website_details;
-		$website_details['auto_update_settings'] = $auto_update_settings;
-		$this->update_website_details( $website_details );
+		
+		// Handle checkbox for auto_update_checks_enabled (unchecked checkboxes don't submit a value).
+		if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			$auto_update_settings['auto_update_checks_enabled'] = '0';
+		}
+		
+		// Debug: Log what auto update settings we extracted
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . print_r( $auto_update_settings, true ) );
+		
+		$this->admin->website_details['auto_update_settings'] = $auto_update_settings;
+		$this->update_website_details( $this->admin->website_details );
+
+		// Force refresh website details cache after saving
+		$this->get_website_details( true );
 
 		do_action( 'wcd_save_update_group_settings', $postdata );
 
@@ -180,8 +206,8 @@ class WebChangeDetector_Admin_Settings {
 
 		// Get the urls.
 		$group_and_urls = $this->admin->get_group_and_urls( $group_id, $filters );
-		$urls           = $group_and_urls['urls'];
-		$urls_meta      = $group_and_urls['meta'];
+		$urls           = $group_and_urls['urls'] ?? array();
+		$urls_meta      = $group_and_urls['meta'] ?? array();
 
 		// Set tab for the right url.
 		$tab = 'update-settings'; // init.
@@ -227,7 +253,7 @@ class WebChangeDetector_Admin_Settings {
 					
 				</p>
 				<input type="hidden" value="webchangedetector" name="page">
-				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ); ?>" name="group_id">
+				<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>" name="group_id">
 
 					<div class="group_urls_container">
 						<form method="get" style="float: left;">
@@ -240,19 +266,19 @@ class WebChangeDetector_Admin_Settings {
 								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
 								// Fix for old sync_url_types.
-								$website_details = $this->admin->website_details;
-								$sync_url_types = $website_details['sync_url_types'];
-								if ( is_string( $website_details['sync_url_types'] ) ) {
-									$sync_url_types = json_decode( $website_details['sync_url_types'], true );
+								$website_details = $this->admin->website_details ?? array();
+								$sync_url_types = $website_details['sync_url_types'] ?? array();
+								if ( isset( $website_details['sync_url_types'] ) && is_string( $website_details['sync_url_types'] ) ) {
+									$sync_url_types = json_decode( $website_details['sync_url_types'], true ) ?? array();
 								}
 
-								if ( ! get_option( 'page_on_front' ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
+								if ( ! get_option( 'page_on_front' ) && ! empty( $sync_url_types ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
 									?>
 									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
 									<?php
 								}
 
-								foreach ( $sync_url_types as $url_type ) {
+								foreach ( $sync_url_types ?? array() as $url_type ) {
 									if ( 'types' !== $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -270,7 +296,7 @@ class WebChangeDetector_Admin_Settings {
 								<?php
 								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
 
-								foreach ( $sync_url_types as $url_type ) {
+								foreach ( $sync_url_types ?? array() as $url_type ) {
 									if ( 'types' === $url_type['url_type_slug'] ) {
 										continue;
 									}
@@ -321,7 +347,7 @@ class WebChangeDetector_Admin_Settings {
 											id="select-desktop"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
 											data-screensize="desktop"
-											onclick="mmToggle( this, 'desktop', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-desktop');"/>
+											onclick="mmToggle( this, 'desktop', '<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>' ); postUrl('select-desktop');"/>
 											<span class="slider round"></span>
 										</label>
 									</td>
@@ -332,7 +358,7 @@ class WebChangeDetector_Admin_Settings {
 											id="select-mobile"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
 											data-screensize="mobile"
-											onclick="mmToggle( this, 'mobile', '<?php echo esc_html( $group_and_urls['id'] ); ?>' ); postUrl('select-mobile');" />
+											onclick="mmToggle( this, 'mobile', '<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>' ); postUrl('select-mobile');" />
 											<span class="slider round"></span>
 										</label>
 									</td>
@@ -348,7 +374,7 @@ class WebChangeDetector_Admin_Settings {
 										'mobile'  => $url['mobile'] ? 'checked' : '',
 									);
 									?>
-									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
+									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
 										<td class="checkbox-desktop" style="text-align: center;">
 											<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url['id'] ); ?>">
 											<label class="switch">
@@ -406,7 +432,6 @@ class WebChangeDetector_Admin_Settings {
 
 						<?php
 						// Pagination.
-                        \WebChangeDetector\WebChangeDetector_Admin_Utils::dd($urls_meta);
 						if ( ! empty( $urls_meta ) && isset( $urls_meta['total_pages'] ) && $urls_meta['total_pages'] > 1 ) {
 							?>
 							<div class="pagination-container" style="text-align: center; margin-top: 20px;">
@@ -485,7 +510,7 @@ class WebChangeDetector_Admin_Settings {
 			}
 
 			foreach ( $websites['data'] as $website ) {
-				if ( str_starts_with( rtrim( $website['domain'] ?? '', '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url() ?? '', '/' ) ) ) {
+				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) ) {
 					$website_details                   = $website;
 					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 					break;
@@ -529,23 +554,19 @@ class WebChangeDetector_Admin_Settings {
 		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
 			$update                                  = true;
 			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => true,
+				'auto_update_checks_enabled'   => '0',
 				'auto_update_checks_from'      => gmdate( 'H:i' ),
 				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => true,
-				'auto_update_checks_tuesday'   => true,
-				'auto_update_checks_wednesday' => true,
-				'auto_update_checks_thursday'  => true,
-				'auto_update_checks_friday'    => true,
-				'auto_update_checks_saturday'  => true,
-				'auto_update_checks_sunday'    => true,
+				'auto_update_checks_monday'    => '1',
+				'auto_update_checks_tuesday'   => '1',
+				'auto_update_checks_wednesday' => '1',
+				'auto_update_checks_thursday'  => '1',
+				'auto_update_checks_friday'    => '1',
+				'auto_update_checks_saturday'  => '0',
+				'auto_update_checks_sunday'    => '0',
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
-
-            // Get local auto update settings from option.
 			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
-
-            // If local auto update settings exist, merge them with the default settings. We don't need them locally anymore.
 			if ( $local_auto_update_settings && is_array( $local_auto_update_settings ) ) {
 				delete_option( WCD_AUTO_UPDATE_SETTINGS );
 				$website_details['auto_update_settings'] = array_merge( $website_details['auto_update_settings'], $local_auto_update_settings );
@@ -570,7 +591,11 @@ class WebChangeDetector_Admin_Settings {
 		if ( ! $update_website_details ) {
 			$update_website_details = $this->admin->website_details;
 		}
-		\WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
+		
+		// Ensure we have a valid website ID before making API call.
+		if ( ! empty( $update_website_details['id'] ) ) {
+			\WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $update_website_details['id'], $update_website_details );
+		}
 	}
 
 	/**

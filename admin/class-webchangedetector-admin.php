@@ -172,6 +172,105 @@ class WebChangeDetector_Admin {
 	 * @var      WebChangeDetector_Admin_Dashboard $dashboard_handler Dashboard management.
 	 */
 	public $dashboard_handler;
+
+	/**
+	 * View renderer instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_View_Renderer $view_renderer View rendering handler.
+	 */
+	public $view_renderer;
+
+	/**
+	 * Screenshot action handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Screenshot_Action_Handler $screenshot_action_handler Screenshot actions.
+	 */
+	public $screenshot_action_handler;
+
+	/**
+	 * Settings action handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Settings_Action_Handler $settings_action_handler Settings actions.
+	 */
+	public $settings_action_handler;
+
+	/**
+	 * Account action handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Account_Action_Handler $account_action_handler Account actions.
+	 */
+	public $account_action_handler;
+
+	/**
+	 * WordPress action handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_WordPress_Action_Handler $wordpress_action_handler WordPress actions.
+	 */
+	public $wordpress_action_handler;
+
+	/**
+	 * Comparison action handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Comparison_Action_Handler $comparison_action_handler Comparison actions.
+	 */
+	public $comparison_action_handler;
+
+	/**
+	 * Component manager instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Component_Manager $component_manager Component management.
+	 */
+	public $component_manager;
+
+	/**
+	 * Error handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Error_Handler $error_handler Error handling.
+	 */
+	public $error_handler;
+
+	/**
+	 * Logger instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Logger $logger Logging system.
+	 */
+	public $logger;
+
+	/**
+	 * Error recovery instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_Error_Recovery $error_recovery Error recovery.
+	 */
+	public $error_recovery;
+
+	/**
+	 * User feedback instance.
+	 *
+	 * @since    1.0.0
+	 * @access   public
+	 * @var      WebChangeDetector_User_Feedback $user_feedback User feedback.
+	 */
+	public $user_feedback;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -195,6 +294,21 @@ class WebChangeDetector_Admin {
 		$this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this );
 		$this->settings_handler = new WebChangeDetector_Admin_Settings( $this );
 		$this->dashboard_handler = new WebChangeDetector_Admin_Dashboard( $this, $this->api_manager, $this->wordpress_handler );
+		$this->view_renderer = new WebChangeDetector_View_Renderer( $this );
+		
+		// Initialize action handlers.
+		$this->screenshot_action_handler = new WebChangeDetector_Screenshot_Action_Handler( $this );
+		$this->settings_action_handler = new WebChangeDetector_Settings_Action_Handler( $this );
+		$this->account_action_handler = new WebChangeDetector_Account_Action_Handler( $this );
+		$this->wordpress_action_handler = new WebChangeDetector_WordPress_Action_Handler( $this );
+		$this->comparison_action_handler = new WebChangeDetector_Comparison_Action_Handler( $this );
+		$this->component_manager = new WebChangeDetector_Component_Manager();
+		
+		// Initialize error handling components.
+		$this->logger = new WebChangeDetector_Logger();
+		$this->error_handler = new WebChangeDetector_Error_Handler( $this->logger );
+		$this->error_recovery = new WebChangeDetector_Error_Recovery( $this->logger );
+		$this->user_feedback = new WebChangeDetector_User_Feedback();
 		
 		// Add cron job for daily sync (after WordPress handler is initialized).
 		add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
@@ -365,6 +479,13 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function print_monitoring_status_bar( $group ) {
+		// Ensure we have group data with default values.
+		$group = array_merge( array(
+			'interval_in_h' => 24,
+			'hour_of_day' => 0,
+			'selected_urls_count' => 0,
+		), $group ?? array() );
+		
 		// Calculation for monitoring.
 		$date_next_sc = false;
 
@@ -587,17 +708,24 @@ class WebChangeDetector_Admin {
 	 */
 	public function get_group_and_urls( $group_uuid, $url_filter = array() ) {
 
-		$group_and_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $group_uuid )['data'];
+		$group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $group_uuid );
+		$group_and_urls = $group_response['data'] ?? array();
 		$urls           = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 
-		if ( empty( $urls['data'] ) ) {
+		// Check if URLs response is valid and has expected structure.
+		if ( empty( $urls ) || ! isset( $urls['data'] ) ) {
 			$this->wordpress_handler->sync_posts( true );
 			$urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 		}
 
-		$group_and_urls['urls']                = $urls['data'];
-		$group_and_urls['meta']                = $urls['meta'];
-		$group_and_urls['selected_urls_count'] = $urls['meta']['selected_urls_count'];
+		// Ensure we have a valid response structure before accessing keys.
+		if ( ! is_array( $urls ) ) {
+			$urls = array( 'data' => array(), 'meta' => array( 'selected_urls_count' => 0 ) );
+		}
+
+		$group_and_urls['urls']                = $urls['data'] ?? array();
+		$group_and_urls['meta']                = $urls['meta'] ?? array();
+		$group_and_urls['selected_urls_count'] = $urls['meta']['selected_urls_count'] ?? 0;
 
 		return $group_and_urls;
 	}

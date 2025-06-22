@@ -158,6 +158,50 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin.php';
 
 		/**
+		 * Controller classes for request handling and routing.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-admin-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-dashboard-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-settings-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-monitoring-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-manual-checks-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-change-detections-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-logs-controller.php';
+
+		/**
+		 * Action handler classes for business logic separation.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-screenshot-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-settings-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-account-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-wordpress-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-comparison-action-handler.php';
+
+		/**
+		 * View renderer classes for presentation layer.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-view-renderer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-notification-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-form-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-table-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-card-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-modal-view.php';
+
+		/**
+		 * Component manager for reusable UI components.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/partials/class-webchangedetector-component-manager.php';
+
+		/**
+		 * Error handling and logging classes.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-logger.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-exceptions.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-error-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-error-recovery.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-user-feedback.php';
+
+		/**
 		 * The class responsible API calls.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-api-v2.php';

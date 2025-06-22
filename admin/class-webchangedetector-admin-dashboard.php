@@ -515,7 +515,8 @@ class WebChangeDetector_Admin_Dashboard {
 						<?php echo esc_html( $compare['difference_percent'] ); ?>%
 					</td>
 					<td>
-						<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
+						<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
+							<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
 							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 							<input type="submit" value="<?php echo esc_attr__( 'Show', 'webchangedetector' ); ?>" class="button">
 						</form>
@@ -635,9 +636,11 @@ class WebChangeDetector_Admin_Dashboard {
 	public function get_comparison_by_token( $postdata, $hide_switch = false, $whitelabel = false ) {
 		$token = $postdata['token'] ?? null;
 
-		if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
-			echo esc_html__( 'Something went wrong. Please try again.', 'webchangedetector' );
-			wp_die();
+		if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_POST['_wpnonce'] ) ), 'show_change_detection' ) ) {
+			if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ), 'show_change_detection' ) ) {
+				echo esc_html__( 'Something went wrong. Please try again.', 'webchangedetector' );
+				wp_die();
+			}
 		}
 
 		if ( ! $token && ! empty( $_GET['id'] ) ) {
@@ -680,12 +683,14 @@ class WebChangeDetector_Admin_Dashboard {
 			?>
 			<!-- Previous and next buttons -->
 			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
-				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
+				<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? '' ) ) ); ?>" method="post" style="display:inline-block;">
+					<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> &lt; <?php echo esc_html__( 'Previous', 'webchangedetector' ); ?> </button>
 				</form>
-				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
+				<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? '' ) ) ); ?>" method="post" style="display:inline-block;">
+					<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>> <?php echo esc_html__( 'Next', 'webchangedetector' ); ?> &gt; </button>

@@ -22,7 +22,7 @@
 	<div class="wcd-step-container wcd-section">
 
 		<p><strong>Currently processing:</strong></p>
-		<table id="currently-processing-table" style="text-align: left; border: none; margin 0 auto; width: 100%;">
+		<table id="currently-processing-table" style="text-align: left; border: none; margin: 0 auto; width: 100%;">
 			<tbody>
 			<tr id="processing_sc_row_empty" ><td style="text-align: center;">Loading processing screenshots... </td></tr>
 			</tbody>
