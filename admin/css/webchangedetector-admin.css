@@ -172,12 +172,6 @@
     display: none;
 }
 
-.webchangedetector .account-box,
-.webchangedetector .help-box {
-    padding-left: 20px;
-    margin-bottom: 30px;
-}
-
 .webchangedetector .status_bar {
     padding: 10px;
     color: #444;
@@ -510,37 +504,6 @@
 .webchangedetector .sidebar {
     float: left;
     width: 300px;
-}
-
-
-/*.webchangedetector .help-box,
-.webchangedetector .account-box {
-    background: #276ECC;
-    color: #fff;
-    padding: 0 10px;
-    display: block;
-    border: 1px solid #fff;
-    box-shadow: 0 0 10px #000;
-    margin-bottom: 20px;
-}
-
-.webchangedetector .help-box h2,
-.webchangedetector .help-box h3,
-.webchangedetector .account-box h2,
-.webchangedetector .account-box h3{
-    color: #fff;
-}
-.webchangedetector .account-box a.account {
-    border-color: #fff;
-    float:right;
-}
-.webchangedetector .account-box a.account:hover{
-    background: rgba( 255,255,255,0.7);
-    border-color:#fff;
-}*/
-
-.webchangedetector .help-box h3 {
-    font-weight: 400;
 }
 
 .webchangedetector table.queue {

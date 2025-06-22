@@ -1,6 +1,6 @@
 <?php
 /**
- * Help - manual checks settings
+ * Manual checks settings
  *
  *  @package    webchangedetector
  */
@@ -130,9 +130,9 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 
 				<div class="setting-row toggle">
 					<label for="auto_update_checks_from" >Auto update times from </label>
-					<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ); ?>" type="time" class="auto_update_checks_from">
+					<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ?? date('H:i') ); ?>" type="time" class="auto_update_checks_from">
 					<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
-					<input id="auto_update_checks_to" name="auto_update_checks_to" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_to'] ); ?>" type="time" class="auto_update_checks_to">
+					<input id="auto_update_checks_to" name="auto_update_checks_to" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_to'] ?? date('H:i', strtotime('+2 hours')) ); ?>" type="time" class="auto_update_checks_to">
 					<small>Set the time frame in which you want to allow WP auto updates.</small>
 				</div>
 
@@ -141,31 +141,31 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 					<div id="auto_update_checks_weekday_container" style="display: inline-block">
 
 						<input name="auto_update_checks_monday" value="0" type="hidden">
-						<input name="auto_update_checks_monday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ); ?> class="auto_update_checks_monday">
+						<input name="auto_update_checks_monday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ?? true ); ?> class="auto_update_checks_monday">
 						<label for="auto_update_checks_monday" style="min-width: inherit">Monday </label><br>
 
 						<input name="auto_update_checks_tuesday" value="0" type="hidden">
-						<input name="auto_update_checks_tuesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_tuesday'] ); ?> class="auto_update_checks_tuesday">
+						<input name="auto_update_checks_tuesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_tuesday'] ?? true ); ?> class="auto_update_checks_tuesday">
 						<label for="auto_update_checks_tuesday" style="min-width: inherit">Tuesday </label><br>
 
 						<input name="auto_update_checks_wednesday" value="0" type="hidden">
-						<input name="auto_update_checks_wednesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_wednesday'] ); ?> class="auto_update_checks_wednesday">
+						<input name="auto_update_checks_wednesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_wednesday'] ?? true ); ?> class="auto_update_checks_wednesday">
 						<label for="auto_update_checks_wednesday" style="min-width: inherit">Wednesday </label><br>
 
 						<input name="auto_update_checks_thursday" value="0" type="hidden">
-						<input name="auto_update_checks_thursday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_thursday'] ); ?> class="auto_update_checks_thursday">
+						<input name="auto_update_checks_thursday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_thursday'] ?? true ); ?> class="auto_update_checks_thursday">
 						<label for="auto_update_checks_thursday" style="min-width: inherit">Thursday </label><br>
 
 						<input name="auto_update_checks_friday" value="0" type="hidden">
-						<input name="auto_update_checks_friday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_friday'] ); ?> class="auto_update_checks_friday">
+						<input name="auto_update_checks_friday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_friday'] ?? true ); ?> class="auto_update_checks_friday">
 						<label for="auto_update_checks_friday" style="min-width: inherit">Friday </label><br>
 
 						<input name="auto_update_checks_saturday" value="0" type="hidden">
-						<input name="auto_update_checks_saturday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_saturday'] ); ?> class="auto_update_checks_saturday">
+						<input name="auto_update_checks_saturday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_saturday'] ?? false ); ?> class="auto_update_checks_saturday">
 						<label for="auto_update_checks_saturday" style="min-width: inherit">Saturday </label><br>
 
 						<input name="auto_update_checks_sunday" value="0" type="hidden">
-						<input name="auto_update_checks_sunday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ); ?> class="auto_update_checks_sunday">
+						<input name="auto_update_checks_sunday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ?? false ); ?> class="auto_update_checks_sunday">
 						<label for="auto_update_checks_sunday" style="min-width: inherit">Sunday </label><br>
 					</div>
 					<small>Set the weekdays in which you want to allow WP auto updates.</small>
@@ -175,7 +175,7 @@ if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) &
 				</div>
 				<div class="setting-row toggle">
 					<label for="auto_update_checks_emails" >Notification email to (comma separated)</label>
-					<input name="auto_update_checks_emails" style="width: 100%" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
+					<input name="auto_update_checks_emails" style="width: 100%" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' ) ); ?>" class="auto_update_checks_emails">
 					<small>Enter the email address(es) which should get notified on about auto update checks.</small>
 				</div>
 			</div>

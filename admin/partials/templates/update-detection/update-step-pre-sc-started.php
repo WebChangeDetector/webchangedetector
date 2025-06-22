@@ -17,7 +17,7 @@ require 'update-step-tiles.php';
 <div id="wcd-screenshots-done" class="wcd-step-container wcd-section"
 		style="max-width: 500px; margin: 20px auto; text-align: center; display: none;">
 	<div class="wcd-highlight-bg done">
-		<h2><?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
+		<h2><?php $utils_handler->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
 	</div>
 	<div class="wcd-highlight-bg">
 		<h2>Time For Updates</h2>

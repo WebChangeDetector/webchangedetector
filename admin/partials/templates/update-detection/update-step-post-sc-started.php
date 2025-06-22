@@ -16,7 +16,7 @@ require 'update-step-tiles.php';
 <!-- Pre-Update started / finished -->
 <div id="wcd-screenshots-done" class="wcd-step-container wcd-section" style="display: <?php echo $sc_processing ? 'none' : 'block'; ?>;">
 	<div class="wcd-highlight-bg done">
-		<h2><?php $wcd->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Change detections</h2>
+		<h2><?php $utils_handler->get_device_icon( 'check', 'screenshots-done-icon' ); ?>Change detections</h2>
 	</div>
 	<div class="wcd-highlight-bg">
 

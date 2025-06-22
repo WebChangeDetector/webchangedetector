@@ -27,6 +27,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Initialize shared handler instances to avoid duplication.
 		$api_manager     = new \WebChangeDetector\WebChangeDetector_API_Manager();
 		$account_handler = new \WebChangeDetector\WebChangeDetector_Admin_Account( $api_manager );
+        $utils_handler   = new \WebChangeDetector\WebChangeDetector_Admin_Utils();
 
 		// Start view.
 		echo '<div class="wrap">';

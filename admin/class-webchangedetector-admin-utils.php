@@ -79,14 +79,66 @@ class WebChangeDetector_Admin_Utils {
 	 * @param string $device The device type ('desktop' or 'mobile').
 	 * @return string HTML icon element.
 	 */
-	public static function get_device_icon( $device ) {
-		$icons = array(
-			'desktop' => '<span class="dashicons dashicons-desktop" title="' . esc_attr__( 'Desktop', 'webchangedetector' ) . '"></span>',
-			'mobile'  => '<span class="dashicons dashicons-smartphone" title="' . esc_attr__( 'Mobile', 'webchangedetector' ) . '"></span>',
-		);
+	 public static function get_device_icon( $icon, $css_class = '' ) {
+		
+		$output = '';
+		if ( 'thumbnail' === $icon ) {
+			$output = '<span class="dashicons dashicons-camera-alt"></span>';
+		}
+		if ( 'desktop' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-laptop"></span>';
+		}
+		if ( 'mobile' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-smartphone"></span>';
+		}
+		if ( 'page' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-media-default"></span>';
+		}
+		if ( 'change-detections' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-view-site"></span>';
+		}
+		if ( 'dashboard' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-home"></span>';
+		}
+		if ( 'logs' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-menu-alt"></span>';
+		}
+		if ( 'settings' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-generic"></span>';
+		}
+		if ( 'website-settings' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-widgets-menus"></span>';
+		}
+		if ( 'help' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-editor-help"></span>';
+		}
+		if ( 'auto-group' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-clock"></span>';
+		}
+		if ( 'update-group' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
+		}
+		if ( 'auto-update-group' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
+		}
+		if ( 'trash' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
+		}
+		if ( 'check' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
+		}
+		if ( 'fail' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
+		}
+		if ( 'warning' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
+		}
+		if ( 'upgrade' === $icon ) {
+			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
+		}
 
-		return isset( $icons[ $device ] ) ? $icons[ $device ] : '';
-	}
+		echo wp_kses( $output, array( 'span' => array( 'class' => array() ) ) );
+    }
 
 	/**
 	 * Get user-friendly comparison status name.
