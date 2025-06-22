@@ -50,6 +50,30 @@ class WebChangeDetector_Admin_AJAX {
      */
     private $account_handler;
 
+    /**
+     * The dashboard handler instance.
+     *
+     * @since 1.0.0
+     * @var WebChangeDetector_Admin_Dashboard
+     */
+    private $dashboard_handler;
+
+    /**
+     * The wordpress handler instance.
+     *
+     * @since 1.0.0
+     * @var WebChangeDetector_Admin_WordPress
+     */
+    private $wordpress_handler;
+
+    /**
+     * The screenshots handler instance.
+     *
+     * @since 1.0.0
+     * @var WebChangeDetector_Admin_Screenshots
+     */
+    private $screenshots_handler;
+
 	/**
 	 * Constructor.
 	 *
@@ -60,6 +84,9 @@ class WebChangeDetector_Admin_AJAX {
 		$this->admin       = $admin;
 		$this->api_manager = new WebChangeDetector_API_Manager();
         $this->account_handler = new WebChangeDetector_Admin_Account( $this->admin );
+        $this->dashboard_handler = new WebChangeDetector_Admin_Dashboard( $this->admin, $this->api_manager, $this->account_handler );
+        $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( $this->admin, $this->api_manager, $this->account_handler );
+        $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin, $this->api_manager, $this->account_handler );
 	}
 
 	/**
@@ -162,8 +189,8 @@ class WebChangeDetector_Admin_AJAX {
 			wp_die();
 		}
 
-		// Delegate to main admin class for now (will be refactored later)
-		if ( $this->admin && method_exists( $this->admin, 'sync_posts' ) && method_exists( $this->admin->settings_handler, 'get_website_details' ) ) {
+		// Delegate to WordPress handler
+		if ( $this->admin && $this->admin->wordpress_handler && method_exists( $this->admin->wordpress_handler, 'sync_posts' ) && method_exists( $this->admin->settings_handler, 'get_website_details' ) ) {
 			$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force );
 			$response = $this->admin->wordpress_handler->sync_posts( (bool) $force, $this->admin->settings_handler->get_website_details() );
@@ -202,7 +229,7 @@ class WebChangeDetector_Admin_AJAX {
 
 		// Delegate to main admin class for now (will be refactored later)
 		if ( $this->admin && method_exists( $this->admin, 'update_comparison_status' ) ) {
-			$result = $this->admin->update_comparison_status( 
+			$result = $this->screenshots_handler->update_comparison_status( 
 				esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), 
 				esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) 
 			);
@@ -250,36 +277,50 @@ class WebChangeDetector_Admin_AJAX {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
 		}
 
-		// Delegate to main admin class for now
-		if ( $this->admin && method_exists( $this->admin, 'load_comparisons_view' ) ) {
+		// Delegate to dashboard handler
+		if ( $this->admin && $this->admin->dashboard_handler && method_exists( $this->admin->dashboard_handler, 'load_comparisons_view' ) ) {
 			// Get and sanitize the POST data
 			$batch_id   = isset( $_POST['batch_id'] ) ? sanitize_text_field( wp_unslash( $_POST['batch_id'] ) ) : '';
 			$per_page   = isset( $_POST['per_page'] ) ? absint( $_POST['per_page'] ) : 30;
-			$offset     = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+			$page       = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
 			$status     = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 			$group_id   = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : '';
 			$url_search = isset( $_POST['url_search'] ) ? sanitize_text_field( wp_unslash( $_POST['url_search'] ) ) : '';
 
-			// Build filters array
-			$filters = array();
+			// Build filters array for API call
+			$api_filters = array(
+				'per_page' => $per_page,
+				'page'     => $page,
+			);
 			if ( ! empty( $status ) ) {
-				$filters['status'] = $status;
+				$api_filters['status'] = $status;
 			}
 			if ( ! empty( $group_id ) ) {
-				$filters['group_id'] = $group_id;
+				$api_filters['group_id'] = $group_id;
 			}
 			if ( ! empty( $url_search ) ) {
-				$filters['url_search'] = $url_search;
+				$api_filters['url_search'] = $url_search;
 			}
 
-			// This would normally get comparisons from API, but for now delegate to admin
-			$comparisons = array(); // Placeholder - would come from API
+			// Get comparisons from API
+			$api_filters['batches'] = $batch_id;
+			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $api_filters );
 			
-			ob_start();
-			$this->admin->load_comparisons_view( $batch_id, $comparisons, $filters );
-			$html = ob_get_clean();
-
-			wp_send_json_success( array( 'html' => $html ) );
+			// Build display filters array
+			$display_filters = array();
+			if ( ! empty( $status ) ) {
+				$display_filters['status'] = $status;
+			}
+			if ( ! empty( $group_id ) ) {
+				$display_filters['group_id'] = $group_id;
+			}
+			if ( ! empty( $url_search ) ) {
+				$display_filters['url_search'] = $url_search;
+			}
+			
+			// Output HTML directly (JavaScript expects raw HTML, not JSON)
+			$this->admin->dashboard_handler->load_comparisons_view( $batch_id, $comparisons, $display_filters );
+			wp_die();
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );
 		}
@@ -304,7 +345,7 @@ class WebChangeDetector_Admin_AJAX {
 			$batch_id = isset( $_POST['batch_id'] ) ? sanitize_text_field( wp_unslash( $_POST['batch_id'] ) ) : '';
 
 			ob_start();
-			$this->admin->load_failed_queues_view( $batch_id );
+			$this->screenshots_handler->load_failed_queues_view( $batch_id );
 			$html = ob_get_clean();
 
 			wp_send_json_success( array( 'html' => $html ) );
@@ -338,7 +379,7 @@ class WebChangeDetector_Admin_AJAX {
 				} else {
 					wp_send_json_success( $result );
 				}
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Exception during website creation: " . $e->getMessage() );
 				wp_send_json_error( array( 'message' => $e->getMessage() ) );
 			}
@@ -417,7 +458,7 @@ class WebChangeDetector_Admin_AJAX {
 	public function ajax_get_wcd_admin_bar_status() {
 		// Delegate to main admin class for now (this is a complex method)
 		if ( $this->admin && method_exists( $this->admin, 'ajax_get_wcd_admin_bar_status' ) ) {
-			$this->admin->ajax_get_wcd_admin_bar_status();
+			$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );
 		}

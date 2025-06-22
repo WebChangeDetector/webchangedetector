@@ -6,7 +6,7 @@
  */
 
 // Are we allowed to see the settings?
-if ( ! empty( $this->website_details['allowances']['monitoring_checks_settings'] ) && $this->website_details['allowances']['monitoring_checks_settings'] ) {
+if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_settings'] ) && $this->admin->website_details['allowances']['monitoring_checks_settings'] ) {
 	$enabled = $group_and_urls['enabled'];
 
 	?>

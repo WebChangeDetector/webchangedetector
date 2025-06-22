@@ -213,7 +213,7 @@ class WebChangeDetector_Admin_Screenshots {
 					<span class="pagination-links">
 						<?php
 						foreach ( $comparisons['meta']['links'] as $link ) {
-							$url_params = $this->admin->get_params_of_url( $link['url'] );
+							$url_params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 							$class      = ! $link['url'] || $link['active'] ? 'disabled' : '';
 							$page       = $url_params['page'] ?? 1;
 							?>
@@ -322,7 +322,7 @@ class WebChangeDetector_Admin_Screenshots {
 		$token = $postdata['token'] ?? null;
 
 		// Verify nonce for security.
-		if ( empty( $_GET['_wpnonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ), 'ajax-nonce' ) ) {
+		if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
 			echo esc_html__( 'Something went wrong. Please try again.', 'webchangedetector' );
 			wp_die();
 		}
@@ -332,7 +332,17 @@ class WebChangeDetector_Admin_Screenshots {
 		}
 
 		if ( isset( $token ) ) {
-			$compare = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
+			$api_response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token );
+			
+			// Check if API response is valid
+			if ( empty( $api_response ) || ! isset( $api_response['data'] ) ) {
+				echo '<p class="notice notice-error" style="padding: 10px;">' .
+					esc_html__( 'Sorry, we couldn\'t find this change detection or you don\'t have permission to view it.', 'webchangedetector' ) .
+					' <a href="?page=webchangedetector-change-detections">' . esc_html__( 'Go back to Change Detections', 'webchangedetector' ) . '</a></p>';
+				return;
+			}
+			
+			$compare = $api_response['data'];
 
 			$public_token = $compare['token'];
 			$all_tokens   = array();

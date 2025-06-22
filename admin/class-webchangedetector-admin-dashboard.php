@@ -533,7 +533,7 @@ class WebChangeDetector_Admin_Dashboard {
 					<span class="pagination-links">
 						<?php
 						foreach ( $comparisons['meta']['links'] as $link ) {
-							$url_params = $this->admin->get_params_of_url( $link['url'] );
+							$url_params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 							$class      = ! $link['url'] || $link['active'] ? 'disabled' : '';
 							$page       = $url_params['page'] ?? 1;
 							?>

@@ -342,7 +342,57 @@ class WebChangeDetector_Admin_Settings {
 								</tr>
 								<?php
 								foreach ( $urls as $url ) {
-									$this->admin->generate_slider_html( 'url', 'desktop', $url['enabled_desktop'], $url, $url['id'], $group_and_urls['id'] );
+									// init.
+									$checked = array(
+										'desktop' => $url['desktop'] ? 'checked' : '',
+										'mobile'  => $url['mobile'] ? 'checked' : '',
+									);
+									?>
+									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
+										<td class="checkbox-desktop" style="text-align: center;">
+											<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url['id'] ); ?>">
+											<label class="switch">
+												<input type="checkbox"
+												data-nonce="<?php echo esc_html( $nonce ); ?>"
+												data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
+												data-screensize="desktop"
+												data-url_id="<?php echo esc_html( $url['id'] ); ?>"
+												name="desktop-<?php echo esc_html( $url['id'] ); ?>"
+												value="1" <?php echo esc_html( $checked['desktop'] ); ?>
+												id="desktop-<?php echo esc_html( $url['id'] ); ?>"
+												onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
+												<span class="slider round"></span>
+											</label>
+										</td>
+
+										<td class="checkbox-mobile" style="text-align: center;">
+										<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url['id'] ); ?>">
+										<label class="switch">
+											<input type="checkbox"
+											data-nonce="<?php echo esc_html( $nonce ); ?>"
+											data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
+											data-screensize="mobile"
+											data-url_id="<?php echo esc_html( $url['id'] ); ?>"
+											name="mobile-<?php echo esc_html( $url['id'] ); ?>"
+											value="1" <?php echo esc_html( $checked['mobile'] ); ?>
+											id="mobile-<?php echo esc_html( $url['id'] ); ?>"
+											onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
+											<span class="slider round"></span>
+										</label>
+										</td>
+
+										<td style="text-align: left;">
+											<strong><?php echo esc_html( $url['html_title'] ); ?></strong><br>
+											<a href="<?php echo ( is_ssl() ? 'https://' : 'http://' ) . esc_html( $url['url'] ); ?>" target="_blank"><?php echo esc_html( $url['url'] ); ?></a>
+										</td>
+
+										<td style="text-align: left;"><?php echo esc_html( $url['category'] ); ?></td>
+
+									</tr>
+
+									<script>mmMarkRows('<?php echo esc_html( $url['id'] ); ?>');</script>
+
+									<?php
 								}
 								?>
 							<?php } else { ?>
@@ -356,7 +406,8 @@ class WebChangeDetector_Admin_Settings {
 
 						<?php
 						// Pagination.
-						if ( $urls_meta['total_pages'] > 1 ) {
+                        \WebChangeDetector\WebChangeDetector_Admin_Utils::dd($urls_meta);
+						if ( ! empty( $urls_meta ) && isset( $urls_meta['total_pages'] ) && $urls_meta['total_pages'] > 1 ) {
 							?>
 							<div class="pagination-container" style="text-align: center; margin-top: 20px;">
 								<?php
@@ -405,15 +456,28 @@ class WebChangeDetector_Admin_Settings {
 	}
 
 	/**
+	 * Clear the cached website details.
+	 *
+	 * @since    1.0.0
+	 * @return   void
+	 */
+	public function clear_website_details_cache() {
+		// This method forces a refresh of the static cached website details
+		// by calling get_website_details with the force_refresh parameter
+		$this->get_website_details( true );
+	}
+
+	/**
 	 * Get website details from API.
 	 *
 	 * @since    1.0.0
+	 * @param    bool    $force_refresh    Whether to force refresh the cached data.
 	 * @return   array|string    The website details or error message.
 	 */
-	public function get_website_details() {
+	public function get_website_details( $force_refresh = false ) {
 		static $website_details;
 
-		if ( empty( $website_details ) ) {
+		if ( $force_refresh || empty( $website_details ) ) {
 			$websites = \WebChangeDetector\WebChangeDetector_API_V2::get_websites_v2();
 
 			if ( empty( $websites['data'] ) ) {

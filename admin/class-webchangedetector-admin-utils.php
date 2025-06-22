@@ -47,6 +47,13 @@ class WebChangeDetector_Admin_Utils {
 		return $url;
 	}
 
+    public static function dd( $data ) {
+        echo '<pre>';
+        print_r( $data );
+        echo '</pre>';
+        die();
+    }
+
 	/**
 	 * Check if a string is valid JSON.
 	 *
@@ -390,5 +397,82 @@ class WebChangeDetector_Admin_Utils {
 	 */
 	public static function verify_nonce( $nonce, $action ) {
 		return wp_verify_nonce( $nonce, 'webchangedetector_' . $action );
+	}
+
+	/**
+	 * Extract parameters from URL query string.
+	 *
+	 * Safely parses URL parameters and returns them as an associative array.
+	 *
+	 * @since 1.0.0
+	 * @param string $url The URL to parse.
+	 * @return array|false Array of parameters or false if URL is empty.
+	 */
+	public static function get_params_of_url( $url ) {
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		$url_components = wp_parse_url( $url );
+		if ( ! isset( $url_components['query'] ) ) {
+			return array();
+		}
+
+		parse_str( $url_components['query'], $params );
+		return $params;
+	}
+
+	/**
+	 * Generate HTML for admin bar slider.
+	 *
+	 * Creates HTML for toggle switches used in the WordPress admin bar
+	 * for controlling monitoring settings on individual pages.
+	 *
+	 * @since 1.0.0
+	 * @param string      $type       'monitoring' or 'manual'.
+	 * @param string      $device     'desktop' or 'mobile'.
+	 * @param bool        $is_enabled Current state.
+	 * @param string      $url        Current page URL.
+	 * @param string|null $url_id     WCD URL ID if known.
+	 * @param string|null $group_id   WCD Group ID.
+	 * @return string HTML for the slider.
+	 */
+	public static function generate_slider_html( $type, $device, $is_enabled, $url, $url_id, $group_id ) {
+		$checked = $is_enabled ? 'checked' : '';
+		$label   = ucfirst( $device );
+		$id      = sprintf( 
+			'wcd-slider-%s-%s-%s', 
+			$type, 
+			$device, 
+			str_replace( array( '.', ':', '/' ), '-', $url_id ?? wp_generate_password( 5, false ) ) 
+		);
+
+		// Data attributes for JavaScript.
+		$data_attrs = sprintf(
+			'data-type="%s" data-device="%s" data-url="%s" data-url-id="%s" data-group-id="%s"',
+			esc_attr( $type ),
+			esc_attr( $device ),
+			esc_attr( $url ),
+			esc_attr( $url_id ?? '' ),
+			esc_attr( $group_id ?? '' )
+		);
+
+		// Generate switch HTML structure.
+		$html = sprintf(
+			'<div class="wcd-admin-bar-slider">' .
+			'<label for="%s" class="wcd-slider-label">%s:</label>' .
+			'<label class="wcd-switch">' .
+			'<input type="checkbox" id="%s" class="wcd-admin-bar-toggle" %s %s> ' .
+			'<span class="wcd-slider-round"></span>' .
+			'</label>' .
+			'</div>',
+			esc_attr( $id ),
+			esc_html( $label ),
+			esc_attr( $id ),
+			$checked,
+			$data_attrs
+		);
+
+		return $html;
 	}
 } 

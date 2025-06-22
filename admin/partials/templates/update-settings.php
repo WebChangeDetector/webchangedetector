@@ -6,9 +6,9 @@
  */
 
 // Are we allowed to see the settings?
-if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) && $this->website_details['allowances']['manual_checks_settings'] ) {
+if ( ! empty( $this->admin->website_details['allowances']['manual_checks_settings'] ) && $this->admin->website_details['allowances']['manual_checks_settings'] ) {
 
-	$auto_update_settings = $this->website_details['auto_update_settings'];
+	$auto_update_settings = $this->admin->website_details['auto_update_settings'];
 
 	$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 	foreach ( $weekdays as $weekday ) {

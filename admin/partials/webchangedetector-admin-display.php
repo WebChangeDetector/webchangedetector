@@ -342,6 +342,9 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				} else {
 					$wcd->settings_handler->update_manual_check_group_settings( $postdata );
 				}
+				
+				// Refresh website details cache to show updated settings immediately
+				$wcd->website_details = $wcd->settings_handler->get_website_details( true );
 				break;
 
 			case 'start_manual_checks':
@@ -553,7 +556,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							<span class="pagination-links">
 								<?php
 								foreach ( $pagination['links'] as $link ) {
-									$params = $wcd->get_params_of_url( $link['url'] );
+									$params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 									$class  = ! $link['url'] || $link['active'] ? 'disabled' : '';
 									?>
 									<a class="tablenav-pages-navspan button <?php echo esc_html( $class ); ?>"
@@ -601,7 +604,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 							$progress_make_update      = 'disabled';
 							$progress_post             = 'disabled';
 							$progress_change_detection = 'disabled';
-							$wcd->get_url_settings( false );
+							$wcd->settings_handler->get_url_settings( false );
 							break;
 
 						case WCD_OPTION_UPDATE_STEP_PRE:
@@ -666,7 +669,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				?>
 				<div class="action-container">
 					<?php
-					$wcd->get_url_settings( true );
+					$wcd->settings_handler->get_url_settings( true );
 					?>
 				</div>
 				<div class="clear"></div>
@@ -765,7 +768,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 									$_GET['paged'] = 1;
 								}
 								foreach ( $queues_meta['links'] as $link ) {
-									$url_params = $wcd->get_params_of_url( $link['url'] );
+									$url_params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 
 									if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
 										?>
@@ -995,7 +998,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 				 * Show compare
 				 */
 			case 'webchangedetector-show-detection':
-									$wcd->screenshots_handler->get_comparison_by_token( $postdata );
+				if ( ! $wcd->settings_handler->is_allowed( 'change_detections_view' ) ) {
+					break;
+				}
+				$wcd->screenshots_handler->get_comparison_by_token( $postdata );
 				break;
 
 				/***************
