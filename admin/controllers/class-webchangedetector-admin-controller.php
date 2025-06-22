@@ -59,9 +59,8 @@ class WebChangeDetector_Admin_Controller {
 	 * Initialize dependencies.
 	 */
 	private function init_dependencies() {
-		// For now, we'll keep these as placeholders until we create them in later phases.
-		// $this->view_renderer = new WebChangeDetector_View_Renderer( $this->admin );
-		// $this->action_handler = new WebChangeDetector_Action_Handler( $this->admin );
+		// Dependencies are initialized through the main admin class.
+		// View rendering and action handling are managed by their respective handlers.
 	}
 
 	/**
@@ -386,7 +385,17 @@ class WebChangeDetector_Admin_Controller {
 
 			if ( ! $this->admin->website_details ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Can't get website_details." );
-				// TODO Exit with a proper error message.
+				?>
+				<div class="notice notice-error">
+					<p><strong>WebChange Detector:</strong> Sorry, we couldn't retrieve your account settings. Please check your API token or contact support if this issue persists.</p>
+					<form method="post" style="margin-top: 10px;">
+						<input type="hidden" name="wcd_action" value="reset_api_token">
+						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<input type="submit" value="Reset API Token" class="button button-secondary">
+					</form>
+				</div>
+				<?php
+				return false;
 			}
 
 			// Make the initial post sync.

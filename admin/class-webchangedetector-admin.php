@@ -583,9 +583,11 @@ class WebChangeDetector_Admin {
 
 
 	/** Save url settings.
-	 *  TODO: Optional save settings for monitoring and manual checks.
 	 *
-	 * @param array $postdata The postdata.
+	 * Handles saving URL selections for groups (monitoring or manual checks).
+	 * Updates the selected URLs for desktop and mobile views through the API.
+	 *
+	 * @param array $postdata The postdata containing URL selections.
 	 *
 	 * @return void
 	 */
