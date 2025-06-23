@@ -107,7 +107,7 @@ class WebChangeDetector_Notification_View {
 	 * Render API error notice.
 	 */
 	public function render_api_error_notice() {
-		$message = 'Something went wrong. Please try to re-add your api token.';
+		$message = 'Something went wrong. Maybe the API token is invalid?';
 		$message .= '<form method="post" style="margin-top: 10px;">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );

@@ -218,8 +218,8 @@ class WebChangeDetector_Error_Recovery {
 		// Database error recovery strategies.
 		$this->register_recovery_strategy( 'database', 'Recreate Database Tables', function( $exception ) {
 			// Attempt to recreate plugin tables.
+			// Creating a new logger instance will automatically create the log table via constructor.
 			$logger = new WebChangeDetector_Logger();
-			$logger->maybe_create_log_table();
 			
 			return array(
 				'success' => true,
@@ -323,14 +323,21 @@ class WebChangeDetector_Error_Recovery {
 	 */
 	private function check_api_connectivity() {
 		try {
-			// Simple API health check.
+			// Simple API health check using test_connection method.
 			$api_manager = new WebChangeDetector_API_Manager();
-			$response = $api_manager->make_request( 'GET', '/health' );
+			$result = $api_manager->test_connection();
+			
+			if ( is_wp_error( $result ) ) {
+				return array(
+					'status'  => false,
+					'message' => 'API connectivity failed: ' . $result->get_error_message(),
+					'details' => array( 'error' => $result->get_error_message() ),
+				);
+			}
 			
 			return array(
 				'status'  => true,
 				'message' => 'API connectivity OK',
-				'details' => array( 'response_code' => $response['response_code'] ),
 			);
 		} catch ( \Exception $e ) {
 			return array(

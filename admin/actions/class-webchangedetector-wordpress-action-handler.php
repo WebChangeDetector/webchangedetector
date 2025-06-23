@@ -144,16 +144,23 @@ class WebChangeDetector_WordPress_Action_Handler {
 	 */
 	public function handle_start_manual_checks( $data ) {
 		try {
-			// Reset to settings step.
-			update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_SETTINGS );
+			// Update step in update detection - matches old implementation.
+			if ( ! empty( $data['step'] ) ) {
+				update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $data['step'] ) );
+				$current_step = $data['step'];
+			} else {
+				// Default to pre-update step if no step provided.
+				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE );
+				$current_step = WCD_OPTION_UPDATE_STEP_PRE;
+			}
 			
-			// Clear any existing batch tracking.
+			// Clear any existing batch tracking when starting fresh.
 			delete_option( 'wcd_manual_checks_batch' );
 			
 			return array(
 				'success' => true,
 				'message' => 'Manual checks workflow started successfully.',
-				'current_step' => WCD_OPTION_UPDATE_STEP_SETTINGS,
+				'current_step' => $current_step,
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -214,16 +221,29 @@ class WebChangeDetector_WordPress_Action_Handler {
 			// Exclude certain post types.
 			$excluded_types = array( 'attachment', 'revision', 'nav_menu_item' );
 			
-			foreach ( $post_types as $post_type ) {
-				if ( ! in_array( $post_type->name, $excluded_types, true ) ) {
-					$available_types[] = array(
-						'slug' => $post_type->name,
-						'name' => $post_type->label,
-						'description' => $post_type->description,
-						'public' => $post_type->public,
-						'count' => wp_count_posts( $post_type->name )->publish ?? 0,
-					);
+			// Get already enabled post types from website details.
+			$enabled_post_types = array();
+			if ( ! empty( $this->admin->website_details['sync_url_types'] ) ) {
+				foreach ( $this->admin->website_details['sync_url_types'] as $sync_url_type ) {
+					if ( ! empty( $sync_url_type['post_type_slug'] ) ) {
+						$enabled_post_types[] = $sync_url_type['post_type_slug'];
+					}
 				}
+			}
+			
+			foreach ( $post_types as $post_type ) {
+				// Skip if post type is excluded or already enabled.
+				if ( in_array( $post_type->name, $excluded_types, true ) || in_array( $post_type->name, $enabled_post_types, true ) ) {
+					continue;
+				}
+				
+				$available_types[] = array(
+					'slug' => $post_type->name,
+					'name' => $post_type->label,
+					'description' => $post_type->description,
+					'public' => $post_type->public,
+					'count' => wp_count_posts( $post_type->name )->publish ?? 0,
+				);
 			}
 			
 			return $available_types;
@@ -324,20 +344,12 @@ class WebChangeDetector_WordPress_Action_Handler {
 	 * @return bool Success status.
 	 */
 	private function sync_specific_post_types( $post_types, $force ) {
-		$success = true;
+		// For now, we'll use the general sync_posts method
+		// since there's no specific sync_post_type method available.
+		// The sync_posts method handles all configured post types.
+		$result = $this->admin->wordpress_handler->sync_posts( $force );
 		
-		foreach ( $post_types as $post_type ) {
-			$post_type = sanitize_text_field( $post_type );
-			
-			if ( post_type_exists( $post_type ) ) {
-				$result = $this->admin->wordpress_handler->sync_post_type( $post_type, $force );
-				if ( ! $result ) {
-					$success = false;
-				}
-			}
-		}
-		
-		return $success;
+		return (bool) $result;
 	}
 
 	/**

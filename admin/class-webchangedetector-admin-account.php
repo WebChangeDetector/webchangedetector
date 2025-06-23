@@ -230,6 +230,7 @@ class WebChangeDetector_Admin_Account {
 					<input type="submit" value="Reset API Token" class="button button-delete"><br>
 				</form>
 			</div>
+            <hr>
 			<div class="box-plain no-border">
 				<h2>Delete Account</h2>
 				<p>To delete your account completely, please login to your account at
@@ -244,7 +245,7 @@ class WebChangeDetector_Admin_Account {
 			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
 			?>
 			<div class="highlight-container">
-				<form class="frm_use_api_token highlight-inner no-bg" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
+				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
 					<input type="hidden" name="wcd_action" value="save_api_token">
 					<?php wp_nonce_field( 'save_api_token' ); ?>
 					<h2>Use Existing API Token</h2>
@@ -271,36 +272,36 @@ class WebChangeDetector_Admin_Account {
 	 * @return   void                    Outputs the no account page HTML.
 	 */
 	public function get_no_account_page( $api_token = '' ) {
+		$user = wp_get_current_user();
+		$first_name = $user->user_firstname;
+		$last_name = $user->user_lastname;
+		$email = $user->user_email;
 		?>
-		<div class="wcd-no-account-container">
-			<div class="wcd-header">
-				<h1><?php esc_html_e( 'Welcome to WebChange Detector', 'webchangedetector' ); ?></h1>
-				<p><?php esc_html_e( 'Monitor your website for visual changes automatically', 'webchangedetector' ); ?></p>
+		<div class="no-account-page">
+			<div class="no-account">
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
+				<h2><?php echo esc_html__( 'See what changed before your users do.', 'webchangedetector' ); ?></h2>
 			</div>
-			
-			<div class="wcd-account-options">
-				<div class="wcd-create-account">
-					<h3><?php esc_html_e( 'Create Free Account', 'webchangedetector' ); ?></h3>
-					<p><?php esc_html_e( 'Get started with a free trial account', 'webchangedetector' ); ?></p>
-					<button class="button button-primary" onclick="wcdShowCreateAccount()">
-						<?php esc_html_e( 'Create Free Account', 'webchangedetector' ); ?>
-					</button>
+			<div class="highlight-wrapper">
+				<div class="highlight-container">
+					<div class="highlight-inner">
+						<h2><?php echo esc_html__( 'Create Free Account', 'webchangedetector' ); ?></h2>
+						<p>
+							<?php echo esc_html__( 'Create your free account with', 'webchangedetector' ); ?><br><strong><?php echo esc_html__( '1000 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'in the first month and', 'webchangedetector' ); ?> <strong><?php echo esc_html__( '50 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'after.', 'webchangedetector' ); ?><br>
+						</p>
+						<form class="frm_new_account" method="post">
+							<input type="hidden" name="wcd_action" value="create_trial_account">
+							<?php wp_nonce_field( 'create_trial_account' ); ?>
+							<input type="text" name="name_first" placeholder="<?php echo esc_attr__( 'First Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $first_name ); ?>" required>
+							<input type="text" name="name_last" placeholder="<?php echo esc_attr__( 'Last Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $last_name ); ?>" required>
+							<input type="email" name="email" placeholder="<?php echo esc_attr__( 'Email', 'webchangedetector' ); ?>" value="<?php echo esc_html( $email ); ?>" required>
+							<input type="password" name="password" placeholder="<?php echo esc_attr__( 'Password', 'webchangedetector' ); ?>" required>
+
+							<input type="submit" class="button-primary" value="<?php echo esc_attr__( 'Create Free Account', 'webchangedetector' ); ?>">
+						</form>
+					</div>
 				</div>
-				
-				<div class="wcd-existing-account">
-					<h3><?php esc_html_e( 'Have an Account?', 'webchangedetector' ); ?></h3>
-					<p><?php esc_html_e( 'Connect your existing account with an API token', 'webchangedetector' ); ?></p>
-					<button class="button" onclick="wcdShowApiTokenForm()">
-						<?php esc_html_e( 'Enter API Token', 'webchangedetector' ); ?>
-					</button>
-				</div>
-			</div>
-			
-			<div id="wcd-create-account-form" style="display: none;">
-				<?php $this->get_create_account_form(); ?>
-			</div>
-			
-			<div id="wcd-api-token-form" style="display: none;">
+
 				<?php $this->get_api_token_form( $api_token ); ?>
 			</div>
 		</div>

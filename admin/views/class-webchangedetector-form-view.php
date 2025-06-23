@@ -74,7 +74,7 @@ class WebChangeDetector_Form_View {
 
 			<select name="group_type">
 				<option value="" <?php selected( empty( $filters['group_type'] ) ); ?>>All Checks</option>
-				<option value="post" <?php selected( $filters['group_type'] ?? '', 'post' ); ?>>Manual Checks & Auto Update Checks</option>
+				<option value="post" <?php selected( $filters['group_type'] ?? '', 'post' ); ?>>Auto Update Checks & Manual Checks</option>
 				<option value="auto" <?php selected( $filters['group_type'] ?? '', 'auto' ); ?>>Monitoring Checks</option>
 			</select>
 			

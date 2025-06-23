@@ -75,7 +75,15 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_make_update      = 'disabled';
 					$progress_post             = 'disabled';
 					$progress_change_detection = 'disabled';
-					include plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/update-step-pre-sc.php';
+					$account_details = $this->admin->account_handler->get_account();
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step( 'pre', array( 
+						'account_details' => $account_details,
+						'progress_setting' => $progress_setting,
+						'progress_pre' => $progress_pre,
+						'progress_make_update' => $progress_make_update,
+						'progress_post' => $progress_post,
+						'progress_change_detection' => $progress_change_detection,
+					) );
 					break;
 
 				case WCD_OPTION_UPDATE_STEP_PRE_STARTED:
@@ -85,7 +93,14 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_post             = 'disabled';
 					$progress_change_detection = 'disabled';
 					$sc_processing             = $this->admin->get_processing_queue_v2(); // used in template.
-					include plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/update-step-pre-sc-started.php';
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step( 'pre_started', array( 
+						'sc_processing' => $sc_processing,
+						'progress_setting' => $progress_setting,
+						'progress_pre' => $progress_pre,
+						'progress_make_update' => $progress_make_update,
+						'progress_post' => $progress_post,
+						'progress_change_detection' => $progress_change_detection,
+					) );
 					break;
 
 				case WCD_OPTION_UPDATE_STEP_POST:
@@ -94,7 +109,13 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_make_update      = 'done';
 					$progress_post             = 'active';
 					$progress_change_detection = 'disabled';
-					include plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/update-step-post-sc.php';
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step( 'post', array( 
+						'progress_setting' => $progress_setting,
+						'progress_pre' => $progress_pre,
+						'progress_make_update' => $progress_make_update,
+						'progress_post' => $progress_post,
+						'progress_change_detection' => $progress_change_detection,
+					) );
 					break;
 
 				case WCD_OPTION_UPDATE_STEP_POST_STARTED:
@@ -104,7 +125,14 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_post             = 'active';
 					$progress_change_detection = 'disabled';
 					$sc_processing             = $this->admin->get_processing_queue_v2(); // used in template.
-					include plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/update-step-post-sc-started.php';
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step( 'post_started', array( 
+						'sc_processing' => $sc_processing,
+						'progress_setting' => $progress_setting,
+						'progress_pre' => $progress_pre,
+						'progress_make_update' => $progress_make_update,
+						'progress_post' => $progress_post,
+						'progress_change_detection' => $progress_change_detection,
+					) );
 					break;
 
 				case WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION:
@@ -113,7 +141,13 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_make_update      = 'done';
 					$progress_post             = 'done';
 					$progress_change_detection = 'active';
-					include plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/update-step-change-detection.php';
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step( 'change_detection', array( 
+						'progress_setting' => $progress_setting,
+						'progress_pre' => $progress_pre,
+						'progress_make_update' => $progress_make_update,
+						'progress_post' => $progress_post,
+						'progress_change_detection' => $progress_change_detection,
+					) );
 					break;
 			}
 			?>

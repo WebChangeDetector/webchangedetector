@@ -662,7 +662,7 @@ class WebChangeDetector_Admin {
 				<?php if ( $this->settings_handler->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Auto Update Checks & Manual Checks
 				</a>
 				<?php } ?>
 				<?php if ( $this->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>

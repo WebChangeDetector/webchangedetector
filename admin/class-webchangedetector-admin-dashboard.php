@@ -697,7 +697,7 @@ class WebChangeDetector_Admin_Dashboard {
 				</form>
 			</div>
 			<?php
-			include 'partials/templates/show-change-detection.php';
+			$this->admin->view_renderer->get_component( 'templates' )->render_show_change_detection( $compare );
 			echo '</div>';
 
 		} else {
@@ -715,75 +715,5 @@ class WebChangeDetector_Admin_Dashboard {
 		}
 	}
 
-	/**
-	 * Display the no account page with account creation form and API token input.
-	 *
-	 * @since    1.0.0
-	 * @param    string $api_token Optional API token to pre-fill.
-	 * @return   void
-	 */
-	public function get_no_account_page( $api_token = '' ) {
-		$user      = wp_get_current_user();
-		$user_meta = get_user_meta( $user->ID );
 
-		// If we have a reseller url, we get the api token from there.
-		if ( defined( 'WCD_RESELLER_URL' ) && WCD_RESELLER_URL ) {
-			$body_args = array(
-				'name_first' => ! empty( $user_meta['first_name'][0] ) ? $user_meta['first_name'][0] : 'n/a',
-				'name_last'  => ! empty( $user_meta['last_name'][0] ) ? $user_meta['last_name'][0] : 'n/a',
-				'email'      => $user->user_email,
-				'domain'     => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-			);
-
-			$response   = wp_remote_post( WCD_RESELLER_URL, array( 'body' => $body_args ) );
-			$subaccount = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! empty( $subaccount['api_token'] ) ) {
-				$this->admin->account_handler->save_api_token( $subaccount, $subaccount['api_token'] );
-
-				wp_safe_redirect( '/wp-admin/admin.php?page=webchangedetector' );
-				exit;
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( wp_remote_retrieve_body( $response ) ) . '</p></div>';
-				return;
-			}
-		}
-
-		if ( isset( $_POST['wcd_action'] ) && 'create_trial_account' === sanitize_text_field( wp_unslash( $_POST['wcd_action'] ) ) ) {
-			check_admin_referer( 'create_trial_account' );
-		}
-
-		$first_name = isset( $_POST['name_first'] ) ? sanitize_text_field( wp_unslash( $_POST['name_first'] ) ) : wp_get_current_user()->user_firstname;
-		$last_name  = isset( $_POST['name_last'] ) ? sanitize_text_field( wp_unslash( $_POST['name_last'] ) ) : wp_get_current_user()->user_lastname;
-		$email      = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : wp_get_current_user()->user_email;
-		?>
-		<div class="no-account-page">
-			<div class="no-account">
-				<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() . '/admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
-				<h2><?php echo esc_html__( 'See what changed before your users do.', 'webchangedetector' ); ?></h2>
-			</div>
-			<div class="highlight-wrapper">
-				<div class="highlight-container">
-					<div class="highlight-inner">
-						<h2><?php echo esc_html__( 'Create Free Account', 'webchangedetector' ); ?></h2>
-						<p>
-							<?php echo esc_html__( 'Create your free account with', 'webchangedetector' ); ?><br><strong><?php echo esc_html__( '1000 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'in the first month and', 'webchangedetector' ); ?> <strong><?php echo esc_html__( '50 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'after.', 'webchangedetector' ); ?><br>
-						</p>
-						<form class="frm_new_account" method="post">
-							<input type="hidden" name="wcd_action" value="create_trial_account">
-							<?php wp_nonce_field( 'create_trial_account' ); ?>
-							<input type="text" name="name_first" placeholder="<?php echo esc_attr__( 'First Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $first_name ); ?>" required>
-							<input type="text" name="name_last" placeholder="<?php echo esc_attr__( 'Last Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $last_name ); ?>" required>
-							<input type="email" name="email" placeholder="<?php echo esc_attr__( 'Email', 'webchangedetector' ); ?>" value="<?php echo esc_html( $email ); ?>" required>
-							<input type="password" name="password" placeholder="<?php echo esc_attr__( 'Password', 'webchangedetector' ); ?>" required>
-
-							<input type="submit" class="button-primary" value="<?php echo esc_attr__( 'Create Free Account', 'webchangedetector' ); ?>">
-						</form>
-					</div>
-				</div>
-
-				<?php $this->admin->account_handler->get_api_token_form( $api_token ); ?>
-			</div>
-		</div>
-		<?php
-	}
 } 

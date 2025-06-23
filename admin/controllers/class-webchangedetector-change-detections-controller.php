@@ -101,7 +101,7 @@ class WebChangeDetector_Change_Detections_Controller {
 
 				<select name="group_type">
 					<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
-					<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Manual Checks & Auto Update Checks</option>
+					<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Auto Update Checks & Manual Checks</option>
 					<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
 				</select>
 				<select name="status" class="js-dropdown">

@@ -126,12 +126,13 @@ class WebChangeDetector_API_V2 {
 	 * @param string $collection_uuid The collection uuid.
 	 */
 	public static function start_url_sync( $delete_missing_urls = true, $collection_uuid = null ) {
-		return self::api_v2(
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Start URL sync: ' . $collection_uuid );
+        return self::api_v2(
 			array(
 				'action'              => 'start-sync',
 				'collection_uuid'     => $collection_uuid,
 				'delete_missing_urls' => $delete_missing_urls,
-			)
+            )
 		);
 	}
 
@@ -147,7 +148,7 @@ class WebChangeDetector_API_V2 {
 		);
 		$args = array_merge( $args, $group_settings );
 
-		return self::api_v2( $args, 'PATCH' );
+		return self::api_v2( $args, 'PUT' );
 	}
 
 	/** Update urls.

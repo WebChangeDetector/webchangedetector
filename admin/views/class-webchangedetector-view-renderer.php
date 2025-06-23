@@ -50,6 +50,7 @@ class WebChangeDetector_View_Renderer {
 			'tables'        => new WebChangeDetector_Table_View( $this->admin ),
 			'cards'         => new WebChangeDetector_Card_View( $this->admin ),
 			'modals'        => new WebChangeDetector_Modal_View( $this->admin ),
+			'templates'     => new WebChangeDetector_Template_View( $this->admin ),
 		);
 	}
 
@@ -189,7 +190,7 @@ class WebChangeDetector_View_Renderer {
 				<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) ) : ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Auto Update Checks & Manual Checks
 				</a>
 				<?php endif; ?>
 				

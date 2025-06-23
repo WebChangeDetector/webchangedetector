@@ -85,7 +85,7 @@ class WebChangeDetector_Admin_AJAX {
 		$this->api_manager = new WebChangeDetector_API_Manager();
         $this->account_handler = new WebChangeDetector_Admin_Account( $this->admin );
         $this->dashboard_handler = new WebChangeDetector_Admin_Dashboard( $this->admin, $this->api_manager, $this->account_handler );
-        $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( $this->admin, $this->api_manager, $this->account_handler );
+        $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( 'webchangedetector', WEBCHANGEDETECTOR_VERSION, $this->admin );
         $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin, $this->api_manager, $this->account_handler );
 	}
 
@@ -456,8 +456,8 @@ class WebChangeDetector_Admin_AJAX {
 	 * @since 1.0.0
 	 */
 	public function ajax_get_wcd_admin_bar_status() {
-		// Delegate to main admin class for now (this is a complex method)
-		if ( $this->admin && method_exists( $this->admin, 'ajax_get_wcd_admin_bar_status' ) ) {
+		// Delegate to WordPress handler (use local instance)
+		if ( $this->wordpress_handler && method_exists( $this->wordpress_handler, 'ajax_get_wcd_admin_bar_status' ) ) {
 			$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );

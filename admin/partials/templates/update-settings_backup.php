@@ -129,7 +129,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</script>
 
 				<div class="setting-row toggle">
-					<label for="auto_update_checks_from" >Auto update times from </label>
+					<label for="auto_update_checks_from" >Auto update timeframe </label>
 					<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ?? date('H:i') ); ?>" type="time" class="auto_update_checks_from">
 					<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
 					<input id="auto_update_checks_to" name="auto_update_checks_to" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_to'] ?? date('H:i', strtotime('+2 hours')) ); ?>" type="time" class="auto_update_checks_to">
@@ -137,7 +137,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 
 				<div class="setting-row toggle">
-					<label for="auto_update_checks_weekdays" style="vertical-align:top;">On days</label>
+					<label for="auto_update_checks_weekdays" style="vertical-align:top;">Limit to weekdays</label>
 					<div id="auto_update_checks_weekday_container" style="display: inline-block">
 
 						<input name="auto_update_checks_monday" value="0" type="hidden">

@@ -88,9 +88,11 @@
 }
 
 .webchangedetector .highlight-inner {
-    padding: 20px;
-    background: #E3EDF8;
-    border: 1px solid #276ECC;
+    padding: 30px;
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .webchangedetector .highlight-inner.no-bg {
@@ -185,6 +187,23 @@
     max-width: 1000px;
     margin: 50px auto 0;
     text-align: center;
+}
+
+.webchangedetector .no-account {
+    margin-bottom: 30px;
+}
+
+.webchangedetector .wcd-logo {
+    max-width: 300px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.webchangedetector .no-account h2 {
+    font-size: 28px;
+    margin: 20px 0;
+    color: #333;
+    font-weight: 400;
 }
 
 .webchangedetector .no-account-page h2 {
@@ -556,11 +575,21 @@
     color: green;
 }
 
+.webchangedetector .box-plain h2 {
+    margin-bottom: 30px;
+}
+
 .webchangedetector .wcd-select-urls-container h2 {
     text-align: center;
 }
 
 .webchangedetector .wcd-frm-settings {
+    margin-bottom: 30px;
+}
+
+.webchangedetector .wcd-url-selection {
+    background: #fff;
+    padding: 10px;
     margin-bottom: 30px;
 }
 
@@ -774,6 +803,74 @@ Settings
     display: block;
     margin: 10px auto;
     width: 400px;
+}
+
+
+
+/* Enhanced form styling for better UX */
+.webchangedetector .frm_new_account input[type="text"],
+.webchangedetector .frm_new_account input[type="email"],
+.webchangedetector .frm_new_account input[type="password"],
+.webchangedetector .frm_use_api_token input[type="text"] {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.webchangedetector .frm_new_account input[type="text"]:focus,
+.webchangedetector .frm_new_account input[type="email"]:focus,
+.webchangedetector .frm_new_account input[type="password"]:focus,
+.webchangedetector .frm_use_api_token input[type="text"]:focus {
+    border-color: #276ECC;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(39, 110, 204, 0.1);
+}
+
+.webchangedetector .frm_new_account input[type="submit"],
+.webchangedetector .frm_use_api_token input[type="submit"] {
+    background: #276ECC;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.webchangedetector .frm_new_account input[type="submit"]:hover,
+.webchangedetector .frm_use_api_token input[type="submit"]:hover {
+    background: #1e5bb8;
+}
+
+/* Improved highlight-inner content styling */
+.webchangedetector .highlight-inner h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.webchangedetector .highlight-inner p {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+
+    .webchangedetector .frm_new_account input,
+    .webchangedetector .frm_use_api_token input {
+        max-width: 100%;
+    }
+
+    .webchangedetector .highlight-inner {
+        padding: 20px;
+    }
 }
 
 

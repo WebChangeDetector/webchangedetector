@@ -88,7 +88,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 				<p class="auto-setting setting-row toggle">
 					<label for="threshold" class="auto-setting">Threshold</label>
 					<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %
-					<small>Ignore changes in Change Detections below the threshold.</small>
+					<small>Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.</small>
 				</p>
 				<p class="auto-setting setting-row toggle">
 					<label for="alert_emails" class="auto-setting">

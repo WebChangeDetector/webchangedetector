@@ -41,7 +41,7 @@ $weekdays = array(
 );
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $name_prefix ); ?>weekdays" style="vertical-align:top;">
 		<?php echo esc_html( $label ); ?>
 	</label>

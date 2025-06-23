@@ -67,30 +67,43 @@ $summary .= ' | Themes: ' . count( $themes_auto_update );
 // Build content.
 ob_start();
 ?>
-<h4>WordPress Core</h4>
-<p><?php echo $core_auto_update_enabled ? 'Core auto-update is enabled.' : 'Core auto-update is disabled.'; ?></p>
+<div style="margin-bottom: 20px;">
+	<h4 style="margin-bottom: 10px;">WordPress Core</h4>
+	<div style="display: flex; align-items: center; margin-bottom: 5px;">
+		<span style="color: <?php echo $core_auto_update_enabled ? '#46b450' : '#dc3232'; ?>; margin-right: 8px; font-size: 16px;">
+			<?php echo $core_auto_update_enabled ? '✓' : '✗'; ?>
+		</span>
+		<span>WordPress Core</span>
+	</div>
+</div>
 
-<h4>Plugins</h4>
-<?php if ( ! empty( $plugins_auto_update ) ) : ?>
-	<ul>
-		<?php foreach ( $plugins_auto_update as $plugin_file => $plugin_data ) : ?>
-			<li><?php echo esc_html( $plugin_data['Name'] ); ?> (<?php echo esc_html( $plugin_data['Version'] ); ?>)</li>
-		<?php endforeach; ?>
-	</ul>
-<?php else : ?>
-	<p>No plugins with auto-update enabled.</p>
-<?php endif; ?>
+<div style="margin-bottom: 20px;">
+	<h4 style="margin-bottom: 10px;">Plugins</h4>
+	<?php foreach ( $all_plugins as $plugin_file => $plugin_data ) : 
+		$is_auto_update = is_array( $auto_update_plugins ) && in_array( $plugin_file, $auto_update_plugins, true );
+	?>
+		<div style="display: flex; align-items: center; margin-bottom: 5px;">
+			<span style="color: <?php echo $is_auto_update ? '#46b450' : '#dc3232'; ?>; margin-right: 8px; font-size: 16px;">
+				<?php echo $is_auto_update ? '✓' : '✗'; ?>
+			</span>
+			<span><?php echo esc_html( $plugin_data['Name'] ); ?> (<?php echo esc_html( $plugin_data['Version'] ); ?>)</span>
+		</div>
+	<?php endforeach; ?>
+</div>
 
-<h4>Themes</h4>
-<?php if ( ! empty( $themes_auto_update ) ) : ?>
-	<ul>
-		<?php foreach ( $themes_auto_update as $theme_slug => $theme_obj ) : ?>
-			<li><?php echo esc_html( $theme_obj->get( 'Name' ) ); ?></li>
-		<?php endforeach; ?>
-	</ul>
-<?php else : ?>
-	<p>No themes with auto-update enabled.</p>
-<?php endif; ?>
+<div style="margin-bottom: 20px;">
+	<h4 style="margin-bottom: 10px;">Themes</h4>
+	<?php foreach ( $all_themes as $theme_slug => $theme_obj ) : 
+		$is_auto_update = is_array( $auto_update_themes ) && in_array( $theme_slug, $auto_update_themes, true );
+	?>
+		<div style="display: flex; align-items: center; margin-bottom: 5px;">
+			<span style="color: <?php echo $is_auto_update ? '#46b450' : '#dc3232'; ?>; margin-right: 8px; font-size: 16px;">
+				<?php echo $is_auto_update ? '✓' : '✗'; ?>
+			</span>
+			<span><?php echo esc_html( $theme_obj->get( 'Name' ) ); ?></span>
+		</div>
+	<?php endforeach; ?>
+</div>
 <?php
 $content = ob_get_clean();
 

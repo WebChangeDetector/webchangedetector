@@ -29,7 +29,7 @@ $description = $description ?? 'Set the hour on which the monitoring checks shou
 $css_class = $css_class ?? '';
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $field_name ); ?>"><?php echo esc_html( $label ); ?></label>
 	<select name="<?php echo esc_attr( $field_name ); ?>" id="<?php echo esc_attr( $field_name ); ?>" class="auto-setting">
 		<?php for ( $i = 0; $i < 24; $i++ ) : ?>

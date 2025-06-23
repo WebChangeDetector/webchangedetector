@@ -393,7 +393,7 @@ class WebChangeDetector_Admin_Screenshots {
 				</form>
 			</div>
 			<?php
-			include 'partials/templates/show-change-detection.php';
+			$this->admin->view_renderer->get_component( 'templates' )->render_show_change_detection( $compare );
 			echo '</div>';
 
 		} else {

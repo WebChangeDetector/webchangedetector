@@ -23,11 +23,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $threshold = $threshold ?? 0.0;
 $label = $label ?? 'Threshold';
-$description = $description ?? 'Ignore changes in Change Detections below the threshold.';
+$description = $description ?? 'Only flag changes above this threshold percentage as significant.';
 $css_class = $css_class ?? '';
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="threshold"><?php echo esc_html( $label ); ?></label>
 	<input 
 		name="threshold" 

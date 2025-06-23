@@ -186,6 +186,7 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-table-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-card-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-modal-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-template-view.php';
 
 		/**
 		 * Component manager for reusable UI components.
@@ -264,14 +265,16 @@ class WebChangeDetector {
 		$this->loader->add_action( 'wp_ajax_wcd_get_admin_bar_status', $plugin_ajax, 'ajax_get_wcd_admin_bar_status' );
 		
 		$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
+		$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
+
+		// Add async sync cron handlers.
+		$this->loader->add_action( 'wcd_async_single_post_sync', $plugin_wordpress, 'async_single_post_sync_handler', 10, 1 );
+		$this->loader->add_action( 'wcd_async_full_sync', $plugin_wordpress, 'async_full_sync_handler', 10, 1 );
 
 		// Add hook for admin bar menu rendering.
 		$this->loader->add_action( 'admin_bar_menu', $plugin_wordpress, 'wcd_admin_bar_menu', 999 );
 		// Add hook for frontend admin bar script enqueueing.
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_wordpress, 'enqueue_admin_bar_scripts' );
-
-		// TODO Sync all pages and posts when there is a new page or post published.
-		// Maybe with action hook save_post and the function wcd_sync_post_after_save.
 	}
 
 	/**

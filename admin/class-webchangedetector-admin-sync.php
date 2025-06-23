@@ -553,7 +553,7 @@ class WebChangeDetector_Admin_Sync {
 					'post_type_slug' => 'frontpage',
 					'post_type_name' => 'Frontpage',
 				);
-				$this->admin->update_website_details( $website_details );
+				$this->admin->settings_handler->update_website_details( $website_details );
 			}
 
 			if ( ! empty( $array ) ) {
@@ -565,7 +565,7 @@ class WebChangeDetector_Admin_Sync {
 					unset( $website_details['sync_url_types'][ $key ] );
 				}
 			}
-			$this->admin->update_website_details( $website_details );
+			$this->admin->settings_handler->update_website_details( $website_details );
 		}
 
 		// Create uuid for sync urls.

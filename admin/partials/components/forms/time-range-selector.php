@@ -29,11 +29,11 @@ $to_time = $to_time ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
 $from_name = $from_name ?? 'time_from';
 $to_name = $to_name ?? 'time_to';
 $label = $label ?? 'Time range';
-$description = $description ?? 'Set the time frame for the operation.';
+$description = $description ?? 'Set the timeframe in which you want to allow WP auto updates.';
 $css_class = $css_class ?? '';
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $from_name ); ?>"><?php echo esc_html( $label ); ?> from</label>
 	<input 
 		id="<?php echo esc_attr( $from_name ); ?>" 

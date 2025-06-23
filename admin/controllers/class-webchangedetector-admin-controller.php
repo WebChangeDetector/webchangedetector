@@ -260,7 +260,7 @@ class WebChangeDetector_Admin_Controller {
 				return false;
 		}
 		
-		// Return the result from the action handler
+		// Return the result from the action handler (messages will be displayed by init() method)
 		return $result;
 	}
 
@@ -624,6 +624,7 @@ class WebChangeDetector_Admin_Controller {
 	 */
 	private function render_api_error() {
 		$this->admin->view_renderer->get_component( 'notifications' )->render_api_error_notice();
+		$this->render_no_account_page();
 	}
 
 	/**

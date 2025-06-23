@@ -69,7 +69,7 @@ $intervals = array(
 );
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $field_name ); ?>"><?php echo esc_html( $label ); ?></label>
 	<select name="<?php echo esc_attr( $field_name ); ?>" id="<?php echo esc_attr( $field_name ); ?>" class="auto-setting">
 		<?php foreach ( $intervals as $interval ) : ?>

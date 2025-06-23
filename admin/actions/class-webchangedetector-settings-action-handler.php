@@ -40,7 +40,8 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
-			if ( ! empty( $data['monitoring'] ) ) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings data: ' . print_r( $data, true ) );
+			if ( ! empty( $data['monitoring'] ) && (int)$data['monitoring'] === 1 ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
 				return $this->handle_manual_check_settings( $data );
@@ -63,6 +64,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate monitoring settings.
 		$validation = $this->validate_monitoring_settings( $data );
 		if ( ! $validation['success'] ) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
 			return $validation;
 		}
 
@@ -72,25 +74,8 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Debug: Log the result from update_monitoring_settings
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings update result: ' . print_r( $result, true ) );
 		
-		// Check if the result is successful (API returns array with data or true for success)
-		if ( $result && ! is_string( $result ) && ( $result === true || ( is_array( $result ) && ! isset( $result['message'] ) ) ) ) {
-			return array(
-				'success' => true,
-				'message' => 'Monitoring settings saved successfully.',
-			);
-		} else {
-			$error_msg = 'Failed to save monitoring settings.';
-			if ( is_string( $result ) ) {
-				$error_msg .= ' Error: ' . $result;
-			} elseif ( is_array( $result ) && isset( $result['message'] ) ) {
-				$error_msg .= ' Error: ' . $result['message'];
-			}
-			
-			return array(
-				'success' => false,
-				'message' => $error_msg,
-			);
-		}
+		// The settings handler now returns a standardized response format
+		return $result;
 	}
 
 	/**
@@ -106,7 +91,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		if ( $result ) {
 			return array(
 				'success' => true,
-				'message' => 'Manual check settings saved successfully.',
+				'message' => 'Auto update checks & manual check settings saved successfully.',
 			);
 		} else {
 			return array(
@@ -309,7 +294,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate interval.
 		if ( ! empty( $data['interval_in_h'] ) ) {
 			$interval = floatval( $data['interval_in_h'] );
-			$valid_intervals = array( 0.25, 0.5, 1, 2, 4, 6, 8, 12, 24 );
+			$valid_intervals = array( 0.25, 0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0, 24.0 );
 			
 			if ( ! in_array( $interval, $valid_intervals, true ) ) {
 				$errors[] = 'Invalid monitoring interval selected.';
@@ -418,17 +403,17 @@ class WebChangeDetector_Settings_Action_Handler {
 		$website_details = $this->admin->website_details ?? array();
 		
 		return $website_details['auto_update_settings'] ?? array(
-			'auto_update_checks_enabled' => '0',
+			'auto_update_checks_enabled' => false,
 			'auto_update_checks_from' => '09:00',
 			'auto_update_checks_to' => '17:00',
 			'auto_update_checks_emails' => get_option( 'admin_email' ),
-			'auto_update_checks_monday' => '1',
-			'auto_update_checks_tuesday' => '1',
-			'auto_update_checks_wednesday' => '1',
-			'auto_update_checks_thursday' => '1',
-			'auto_update_checks_friday' => '1',
-			'auto_update_checks_saturday' => '0',
-			'auto_update_checks_sunday' => '0',
+			'auto_update_checks_monday' => true,
+			'auto_update_checks_tuesday' => true,
+			'auto_update_checks_wednesday' => true,
+			'auto_update_checks_thursday' => true,
+			'auto_update_checks_friday' => true,
+			'auto_update_checks_saturday' => false,
+			'auto_update_checks_sunday' => false,
 		);
 	}
 } 

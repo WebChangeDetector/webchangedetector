@@ -199,6 +199,8 @@ function currentlyProcessing() {
             });
         });
 
+
+
         $(".codearea").each(function (index, item) {
             wp.codeEditor.initialize(item);
         });
@@ -846,5 +848,44 @@ function validateEmail(emails) {
 
 function showUpdates() {
     jQuery("#updates").toggle("slow");
+}
+
+/**
+ * Start manual checks by advancing to the pre-screenshot step
+ * @param {string} groupId - The group ID for manual checks
+ */
+function startManualChecks(groupId) {
+    if (confirm("Are you ready to start manual checks? This will advance to the pre-update screenshot step.")) {
+        // Create a form and submit it to start manual checks
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
+
+        // Add the action to advance to next step
+        var actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'wcd_action';
+        actionInput.value = 'start_manual_checks';
+        form.appendChild(actionInput);
+
+        // Add the step parameter to advance to pre-screenshot step
+        var stepInput = document.createElement('input');
+        stepInput.type = 'hidden';
+        stepInput.name = 'step';
+        stepInput.value = 'pre-update';
+        form.appendChild(stepInput);
+
+        // Add nonce for security - WordPress expects a nonce field that matches the action name
+        var nonceInput = document.createElement('input');
+        nonceInput.type = 'hidden';
+        nonceInput.name = '_wpnonce';
+        // Use the correct nonce for the start_manual_checks action
+        nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
+        form.appendChild(nonceInput);
+
+        // Add form to body and submit
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 

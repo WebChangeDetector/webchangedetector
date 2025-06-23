@@ -78,17 +78,18 @@ class WebChangeDetector_Admin_Settings {
 	public function update_monitoring_settings( $group_data ) {
 		// Debug: Log what we received for monitoring settings
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . print_r( $group_data, true ) );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . print_r( $_POST, true ) );
 		
 		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
 
 		$args = array(
 			'monitoring'    => true,
-			'hour_of_day'   => ! isset( $group_data['hour_of_day'] ) ? $monitoring_settings['hour_of_day'] : sanitize_key( $group_data['hour_of_day'] ),
-			'interval_in_h' => ! isset( $group_data['interval_in_h'] ) ? $monitoring_settings['interval_in_h'] : sanitize_text_field( $group_data['interval_in_h'] ),
+			'hour_of_day'   => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
+			'interval_in_h' => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
 			'enabled'       => ( isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ) ) ? 1 : 0,
-			'alert_emails'  => ! isset( $group_data['alert_emails'] ) ? $monitoring_settings['alert_emails'] : explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ),
-			'name'          => ! isset( $group_data['group_name'] ) ? $monitoring_settings['name'] : sanitize_text_field( $group_data['group_name'] ),
-			'threshold'     => ! isset( $group_data['threshold'] ) ? $monitoring_settings['threshold'] : sanitize_text_field( $group_data['threshold'] ),
+			'alert_emails'  => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
+			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
+			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
 		);
 
 		if ( ! empty( $group_data['css'] ) ) {
@@ -98,13 +99,37 @@ class WebChangeDetector_Admin_Settings {
 		// Debug: Log what we're sending to the API
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . print_r( $args, true ) );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid );
-
+		
+		// Check if monitoring group UUID exists
+		if ( empty( $this->admin->monitoring_group_uuid ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!' );
+			return array(
+				'success' => false,
+				'message' => 'Monitoring group UUID is not set. Please contact support.',
+			);
+		}
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group( $this->admin->monitoring_group_uuid, $args );
 		
 		// Debug: Log the API response
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . print_r( $result, true ) );
 		
-		return $result;
+		// Return standardized response format
+		if ( $result && ! is_string( $result ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Monitoring settings saved successfully.',
+				'data' => $result,
+			);
+		} else {
+			$error_msg = 'Failed to save monitoring settings.';
+			if ( is_string( $result ) ) {
+				$error_msg .= ' Error: ' . $result;
+			}
+			return array(
+				'success' => false,
+				'message' => $error_msg,
+			);
+		}
 	}
 
 	/**
@@ -230,21 +255,21 @@ class WebChangeDetector_Admin_Settings {
 
 			// Include the group settings.
 			if ( ! $monitoring_group ) {
-				include 'partials/templates/update-settings.php';
+				$this->admin->view_renderer->get_component( 'templates' )->render_update_settings( $group_and_urls, $group_id );
 			} else {
 
 				// Print the status bar.
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
 
 				// Monitoring settings.
-				include 'partials/templates/auto-settings.php';
+				$this->admin->view_renderer->get_component( 'templates' )->render_auto_settings( $group_and_urls, $group_id );
 			}
 
 			// Select URLs section.
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
 
-			<div class="wcd-frm-settings box-plain">
+			<div class="wcd-url-selection box-plain">
 				<h2>Select URLs to Check<br><small></small></h2>
 				<p style="text-align: center;">
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>
@@ -333,8 +358,8 @@ class WebChangeDetector_Admin_Settings {
 
 						<table class="no-margin filter-table">
 							<tr>
-												<th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'desktop' ); ?><br>Desktop</th>
-				<th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'mobile' ); ?> Mobile</th>
+                                <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'desktop' ); ?><br>Desktop</th>
+				                <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'mobile' ); ?> Mobile</th>
 								<th style="width: 100%">URL</th>
 								<th style="min-width: 90px">Post type</th>
 							</tr>
@@ -473,6 +498,30 @@ class WebChangeDetector_Admin_Settings {
 						?>
 					</div>
 				</div>
+				<hr>
+				<?php
+				// Add Manual Checks Workflow section after URL selection (only for manual checks, not monitoring)
+				if ( ! $monitoring_group && $group_and_urls['selected_urls_count'] > 0 ) {
+					?>
+					<div class="box-plain" style="background: white; margin-top: 20px;">
+						<table class="form-table">
+							<tbody>
+								<tr>
+									<th scope="row">Manual Checks Workflow</th>
+									<td>
+										<p>Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.</p>
+										<button style="margin-top: 10px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
+											Start Manual Checks
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<?php
+				}
+				?>
+				
 				<?php
 			}
 			?>
@@ -675,7 +724,7 @@ class WebChangeDetector_Admin_Settings {
 				<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Manual Checks & Auto Update Checks
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Auto Update Checks & Manual Checks
 				</a>
 				<?php } ?>
 				<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>

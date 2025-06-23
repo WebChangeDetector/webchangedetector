@@ -16,12 +16,14 @@
             console.error('WCD Admin Bar Error: Top-level node #wp-admin-bar-wcd-admin-bar not found.');
             // Attempt alternative selector if needed, e.g. $('#wp-admin-bar-wcd-admin-bar-default')?
         } else {
-
+            console.log('WCD Admin Bar: Found admin bar node.');
         }
         if (!placeholderNode.length) {
             // This might be expected if the user isn't an admin or menu is disabled,
             // but if wcdAdminBarData *was* found, this node *should* exist initially.
-            console.warn('WCD Admin Bar Warning: Placeholder node #wcd-status-placeholder not found.');
+            console.warn('WCD Admin Bar Warning: Placeholder node #wp-admin-bar-wcd-status-placeholder not found.');
+        } else {
+            console.log('WCD Admin Bar: Found placeholder node.');
         }
 
         // --- Function to generate slider HTML (based on PHP function) ---
@@ -103,13 +105,18 @@
 
         // --- AJAX Loading Event Listener ---
         wcdAdminBarNode.on('mouseenter', function () {
+            console.log('WCD Admin Bar: Mouse entered admin bar node.');
 
             if (wcdAdminBarLoaded) {
+                console.log('WCD Admin Bar: Already loaded, skipping.');
                 return; // Already loaded
             }
             if (!placeholderNode.length) {
+                console.error('WCD Admin Bar: Placeholder node not found, aborting.');
                 return; // Don't proceed if placeholder isn't there
             }
+
+            console.log('WCD Admin Bar: Loading URL status...');
             wcdAdminBarLoaded = true; // Set flag
 
             placeholderNode.find('.ab-item').text(wcdAdminBarData.loading_text);
@@ -124,6 +131,7 @@
                 },
                 dataType: 'json',
                 success: function (response) {
+                    console.log('WCD Admin Bar: AJAX response received:', response);
 
                     // Find the placeholder LI element
                     const placeholderLi = $('#wp-admin-bar-wcd-status-placeholder');
@@ -137,6 +145,7 @@
                     placeholderLi.empty();
 
                     if (response.success && response.data) {
+                        console.log('WCD Admin Bar: Processing successful response with data:', response.data);
                         const menuItemsHtml = buildAdminBarMenu(response.data);
 
                         if (response.data.tracked === false) {

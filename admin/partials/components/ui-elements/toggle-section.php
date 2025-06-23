@@ -33,7 +33,7 @@ $css_class = $css_class ?? '';
 $section_id = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $toggle_name ); ?>"><?php echo esc_html( $toggle_label ); ?></label>
 	<label class="switch">
 		<input 

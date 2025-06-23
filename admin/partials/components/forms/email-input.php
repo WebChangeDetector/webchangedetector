@@ -37,7 +37,7 @@ $placeholder = $placeholder ?? ( $multiple ? 'email1@example.com, email2@example
 $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 ?>
 
-<div class="setting-row toggle <?php echo esc_attr( $css_class ); ?>">
+<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $field_name ); ?>">
 		<?php echo esc_html( $label ); ?>
 		<?php if ( $multiple ) : ?>
