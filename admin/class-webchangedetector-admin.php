@@ -1466,7 +1466,7 @@ class WebChangeDetector_Admin {
 	 * @return void
 	 */
 	public function add_post_type( $postdata ) {
-		$post_type                               = json_decode( stripslashes( $postdata['post_type'] ), true );
+		$post_type                               = json_decode( $postdata['post_type'], true );
 		$this->website_details['sync_url_types'] = array_merge( $post_type, $this->website_details['sync_url_types'] );
 
 		$this->update_website_details();
