@@ -2911,21 +2911,21 @@ class WebChangeDetector_Admin {
 		// Set default allowances if we don't have any yet. Shouldn't happen as they come from the api.
 		if ( empty( $allowances ) ) {
 			$allowances = array(
-				'change_detections_view'     => 1,
-				'manual_checks_view'         => 1,
-				'manual_checks_start'        => 1,
-				'manual_checks_settings'     => 1,
-				'manual_checks_urls'         => 1,
-				'monitoring_checks_view'     => 1,
-				'monitoring_checks_settings' => 1,
-				'monitoring_checks_urls'     => 1,
-				'logs_view'                  => 1,
-				'settings_view'              => 1,
-				'settings_add_urls'          => 1,
-				'settings_account_settings'  => 1,
-				'upgrade_account'            => 1,
-				'wizard_start'               => 1,
-				'only_frontpage'             => 0,
+				'change_detections_view'     => true,
+				'manual_checks_view'         => true,
+				'manual_checks_start'        => true,
+				'manual_checks_settings'     => true,
+				'manual_checks_urls'         => true,
+				'monitoring_checks_view'     => true,
+				'monitoring_checks_settings' => true,
+				'monitoring_checks_urls'     => true,
+				'logs_view'                  => true,
+				'settings_view'              => true,
+				'settings_add_urls'          => true,
+				'settings_account_settings'  => true,
+				'upgrade_account'            => true,
+				'wizard_start'               => true,
+				'only_frontpage'             => false,
 			);
 		}
 
