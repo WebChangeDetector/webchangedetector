@@ -1677,7 +1677,7 @@ body:has(#wpadminbar) .mm_wp_compare .popup {
 .mm_wp_compare .add_group_popup,
 .mm_wp_compare .popup {
     position: fixed;
-    z-index: 9998 !important;
+    z-index: 20 !important;
     background: rgba(255, 255, 255, 0.8);
     /*top: 100px;*/
     left: 0;
