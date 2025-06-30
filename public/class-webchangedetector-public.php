@@ -42,14 +42,35 @@ class WebChangeDetector_Public {
 	 * @since    3.1.7
 	 */
 	public function enqueue_styles() {
-		// Check if admin bar menu is disabled in settings.
-		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
-			return;
-		}
-		// Only enqueue if the admin bar is showing for a logged-in user who can manage options.
-		if ( is_admin_bar_showing() && is_user_logged_in() && current_user_can( 'manage_options' ) ) {
-			wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
-		}
+		// Load the new design CSS files
+		wp_enqueue_style( 'webchangedetector-public-legacy', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'css/wp-compare-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+		wp_enqueue_style( 'dashicons' );
+		wp_enqueue_style( 'wp-codemirror' );
+		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( __FILE__ ) . 'css/darcula.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+	}
+
+	/**
+	 * Register the JavaScript for the public-facing side of the site.
+	 *
+	 * @since    1.0.0
+	 */
+	public function enqueue_scripts() {
+		wp_enqueue_script( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'js/wp-compare-public.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
+		wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
+		wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
+		wp_enqueue_script( 'wcd_ajax', plugin_dir_url( __FILE__ ) . 'js/wcd-ajax.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
+		wp_enqueue_script( 'jquery-ui-accordion' );
+		wp_enqueue_script( 'code-editor', '/wp-admin/js/code-editor.min.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
+
+		// Load WP codemirror
+		$css_settings              = array(
+			'codemirror' => array( 'theme' => 'darcula' ),
+		);
+		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+		wp_enqueue_script( 'wp-theme-plugin-editor' );
 	}
 
 	/** Verify the website if we do.

@@ -29,7 +29,7 @@ $css_class = $css_class ?? '';
 $accordion_id = $accordion_id ?? 'accordion-' . wp_rand( 1000, 9999 );
 ?>
 
-<div class="accordion <?php echo esc_attr( $css_class ); ?>" style="margin-bottom: 20px; border: 1px solid #ddd;">
+<div class="accordion <?php echo esc_attr( $css_class ); ?> accordion-css-injection" style="margin-bottom: 20px; border: 1px solid #ddd;">
 	<div 
 		class="accordion-header" 
 		style="cursor:pointer; padding:10px;" 

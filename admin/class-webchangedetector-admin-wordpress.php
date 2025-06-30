@@ -78,8 +78,10 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_styles() {
 		wp_enqueue_style( 'jquery-ui-accordion' );
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/wp-compare-public.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
+		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/darcula.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
 
@@ -93,15 +95,21 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_scripts( $hook_suffix ) {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'webchangedetector-public', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/wp-compare-public.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'wcd_ajax', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/wcd-ajax.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'jquery-ui-accordion' );
 			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
 			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+			wp_enqueue_script( 'code-editor', '/wp-admin/js/code-editor.min.js', array( 'jquery' ), $this->version, false );
 
-			$css_settings = array( 'type' => 'text/css' );
+			$css_settings = array(
+				'codemirror' => array( 'theme' => 'darcula' ),
+			);
 			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
 			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
+			wp_enqueue_script( 'wp-theme-plugin-editor' );
 
 			wp_localize_script( 'wcd-wizard', 'wcdWizardData', array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),

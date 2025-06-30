@@ -269,7 +269,7 @@ class WebChangeDetector_Admin_Settings {
 			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 				?>
 
-			<div class="wcd-url-selection box-plain">
+			<div class="wcd-url-selection wcd-settings-card">
 				<h2>Select URLs to Check<br><small></small></h2>
 				<p style="text-align: center;">
 					<strong>Currently selected URLs: <?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></strong><br>

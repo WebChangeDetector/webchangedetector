@@ -1,6 +1,1 @@
-<?php
-/**
- * Silence is golden.
- *
- * @package    WebChangeDetector
- * */
+<?php // Silence is golden
