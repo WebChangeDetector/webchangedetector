@@ -375,11 +375,86 @@ function currentlyProcessing() {
         // This needs to instantly be executed
         currentlyProcessing();
 
+        // Function to get current filters from the filter form
+        function getCurrentFilters() {
+            const filterForm = $('#form-filter-change-detections');
+            if (filterForm.length === 0) {
+                return null;
+            }
+
+            const formData = {};
+            filterForm.find('input, select').each(function () {
+                const name = $(this).attr('name');
+                const value = $(this).val();
+                if (name && value !== '' && name !== 'action' && name !== 'pagination') {
+                    formData[name] = value;
+                }
+            });
+
+            return Object.keys(formData).length > 0 ? formData : null;
+        }
+
+        // Function to re-initialize all components after AJAX content loads
+        function reinitializeAfterAjax(container) {
+            // Re-initialize accordion widgets for new content
+            container.find(".accordion").each(function () {
+                // Destroy existing accordion if it exists
+                if ($(this).hasClass('ui-accordion')) {
+                    $(this).accordion("destroy");
+                }
+                // Initialize accordion
+                $(this).accordion({
+                    heightStyle: "content",
+                    header: "h3",
+                    collapsible: true,
+                    active: false, // Don't auto-open on load
+                    animate: 200
+                });
+            });
+
+            // Re-apply background colors for difference tiles
+            container.find(".diff-tile").each(function () {
+                var diffPercent = $(this).data("diff_percent");
+                if (diffPercent > 0) {
+                    var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
+                    $(this).css("background", bgColor);
+                }
+            });
+
+            // Re-initialize comparison row click handlers
+            container.find(".comparison_row").off("click").on("click", function () {
+                const token = $(this).data("token");
+                const currentKey = $(this).index();
+                const maxKey = $(this).closest("tbody").find(".comparison_row").length;
+
+                if (token) {
+                    // Use the global function if available
+                    if (typeof ajaxShowChangeDetectionPopup === 'function') {
+                        ajaxShowChangeDetectionPopup(token, currentKey, maxKey);
+                    }
+                }
+            });
+
+            // Re-initialize any other event handlers that might be needed
+            container.find(".ajax_paginate_batch_comparisons").off("click").on("click", function () {
+                const batchContainer = $(this).closest(".accordion-container");
+                const batchId = batchContainer.data("batch_id");
+                const page = $(this).data("page");
+                const filters = $(this).data("filters");
+                loadBatchComparisons($(this), batchId, page, filters, true);
+            });
+        }
+
         // Load batch comparisons content and handle pagination
         function loadBatchComparisons(element, batchId, page = 1, filters = null, shouldScroll = false) {
             const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
             const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
             const failedCount = batchContainer.data("failed_count");
+
+            // If filters are not provided, get them from the current filter form
+            if (filters === null) {
+                filters = getCurrentFilters();
+            }
 
             const args = {
                 action: 'get_batch_comparisons_view',
@@ -403,20 +478,8 @@ function currentlyProcessing() {
             $.post(ajaxurl, args, function (response) {
                 contentContainer.html(response);
 
-                // Bg color for difference
-                $(".diff-tile").each(function () {
-                    var diffPercent = $(this).data("diff_percent");
-                    if (diffPercent > 0) {
-                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"), $(this).data("threshold"));
-                        $(this).css("background", bgColor);
-                    }
-                });
-
-                // Refresh the accordion to recalculate heights and prevent overlapping
-                const accordion = batchContainer.find(".accordion");
-                if (accordion.length > 0) {
-                    accordion.accordion("refresh");
-                }
+                // Re-initialize all components for the new content
+                reinitializeAfterAjax(contentContainer);
 
                 initBatchComparisonsPagination();
             });

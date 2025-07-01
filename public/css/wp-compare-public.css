@@ -5031,11 +5031,8 @@ input:checked+.slider:before {
 
 /* Form styling for better integration */
 #form-take-pre-sc {
-    background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
-    padding: 32px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
 #btn-start-update-detection {

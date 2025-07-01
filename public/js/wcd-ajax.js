@@ -1806,6 +1806,7 @@ var checkingInterval = [];
             $.post(ajaxurl, formFields, function (response) {
                 $('#change-detection-batches').replaceWith(response);
                 $.fn.loadJs();
+                loadAjaxFunctions();
                 $("#mm_loading").hide();
             });
         });

@@ -18,8 +18,7 @@ require 'update-step-tiles.php';
 	<div class="wcd-highlight-bg done">
 		<h2><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'check', 'screenshots-done-icon' ); ?>Change detections</h2>
 	</div>
-	<div class="wcd-highlight-bg">
-
+	<div class="wcd-card">
 		<h2>Finished</h2>
 		<p>Your change detections are ready. See what changed and fix things if they need to be fixed.</p>
 		<form method="post">

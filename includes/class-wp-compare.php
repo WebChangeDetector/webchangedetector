@@ -3123,7 +3123,7 @@ error_log( 'WCD: website: ' . print_r( $website, true ) );
                         </div>
                         <div class="wcd-card-content">
                             <p>Connect your WP website to the WebChange Detector WebApp using your API token.</p>
-                            <p><a href="/webchangedetector/?tab=subaccounts" target="_blank">Create sub-accounts</a> to limit checks per WP website.</p>
+                            <p>Download and configure the WordPress plugin to automatically sync your website URLs and run change detection checks.</p>
                             <a class="et_pb_button" href="https://wordpress.org/plugins/webchangedetector/">Download the plugin</a>
                         </div>
                     </div>
@@ -3637,8 +3637,12 @@ error_log( 'WCD: website: ' . print_r( $website, true ) );
                                                 }
                                             }
 
-											// Show browser console errors
-											if(!empty($_COOKIE['show_browser_console_errors']) && $_COOKIE['show_browser_console_errors'] == 'true') {
+											// Show browser console errors (only for supported plans)
+											$user_account = $this->get_account_details_v2();
+											$user_plan = $user_account['plan'] ?? 'free';
+											$canAccessBrowserConsole = wcd_can_access_feature('browser_console', $user_plan);
+											
+											if($canAccessBrowserConsole && !empty($_COOKIE['show_browser_console_errors']) && $_COOKIE['show_browser_console_errors'] == 'true') {
 												if(!empty($batch['browser_console_count']['added'] || !empty($batch['browser_console_count']['mixed']))) {
 													echo '<span style="color: darkred; font-size: 14px; font-weight: 700;">New browser console errors: ' . $batch['browser_console_count']['added'] + $batch['browser_console_count']['mixed'] . '</span><br>';
 												}
@@ -3894,6 +3898,7 @@ error_log( 'WCD: website: ' . print_r( $website, true ) );
                     <th style="width:auto">URL</th>
                     <th style="width:220px">Compared Screenshots</th>
                     <th style="width:100px">Difference</th>
+                    <th style="width:120px">Console</th>
                 </tr>
                 <?php
                 // Change detections
@@ -3906,6 +3911,18 @@ error_log( 'WCD: website: ' . print_r( $website, true ) );
                 if ( isset( $compares[ $key - 1 ] ) ) {
                     $previous_comparison_token = $compares[ $key - 1 ]['token'];
                 }
+                
+                // Check for browser console data and plan access
+                $hasConsoleChanges = !empty($compare['browser_console_added']) || !empty($compare['browser_console_removed']) || !empty($compare['browser_console_change']);
+                $consoleChangeCount = 0;
+                if ($hasConsoleChanges) {
+                    $consoleChangeCount += is_array($compare['browser_console_added']) ? count($compare['browser_console_added']) : 0;
+                    $consoleChangeCount += is_array($compare['browser_console_removed']) ? count($compare['browser_console_removed']) : 0;
+                }
+                
+                $user_account = $this->get_account_details_v2();
+                $user_plan = $user_account['plan'] ?? 'free';
+                $canAccessBrowserConsole = wcd_can_access_feature('browser_console', $user_plan);
                 ?>
                 <tr class="comparison_row"
                     data-url_id="<?php echo $compare['url']; ?>"
@@ -3951,7 +3968,45 @@ error_log( 'WCD: website: ' . print_r( $website, true ) );
                         <?php echo $compare['threshold'] > $compare['difference_percent'] ? '<div style="font-size: 10px">Threshold: ' . $compare['threshold'] . '%</div>' : ''; ?>
                     </td>
 
-					<td style="order: 5; display: none;">
+                    <!-- Console Changes Column -->
+                    <td class="console-tile wcd-console-changes-column <?php echo $hasConsoleChanges ? 'has-console-changes' : 'no-console-changes'; ?> <?php echo !$canAccessBrowserConsole ? 'wcd-console-restricted' : ''; ?>"
+                        data-console_changes="<?php echo $consoleChangeCount; ?>"
+						style="order: 5; position: relative;"
+                    >
+						<div class="mobile-label-difference" style="display: none">Console Changes</div>
+                        <div class="wcd-console-diff-box" <?php echo !$canAccessBrowserConsole ? 'style="filter: blur(3px);"' : ''; ?>>
+                            <?php if ($canAccessBrowserConsole) { ?>
+                                <?php if ($hasConsoleChanges && $consoleChangeCount > 0) { ?>
+                                    <div class="wcd-console-indicator-badge">
+                                        <span class="wcd-console-count"><?php echo $consoleChangeCount; ?></span>
+                                        <span class="wcd-console-text">changes</span>
+                                    </div>
+                                <?php } else { ?>
+                                    <div class="wcd-no-console-changes">
+                                        <span class="wcd-console-none-text">No changes</span>
+                                    </div>
+                                <?php } ?>
+                            <?php } else { ?>
+                                <!-- Dummy content for restricted plans -->
+                                <div class="wcd-console-indicator-badge">
+                                    <span class="wcd-console-count">3</span>
+                                    <span class="wcd-console-text">changes</span>
+                                </div>
+                            <?php } ?>
+                        </div>
+                        
+                        <?php if (!$canAccessBrowserConsole) { ?>
+                            <!-- Lock overlay for restricted plans -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); z-index: 10;">
+                                <div style="text-align: center; color: #666; font-size: 12px;">
+                                    <span class="dashicons dashicons-lock" style="font-size: 20px; margin-bottom: 5px;"></span><br>
+                                    Needs Personal Pro
+                                </div>
+                            </div>
+                        <?php } ?>
+                    </td>
+
+					<td style="order: 6; display: none;">
                         <button id="show-compare-<?php echo $key; ?>" onclick="jQuery(this).closest('.comparison_row').click();" class="et_pb_button">
                             Show
                         </button>
@@ -4471,6 +4526,86 @@ function get_small_loading_icon() {
 	return plugin_dir_url( __FILE__ ) . './../public/img/loading.gif';
 }
 
+/**
+ * Check if the current user's plan allows access to a specific feature
+ * 
+ * @param string $feature The feature to check (e.g., 'browser_console')
+ * @param string|null $user_plan The user's plan (if null, will fetch current user's plan)
+ * @return bool True if feature is accessible, false otherwise
+ */
+function wcd_can_access_feature( $feature, $user_plan = null ) {
+	// Feature requirements mapping
+	$feature_requirements = array(
+		'browser_console' => array( WCD_PERSONAL_PRO_PLAN, WCD_FREELANCER_PLAN, WCD_AGENCY_PLAN, WCD_TRIAL_PLAN ),
+		// Future features can be added here
+		// 'advanced_analytics' => array( WCD_FREELANCER_PLAN, WCD_AGENCY_PLAN, WCD_TRIAL_PLAN ),
+		// 'white_label' => array( WCD_AGENCY_PLAN, WCD_TRIAL_PLAN ),
+	);
+
+	// Get user plan if not provided
+	if ( $user_plan === null ) {
+		$wp_comp = new Wp_Compare();
+		$account_details = $wp_comp->get_account_details_v2();
+		$user_plan = $account_details['plan'] ?? 'free';
+	}
+
+	// Check if feature exists
+	if ( ! isset( $feature_requirements[ $feature ] ) ) {
+		return true; // If feature is not defined, allow access by default
+	}
+
+	// Trial plan has access to everything
+	if ( $user_plan === WCD_TRIAL_PLAN ) {
+		return true;
+	}
+
+	// Check if user's plan is in the allowed plans for this feature
+	return in_array( $user_plan, $feature_requirements[ $feature ] );
+}
+
+/**
+ * Get the minimum required plan for a feature
+ * 
+ * @param string $feature The feature to check
+ * @return string The minimum plan name required
+ */
+function wcd_get_feature_required_plan( $feature ) {
+	$feature_requirements = array(
+		'browser_console' => 'Personal Pro',
+		// Future features can be added here
+	);
+
+	return $feature_requirements[ $feature ] ?? 'Personal';
+}
+
+/**
+ * Generate blurred preview HTML for restricted features
+ * 
+ * @param string $feature The feature name
+ * @param string $preview_content The content to show blurred
+ * @param string $container_class Additional CSS class for the container
+ * @return string HTML for the blurred preview with overlay
+ */
+function wcd_generate_feature_preview( $feature, $preview_content, $container_class = '' ) {
+	$required_plan = wcd_get_feature_required_plan( $feature );
+	$upgrade_url = mm_get_billing_domain() . 'select-plan';
+	
+	$html = '<div class="wcd-feature-restricted ' . esc_attr( $container_class ) . '" style="position: relative;">';
+	$html .= '<div class="wcd-blurred-content" style="filter: blur(4px); pointer-events: none;">';
+	$html .= $preview_content;
+	$html .= '</div>';
+	$html .= '<div class="wcd-restriction-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: 8px; border: 2px dashed #ddd;">';
+	$html .= '<div class="wcd-restriction-message" style="text-align: center; padding: 20px;">';
+	$html .= '<h4 style="margin: 0 0 10px 0; color: #333;">🔒 Feature Restricted</h4>';
+	$html .= '<p style="margin: 0 0 15px 0; color: #666;">Needs ' . esc_html( $required_plan ) . ' plan</p>';
+	$html .= '<a href="' . esc_url( $upgrade_url ) . '" target="_blank" class="wcd-upgrade-button" style="display: inline-block; padding: 8px 16px; background: #007cba; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">Upgrade Plan</a>';
+	$html .= '</div>';
+	$html .= '</div>';
+	$html .= '</div>';
+	
+	return $html;
+}
+
 function prettyPrintComparisonStatus( $status, $addClass = '', $amountStatus = false ) {
 
 	switch ( $status ) {
@@ -4631,6 +4766,15 @@ if ( ! defined( 'WCD_TRIAL_PLAN_ID' ) ) {
 }
 if ( ! defined( 'WCD_TRIAL_PLAN' ) ) {
 	define( 'WCD_TRIAL_PLAN', 'trial' );
+}
+if ( ! defined( 'WCD_PERSONAL_PRO_PLAN' ) ) {
+	define( 'WCD_PERSONAL_PRO_PLAN', 'personal_pro' );
+}
+if ( ! defined( 'WCD_FREELANCER_PLAN' ) ) {
+	define( 'WCD_FREELANCER_PLAN', 'freelancer' );
+}
+if ( ! defined( 'WCD_AGENCY_PLAN' ) ) {
+	define( 'WCD_AGENCY_PLAN', 'agency' );
 }
 
 // Steps in update change detection

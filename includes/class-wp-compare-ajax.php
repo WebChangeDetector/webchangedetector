@@ -166,7 +166,15 @@ class Wp_Compare_Ajax {
 		$filters['orderBy'] = 'difference_percent';
 		$filters['orderDirection'] = 'desc';
 
-		$filters = array_filter($filters);
+		// Filter out empty values but preserve 'difference_only' even when it's 0
+		$filters = array_filter($filters, function($value, $key) {
+			// Always keep difference_only parameter, even if it's 0
+			if ($key === 'difference_only') {
+				return $value !== '' && $value !== null;
+			}
+			// For other fields, filter out empty values
+			return !empty($value);
+		}, ARRAY_FILTER_USE_BOTH);
 
 		$comparisons = Wp_Compare_API_V2::get_comparisons_v2($filters);
 

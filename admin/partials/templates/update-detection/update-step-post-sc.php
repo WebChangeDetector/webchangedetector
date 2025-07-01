@@ -12,7 +12,7 @@ require 'update-step-tiles.php';
 ?>
 
 <div class="wcd-step-container wcd-section">
-	<div class="wcd-highlight-bg">
+	<div class="wcd-card">
 		<h2>Create Change Detections</h2>
 		<p>Done with updates or other changes? <br>Create change detections to see what changed.</p>
 		<div style="width: 300px; margin: 0 auto;">

@@ -85,14 +85,34 @@
                 <strong>Before:</strong> <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo strtotime( $compare['screenshot_1_updated_at'] ); ?>"><?php echo gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot_1_updated_at'] ) ); ?></div><br>
                 <strong>After:</strong> <div class="screenshot-date" style="text-align: right; display: inline;" data-date="<?php echo strtotime( $compare['screenshot_2_updated_at'] ); ?>"><?php echo gmdate( 'd/m/Y H:i.s', strtotime( $compare['screenshot_2_updated_at'] ) ); ?></div>
             </div>
-            <?php if(!empty($_COOKIE['wcd-show-browser-console'])) { ?>
-                <div class="comparison-tiles" style="width: 240px;">
-                    <strong>Browser console changes</strong><br>
-                    <strong>Added:</strong> <?= is_array($compare['browser_console_added']) ? implode("<br>", array_map('esc_html', $compare['browser_console_added'])) : 'none' ?><br>
-                    <strong>Removed:</strong> <?= is_array($compare['browser_console_removed']) ? implode("<br>", array_map('esc_html', $compare['browser_console_removed'])) : 'none' ?><br>
-                    <strong>Changed:</strong> <?= is_array($compare['browser_console_change']) ? implode("<br>", array_map('esc_html', $compare['browser_console_change'])) : 'none' ?><br>
-                </div>
-            <?php } ?>
+            <?php 
+            // Check user plan access for browser console feature
+            $wp_comp = new Wp_Compare();
+            $user_account = $wp_comp->get_account_details_v2();
+            $user_plan = $user_account['plan'] ?? 'free';
+            $canAccessBrowserConsole = wcd_can_access_feature('browser_console', $user_plan);
+            
+            if(!empty($_COOKIE['wcd-show-browser-console'])) { 
+                if ($canAccessBrowserConsole) { ?>
+                    <div class="comparison-tiles" style="width: 240px;">
+                        <strong>Browser console changes</strong><br>
+                        <strong>Added:</strong> <?= is_array($compare['browser_console_added']) ? implode("<br>", array_map(function($log) { return esc_html(is_array($log) && isset($log['text']) ? $log['text'] : $log); }, $compare['browser_console_added'])) : 'none' ?><br>
+                        <strong>Removed:</strong> <?= is_array($compare['browser_console_removed']) ? implode("<br>", array_map(function($log) { return esc_html(is_array($log) && isset($log['text']) ? $log['text'] : $log); }, $compare['browser_console_removed'])) : 'none' ?><br>
+                        <strong>Changed:</strong> <?= is_array($compare['browser_console_change']) ? implode("<br>", array_map('esc_html', $compare['browser_console_change'])) : 'none' ?><br>
+                    </div>
+                <?php } else { 
+                    // Generate dummy preview content for plans that don't have access
+                    $dummyConsoleContent = '
+                        <div class="comparison-tiles" style="width: 240px;">
+                            <strong>Browser console changes</strong><br>
+                            <strong>Added:</strong> Failed to load resource: net::ERR_CONNECTION_REFUSED<br>Uncaught TypeError: Cannot read property \'style\' of null<br>
+                            <strong>Removed:</strong> jQuery is loaded and ready<br>
+                            <strong>Changed:</strong> Console behavior modified<br>
+                        </div>';
+                    
+                    echo wcd_generate_feature_preview('browser_console', $dummyConsoleContent, 'wcd-console-tiles-restricted');
+                } 
+            } ?>
             <div class="comparison-tiles" style="width: 375px; margin-right: 0;">
                 <strong>URL Details</strong><br>
                 <!--<?php echo get_device_icon( $compare['device'] ); ?>

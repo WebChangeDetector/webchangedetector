@@ -827,9 +827,9 @@ function wcd_content( $tab = false, $subtab = false ) {
 		case 'website-settings':
 			?>
 			<h1>
-				WP Websites
+				WordPress Websites
 				<small>
-					Your API token for direct integrations and for using our WP plugin.
+					Your API token for direct integrations and for using our WordPress plugin.
 				</small>
 			</h1>
 
@@ -844,10 +844,10 @@ function wcd_content( $tab = false, $subtab = false ) {
 			case 'subaccounts':
 				?>
 				<h1>
-                    Sub-Accounts
+                    Subaccounts
                     <small>
-                        Create sub-accounts and limit the number of checks for each sub-account. Use the newly generated API token for e.g. the WP plugin.
-						Sub-accounts can't login at the webapp.
+                        Create subaccounts and limit the number of checks for each subaccount. Use the newly generated API token for integrations.
+						Subaccounts can't login at the webapp.
                     </small>
 				</h1>
 				<?php
@@ -1067,14 +1067,14 @@ if ( ! function_exists( 'mm_tabs' ) ) {
 				<a href="<?php echo MM_APP_PATH; ?>?tab=website-settings"
 					class="nav-tab <?php echo $active_tab == 'website-settings' ? 'nav-tab-active' : ''; ?>">
 					<?php echo get_device_icon( 'wordpress' ); ?>
-					WP Websites
+					WordPress Websites
 				</a>
 			</li>
 			<li>
 				<a href="<?php echo MM_APP_PATH; ?>?tab=subaccounts"
 					class="nav-tab <?php echo $active_tab == 'subaccounts' ? 'nav-tab-active' : ''; ?>">
 					<?php echo get_device_icon( 'subaccounts' ); ?>
-					Sub-accounts
+					Subaccounts
 				</a>
 			</li>
 

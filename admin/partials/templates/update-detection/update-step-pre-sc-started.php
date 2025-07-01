@@ -16,7 +16,7 @@ require 'update-step-tiles.php';
 <!-- Pre-Update started / finished -->
 <div id="wcd-screenshots-done" class="wcd-step-container wcd-section"
 		style="max-width: 500px; margin: 20px auto; text-align: center; display: none;">
-	<div class="wcd-highlight-bg done">
+	<div class="wcd-card done">
 		<h2><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'check', 'screenshots-done-icon' ); ?>Pre-Update Screenshots</h2>
 	</div>
 	<div class="wcd-highlight-bg">
@@ -32,7 +32,6 @@ require 'update-step-tiles.php';
 			<input class="button button-primary" type="submit" value="Next >">
 		</form>
 	</div>
-
 
 	<?php require 'update-step-cancel.php'; ?>
 </div>
