@@ -51,68 +51,76 @@ class WebChangeDetector_Settings_Controller {
 		?>
 		<div class="action-container">
 
-			<div class="box-plain no-border">
-				<?php
-				// Wizard functionality temporarily removed for phase 1
-				// Will be moved to view renderer in later phases
-				?>
-				<h2>URL Synchronization Settings</h2>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row">
-							<label>Show Post Types</label>
-						</th>
-						<td>
-							<p class="description" style="margin-bottom: 10px;">Missing URLs to switch on for checking? Show additional post types in the URL list here.</p>
+			<div class="wcd-settings-section">
+				<div class="wcd-settings-card">
+					<?php
+					// Wizard functionality temporarily removed for phase 1
+					// Will be moved to view renderer in later phases
+					?>
+					<h2>URL Synchronization Settings</h2>
+					
+					<div class="wcd-form-row">
+						<div class="wcd-form-label-wrapper">
+							<label class="wcd-form-label">Show Post Types</label>
+							<div class="wcd-description">Missing URLs to switch on for checking? Show additional post types in the URL list here.</div>
+						</div>
+						<div class="wcd-form-control">
 							<?php $this->render_post_types_form(); ?>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<label>Show Taxonomies</label>
-						</th>
-						<td>
-							<p class="description" style="margin-bottom: 10px;">Missing taxonomies like categories or tags? Select them here and they appear in the URL list.</p>
+						</div>
+					</div>
+					
+					<div class="wcd-form-row">
+						<div class="wcd-form-label-wrapper">
+							<label class="wcd-form-label">Show Taxonomies</label>
+							<div class="wcd-description">Missing taxonomies like categories or tags? Select them here and they appear in the URL list.</div>
+						</div>
+						<div class="wcd-form-control">
 							<?php $this->render_taxonomies_form(); ?>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">URL Sync Status</th>
-						<td>
-							<p class="description" style="margin-bottom: 10px;">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
-							This works automatically in the background. When you add a webpage, you can start the sync manually.</p>
+						</div>
+					</div>
+					
+					<div class="wcd-form-row">
+						<div class="wcd-form-label-wrapper">
+							<label class="wcd-form-label">URL Sync Status</label>
+							<div class="wcd-description">To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
+							This works automatically in the background. When you add a webpage, you can start the sync manually.</div>
+						</div>
+						<div class="wcd-form-control">
 							<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
 									<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 								</span>
 							</p>
-							<button class="button button-secondary" onclick="sync_urls(1); return false;">Sync URLs Manually</button>
-						</td>
-					</tr>
-				</table>
+							<button class="button button-secondary" onclick="sync_urls(1); return false;">Sync URLs Now</button>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<hr />
 
-			<div class="box-plain no-border">
-				<h2>Admin Bar Menu</h2>
-				<form method="post">
-				<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
-				<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
-					<table class="form-table">
-						<tr valign="top">
-							<th scope="row">Disable Admin Bar Menu</th>
-							<td>
+			<div class="wcd-settings-section">
+				<div class="wcd-settings-card">
+					<h2>Admin Bar Menu</h2>
+					<form method="post">
+					<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
+					<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
+						
+						<div class="wcd-form-row">
+							<div class="wcd-form-label-wrapper">
+								<label class="wcd-form-label">Disable Admin Bar Menu</label>
+								<div class="wcd-description">Check this box to hide the WCD menu item in the frontend admin bar.</div>
+							</div>
+							<div class="wcd-form-control">
 								<label>
-									
 									<input type="checkbox" name="wcd_disable_admin_bar_menu" value="1" <?php checked( get_option( 'wcd_disable_admin_bar_menu', 0 ), 1 ); ?> />
 									Disable WCD Menu in Admin Bar
 								</label>
-								<p class="description">Check this box to hide the WCD menu item in the frontend admin bar.</p>
-							</td>
-						</tr>
-					</table>
-					<?php submit_button( 'Save Admin Bar Setting' ); ?>
-				</form>
+							</div>
+						</div>
+						
+						<?php submit_button( 'Save Admin Bar Setting' ); ?>
+					</form>
+				</div>
 			</div>
 
 			<hr>
@@ -123,10 +131,12 @@ class WebChangeDetector_Settings_Controller {
                     </div>';
 			} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
 				?>
-				<div class="box-plain no-border">
-					<h2>Need more checks?</h2>
-					<p>If you need more checks, please upgrade your account with the button below.</p>
-					<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>">Upgrade</a>
+				<div class="wcd-settings-section">
+					<div class="wcd-settings-card">
+						<h2>Need more checks?</h2>
+						<p>If you need more checks, please upgrade your account with the button below.</p>
+						<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>">Upgrade</a>
+					</div>
 				</div>
 				<?php
 			}

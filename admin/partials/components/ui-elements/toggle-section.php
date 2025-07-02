@@ -35,7 +35,7 @@ $section_id = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 
 <div class="setting-row <?php echo esc_attr( $css_class ); ?>">
 	<label for="<?php echo esc_attr( $toggle_name ); ?>"><?php echo esc_html( $toggle_label ); ?></label>
-	<label class="switch">
+	<label class="wcd-modern-switch">
 		<input 
 			type="checkbox" 
 			name="<?php echo esc_attr( $toggle_name ); ?>" 
@@ -44,7 +44,7 @@ $section_id = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 			<?php checked( $is_enabled ); ?>
 			onchange="toggleSection('<?php echo esc_js( $section_id ); ?>', this.checked)"
 		>
-		<span class="slider round"></span>
+		<span class="wcd-modern-slider"></span>
 	</label>
 	<?php if ( $toggle_description ) : ?>
 		<br><small><?php echo esc_html( $toggle_description ); ?></small>

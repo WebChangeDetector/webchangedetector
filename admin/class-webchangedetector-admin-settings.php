@@ -86,7 +86,7 @@ class WebChangeDetector_Admin_Settings {
 			'monitoring'    => true,
 			'hour_of_day'   => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
 			'interval_in_h' => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
-			'enabled'       => ( isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ) ) ? 1 : 0,
+			'enabled'       => isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ),
 			'alert_emails'  => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
 			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
 			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
@@ -252,22 +252,48 @@ class WebChangeDetector_Admin_Settings {
 
 		<div class="wcd-select-urls-container">
 			<?php
-
-			// Include the group settings.
-			if ( ! $monitoring_group ) {
-				$this->admin->view_renderer->get_component( 'templates' )->render_update_settings( $group_and_urls, $group_id );
-			} else {
-
-				// Print the status bar.
+			// Print the status bar for monitoring group.
+			if ( $monitoring_group ) {
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
-
-				// Monitoring settings.
-				$this->admin->view_renderer->get_component( 'templates' )->render_auto_settings( $group_and_urls, $group_id );
 			}
-
-			// Select URLs section.
-			if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+			
+			// Add Manual Checks Workflow section at the top (only for manual checks, not monitoring)
+			if ( ! $monitoring_group && $group_and_urls['selected_urls_count'] > 0 ) {
 				?>
+				<div class="wcd-settings-section">
+					<div class="wcd-settings-card wcd-start-checks-card">
+						<div class="wcd-form-row">
+							<div class="wcd-form-label-wrapper">
+								<label class="wcd-form-label"><span class="dashicons dashicons-controls-play"></span> Manual Checks Workflow</label>
+								<div class="wcd-description">Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.</div>
+							</div>
+							<div class="wcd-form-control">
+								<button style="margin-top: 10px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
+									<span class="dashicons dashicons-controls-play"></span> Start Manual Checks
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<hr style="margin: 20px 0; border-color: #e1e5e9;">
+				<?php
+			}
+			?>
+			
+			<div class="wcd-settings-flex-container">
+				<?php
+				// Include the group settings.
+				if ( ! $monitoring_group ) {
+					$this->admin->view_renderer->get_component( 'templates' )->render_update_settings( $group_and_urls, $group_id );
+				} else {
+					// Monitoring settings.
+					$this->admin->view_renderer->get_component( 'templates' )->render_auto_settings( $group_and_urls, $group_id );
+				}
+
+				// Select URLs section.
+				if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+					?>
 
 			<div class="wcd-url-selection wcd-settings-card">
 				<h2>Select URLs to Check<br><small></small></h2>
@@ -284,55 +310,62 @@ class WebChangeDetector_Admin_Settings {
 						<form method="get" style="float: left;">
 							<input type="hidden" name="page" value="webchangedetector-<?php echo esc_html( $tab ); ?>">
 
-							Post types
-							<select id="filter-post-type" name="post-type">
-								<option value="0">All</option>
-								<?php
-								$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
-
-								// Fix for old sync_url_types.
-								$website_details = $this->admin->website_details ?? array();
-								$sync_url_types = $website_details['sync_url_types'] ?? array();
-								if ( isset( $website_details['sync_url_types'] ) && is_string( $website_details['sync_url_types'] ) ) {
-									$sync_url_types = json_decode( $website_details['sync_url_types'], true ) ?? array();
-								}
-
-								if ( ! get_option( 'page_on_front' ) && ! empty( $sync_url_types ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
-									?>
-									<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
+							<div style="display: inline-block; margin-right: 15px; vertical-align: top;">
+								<label for="filter-post-type" style="display: block; font-weight: 600; margin-bottom: 4px;">Post types</label>
+								<select id="filter-post-type" name="post-type">
+									<option value="0">All</option>
 									<?php
-								}
+									$selected_post_type = isset( $_GET['post-type'] ) ? sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) : array();
 
-								foreach ( $sync_url_types ?? array() as $url_type ) {
-									if ( 'types' !== $url_type['url_type_slug'] ) {
-										continue;
+									// Fix for old sync_url_types.
+									$website_details = $this->admin->website_details ?? array();
+									$sync_url_types = $website_details['sync_url_types'] ?? array();
+									if ( isset( $website_details['sync_url_types'] ) && is_string( $website_details['sync_url_types'] ) ) {
+										$sync_url_types = json_decode( $website_details['sync_url_types'], true ) ?? array();
 									}
-									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
-									?>
-									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-										<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( $url_type['post_type_slug'] ) ); ?>
-									</option>
-								<?php } ?>
-							</select>
 
-							Taxonomies
-							<select id="filter-taxonomy" name="taxonomy">
-								<option value="0">All</option>
-								<?php
-								$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
-
-								foreach ( $sync_url_types ?? array() as $url_type ) {
-									if ( 'types' === $url_type['url_type_slug'] ) {
-										continue;
+									if ( ! get_option( 'page_on_front' ) && ! empty( $sync_url_types ) && ! in_array( 'frontpage', array_column( $sync_url_types, 'post_type_slug' ), true ) ) {
+										?>
+										<option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?> >Frontpage</option>
+										<?php
 									}
-									$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
-									?>
-									<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-										<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
-									</option>
-								<?php } ?>
-							</select>
-							<button class="button button-secondary">Filter</button>
+
+									foreach ( $sync_url_types ?? array() as $url_type ) {
+										if ( 'types' !== $url_type['url_type_slug'] ) {
+											continue;
+										}
+										$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
+										?>
+										<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
+											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( $url_type['post_type_slug'] ) ); ?>
+										</option>
+									<?php } ?>
+								</select>
+							</div>
+
+							<div style="display: inline-block; margin-right: 15px; vertical-align: top;">
+								<label for="filter-taxonomy" style="display: block; font-weight: 600; margin-bottom: 4px;">Taxonomies</label>
+								<select id="filter-taxonomy" name="taxonomy">
+									<option value="0">All</option>
+									<?php
+									$selected_post_type = isset( $_GET['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) : '';
+
+									foreach ( $sync_url_types ?? array() as $url_type ) {
+										if ( 'types' === $url_type['url_type_slug'] ) {
+											continue;
+										}
+										$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
+										?>
+										<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
+											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
+										</option>
+									<?php } ?>
+								</select>
+							</div>
+							
+							<div style="display: inline-block; vertical-align: top; margin-top: 22px;">
+								<button class="button button-secondary">Filter</button>
+							</div>
 						</form>
 
 						<script>
@@ -367,24 +400,24 @@ class WebChangeDetector_Admin_Settings {
 								<?php // Select all from same device. ?>
 								<tr class=" even-tr-white" style="background: none; text-align: center">
 									<td>
-										<label class="switch">
+										<label class="wcd-modern-switch">
 											<input type="checkbox"
 											id="select-desktop"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
 											data-screensize="desktop"
 											onclick="mmToggle( this, 'desktop', '<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>' ); postUrl('select-desktop');"/>
-											<span class="slider round"></span>
+											<span class="wcd-modern-slider"></span>
 										</label>
 									</td>
 
 									<td>
-										<label class="switch">
+										<label class="wcd-modern-switch">
 											<input type="checkbox"
 											id="select-mobile"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
 											data-screensize="mobile"
 											onclick="mmToggle( this, 'mobile', '<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>' ); postUrl('select-mobile');" />
-											<span class="slider round"></span>
+											<span class="wcd-modern-slider"></span>
 										</label>
 									</td>
 
@@ -392,6 +425,7 @@ class WebChangeDetector_Admin_Settings {
 									<td></td>
 								</tr>
 								<?php
+                                
 								foreach ( $urls as $url ) {
 									// init.
 									$checked = array(
@@ -402,7 +436,7 @@ class WebChangeDetector_Admin_Settings {
 									<tr class="live-filter-row even-tr-white post_id_<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>" id="<?php echo esc_html( $url['id'] ); ?>" >
 										<td class="checkbox-desktop" style="text-align: center;">
 											<input type="hidden" value="0" name="desktop-<?php echo esc_html( $url['id'] ); ?>">
-											<label class="switch">
+											<label class="wcd-modern-switch">
 												<input type="checkbox"
 												data-nonce="<?php echo esc_html( $nonce ); ?>"
 												data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
@@ -412,13 +446,13 @@ class WebChangeDetector_Admin_Settings {
 												value="1" <?php echo esc_html( $checked['desktop'] ); ?>
 												id="desktop-<?php echo esc_html( $url['id'] ); ?>"
 												onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
-												<span class="slider round"></span>
+												<span class="wcd-modern-slider"></span>
 											</label>
 										</td>
 
 										<td class="checkbox-mobile" style="text-align: center;">
 										<input type="hidden" value="0" name="mobile-<?php echo esc_html( $url['id'] ); ?>">
-										<label class="switch">
+										<label class="wcd-modern-switch">
 											<input type="checkbox"
 											data-nonce="<?php echo esc_html( $nonce ); ?>"
 											data-type="<?php echo esc_html( lcfirst( $url['category'] ) ); ?>"
@@ -428,7 +462,7 @@ class WebChangeDetector_Admin_Settings {
 											value="1" <?php echo esc_html( $checked['mobile'] ); ?>
 											id="mobile-<?php echo esc_html( $url['id'] ); ?>"
 											onclick="mmMarkRows('<?php echo esc_html( $url['id'] ); ?>'); postUrl('<?php echo esc_html( $url['id'] ); ?>');" >
-											<span class="slider round"></span>
+											<span class="wcd-modern-slider"></span>
 										</label>
 										</td>
 
@@ -457,72 +491,93 @@ class WebChangeDetector_Admin_Settings {
 
 						<?php
 						// Pagination.
-						if ( ! empty( $urls_meta ) && isset( $urls_meta['total_pages'] ) && $urls_meta['total_pages'] > 1 ) {
+						if ( ! empty( $urls_meta ) && isset( $urls_meta['last_page'] ) && $urls_meta['last_page'] > 1 ) {
 							?>
-							<div class="pagination-container" style="text-align: center; margin-top: 20px;">
-								<?php
-								$pagination_params['page'] = 'webchangedetector-' . $tab;
-								$current_page = $page;
-								$total_pages = $urls_meta['total_pages'];
+							<div class="wcd-pagination-container" style="text-align: center; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e5e9;">
+								<div class="wcd-pagination-wrapper">
+									<?php
+									// Initialize pagination variables
+									$pagination_params['page'] = 'webchangedetector-' . $tab;
+									$current_page = $urls_meta['current_page'] ?? $page;
+									$total_pages = $urls_meta['last_page'];
+									$total_items = $urls_meta['total'] ?? 0;
+									?>
+									<div class="wcd-pagination-info">
+										<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;">Showing page <?php echo esc_html( $current_page ); ?> of <?php echo esc_html( $total_pages ); ?> (<?php echo esc_html( $total_items ); ?> total URLs)</span>
+									</div>
+									<div class="wcd-pagination-links" style="margin-top: 15px;">
+										<?php
 
-								// Previous page link.
-								if ( $current_page > 1 ) {
-									$prev_page = $current_page - 1;
-									$pagination_params['paged'] = $prev_page;
-									$prev_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
-									echo '<a href="' . esc_url( $prev_url ) . '" class="button button-secondary">← Previous</a> ';
-								}
+										// Previous page link.
+										if ( $current_page > 1 ) {
+											$prev_page = $current_page - 1;
+											$pagination_params['paged'] = $prev_page;
+											$prev_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
+											echo '<a class="wcd-pagination-btn et_pb_button" href="' . esc_url( $prev_url ) . '" style="margin: 0 3px;">‹ Previous</a> ';
+										} else {
+											echo '<span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">‹ Previous</span> ';
+										}
 
-								// Page numbers.
-								for ( $i = 1; $i <= $total_pages; $i++ ) {
-									if ( $i == $current_page ) {
-										echo '<strong>' . esc_html( $i ) . '</strong> ';
-									} else {
-										$pagination_params['paged'] = $i;
-										$page_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
-										echo '<a href="' . esc_url( $page_url ) . '">' . esc_html( $i ) . '</a> ';
-									}
-								}
+										// Page numbers with smart truncation.
+										$start_page = max( 1, $current_page - 2 );
+										$end_page = min( $total_pages, $current_page + 2 );
 
-								// Next page link.
-								if ( $current_page < $total_pages ) {
-									$next_page = $current_page + 1;
-									$pagination_params['paged'] = $next_page;
-									$next_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
-									echo ' <a href="' . esc_url( $next_url ) . '" class="button button-secondary">Next →</a>';
-								}
-								?>
+										if ( $start_page > 1 ) {
+											$pagination_params['paged'] = 1;
+											$page_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
+											echo '<a class="wcd-page-num et_pb_button small" href="' . esc_url( $page_url ) . '" style="margin: 0 2px;">1</a> ';
+											if ( $start_page > 2 ) {
+												echo '<span class="wcd-page-dots" style="margin: 0 5px; color: #646970;">…</span> ';
+											}
+										}
+
+										for ( $i = $start_page; $i <= $end_page; $i++ ) {
+											if ( $i == $current_page ) {
+												echo '<span class="wcd-page-num et_pb_button small primary current" style="margin: 0 2px; background: #0073aa; color: #fff; font-weight: 700;">' . esc_html( $i ) . '</span> ';
+											} else {
+												$pagination_params['paged'] = $i;
+												$page_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
+												echo '<a class="wcd-page-num et_pb_button small" href="' . esc_url( $page_url ) . '" style="margin: 0 2px; background: #fff; color: #0073aa; border: 1px solid #dcdcde;">' . esc_html( $i ) . '</a> ';
+											}
+										}
+
+										if ( $end_page < $total_pages ) {
+											if ( $end_page < $total_pages - 1 ) {
+												echo '<span class="wcd-page-dots" style="margin: 0 5px; color: #646970;">…</span> ';
+											}
+											$pagination_params['paged'] = $total_pages;
+											$page_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
+											echo '<a class="wcd-page-num et_pb_button small" href="' . esc_url( $page_url ) . '" style="margin: 0 2px; background: #fff; color: #0073aa; border: 1px solid #dcdcde;">' . esc_html( $total_pages ) . '</a> ';
+										}
+
+										// Next page link.
+										if ( $current_page < $total_pages ) {
+											$next_page = $current_page + 1;
+											$pagination_params['paged'] = $next_page;
+											$next_url = add_query_arg( $pagination_params, admin_url( 'admin.php' ) );
+											echo ' <a class="wcd-pagination-btn et_pb_button" href="' . esc_url( $next_url ) . '" style="margin: 0 3px;">Next ›</a>';
+										} else {
+											echo ' <span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">Next ›</span>';
+										}
+										?>
+									</div>
+								</div>
 							</div>
 							<?php
 						}
 						?>
 					</div>
 				</div>
-				<hr>
-				<?php
-				// Add Manual Checks Workflow section after URL selection (only for manual checks, not monitoring)
-				if ( ! $monitoring_group && $group_and_urls['selected_urls_count'] > 0 ) {
-					?>
-					<div class="box-plain" style="background: white; margin-top: 20px;">
-						<table class="form-table">
-							<tbody>
-								<tr>
-									<th scope="row">Manual Checks Workflow</th>
-									<td>
-										<p>Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.</p>
-										<button style="margin-top: 10px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
-											Start Manual Checks
-										</button>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<?php
-				}
-				?>
+			</div> <!-- Close flex container -->
+			
+
 				
 				<?php
+			} else {
+				// Close flex container even if URL selection is not allowed
+				?>
+			</div> <!-- Close flex container -->
+			<?php
 			}
 			?>
 		</div>

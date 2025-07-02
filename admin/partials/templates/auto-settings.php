@@ -16,10 +16,9 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 	$enabled = $group_and_urls['enabled'] ?? false;
 
 	?>
-	<div class="wcd-settings-section">
-		<div class="wcd-settings-card">
-			<h2>Monitoring Settings</h2>
-			<p>Configure automatic monitoring settings for your selected URLs and get notified about changes.</p>
+	<div class="wcd-settings-card">
+		<h2>Monitoring Settings</h2>
+		<p>Configure automatic monitoring settings for your selected URLs and get notified about changes.</p>
 			
 			<form action="admin.php?page=webchangedetector-auto-settings" method="post">
 				<input type="hidden" name="wcd_action" value="save_group_settings">
@@ -152,8 +151,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					</div>
 				</div>
 			
-			<?php submit_button( 'Save Settings', 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormAutoSettings()' ) ); ?>
-		</form>
+		<?php submit_button( 'Save Settings', 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormAutoSettings()' ) ); ?>
+	</form>
 	</div>
 
 	<script type="text/javascript">

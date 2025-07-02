@@ -14,6 +14,24 @@
     margin: 20px 0;
 }
 
+.webchangedetector .wcd-settings-flex-container {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+    align-items: flex-start;
+}
+
+.webchangedetector .wcd-settings-flex-container .wcd-settings-card {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+@media (max-width: 1200px) {
+    .webchangedetector .wcd-settings-flex-container {
+        flex-direction: column;
+    }
+}
+
 .webchangedetector .wcd-settings-card {
     background: #fff;
     border: 1px solid #e1e5e9;
@@ -26,7 +44,6 @@
 
 .webchangedetector .wcd-settings-card:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
     border-color: #c3c4c7;
 }
 
@@ -154,6 +171,40 @@
     background: #1e5f99;
 }
 
+/* Special styling for device switches (desktop/mobile toggles with text) */
+.webchangedetector .enabled_switch.devices .wcd-modern-switch {
+    width: 120px;
+    height: 34px;
+}
+
+.webchangedetector .enabled_switch.devices .wcd-modern-slider {
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    line-height: 12px;
+    text-align: center;
+    font-weight: 500;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.webchangedetector .enabled_switch.devices .wcd-modern-slider:before {
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.webchangedetector .enabled_switch.devices input:checked+.wcd-modern-slider:before {
+    transform: translateX(85px);
+}
+
 /* Form inputs styling */
 .webchangedetector .wcd-form-row input[type="number"],
 .webchangedetector .wcd-form-row input[type="text"],
@@ -211,7 +262,6 @@
 
 .webchangedetector .wcd-form-row:nth-child(odd) {
     background-color: transparent;
-    padding: 20px 24px;
 }
 
 /* Responsive design */
@@ -870,7 +920,7 @@
 
 .webchangedetector div.code-tags {
     color: #d29305;
-    background: #f7f7f7;
+    background: #313335;
     font-style: italic;
     font-size: 14px;
     padding: 5px 10px !important;
@@ -1319,6 +1369,110 @@ Settings
     height: auto;
 }
 
+/* Modern monitoring status card */
+.webchangedetector .wcd-monitoring-status-card {
+    margin-bottom: 20px;
+    border-left: 4px solid #0073aa;
+}
+
+.webchangedetector .wcd-monitoring-status-header h3 {
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    color: #0073aa;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.webchangedetector .wcd-monitoring-status-header h3 .dashicons {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.webchangedetector .wcd-next-check-container {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.webchangedetector .wcd-status-label {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.webchangedetector .wcd-status-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0073aa;
+    margin-bottom: 5px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.webchangedetector .wcd-status-date {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.webchangedetector .wcd-monitoring-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+}
+
+.webchangedetector .wcd-stat-item {
+    text-align: center;
+    flex: 1;
+}
+
+.webchangedetector .wcd-stat-label {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.webchangedetector .wcd-stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+}
+
+@media (max-width: 768px) {
+    .webchangedetector .wcd-monitoring-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .webchangedetector .wcd-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .webchangedetector .wcd-stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .webchangedetector .wcd-stat-label,
+    .webchangedetector .wcd-stat-value {
+        margin: 0;
+        font-size: 14px;
+    }
+}
+
 /* Modern button enhancements */
 .webchangedetector .et_pb_button {
     background: #0073aa;
@@ -1485,6 +1639,477 @@ Settings
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Modern pagination design */
+.webchangedetector .wcd-pagination-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e1e5e9;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    margin: 30px 0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.webchangedetector .wcd-pagination-container:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.webchangedetector .wcd-pagination-info {
+    margin-bottom: 20px;
+}
+
+.webchangedetector .wcd-displaying-num {
+    color: #646970;
+    font-weight: 600;
+    font-size: 14px;
+    background: rgba(0, 115, 170, 0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.webchangedetector .wcd-pagination-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.webchangedetector .wcd-pagination-btn.et_pb_button {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    box-shadow: 0 2px 4px rgba(0, 115, 170, 0.2);
+}
+
+.webchangedetector .wcd-pagination-btn.et_pb_button:hover {
+    background: #005a87;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 115, 170, 0.3);
+}
+
+.webchangedetector .wcd-pagination-btn.et_pb_button.disabled {
+    background: #dcdcde !important;
+    color: #a7aaad !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.webchangedetector .wcd-page-num.et_pb_button.small {
+    background: #fff;
+    color: #0073aa;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.webchangedetector .wcd-page-num.et_pb_button.small:hover {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 115, 170, 0.25);
+}
+
+.webchangedetector .wcd-page-num.et_pb_button.small.current {
+    background: #0073aa !important;
+    color: #fff !important;
+    border-color: #0073aa !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 8px rgba(0, 115, 170, 0.4) !important;
+    transform: scale(1.05) !important;
+}
+
+.webchangedetector .wcd-page-dots {
+    color: #646970;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0 8px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Account information styling */
+.webchangedetector .wcd-account-info {
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.webchangedetector .wcd-account-info p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+}
+
+.webchangedetector .wcd-account-info strong {
+    display: inline-block;
+    min-width: 100px;
+    margin-right: 10px;
+    color: #0073aa;
+    font-weight: 600;
+}
+
+.webchangedetector .wcd-account-info code {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    color: #333;
+    word-break: break-all;
+}
+
+/* Settings section icons */
+.webchangedetector .wcd-settings-card h2 .dashicons {
+    color: #0073aa;
+    margin-right: 8px;
+    font-size: 20px;
+    vertical-align: middle;
+}
+
+/* Start checks card styling */
+.webchangedetector .wcd-start-checks-card {
+    border-left: 4px solid #00a32a;
+    background: linear-gradient(135deg, #f8fff8 0%, #f0fff0 100%);
+}
+
+.webchangedetector .wcd-start-checks-card .wcd-form-label .dashicons {
+    color: #00a32a;
+}
+
+.webchangedetector .wcd-start-checks-card .button-primary {
+    background: #00a32a;
+    border-color: #00a32a;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.webchangedetector .wcd-start-checks-card .button-primary:hover {
+    background: #008a25;
+    border-color: #008a25;
+}
+
+.webchangedetector .wcd-start-checks-card .button-primary .dashicons {
+    font-size: 18px;
+}
+
+/* Cancel card styling */
+.webchangedetector .wcd-cancel-card {
+    border-left: 4px solid #d63638;
+    background: linear-gradient(135deg, #fff8f8 0%, #fff0f0 100%);
+    margin-top: 30px;
+}
+
+.webchangedetector .wcd-cancel-card .wcd-form-label .dashicons {
+    color: #d63638;
+}
+
+.webchangedetector .wcd-cancel-btn {
+    background: #d63638 !important;
+    border-color: #d63638 !important;
+    color: #fff !important;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.webchangedetector .wcd-cancel-btn:hover {
+    background: #b32d2e !important;
+    border-color: #b32d2e !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(214, 54, 56, 0.3);
+}
+
+.webchangedetector .wcd-cancel-btn .dashicons {
+    font-size: 18px;
+}
+
+/* Workflow steps styling */
+.webchangedetector .wcd-workflow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.webchangedetector .wcd-step-item {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.webchangedetector .wcd-step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.webchangedetector .wcd-step-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.webchangedetector .wcd-step-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.webchangedetector .wcd-step-connector {
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+    margin: 0 20px;
+    flex-shrink: 0;
+}
+
+/* Step states */
+.webchangedetector .wcd-step-disabled .wcd-step-icon {
+    background: #f1f1f1;
+    border: 2px solid #ddd;
+    color: #999;
+}
+
+.webchangedetector .wcd-step-disabled .wcd-step-content h3 {
+    color: #999;
+}
+
+.webchangedetector .wcd-step-disabled .wcd-step-content p {
+    color: #bbb;
+}
+
+.webchangedetector .wcd-step-active .wcd-step-icon {
+    background: #0073aa;
+    border: 2px solid #0073aa;
+    color: #fff;
+    animation: pulse 2s infinite;
+}
+
+.webchangedetector .wcd-step-active .wcd-step-content h3 {
+    color: #0073aa;
+}
+
+.webchangedetector .wcd-step-done .wcd-step-icon {
+    background: #00a32a;
+    border: 2px solid #00a32a;
+    color: #fff;
+}
+
+.webchangedetector .wcd-step-done .wcd-step-content h3 {
+    color: #00a32a;
+}
+
+.webchangedetector .wcd-step-number {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.webchangedetector .wcd-connector-active {
+    background: #00a32a;
+}
+
+.webchangedetector .wcd-connector-inactive {
+    background: #e1e5e9;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 115, 170, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 115, 170, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 115, 170, 0);
+    }
+}
+
+/* Success card styling */
+.webchangedetector .wcd-success-card {
+    border-left: 4px solid #00a32a;
+    background: linear-gradient(135deg, #f8fff8 0%, #f0fff0 100%);
+}
+
+.webchangedetector .wcd-success-card .wcd-form-label .dashicons {
+    color: #00a32a;
+}
+
+.webchangedetector .wcd-status-info {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+/* Action card styling */
+.webchangedetector .wcd-action-card {
+    border-left: 4px solid #0073aa;
+    background: linear-gradient(135deg, #f8faff 0%, #f0f6ff 100%);
+}
+
+.webchangedetector .wcd-action-card .wcd-form-label .dashicons {
+    color: #0073aa;
+}
+
+.webchangedetector .wcd-action-btn {
+    background: #0073aa;
+    border-color: #0073aa;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.webchangedetector .wcd-action-btn:hover {
+    background: #005a87;
+    border-color: #005a87;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 115, 170, 0.3);
+}
+
+.webchangedetector .wcd-action-btn .dashicons {
+    font-size: 18px;
+}
+
+/* Warning card styling */
+.webchangedetector .wcd-warning-card {
+    border-left: 4px solid #f56e28;
+    background: linear-gradient(135deg, #fffaf7 0%, #fff5ed 100%);
+}
+
+.webchangedetector .wcd-warning-card .wcd-form-label .dashicons {
+    color: #f56e28;
+}
+
+.webchangedetector .wcd-error-message {
+    background: #fff2f2;
+    border: 1px solid #f5c2c7;
+    border-radius: 6px;
+    padding: 15px;
+    color: #721c24;
+}
+
+.webchangedetector .wcd-error-message p:first-child {
+    margin-top: 0;
+    font-weight: 600;
+}
+
+.webchangedetector .wcd-error-message p:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive design for workflow steps */
+@media (max-width: 768px) {
+    .webchangedetector .wcd-workflow-steps {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .webchangedetector .wcd-step-item {
+        margin-bottom: 20px;
+        min-width: auto;
+        width: 100%;
+    }
+
+    .webchangedetector .wcd-step-connector {
+        width: 4px;
+        height: 30px;
+        margin: 10px 0;
+        transform: rotate(90deg);
+    }
+
+    .webchangedetector .wcd-step-connector:last-of-type {
+        display: none;
+    }
+}
+
+/* Responsive design for pagination */
+@media (max-width: 768px) {
+    .webchangedetector .wcd-pagination-links {
+        gap: 8px;
+    }
+
+    .webchangedetector .wcd-pagination-btn.et_pb_button {
+        min-width: 70px;
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .webchangedetector .wcd-page-num.et_pb_button.small {
+        min-width: 28px;
+        height: 28px;
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+
+    .webchangedetector .wcd-account-info strong {
+        min-width: 80px;
+        font-size: 14px;
+    }
+}
+
 /* Modern table design */
 .webchangedetector table,
 .webchangedetector .url-table,
@@ -1617,4 +2242,75 @@ Settings
 .webchangedetector .queue-status-failed {
     background: #ffebee;
     color: #c62828;
+}
+
+.webchangedetector .update-step-tile {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.webchangedetector .update-step-tile.step-current {
+    border-color: #0073aa;
+    background: #f0f8ff;
+}
+
+.webchangedetector .update-step-tile.step-completed {
+    border-color: #00a32a;
+    background: #f0fff0;
+}
+
+.webchangedetector .update-step-tile.step-pending {
+    opacity: 0.7;
+}
+
+.webchangedetector .step-icon {
+    position: relative;
+    margin-right: 15px;
+    font-size: 24px;
+}
+
+.webchangedetector .step-icon .dashicons {
+    color: #666;
+}
+
+.webchangedetector .step-current .step-icon .dashicons {
+    color: #0073aa;
+}
+
+.webchangedetector .step-completed .step-icon .dashicons {
+    color: #00a32a;
+}
+
+.webchangedetector .step-status-icon {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 16px !important;
+    background: white;
+    border-radius: 50%;
+}
+
+.webchangedetector .step-content {
+    flex: 1;
+}
+
+.webchangedetector .step-title {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.webchangedetector .step-description {
+    margin: 0 0 15px 0;
+    color: #666;
+}
+
+.webchangedetector .step-action {
+    margin-top: 10px;
 }

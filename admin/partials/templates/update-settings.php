@@ -25,44 +25,51 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && '1' === $auto_update_settings['auto_update_checks_enabled'];
 	?>
 
-	<div class="box-plain no-border">
+	<div class="wcd-settings-card">
 		<h2>WP Auto Update & Manual Checks Settings</h2>
-		<form action="admin.php?page=webchangedetector-update-settings" method="post">
-			<input type="hidden" name="wcd_action" value="save_group_settings">
-			<input type="hidden" name="step" value="pre-update">
-			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
-			<?php wp_nonce_field( 'save_group_settings' ); ?>
-			
-			<table class="form-table">
-				<tr valign="top">
-					<th scope="row">
-						<label>Auto Update Checks</label>
-					</th>
-					<td>
+			<form action="admin.php?page=webchangedetector-update-settings" method="post">
+				<input type="hidden" name="wcd_action" value="save_group_settings">
+				<input type="hidden" name="step" value="pre-update">
+				<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
+				<?php wp_nonce_field( 'save_group_settings' ); ?>
+				
+				<div class="wcd-form-row">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">Auto Update Checks</label>
+						<div class="wcd-description">WP auto updates have to be enabled. This option only enables checks during auto updates.</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
-						// Auto Update Checks Toggle.
+						// Auto Update Checks Toggle (without content).
 						$toggle_name = 'auto_update_checks_enabled';
 						$is_enabled = $auto_update_checks_enabled;
 						$toggle_label = 'Auto Update Checks';
-						$toggle_description = 'WP auto updates have to be enabled. This option only enables checks during auto updates.';
+						$toggle_description = '';
 						$section_id = 'auto_update_checks_settings';
-						
-						// Build the content for the auto update settings.
-						ob_start();
-						// Auto Update Information Component.
-						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-info.php';
-						$content = ob_get_clean();
+						$content = ''; // Empty content for the toggle
 						
 						// Include Toggle Section Component.
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/toggle-section.php';
 						?>
-					</td>
-				</tr>
-				<tr valign="top" class="auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
-					<th scope="row">
-						<label>Auto Update Timeframe</label>
-					</th>
-					<td>
+					</div>
+				</div>
+				
+				<!-- Auto Update Information Accordion - Always visible underneath the toggle -->
+				<div class="wcd-form-row">
+					<div class="wcd-form-control" style="grid-column: 1 / -1;">
+						<?php
+						// Auto Update Information Component.
+						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-info.php';
+						?>
+					</div>
+				</div>
+				
+				<div class="wcd-form-row auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">Auto Update Timeframe</label>
+						<div class="wcd-description">Set the time frame in which you want to allow WP auto updates.</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
 						// Time Range Selector Component.
 						$from_time = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
@@ -70,63 +77,71 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 						$from_name = 'auto_update_checks_from';
 						$to_name = 'auto_update_checks_to';
 						$label = 'Only';
-						$description = 'Set the time frame in which you want to allow WP auto updates.';
+						$description = '';
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/time-range-selector.php';
 						?>
-					</td>
-				</tr>
-				<tr valign="top" class="auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
-					<th scope="row">
-						<label>Weekdays</label>
-					</th>
-					<td>
+					</div>
+				</div>
+				
+				<div class="wcd-form-row auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">Weekdays</label>
+						<div class="wcd-description">Set the weekdays in which you want to allow WP auto updates.</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
 						// Weekday Selector Component.
 						$selected_days = $weekdays_data;
 						$name_prefix = 'auto_update_checks_';
 						$label = 'Only on these weekdays';
-						$description = 'Set the weekdays in which you want to allow WP auto updates.';
+						$description = '';
 						$show_validation = true;
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/weekday-selector.php';
 						?>
-					</td>
-				</tr>
-				<tr valign="top" class="auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
-					<th scope="row">
-						<label>Notification Email</label>
-					</th>
-					<td>
+					</div>
+				</div>
+				
+				<div class="wcd-form-row auto-update-setting" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">Notification Email</label>
+						<div class="wcd-description">Enter the email address(es) which should get notified about auto update checks.</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
 						// Email Input Component.
 						$email_value = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
 						$field_name = 'auto_update_checks_emails';
 						$label = 'Notification email to';
-						$description = 'Enter the email address(es) which should get notified about auto update checks.';
+						$description = '';
 						$multiple = true;
 						$show_validation = true;
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
 						?>
-					</td>
-				</tr>
-                <tr valign="top">
-					<th scope="row">
-						<label>Change Detection Threshold</label>
-					</th>
-					<td>
+					</div>
+				</div>
+				
+				<div class="wcd-form-row">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">Change Detection Threshold</label>
+						<div class="wcd-description">Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
 						// Threshold Setting Component.
-                        $label = 'Threshold';
-						$description = 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.';
+						$label = 'Threshold';
+						$description = '';
 						$threshold = $group_and_urls['threshold'] ?? 0.0;
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/threshold-setting.php';
 						?>
-					</td>
-				</tr>
-				<tr valign="top">
-					<th scope="row">
-						<label>CSS Settings</label>
-					</th>
-					<td>
+					</div>
+				</div>
+				
+				<div class="wcd-form-row">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label">CSS Settings</label>
+						<div class="wcd-description">Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).</div>
+					</div>
+					<div class="wcd-form-control">
 						<?php
 						// CSS Injection using Accordion Component.
 						$header_text = 'CSS Injection';
@@ -136,27 +151,25 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 						// Build content.
 						ob_start();
 						?>
-						<p class="description" style="margin-bottom: 10px;">Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).</p>
-						<div class="code-tags default-bg">&lt;style&gt;</div>
-						<textarea name="css" class="codearea" style="height:300px; width: 100%;"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
-						<div class="code-tags default-bg">&lt;/style&gt;</div>
+						<div style="margin-top: 10px;">
+							<div class="code-tags default-bg">&lt;style&gt;</div>
+							<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
+							<div class="code-tags default-bg">&lt;/style&gt;</div>
+						</div>
 						<?php
 						$content = ob_get_clean();
 						
 						// Include accordion component.
 						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/accordion.php';
 						?>
-					</td>
-				</tr>
-			</table>
-			
-			<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ?? '' ); ?>">
-			
-			<?php submit_button( 'Save Settings', 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormGroupSettings()' ) ); ?>
-		</form>
+					</div>
+				</div>
+				
+				<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ?? '' ); ?>">
+				
+				<?php submit_button( 'Save Settings', 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormGroupSettings()' ) ); ?>
+			</form>
 	</div>
-
-    <hr>
     
 
 	<script type="text/javascript">

@@ -104,6 +104,7 @@ ob_start();
 		</div>
 	<?php endforeach; ?>
 </div>
+<div>
 <?php
 $content = ob_get_clean();
 
@@ -114,3 +115,4 @@ $open = false;
 
 include dirname( __DIR__ ) . '/ui-elements/accordion.php';
 ?> 
+</div>

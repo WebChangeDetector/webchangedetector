@@ -57,6 +57,25 @@ function toggleAccordion(accordionId) {
 		content.style.display = 'block';
 		icon.classList.remove('dashicons-arrow-right-alt2');
 		icon.classList.add('dashicons-arrow-down-alt2');
+		
+		// Initialize CodeMirror for CSS textareas when accordion opens for the first time
+		if (accordionId === 'css-injection-manual' || accordionId === 'css-injection-auto' || accordionId === 'css-injection-monitoring') {
+			var cssTextareas = content.querySelectorAll('.wcd-css-textarea');
+			cssTextareas.forEach(function(textarea) {
+				// Only initialize if not already initialized
+				if (!textarea.nextElementSibling || !textarea.nextElementSibling.classList.contains('CodeMirror')) {
+					// Use WordPress CodeMirror initialization if available
+					if (window.wp && window.wp.codeEditor) {
+						// Get settings from the localized script
+						var editorSettings = {};
+						if (typeof cm_settings !== 'undefined' && cm_settings.codeEditor) {
+							editorSettings = cm_settings.codeEditor;
+						}
+						wp.codeEditor.initialize(textarea, editorSettings);
+					}
+				}
+			});
+		}
 	} else {
 		content.style.display = 'none';
 		icon.classList.remove('dashicons-arrow-down-alt2');

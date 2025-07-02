@@ -172,7 +172,7 @@ class WebChangeDetector_Settings_Action_Handler {
 
 			// Build settings array.
 			$settings = array(
-				'auto_update_checks_enabled'   => $data['auto_update_checks_enabled'] ?? '0',
+				'auto_update_checks_enabled'   => !empty( $data['auto_update_checks_enabled'] ) && $data['auto_update_checks_enabled'] === '1',
 				'auto_update_checks_from'      => sanitize_text_field( $data['auto_update_checks_from'] ?? '' ),
 				'auto_update_checks_to'        => sanitize_text_field( $data['auto_update_checks_to'] ?? '' ),
 				'auto_update_checks_emails'    => sanitize_textarea_field( $data['auto_update_checks_emails'] ?? '' ),
@@ -180,7 +180,7 @@ class WebChangeDetector_Settings_Action_Handler {
 
 			// Add weekday settings.
 			foreach ( WebChangeDetector_Admin::WEEKDAYS as $day ) {
-				$settings[ 'auto_update_checks_' . $day ] = isset( $data[ 'auto_update_checks_' . $day ] ) ? '1' : '0';
+				$settings[ 'auto_update_checks_' . $day ] = isset( $data[ 'auto_update_checks_' . $day ] ) && $data[ 'auto_update_checks_' . $day ] === '1';
 			}
 
 			// Save via API.

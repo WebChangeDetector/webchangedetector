@@ -68,16 +68,25 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param string $uuid The website uuid.
 	 * @param array  $website_details The website details to update.
+	 * @param string $api_token Optional API token to use for the request.
 	 * @return mixed|string
 	 */
-	public static function update_website_v2( $uuid, $website_details ) {
+	public static function update_website_v2( $uuid, $website_details, $api_token = null ) {
 		$args = array(
 			'action' => 'websites/' . $uuid,
 		);
-		$args = array_merge( $args, $website_details );
-		return self::api_v2( $args, 'PUT' );
-	}
 
+        // Api doesn't allow domain as param.
+        if(isset($website_details['domain'])) {
+            unset($website_details['domain']);
+        }
+
+		$args = array_merge( $args, $website_details );
+		
+		// Pass custom API token if provided
+		return self::api_v2( $args, 'PUT', false, $api_token );
+	}
+    
 	/**
 	 * Create website.
 	 *
@@ -237,6 +246,18 @@ class WebChangeDetector_API_V2 {
 			'url'    => $url,
 		);
 		return self::api_v2( $args );
+	}
+
+	/** Get all URLs.
+	 *
+	 * @param array $filters Optional filters for URLs.
+	 * @return mixed|string
+	 */
+	public static function get_urls_v2( $filters = array() ) {
+		$args = array(
+			'action' => 'urls?' . build_query( $filters ),
+		);
+		return self::api_v2( $args, 'GET' );
 	}
 
 	/** Add urls to group.
@@ -507,10 +528,11 @@ class WebChangeDetector_API_V2 {
 	 * @param array  $post All params for the request.
 	 * @param string $method The request method.
 	 * @param bool   $is_web Call web interface.
+	 * @param string $custom_api_token Optional custom API token to use instead of default.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false ) {
-		$api_token = get_option( 'webchangedetector_api_token' );
+	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null ) {
+		$api_token = $custom_api_token ? $custom_api_token : get_option( 'webchangedetector_api_token' );
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
 		$url_web = 'https://api.webchangedetector.com/';

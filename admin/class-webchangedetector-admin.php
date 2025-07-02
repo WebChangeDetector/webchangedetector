@@ -466,13 +466,6 @@ class WebChangeDetector_Admin {
         );
 	}
 
-	/** Get params of an url.
-	 *
-	 * @param string $url The url.
-	 * @return array|false
-	 */
-
-
 	/** Print the monitoring status bar.
 	 *
 	 * @param array $group The group details.
@@ -567,14 +560,29 @@ class WebChangeDetector_Admin {
 		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_urls_count'];
 		?>
 
-		<div class="status_bar">
-			<div class="box full">
-				<div id="txt_next_sc_in">Next monitoring checks in</div>
-				<div id="next_sc_in" class="big"></div>
-				<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
+		<div class="wcd-settings-card wcd-monitoring-status-card">
+			<div class="wcd-monitoring-status-header">
+				<h3><span class="dashicons dashicons-clock"></span> Monitoring Status</h3>
+			</div>
+			<div class="wcd-monitoring-status-content">
+				<div class="wcd-next-check-container">
+					<div id="txt_next_sc_in" class="wcd-status-label">Next monitoring checks in</div>
+					<div id="next_sc_in" class="wcd-status-value"></div>
+					<div id="next_sc_date" class="wcd-status-date local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
+				</div>
+				<div class="wcd-monitoring-stats">
+					<div class="wcd-stat-item">
+						<span class="wcd-stat-label">Selected URLs</span>
+						<span class="wcd-stat-value"><?php echo esc_html( $group['selected_urls_count'] ); ?></span>
+					</div>
+					<div class="wcd-stat-item">
+						<span class="wcd-stat-label">Check Interval</span>
+						<span class="wcd-stat-value"><?php echo esc_html( $group['interval_in_h'] ); ?>h</span>
+					</div>
+				</div>
 				<div id="sc_available_until_renew"
 					data-amount_selected_urls="<?php echo esc_html( $group['selected_urls_count'] ); ?>"
-					data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>"></div>
+					data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>" style="display: none;"></div>
 			</div>
 		</div>
 		<?php
@@ -636,70 +644,7 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>Settings saved.</p></div>';
 	}
 
-	/** View of tabs
-	 *
-	 * @return void
-	 */
-	public function tabs() {
-		$active_tab = 'webchangedetector'; // init.
-
-		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
-			echo 'Something went wrong. Please try again.';
-		}
-
-		if ( isset( $_GET['page'] ) ) {
-			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
-		}
-		?>
-		<div class="wrap">
-			<h2 class="nav-tab-wrapper">
-				<?php if ( $this->settings_handler->is_allowed( 'dashboard_view' ) ) { ?>
-				<a href="?page=webchangedetector"
-					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> Dashboard
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'manual_checks_view' ) ) { ?>
-				<a href="?page=webchangedetector-update-settings"
-					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Auto Update Checks & Manual Checks
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>
-					<a href="?page=webchangedetector-auto-settings"
-					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> Monitoring
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'change_detections_view' ) ) { ?>
-					<a href="?page=webchangedetector-change-detections"
-					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> Change Detections
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'logs_view' ) ) { ?>
-				<a href="?page=webchangedetector-logs"
-					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> Queue
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'settings_view' ) ) { ?>
-				<a href="?page=webchangedetector-settings"
-					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> Settings
-				</a>
-				<?php } ?>
-				<?php if ( $this->settings_handler->is_allowed( 'upgrade_account' ) ) { ?>
-				<a href="<?php echo esc_url( $this->account_handler->get_upgrade_url() ); ?>" target="_blank"
-					class="nav-tab upgrade">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> Upgrade Account
-				</a>
-				<?php } ?>
-			</h2>
-		</div>
-
-		<?php
-	}
+	
 
 	/** Get group details and its urls.
 	 *
@@ -730,90 +675,6 @@ class WebChangeDetector_Admin {
 		$group_and_urls['selected_urls_count'] = $urls['meta']['selected_urls_count'] ?? 0;
 
 		return $group_and_urls;
-	}
-
-	/**
-	 * Call to V1 API.
-	 *
-	 * @param array $post Request data.
-	 * @param bool  $is_web Is web request.
-	 * @return string|array
-	 */
-	public function api_v1( $post, $is_web = false ) {
-		$url     = 'https://api.webchangedetector.com/api/v1/'; // init for production.
-		$url_web = 'https://api.webchangedetector.com/';
-
-		// This is where it can be changed to a local/dev address.
-		if ( defined( 'WCD_API_URL' ) && is_string( WCD_API_URL ) && ! empty( WCD_API_URL ) ) {
-			$url = WCD_API_URL;
-		}
-
-		// Overwrite $url if it is a get request.
-		if ( $is_web && defined( 'WCD_API_URL_WEB' ) && is_string( WCD_API_URL_WEB ) && ! empty( WCD_API_URL_WEB ) ) {
-			$url_web = WCD_API_URL_WEB;
-		}
-
-		$url     .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
-		$url_web .= str_replace( '_', '-', $post['action'] ); // add kebab action to url.
-		$action   = $post['action']; // For debugging.
-
-		// Get API Token from WP DB.
-		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
-
-		unset( $post['action'] ); // don't need to send as action as it's now the url.
-		unset( $post['api_token'] ); // just in case.
-
-		$post['wp_plugin_version'] = WEBCHANGEDETECTOR_VERSION; // API will check this to check compatability.
-		// there's checks in place on the API side, you can't just send a different domain here, you sneaky little hacker ;).
-		$post['domain'] = self::get_domain_from_site_url();
-		$post['wp_id']  = get_current_user_id();
-
-		$args = array(
-			'timeout' => WCD_REQUEST_TIMEOUT,
-			'body'    => $post,
-			'headers' => array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => self::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			),
-		);
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
-		if ( $is_web ) {
-			$response = wp_remote_post( $url_web, $args );
-		} else {
-			$response = wp_remote_post( $url, $args );
-		}
-
-		$body          = wp_remote_retrieve_body( $response );
-		$response_code = (int) wp_remote_retrieve_response_code( $response );
-
-		$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
-
-		// `message` is part of the Laravel Stacktrace.
-		if ( WCD_HTTP_BAD_REQUEST === $response_code &&
-			is_array( $decoded_body ) &&
-			array_key_exists( 'message', $decoded_body ) &&
-			'plugin_update_required' === $decoded_body['message'] ) {
-			return 'update plugin';
-		}
-
-		if ( WCD_HTTP_INTERNAL_SERVER_ERROR === $response_code && 'account_details' === $action ) {
-			return 'activate account';
-		}
-
-		if ( WCD_HTTP_UNAUTHORIZED === $response_code ) {
-			return 'unauthorized';
-		}
-
-		// if parsing JSON into $decoded_body was without error.
-		if ( JSON_ERROR_NONE === json_last_error() ) {
-			return $decoded_body;
-		}
-
-		return $body;
 	}
 
 

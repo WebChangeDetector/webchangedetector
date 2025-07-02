@@ -160,4 +160,14 @@ function run_webchangedetector() {
 
 
 
+/**
+ * Get the plugin directory path.
+ * This function is used by various partial files to include other files.
+ *
+ * @return string The plugin directory path.
+ */
+function wcd_get_plugin_dir() {
+	return plugin_dir_path( __FILE__ );
+}
+
 run_webchangedetector();

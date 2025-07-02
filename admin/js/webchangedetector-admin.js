@@ -202,6 +202,13 @@ function currentlyProcessing() {
 
 
         $(".codearea").each(function (index, item) {
+            // Skip CSS textareas that are inside closed accordions - they will be initialized when accordion opens
+            if ($(item).hasClass('wcd-css-textarea')) {
+                var accordionContent = $(item).closest('.accordion-content');
+                if (accordionContent.length && accordionContent.is(':hidden')) {
+                    return; // Skip this textarea, it will be initialized when accordion opens
+                }
+            }
             wp.codeEditor.initialize(item);
         });
 
@@ -248,12 +255,12 @@ function currentlyProcessing() {
 
         // Confirm taking pre screenshots
         $('#frm-take-pre-sc').submit(function () {
-            return confirm("Please confirm taking pre-update screenshots.");
+            return true;
         });
 
         // Confirm taking post screenshots
         $('#frm-take-post-sc').submit(function () {
-            return confirm("Please confirm to create change detections.");
+            return true;
         });
 
         // Confirm cancel manual checks
@@ -320,7 +327,7 @@ function currentlyProcessing() {
 
         // Set time until next screenshots
         let autoEnabled = false;
-        if ($("#auto-enabled").is(':checked')) {
+        if ($("#auto-enabled").is(':checked') || $('input[name="enabled"]').is(':checked')) {
             autoEnabled = true;
         }
         let txtNextScIn = "No trackings active";
@@ -918,37 +925,35 @@ function showUpdates() {
  * @param {string} groupId - The group ID for manual checks
  */
 function startManualChecks(groupId) {
-    if (confirm("Are you ready to start manual checks? This will advance to the pre-update screenshot step.")) {
-        // Create a form and submit it to start manual checks
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
+    // Create a form and submit it to start manual checks
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
 
-        // Add the action to advance to next step
-        var actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'wcd_action';
-        actionInput.value = 'start_manual_checks';
-        form.appendChild(actionInput);
+    // Add the action to advance to next step
+    var actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'wcd_action';
+    actionInput.value = 'start_manual_checks';
+    form.appendChild(actionInput);
 
-        // Add the step parameter to advance to pre-screenshot step
-        var stepInput = document.createElement('input');
-        stepInput.type = 'hidden';
-        stepInput.name = 'step';
-        stepInput.value = 'pre-update';
-        form.appendChild(stepInput);
+    // Add the step parameter to advance to pre-screenshot step
+    var stepInput = document.createElement('input');
+    stepInput.type = 'hidden';
+    stepInput.name = 'step';
+    stepInput.value = 'pre-update';
+    form.appendChild(stepInput);
 
-        // Add nonce for security - WordPress expects a nonce field that matches the action name
-        var nonceInput = document.createElement('input');
-        nonceInput.type = 'hidden';
-        nonceInput.name = '_wpnonce';
-        // Use the correct nonce for the start_manual_checks action
-        nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
-        form.appendChild(nonceInput);
+    // Add nonce for security - WordPress expects a nonce field that matches the action name
+    var nonceInput = document.createElement('input');
+    nonceInput.type = 'hidden';
+    nonceInput.name = '_wpnonce';
+    // Use the correct nonce for the start_manual_checks action
+    nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
+    form.appendChild(nonceInput);
 
-        // Add form to body and submit
-        document.body.appendChild(form);
-        form.submit();
-    }
+    // Add form to body and submit
+    document.body.appendChild(form);
+    form.submit();
 }
 

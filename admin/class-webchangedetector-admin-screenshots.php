@@ -423,4 +423,89 @@ class WebChangeDetector_Admin_Screenshots {
 
 		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . esc_url( $postdata['img_url'] ) . '"></div>';
 	}
+
+	/**
+	 * Preview screenshot for a URL.
+	 *
+	 * Takes a preview screenshot of a given URL using the screenshoter service.
+	 * Supports both desktop and mobile device widths.
+	 *
+	 * @since    1.0.0
+	 * @param    array $postdata The post data containing URL and device info.
+	 * @return   string The screenshot link or error message.
+	 */
+	public function preview_screenshot( $postdata ) {
+		$width = 1920;
+		if ( ! empty( $postdata['device'] ) && $postdata['device'] == 'mobile' ) {
+			$width = 375;
+		}
+
+		if ( strpos( $postdata['url'], 'http://' ) === 0 || strpos( $postdata['url'], 'https://' ) === 0 ) {
+			$url = $postdata['url'];
+		} else {
+			$url = 'http://' . $postdata['url'];
+		}
+
+		$curl = curl_init();
+
+		$params = array(
+			'url'    => $url,
+			'width'  => $width,
+			'fastSc' => false, // currently not working in sc api
+			'output' => true,
+		);
+
+		$screenshoter_url = 'https://us-east1-webchangedetector.cloudfunctions.net/wcd-sc-us-dev';
+		if ( mm_env() == 'production' ) {
+			$screenshoter_url = 'https://us-east1-webchangedetector.cloudfunctions.net/wcd-sc-us';
+		} elseif ( mm_env() == 'local' ) {
+			$screenshoter_url = 'http://localhost:8081';
+		}
+
+		curl_setopt_array(
+			$curl,
+			array(
+				CURLOPT_URL            => $screenshoter_url,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST  => 'POST',
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_POSTFIELDS     => json_encode( $params ),
+				CURLOPT_TIMEOUT        => 120, // timeout in seconds
+				CURLOPT_HTTPHEADER     => array(
+					'Access-Control-Allow-Origin: *',
+					'Content-Type: application/json',
+				),
+			)
+		);
+
+		$response = curl_exec( $curl );
+		$status   = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+
+		curl_close( $curl );
+
+		if ( $status != 200 && $status != 201 ) {
+			return json_encode( $response );
+		} else {
+			return json_decode( $response, 1 )[0]['link_compressed'];
+		}
+	}
+
+	/**
+	 * Take thumbnail for a URL.
+	 *
+	 * Initiates thumbnail generation for a specific URL via API.
+	 *
+	 * @since    1.0.0
+	 * @param    array $postdata The post data containing URL ID.
+	 * @return   mixed The API response.
+	 */
+	public function take_thumbnail( $postdata ) {
+		$url_id = $postdata['url_id'];
+
+		$args = array(
+			'action' => 'take_thumbnail',
+			'url_id' => $url_id,
+		);
+		return mm_api( $args );
+	}
 } 

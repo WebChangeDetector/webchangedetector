@@ -81,7 +81,7 @@ class WebChangeDetector_Admin_WordPress {
 		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/wp-compare-public.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
-		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/darcula.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( __FILE__ ) . 'css/darcula.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
 	}
 
@@ -102,10 +102,19 @@ class WebChangeDetector_Admin_WordPress {
 			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
 			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
-			wp_enqueue_script( 'code-editor', '/wp-admin/js/code-editor.min.js', array( 'jquery' ), $this->version, false );
-
+			// CodeMirror settings for CSS
 			$css_settings = array(
-				'codemirror' => array( 'theme' => 'darcula' ),
+				'type' => 'text/css',
+				'codemirror' => array( 
+					'theme' => 'darcula',
+					'mode' => 'css',
+					'lineNumbers' => true,
+					'autoCloseBrackets' => true,
+					'matchBrackets' => true,
+					'styleActiveLine' => true,
+					'indentUnit' => 2,
+					'tabSize' => 2
+				),
 			);
 			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
 			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
@@ -507,10 +516,13 @@ class WebChangeDetector_Admin_WordPress {
 		$monitoring_url_data = null;
 		$wcd_url_id = null;
 		
+		// First, try to find exact URL matches
 		foreach ( $manual_urls as $url_data ) {
 			if ( isset( $url_data['url'] ) && \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ) === $url ) {
 				$manual_url_data = $url_data;
-				$wcd_url_id = $url_data['id'];
+				if ( isset( $url_data['id'] ) ) {
+					$wcd_url_id = $url_data['id'];
+				}
 				break;
 			}
 		}
@@ -518,15 +530,39 @@ class WebChangeDetector_Admin_WordPress {
 		foreach ( $monitoring_urls as $url_data ) {
 			if ( isset( $url_data['url'] ) && \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ) === $url ) {
 				$monitoring_url_data = $url_data;
-				if ( ! $wcd_url_id ) {
+				if ( ! $wcd_url_id && isset( $url_data['id'] ) ) {
 					$wcd_url_id = $url_data['id'];
 				}
 				break;
 			}
 		}
 		
+		// Fallback: If we still don't have a URL ID but we have URL data, use the first available ID
+		if ( ! $wcd_url_id ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No exact URL match found, using fallback logic for URL: ' . $url );
+			
+			// Try to get ID from first manual URL
+			if ( ! empty( $manual_urls ) && isset( $manual_urls[0]['id'] ) ) {
+				$wcd_url_id = $manual_urls[0]['id'];
+				$manual_url_data = $manual_urls[0];
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Using first manual URL ID: ' . $wcd_url_id );
+			}
+			// If not found in manual, try monitoring group
+			elseif ( ! empty( $monitoring_urls ) && isset( $monitoring_urls[0]['id'] ) ) {
+				$wcd_url_id = $monitoring_urls[0]['id'];
+				$monitoring_url_data = $monitoring_urls[0];
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Using first monitoring URL ID: ' . $wcd_url_id );
+			}
+		}
+		
+		// Final check: Make sure we have a URL ID
+		if ( ! $wcd_url_id ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] ERROR: No URL ID found for URL: ' . $url . ' - Manual URLs: ' . wp_json_encode( $manual_urls ) . ' - Monitoring URLs: ' . wp_json_encode( $monitoring_urls ) );
+			return false;
+		}
+		
 		// Build response data structure expected by the JavaScript.
-		return array(
+		$response_data = array(
 			'tracked'               => true,
 			'current_url'           => $url,
 			'wcd_url_id'           => $wcd_url_id,
@@ -541,6 +577,10 @@ class WebChangeDetector_Admin_WordPress {
 				'mobile'  => $monitoring_url_data ? (bool) ( $monitoring_url_data['mobile'] ?? false ) : false,
 			),
 		);
+		
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Response data: ' . wp_json_encode( $response_data ) );
+		
+		return $response_data;
 	}
 
 	/**
@@ -553,7 +593,7 @@ class WebChangeDetector_Admin_WordPress {
 	public function add_post_type( $postdata ) {
 		$post_type = json_decode( stripslashes( $postdata['post_type'] ), true );
 		$this->admin->website_details['sync_url_types'] = array_merge( $post_type, $this->admin->website_details['sync_url_types'] );
-
+        error_log(print_r($this->admin->website_details,1));
 		// TODO: Move to settings handler
 		$website_details = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], $this->admin->website_details );
 		$this->admin->website_details = $website_details;
@@ -838,11 +878,11 @@ class WebChangeDetector_Admin_WordPress {
 	}
 
 	/**
-	 * Prepare URLs for upload in batches.
+	 * Upload URLs in batches to the WebChange Detector service.
 	 *
 	 * @since    1.0.0
 	 * @param    array    $upload_array    The URLs to upload.
-	 * @return   void
+	 * @return   bool|string    True on success, error message on failure.
 	 */
 	public function upload_urls_in_batches( $upload_array ) {
 		if ( ! empty( $upload_array ) ) {
@@ -889,6 +929,9 @@ class WebChangeDetector_Admin_WordPress {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting Sync' );
 		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
 
+		// Clear any existing sync URLs to start fresh.
+		$this->admin->sync_urls = array();
+
 		// Check if we got website_details or if we use the ones from the class.
 		$array = array(); // init.
 		if ( ! $website_details ) {
@@ -911,6 +954,7 @@ class WebChangeDetector_Admin_WordPress {
 
 			// Get all WP post_types.
 			$post_types = get_post_types( array( 'public' => true ), 'objects' );
+			$post_type_names = array(); // Initialize array.
 			foreach ( $post_types as $post_type ) {
 				$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 
@@ -924,6 +968,7 @@ class WebChangeDetector_Admin_WordPress {
 			}
 
 			if ( ! empty( $post_type_names ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Syncing post types: ' . implode( ', ', $post_type_names ) );
 				$this->get_all_posts_data( $post_type_names );
 			}
 
@@ -944,6 +989,7 @@ class WebChangeDetector_Admin_WordPress {
 			}
 
 			if ( ! empty( $taxonomy_post_names ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Syncing taxonomies: ' . implode( ', ', $taxonomy_post_names ) );
 				$this->get_all_terms_data( $taxonomy_post_names );
 			}
 		}
@@ -1031,6 +1077,16 @@ class WebChangeDetector_Admin_WordPress {
 			$this->admin->settings_handler->update_website_details( $website_details );
 		}
 
+		// Check if we have any URLs to sync.
+		if ( empty( $this->admin->sync_urls ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No URLs found to sync' );
+			return 'No URLs found to sync';
+		}
+
+		// Log the number of URL batches being synced.
+		$total_batches = count( $this->admin->sync_urls );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Syncing ' . $total_batches . ' URL batches' );
+
 		// Create uuid for sync urls.
 		$collection_uuid = wp_generate_uuid4();
 
@@ -1038,9 +1094,392 @@ class WebChangeDetector_Admin_WordPress {
 		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->admin->sync_urls, $collection_uuid );
 		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . $response_sync_urls );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . $response_start_url_sync );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . print_r($response_start_url_sync,1) );
 
 		return date_i18n( 'd/m/Y H:i' );
+	}
+
+	/**
+	 * Get WordPress post types via REST API.
+	 *
+	 * Retrieves available post types, taxonomies, and WPML languages from a WordPress site
+	 * using the WordPress REST API.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $domain    The domain to get post types from.
+	 * @return   array|string    Array of post types and taxonomies, or error message.
+	 */
+	public function get_wp_post_types( $domain ) {
+		error_log('Starting get_wp_post_types');
+		$scheme = $this->is_website_https( $domain ) ? 'https://' : 'http://';
+		error_log('Scheme: ' . $scheme);
+		
+		// Check for WPML & if api is reachable.
+		$response = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/' );
+		error_log('Response wp/v2: ' . print_r($response, true));
+		$status   = wp_remote_retrieve_response_code( $response );
+		if ( $status !== 200 ) {
+			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
+		}
+		$body       = wp_remote_retrieve_body( $response );
+		$api_routes = json_decode( $body, true );
+
+		$return = array(); // init.
+
+		// Get Post Types.
+		$response     = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/types' );
+		$status_types = wp_remote_retrieve_response_code( $response );
+		if ( $status_types !== 200 ) {
+			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
+		}
+		$body       = wp_remote_retrieve_body( $response );
+		$post_types = json_decode( $body, true );
+
+		// Get Taxonomies.
+		$response          = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/taxonomies' );
+		error_log('Response taxonomies: ' . print_r($response, true));
+		$status_taxonomies = wp_remote_retrieve_response_code( $response );
+		if ( $status_taxonomies !== 200 ) {
+			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
+		}
+		$body       = wp_remote_retrieve_body( $response );
+		$taxonomies = json_decode( $body, true );
+
+		$return_post_types = array();
+		$return_taxonomies = array();
+
+		// Prepare return post_types.
+		foreach ( $post_types as $post_type ) {
+			$return_post_types[] = array(
+				'name' => $post_type['name'],
+				'slug' => $post_type['rest_base'],
+			);
+		}
+
+		// Prepare return taxonomies.
+		foreach ( $taxonomies as $taxonomy ) {
+			$return_taxonomies[] = array(
+				'name' => $taxonomy['name'],
+				'slug' => $taxonomy['rest_base'],
+			);
+		}
+
+		// Get it together.
+		$return[] = array(
+			'url_type_slug' => 'types',
+			'url_type_name' => 'Post Types',
+			'url_types'     => $return_post_types,
+		);
+
+		$return[] = array(
+			'url_type_slug' => 'taxonomies',
+			'url_type_name' => 'Taxonomies',
+			'url_types'     => $return_taxonomies,
+		);
+
+		// Check for WPML languages.
+		$wpml_language_codes = array();
+		if ( ! empty( $api_routes['routes']['/wp/v2']['endpoints'][0]['args']['wpml_language']['enum'] ) ) {
+			$wpml_language_codes = $api_routes['routes']['/wp/v2']['endpoints'][0]['args']['wpml_language']['enum'];
+		}
+
+		// Prepare languages.
+		if ( $wpml_language_codes ) {
+			foreach ( $wpml_language_codes as $wpml_language_code ) {
+				$return_wpml_languages[] = array(
+					'name' => strtoupper( $wpml_language_code ),
+					'slug' => $wpml_language_code,
+				);
+			}
+
+			if ( ! empty( $return_wpml_languages ) ) {
+				$return[] = array(
+					'url_type_slug' => 'wpml_language',
+					'url_type_name' => 'Languages',
+					'url_types'     => $return_wpml_languages,
+				);
+			}
+		}
+		return $return;
+	}
+
+	/**
+	 * Get WordPress URLs via REST API.
+	 *
+	 * Retrieves URLs from a WordPress site using the WordPress REST API.
+	 * Groups URLs by post type and taxonomy and includes metadata.
+	 *
+	 * @since    1.0.0
+	 * @param    string $domain     The domain to get URLs from.
+	 * @param    array  $url_types  The URL types to retrieve (optional).
+	 * @return   array|string|false Array of URLs grouped by type, error message, or false on failure.
+	 */
+	public function get_wp_urls( $domain, $url_types = false ) {
+		if ( ! $domain ) {
+			return 'domain invalid';
+		}
+
+		$scheme = $this->is_website_https( $domain ) ? 'https://' : 'http://';
+
+		if ( ! $url_types ) {
+			$url_types = array(
+				array(
+					'url_type_slug'  => 'types',
+					'url_type_name'  => 'Post Types',
+					'post_type_slug' => 'pages',
+					'post_type_name' => 'Pages',
+				),
+				array(
+					'url_type_slug'  => 'types',
+					'url_type_name'  => 'Post Types',
+					'post_type_slug' => 'posts',
+					'post_type_name' => 'Posts',
+				),
+			);
+		}
+
+		// Check if we have different languages with wpml.
+		$languages = array();
+		foreach ( $url_types as $key => $url_type ) {
+			if ( $url_type['url_type_slug'] === 'wpml_language' ) {
+				$languages[] = $url_type['post_type_slug'];
+				unset( $url_types[ $key ] );
+			}
+		}
+		if ( empty( $languages ) ) {
+			$languages = array( false );
+		}
+
+		$urls             = array();
+		$frontpage_has_id = false;
+
+		// Loop for every language.
+		foreach ( $languages as $language ) {
+			// Loop for url_types like post_type or taxonomy.
+			foreach ( $url_types as $url_type ) {
+				$pages_added = 0;
+				$offset      = 0;
+
+				// Loop through the post_types / taxonomies.
+				switch ( $url_type['url_type_slug'] ) {
+					case 'taxonomies':
+						$is_taxonomie = true;
+						$args         = array(
+							'per_page' => '100',
+							'_fields'  => 'id,link,name',
+							'order'    => 'asc',
+						);
+						break;
+
+					default:
+						$is_taxonomie = false;
+						$args         = array(
+							'per_page' => '100',
+							'_fields'  => 'id,link,title',
+							'orderby'  => 'parent',
+							'order'    => 'asc',
+						);
+				}
+				// add wmpl language to the args.
+				if ( $language ) {
+					$args['wpml_language'] = $language;
+				}
+
+				do {
+					$args['offset'] = $offset;
+					$response       = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/' . $url_type['post_type_slug'] . '/?' . http_build_query( $args ) );
+					$status_code    = wp_remote_retrieve_response_code( $response );
+					$type_urls      = wp_remote_retrieve_body( $response );
+					$type_urls      = json_decode( $type_urls );
+
+					if ( $status_code === 200 ) {
+						foreach ( $type_urls as $type_url ) {
+							$clean_link = str_replace( array( 'http://', 'https://' ), '', $type_url->link );
+
+							$chunk_key = (int) ( $pages_added / 1000 );
+
+							$urls[ $chunk_key ][ $url_type['url_type_slug'] . '%%' . $url_type['post_type_name'] ][] = array(
+								'url'        => $clean_link,
+								'html_title' => $is_taxonomie ? $type_url->name : $type_url->title->rendered,
+							);
+
+							if ( in_array( $clean_link, array( $domain, $domain . '/', 'www.' . $domain, 'www.' . $domain . '/' ) ) ) {
+								$frontpage_has_id = true;
+							}
+						}
+					}
+
+					if ( is_iterable( $type_urls ) ) {
+						$pages_added += count( $type_urls ) ?? 0;
+					}
+
+					$offset += 100;
+				} while ( $pages_added == $offset );
+			}
+		}
+
+		if ( ! $frontpage_has_id && count( $urls ) ) {
+			$urls[]['frontpage%%Frontpage'][] = array(
+				'url'        => str_replace( array( 'http://', 'https://' ), '', $domain . '/' ),
+				'html_title' => 'Home',
+			);
+		}
+
+		if ( count( $urls ) ) {
+			return $urls;
+		}
+		return false;
+	}
+
+	/**
+	 * Check if website uses HTTPS.
+	 *
+	 * Tests if a website is accessible via HTTPS by making a request
+	 * and checking the response status. Uses static caching for performance.
+	 *
+	 * @since    1.0.0
+	 * @param    string $url The URL to test for HTTPS support.
+	 * @return   bool        True if HTTPS is supported, false otherwise.
+	 */
+	public function is_website_https( $url ) {
+		static $scheme;
+
+		if ( isset( $scheme ) ) {
+			return $scheme;
+		}
+
+		$url      = str_replace( array( 'http://', 'https://' ), '', $url );
+		$response = wp_remote_get( 'https://' . $url );
+		$status   = wp_remote_retrieve_response_code( $response );
+
+		if ( $status === 200 ) {
+			$scheme = true;
+		} else {
+			$scheme = false;
+		}
+		return $scheme;
+	}
+
+	/**
+	 * Get selected WordPress URL types for a group.
+	 *
+	 * Retrieves the selected URL types for synchronization from a group's website.
+	 *
+	 * @since    1.0.0
+	 * @param    int $group_id The group ID to get URL types for.
+	 * @return   array|false   Array of selected URL types or false if none.
+	 */
+	public function get_selected_wp_url_types( $group_id ) {
+		$website = $this->get_website_by_group_id( $group_id );
+		if ( empty( $website['sync_url_types'] ) ) {
+			return false;
+		}
+		return ( $website['sync_url_types'] );
+	}
+
+	/**
+	 * Get website details by group ID.
+	 *
+	 * @since    1.0.0
+	 * @param    int    $group_id The group ID.
+	 * @return   array
+	 */
+	private function get_website_by_group_id( $group_id ) {
+		return \WebChangeDetector\WebChangeDetector_Admin_Utils::get_website_by_group_id( $group_id );
+	}
+
+	/**
+	 * Save WordPress group settings.
+	 *
+	 * @param array $postdata The form data containing WordPress group settings.
+	 * @return array|string|false The result of saving settings, false on failure.
+	 */
+	public static function save_wp_group_settings( $postdata ) {
+		if ( ! empty( $postdata['group_id'] ) && $postdata['group_id'] !== 0 ) {
+			$domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_by_group_id( $postdata['group_id'] );
+		} elseif ( ! empty( $postdata['domain'] ) ) {
+			$domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::check_url( $postdata['domain'] )[0];
+			$domain = rtrim( $domain, '/' );
+		} else {
+			return false;
+		}
+		// $domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::check_url($postdata['domain']); // check the domain and get the correct schema
+		// Get the urls
+		$post_types = array();
+
+		foreach ( $postdata as $key => $value ) {
+			if ( strpos( $key, 'wp_api_' ) === 0 && $postdata[ $key ] ) {
+				$value        = json_decode( str_replace( '\\"', '"', $value ), true );
+				$post_types[] = $value;
+			}
+		}
+
+		// Use WordPress handler directly  
+		$wordpress_handler = new \WebChangeDetector\WebChangeDetector_Admin_WordPress( 'webchangedetector', '1.0.0', null );
+		$urls = $wordpress_handler->get_wp_urls( $domain, $post_types );
+
+		if ( ! count( $urls ) ) {
+			return 'no posts';
+		}
+
+		// Add new website if group_id = 0
+		if ( isset( $postdata['group_id'] ) && (int) $postdata['group_id'] === 0 ) {
+
+			// Add website and both group types if they don't exist yet
+			$args    = array(
+				'action'    => 'add_website_groups',
+				'domain'    => $domain,
+				'cms'       => $postdata['cms'] ?? null,
+				'threshold' => $postdata['threshold'] ?? 0,
+			);
+			$success = mm_api( $args );
+
+			// Early return
+			if ( ! $success ) {
+				return 'couln\'t create website groups';
+			}
+		}
+
+		// Get the group ids
+		$website_details = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_website_details_by_domain( $domain )[0];
+
+		// Get current post_type settings
+		/*
+		$selected_group_post_types = get_user_meta(get_current_user_id(), USER_META_WP_GROUP_POST_TYPES, true);
+
+		if(!is_array($selected_group_post_types)) {
+			$selected_group_post_types = [];
+		}
+		// Add new group_ids and settings
+		$selected_group_post_types[$website_details['manual_detection_group_id']] = $post_types;
+		$selected_group_post_types[$website_details['auto_detection_group_id']] = $post_types;
+		*/
+		$website_details['sync_url_types'] = $post_types;
+		$args                              = array(
+			'action' => 'save_user_website',
+		);
+		$args                              = array_merge( $args, $website_details );
+		$success                           = mm_api( $args );
+
+		// Update selected post_types for group
+		// update_user_meta(get_current_user_id(), USER_META_WP_GROUP_POST_TYPES, $selected_group_post_types);
+
+		// Sync the urls
+		/*
+		$args = [
+			'action' => 'sync_urls',
+			'domain' => $domain,
+			'delete_missing_urls' => true,
+			'posts' => json_encode($urls),
+		];
+		mm_api($args); // receiving sync data might increase memory. Count result didn't work.
+		*/
+		\WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $urls, $domain );
+		\WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( $domain, true );
+
+		// $this->log($synced_urls);
+		// $amount = count($urls);
+		return array( 'urls_added' => true );
 	}
 
 }
