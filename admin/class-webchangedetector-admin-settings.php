@@ -147,13 +147,29 @@ class WebChangeDetector_Admin_Settings {
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
-				$auto_update_settings[ $key ] = $value;
+				// Handle checkbox values for enabled field and weekdays
+				if ( $key === 'auto_update_checks_enabled' || 
+					 in_array( $key, array( 
+						 'auto_update_checks_monday', 
+						 'auto_update_checks_tuesday', 
+						 'auto_update_checks_wednesday', 
+						 'auto_update_checks_thursday', 
+						 'auto_update_checks_friday', 
+						 'auto_update_checks_saturday', 
+						 'auto_update_checks_sunday' 
+					 ) ) ) {
+					// Convert checkbox values to boolean
+					$auto_update_settings[ $key ] = ( $value === '1' || $value === 1 || $value === true );
+				} else {
+					// Handle other auto update settings (time, emails, etc.)
+					$auto_update_settings[ $key ] = $value;
+				}
 			}
 		}
 		
 		// Handle checkbox for auto_update_checks_enabled (unchecked checkboxes don't submit a value).
 		if ( ! isset( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-			$auto_update_settings['auto_update_checks_enabled'] = '0';
+			$auto_update_settings['auto_update_checks_enabled'] = false;
 		}
 		
 		// Debug: Log what auto update settings we extracted

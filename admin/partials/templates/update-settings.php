@@ -22,7 +22,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 		$weekdays_data[ $weekday ] = ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] );
 	}
 
-	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && '1' === $auto_update_settings['auto_update_checks_enabled'];
+	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( $auto_update_settings['auto_update_checks_enabled'] === true || $auto_update_settings['auto_update_checks_enabled'] === '1' || $auto_update_settings['auto_update_checks_enabled'] === 1 );
 	?>
 
 	<div class="wcd-settings-card">

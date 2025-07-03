@@ -428,16 +428,16 @@ class WebChangeDetector_Admin {
                 // Set default auto update settings if not present.
                 if ( empty( $website_data['auto_update_settings'] ) ) {
                     $website_data['auto_update_settings'] = array(
-                        'auto_update_checks_enabled'   => '0',
+                        'auto_update_checks_enabled'   => true,
                         'auto_update_checks_from'      => gmdate( 'H:i' ),
                         'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-                        'auto_update_checks_monday'    => '1',
-                        'auto_update_checks_tuesday'   => '1',
-                        'auto_update_checks_wednesday' => '1',
-                        'auto_update_checks_thursday'  => '1',
-                        'auto_update_checks_friday'    => '1',
-                        'auto_update_checks_saturday'  => '0',
-                        'auto_update_checks_sunday'    => '0',
+                        'auto_update_checks_monday'    => true,
+                        'auto_update_checks_tuesday'   => true,
+                        'auto_update_checks_wednesday' => true,
+                        'auto_update_checks_thursday'  => true,
+                        'auto_update_checks_friday'    => true,
+                        'auto_update_checks_saturday'  => false,
+                        'auto_update_checks_sunday'    => false,
                         'auto_update_checks_emails'    => get_option( 'admin_email' ),
                     );
                 }
