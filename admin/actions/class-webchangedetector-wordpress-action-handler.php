@@ -43,7 +43,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 			// The form sends post_type as JSON, decode it first.
 			$post_type_data = '';
 			if ( ! empty( $data['post_type'] ) ) {
-				$post_type_json = json_decode( stripslashes( $data['post_type'] ), true );
+				$post_type_json = json_decode( $data['post_type'], true );
 				$post_type_data = is_array( $post_type_json ) ? $post_type_json : array();
 			}
 			

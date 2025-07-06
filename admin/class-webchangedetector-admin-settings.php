@@ -624,7 +624,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @param    bool    $force_refresh    Whether to force refresh the cached data.
 	 * @return   array|string    The website details or error message.
 	 */
-	public function get_website_details( $force_refresh = false ) {
+	public function get_website_details( $force_refresh = true ) {
 		static $website_details;
 
 		if ( $force_refresh || empty( $website_details ) ) {
@@ -641,7 +641,7 @@ class WebChangeDetector_Admin_Settings {
 					
 					// Update sync_url_types with local language names to fix language mismatch.
 					$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
-					
+					error_log( print_r( $website_details['sync_url_types'], true ) );
 					break;
 				}
 			}
@@ -666,13 +666,13 @@ class WebChangeDetector_Admin_Settings {
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'post',
+						'post_type_slug' => 'posts',
 						'post_type_name' => 'Posts',
 					),
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'page',
+						'post_type_slug' => 'pages',
 						'post_type_name' => 'Pages',
 					),
 				);
@@ -683,16 +683,16 @@ class WebChangeDetector_Admin_Settings {
 		if ( ! empty( $website_details ) && empty( $website_details['auto_update_settings'] ) ) {
 			$update                                  = true;
 			$website_details['auto_update_settings'] = array(
-				'auto_update_checks_enabled'   => '0',
+				'auto_update_checks_enabled'   => false,
 				'auto_update_checks_from'      => gmdate( 'H:i' ),
 				'auto_update_checks_to'        => gmdate( 'H:i', strtotime( '+12 hours' ) ),
-				'auto_update_checks_monday'    => '1',
-				'auto_update_checks_tuesday'   => '1',
-				'auto_update_checks_wednesday' => '1',
-				'auto_update_checks_thursday'  => '1',
-				'auto_update_checks_friday'    => '1',
-				'auto_update_checks_saturday'  => '0',
-				'auto_update_checks_sunday'    => '0',
+				'auto_update_checks_monday'    => true,
+				'auto_update_checks_tuesday'   => true,
+				'auto_update_checks_wednesday' => true,
+				'auto_update_checks_thursday'  => true,
+				'auto_update_checks_friday'    => true,
+				'auto_update_checks_saturday'  => false,
+				'auto_update_checks_sunday'    => false,
 				'auto_update_checks_emails'    => get_option( 'admin_email' ),
 			);
 			$local_auto_update_settings              = get_option( WCD_AUTO_UPDATE_SETTINGS );
@@ -856,31 +856,33 @@ class WebChangeDetector_Admin_Settings {
 				continue;
 			}
 
-			$slug = $sync_type['post_type_slug'];
-
+            
 			// Handle special case for frontpage.
-			if ( 'frontpage' === $slug ) {
+			if ( 'frontpage' === $sync_type['post_type_slug'] ) {
 				$sync_type['post_type_name'] = __( 'Frontpage', 'webchangedetector' );
 				continue;
 			}
 
+            $post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug_from_rest_base( $sync_type['post_type_slug'] );
+
 			// Check if it's a post type.
-			$post_type_object = get_post_type_object( $slug );
+            
+			$post_type_object = get_post_type_object( $post_type_slug );
 			if ( $post_type_object ) {
-				$sync_type['post_type_name'] = $post_type_object->label;
+				$sync_type['post_type_name'] = $post_type_object->labels->name;
 				continue;
 			}
 
 			// Check if it's a taxonomy.
-			$taxonomy_object = get_taxonomy( $slug );
+			$taxonomy_object = get_taxonomy( $post_type_slug );
 			if ( $taxonomy_object ) {
-				$sync_type['post_type_name'] = $taxonomy_object->label;
+				$sync_type['post_type_name'] = $taxonomy_object->labels->name;
 				$sync_type['url_type_name'] = __( 'Taxonomies', 'webchangedetector' );
 				continue;
 			}
 
 			// Fallback: capitalize the slug.
-			$sync_type['post_type_name'] = ucfirst( $slug );
+			$sync_type['post_type_name'] = ucfirst( $post_type_slug );
 		}
 
 		return $sync_url_types;
@@ -902,7 +904,7 @@ class WebChangeDetector_Admin_Settings {
 			if ( ! empty( $slug ) ) {
 				$available_types['post_types'][] = array(
 					'slug' => $slug,
-					'name' => $post_type->label,
+					'name' => $post_type->labels->name,
 					'type' => 'post_type',
 					'checked' => false, // Will be set based on current sync_url_types
 				);
@@ -916,7 +918,7 @@ class WebChangeDetector_Admin_Settings {
 			if ( ! empty( $slug ) ) {
 				$available_types['taxonomies'][] = array(
 					'slug' => $slug,
-					'name' => $taxonomy->label,
+					'name' => $taxonomy->labels->name,
 					'type' => 'taxonomy',
 					'checked' => false, // Will be set based on current sync_url_types
 				);

@@ -745,8 +745,8 @@ class WebChangeDetector_Admin_AJAX {
 							$default_sync_types[] = array(
 								'url_type_slug'  => 'types',
 								'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
-								'post_type_slug' => $post_type['slug'],
-								'post_type_name' => $post_type['name'],
+								'post_type_slug' => $available_types['post_types']['slug'],
+								'post_type_name' => $available_types['post_types']['name'],
 							);
 						}
 					}
@@ -757,15 +757,15 @@ class WebChangeDetector_Admin_AJAX {
 					$default_sync_types = array(
 						array(
 							'url_type_slug'  => 'types',
-							'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+							'url_type_name'  => 'Post Types',
 							'post_type_slug' => 'posts',
-							'post_type_name' => __( 'Posts', 'webchangedetector' ),
+							'post_type_name' => get_post_type_object('post')->labels->name, // post because we use the slug here, not rest_base
 						),
 						array(
 							'url_type_slug'  => 'types',
-							'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+							'url_type_name'  => 'Post Types',
 							'post_type_slug' => 'pages',
-							'post_type_name' => __( 'Pages', 'webchangedetector' ),
+							'post_type_name' => get_post_type_object('page')->labels->name,// page because we use the slug here, not rest_base
 						),
 					);
 				}

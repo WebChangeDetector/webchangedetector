@@ -599,7 +599,7 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function add_post_type( $postdata ) {
-		$post_type = json_decode( stripslashes( $postdata['post_type'] ), true );
+		$post_type = json_decode( $postdata['post_type'], true );
 		$this->admin->website_details['sync_url_types'] = array_merge( $post_type, $this->admin->website_details['sync_url_types'] );
        
 		// TODO: Move to settings handler

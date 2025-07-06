@@ -110,7 +110,7 @@ class WebChangeDetector_Dashboard_Controller {
 
 			case 'add_post_type':
 				$this->admin->wordpress_handler->add_post_type( $postdata );
-				$post_type_name = json_decode( stripslashes( $postdata['post_type'] ), true )[0]['post_type_name'];
+				$post_type_name = json_decode( $postdata['post_type'], true )[0]['post_type_name'];
 				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
 
