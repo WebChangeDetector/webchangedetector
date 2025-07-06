@@ -751,6 +751,20 @@ class WebChangeDetector_Admin_AJAX {
 						}
 					}
 				}
+
+                // Add Posts and Pages as defaults (same as API defaults)
+				if ( ! empty( $available_types['taxonomies'] ) ) {
+					foreach ( $available_types['taxonomies'] as $taxonomy ) {
+						if ( in_array( $taxonomy['slug'], array( 'category' ), true ) ) {
+							$default_sync_types[] = array(
+								'url_type_slug'  => 'taxonomies',
+								'url_type_name'  => __( 'Taxonomies', 'webchangedetector' ),
+								'post_type_slug' => $available_types['taxonomies']['slug'],
+								'post_type_name' => $available_types['taxonomies']['name'],
+							);
+						}
+					}
+				}
 				
 				// If we couldn't find posts/pages, fall back to hardcoded defaults
 				if ( empty( $default_sync_types ) ) {
@@ -766,6 +780,12 @@ class WebChangeDetector_Admin_AJAX {
 							'url_type_name'  => 'Post Types',
 							'post_type_slug' => 'pages',
 							'post_type_name' => get_post_type_object('page')->labels->name,// page because we use the slug here, not rest_base
+						),
+                        array(
+							'url_type_slug'  => 'taxonomies',
+							'url_type_name'  => 'Taxonomies',
+							'post_type_slug' => 'category',
+							'post_type_name' => get_taxonomy('category')->labels->name,// page because we use the slug here, not rest_base
 						),
 					);
 				}
