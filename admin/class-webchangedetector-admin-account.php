@@ -78,7 +78,7 @@ class WebChangeDetector_Admin_Account {
 				'ip'                => isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '',
 				'domain'            => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
 				'validation_string' => $validation_string,
-				'cms'               => 'wp',
+				'cms'               => 'wordpress',
 			),
 			$postdata
 		);
@@ -237,7 +237,45 @@ class WebChangeDetector_Admin_Account {
 							<div class="wcd-form-control">
 								<div class="wcd-account-info">
 									<p><strong>Email:</strong> <?php echo esc_html( $this->get_account()['email'] ); ?></p>
-									<p><strong>API Token:</strong> <code><?php echo esc_html( $api_token ); ?></code></p>
+									<p><strong>API Token:</strong></p>
+									<div class="wcd-api-token-section">
+										<div class="wcd-api-token-controls">
+											<span id="api-token-display" style="display: none; font-family: monospace; font-size: 13px;"><?php echo esc_html( $api_token ); ?></span>
+											<span id="api-token-hidden" style="font-family: monospace; letter-spacing: 2px;">••••••••••••••••••••••••••••••••••••••••••••••••••</span>
+											<button type="button" id="toggle-api-token" class="wcd-token-toggle" title="Show/Hide API Token" style="background: none; border: none; cursor: pointer; margin-left: 10px; color: #0073aa;">
+												<span class="dashicons dashicons-hidden" id="toggle-icon"></span>
+											</button>
+										</div>
+										<p class="wcd-security-note" style="font-size: 12px; color: #666; margin-top: 8px;">
+											Keep your API token secure and never share it publicly
+										</p>
+									</div>
+									
+									<script>
+									document.addEventListener('DOMContentLoaded', function() {
+										const toggleBtn = document.getElementById('toggle-api-token');
+										const tokenDisplay = document.getElementById('api-token-display');
+										const tokenHidden = document.getElementById('api-token-hidden');
+										const toggleIcon = document.getElementById('toggle-icon');
+										let isVisible = false;
+
+										toggleBtn.addEventListener('click', function() {
+											isVisible = !isVisible;
+											
+											if (isVisible) {
+												tokenDisplay.style.display = 'inline';
+												tokenHidden.style.display = 'none';
+												toggleIcon.className = 'dashicons dashicons-visibility';
+												toggleBtn.title = 'Hide API Token';
+											} else {
+												tokenDisplay.style.display = 'none';
+												tokenHidden.style.display = 'inline';
+												toggleIcon.className = 'dashicons dashicons-hidden';
+												toggleBtn.title = 'Show API Token';
+											}
+										});
+									});
+									</script>
 								</div>
 							</div>
 						</div>
@@ -306,6 +344,11 @@ class WebChangeDetector_Admin_Account {
 	 * @return   void                    Outputs the no account page HTML.
 	 */
 	public function get_no_account_page( $api_token = '' ) {
+		// Set initial setup needed flag for new users (only if no API token exists).
+		if ( empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN, '' ) ) ) {
+			update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
+		}
+		
 		$user = wp_get_current_user();
 		$first_name = $user->user_firstname;
 		$last_name = $user->user_lastname;
@@ -355,32 +398,68 @@ class WebChangeDetector_Admin_Account {
 	public function show_activate_account( $error ) {
 		$account_email = get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, '' );
 		?>
-		<div class="wcd-activate-account">
-			<h2><?php esc_html_e( 'Activate Your Account', 'webchangedetector' ); ?></h2>
-			
-			<?php if ( ! empty( $error ) ) : ?>
-				<div class="notice notice-error">
-					<p><?php echo esc_html( $error ); ?></p>
+		<div class="wcd-activate-account-modern">
+			<div class="wcd-activation-container">
+				<div class="wcd-activation-header">
+					<div class="wcd-activation-icon">
+						<span class="dashicons dashicons-email-alt2"></span>
+					</div>
+					<h2><?php esc_html_e( 'Account Activation Required', 'webchangedetector' ); ?></h2>
 				</div>
-			<?php endif; ?>
-			
-			<div class="wcd-activation-instructions">
-				<p><?php esc_html_e( 'Please check your email and click the activation link to complete your account setup.', 'webchangedetector' ); ?></p>
 				
-				<?php if ( $account_email ) : ?>
-					<p><?php printf( esc_html__( 'We sent the activation email to: %s', 'webchangedetector' ), '<strong>' . esc_html( $account_email ) . '</strong>' ); ?></p>
+				<?php if ( ! empty( $error ) && $error !== 'ActivateAccount' && $error !== 'activate account' ) : ?>
+					<div class="wcd-error-card">
+						<span class="dashicons dashicons-warning"></span>
+						<p><?php echo esc_html( $error ); ?></p>
+					</div>
 				<?php endif; ?>
 				
-				<p><?php esc_html_e( 'After activation, return here and refresh the page to access your dashboard.', 'webchangedetector' ); ?></p>
-			</div>
-			
-			<div class="wcd-activation-actions">
-				<button class="button button-primary" onclick="location.reload()">
-					<?php esc_html_e( 'I Have Activated My Account', 'webchangedetector' ); ?>
-				</button>
-				<a href="<?php echo esc_url( $this->get_app_url() . 'support' ); ?>" class="button" target="_blank">
-					<?php esc_html_e( 'Need Help?', 'webchangedetector' ); ?>
-				</a>
+				<div class="wcd-activation-card">
+					<div class="wcd-activation-content">
+						<h3><?php esc_html_e( 'Check Your Email', 'webchangedetector' ); ?></h3>
+						<p class="wcd-activation-description">
+							<?php esc_html_e( 'We\'ve sent an activation link to your email address. Please click the link to complete your account setup.', 'webchangedetector' ); ?>
+						</p>
+						
+						<?php if ( $account_email ) : ?>
+							<div class="wcd-email-display">
+								<span class="dashicons dashicons-email"></span>
+								<strong><?php echo esc_html( $account_email ); ?></strong>
+							</div>
+						<?php endif; ?>
+						
+						<div class="wcd-activation-steps">
+							<div class="wcd-step">
+								<span class="wcd-step-number">1</span>
+								<span class="wcd-step-text"><?php esc_html_e( 'Check your email inbox (and spam folder)', 'webchangedetector' ); ?></span>
+							</div>
+							<div class="wcd-step">
+								<span class="wcd-step-number">2</span>
+								<span class="wcd-step-text"><?php esc_html_e( 'Click the activation link in the email', 'webchangedetector' ); ?></span>
+							</div>
+							<div class="wcd-step">
+								<span class="wcd-step-number">3</span>
+								<span class="wcd-step-text"><?php esc_html_e( 'Return here and refresh to access your dashboard', 'webchangedetector' ); ?></span>
+							</div>
+						</div>
+						
+						<div class="wcd-activation-note">
+							<span class="dashicons dashicons-info"></span>
+							<p><?php esc_html_e( 'The activation email usually arrives within a few minutes. If you don\'t see it, please check your spam folder.', 'webchangedetector' ); ?></p>
+						</div>
+						
+						<div class="wcd-reset-section">
+							<form method="post" style="margin: 0;">
+								<input type="hidden" name="wcd_action" value="reset_api_token">
+								<?php wp_nonce_field( 'reset_api_token' ); ?>
+								<button type="submit" class="wcd-reset-button" onclick="return confirmReset()">
+									<span class="dashicons dashicons-trash"></span>
+									<?php esc_html_e( 'Reset & Start Over', 'webchangedetector' ); ?>
+								</button>
+							</form>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -680,44 +759,5 @@ class WebChangeDetector_Admin_Account {
 		return false;
 	}
 
-	/**
-	 * Resend verification email for the current user.
-	 *
-	 * Sends a request to the WebChange Detector API to resend the verification email
-	 * to the current WordPress user's email address.
-	 *
-	 * @since    1.0.0
-	 * @return   mixed    API response.
-	 */
-	public function resend_verification_email() {
-		$args = array(
-			'action' => 'resend_verification_email',
-		);
-
-		$wp_user = wp_get_current_user();
-		if ( ! empty( $wp_user ) && ! empty( $wp_user->user_email ) ) {
-			$args['email'] = $wp_user->user_email;
-		}
-
-		return mm_api( $args );
-	}
-
-	/**
-	 * Check if the current user is using the main account API token.
-	 *
-	 * Compares the current user's API token with the main API token to determine
-	 * if they are using the main account or a subaccount.
-	 *
-	 * @since    1.0.0
-	 * @return   bool    True if using main account, false if using subaccount.
-	 */
-	public function is_main_account() {
-		$current_api_token = get_user_meta( get_current_user_id(), 'wcd_active_api_token', true ) ?? mm_api_token();
-		if ( ! $current_api_token ) {
-			$current_api_token = mm_api_token();
-		}
-		$main_api_token = mm_api_token();
-
-		return $current_api_token === $main_api_token;
-	}
+	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller
 } 

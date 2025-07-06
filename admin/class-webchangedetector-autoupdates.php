@@ -466,7 +466,7 @@ class WebChangeDetector_Autoupdates {
 
 		// Enable auto-update checks if the defines are set.
 		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
-			$auto_update_settings['auto_update_checks_enabled'] = '1';
+			$auto_update_settings['auto_update_checks_enabled'] = true;
 		}
 		return $auto_update_settings;
 	}

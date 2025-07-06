@@ -106,6 +106,12 @@ class WebChangeDetector_Admin_AJAX {
 		add_action( 'wp_ajax_create_website_and_groups_ajax', array( $this, 'ajax_create_website_and_groups' ) );
 		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
+		add_action( 'wp_ajax_wcd_check_activation_status', array( $this, 'ajax_check_activation_status' ) );
+		add_action( 'wp_ajax_wcd_get_initial_setup', array( $this, 'ajax_get_initial_setup' ) );
+		add_action( 'wp_ajax_wcd_save_initial_setup', array( $this, 'ajax_save_initial_setup' ) );
+		add_action( 'wp_ajax_wcd_sync_posts', array( $this, 'ajax_sync_posts' ) );
+		add_action( 'wp_ajax_wcd_update_sync_types_with_local_labels', array( $this, 'ajax_update_sync_types_with_local_labels' ) );
+		add_action( 'wp_ajax_wcd_complete_initial_setup', array( $this, 'ajax_complete_initial_setup' ) );
 	}
 
 	/**
@@ -211,32 +217,74 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_update_comparison_status() {
 		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['status'] ) || ! isset( $_POST['nonce'] ) ) {
-			echo 'POST Params missing';
+			echo 'failed: missing post fields';
 			wp_die();
 		}
 
 		// Verify nonce
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
-			echo 'Nonce verify failed';
-			wp_die( 'Busted!' );
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			echo 'failed: nonce missing';
+			wp_die();
 		}
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
-			echo 'Permission denied';
+			echo 'failed: capabilities';
 			wp_die();
 		}
 
-		// Delegate to main admin class for now (will be refactored later)
-		if ( $this->admin && method_exists( $this->admin, 'update_comparison_status' ) ) {
-			$result = $this->screenshots_handler->update_comparison_status( 
-				esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) ), 
-				esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) ) 
-			);
-			echo esc_html( $result['data']['status'] ) ?? 'failed';
-		} else {
-			echo 'Method not available';
+		$comparison_id = esc_html( sanitize_text_field( wp_unslash( $_POST['id'] ) ) );
+		$status = esc_html( sanitize_text_field( wp_unslash( $_POST['status'] ) ) );
+
+		// Update comparison status via screenshots handler
+		$result = $this->screenshots_handler->update_comparison_status( $comparison_id, $status );
+		
+		// Handle the most common success scenarios first
+		if ( $result === true ) {
+			// API call successful (common case for PUT requests)
+			echo esc_html( $status );
+			wp_die();
 		}
+		
+		if ( is_array( $result ) ) {
+			// Check for explicit success indicators
+			if ( isset( $result['success'] ) && $result['success'] ) {
+				echo esc_html( $status );
+				wp_die();
+			}
+			
+			// Check for status in data
+			if ( isset( $result['data']['status'] ) ) {
+				echo esc_html( $result['data']['status'] );
+				wp_die();
+			}
+			
+			// Check for Laravel-style success (no error key)
+			if ( ! isset( $result['error'] ) && ! isset( $result['errors'] ) && ! isset( $result['message'] ) ) {
+				echo esc_html( $status );
+				wp_die();
+			}
+			
+			// Array contains error information
+			echo 'failed';
+			wp_die();
+		}
+		
+		if ( is_string( $result ) ) {
+			// Check for known error strings
+			$error_strings = array( 'Id is missing.', 'Wrong status.', 'No API token found', 'unauthorized', 'update plugin', 'activate account' );
+			if ( in_array( $result, $error_strings, true ) ) {
+				echo 'failed';
+				wp_die();
+			}
+			
+			// Unknown string response - could be success
+			echo esc_html( $status );
+			wp_die();
+		}
+		
+		// Fallback for any other case
+		echo 'failed';
 		
 		wp_die();
 	}
@@ -438,14 +486,13 @@ class WebChangeDetector_Admin_AJAX {
 				'max_auto_update_checks' => $max_auto_update_checks,
 				'checks_needed'          => $checks_needed,
 				'checks_available'       => $checks_available,
-				'checks_until_renewal'   => $checks_until_renewal,
-				// Debug info.
-				'debug'                  => array(
-					'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
-					'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
-					'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
-					'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
-				),
+				'checks_until_renewal'   => $checks_until_renewal,	
+                'auto_group_enabled'  => $auto_group['enabled'] ?? 'not set',
+                'auto_group_interval' => $auto_group['interval_in_h'] ?? 'not set',
+                'auto_group_urls'     => $auto_group['selected_urls_count'] ?? 'not set',
+                'update_group_urls'   => $update_group['selected_urls_count'] ?? 'not set',
+                'auto_update_settings' => $auto_update_settings,
+				
 			)
 		);
 	}
@@ -461,6 +508,336 @@ class WebChangeDetector_Admin_AJAX {
 			$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to check account activation status.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_check_activation_status() {
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		// Check if we have both email and API token
+		$account_email = get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, '' );
+		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN, '' );
+
+		if ( empty( $account_email ) ) {
+			wp_send_json_error( array( 'message' => __( 'No account email found.', 'webchangedetector' ) ) );
+			return;
+		}
+
+		if ( empty( $api_token ) ) {
+			wp_send_json_success( array( 'activated' => false, 'message' => __( 'Waiting for account activation.', 'webchangedetector' ) ) );
+			return;
+		}
+
+		// Try to get account details to verify the token works
+		if ( $this->admin && $this->admin->account_handler && method_exists( $this->admin->account_handler, 'get_account' ) ) {
+			try {
+				$account = $this->admin->account_handler->get_account();
+				
+				if ( ! empty( $account ) && is_array( $account ) ) {
+					// Account is activated and accessible
+					wp_send_json_success( array( 
+						'activated' => true, 
+						'message' => __( 'Account activated successfully.', 'webchangedetector' ),
+						'account' => $account
+					) );
+				} else {
+					// Token exists but account not accessible - still waiting for activation
+					wp_send_json_success( array( 'activated' => false, 'message' => __( 'Account activation pending.', 'webchangedetector' ) ) );
+				}
+			} catch ( \Exception $e ) {
+				// Error accessing account - still waiting for activation
+				wp_send_json_success( array( 'activated' => false, 'message' => __( 'Account activation pending.', 'webchangedetector' ) ) );
+			}
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Account handler not available.', 'webchangedetector' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to get initial setup data.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_get_initial_setup() {
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			$available_types = $this->admin->settings_handler->get_available_sync_types();
+			wp_send_json_success( array( 'available_types' => $available_types ) );
+		} catch ( \Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to save initial setup selections.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_save_initial_setup() {
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_initial_setup', 'wcd_initial_setup_nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			// Get selected types from form
+			$selected_post_types = isset( $_POST['post_types'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['post_types'] ) ) : array();
+			$selected_taxonomies = isset( $_POST['taxonomies'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['taxonomies'] ) ) : array();
+			$selected_special = isset( $_POST['special'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['special'] ) ) : array();
+
+			// Build new sync_url_types array
+			$new_sync_url_types = array();
+
+			// Add selected post types
+			foreach ( $selected_post_types as $post_type_slug ) {
+				$post_type_object = get_post_type_object( $post_type_slug );
+				if ( $post_type_object ) {
+					$new_sync_url_types[] = array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+						'post_type_slug' => $post_type_slug,
+						'post_type_name' => $post_type_object->label,
+					);
+				}
+			}
+
+			// Add selected taxonomies
+			foreach ( $selected_taxonomies as $taxonomy_slug ) {
+				$taxonomy_object = get_taxonomy( $taxonomy_slug );
+				if ( $taxonomy_object ) {
+					$new_sync_url_types[] = array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => __( 'Taxonomies', 'webchangedetector' ),
+						'post_type_slug' => $taxonomy_slug,
+						'post_type_name' => $taxonomy_object->label,
+					);
+				}
+			}
+
+			// Add selected special pages
+			foreach ( $selected_special as $special_slug ) {
+				if ( 'frontpage' === $special_slug ) {
+					$new_sync_url_types[] = array(
+						'url_type_slug'  => 'types',
+						'url_type_name'  => __( 'Special Pages', 'webchangedetector' ),
+						'post_type_slug' => 'frontpage',
+						'post_type_name' => __( 'Frontpage', 'webchangedetector' ),
+					);
+				}
+			}
+
+			// Update website details with new sync types
+			$website_details = $this->admin->settings_handler->get_website_details( true );
+			if ( ! empty( $website_details ) ) {
+				$website_details['sync_url_types'] = $new_sync_url_types;
+				$this->admin->settings_handler->update_website_details( $website_details );
+			}
+
+			// Mark initial setup as completed
+			update_option( 'wcd_initial_setup_completed', true );
+
+			wp_send_json_success( array( 
+				'message' => __( 'Initial setup saved successfully.', 'webchangedetector' ),
+				'sync_url_types' => $new_sync_url_types 
+			) );
+
+		} catch ( \Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to trigger post sync after initial setup.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_sync_posts() {
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			// Delegate to WordPress handler for sync
+			if ( $this->admin && $this->admin->wordpress_handler && method_exists( $this->admin->wordpress_handler, 'sync_posts' ) ) {
+				$website_details = $this->admin->settings_handler->get_website_details( true );
+				$response = $this->admin->wordpress_handler->sync_posts( true, $website_details );
+				
+				wp_send_json_success( array( 
+					'message' => __( 'Posts synced successfully.', 'webchangedetector' ),
+					'response' => $response 
+				) );
+			} else {
+				wp_send_json_error( array( 'message' => __( 'Sync method not available.', 'webchangedetector' ) ) );
+			}
+
+		} catch ( \Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to update sync types with local labels.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_update_sync_types_with_local_labels() {
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: update_sync_types_with_local_labels called' );
+		
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: User capabilities check failed' );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Starting sync types update with local labels' );
+			
+			// Get current website details with existing sync_url_types
+			$website_details = $this->admin->settings_handler->get_website_details( true );
+			
+			if ( empty( $website_details ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Website details are empty' );
+				wp_send_json_error( array( 'message' => __( 'Unable to load website details.', 'webchangedetector' ) ) );
+			}
+
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Website details loaded, sync_url_types count: ' . ( ! empty( $website_details['sync_url_types'] ) ? count( $website_details['sync_url_types'] ) : '0' ) );
+
+			// If no sync_url_types exist, create default ones (Posts and Pages as per API defaults)
+			if ( empty( $website_details['sync_url_types'] ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: No sync_url_types found, creating defaults' );
+				
+				// Get available post types the same way as settings tab
+				$available_types = $this->admin->settings_handler->get_available_sync_types();
+				$default_sync_types = array();
+				
+				// Add Posts and Pages as defaults (same as API defaults)
+				if ( ! empty( $available_types['post_types'] ) ) {
+					foreach ( $available_types['post_types'] as $post_type ) {
+						if ( in_array( $post_type['slug'], array( 'posts', 'pages' ), true ) ) {
+							$default_sync_types[] = array(
+								'url_type_slug'  => 'types',
+								'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+								'post_type_slug' => $post_type['slug'],
+								'post_type_name' => $post_type['name'],
+							);
+						}
+					}
+				}
+				
+				// If we couldn't find posts/pages, fall back to hardcoded defaults
+				if ( empty( $default_sync_types ) ) {
+					$default_sync_types = array(
+						array(
+							'url_type_slug'  => 'types',
+							'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+							'post_type_slug' => 'posts',
+							'post_type_name' => __( 'Posts', 'webchangedetector' ),
+						),
+						array(
+							'url_type_slug'  => 'types',
+							'url_type_name'  => __( 'Post Types', 'webchangedetector' ),
+							'post_type_slug' => 'pages',
+							'post_type_name' => __( 'Pages', 'webchangedetector' ),
+						),
+					);
+				}
+				
+				$website_details['sync_url_types'] = $default_sync_types;
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Created default sync types: ' . print_r( $default_sync_types, true ) );
+			}
+
+			// Update sync_url_types with local labels using existing method
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updating sync types with local names' );
+			
+			// Check if the method exists
+			if ( ! method_exists( $this->admin->settings_handler, 'update_sync_url_types_with_local_names' ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Method update_sync_url_types_with_local_names does not exist' );
+				wp_send_json_error( array( 'message' => __( 'Update method not available.', 'webchangedetector' ) ) );
+			}
+			
+			$updated_sync_types = $this->admin->settings_handler->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
+			
+			if ( empty( $updated_sync_types ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updated sync types is empty' );
+				wp_send_json_error( array( 'message' => __( 'Failed to update sync types.', 'webchangedetector' ) ) );
+			}
+			
+			$website_details['sync_url_types'] = $updated_sync_types;
+			
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Saving updated website details' );
+			
+			// Save the updated website details
+			$update_result = $this->admin->settings_handler->update_website_details( $website_details );
+			
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Update result: ' . print_r( $update_result, true ) );
+			
+			wp_send_json_success( array( 
+				'message' => __( 'Sync types updated with local labels.', 'webchangedetector' ),
+				'sync_url_types' => $updated_sync_types 
+			) );
+
+		} catch ( \Exception $e ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Exception in sync types update: ' . $e->getMessage() );
+			wp_send_json_error( array( 'message' => 'Error: ' . $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to complete initial setup.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_complete_initial_setup() {
+		// Verify nonce for security
+		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
+
+		// Verify user capabilities
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
+		}
+
+		try {
+			// Clear the initial setup needed flag
+			delete_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED );
+			
+			// Enable the wizard for the user
+			add_option( 'wcd_wizard', 'true', '', false );
+			
+			wp_send_json_success( array( 
+				'message' => __( 'Initial setup completed successfully.', 'webchangedetector' ),
+				'wizard_enabled' => true
+			) );
+
+		} catch ( \Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
 	}
 } 

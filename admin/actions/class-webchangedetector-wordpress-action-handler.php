@@ -64,13 +64,15 @@ class WebChangeDetector_WordPress_Action_Handler {
 				);
 			}
 
-			// Validate post type exists.
-			if ( ! post_type_exists( $post_type_slug ) ) {
-				return array(
-					'success' => false,
-					'message' => 'Post type does not exist: ' . $post_type_slug,
-				);
-			}
+			// Validate post type exists. 
+            // Our post_type_slug is actually the post_type->rest_base or post_type->name as fallback.
+            // So we need to skip this check.
+			// if ( ! post_type_exists( $post_type_slug ) ) {
+			// 	return array(
+			// 		'success' => false,
+			// 		'message' => 'Post type does not exist: ' . $post_type_slug,
+			// 	);
+			// }
 
 			// Use the existing add_post_type method which handles the JSON data properly.
 			$this->admin->wordpress_handler->add_post_type( $data );
@@ -232,17 +234,20 @@ class WebChangeDetector_WordPress_Action_Handler {
 			}
 			
 			foreach ( $post_types as $post_type ) {
+				// Get the proper slug using the utility method that handles rest_base fallback to name.
+				$post_type_slug = WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
+				
 				// Skip if post type is excluded or already enabled.
-				if ( in_array( $post_type->name, $excluded_types, true ) || in_array( $post_type->name, $enabled_post_types, true ) ) {
+				if ( in_array( $post_type_slug, $excluded_types, true ) || in_array( $post_type_slug, $enabled_post_types, true ) ) {
 					continue;
 				}
 				
 				$available_types[] = array(
-					'slug' => $post_type->name,
+					'slug' => $post_type_slug,
 					'name' => $post_type->label,
 					'description' => $post_type->description,
 					'public' => $post_type->public,
-					'count' => wp_count_posts( $post_type->name )->publish ?? 0,
+					'count' => wp_count_posts( $post_type_slug )->publish ?? 0,
 				);
 			}
 			

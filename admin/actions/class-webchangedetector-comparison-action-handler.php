@@ -50,7 +50,7 @@ class WebChangeDetector_Comparison_Action_Handler {
 			}
 
 			// Update comparison status via API.
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_comparison_status_v2( $comparison_id, $status );
+			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_comparison_v2( $comparison_id, $status );
 			
 			if ( $result['success'] ?? false ) {
 				return array(

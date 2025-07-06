@@ -232,13 +232,18 @@ class WebChangeDetector_Admin_Settings {
 
 		$pagination_params = array();
 		if ( ! empty( $_GET['post-type'] ) ) {
-			$filters['category']            = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
+			// Convert rest_base to WordPress post type slug, then get the label that matches what's in the API
+			$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug_from_rest_base( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
+			$post_type_object = get_post_type_object( $post_type_slug );
+			$post_type_label = $post_type_object ? $post_type_object->labels->name : $post_type_slug;
+			$filters['category'] = $post_type_label;
 			$pagination_params['post-type'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
+            error_log('filters: ' . print_r($filters, true));
 		}
 		if ( ! empty( $_GET['taxonomy'] ) ) {
-			$filters['category']           = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
-			$pagination_params['taxonomy'] = sanitize_text_field( wp_unslash( $_GET['post-type'] ) );
-
+			$taxonomy_name = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name_from_slug( sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) ) );
+			$filters['category'] = $taxonomy_name;
+			$pagination_params['taxonomy'] = sanitize_text_field( wp_unslash( $_GET['taxonomy'] ) );
 		}
 		if ( ! empty( $_GET['search'] ) ) {
 			$filters['search']           = sanitize_text_field( wp_unslash( $_GET['search'] ) );
@@ -353,7 +358,7 @@ class WebChangeDetector_Admin_Settings {
 										$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
 										?>
 										<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( $url_type['post_type_slug'] ) ); ?>
+											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name_from_rest_base( $url_type['post_type_slug'] ) ); ?>
 										</option>
 									<?php } ?>
 								</select>
@@ -373,7 +378,7 @@ class WebChangeDetector_Admin_Settings {
 										$selected = $url_type['post_type_slug'] === $selected_post_type ? 'selected' : '';
 										?>
 										<option value="<?php echo esc_html( $url_type['post_type_slug'] ); ?>" <?php echo esc_html( $selected ); ?>>
-											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name( $url_type['post_type_slug'] ) ); ?>
+											<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_name_from_slug( $url_type['post_type_slug'] ) ); ?>
 										</option>
 									<?php } ?>
 								</select>
@@ -633,6 +638,10 @@ class WebChangeDetector_Admin_Settings {
 				if ( str_starts_with( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) ) {
 					$website_details                   = $website;
 					$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
+					
+					// Update sync_url_types with local language names to fix language mismatch.
+					$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
+					
 					break;
 				}
 			}
@@ -640,7 +649,7 @@ class WebChangeDetector_Admin_Settings {
 
 		$update = false;
 
-		// Set default sync types.
+		// Set default sync types for legacy fallback.
 		if ( ! empty( $website_details ) && empty( $website_details['sync_url_types'] ) ) {
 			$update = true;
 			if ( $this->is_allowed( 'only_frontpage' ) ) {
@@ -657,14 +666,14 @@ class WebChangeDetector_Admin_Settings {
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'posts',
-						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'posts' ),
+						'post_type_slug' => 'post',
+						'post_type_name' => 'Posts',
 					),
 					array(
 						'url_type_slug'  => 'types',
 						'url_type_name'  => 'Post Types',
-						'post_type_slug' => 'pages',
-						'post_type_name' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( 'pages' ),
+						'post_type_slug' => 'page',
+						'post_type_name' => 'Pages',
 					),
 				);
 			}
@@ -826,4 +835,103 @@ class WebChangeDetector_Admin_Settings {
 		</div>
 		<?php
 	}
+
+
+
+	/**
+	 * Update sync_url_types with local language names.
+	 * This fixes the language mismatch issue where API sends English names
+	 * but local WordPress has different language names.
+	 *
+	 * @param array $sync_url_types The sync URL types from API.
+	 * @return array Updated sync URL types with local language names.
+	 */
+	public function update_sync_url_types_with_local_names( $sync_url_types ) {
+		if ( empty( $sync_url_types ) ) {
+			return $sync_url_types;
+		}
+
+		foreach ( $sync_url_types as &$sync_type ) {
+			if ( empty( $sync_type['post_type_slug'] ) ) {
+				continue;
+			}
+
+			$slug = $sync_type['post_type_slug'];
+
+			// Handle special case for frontpage.
+			if ( 'frontpage' === $slug ) {
+				$sync_type['post_type_name'] = __( 'Frontpage', 'webchangedetector' );
+				continue;
+			}
+
+			// Check if it's a post type.
+			$post_type_object = get_post_type_object( $slug );
+			if ( $post_type_object ) {
+				$sync_type['post_type_name'] = $post_type_object->label;
+				continue;
+			}
+
+			// Check if it's a taxonomy.
+			$taxonomy_object = get_taxonomy( $slug );
+			if ( $taxonomy_object ) {
+				$sync_type['post_type_name'] = $taxonomy_object->label;
+				$sync_type['url_type_name'] = __( 'Taxonomies', 'webchangedetector' );
+				continue;
+			}
+
+			// Fallback: capitalize the slug.
+			$sync_type['post_type_name'] = ucfirst( $slug );
+		}
+
+		return $sync_url_types;
+	}
+
+	/**
+	 * Get available post types and taxonomies for initial setup selection.
+	 * This provides data for the overlay selection during activation.
+	 *
+	 * @return array Array of available post types and taxonomies.
+	 */
+	public function get_available_sync_types() {
+		$available_types = array();
+
+		// Get public post types.
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		foreach ( $post_types as $post_type ) {
+			$slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
+			if ( ! empty( $slug ) ) {
+				$available_types['post_types'][] = array(
+					'slug' => $slug,
+					'name' => $post_type->label,
+					'type' => 'post_type',
+					'checked' => false, // Will be set based on current sync_url_types
+				);
+			}
+		}
+
+		// Get public taxonomies.
+		$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
+		foreach ( $taxonomies as $taxonomy ) {
+			$slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $taxonomy );
+			if ( ! empty( $slug ) ) {
+				$available_types['taxonomies'][] = array(
+					'slug' => $slug,
+					'name' => $taxonomy->label,
+					'type' => 'taxonomy',
+					'checked' => false, // Will be set based on current sync_url_types
+				);
+			}
+		}
+
+		// Add frontpage option.
+		$available_types['special'][] = array(
+			'slug' => 'frontpage',
+			'name' => __( 'Frontpage', 'webchangedetector' ),
+			'type' => 'special',
+			'checked' => false, // Will be set based on current sync_url_types
+		);
+
+		return $available_types;
+	}
+
 } 

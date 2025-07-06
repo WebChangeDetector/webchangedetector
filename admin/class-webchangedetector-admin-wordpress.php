@@ -78,7 +78,6 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_styles() {
 		wp_enqueue_style( 'jquery-ui-accordion' );
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
-		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/wp-compare-public.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
 		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( __FILE__ ) . 'css/darcula.css', array(), $this->version, 'all' );
@@ -95,8 +94,6 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_scripts( $hook_suffix ) {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
-			wp_enqueue_script( 'webchangedetector-public', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/wp-compare-public.js', array( 'jquery' ), $this->version, false );
-			wp_enqueue_script( 'wcd_ajax', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/wcd-ajax.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'jquery-ui-accordion' );
 			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
@@ -246,9 +243,13 @@ class WebChangeDetector_Admin_WordPress {
 		$website_details = $this->admin->settings_handler->get_website_details();
 		$to_sync         = false;
 		
+		// Get the post type slug for comparison
+		$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
+		
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-			if ( $post_category === $sync_url_type['post_type_name'] ) {
+			if ( $post_type_slug === $sync_url_type['post_type_slug'] ) {
 				$to_sync = true;
+				break;
 			}
 		}
 		
@@ -296,9 +297,16 @@ class WebChangeDetector_Admin_WordPress {
 		$website_details = $this->admin->settings_handler->get_website_details();
 		$to_sync = false;
 		
+		// Get both the WordPress post type name and the rest_base for comparison
+		$wp_post_type_name = $post_type->name; // WordPress internal name (e.g., "product")
+		$wp_rest_base = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ); // rest_base (e.g., "products")
+		
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-			if ( $post_category === $sync_url_type['post_type_name'] ) {
+			// Check if the stored slug matches either the WordPress name or the rest_base
+			if ( $wp_post_type_name === $sync_url_type['post_type_slug'] || 
+			     $wp_rest_base === $sync_url_type['post_type_slug'] ) {
 				$to_sync = true;
+				break;
 			}
 		}
 		
@@ -593,11 +601,13 @@ class WebChangeDetector_Admin_WordPress {
 	public function add_post_type( $postdata ) {
 		$post_type = json_decode( stripslashes( $postdata['post_type'] ), true );
 		$this->admin->website_details['sync_url_types'] = array_merge( $post_type, $this->admin->website_details['sync_url_types'] );
-        error_log(print_r($this->admin->website_details,1));
+       
 		// TODO: Move to settings handler
 		$website_details = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], $this->admin->website_details );
-		$this->admin->website_details = $website_details;
-		$this->sync_posts( true );
+		if(isset($website_details['data']) && !empty($website_details['data']['sync_url_types'])){
+            $this->admin->website_details = $website_details['data'];
+            $this->sync_posts( true );
+		}
 	}
 
 	/**
@@ -956,8 +966,8 @@ class WebChangeDetector_Admin_WordPress {
 			$post_types = get_post_types( array( 'public' => true ), 'objects' );
 			$post_type_names = array(); // Initialize array.
 			foreach ( $post_types as $post_type ) {
+               
 				$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
-
 				// Get the right name for the request.
 				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
 					if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
@@ -1093,7 +1103,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Sync urls.
 		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->admin->sync_urls, $collection_uuid );
 		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . $response_sync_urls );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . print_r($response_sync_urls, 1) );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . print_r($response_start_url_sync,1) );
 
 		return date_i18n( 'd/m/Y H:i' );
@@ -1359,127 +1369,4 @@ class WebChangeDetector_Admin_WordPress {
 		}
 		return $scheme;
 	}
-
-	/**
-	 * Get selected WordPress URL types for a group.
-	 *
-	 * Retrieves the selected URL types for synchronization from a group's website.
-	 *
-	 * @since    1.0.0
-	 * @param    int $group_id The group ID to get URL types for.
-	 * @return   array|false   Array of selected URL types or false if none.
-	 */
-	public function get_selected_wp_url_types( $group_id ) {
-		$website = $this->get_website_by_group_id( $group_id );
-		if ( empty( $website['sync_url_types'] ) ) {
-			return false;
-		}
-		return ( $website['sync_url_types'] );
-	}
-
-	/**
-	 * Get website details by group ID.
-	 *
-	 * @since    1.0.0
-	 * @param    int    $group_id The group ID.
-	 * @return   array
-	 */
-	private function get_website_by_group_id( $group_id ) {
-		return \WebChangeDetector\WebChangeDetector_Admin_Utils::get_website_by_group_id( $group_id );
-	}
-
-	/**
-	 * Save WordPress group settings.
-	 *
-	 * @param array $postdata The form data containing WordPress group settings.
-	 * @return array|string|false The result of saving settings, false on failure.
-	 */
-	public static function save_wp_group_settings( $postdata ) {
-		if ( ! empty( $postdata['group_id'] ) && $postdata['group_id'] !== 0 ) {
-			$domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_by_group_id( $postdata['group_id'] );
-		} elseif ( ! empty( $postdata['domain'] ) ) {
-			$domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::check_url( $postdata['domain'] )[0];
-			$domain = rtrim( $domain, '/' );
-		} else {
-			return false;
-		}
-		// $domain = \WebChangeDetector\WebChangeDetector_Admin_Utils::check_url($postdata['domain']); // check the domain and get the correct schema
-		// Get the urls
-		$post_types = array();
-
-		foreach ( $postdata as $key => $value ) {
-			if ( strpos( $key, 'wp_api_' ) === 0 && $postdata[ $key ] ) {
-				$value        = json_decode( str_replace( '\\"', '"', $value ), true );
-				$post_types[] = $value;
-			}
-		}
-
-		// Use WordPress handler directly  
-		$wordpress_handler = new \WebChangeDetector\WebChangeDetector_Admin_WordPress( 'webchangedetector', '1.0.0', null );
-		$urls = $wordpress_handler->get_wp_urls( $domain, $post_types );
-
-		if ( ! count( $urls ) ) {
-			return 'no posts';
-		}
-
-		// Add new website if group_id = 0
-		if ( isset( $postdata['group_id'] ) && (int) $postdata['group_id'] === 0 ) {
-
-			// Add website and both group types if they don't exist yet
-			$args    = array(
-				'action'    => 'add_website_groups',
-				'domain'    => $domain,
-				'cms'       => $postdata['cms'] ?? null,
-				'threshold' => $postdata['threshold'] ?? 0,
-			);
-			$success = mm_api( $args );
-
-			// Early return
-			if ( ! $success ) {
-				return 'couln\'t create website groups';
-			}
-		}
-
-		// Get the group ids
-		$website_details = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_website_details_by_domain( $domain )[0];
-
-		// Get current post_type settings
-		/*
-		$selected_group_post_types = get_user_meta(get_current_user_id(), USER_META_WP_GROUP_POST_TYPES, true);
-
-		if(!is_array($selected_group_post_types)) {
-			$selected_group_post_types = [];
-		}
-		// Add new group_ids and settings
-		$selected_group_post_types[$website_details['manual_detection_group_id']] = $post_types;
-		$selected_group_post_types[$website_details['auto_detection_group_id']] = $post_types;
-		*/
-		$website_details['sync_url_types'] = $post_types;
-		$args                              = array(
-			'action' => 'save_user_website',
-		);
-		$args                              = array_merge( $args, $website_details );
-		$success                           = mm_api( $args );
-
-		// Update selected post_types for group
-		// update_user_meta(get_current_user_id(), USER_META_WP_GROUP_POST_TYPES, $selected_group_post_types);
-
-		// Sync the urls
-		/*
-		$args = [
-			'action' => 'sync_urls',
-			'domain' => $domain,
-			'delete_missing_urls' => true,
-			'posts' => json_encode($urls),
-		];
-		mm_api($args); // receiving sync data might increase memory. Count result didn't work.
-		*/
-		\WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $urls, $domain );
-		\WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( $domain, true );
-
-		// $this->log($synced_urls);
-		// $amount = count($urls);
-		return array( 'urls_added' => true );
-	}
-
 }

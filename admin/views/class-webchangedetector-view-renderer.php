@@ -163,9 +163,9 @@ class WebChangeDetector_View_Renderer {
 		?>
 		<div id="wcd-loading-overlay" style="display: none;">
 			<div class="wcd-loading-content">
-				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
 				<p class="wcd-loading-text"><?php echo esc_html( $message ); ?></p>
-				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
+				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../admin/img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
 			</div>
 		</div>
 		<?php
@@ -274,4 +274,6 @@ class WebChangeDetector_View_Renderer {
 		</script>
 		<?php
 	}
+
+
 } 

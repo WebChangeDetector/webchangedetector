@@ -585,16 +585,45 @@ class WebChangeDetector_API_V2 {
 					)
 				);
 				$i         = 0;
+				$results   = array();
 				foreach ( $responses as $response ) {
 					++$i;
 					if ( isset( $response->headers['date'] ) ) {
 						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Responsetime Request $i: " . $response->headers['date'] );
 					}
+					
+					// Process each response
+					$response_code = (int) $response->status_code;
+					$body = $response->body;
+					
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Response $i code: " . $response_code );
+					
+					// Decode the response body
+					$decoded_body = json_decode( $body, true );
+					
+					// Handle different response codes
+					if ( 200 === $response_code ) {
+						// Success
+						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
+							$results[] = $decoded_body;
+						} else {
+							$results[] = $body;
+						}
+					} else {
+						// Error response
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Multicall request $i failed with code $response_code: " . $body );
+						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
+							$results[] = $decoded_body;
+						} else {
+							$results[] = array( 'error' => 'Request failed', 'code' => $response_code, 'body' => $body );
+						}
+					}
 				}
-
-				$response_code = (int) wp_remote_retrieve_response_code( $responses );
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' Response code curl-multi-call: ' . $response_code );
-
+				
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' Multicall completed with ' . count( $results ) . ' results' );
+				
+				// Return the results for multicall
+				return $results;
 			}
 		} else {
 			$args = array(

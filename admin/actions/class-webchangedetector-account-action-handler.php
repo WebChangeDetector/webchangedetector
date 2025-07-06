@@ -57,6 +57,14 @@ class WebChangeDetector_Account_Action_Handler {
 			// Save token to database.
 			update_option( WCD_WP_OPTION_KEY_API_TOKEN, $api_token );
 			
+			// Only set initial setup flag if this is a completely new setup.
+			// Check if there are existing sync_url_types configured.
+			$website_details = $this->admin->settings_handler->get_website_details( true );
+			if ( empty( $website_details['sync_url_types'] ) ) {
+				// Set flag that initial setup is needed.
+				update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
+			}
+			
 			// Try to create website and groups if they don't exist.
 			$setup_result = $this->setup_website_and_groups();
 			
@@ -89,9 +97,20 @@ class WebChangeDetector_Account_Action_Handler {
 			// Clear wizard tracking.
 			delete_option( 'wcd_wizard_disabled' );
 			
+			// Reset activation flag so user can go through account creation process again.
+			delete_option( 'wcd_account_activated' );
+			delete_option( 'wcd_activation_status' );
+			
+			// Set flag that initial setup is needed.
+			update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
+			
+			// Clear any cached account and website details.
+			delete_option( WCD_ALLOWANCES );
+			delete_option( 'wcd_last_urls_sync' );
+			
 			return array(
 				'success' => true,
-				'message' => 'API token reset successfully. You can now enter a new token.',
+				'message' => 'API token reset successfully. You can now enter a new token or create a new account.',
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -110,6 +129,9 @@ class WebChangeDetector_Account_Action_Handler {
 	public function handle_create_trial_account( $data ) {
 		try {
 			$email = sanitize_email( $data['email'] ?? '' );
+			$name_first = sanitize_text_field( $data['name_first'] ?? '' );
+			$name_last = sanitize_text_field( $data['name_last'] ?? '' );
+			$password = $data['password'] ?? '';
 			
 			if ( empty( $email ) || ! is_email( $email ) ) {
 				return array(
@@ -117,32 +139,82 @@ class WebChangeDetector_Account_Action_Handler {
 					'message' => 'Valid email address is required.',
 				);
 			}
+			
+			if ( empty( $name_first ) || empty( $name_last ) ) {
+				return array(
+					'success' => false,
+					'message' => 'First and last name are required.',
+				);
+			}
+			
+			if ( empty( $password ) || strlen( $password ) < 6 ) {
+				return array(
+					'success' => false,
+					'message' => 'Password must be at least 6 characters long.',
+				);
+			}
+
+			// Prepare data array for account creation.
+			$account_data = array(
+				'email' => $email,
+				'name_first' => $name_first,
+				'name_last' => $name_last,
+				'password' => $password,
+			);
 
 			// Create trial account via API.
-			$result = $this->admin->account_handler->create_trial_account( $email );
+			$result = $this->admin->account_handler->create_trial_account( $account_data );
 			
-			if ( $result['success'] ?? false ) {
+			// Check if API call was successful
+			// API can return either an array with data or error strings like 'unauthorized', 'activate account', etc.
+			if ( is_string( $result ) ) {
 				// Store account email.
 				update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, $email );
 				
-				// If API token was returned, save it.
-				if ( ! empty( $result['api_token'] ) ) {
-					update_option( WCD_WP_OPTION_KEY_API_TOKEN, $result['api_token'] );
-					
-					// Setup website and groups.
-					$setup_result = $this->setup_website_and_groups();
-					$result['setup_result'] = $setup_result;
-				}
+				// Save the API token.
+				update_option( WCD_WP_OPTION_KEY_API_TOKEN, $result );
+				
+				// Set flag that initial setup is needed.
+				update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
+				
+				// Setup website and groups.
+				$setup_result = $this->setup_website_and_groups();
 				
 				return array(
 					'success' => true,
-					'message' => 'Trial account created successfully! Check your email for login details.',
+					'message' => 'Trial account created successfully! Check your email for activation.',
 					'result' => $result,
+					'setup_result' => $setup_result,
 				);
 			} else {
+				// Handle error responses
+				$error_message = 'Failed to create trial account.';
+				
+				if ( is_string( $result ) ) {
+					switch ( $result ) {
+						case 'unauthorized':
+							$error_message = 'Unauthorized request. Please try again.';
+							break;
+						case 'activate account':
+						case 'ActivateAccount':
+							$error_message = 'Account created but needs activation. Check your email.';
+							break;
+						case 'update plugin':
+							$error_message = 'Plugin update required. Please update the plugin.';
+							break;
+						default:
+							$error_message = $result;
+							break;
+					}
+				} elseif ( is_array( $result ) && ! empty( $result['message'] ) ) {
+					$error_message = $result['message'];
+				} elseif ( is_array( $result ) && ! empty( $result['error'] ) ) {
+					$error_message = $result['error'];
+				}
+				
 				return array(
 					'success' => false,
-					'message' => $result['message'] ?? 'Failed to create trial account.',
+					'message' => $error_message,
 				);
 			}
 		} catch ( \Exception $e ) {

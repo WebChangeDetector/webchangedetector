@@ -401,6 +401,58 @@ function currentlyProcessing() {
             return Object.keys(formData).length > 0 ? formData : null;
         }
 
+        // Function to initialize comparison status change buttons
+        function initComparisonStatusButtons(container) {
+            container.find(".ajax_update_comparison_status").off("click").on("click", function () {
+                let e = $(this);
+                let status = $(this).data('status');
+                let statusElement = $(e).parent().parent().find(".current_comparison_status");
+                var data = {
+                    action: 'update_comparison_status',
+                    nonce: $(this).data('nonce'),
+                    id: $(this).data('id'),
+                    status: status
+                };
+
+                // Replace content with loading img.
+                let initialStatusContent = $(statusElement).html();
+                $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
+
+                $.post(ajaxurl, data, function (response) {
+                    // Debug logging
+                    console.log('WebChangeDetector: Status update response:', response);
+
+                    if ('failed' === response) {
+                        $(statusElement).html(initialStatusContent);
+                        alert('Something went wrong. Please try again.');
+                        return false;
+                    }
+
+                    let status_nice_name;
+                    if ('ok' === response) {
+                        status_nice_name = 'Ok';
+                    } else if ('to_fix' === response) {
+                        status_nice_name = 'To Fix';
+                    } else if ('false_positive' === response) {
+                        status_nice_name = 'False Positive';
+                    } else {
+                        // Unexpected response - log it and show generic error
+                        console.error('WebChangeDetector: Unexpected status response:', response);
+                        $(statusElement).html(initialStatusContent);
+                        alert('Unexpected response from server. Please try again.');
+                        return false;
+                    }
+
+                    $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_new");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
+                    $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_" + response);
+                });
+            });
+        }
+
         // Function to re-initialize all components after AJAX content loads
         function reinitializeAfterAjax(container) {
             // Re-initialize accordion widgets for new content
@@ -441,6 +493,9 @@ function currentlyProcessing() {
                     }
                 }
             });
+
+            // Re-initialize comparison status change buttons
+            initComparisonStatusButtons(container);
 
             // Re-initialize any other event handlers that might be needed
             container.find(".ajax_paginate_batch_comparisons").off("click").on("click", function () {
@@ -575,45 +630,8 @@ function currentlyProcessing() {
             }
         }
 
-        $(".ajax_update_comparison_status").click(function () {
-            let e = $(this);
-            let status = $(this).data('status');
-            let statusElement = $(e).parent().parent().find(".current_comparison_status");
-            var data = {
-                action: 'update_comparison_status',
-                nonce: $(this).data('nonce'),
-                id: $(this).data('id'),
-                status: status
-            };
-
-            // Replace content with loading img.
-            let initialStatusContent = $(statusElement).html();
-            $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
-
-            $.post(ajaxurl, data, function (response) {
-                if ('failed' === response) {
-                    $(statusElement).html(initialStatusContent);
-                    alert('Something went wrong. Please try again.');
-                    return false;
-                }
-
-                let status_nice_name;
-                if ('ok' === response) {
-                    status_nice_name = 'Ok';
-                } else if ('to_fix' === response) {
-                    status_nice_name = 'To Fix';
-                } else if ('false_positive' === response) {
-                    status_nice_name = 'False Positive';
-                }
-                $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_new");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
-                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_" + response);
-            });
-
-        })
+        // Initialize comparison status buttons for initial page load
+        initComparisonStatusButtons($(document));
 
         initBatchComparisonsPagination();
 
@@ -641,7 +659,7 @@ function currentlyProcessing() {
                     const data = response.data;
 
                     // Debug logging
-
+                    console.log(data);
                     // Update monitoring stats
                     const monitoringElement = $('#wcd-monitoring-stats');
                     if (monitoringElement.length > 0) {
@@ -654,8 +672,9 @@ function currentlyProcessing() {
 
                     // Update auto-update stats
                     const autoUpdateElement = $('#wcd-auto-update-stats');
+                    console.log(data.auto_update_settings.auto_update_checks_enabled);
                     if (autoUpdateElement.length > 0) {
-                        if (data.max_auto_update_checks > 0) {
+                        if (data.max_auto_update_checks > 0 && data.auto_update_settings.auto_update_checks_enabled) {
                             autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
                         } else {
                             autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: red; font-weight: 900">Off</span>');

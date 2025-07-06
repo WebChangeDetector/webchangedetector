@@ -727,6 +727,9 @@ if ( ! defined( 'WCD_WP_OPTION_KEY_UPGRADE_URL' ) ) {
 	define( 'WCD_WP_OPTION_KEY_UPGRADE_URL', 'wcd_upgrade_url' );
 }
 
+if ( ! defined( 'WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED' ) ) {
+	define( 'WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED', 'wcd_initial_setup_needed' );
+}
 
 // Steps in update change detection.
 if ( ! defined( 'WCD_OPTION_UPDATE_STEP_KEY' ) ) {
@@ -756,7 +759,7 @@ if ( ! defined( 'WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION' ) ) {
 
 // WCD tabs.
 if ( ! defined( 'WCD_TAB_DASHBOARD' ) ) {
-	define( 'WCD_TAB_DASHBOARD', '/admin.php?page=webchangedetector-dashboard' );
+	define( 'WCD_TAB_DASHBOARD', '/admin.php?page=webchangedetector' );
 }
 if ( ! defined( 'WCD_TAB_UPDATE' ) ) {
 	define( 'WCD_TAB_UPDATE', '/admin.php?page=webchangedetector-update-settings' );

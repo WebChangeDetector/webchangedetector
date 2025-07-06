@@ -263,7 +263,13 @@ class WebChangeDetector {
 		$this->loader->add_action( 'wp_ajax_create_website_and_groups_ajax', $plugin_ajax, 'ajax_create_website_and_groups' );
 		$this->loader->add_action( 'wp_ajax_get_dashboard_usage_stats', $plugin_ajax, 'ajax_get_dashboard_usage_stats' );
 		$this->loader->add_action( 'wp_ajax_wcd_get_admin_bar_status', $plugin_ajax, 'ajax_get_wcd_admin_bar_status' );
-		
+		$this->loader->add_action( 'wp_ajax_wcd_check_activation_status', $plugin_ajax, 'ajax_check_activation_status' );
+		$this->loader->add_action( 'wp_ajax_wcd_get_initial_setup', $plugin_ajax, 'ajax_get_initial_setup' );
+		$this->loader->add_action( 'wp_ajax_wcd_save_initial_setup', $plugin_ajax, 'ajax_save_initial_setup' );
+		$this->loader->add_action( 'wp_ajax_wcd_sync_posts', $plugin_ajax, 'ajax_sync_posts' );
+		$this->loader->add_action( 'wp_ajax_wcd_update_sync_types_with_local_labels', $plugin_ajax, 'ajax_update_sync_types_with_local_labels' );
+		$this->loader->add_action( 'wp_ajax_wcd_complete_initial_setup', $plugin_ajax, 'ajax_complete_initial_setup' );
+
 		$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
 		$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
 

@@ -44,7 +44,6 @@ class WebChangeDetector_Public {
 	public function enqueue_styles() {
 		// Load the new design CSS files
 		wp_enqueue_style( 'webchangedetector-public-legacy', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
-		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'css/wp-compare-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
 	}
 
 	/**
@@ -53,7 +52,6 @@ class WebChangeDetector_Public {
 	 * @since    1.0.0
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'js/wp-compare-public.js', array( 'jquery' ), WEBCHANGEDETECTOR_VERSION, false );
 
 		// Load WP codemirror
 		$css_settings              = array(

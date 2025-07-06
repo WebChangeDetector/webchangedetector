@@ -173,9 +173,6 @@ class WebChangeDetector_Change_Detections_Controller {
 
 				$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
 
-				// Wizard functionality temporarily removed for phase 1
-				// Will be moved to view renderer in later phases
-
 				if ( ! empty( $comparisons['data'] ) ) {
 					$comparisons = $comparisons['data'];
 				}
