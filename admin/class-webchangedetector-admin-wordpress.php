@@ -945,7 +945,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Check if we got website_details or if we use the ones from the class.
 		$array = array(); // init.
 		if ( ! $website_details ) {
-			$website_details = $this->admin->website_details;
+			$website_details = $this->admin->settings_handler->get_website_details();
 		}
 
 		// We only sync the frontpage.

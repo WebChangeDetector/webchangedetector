@@ -46,6 +46,15 @@ class WebChangeDetector_Admin_Sync {
 	private $api_manager;
 
 	/**
+	 * Reference to the WordPress handler instance.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      WebChangeDetector_Admin_WordPress    $wordpress_handler    The WordPress handler instance.
+	 */
+	private $wordpress_handler;
+
+	/**
 	 * Initialize the sync manager.
 	 *
 	 * @since    1.0.0
@@ -55,6 +64,7 @@ class WebChangeDetector_Admin_Sync {
 	public function __construct( $admin, $api_manager ) {
 		$this->admin       = $admin;
 		$this->api_manager = $api_manager;
+		$this->wordpress_handler = $admin->wordpress_handler;
 	}
 
 	/**
@@ -64,7 +74,7 @@ class WebChangeDetector_Admin_Sync {
 	 * @return   bool  True on success.
 	 */
 	public function wcd_sync_post_after_save() {
-		$this->sync_posts( true );
+		$this->wordpress_handler->sync_posts( true );
 		return true;
 	}
 
@@ -382,7 +392,7 @@ class WebChangeDetector_Admin_Sync {
 	 */
 	public function daily_sync_posts_cron_job() {
 		// Setting force to true to ensure it runs regardless of last sync time.
-		$this->sync_posts();
+		$this->wordpress_handler->sync_posts();
 	}
 
 	/**
@@ -402,207 +412,5 @@ class WebChangeDetector_Admin_Sync {
 		}
 		
 		return false;
-	}
-
-	/**
-	 * Sync posts with API.
-	 *
-	 * @since    1.0.0
-	 * @param    bool       $force_sync        Skip cache and force sync.
-	 * @param    array|bool $website_details   The website details or false.
-	 * @return   bool|string  Date of sync or false on failure.
-	 */
-	public function sync_posts( $force_sync = false, $website_details = false ) {
-		$last_sync     = get_option( 'wcd_last_urls_sync' );
-		$sync_interval = '+1 hour';
-
-		// Skip sync if last sync is less than sync interval.
-		if ( $last_sync && ! $force_sync && strtotime( $sync_interval, $last_sync ) >= date_i18n( 'U' ) ) {
-			// Returning last sync datetime.
-			return date_i18n( 'd.m.Y H:i', $last_sync );
-		}
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting Sync' );
-		update_option( 'wcd_last_urls_sync', date_i18n( 'U' ) );
-
-		// Check if we got website_details or if we use the ones from the class.
-		$array = array(); // init.
-		if ( ! $website_details ) {
-			$website_details = $this->admin->website_details;
-		}
-
-		// We only sync the frontpage.
-		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "only frontpage: " . wp_json_encode( $website_details['allowances']['only_frontpage'] ) );
-			$array['frontpage%%Frontpage'][] = array(
-				'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-				'html_title' => get_bloginfo( 'name' ),
-			);
-			$this->upload_urls_in_batches( $array );
-			return true;
-		}
-
-		// Initialize sync_urls if not already done
-		if ( ! isset( $this->admin->sync_urls ) ) {
-			$this->admin->sync_urls = array();
-		}
-
-		// Init sync urls if we don't have them yet.
-		if ( ! empty( $website_details['sync_url_types'] ) ) {
-			// Get all WP post_types.
-			$post_types = get_post_types( array( 'public' => true ), 'objects' );
-			$post_type_names = array();
-			
-			foreach ( $post_types as $post_type ) {
-				$wp_post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
-
-				// Get the right name for the request.
-				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $wp_post_type_slug ) {
-						// The 'get_posts' function needs 'name' instead of 'rest_base'.
-						$post_type_names[] = $post_type->rest_base;
-					}
-				}
-			}
-
-			if ( ! empty( $post_type_names ) ) {
-				$this->get_all_posts_data( $post_type_names );
-			}
-
-			// Get all WP taxonomies.
-			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
-			$taxonomy_post_names = array();
-			
-			foreach ( $taxonomies as $taxonomy ) {
-				// Depending on if we have 'rest_base' name we use this one or the 'name'.
-				$wp_taxonomy_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_taxonomy_slug( $taxonomy );
-
-				// Get the terms names.
-				foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-					if ( $sync_url_type['post_type_slug'] === $wp_taxonomy_slug ) {
-						$taxonomy_post_names[] = $taxonomy->name;
-					}
-				}
-			}
-
-			if ( ! empty( $taxonomy_post_names ) ) {
-				$this->get_all_terms_data( $taxonomy_post_names );
-			}
-		}
-
-		$active_plugins = get_option( 'active_plugins' );
-
-		// Check if frontpage is already in the sync settings.
-		$frontpage_exists = array_filter(
-			$website_details['sync_url_types'] ?? array(),
-			function ( $item ) {
-				return isset( $item['post_type_slug'] ) && 'frontpage' === $item['post_type_slug'];
-			}
-		);
-
-		// If blog is set as home page.
-		if ( ! get_option( 'page_on_front' ) ) {
-			// WPML fix.
-			if ( $active_plugins && in_array( WCD_WPML_PLUGIN_FILE, $active_plugins, true ) ) {
-				$languages = icl_get_languages( 'skip_missing=0' ); // Get all active languages.
-
-				if ( ! empty( $languages ) ) {
-					// Store the current language to switch back later.
-					$current_lang = apply_filters( 'wpml_current_language', null );
-					foreach ( $languages as $lang_code => $lang_info ) {
-						// Switch to each language.
-						do_action( 'wpml_switch_language', $lang_code );
-
-						// Store the title in the array with the language code as the key.
-						$array['frontpage%%Frontpage'][] = array(
-							'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( apply_filters( 'wpml_home_url', get_home_url(), $lang_code ) ),
-							'html_title' => get_bloginfo( 'name' ),
-						);
-					}
-
-					// Switch back to the original language.
-					do_action( 'wpml_switch_language', $current_lang );
-				}
-			} elseif ( $active_plugins && in_array( WCD_POLYLANG_PLUGIN_FILE, $active_plugins, true ) ) {
-				// Polylang fix.
-				if ( isset( $GLOBALS['polylang'] ) ) {
-					$languages = $GLOBALS['polylang']->model->get_languages_list();
-
-					foreach ( $languages as $language ) {
-						// Check if home_url is available in the language info.
-						if ( ! empty( $language->home_url ) ) {
-							$array['frontpage%%Frontpage'][] = array(
-								'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $language->home_url ),
-								'html_title' => get_bloginfo( 'name' ),
-							);
-						}
-					}
-				}
-			} else {
-				$array['frontpage%%Frontpage'][] = array(
-					'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( get_option( 'home' ) ),
-					'html_title' => get_bloginfo( 'name' ),
-				);
-			}
-
-			// Add frontpage if it's not yet in the sync_url_types array.
-			if ( empty( $frontpage_exists ) ) {
-				$website_details['sync_url_types'][] = array(
-					'url_type_slug'  => 'types',
-					'url_type_name'  => 'frontpage',
-					'post_type_slug' => 'frontpage',
-					'post_type_name' => 'Frontpage',
-				);
-				$this->admin->settings_handler->update_website_details( $website_details );
-			}
-
-			if ( ! empty( $array ) ) {
-				$this->upload_urls_in_batches( $array );
-			}
-		} elseif ( $frontpage_exists ) {
-			foreach ( $website_details['sync_url_types'] as $key => $sync_types_values ) {
-				if ( 'frontpage' === $sync_types_values['post_type_slug'] ) {
-					unset( $website_details['sync_url_types'][ $key ] );
-				}
-			}
-			$this->admin->settings_handler->update_website_details( $website_details );
-		}
-
-		// Create uuid for sync urls.
-		$collection_uuid = wp_generate_uuid4();
-
-		// Sync urls.
-		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->admin->sync_urls, $collection_uuid );
-		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( true, $collection_uuid );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . $response_sync_urls );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . $response_start_url_sync );
-
-		return date_i18n( 'd/m/Y H:i' );
-	}
-
-	/**
-	 * Format post types for sync_url_types field.
-	 * Migrated from legacy class-wp-compare.php.
-	 *
-	 * @param array $post_types Post types from form.
-	 * @return array Formatted sync URL types.
-	 */
-	private static function format_sync_url_types( $post_types ) {
-		$sync_url_types = array();
-		
-		error_log( 'WCD: format_sync_url_types input: ' . print_r( $post_types, true ) );
-
-		foreach ( $post_types as $post_type ) {
-			$sync_url_types[] = array(
-				'url_type_slug' => 'types',
-				'url_type_name' => 'Post Types',
-				'post_type_slug' => $post_type['post_type_slug'],
-				'post_type_name' => $post_type['post_type_name'] ?? ucfirst( $post_type['post_type'] ),
-			);
-		}
-		
-		error_log( 'WCD: format_sync_url_types output: ' . print_r( $sync_url_types, true ) );
-
-		return $sync_url_types;
 	}
 }
