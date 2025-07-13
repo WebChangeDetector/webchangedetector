@@ -2670,3 +2670,225 @@ Settings
     height: auto;
     opacity: 0.8;
 }
+
+/* ==========================================================================
+   Browser Console Styles
+   ========================================================================== */
+
+/* Console Changes Container */
+.webchangedetector #console-section {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.webchangedetector .console-added,
+.webchangedetector .console-removed {
+    margin-bottom: 15px;
+}
+
+.webchangedetector .console-added h4 {
+    color: #d63638;
+    padding: 10px 0 0 10px;
+    font-size: 14px;
+}
+
+.webchangedetector .console-removed h4 {
+    color: #00a32a;
+    padding: 10px 0 0 10px;
+    font-size: 14px;
+}
+
+/* Console Entries */
+.webchangedetector .console-entry {
+    background: white;
+    border-left: 4px solid #ddd;
+    padding: 8px 12px;
+    margin: 5px 0;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 0 4px 4px 0;
+}
+
+.webchangedetector .console-entry.added {
+    border-left-color: #d63638;
+    background: #fff5f5;
+}
+
+.webchangedetector .console-entry.removed {
+    border-left-color: #00a32a;
+    background: #f0fff4;
+}
+
+.webchangedetector .console-message {
+    color: #2c3e50;
+    word-break: break-word;
+    display: block;
+}
+
+.webchangedetector .console-more {
+    font-style: italic;
+    color: #666;
+    margin: 5px 0;
+    font-size: 12px;
+}
+
+/* No Changes State */
+.webchangedetector .console-no-changes {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.webchangedetector .console-status {
+    font-weight: bold;
+    color: #00a32a;
+    font-size: 14px;
+}
+
+/* Console Restricted/Preview Styles */
+.webchangedetector .console-restricted {
+    background: #f0f6fc;
+    border: 1px solid #c6d7eb;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.webchangedetector .console-restricted p {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #3c434a;
+}
+
+.webchangedetector .console-preview {
+    opacity: 0.6;
+    margin: 15px 0;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.webchangedetector .console-preview .console-entry {
+    text-align: left;
+    margin: 8px 0;
+}
+
+.webchangedetector .console-restricted .button {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.webchangedetector .console-restricted .button:hover {
+    background: #135e96;
+    border-color: #135e96;
+    color: white;
+}
+
+/* Console Indicator Badge in Tables */
+.webchangedetector .console-indicator-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #2271b1 !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    margin: 0 5px !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+.webchangedetector .console-indicator-badge .dashicons {
+    font-size: 14px !important;
+    margin-right: 4px !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 1 !important;
+}
+
+.webchangedetector .console-count {
+    font-weight: bold !important;
+    margin-right: 4px !important;
+}
+
+.webchangedetector .console-text {
+    font-size: 10px !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .webchangedetector .console-changes-container {
+        padding: 10px;
+        margin: 5px 0;
+    }
+
+    .webchangedetector .console-entry {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .webchangedetector .console-indicator-badge {
+        font-size: 10px !important;
+        padding: 3px 6px !important;
+    }
+
+    .webchangedetector .console-indicator-badge .dashicons {
+        font-size: 12px !important;
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    .webchangedetector .console-text {
+        display: none;
+        /* Hide text on small screens, keep only icon and count */
+    }
+}
+
+/* Integration with existing accordion styles */
+.webchangedetector .mm_accordion_content .console-changes-container {
+    margin: 0;
+    border-radius: 0;
+}
+
+.webchangedetector .mm_accordion_content .console-changes-container h4 {
+    margin-left: 10px;
+    margin-top: 10px;
+}
+
+/* Dark mode compatibility (if theme supports it) */
+@media (prefers-color-scheme: dark) {
+    .webchangedetector .console-changes-container {
+        background: #2c2c2c;
+        border-color: #4a4a4a;
+        color: #e0e0e0;
+    }
+
+    .webchangedetector .console-entry {
+        background: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    .webchangedetector .console-entry.added {
+        background: #2d1b1b;
+    }
+
+    .webchangedetector .console-entry.removed {
+        background: #1b2d1b;
+    }
+
+    .webchangedetector .console-message {
+        color: #e0e0e0;
+    }
+}

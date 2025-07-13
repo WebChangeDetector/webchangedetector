@@ -363,8 +363,24 @@ class WebChangeDetector_Admin_Dashboard {
 									\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' );
 									echo ' ' . esc_html__( 'Manual Checks', 'webchangedetector' );
 								}
-									?>
-									<br>
+
+								// Show browser console changes indicator (only for supported plans).
+								$user_account = $this->admin->account_handler->get_account();
+								$user_plan = $user_account['plan'] ?? 'free';
+								$canAccessBrowserConsole = $this->admin->can_access_feature('browser_console', $user_plan);
+
+								if ($canAccessBrowserConsole && !empty($batch['console_changes_count'])) {
+									$consoleTotal = $batch['console_changes_count'];
+									if ($consoleTotal > 0) {
+										echo '<div class="console-indicator-badge" style="display: inline-flex; align-items: center; background: #2271b1; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; margin: 0 5px; vertical-align: middle;">';
+										echo '<span class="dashicons dashicons-editor-code" style="font-size: 14px; margin-right: 4px;"></span>';
+										echo '<span class="console-count" style="font-weight: bold; margin-right: 4px;">' . $consoleTotal . '</span>';
+										echo '<span class="console-text" style="font-size: 10px;">Console Change' . ($consoleTotal > 1 ? 's' : '') . '</span>';
+										echo '</div>';
+									}
+								}
+								?>
+								<br>
 									<small>
 										<?php
 										if ( ! empty( $batch_finished_at ) && 'processing...' !== $batch_finished_at ) {

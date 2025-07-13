@@ -677,7 +677,30 @@ class WebChangeDetector_Admin {
 		return $group_and_urls;
 	}
 
-
+	/**
+	 * Check if user can access specific feature based on plan.
+	 *
+	 * @param string $feature Feature name.
+	 * @param string|null $user_plan User plan level.
+	 * @return bool
+	 */
+	public function can_access_feature( $feature, $user_plan = null ) {
+		if ( ! $user_plan ) {
+			$account = $this->account_handler->get_account();
+			$user_plan = $account['plan'] ?? 'free';
+		}
+		
+		$feature_plans = array(
+			'browser_console' => array( 'trial', 'personal_pro', 'freelancer', 'agency' ),
+			// Add other features as needed.
+		);
+		
+		if ( ! isset( $feature_plans[ $feature ] ) ) {
+			return true; // Feature not restricted.
+		}
+		
+		return in_array( $user_plan, $feature_plans[ $feature ], true );
+	}
 
 } // End class WebChangeDetector_Admin.
 
