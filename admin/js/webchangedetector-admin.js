@@ -527,9 +527,6 @@ function currentlyProcessing() {
                 nonce: wcdAjaxData.nonce
             }
 
-            // Show loading placeholder
-            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="' + wcdAjaxData.plugin_url + 'img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
-
             // Only scroll for pagination, not initial load
             if (shouldScroll) {
                 $([document.documentElement, document.body]).animate({

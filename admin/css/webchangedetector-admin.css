@@ -563,7 +563,7 @@
 }
 
 .webchangedetector .ajax_batch_comparisons_content .tablenav {
-    margin-top: 2px;
+    margin-top: 20px;
     margin-bottom: 10px;
     padding-bottom: 10px;
 }
@@ -574,10 +574,7 @@
 
 .webchangedetector .comparison-tile {
     float: left;
-
-
     color: #444;
-
     border-right: none;
 }
 
@@ -638,6 +635,10 @@
     margin-left: 10px;
     font-size: 13px;
     line-height: 2;
+}
+
+.webchangedetector .ajax-loading-container {
+    text-align: center;
 }
 
 

@@ -397,12 +397,12 @@ class WebChangeDetector_Admin_Dashboard {
 							</div>
 						</h3>
 						<div class="mm_accordion_content">
-                        <div class="ajax_batch_comparisons_content">
-                            
+                            <div class="ajax_batch_comparisons_content">
 								<div class="ajax-loading-container">
-									<img decoding="async" src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif">
-									<div style="text-align: center;"><?php echo esc_html__( 'Loading', 'webchangedetector' ); ?></div>
+									<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif">
+									<div><?php echo esc_html__( 'Loading', 'webchangedetector' ); ?></div>
 								</div>
+                                
 							</div>
 						</div>
 					</div>
