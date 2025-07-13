@@ -124,7 +124,7 @@ class WebChangeDetector_Admin_WordPress {
 
 			wp_localize_script( $this->plugin_name, 'wcdAjaxData', array(
 				'ajax_url'   => admin_url( 'admin-ajax.php' ),
-				'nonce'      => wp_create_nonce( 'ajax-nonce' ),
+				'nonce'      => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
 				'take_screenshots_nonce' => wp_create_nonce( 'take_screenshots' ),
 				'start_manual_checks_nonce' => wp_create_nonce( 'start_manual_checks' ),
 				'plugin_url' => plugin_dir_url( __FILE__ ),
@@ -150,7 +150,7 @@ class WebChangeDetector_Admin_WordPress {
 			wp_localize_script( $admin_bar_script_handle, 'wcdAdminBarData', array(
 				'ajax_url'         => admin_url( 'admin-ajax.php' ),
 				'nonce'            => wp_create_nonce( 'wcd_admin_bar_nonce' ),
-				'postUrlNonce'     => wp_create_nonce( 'ajax-nonce' ),
+				'postUrlNonce'     => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
 				'action'           => 'wcd_get_admin_bar_status',
 				'loading_text'     => __( 'Loading WCD Status...', 'webchangedetector' ),
 				'error_text'       => __( 'Error loading status.', 'webchangedetector' ),

@@ -268,7 +268,7 @@ class WebChangeDetector_Admin_Settings {
 			<?php
 		}
 
-		$nonce = wp_create_nonce( 'ajax-nonce' );
+		$nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' );
 		?>
 
 		<div class="wcd-select-urls-container">

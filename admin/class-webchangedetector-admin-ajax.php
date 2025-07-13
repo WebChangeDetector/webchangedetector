@@ -121,7 +121,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_get_processing_queue() {
 		// Verify nonce for security
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ), 403 );
+		}
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
@@ -318,7 +320,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_get_batch_comparisons_view() {
 		// Verify nonce for security
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ), 403 );
+		}
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
@@ -381,7 +385,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_load_failed_queues() {
 		// Verify nonce for security
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ), 403 );
+		}
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
@@ -409,7 +415,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_create_website_and_groups() {
 		// Verify nonce for security
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ), 403 );
+		}
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
@@ -443,7 +451,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function ajax_get_dashboard_usage_stats() {
 		// Verify nonce for security.
-		check_ajax_referer( 'ajax-nonce', 'nonce' );
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ), 403 );
+		}
 
 		// Verify user capabilities.
 		if ( ! current_user_can( 'manage_options' ) ) {

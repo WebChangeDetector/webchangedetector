@@ -574,10 +574,10 @@
 
 .webchangedetector .comparison-tile {
     float: left;
-    padding: 10px;
-    background: #276dcc1c;
+
+
     color: #444;
-    border: 1px solid #aaa;
+
     border-right: none;
 }
 
@@ -640,13 +640,11 @@
     line-height: 2;
 }
 
-.webchangedetector .comparison-diff-tile {
-    width: 100px;
-}
+
 
 .webchangedetector .comparison-status-tile {
     width: 180px;
-    border-right: 1px solid #aaa;
+    padding-right: 10px;
 }
 
 .webchangedetector .comparison_status_container:hover .change_status {
@@ -667,7 +665,6 @@
 
 .webchangedetector .comparison-date-tile {
     width: 200px;
-    border-right: 1px solid #aaa;
 }
 
 
@@ -778,7 +775,7 @@
 }
 
 .webchangedetector h3 {
-    margin: 0 0;
+    margin: 0 0 10px 0;
 }
 
 .webchangedetector .mm_accordion_title small {
@@ -2890,5 +2887,510 @@ Settings
 
     .webchangedetector .console-message {
         color: #e0e0e0;
+    }
+}
+
+/* ==========================================================================
+   Modern Detection Summary Styling (from webapp)
+   ========================================================================== */
+
+/* Modern Detection Summary Styling */
+.wcd-detection-summary-container {
+    max-width: 100%;
+    margin: 15px auto 25px auto;
+}
+
+.wcd-section-headline {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Visual Changes Section */
+.wcd-visual-changes-section,
+.wcd-console-changes-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.wcd-visual-diff-display {
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0;
+}
+
+.wcd-diff-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.wcd-diff-percentage {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.wcd-diff-label {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.wcd-threshold-note {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
+/* Visual diff color coding - maintaining existing logic */
+.wcd-visual-diff-display[data-diff_percent="0"] {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-visual-diff-display[data-diff_percent]:not([data-diff_percent="0"]) {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-visual-diff-display[data-diff_percent^="1"],
+.wcd-visual-diff-display[data-diff_percent^="2"],
+.wcd-visual-diff-display[data-diff_percent^="3"],
+.wcd-visual-diff-display[data-diff_percent^="4"] {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Browser Console Section */
+.wcd-console-display {
+    min-height: 60px;
+}
+
+.wcd-console-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.wcd-console-changed {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-console-unchanged {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+/* Console indicator status-specific background colors */
+.wcd-console-indicator.removed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-console-indicator.added {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-console-indicator.mixed {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Console changes section styling for popup - green when entries removed */
+.wcd-console-changes-section.console-removed .wcd-console-indicator,
+.wcd-console-changes-section.only-removed .wcd-console-indicator {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-console-changes-section.console-removed,
+.wcd-console-changes-section.only-removed {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, #ffffff 100%);
+}
+
+.wcd-console-status {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.wcd-console-logs {
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.wcd-console-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 4px 0;
+}
+
+.wcd-console-entry:last-child {
+    margin-bottom: 0;
+}
+
+.wcd-console-prefix {
+    font-weight: 700;
+    min-width: 12px;
+    display: inline-block;
+}
+
+.wcd-console-added .wcd-console-prefix {
+    color: #ef4444;
+}
+
+.wcd-console-removed .wcd-console-prefix {
+    color: #22c55e;
+}
+
+.wcd-console-message {
+    color: #f1f5f9;
+    word-break: break-word;
+    flex: 1;
+}
+
+.wcd-console-added .wcd-console-message {
+    background: rgba(239, 68, 68, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 2px solid #ef4444;
+}
+
+.wcd-console-removed .wcd-console-message {
+    background: rgba(34, 197, 94, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 2px solid #22c55e;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.wcd-console-info .wcd-console-message {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.wcd-console-more {
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .wcd-detection-summary-container {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+
+    .wcd-visual-changes-section,
+    .wcd-console-changes-section {
+        padding: 15px;
+    }
+
+    .wcd-section-headline {
+        font-size: 16px;
+    }
+
+    .wcd-diff-percentage {
+        font-size: 20px;
+    }
+
+    .wcd-console-logs {
+        font-size: 12px;
+    }
+}
+
+/* Console indicator badge styling for tables */
+.wcd-console-indicator-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #2271b1 !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    margin: 0 5px !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+.wcd-console-indicator-badge:hover {
+    background: #135e96 !important;
+    transform: scale(1.05);
+}
+
+.wcd-console-indicator-badge .dashicons {
+    font-size: 14px !important;
+    margin-right: 4px !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 1 !important;
+}
+
+.wcd-console-count {
+    font-weight: bold !important;
+    margin-right: 4px !important;
+}
+
+.wcd-console-text {
+    font-size: 10px !important;
+}
+
+/* Additional console badge styles */
+.wcd-console-diff-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin: 0 5px;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.wcd-console-diff-badge:hover {
+    background: #c82333;
+    color: white;
+    text-decoration: none;
+}
+
+.wcd-console-diff-badge .dashicons {
+    font-size: 14px;
+    margin-right: 4px;
+    width: 14px;
+    height: 14px;
+}
+
+.wcd-console-diff-count {
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+/* Table column styling for visual and console changes */
+.wcd-visual-changes-column,
+.wcd-console-changes-column {
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px;
+    min-width: 100px;
+}
+
+.wcd-visual-diff-box,
+.wcd-console-diff-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    min-height: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wcd-visual-diff-box {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #495057;
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-diff-box {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: #dc3545;
+}
+
+.wcd-visual-percentage {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-percentage {
+    color: white;
+}
+
+.wcd-threshold-text {
+    font-size: 10px;
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+.wcd-console-diff-box {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #495057;
+}
+
+.wcd-console-changes-column.has-console-changes .wcd-console-diff-box {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: #dc3545;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-indicator-badge {
+    background: #f8f9fa;
+    color: #6c757d;
+    border-color: #e9ecef;
+}
+
+.wcd-console-diff-box .wcd-console-indicator-badge {
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 2px !important;
+}
+
+.wcd-console-diff-box .wcd-console-indicator-badge .dashicons {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-indicator-badge .dashicons,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-count {
+    opacity: 0.4;
+}
+
+.wcd-console-diff-box .wcd-console-count {
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 1;
+    margin: 0;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-count,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-text {
+    color: #6c757d;
+}
+
+.wcd-console-diff-box .wcd-console-text {
+    font-size: 9px;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.wcd-no-console-changes {
+    color: #6c757d;
+    font-size: 10px;
+    font-style: italic;
+}
+
+.wcd-console-none-text {
+    color: #6c757d;
+    font-size: 10px;
+    font-style: italic;
+}
+
+/* Hover effects */
+.wcd-visual-diff-box:hover,
+.wcd-console-diff-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-diff-box:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.wcd-console-changes-column.has-console-changes .wcd-console-diff-box:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box:hover,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box:hover .wcd-console-indicator-badge {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .wcd-console-diff-badge {
+        font-size: 10px !important;
+        padding: 3px 6px !important;
+    }
+
+    .wcd-console-diff-badge .dashicons {
+        font-size: 12px !important;
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    .wcd-console-text {
+        display: none;
+        /* Hide text on small screens, keep only icon and count */
+    }
+
+    .wcd-visual-changes-column,
+    .wcd-console-changes-column {
+        min-width: 80px;
+    }
+
+    .wcd-visual-diff-box,
+    .wcd-console-diff-box {
+        min-height: 40px;
+        padding: 6px;
+    }
+
+    .wcd-visual-percentage {
+        font-size: 14px;
+    }
+
+    .wcd-console-diff-box .wcd-console-indicator-badge .dashicons {
+        font-size: 16px !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .wcd-console-diff-box .wcd-console-count {
+        font-size: 11px;
     }
 }

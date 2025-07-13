@@ -85,7 +85,7 @@ class WebChangeDetector_Admin_Dashboard {
 
 		?>
 		<div class="dashboard">
-			<div class="no-border box-plain">
+			<div class="wcd-settings-card">
 				<div class="box-half no-border">
 					<p>
 						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">

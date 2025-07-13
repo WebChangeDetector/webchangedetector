@@ -6,7 +6,7 @@
  */
 
 ?>
-<div class="comparison-tiles">
+<div class="comparison-tiles wcd-settings-card">
 	<div class="comparison_status_container comparison-tile comparison-status-tile">
 		<strong>Status</strong>
 		<span id="current_comparison_status" class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
@@ -14,7 +14,7 @@
 		</span>
 		<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
 			<strong>Change Status to:</strong><br>
-			<?php $nonce = wp_create_nonce( 'ajax-nonce' ); ?>
+			<?php $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ); ?>
 			<button name="status"
 					data-id="<?php echo esc_html( $compare['id'] ); ?>"
 					data-status="ok"
@@ -62,10 +62,7 @@
 		</a>
 	</div>
 
-	<div class="comparison-tile comparison-diff-tile" data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
-		<strong>Difference </strong><br>
-		<span><?php echo esc_html( $compare['difference_percent'] ); ?> %</span>
-	</div>
+	
 
 	<div class="comparison-tile comparison-date-tile">
 		<strong>Screenshots</strong><br>
@@ -77,7 +74,6 @@
 		</div>
 	</div>
 </div>
-<div class="clear"></div>
 <?php
 // Browser Console Changes Section - with safety checks
 $browser_console_added = isset($compare['browser_console_added']) && is_array($compare['browser_console_added']) ? $compare['browser_console_added'] : [];
@@ -108,103 +104,151 @@ try {
     $canAccessBrowserConsole = false;
 }
 
-// Helper function to safely extract console message content
-function safe_extract_console_message($log) {
-    $textContent = '';
-    if (is_array($log)) {
-        $textContent = $log['text'] ?? $log['message'] ?? $log['content'] ?? 'Unknown console message';
-    } elseif (is_string($log)) {
-        // Try to decode JSON, with error handling
-        $decoded = json_decode($log, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            $textContent = $decoded['text'] ?? $decoded['message'] ?? $decoded['content'] ?? 'Console message (JSON)';
+// Helper function to safely extract console message content (for compatibility)
+if (!function_exists('safe_extract_console_message')) {
+    function safe_extract_console_message($log) {
+        $textContent = '';
+        if (is_array($log)) {
+            $textContent = $log['text'] ?? $log['message'] ?? $log['content'] ?? 'Unknown console message';
+        } elseif (is_string($log)) {
+            // Try to decode JSON, with error handling
+            $decoded = json_decode($log, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $textContent = $decoded['text'] ?? $decoded['message'] ?? $decoded['content'] ?? 'Console message (JSON)';
+            } else {
+                // If not valid JSON, treat as plain text (but limit length for security)
+                $textContent = strlen($log) > 200 ? substr($log, 0, 200) . '...' : $log;
+            }
         } else {
-            // If not valid JSON, treat as plain text (but limit length for security)
-            $textContent = strlen($log) > 200 ? substr($log, 0, 200) . '...' : $log;
+            $textContent = 'Invalid console message format';
         }
-    } else {
-        $textContent = 'Invalid console message format';
+        
+        // Additional security: sanitize the content
+        $textContent = strip_tags($textContent);
+        return htmlspecialchars($textContent, ENT_QUOTES, 'UTF-8');
     }
-    
-    // Additional security: sanitize the content
-    $textContent = strip_tags($textContent);
-    return htmlspecialchars($textContent, ENT_QUOTES, 'UTF-8');
 }
 ?>
 
-<div class="clear"></div>
-<div id="console-section" style="margin-top: 20px;">
-    <h3>🔧 Browser Console Changes</h3>
-    
-    <?php if ($canAccessBrowserConsole) { ?>
-        <?php if($hasBrowserConsoleData) { ?>
-            <!-- Display actual console data -->
-            <div class="console-changes-container">
-                <?php 
-                $hasAdded = !empty($browser_console_added);
-                $hasRemoved = !empty($browser_console_removed);
+<div class="wcd-detection-summary-container" style="display: flex; gap: 20px; margin: 15px auto 25px auto; align-items: stretch;">
+    <!-- Visual Changes Section -->
+    <div class="wcd-visual-changes-section" style="flex: 1;">
+        <h3 class="wcd-section-headline">🖼️ Visual Changes</h3>
+        <div class="comparison-tiles comparison-diff-tile wcd-visual-diff-display" 
+             data-diff_percent="<?php echo esc_attr($compare['difference_percent']); ?>"
+             data-threshold="<?php echo esc_attr($compare['threshold'] ?? 0); ?>">
+            <?php if($compare['difference_percent'] > 0) { ?>
+                <div class="wcd-diff-indicator">
+                    <span class="wcd-diff-percentage"><?php echo esc_html($compare['difference_percent']); ?>%</span>
+                    <span class="wcd-diff-label">Screenshot Difference</span>
+                </div>
+            <?php } else { ?>
+                <div class="wcd-diff-indicator wcd-no-diff">
+                    <span class="wcd-diff-percentage">0%</span>
+                    <span class="wcd-diff-label">No Visual Changes</span>
+                </div>
+            <?php } ?>
+            
+            <?php if(isset($compare['threshold']) && $compare['threshold'] > $compare['difference_percent']) { ?>
+                <div class="wcd-threshold-note">Threshold: <?php echo esc_html($compare['threshold']); ?>%</div>
+            <?php } ?>
+        </div>
+    </div>
+
+    <!-- Browser Console Changes Section -->
+    <div class="wcd-console-changes-section" style="flex: 1;">
+        <h3 class="wcd-section-headline">🔧 Browser Console Changes</h3>
+        <?php if ($canAccessBrowserConsole) { ?>
+            <div class="wcd-console-display">
+                <?php if($hasBrowserConsoleData) { 
+                    $hasAdded = !empty($browser_console_added);
+                    $hasRemoved = !empty($browser_console_removed);
+                    $changeStatus = $browser_console_change ?? 'unchanged';
                 ?>
-                
-                <?php if($hasAdded) { ?>
-                    <div class="console-added">
-                        <h4>🔴 New Console Messages (<?php echo count($browser_console_added); ?>)</h4>
-                        <?php foreach(array_slice($browser_console_added, 0, 3) as $log) {
-                            $textContent = safe_extract_console_message($log);
-                        ?>
-                            <div class="console-entry added">
-                                <span class="console-message"><?php echo $textContent; ?></span>
-                            </div>
-                        <?php } ?>
-                        
-                        <?php if(count($browser_console_added) > 3) { ?>
-                            <div class="console-more">... and <?php echo count($browser_console_added) - 3; ?> more entries</div>
-                        <?php } ?>
+                    <div class="wcd-console-indicator wcd-console-changed">
+                        <span class="wcd-console-status"><?php 
+                            if($changeStatus === 'mixed') echo 'Console Changes Detected';
+                            elseif($changeStatus === 'added') echo 'New Error Console Entries';
+                            elseif($changeStatus === 'removed') echo 'Error Console Entries Removed';
+                            else echo 'Console Changed';
+                        ?></span>
                     </div>
-                <?php } ?>
-                
-                <?php if($hasRemoved) { ?>
-                    <div class="console-removed">
-                        <h4>🟢 Resolved Console Messages (<?php echo count($browser_console_removed); ?>)</h4>
-                        <?php foreach(array_slice($browser_console_removed, 0, 2) as $log) {
-                            $textContent = safe_extract_console_message($log);
-                        ?>
-                            <div class="console-entry removed">
-                                <span class="console-message"><?php echo $textContent; ?></span>
-                            </div>
-                        <?php } ?>
+                    
+                    <div class="wcd-console-logs">
+                        <?php if($hasAdded && is_array($browser_console_added)) { 
+                            foreach(array_slice($browser_console_added, 0, 3) as $log) { 
+                                $textContent = safe_extract_console_message($log);
+                                ?>
+                                <div class="wcd-console-entry wcd-console-added">
+                                    <span class="wcd-console-prefix">+</span>
+                                    <span class="wcd-console-message"><?php echo $textContent; ?></span>
+                                </div>
+                        <?php } 
+                            if(count($browser_console_added) > 3) { ?>
+                                <div class="wcd-console-more">... and <?php echo count($browser_console_added) - 3; ?> more entries</div>
+                        <?php } 
+                        }
                         
-                        <?php if(count($browser_console_removed) > 2) { ?>
-                            <div class="console-more">... and <?php echo count($browser_console_removed) - 2; ?> more removed</div>
-                        <?php } ?>
+                        if($hasRemoved && is_array($browser_console_removed)) { 
+                            foreach(array_slice($browser_console_removed, 0, 2) as $log) { 
+                                $textContent = safe_extract_console_message($log);
+                                ?>
+                                <div class="wcd-console-entry wcd-console-removed">
+                                    <span class="wcd-console-prefix">-</span>
+                                    <span class="wcd-console-message"><?php echo $textContent; ?></span>
+                                </div>
+                        <?php } 
+                            if(count($browser_console_removed) > 2) { ?>
+                                <div class="wcd-console-more">... and <?php echo count($browser_console_removed) - 2; ?> more removed</div>
+                        <?php } 
+                        } ?>
+                    </div>
+                <?php } else { ?>
+                    <div class="wcd-console-indicator wcd-console-unchanged">
+                        <span class="wcd-console-status">No Browser Console Changes</span>
+                    </div>
+                    <div class="wcd-console-logs">
+                        <div class="wcd-console-entry wcd-console-info">
+                            <span class="wcd-console-message">✓ No new browser console errors detected</span>
+                        </div>
                     </div>
                 <?php } ?>
             </div>
-        <?php } else { ?>
-            <div class="console-no-changes">
-                <span class="console-status">No Browser Console Changes</span>
-                <div class="console-entry">
-                    <span class="console-message">✓ No new browser console errors detected</span>
+        <?php } else { 
+            // Generate dummy preview content for plans that don't have access
+            ?>
+            <div class="wcd-console-display" style="position: relative;">
+                <div class="wcd-console-indicator wcd-console-changed">
+                    <span class="wcd-console-status">Console Changes Detected</span>
+                </div>
+                <div class="wcd-console-logs">
+                    <div class="wcd-console-entry wcd-console-added">
+                        <span class="wcd-console-prefix">+</span>
+                        <span class="wcd-console-message">Failed to load resource: net::ERR_CONNECTION_REFUSED</span>
+                    </div>
+                    <div class="wcd-console-entry wcd-console-added">
+                        <span class="wcd-console-prefix">+</span>
+                        <span class="wcd-console-message">Uncaught TypeError: Cannot read property 'style' of null</span>
+                    </div>
+                    <div class="wcd-console-entry wcd-console-removed">
+                        <span class="wcd-console-prefix">-</span>
+                        <span class="wcd-console-message">jQuery is loaded and ready</span>
+                    </div>
+                    <div class="wcd-console-more">... and 5 more entries</div>
+                </div>
+                <!-- Overlay for restricted access -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10;">
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">🔒 Browser Console monitoring</p>
+                        <p style="margin: 0 0 15px 0; color: #666;">Available on <strong>Personal Pro+</strong> plans</p>
+                        <a href="<?php echo esc_url(method_exists($this, 'billing_url') ? $this->billing_url() : 'https://www.webchangedetector.com/pricing/'); ?>" target="_blank" style="background: #0073aa; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 500;">
+                            Upgrade Plan
+                        </a>
+                    </div>
                 </div>
             </div>
         <?php } ?>
-    <?php } else { ?>
-        <!-- Show preview for restricted plans -->
-        <div class="console-restricted">
-            <p>🔒 Browser Console monitoring available on <strong>Personal Pro+</strong> plans</p>
-            <div class="console-preview">
-                <div class="console-entry added">
-                    <span class="console-message">Failed to load resource: net::ERR_CONNECTION_REFUSED</span>
-                </div>
-                <div class="console-entry added">
-                    <span class="console-message">Uncaught TypeError: Cannot read property 'style' of null</span>
-                </div>
-                <div class="console-entry removed">
-                    <span class="console-message">jQuery is loaded and ready</span>
-                </div>
-            </div>
-            <a href="<?php echo esc_url(method_exists($this, 'billing_url') ? $this->billing_url() : '#'); ?>" target="_blank" class="button">Upgrade Plan</a>
-        </div>
-    <?php } ?>
+    </div>
 </div>
 <div id="comp-headlines">
 	<div style="display:inline-block; width: calc(50% - 20px); text-align: center;">

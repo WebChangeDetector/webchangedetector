@@ -86,7 +86,7 @@ class WebChangeDetector_Settings_Controller {
 							This works automatically in the background. When you add a webpage, you can start the sync manually.</div>
 						</div>
 						<div class="wcd-form-control">
-							<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( wp_create_nonce( 'ajax-nonce' ) ); ?>">
+							<p>Last Sync: <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ) ); ?>">
 									<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 								</span>
 							</p>
