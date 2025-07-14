@@ -2867,6 +2867,66 @@ Settings
     margin-top: 10px;
 }
 
+/* Failed Checks Accordion Styles */
+.webchangedetector .wcd-failed-checks-accordion {
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.webchangedetector .wcd-failed-checks-accordion .wcd-accordion-header {
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s ease;
+}
+
+.webchangedetector .wcd-failed-checks-accordion .wcd-accordion-header:hover {
+    background: #f0f0f1;
+}
+
+.webchangedetector .wcd-failed-checks-accordion .wcd-accordion-icon {
+    transition: transform 0.3s ease;
+    color: #666;
+}
+
+.webchangedetector .wcd-failed-checks-accordion .wcd-accordion-content {
+    border: 1px solid #e1e5e9;
+    border-top: 0;
+    background: #fff;
+    padding: 15px;
+}
+
+.webchangedetector .wcd-failed-checks-accordion table {
+    margin: 0;
+    border: none;
+}
+
+.webchangedetector .wcd-failed-checks-accordion table th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #e1e5e9;
+    padding: 10px;
+    font-weight: 600;
+}
+
+.webchangedetector .wcd-failed-checks-accordion table td {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.webchangedetector .wcd-failed-checks-accordion table tr:last-child td {
+    border-bottom: none;
+}
+
+.webchangedetector .wcd-failed-checks-accordion .dashicons-warning {
+    font-size: 18px;
+}
+
 
 /* ==========================================================================
    Modern Detection Summary Styling (from webapp)
