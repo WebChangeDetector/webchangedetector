@@ -215,9 +215,11 @@ function currentlyProcessing() {
         // Init accordions
         $(".accordion").each(function (index, item) {
             $(item).accordion({
+                heightStyle: "content",
                 header: "h3",
                 collapsible: true,
                 active: false,
+                animate: 200,
                 icons: {
                     "header": "dashicons dashicons-plus",
                     "activeHeader": "dashicons dashicons-minus"
