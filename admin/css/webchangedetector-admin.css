@@ -3435,12 +3435,7 @@ Settings
     transform: translateY(-1px);
 }
 
-.webchangedetector .nav-tab:hover .dashicons,
-.webchangedetector .nav-tab:hover .group_icon {
-    opacity: 1;
-    color: #0073aa;
-    transform: scale(1.1);
-}
+
 
 /* Active tab styling */
 .webchangedetector .nav-tab-active,
@@ -3482,17 +3477,7 @@ Settings
     opacity: 1;
 }
 
-/* Active state underline effect */
-.webchangedetector .nav-tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
-    border-radius: 2px 2px 0 0;
-}
+
 
 /* Responsive design for tablets */
 @media (max-width: 1024px) {

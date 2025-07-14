@@ -135,19 +135,13 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 						$open         = false;
 
 						// Build content.
-						ob_start();
+						
 						?>
-						<div style="margin-top: 10px;">
+						<div style="margin-top: 10px; width: 100%;">
 							<div class="code-tags default-bg">&lt;style&gt;</div>
 							<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
 							<div class="code-tags default-bg">&lt;/style&gt;</div>
 						</div>
-						<?php
-						$content = ob_get_clean();
-
-						// Include accordion component.
-						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/accordion.php';
-						?>
 					</div>
 				</div>
 			
