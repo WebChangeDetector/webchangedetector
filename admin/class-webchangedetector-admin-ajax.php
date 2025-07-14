@@ -154,8 +154,8 @@ class WebChangeDetector_Admin_AJAX {
 
 		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
 
-		// Verify nonce using the action name 'ajax-nonce' used during its creation
-		if ( ! wp_verify_nonce( $nonce, 'ajax-nonce' ) ) {
+		// Verify nonce using the WebChangeDetector utils method that handles the prefix
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, 'ajax-nonce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Nonce verification failed.', 'webchangedetector' ) ) );
 		}
 
@@ -166,12 +166,16 @@ class WebChangeDetector_Admin_AJAX {
 
 		// Delegate to main admin class for now (will be refactored later)
 		if ( $this->admin && method_exists( $this->admin, 'post_urls' ) ) {
+			// Capture any output from the post_urls method
+			ob_start();
 			$this->admin->post_urls( $_POST );
+			$output = ob_get_clean();
+			
+			// Send success response
+			wp_send_json_success( array( 'message' => __( 'Settings saved successfully.', 'webchangedetector' ) ) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );
 		}
-
-		wp_die();
 	}
 
 	/**
@@ -186,7 +190,7 @@ class WebChangeDetector_Admin_AJAX {
 		}
 
 		// Verify nonce
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			echo 'Nonce verify failed';
 			wp_die( 'Busted!' );
 		}

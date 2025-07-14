@@ -53,7 +53,7 @@
                     <label for="${escAttr(id)}" class="wcd-slider-label">${escAttr(label)}:</label>
                     <label class="wcd-switch">
                         <input type="checkbox" id="${escAttr(id)}" class="wcd-admin-bar-toggle" ${checked} ${dataAttrs}> 
-                        <span class="wcd-modern-slider"></span>
+                        <span class="wcd-slider-round"></span>
                     </label>
                 </div>
             `;

@@ -145,6 +145,8 @@ class WebChangeDetector_Admin_WordPress {
 		
 		if ( is_admin_bar_showing() && ! is_admin() && current_user_can( 'manage_options' ) ) {
 			$admin_bar_script_handle = 'webchangedetector-admin-bar';
+			
+			// Enqueue JavaScript
 			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true );
 
 			wp_localize_script( $admin_bar_script_handle, 'wcdAdminBarData', array(

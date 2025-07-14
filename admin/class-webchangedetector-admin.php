@@ -280,6 +280,9 @@ class WebChangeDetector_Admin {
 	public function __construct( $plugin_name = 'WebChangeDetector' ) {
 		$this->plugin_name = $plugin_name;
 		
+		// Ensure required constants are defined before accessing them.
+		$this->ensure_required_constants();
+		
 		// Set the group uuids.
 		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
@@ -317,7 +320,29 @@ class WebChangeDetector_Admin {
 		}
 	}
 
-
+	/**
+	 * Ensure required constants are defined for group operations.
+	 *
+	 * @since    1.0.0
+	 * @return   void
+	 */
+	private function ensure_required_constants() {
+		if ( ! defined( 'WCD_WEBSITE_GROUPS' ) ) {
+			define( 'WCD_WEBSITE_GROUPS', 'wcd_website_groups' );
+		}
+		if ( ! defined( 'WCD_MANUAL_DETECTION_GROUP' ) ) {
+			define( 'WCD_MANUAL_DETECTION_GROUP', 'manual_detection_group' );
+		}
+		if ( ! defined( 'WCD_AUTO_DETECTION_GROUP' ) ) {
+			define( 'WCD_AUTO_DETECTION_GROUP', 'auto_detection_group' );
+		}
+		if ( ! defined( 'WCD_VERIFY_SECRET' ) ) {
+			define( 'WCD_VERIFY_SECRET', 'webchangedetector_verify_secret' );
+		}
+		if ( ! defined( 'WCD_WP_OPTION_KEY_API_TOKEN' ) ) {
+			define( 'WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token' );
+		}
+	}
 
 	/** Website details.
 	 *
