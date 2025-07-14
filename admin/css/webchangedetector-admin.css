@@ -2884,7 +2884,6 @@ Settings
 }
 
 .webchangedetector .wcd-failed-checks-accordion .wcd-accordion-header {
-    background: #f8f9fa;
     border: 1px solid #e1e5e9;
     padding: 12px 15px;
     cursor: pointer;
@@ -2892,6 +2891,7 @@ Settings
     align-items: center;
     justify-content: space-between;
     transition: background-color 0.3s ease;
+    background: #f7f7f7;
 }
 
 .webchangedetector .wcd-failed-checks-accordion .wcd-accordion-header:hover {
@@ -2904,10 +2904,10 @@ Settings
 }
 
 .webchangedetector .wcd-failed-checks-accordion .wcd-accordion-content {
-    border: 1px solid #e1e5e9;
     border-top: 0;
     background: #fff;
-    padding: 15px;
+    display: none;
+    border: 1px solid #ddd;
 }
 
 .webchangedetector .wcd-failed-checks-accordion table {
@@ -2917,7 +2917,6 @@ Settings
 
 .webchangedetector .wcd-failed-checks-accordion table th {
     background: #f8f9fa;
-    border-bottom: 2px solid #e1e5e9;
     padding: 10px;
     font-weight: 600;
 }

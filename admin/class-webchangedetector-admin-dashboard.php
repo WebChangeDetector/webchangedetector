@@ -464,7 +464,7 @@ class WebChangeDetector_Admin_Dashboard
         if (! empty($failed_queues['data'])) {
         ?>
             <div class="wcd-failed-checks-accordion" style="margin-bottom: 20px;">
-                <div class="wcd-accordion-header" style="background: #f7f7f7; border: 1px solid #ddd; padding: 12px 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div class="wcd-accordion-header">
                     <div style="display: flex; align-items: center;">
                         <span class="dashicons dashicons-warning" style="color: #d63638; margin-right: 8px;"></span>
                         <strong><?php echo esc_html__('Failed Checks', 'webchangedetector'); ?></strong>
@@ -477,7 +477,7 @@ class WebChangeDetector_Admin_Dashboard
                     </div>
                     <span class="dashicons dashicons-arrow-down-alt2 wcd-accordion-icon"></span>
                 </div>
-                <div class="wcd-accordion-content" style="display: none; border: 1px solid #ddd; border-top: 0; background: #fff; padding: 15px;">
+                <div class="wcd-accordion-content">
                     <table class="widefat striped" style="margin: 0;">
                         <thead>
                             <tr>
