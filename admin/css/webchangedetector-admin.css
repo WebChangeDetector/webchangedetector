@@ -965,6 +965,12 @@ Manual Checks
     margin-bottom: 40px;
 }
 
+.webchangedetector .wcd-update-check-button,
+.webchangedetector .wcd-update-check-urls {
+    text-align: center;
+    display: block;
+}
+
 .webchangedetector .update-status {
     padding: 20px 0;
     width: calc(33% - 2px);
