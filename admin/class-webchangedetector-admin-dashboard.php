@@ -360,7 +360,8 @@ class WebChangeDetector_Admin_Dashboard
                                 </div>
                                 <div class="accordion-batch-title-tile">
                                     <?php
-                                    if ($batch_group === $this->admin->monitoring_group_uuid) {
+
+                                    if (strpos($batch['name'], 'Monitoring') === 0) {
                                         \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('auto-group');
                                         echo ' ' . esc_html__('Monitoring Checks', 'webchangedetector');
                                     } elseif (is_array($auto_update_batches) && in_array($batch_id, $auto_update_batches, true)) {

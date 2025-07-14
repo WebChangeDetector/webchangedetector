@@ -10,7 +10,7 @@
 	<div class="comparison_status_container comparison-tile comparison-status-tile">
 		<strong>Status</strong>
 		<span id="current_comparison_status" class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
-			<?php echo esc_html( $this->comparison_status_nice_name( $compare['status'] ) ); ?>
+			<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $compare['status'] ) ); ?>
 		</span>
 		<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
 			<strong>Change Status to:</strong><br>

@@ -12,7 +12,7 @@ function updateProcessingStep() {
             nonce: wcdAjaxData.nonce
         };
 
-        $.post(ajaxurl, data, function (response) {
+        $.post(wcdAjaxData.ajax_url, data, function (response) {
 
             response = JSON.parse(response);
 
@@ -418,7 +418,7 @@ function currentlyProcessing() {
                 let initialStatusContent = $(statusElement).html();
                 $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
 
-                $.post(ajaxurl, data, function (response) {
+                $.post(wcdAjaxData.ajax_url, data, function (response) {
                     // Debug logging
                     console.log('WebChangeDetector: Status update response:', response);
 
@@ -435,6 +435,10 @@ function currentlyProcessing() {
                         status_nice_name = 'To Fix';
                     } else if ('false_positive' === response) {
                         status_nice_name = 'False Positive';
+                    } else if ('failed' === response) {
+                        status_nice_name = 'Failed';
+                    } else if ('new' === response) {
+                        status_nice_name = 'New';
                     } else {
                         // Unexpected response - log it and show generic error
                         console.error('WebChangeDetector: Unexpected status response:', response);
@@ -534,7 +538,7 @@ function currentlyProcessing() {
                 }, 500);
             }
 
-            $.post(ajaxurl, args, function (response) {
+            $.post(wcdAjaxData.ajax_url, args, function (response) {
                 contentContainer.html(response);
 
                 // Re-initialize all components for the new content
@@ -601,7 +605,7 @@ function currentlyProcessing() {
 
                     // Load content via AJAX
                     $.ajax({
-                        url: ajaxurl,
+                        url: wcdAjaxData.ajax_url,
                         type: 'POST',
                         data: {
                             action: 'load_failed_queues',
@@ -644,7 +648,7 @@ function currentlyProcessing() {
         }
 
         $.ajax({
-            url: ajaxurl,
+            url: wcdAjaxData.ajax_url,
             type: 'POST',
             data: {
                 action: 'get_dashboard_usage_stats',
@@ -733,7 +737,7 @@ function sync_urls(force = 0) {
     // Show the button as disabled.
     jQuery('.button-sync-urls').prop('disabled', true);
 
-    jQuery.post(ajaxurl, data, function (response) {
+    jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
         // We get the last sync date as response.
         jQuery('#ajax_sync_urls_status').html(response);
         jQuery('.button-sync-urls').prop('disabled', false);
@@ -774,7 +778,7 @@ function postUrl(postId) {
         }
     }
 
-    jQuery.post(ajaxurl, data, function (response) {
+    jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
         // TODO confirm saving.
     });
 }

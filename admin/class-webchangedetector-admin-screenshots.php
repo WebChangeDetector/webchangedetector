@@ -59,29 +59,6 @@ class WebChangeDetector_Admin_Screenshots {
 		return \WebChangeDetector\WebChangeDetector_API_V2::update_comparison_v2( $id, $status );
 	}
 
-	/**
-	 * Get nice display name for comparison status.
-	 *
-	 * Converts comparison status codes to user-friendly display names.
-	 *
-	 * @since    1.0.0
-	 * @param    string $status The comparison status code.
-	 * @return   string         The nice display name for the status.
-	 */
-	public function get_comparison_status_nice_name( $status ) {
-		switch ( $status ) {
-			case 'ok':
-				return __( 'Ok', 'webchangedetector' );
-			case 'to_fix':
-				return __( 'To Fix', 'webchangedetector' );
-			case 'false_positive':
-				return __( 'False Positive', 'webchangedetector' );
-			case 'failed':
-				return __( 'Failed', 'webchangedetector' );
-			default:
-				return __( 'New', 'webchangedetector' );
-		}
-	}
 
 	
 
@@ -195,7 +172,7 @@ class WebChangeDetector_Admin_Screenshots {
 			
 			$compare = $api_response['data'];
 
-			$public_token = $compare['token'];
+			// $public_token = $compare['token']; // Unused variable
 			$all_tokens   = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );

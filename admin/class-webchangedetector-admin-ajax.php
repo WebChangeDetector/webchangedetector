@@ -67,6 +67,38 @@ class WebChangeDetector_Admin_AJAX {
      */
     private $screenshots_handler;
 
+    /**
+     * The screenshots AJAX handler instance.
+     *
+     * @since 4.0.0
+     * @var WebChangeDetector_Screenshots_Ajax_Handler
+     */
+    private $screenshots_ajax_handler;
+
+    /**
+     * The settings AJAX handler instance.
+     *
+     * @since 4.0.0
+     * @var WebChangeDetector_Settings_Ajax_Handler
+     */
+    private $settings_ajax_handler;
+
+    /**
+     * The WordPress AJAX handler instance.
+     *
+     * @since 4.0.0
+     * @var WebChangeDetector_WordPress_Ajax_Handler
+     */
+    private $wordpress_ajax_handler;
+
+    /**
+     * The account AJAX handler instance.
+     *
+     * @since 4.0.0
+     * @var WebChangeDetector_Account_Ajax_Handler
+     */
+    private $account_ajax_handler;
+
 	/**
 	 * Constructor.
 	 *
@@ -79,6 +111,52 @@ class WebChangeDetector_Admin_AJAX {
         $this->account_handler = new WebChangeDetector_Admin_Account( $this->api_manager );
         $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( 'webchangedetector', WEBCHANGEDETECTOR_VERSION, $this->admin );
         $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin, $this->api_manager, $this->account_handler );
+        
+        // Initialize new focused AJAX handlers.
+        $this->init_ajax_handlers();
+	}
+
+	/**
+	 * Initialize focused AJAX handlers.
+	 *
+	 * Creates instances of the focused AJAX handlers and registers their hooks.
+	 * This follows the new architecture for better organization and maintainability.
+	 *
+	 * @since 4.0.0
+	 */
+	private function init_ajax_handlers() {
+		// Initialize screenshots AJAX handler.
+		$this->screenshots_ajax_handler = new \WebChangeDetector\WebChangeDetector_Screenshots_Ajax_Handler(
+			$this->admin,
+			$this->api_manager,
+			$this->screenshots_handler,
+			$this->account_handler
+		);
+
+		// Initialize settings AJAX handler.
+		$this->settings_ajax_handler = new \WebChangeDetector\WebChangeDetector_Settings_Ajax_Handler(
+			$this->admin,
+			$this->api_manager,
+			$this->admin->settings_handler ?? null
+		);
+
+		// Initialize WordPress AJAX handler.
+		$this->wordpress_ajax_handler = new \WebChangeDetector\WebChangeDetector_WordPress_Ajax_Handler(
+			$this->admin,
+			$this->api_manager,
+			$this->wordpress_handler,
+			$this->admin->settings_handler ?? null
+		);
+
+		// Initialize account AJAX handler.
+		$this->account_ajax_handler = new \WebChangeDetector\WebChangeDetector_Account_Ajax_Handler(
+			$this->admin,
+			$this->api_manager,
+			$this->account_handler
+		);
+
+		// Note: Hooks are registered in includes/class-webchangedetector.php
+		// The old methods will delegate to these new handlers
 	}
 
 	/**

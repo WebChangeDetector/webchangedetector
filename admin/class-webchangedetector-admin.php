@@ -727,6 +727,86 @@ class WebChangeDetector_Admin {
 		return in_array( $user_plan, $feature_plans[ $feature ], true );
 	}
 
+	/**
+	 * Convenience method for error logging.
+	 *
+	 * Provides a simple interface to log errors with proper context and severity levels.
+	 * Uses the integrated logger instance for consistent error handling.
+	 *
+	 * @since 4.0.0
+	 * @param string $message The error message to log.
+	 * @param string $context Optional. The context or category for the error. Default 'admin'.
+	 * @param string $severity Optional. The severity level. Default 'error'.
+	 * @return bool True on success, false on failure.
+	 */
+	public function log_error( $message, $context = 'admin', $severity = 'error' ) {
+		if ( ! $this->logger ) {
+			return false;
+		}
+		
+		return $this->logger->log( $message, $severity, $context );
+	}
+
+	/**
+	 * Convenience method for safe API call execution.
+	 *
+	 * Wraps API operations with comprehensive error handling, retry logic, and recovery.
+	 * Uses the integrated error handler for consistent error management.
+	 *
+	 * @since 4.0.0
+	 * @param callable $operation The API operation to execute.
+	 * @param array $options Optional. Configuration options for error handling.
+	 * @return array Response array with success status and data.
+	 */
+	public function safe_execute( $operation, $options = array() ) {
+		if ( ! $this->error_handler ) {
+			return array(
+				'success' => false,
+				'message' => 'Error handler not available.',
+			);
+		}
+		
+		$default_options = array(
+			'category'     => 'admin',
+			'user_message' => 'An error occurred while processing your request.',
+			'context'      => 'Admin Operation',
+		);
+		
+		$options = wp_parse_args( $options, $default_options );
+		
+		return $this->error_handler->execute_with_error_handling( $operation, array(), $options );
+	}
+
+	/**
+	 * Convenience method for handling API errors.
+	 *
+	 * Provides a simple interface to handle API errors with proper logging and recovery.
+	 * Uses the integrated error handler for consistent error management.
+	 *
+	 * @since 4.0.0
+	 * @param callable $api_call The API call to execute.
+	 * @param array $options Optional. Configuration options for error handling.
+	 * @return array Response array with success status and data.
+	 */
+	public function handle_api_error( $api_call, $options = array() ) {
+		if ( ! $this->error_handler ) {
+			return array(
+				'success' => false,
+				'message' => 'Error handler not available.',
+			);
+		}
+		
+		$default_options = array(
+			'category'     => 'api',
+			'user_message' => 'Failed to communicate with WebChangeDetector service. Please try again.',
+			'context'      => 'API Operation',
+		);
+		
+		$options = wp_parse_args( $options, $default_options );
+		
+		return $this->error_handler->handle_api_error( $api_call, array(), $options );
+	}
+
 } // End class WebChangeDetector_Admin.
 
 // HTTP Status Codes.

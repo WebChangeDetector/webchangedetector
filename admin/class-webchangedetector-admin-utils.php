@@ -154,12 +154,13 @@ class WebChangeDetector_Admin_Utils {
 	public static function get_comparison_status_name( $status ) {
 		$status_names = array(
 			'new'            => __( 'New', 'webchangedetector' ),
-			'ok'             => __( 'OK', 'webchangedetector' ),
+			'ok'             => __( 'Ok', 'webchangedetector' ),
 			'to_fix'         => __( 'To Fix', 'webchangedetector' ),
 			'false_positive' => __( 'False Positive', 'webchangedetector' ),
+			'failed'         => __( 'Failed', 'webchangedetector' ),
 		);
 
-		return isset( $status_names[ $status ] ) ? $status_names[ $status ] : ucfirst( $status );
+		return isset( $status_names[ $status ] ) ? $status_names[ $status ] : __( 'New', 'webchangedetector' );
 	}
 
 	/**

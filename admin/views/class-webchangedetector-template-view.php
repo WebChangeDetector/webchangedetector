@@ -87,16 +87,6 @@ class WebChangeDetector_Template_View {
 		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/show-change-detection.php';
 	}
 
-	/**
-	 * Get comparison status nice name.
-	 * Delegates to the screenshots handler.
-	 *
-	 * @param string $status The status to get nice name for.
-	 * @return string The nice name for the status.
-	 */
-	public function comparison_status_nice_name( $status ) {
-		return $this->admin->screenshots_handler->get_comparison_status_nice_name( $status );
-	}
 
 	/**
 	 * Get app URL.

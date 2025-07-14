@@ -153,6 +153,15 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-wordpress.php';
 
 		/**
+		 * The focused AJAX handler classes for better organization and maintainability.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-ajax-handler-base.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-screenshots-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-settings-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-wordpress-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-account-ajax-handler.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin.php';
