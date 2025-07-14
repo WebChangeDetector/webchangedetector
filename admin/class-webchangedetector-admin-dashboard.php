@@ -454,13 +454,12 @@ class WebChangeDetector_Admin_Dashboard {
 		}
 
 		?>
-		<table class="toggle" style="width: 100%">
+		<table class="wcd-comparison-table toggle" style="width: 100%">
 			<tr>
 				<th style="min-width: 120px;"><?php echo esc_html__( 'Status', 'webchangedetector' ); ?></th>
 				<th style="width: 100%"><?php echo esc_html__( 'URL', 'webchangedetector' ); ?></th>
 				<th style="min-width: 150px"><?php echo esc_html__( 'Compared Screenshots', 'webchangedetector' ); ?></th>
 				<th style="min-width: 50px"><?php echo esc_html__( 'Difference', 'webchangedetector' ); ?></th>
-				<th><?php echo esc_html__( 'Show', 'webchangedetector' ); ?></th>
 			</tr>
 
 			<?php
@@ -476,7 +475,7 @@ class WebChangeDetector_Admin_Dashboard {
 				}
 
 				?>
-				<tr>
+				<tr id="comparison-<?php echo esc_html( $compare['id'] ); ?>">
 					<td>
 						<div class="comparison_status_container">
 							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html( $compare['status'] ); ?>">
@@ -531,7 +530,7 @@ class WebChangeDetector_Admin_Dashboard {
 						data-diff_percent="<?php echo esc_html( $compare['difference_percent'] ); ?>">
 						<?php echo esc_html( $compare['difference_percent'] ); ?>%
 					</td>
-					<td>
+					<td data-comparison_id="<?php echo esc_html( $compare['id'] ); ?>" style="display: none;">
 						<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
 							<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
 							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
@@ -541,7 +540,15 @@ class WebChangeDetector_Admin_Dashboard {
 				</tr>
 			<?php } ?>
 		</table>
-
+        <script>
+           jQuery("tr").click(function(e) {
+            // Don't trigger row click if clicking on status-related elements.
+            if (jQuery(e.target).closest('.comparison_status_container, .current_comparison_status, .comparison_status, .ajax_update_comparison_status, .change_status').length > 0) {
+                return;
+            }
+            jQuery(this).find("td[data-comparison_id='" + jQuery(this).attr("id").replace("comparison-", "") + "']").find("form").submit();
+           });
+           </script>
 		<?php
 		// Add pagination if needed.
 		if ( ! empty( $comparisons['meta']['links'] ) ) {
