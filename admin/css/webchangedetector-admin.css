@@ -3475,6 +3475,10 @@ Settings
     box-sizing: border-box;
 }
 
+.webchangedetector a.nav-tab:focus {
+    box-shadow: none;
+}
+
 /* Tab icons */
 .webchangedetector .nav-tab .dashicons,
 .webchangedetector .nav-tab .group_icon {
@@ -3606,19 +3610,6 @@ Settings
     .webchangedetector .nav-tab span.tab-text {
         display: none;
     }
-}
-
-/* Focus states for accessibility */
-.webchangedetector .nav-tab:focus {
-    outline: 2px solid #2271b1;
-    outline-offset: -2px;
-    box-shadow: 0 0 0 1px #ffffff, 0 0 0 3px #2271b1;
-}
-
-.webchangedetector .nav-tab-active:focus {
-    outline: 2px solid #ffffff;
-    outline-offset: -2px;
-    box-shadow: 0 0 0 1px #0073aa, 0 0 0 3px #ffffff;
 }
 
 /* Enhanced icons styling */
