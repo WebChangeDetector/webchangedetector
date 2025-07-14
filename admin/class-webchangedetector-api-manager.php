@@ -315,18 +315,6 @@ class WebChangeDetector_API_Manager {
 	}
 
 	/**
-	 * Update comparison status.
-	 *
-	 * @since 1.0.0
-	 * @param int    $comparison_id The comparison ID.
-	 * @param string $status        The new status.
-	 * @return array|WP_Error Response data or WP_Error on failure.
-	 */
-	public function update_comparison_status( $comparison_id, $status ) {
-		return $this->put( "/comparisons/{$comparison_id}", array( 'status' => $status ) );
-	}
-
-	/**
 	 * Queue API methods.
 	 */
 

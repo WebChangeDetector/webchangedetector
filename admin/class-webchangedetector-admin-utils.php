@@ -47,12 +47,6 @@ class WebChangeDetector_Admin_Utils {
 		return $url;
 	}
 
-    public static function dd( $data ) {
-        echo '<pre>';
-        print_r( $data );
-        echo '</pre>';
-        die();
-    }
 
 	/**
 	 * Check if a string is valid JSON.
@@ -516,50 +510,5 @@ class WebChangeDetector_Admin_Utils {
 		return $params;
 	}
 
-	/**
-	 * Get time ago string from date.
-	 *
-	 * Converts a date into a human-readable "time ago" format.
-	 * Returns strings like "2 minutes ago" or "1 hour ago".
-	 *
-	 * @since 1.0.0
-	 * @param string $date The date to convert.
-	 * @return string Human-readable time ago string.
-	 */
-	public static function timeAgo( $date ) {
-		$timestamp = strtotime( $date );
 
-		$strTime = array( 'second', 'minute', 'hour', 'day', 'month', 'year' );
-		$length  = array( '60', '60', '24', '30', '12', '10' );
-
-		$currentTime = time();
-		if ( $currentTime >= $timestamp ) {
-			$diff = time() - $timestamp;
-			for ( $i = 0; $diff >= $length[ $i ] && $i < count( $length ) - 1; $i++ ) {
-				$diff = $diff / $length[ $i ];
-			}
-
-			$diff = round( $diff );
-			return $diff . ' ' . $strTime[ $i ] . '(s) ago ';
-		}
-		return '';
-	}
-
-	/**
-	 * Log messages to file.
-	 *
-	 * Writes log messages to the plugin's log file for debugging purposes.
-	 * Handles arrays and objects by converting them to JSON.
-	 *
-	 * @since 1.0.0
-	 * @param mixed $log The data to log.
-	 * @return void
-	 */
-	public static function log( $log ) {
-		if ( is_array( $log ) || is_object( $log ) ) {
-			$log = json_encode( $log );
-		}
-		$plugin_dir = plugin_dir_path( dirname( __FILE__ ) );
-		file_put_contents( $plugin_dir . '/logs.txt', $log . PHP_EOL, FILE_APPEND );
-	}
 }

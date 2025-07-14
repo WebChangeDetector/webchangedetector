@@ -50,13 +50,6 @@ class WebChangeDetector_Admin_AJAX {
      */
     private $account_handler;
 
-    /**
-     * The dashboard handler instance.
-     *
-     * @since 1.0.0
-     * @var WebChangeDetector_Admin_Dashboard
-     */
-    private $dashboard_handler;
 
     /**
      * The wordpress handler instance.
@@ -83,8 +76,7 @@ class WebChangeDetector_Admin_AJAX {
 	public function __construct( $admin = null ) {
 		$this->admin       = $admin;
 		$this->api_manager = new WebChangeDetector_API_Manager();
-        $this->account_handler = new WebChangeDetector_Admin_Account( $this->admin );
-        $this->dashboard_handler = new WebChangeDetector_Admin_Dashboard( $this->admin, $this->api_manager, $this->account_handler );
+        $this->account_handler = new WebChangeDetector_Admin_Account( $this->api_manager );
         $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( 'webchangedetector', WEBCHANGEDETECTOR_VERSION, $this->admin );
         $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin, $this->api_manager, $this->account_handler );
 	}
@@ -169,7 +161,7 @@ class WebChangeDetector_Admin_AJAX {
 			// Capture any output from the post_urls method
 			ob_start();
 			$this->admin->post_urls( $_POST );
-			$output = ob_get_clean();
+			ob_get_clean();
 			
 			// Send success response
 			wp_send_json_success( array( 'message' => __( 'Settings saved successfully.', 'webchangedetector' ) ) );
@@ -571,6 +563,7 @@ class WebChangeDetector_Admin_AJAX {
 				}
 			} catch ( \Exception $e ) {
 				// Error accessing account - still waiting for activation
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Account activation check failed: ' . $e->getMessage() );
 				wp_send_json_success( array( 'activated' => false, 'message' => __( 'Account activation pending.', 'webchangedetector' ) ) );
 			}
 		} else {

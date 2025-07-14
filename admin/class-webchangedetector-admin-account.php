@@ -166,7 +166,15 @@ class WebChangeDetector_Admin_Account {
 
 		$account_details = $this->get_account();
 
-		if ( ! $this->is_allowed( 'upgrade_account' ) || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
+		$allowances = get_option( WCD_ALLOWANCES, array() );
+		$upgrade_allowed = isset( $allowances['upgrade_account'] ) ? $allowances['upgrade_account'] : 1;
+		
+		// Disable upgrade account for subaccounts.
+		if ( ! empty( $account_details['is_subaccount'] ) && $account_details['is_subaccount'] ) {
+			$upgrade_allowed = 0;
+		}
+		
+		if ( ! $upgrade_allowed || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
 			return '?page=webchangedetector-no-billing-account';
 		}
 
@@ -602,55 +610,6 @@ class WebChangeDetector_Admin_Account {
 		return $body;
 	}
 
-	/**
-	 * Check if a feature is allowed for the current account.
-	 *
-	 * Wrapper method for permission checking - uses the same logic
-	 * as the main settings handler for consistent permission management.
-	 *
-	 * @since    1.0.0
-	 * @param    string    $allowed    The feature to check permission for.
-	 * @return   bool                  True if allowed, false otherwise.
-	 */
-	private function is_allowed( $allowed ) {
-		// Use the same allowances checking logic as the main settings handler.
-		// Get allowances from WordPress options (cached by the main settings handler).
-		$allowances = get_option( WCD_ALLOWANCES, array() );
-		
-		// Set default allowances if we don't have any yet.
-		if ( empty( $allowances ) ) {
-			$allowances = array(
-				'change_detections_view'     => 1,
-				'manual_checks_view'         => 1,
-				'manual_checks_start'        => 1,
-				'manual_checks_settings'     => 1,
-				'manual_checks_urls'         => 1,
-				'monitoring_checks_view'     => 1,
-				'monitoring_checks_settings' => 1,
-				'monitoring_checks_urls'     => 1,
-				'logs_view'                  => 1,
-				'settings_view'              => 1,
-				'settings_add_urls'          => 1,
-				'settings_account_settings'  => 1,
-				'upgrade_account'            => 1,
-				'wizard_start'               => 1,
-				'only_frontpage'             => 0,
-			);
-		}
-		
-		// Disable upgrade account for subaccounts.
-		if ( 'upgrade_account' === $allowed && ! empty( $this->get_account()['is_subaccount'] ) && $this->get_account()['is_subaccount'] ) {
-			$allowances['upgrade_account'] = 0;
-		}
-		
-		// Return allowance value if exists.
-		if ( array_key_exists( $allowed, $allowances ) ) {
-			return $allowances[ $allowed ];
-		}
-		
-		// Default to allowing if not found.
-		return true;
-	}
 
 	/**
 	 * Generate the create account form HTML.
