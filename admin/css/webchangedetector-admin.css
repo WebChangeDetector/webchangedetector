@@ -1655,6 +1655,7 @@ Settings
 .webchangedetector input[type="email"],
 .webchangedetector input[type="number"],
 .webchangedetector input[type="time"],
+.webchangedetector input[type="date"],
 .webchangedetector select,
 .webchangedetector textarea {
     border: 1px solid #dcdcde;
@@ -1669,6 +1670,7 @@ Settings
 .webchangedetector input[type="email"]:focus,
 .webchangedetector input[type="number"]:focus,
 .webchangedetector input[type="time"]:focus,
+.webchangedetector input[type="date"]:focus,
 .webchangedetector select:focus,
 .webchangedetector textarea:focus {
     border-color: #0073aa;
