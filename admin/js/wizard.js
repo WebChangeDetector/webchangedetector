@@ -293,7 +293,7 @@
                     element: '.webchangedetector .wcd-settings-card',
                     popover: {
                         title: 'Manual Checks & Auto Update Settings',
-                        description: 'Start the Manual Checks here. But first, let\'s walk through each important setting.',
+                        description: 'You can start the Manual Checks here. But first, let\'s walk through each important setting.',
                         side: 'bottom',
                         align: 'start'
                     }
@@ -302,7 +302,7 @@
                     element: '.wcd-form-row.wcd-auto-update-setting-enabled',
                     popover: {
                         title: 'Enable Auto Update Checks',
-                        description: 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard and helps catch any visual changes or issues that updates might cause.',
+                        description: 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.',
                         side: 'right',
                         align: 'center',
                         onNextClick: (element, step, options) => {
