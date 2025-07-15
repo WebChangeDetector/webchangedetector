@@ -79,7 +79,7 @@ class WebChangeDetector_Logs_Controller {
 
 		?>
 
-		<div class="action-container">
+		<div class="action-container wizard-logs">
 			<table class="queue">
 				<tr>
 					<th></th>
@@ -161,4 +161,4 @@ class WebChangeDetector_Logs_Controller {
 		<div class="clear"></div>
 		<?php
 	}
-} 
+}

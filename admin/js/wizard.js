@@ -232,7 +232,7 @@
             this.isActive = false;
 
             // Send AJAX request to disable wizard
-            if (typeof wcdWizardData !== 'undefined') {
+            if (typeof wcdWizardData !== 'undefined' && wcdWizardData.ajax_url) {
                 $.post(wcdWizardData.ajax_url, {
                     action: 'wcd_disable_wizard',
                     nonce: wcdWizardData.nonce
@@ -251,10 +251,9 @@
         getDashboardSteps() {
             return [
                 {
-
                     popover: {
                         title: 'Welcome to WebChange Detector',
-                        description: 'This wizard will help you get started with your website checks. You can exit the wizard any time and restart it from the dashboard.',
+                        description: 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s set up your monitoring!',
                         side: 'bottom',
                         align: 'start'
                     }
@@ -262,8 +261,8 @@
                 {
                     element: '.webchangedetector .box-half.credit',
                     popover: {
-                        title: 'Your Account',
-                        description: 'See how many checks you have left and how many checks are used with your current settings until renewal.',
+                        title: 'Your Check Credits',
+                        description: 'This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits.',
                         side: 'left',
                         align: 'start'
                     }
@@ -271,12 +270,12 @@
                 {
                     element: '.webchangedetector .wizard-dashboard-latest-change-detections',
                     popover: {
-                        title: 'Change Detections',
-                        description: 'Your latest change detections will appear here. But first, let\'s do some checks and create some change detections.',
+                        title: 'Recent Changes',
+                        description: 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.',
                         side: 'top',
                         align: 'start',
                         nextBtnText: 'Next →',
-                        onNextClick: (element, step, options) => {
+                        onNextClick: () => {
                             // Navigate to URL selection page with wizard parameter
                             this.navigateToPage('webchangedetector-update-settings');
                         }
@@ -291,11 +290,91 @@
         getUrlSelectionSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-frm-settings',
+                    element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'Settings',
-                        description: 'Here you can configure the WP Auto Update Check settings and some settings for the manual checks, too. <br><br>Remember to enable the WP auto-updates for everything you want to update. <br><br>Don\'t forget to save the settings.',
+                        title: 'Manual Checks & Auto Update Settings',
+                        description: 'Start the Manual Checks here. But first, let\'s walk through each important setting.',
                         side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-enabled',
+                    popover: {
+                        title: 'Enable Auto Update Checks',
+                        description: 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard and helps catch any visual changes or issues that updates might cause.',
+                        side: 'right',
+                        align: 'center',
+                        onNextClick: (element, step, options) => {
+                            // Check if auto update checks are enabled
+                            const autoUpdateCheckbox = document.querySelector('input[name="auto_update_checks_enabled"]');
+                            console.log(autoUpdateCheckbox);
+                            console.log(autoUpdateCheckbox.checked);
+
+                            if (!autoUpdateCheckbox || !autoUpdateCheckbox.checked) {
+                                // Create a more user-friendly notification
+                                window.WCDWizard.showRequiredSettingNotification('Auto Update Checks');
+
+                                autoUpdateCheckbox.focus();
+                                return; // Don't proceed if validation fails
+                            }
+
+                            // Validation passed - proceed to next step
+                            options.driver.moveNext();
+                        }
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-enabled-auto-updates',
+                    popover: {
+                        title: 'Enabled Auto Updates',
+                        description: 'Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings.',
+                        side: 'right',
+                        align: 'center'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-from',
+                    popover: {
+                        title: 'Auto Update Timeframe',
+                        description: 'Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-weekday',
+                    popover: {
+                        title: 'Weekday Selection',
+                        description: 'Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-emails',
+                    popover: {
+                        title: 'Notification Emails',
+                        description: 'Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-threshold',
+                    popover: {
+                        title: 'Change Detection Threshold',
+                        description: 'Set the sensitivity for detecting changes (0-100%). Lower values detect smaller changes but may create false positives. Start with 5-10% for balanced detection.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-auto-update-setting-css',
+                    popover: {
+                        title: 'CSS Injection',
+                        description: 'Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }',
+                        side: 'left',
                         align: 'start'
                     }
                 },
@@ -303,20 +382,19 @@
                     element: '.webchangedetector .group_urls_container table',
                     popover: {
                         title: 'URL Selection Table',
-                        description: 'Use the toggles to select which URLs to check on desktop and mobile devices. The toggle selections are automatically saved for the manual checks and for the auto update checks.',
+                        description: 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.',
                         side: 'top',
                         align: 'center'
                     }
                 },
                 {
-                    element: '.webchangedetector .wizard-start-manual-checks',
+                    element: '.webchangedetector input[type="submit"][value="Save Settings"]',
                     popover: {
-                        title: 'Start Manual Checks',
-                        description: 'When you want to do updates or other changes and check your selected websites, start the wizard here. The wizard guides you through the process.',
-                        side: 'left',
-                        align: 'start',
-                        nextBtnText: 'Next →',
-                        onNextClick: (element, step, options) => {
+                        title: 'Save Your Settings',
+                        description: 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.',
+                        side: 'top',
+                        align: 'center',
+                        onNextClick: () => {
                             // Navigate to monitoring settings page with wizard parameter
                             this.navigateToPage('webchangedetector-auto-settings');
                         }
@@ -331,33 +409,99 @@
         getMonitoringSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-frm-settings',
+                    element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'Monitoring Settings',
-                        description: 'Configure your automatic monitoring settings here. This determines how often your website will be checked for changes.',
+                        title: 'Automatic Monitoring Settings',
+                        description: 'Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues. ',
                         side: 'bottom',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.webchangedetector .wizard-save-auto-settings',
+                    element: '.wcd-form-row.wcd-monitoring-enabled',
                     popover: {
-                        title: 'Save Settings',
-                        description: 'Don\'t forget to save the settings to activate your monitoring configuration.',
+                        title: 'Enable Monitoring',
+                        description: 'Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.',
+                        side: 'right',
+                        align: 'center',
+                        onNextClick: (element, step, options) => {
+                            // Check if monitoring is enabled
+                            const monitoringCheckbox = document.querySelector('input[name="enabled"]');
+                            if (!monitoringCheckbox || !monitoringCheckbox.checked) {
+                                // Create a more user-friendly notification
+                                window.WCDWizard.showRequiredSettingNotification('Monitoring');
+
+                                monitoringCheckbox.focus();
+                                return; // Don't proceed if validation fails
+                            }
+
+                            // Validation passed - proceed to next step
+                            options.driver.moveNext();
+                        }
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-monitoring-interval',
+                    popover: {
+                        title: 'Check Frequency',
+                        description: 'How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.',
                         side: 'left',
                         align: 'start'
-
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-monitoring-hour-of-day',
+                    popover: {
+                        title: 'Preferred Check Time',
+                        description: 'Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-monitoring-threshold',
+                    popover: {
+                        title: 'Change Sensitivity',
+                        description: 'Set how sensitive the monitoring should be. Lower values (5-10%) catch small changes but may trigger false alerts. Higher values (15-20%) reduce false positives.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-monitoring-alert-emails',
+                    popover: {
+                        title: 'Alert Recipients',
+                        description: 'Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row.wcd-monitoring-css',
+                    popover: {
+                        title: 'CSS Customization',
+                        description: 'Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.webchangedetector input[type="submit"][value="Save Settings"]',
+                    popover: {
+                        title: 'Save Monitoring Settings',
+                        description: 'Save your configuration to activate monitoring. Changes take effect immediately.',
+                        side: 'top',
+                        align: 'center'
                     }
                 },
                 {
                     element: '.webchangedetector .group_urls_container',
                     popover: {
-                        title: 'Select URLs for Monitoring',
-                        description: 'All URLs which you select here will be monitored with the settings configured above.',
+                        title: 'Select Pages to Monitor',
+                        description: 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.',
                         side: 'top',
                         align: 'start',
-                        nextBtnText: 'Next →',
-                        onNextClick: (element, step, options) => {
+                        onNextClick: () => {
                             // Navigate to change detections page with wizard parameter
                             this.navigateToPage('webchangedetector-change-detections');
                         }
@@ -374,12 +518,29 @@
                 {
                     element: '.webchangedetector .wizard-change-detections',
                     popover: {
-                        title: 'Change Detections',
-                        description: 'In this tab, you can see all your change detections. Here you can review and manage detected changes on your website.',
+                        title: 'Change Detection History',
+                        description: 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.',
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.webchangedetector .wizard-change-detections table',
+                    popover: {
+                        title: 'Detection Table',
+                        description: 'Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.',
+                        side: 'top',
+                        align: 'center'
+                    }
+                },
+                {
+                    element: '.webchangedetector .wizard-change-detections form',
+                    popover: {
+                        title: 'Filter Options',
+                        description: 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.',
                         side: 'bottom',
                         align: 'start',
-                        nextBtnText: 'Next →',
-                        onNextClick: (element, step, options) => {
+                        onNextClick: () => {
                             // Navigate to logs page with wizard parameter
                             this.navigateToPage('webchangedetector-logs');
                         }
@@ -396,12 +557,20 @@
                 {
                     element: '.webchangedetector .wizard-logs',
                     popover: {
-                        title: 'Logs',
-                        description: 'The logs section shows you a detailed history of all checks performed on your website. You can track when checks were run and see any issues that occurred.',
+                        title: 'Activity Logs',
+                        description: 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.',
                         side: 'bottom',
-                        align: 'start',
-                        nextBtnText: 'Next →',
-                        onNextClick: (element, step, options) => {
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.webchangedetector .wizard-logs table',
+                    popover: {
+                        title: 'Log Details',
+                        description: 'Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors.',
+                        side: 'top',
+                        align: 'center',
+                        onNextClick: () => {
                             // Navigate to settings page with wizard parameter
                             this.navigateToPage('webchangedetector-settings');
                         }
@@ -416,15 +585,51 @@
         getSettingsSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-section',
+                    element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'Settings',
-                        description: 'In the settings tab, you can configure advanced options for WebChange Detector, manage your account preferences, and customize how the plugin behaves.',
+                        title: 'URL Management',
+                        description: 'Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.',
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-form-row:has(button[onclick*="sync_urls"])',
+                    popover: {
+                        title: 'URL Synchronization',
+                        description: 'WebChange Detector syncs your site\'s URLs automatically. Use "Sync Now" after adding new content or if URLs are missing.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-settings-card:has(input[name="wcd_disable_admin_bar_menu"])',
+                    popover: {
+                        title: 'Quick Access',
+                        description: 'The admin bar menu provides quick access to WebChange Detector from your site\'s frontend. Disable if you prefer a cleaner toolbar.',
+                        side: 'top',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: 'input[name="wcd_api_token"], .webchangedetector form:has(input[name="wcd_api_token"])',
+                    popover: {
+                        title: 'API Connection',
+                        description: 'Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!',
+                        side: 'top',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.webchangedetector .wcd-settings-section',
+                    popover: {
+                        title: '🎉 Setup Complete!',
+                        description: 'You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.',
                         side: 'bottom',
                         align: 'start',
-                        doneBtnText: 'Complete Wizard →',
-                        nextBtnText: 'Complete Wizard →',
-                        onNextClick: (element, step, options) => {
+                        doneBtnText: 'Finish Tour →',
+                        nextBtnText: 'Finish Tour →',
+                        onNextClick: () => {
                             // Complete the wizard and navigate back to dashboard without wizard parameter
                             this.completeWizard();
                         }
@@ -510,7 +715,7 @@
             this.isActive = false;
 
             // Send AJAX request to disable wizard
-            if (typeof wcdWizardData !== 'undefined') {
+            if (typeof wcdWizardData !== 'undefined' && wcdWizardData.ajax_url) {
                 $.post(wcdWizardData.ajax_url, {
                     action: 'wcd_disable_wizard',
                     nonce: wcdWizardData.nonce
@@ -523,7 +728,7 @@
  */
         onWizardEnd() {
             // Send AJAX request to disable wizard
-            if (typeof wcdWizardData !== 'undefined') {
+            if (typeof wcdWizardData !== 'undefined' && wcdWizardData.ajax_url) {
                 $.post(wcdWizardData.ajax_url, {
                     action: 'wcd_disable_wizard',
                     nonce: wcdWizardData.nonce
@@ -564,6 +769,40 @@
          */
         isWizardActive() {
             return this.isActive;
+        }
+
+        /**
+         * Show a notification for required settings
+         */
+        showRequiredSettingNotification(settingName) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #266FCB;
+                color: white;
+                padding: 20px 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                z-index: 1000000001;
+                text-align: center;
+                max-width: 400px;
+            `;
+            notification.innerHTML = `
+                <h3 style="margin: 0 0 10px 0; color: white;">Required Setting</h3>
+                <p style="margin: 0 0 15px 0;">Please enable <strong>${settingName}</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.</p>
+            `;
+            document.body.appendChild(notification);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 2000);
         }
     }
 
