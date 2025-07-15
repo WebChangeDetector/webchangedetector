@@ -253,7 +253,7 @@
                 {
                     popover: {
                         title: 'Welcome to WebChange Detector',
-                        description: 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s set up your monitoring!',
+                        description: 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s start the tour!',
                         side: 'bottom',
                         align: 'start'
                     }

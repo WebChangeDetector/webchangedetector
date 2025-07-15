@@ -102,7 +102,7 @@ class WebChangeDetector_Admin_Dashboard
                         <p>
                             <?php echo esc_html__('Start the Wizard to see what you can do with WebChange Detector.', 'webchangedetector'); ?>
                         </p>
-                        <input type="button" class="button button-primary" value="<?php echo esc_attr__('Start Wizard', 'webchangedetector'); ?>" onclick="window.wcdStartWizard()">
+                        <input type="button" class="button button-primary" value="<?php echo esc_attr__('Start Tour', 'webchangedetector'); ?>" onclick="window.wcdStartWizard()">
                     <?php } ?>
                 </div>
                 <div class="box-half credit">
