@@ -229,7 +229,7 @@ class WebChangeDetector_Admin_Account {
 	public function get_api_token_form( $api_token = false ) {
 		if ( $api_token ) {
 			?>
-			<div class="wcd-settings-section">
+			<div class="wcd-settings-section wcd-settings-section-api-token">
 				<div class="wcd-settings-card">
 					<h2><span class="dashicons dashicons-admin-users"></span> Account</h2>
 					<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"

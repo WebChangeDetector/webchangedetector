@@ -364,7 +364,7 @@
                     element: '.wcd-form-row.wcd-auto-update-setting-threshold',
                     popover: {
                         title: 'Change Detection Threshold',
-                        description: 'Set the sensitivity for detecting changes (0-100%). Lower values detect smaller changes but may create false positives. Start with 5-10% for balanced detection.',
+                        description: 'Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.',
                         side: 'left',
                         align: 'start'
                     }
@@ -422,8 +422,8 @@
                     popover: {
                         title: 'Enable Monitoring',
                         description: 'Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.',
-                        side: 'right',
-                        align: 'center',
+                        side: 'left',
+                        align: 'start',
                         onNextClick: (element, step, options) => {
                             // Check if monitoring is enabled
                             const monitoringCheckbox = document.querySelector('input[name="enabled"]');
@@ -462,7 +462,7 @@
                     element: '.wcd-form-row.wcd-monitoring-threshold',
                     popover: {
                         title: 'Change Sensitivity',
-                        description: 'Set how sensitive the monitoring should be. Lower values (5-10%) catch small changes but may trigger false alerts. Higher values (15-20%) reduce false positives.',
+                        description: 'Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.',
                         side: 'left',
                         align: 'start'
                     }
@@ -612,7 +612,7 @@
                     }
                 },
                 {
-                    element: 'input[name="wcd_api_token"], .webchangedetector form:has(input[name="wcd_api_token"])',
+                    element: '.wcd-settings-section-api-token',
                     popover: {
                         title: 'API Connection',
                         description: 'Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!',
@@ -621,9 +621,9 @@
                     }
                 },
                 {
-                    element: '.webchangedetector .wcd-settings-section',
+                    element: '.webchangedetector',
                     popover: {
-                        title: '🎉 Setup Complete!',
+                        title: 'Setup Complete!',
                         description: 'You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.',
                         side: 'bottom',
                         align: 'start',
