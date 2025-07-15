@@ -96,6 +96,9 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Clear all caches before taking post-update screenshots.
+		$this->clear_wordpress_caches();
+
 		// Start the post-update screenshots.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting post-update screenshots and comparisons.' );
 		$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
@@ -321,6 +324,9 @@ class WebChangeDetector_Autoupdates {
 
 			// Create scheduled wp_maybe_auto_update check and external cron at wcd api to make sure the scheduler is triggered every minute.
 			$this->reschedule( 'wp_maybe_auto_update' );
+
+			// Clear all caches before taking pre-update screenshots.
+			$this->clear_wordpress_caches();
 
 			// Take the screenshots and set the status to processing.
 			$sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'pre' );
@@ -666,6 +672,352 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_TRIGGER_AUTO_UPDATE_CRON' ) ) {
 			define( 'WCD_TRIGGER_AUTO_UPDATE_CRON', 'trigger_auto_update_cron' );
+		}
+	}
+
+	/**
+	 * Clear all known WordPress cache plugins and systems.
+	 *
+	 * This method clears caches from various popular caching plugins and systems
+	 * to ensure fresh screenshots are taken during the auto-update process.
+	 *
+	 * @return void
+	 */
+	private function clear_wordpress_caches() {
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Clearing all WordPress caches before taking screenshots.' );
+
+		$cleared_caches = array();
+		$failed_caches  = array();
+
+		// WP Rocket
+		try {
+			if ( function_exists( '\rocket_clean_domain' ) ) {
+				rocket_clean_domain();
+				if ( function_exists( '\rocket_clean_minify' ) ) {
+					rocket_clean_minify();
+				}
+				$cleared_caches[] = 'WP Rocket';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP Rocket: ' . $e->getMessage();
+		}
+
+		// W3 Total Cache
+		try {
+			if ( function_exists( '\w3tc_flush_all' ) ) {
+				w3tc_flush_all();
+				$cleared_caches[] = 'W3 Total Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'W3 Total Cache: ' . $e->getMessage();
+		}
+
+		// LiteSpeed Cache
+		try {
+			if ( defined( 'LSCWP_VERSION' ) ) {
+				do_action( 'litespeed_purge_all' );
+				do_action( 'litespeed_purge_cssjs' );
+				do_action( 'litespeed_purge_object' );
+				$cleared_caches[] = 'LiteSpeed Cache';
+			}
+			if ( class_exists( '\LiteSpeed_Cache_API' ) && method_exists( '\LiteSpeed_Cache_API', 'purge_all' ) ) {
+				\LiteSpeed_Cache_API::purge_all();
+				if ( ! in_array( 'LiteSpeed Cache', $cleared_caches, true ) ) {
+					$cleared_caches[] = 'LiteSpeed Cache';
+				}
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'LiteSpeed Cache: ' . $e->getMessage();
+		}
+
+		// WP Super Cache
+		try {
+			if ( function_exists( '\wp_cache_clear_cache' ) ) {
+				@wp_cache_clear_cache( true );
+				$cleared_caches[] = 'WP Super Cache';
+			} elseif ( function_exists( '\wp_cache_post_change' ) ) {
+				@wp_cache_post_change( '' );
+				$cleared_caches[] = 'WP Super Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP Super Cache: ' . $e->getMessage();
+		}
+
+		// WP Fastest Cache
+		try {
+			if ( function_exists( '\wpfc_clear_all_cache' ) ) {
+				wpfc_clear_all_cache( true );
+				$cleared_caches[] = 'WP Fastest Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP Fastest Cache: ' . $e->getMessage();
+		}
+
+		// Cache Enabler
+		try {
+			if ( class_exists( '\Cache_Enabler' ) && method_exists( '\Cache_Enabler', 'clear_total_cache' ) ) {
+				\Cache_Enabler::clear_total_cache();
+				$cleared_caches[] = 'Cache Enabler';
+			}
+			// New Cache Enabler (v1.5.0+)
+			if ( class_exists( '\Cache_Enabler_Engine' ) && method_exists( '\Cache_Enabler_Engine', 'clear_cache' ) ) {
+				\Cache_Enabler_Engine::clear_cache();
+				if ( ! in_array( 'Cache Enabler', $cleared_caches, true ) ) {
+					$cleared_caches[] = 'Cache Enabler';
+				}
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Cache Enabler: ' . $e->getMessage();
+		}
+
+		// Comet Cache
+		try {
+			if ( class_exists( '\comet_cache' ) && method_exists( '\comet_cache', 'clear' ) ) {
+				\comet_cache::clear();
+				$cleared_caches[] = 'Comet Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Comet Cache: ' . $e->getMessage();
+		}
+
+		// Swift Performance
+		try {
+			if ( class_exists( '\Swift_Performance_Cache' ) && method_exists( '\Swift_Performance_Cache', 'clear_all_cache' ) ) {
+				\Swift_Performance_Cache::clear_all_cache();
+				$cleared_caches[] = 'Swift Performance';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Swift Performance: ' . $e->getMessage();
+		}
+
+		// Borlabs Cache
+		try {
+			if ( function_exists( '\borlabsCacheClearCache' ) ) {
+				borlabsCacheClearCache();
+				$cleared_caches[] = 'Borlabs Cache';
+			}
+			if ( has_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache' ) ) {
+				do_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache', true );
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Borlabs Cache: ' . $e->getMessage();
+		}
+
+		// NitroPack
+		try {
+			if ( function_exists( '\nitropack_reset_cache' ) ) {
+				nitropack_reset_cache();
+				$cleared_caches[] = 'NitroPack';
+			} elseif ( function_exists( '\nitropack_purge_cache' ) ) {
+				nitropack_purge_cache();
+				$cleared_caches[] = 'NitroPack';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'NitroPack: ' . $e->getMessage();
+		}
+
+		// Redis Object Cache
+		try {
+			global $wp_object_cache;
+			if ( $wp_object_cache && method_exists( $wp_object_cache, 'flush' ) ) {
+				$wp_object_cache->flush();
+				$cleared_caches[] = 'Redis Object Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Redis Object Cache: ' . $e->getMessage();
+		}
+
+		// Object Cache Pro
+		try {
+			if ( class_exists( '\Object_Cache_Pro' ) ) {
+				global $wp_object_cache;
+				if ( method_exists( $wp_object_cache, 'flushRuntime' ) ) {
+					$wp_object_cache->flushRuntime();
+				}
+				if ( method_exists( $wp_object_cache, 'flushBlog' ) ) {
+					$wp_object_cache->flushBlog();
+				}
+				$cleared_caches[] = 'Object Cache Pro';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Object Cache Pro: ' . $e->getMessage();
+		}
+
+		// SG Optimizer
+		try {
+			if ( function_exists( '\sg_cachepress_purge_cache' ) ) {
+				sg_cachepress_purge_cache();
+				$cleared_caches[] = 'SG Optimizer';
+			}
+			if ( has_action( 'siteground_optimizer_flush_cache' ) ) {
+				do_action( 'siteground_optimizer_flush_cache' );
+				if ( ! in_array( 'SG Optimizer', $cleared_caches, true ) ) {
+					$cleared_caches[] = 'SG Optimizer';
+				}
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'SG Optimizer: ' . $e->getMessage();
+		}
+
+		// WP-Optimize
+		try {
+			if ( function_exists( '\wpo_cache_flush' ) ) {
+				wpo_cache_flush();
+				$cleared_caches[] = 'WP-Optimize';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP-Optimize: ' . $e->getMessage();
+		}
+
+		// Autoptimize
+		try {
+			if ( class_exists( '\autoptimizeCache' ) && method_exists( '\autoptimizeCache', 'clearall' ) ) {
+				\autoptimizeCache::clearall();
+				$cleared_caches[] = 'Autoptimize';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Autoptimize: ' . $e->getMessage();
+		}
+
+		// Hummingbird
+		try {
+			if ( did_action( 'plugins_loaded' ) ) {
+				do_action( 'wphb_clear_page_cache' );
+				$cleared_caches[] = 'Hummingbird';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Hummingbird: ' . $e->getMessage();
+		}
+
+		// Breeze (Cloudways)
+		try {
+			do_action( 'breeze_clear_all_cache' );
+			$cleared_caches[] = 'Breeze';
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Breeze: ' . $e->getMessage();
+		}
+
+		// Kinsta Cache
+		try {
+			if ( class_exists( '\Kinsta\Cache' ) && ! empty( $kinsta_cache ) ) {
+				$kinsta_cache->kinsta_cache_purge->purge_complete_caches();
+				$cleared_caches[] = 'Kinsta Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Kinsta Cache: ' . $e->getMessage();
+		}
+
+		// Pagely Cache
+		try {
+			if ( class_exists( '\PagelyCachePurge' ) && method_exists( '\PagelyCachePurge', 'purgeAll' ) ) {
+				\PagelyCachePurge::purgeAll();
+				$cleared_caches[] = 'Pagely Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Pagely Cache: ' . $e->getMessage();
+		}
+
+		// WP Engine System
+		try {
+			if ( class_exists( '\WpeCommon' ) && method_exists( '\WpeCommon', 'purge_memcached' ) ) {
+				\WpeCommon::purge_memcached();
+				$cleared_caches[] = 'WP Engine Memcached';
+			}
+			if ( class_exists( '\WpeCommon' ) && method_exists( '\WpeCommon', 'purge_varnish_cache' ) ) {
+				\WpeCommon::purge_varnish_cache();
+				$cleared_caches[] = 'WP Engine Varnish';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP Engine: ' . $e->getMessage();
+		}
+
+		// Cloudflare
+		try {
+			if ( class_exists( '\CF\WordPress\Hooks' ) ) {
+				$cloudflare = new \CF\WordPress\Hooks();
+				if ( method_exists( $cloudflare, 'purgeCacheEverything' ) ) {
+					$cloudflare->purgeCacheEverything();
+					$cleared_caches[] = 'Cloudflare';
+				}
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Cloudflare: ' . $e->getMessage();
+		}
+
+		// Flying Press
+		try {
+			if ( class_exists( '\FlyingPress' ) && method_exists( '\FlyingPress', 'purge_cached_pages' ) ) {
+				\FlyingPress::purge_cached_pages();
+				$cleared_caches[] = 'Flying Press';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Flying Press: ' . $e->getMessage();
+		}
+
+		// WP Cloudflare Super Page Cache
+		try {
+			if ( class_exists( '\SW_CLOUDFLARE_PAGECACHE' ) && method_exists( '\SW_CLOUDFLARE_PAGECACHE', 'cloudflare_purge_cache' ) ) {
+				$cf_cache = new \SW_CLOUDFLARE_PAGECACHE();
+				$cf_cache->cloudflare_purge_cache();
+				$cleared_caches[] = 'WP Cloudflare Super Page Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP Cloudflare Super Page Cache: ' . $e->getMessage();
+		}
+
+		// Perfmatters
+		try {
+			if ( function_exists( '\perfmatters_clear_page_cache' ) ) {
+				perfmatters_clear_page_cache();
+				$cleared_caches[] = 'Perfmatters';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'Perfmatters: ' . $e->getMessage();
+		}
+
+		// WP-Rocket Cloudflare Add-on
+		try {
+			if ( function_exists( '\rocket_cloudflare_purge_cache' ) ) {
+				rocket_cloudflare_purge_cache();
+				$cleared_caches[] = 'WP-Rocket Cloudflare Add-on';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WP-Rocket Cloudflare Add-on: ' . $e->getMessage();
+		}
+
+		// WordPress Core Object Cache
+		try {
+			if ( function_exists( '\wp_cache_flush' ) ) {
+				wp_cache_flush();
+				$cleared_caches[] = 'WordPress Core Object Cache';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WordPress Core Object Cache: ' . $e->getMessage();
+		}
+
+		// WordPress Transients
+		try {
+			if ( function_exists( '\wc_delete_product_transients' ) ) {
+				wc_delete_product_transients();
+				$cleared_caches[] = 'WooCommerce Transients';
+			}
+			if ( function_exists( '\delete_expired_transients' ) ) {
+				delete_expired_transients( true );
+				$cleared_caches[] = 'Expired Transients';
+			}
+		} catch ( \Exception $e ) {
+			$failed_caches[] = 'WordPress Transients: ' . $e->getMessage();
+		}
+
+		// Log summary
+		if ( ! empty( $cleared_caches ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Successfully cleared caches: ' . implode( ', ', $cleared_caches ) );
+		}
+		if ( ! empty( $failed_caches ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Failed to clear some caches: ' . implode( '; ', $failed_caches ), 'error' );
+		}
+		if ( empty( $cleared_caches ) && empty( $failed_caches ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cache plugins detected or cleared.' );
 		}
 	}
 }
