@@ -54,6 +54,13 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 
+= 4.0.0 =
+* Improvement: New design
+* Improvement: Refactoring 
+* Improvement: Optimized url sync 
+* Feature: Browser console log checks
+* Feature: Clear caches at auto update checks
+
 = 3.2.4 =
 * Impromenent: URL sync via daily cron
 * Improvement: JS file loading optimization
