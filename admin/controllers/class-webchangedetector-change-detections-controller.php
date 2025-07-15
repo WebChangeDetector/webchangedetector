@@ -169,13 +169,6 @@ class WebChangeDetector_Change_Detections_Controller
                     'per_page' => 999999,
                 );
 
-                // Get failed queues.
-                $batch_ids = array();
-                foreach ($batches['data'] as $batch) {
-                    $batch_ids[] = $batch['id'];
-                }
-                $failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2($batch_ids, 'failed');
-
                 $comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2(array_merge($filters_comparisons, $extra_filters));
 
                 if (! empty($comparisons['data'])) {
@@ -183,7 +176,7 @@ class WebChangeDetector_Change_Detections_Controller
                 }
             }
 
-            $this->admin->dashboard_handler->compare_view_v2($batches['data'] ?? array(), $failed_queues);
+            $this->admin->dashboard_handler->compare_view_v2($batches['data'] ?? array());
 
             // Prepare pagination.
             unset($extra_filters['paged']);

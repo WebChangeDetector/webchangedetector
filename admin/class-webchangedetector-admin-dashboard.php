@@ -289,7 +289,7 @@ class WebChangeDetector_Admin_Dashboard
      *
      * @since    1.0.0
      * @param    array $batches       The batches data from API.
-     * @param    mixed $failed_queues The failed queues data (optional).
+     * @param    mixed $failed_queues The failed queues data (optional, deprecated - use batch data instead).
      * @return   void
      */
     public function compare_view_v2($batches, $failed_queues = false)
@@ -313,19 +313,13 @@ class WebChangeDetector_Admin_Dashboard
         foreach ($batches as $batch) {
             $batch_id = $batch['id'];
 
-            $amount_failed = 0;
-            if (! empty($failed_queues['data'])) {
-                foreach ($failed_queues['data'] as $failed_queue) {
-                    if ($failed_queue['batch'] === $batch_id) {
-                        ++$amount_failed;
-                    }
-                }
-            }
+            // Get failed count directly from batch data
+            $amount_failed = $batch['queues_count']['failed'] ?? 0;
 
-            // Calculate needs_attention from batch statistics.
+            // Calculate needs_attention from batch comparisons_count.
             $needs_attention = false;
-            if (isset($batch['statistics'])) {
-                $stats = $batch['statistics'];
+            if (isset($batch['comparisons_count'])) {
+                $stats = $batch['comparisons_count'];
                 // If there are any non-ok statuses, needs attention.
                 if (($stats['new'] ?? 0) > 0 || ($stats['to_fix'] ?? 0) > 0 || $amount_failed > 0) {
                     $needs_attention = true;
