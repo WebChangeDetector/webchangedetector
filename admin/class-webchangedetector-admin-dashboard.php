@@ -316,12 +316,18 @@ class WebChangeDetector_Admin_Dashboard
             // Get failed count directly from batch data
             $amount_failed = $batch['queues_count']['failed'] ?? 0;
 
-            // Calculate needs_attention from batch comparisons_count.
+            // Calculate console changes count (added + mixed)
+            $console_changes_count = 0;
+            if (!empty($batch['browser_console_count'])) {
+                $console_changes_count = ($batch['browser_console_count']['added'] ?? 0) + ($batch['browser_console_count']['mixed'] ?? 0);
+            }
+
+            // Calculate needs_attention from batch comparisons_count and console changes.
             $needs_attention = false;
             if (isset($batch['comparisons_count'])) {
                 $stats = $batch['comparisons_count'];
-                // If there are any non-ok statuses, needs attention.
-                if (($stats['new'] ?? 0) > 0 || ($stats['to_fix'] ?? 0) > 0 || $amount_failed > 0) {
+                // If there are any non-ok statuses, failed checks, or console changes, needs attention.
+                if (($stats['new'] ?? 0) > 0 || ($stats['to_fix'] ?? 0) > 0 || $amount_failed > 0 || $console_changes_count > 0) {
                     $needs_attention = true;
                 }
             }
@@ -332,7 +338,7 @@ class WebChangeDetector_Admin_Dashboard
             // Get created_at from batch data.
             $batch_finished_at = $batch['finished_at'] ?? __('processing...', 'webchangedetector');
         ?>
-            <div class="accordion-container" data-batch_id="<?php echo esc_attr($batch_id); ?>" data-failed_count="<?php echo esc_attr($amount_failed); ?>" style="margin-top: 20px;">
+            <div class="accordion-container" data-batch_id="<?php echo esc_attr($batch_id); ?>" data-failed_count="<?php echo esc_attr($amount_failed); ?>" data-console_changes_count="<?php echo esc_attr($console_changes_count); ?>" style="margin-top: 20px;">
                 <div class="accordion accordion-batch">
                     <div class="mm_accordion_title">
                         <h3>
@@ -346,6 +352,23 @@ class WebChangeDetector_Admin_Dashboard
                                         \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('check', 'batch_is_ok');
                                         echo '<small>' . esc_html__('Looks Good', 'webchangedetector') . '</small>';
                                     }
+
+                                    // Show browser console changes indicator (only for supported plans).
+                                    $user_account = $this->admin->account_handler->get_account();
+                                    $user_plan = $user_account['plan'] ?? 'free';
+                                    $canAccessBrowserConsole = $this->admin->can_access_feature('browser_console', $user_plan);
+
+                                    if ($canAccessBrowserConsole && $console_changes_count > 0) {
+                                        $consoleTotal = $console_changes_count;
+                                        if ($consoleTotal > 0) {
+                                            echo '<div class="wcd-console-badge-batch">';
+                                            echo '<span class="dashicons dashicons-editor-code"></span>';
+                                            echo '<span class="wcd-console-count">' . $consoleTotal . '</span>';
+                                            echo '<span class="wcd-console-text">Console Change' . ($consoleTotal > 1 ? 's' : '') . '</span>';
+                                            echo '</div>';
+                                        }
+                                    }
+
                                     if ($amount_failed) {
                                         /* translators: %d: number of failed checks */
                                         echo "<div style='font-size: 14px; color: darkred'> " . esc_html(sprintf(_n('%d check failed', '%d checks failed', $amount_failed, 'webchangedetector'), $amount_failed)) . '</div>';
@@ -366,21 +389,7 @@ class WebChangeDetector_Admin_Dashboard
                                         echo ' ' . esc_html__('Manual Checks', 'webchangedetector');
                                     }
 
-                                    // Show browser console changes indicator (only for supported plans).
-                                    $user_account = $this->admin->account_handler->get_account();
-                                    $user_plan = $user_account['plan'] ?? 'free';
-                                    $canAccessBrowserConsole = $this->admin->can_access_feature('browser_console', $user_plan);
 
-                                    if ($canAccessBrowserConsole && !empty($batch['console_changes_count'])) {
-                                        $consoleTotal = $batch['console_changes_count'];
-                                        if ($consoleTotal > 0) {
-                                            echo '<div class="console-indicator-badge" style="display: inline-flex; align-items: center; background: #2271b1; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; margin: 0 5px; vertical-align: middle;">';
-                                            echo '<span class="dashicons dashicons-editor-code" style="font-size: 14px; margin-right: 4px;"></span>';
-                                            echo '<span class="console-count" style="font-weight: bold; margin-right: 4px;">' . $consoleTotal . '</span>';
-                                            echo '<span class="console-text" style="font-size: 10px;">Console Change' . ($consoleTotal > 1 ? 's' : '') . '</span>';
-                                            echo '</div>';
-                                        }
-                                    }
                                     ?>
                                     <br>
                                     <small>
@@ -432,9 +441,10 @@ class WebChangeDetector_Admin_Dashboard
      * @param    string $batch_id     The batch ID to load comparisons for.
      * @param    array  $comparisons  The comparisons data from API.
      * @param    array  $filters      The applied filters.
+     * @param    int    $console_changes_count  The console changes count for the batch (added + mixed).
      * @return   void
      */
-    public function load_comparisons_view($batch_id, $comparisons, $filters)
+    public function load_comparisons_view($batch_id, $comparisons, $filters, $console_changes_count = 0)
     {
         // Get failed queues for this batch
         $failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2($batch_id, 'failed', false, array('per_page' => 100));
@@ -548,7 +558,7 @@ class WebChangeDetector_Admin_Dashboard
         ?>
         <table class="wcd-comparison-table toggle" style="width: 100%">
             <tr>
-                <th style="min-width: 120px;"><?php echo esc_html__('Status', 'webchangedetector'); ?></th>
+                <th style="min-width: 140px; text-align: center;"><?php echo esc_html__('Status', 'webchangedetector'); ?></th>
                 <th style="width: 100%"><?php echo esc_html__('URL', 'webchangedetector'); ?></th>
                 <th style="min-width: 150px"><?php echo esc_html__('Compared Screenshots', 'webchangedetector'); ?></th>
                 <th style="min-width: 50px"><?php echo esc_html__('Difference', 'webchangedetector'); ?></th>
@@ -573,6 +583,7 @@ class WebChangeDetector_Admin_Dashboard
                             <span class="current_comparison_status comparison_status comparison_status_<?php echo esc_html($compare['status']); ?>">
                                 <?php echo esc_html(\WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name($compare['status'])); ?>
                             </span>
+
                             <div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
                                 <strong><?php echo esc_html__('Change Status to:', 'webchangedetector'); ?></strong><br>
                                 <?php $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce('ajax-nonce'); ?>
@@ -598,6 +609,26 @@ class WebChangeDetector_Admin_Dashboard
                                     class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
                                     onclick="return false;"><?php echo esc_html__('False Positive', 'webchangedetector'); ?></button>
                             </div>
+                            <?php
+                            // Show console changes badge if present
+                            $user_account = $this->admin->account_handler->get_account();
+                            $user_plan = $user_account['plan'] ?? 'free';
+                            $canAccessBrowserConsole = $this->admin->can_access_feature('browser_console', $user_plan);
+
+                            if ($canAccessBrowserConsole && !empty($compare['browser_console_change']) && $compare['browser_console_change'] !== 'unchanged') {
+                                $console_added = count($compare['browser_console_added'] ?? []);
+                                $console_removed = count($compare['browser_console_removed'] ?? []);
+                                $console_total = $console_added + $console_removed;
+
+                                if ($console_total > 0) {
+                                    echo '<div class="wcd-console-badge-comparison">';
+                                    echo '<span class="dashicons dashicons-editor-code"></span>';
+                                    echo '<span class="wcd-console-count">' . $console_total . '</span>';
+                                    echo '<span class="wcd-console-text">Console Change' . ($console_total > 1 ? 's' : '') . '</span>';
+                                    echo '</div>';
+                                }
+                            }
+                            ?>
                         </div>
                     </td>
                     <td>

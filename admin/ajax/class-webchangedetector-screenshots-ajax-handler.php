@@ -213,6 +213,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$status     = isset( $post_data['status'] ) ? sanitize_text_field( $post_data['status'] ) : '';
 			$group_id   = isset( $post_data['group_id'] ) ? sanitize_text_field( $post_data['group_id'] ) : '';
 			$url_search = isset( $post_data['url_search'] ) ? sanitize_text_field( $post_data['url_search'] ) : '';
+			$console_changes_count = isset( $post_data['console_changes_count'] ) ? absint( $post_data['console_changes_count'] ) : 0;
 
 			// Build filters array for API call
 			$api_filters = array(
@@ -248,7 +249,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			// Delegate to admin dashboard for view loading.
 			if ( $this->admin && $this->admin->dashboard_handler && method_exists( $this->admin->dashboard_handler, 'load_comparisons_view' ) ) {
 				// Output HTML directly (not JSON) to match JavaScript expectations.
-				$this->admin->dashboard_handler->load_comparisons_view( $batch_id, $comparisons, $display_filters );
+				$this->admin->dashboard_handler->load_comparisons_view( $batch_id, $comparisons, $display_filters, $console_changes_count );
 				wp_die(); // Prevent WordPress from adding extra output.
 			} else {
 				$this->send_error_response( 

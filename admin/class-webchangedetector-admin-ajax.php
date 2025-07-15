@@ -412,6 +412,7 @@ class WebChangeDetector_Admin_AJAX {
 			$status     = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 			$group_id   = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : '';
 			$url_search = isset( $_POST['url_search'] ) ? sanitize_text_field( wp_unslash( $_POST['url_search'] ) ) : '';
+			$console_changes_count = isset( $_POST['console_changes_count'] ) ? absint( $_POST['console_changes_count'] ) : 0;
 
 			// Build filters array for API call
 			$api_filters = array(
@@ -445,7 +446,7 @@ class WebChangeDetector_Admin_AJAX {
 			}
 			
 			// Output HTML directly (JavaScript expects raw HTML, not JSON)
-			$this->admin->dashboard_handler->load_comparisons_view( $batch_id, $comparisons, $display_filters );
+			$this->admin->dashboard_handler->load_comparisons_view( $batch_id, $comparisons, $display_filters, $console_changes_count );
 			wp_die();
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Method not available.', 'webchangedetector' ) ) );

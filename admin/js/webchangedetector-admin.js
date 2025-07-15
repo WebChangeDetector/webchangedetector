@@ -518,6 +518,7 @@ function currentlyProcessing() {
             const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
             const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
             const failedCount = batchContainer.data("failed_count");
+            const consoleChangesCount = batchContainer.data("console_changes_count") || 0;
 
             // If filters are not provided, get them from the current filter form
             if (filters === null) {
@@ -530,6 +531,7 @@ function currentlyProcessing() {
                 page: page,
                 filters: filters,
                 failed_count: failedCount,
+                console_changes_count: consoleChangesCount,
                 nonce: wcdAjaxData.nonce
             }
 

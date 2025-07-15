@@ -651,9 +651,15 @@
     padding-right: 10px;
 }
 
+.webchangedetector .comparison_status_container {
+    text-align: center;
+}
+
+
 .webchangedetector .comparison_status_container:hover .change_status {
     display: block !important;
     z-index: 100;
+
 }
 
 .webchangedetector .comparison_status_container .change_status button {
@@ -691,7 +697,7 @@
 }
 
 .webchangedetector .accordion-batch-title-tile.accordion-batch-title-tile-status {
-    width: 120px;
+    width: 150px;
     text-align: center;
 }
 
@@ -3192,6 +3198,69 @@ Settings
     white-space: nowrap !important;
 }
 
+/* Console badge for batch-level accordion titles */
+.wcd-console-badge-batch {
+    display: inline-flex;
+    align-items: center;
+    background: #2271b1;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin: 0 5px;
+    vertical-align: middle;
+    margin-top: 10px;
+}
+
+/* Console badge for comparison table rows */
+.wcd-console-badge-comparison {
+    display: inline-flex;
+    align-items: center;
+    background: #2271b1;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* Console badge icon styling */
+.wcd-console-badge-batch .dashicons {
+    font-size: 14px;
+    margin-right: 4px;
+    width: 14px;
+    height: 14px;
+    line-height: 1;
+}
+
+.wcd-console-badge-comparison .dashicons {
+    font-size: 12px;
+    margin-right: 3px;
+    width: 12px;
+    height: 12px;
+    line-height: 1;
+}
+
+/* Console badge count styling */
+.wcd-console-badge-batch .wcd-console-count {
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+.wcd-console-badge-comparison .wcd-console-count {
+    font-weight: bold;
+    margin-right: 3px;
+}
+
+/* Console badge text styling */
+.wcd-console-badge-batch .wcd-console-text {
+    font-size: 10px;
+}
+
+.wcd-console-badge-comparison .wcd-console-text {
+    font-size: 9px;
+}
+
 .wcd-console-indicator-badge:hover {
     background: #135e96 !important;
     transform: scale(1.05);
@@ -3413,6 +3482,28 @@ Settings
     .wcd-console-text {
         display: none;
         /* Hide text on small screens, keep only icon and count */
+    }
+
+    .wcd-console-badge-batch {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    .wcd-console-badge-comparison {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+
+    .wcd-console-badge-batch .dashicons {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+    }
+
+    .wcd-console-badge-comparison .dashicons {
+        font-size: 10px;
+        width: 10px;
+        height: 10px;
     }
 
     .wcd-visual-changes-column,
