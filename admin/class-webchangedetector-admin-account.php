@@ -574,7 +574,7 @@ class WebChangeDetector_Admin_Account {
 			),
 		);
 
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ) );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ), 'api_v1', 'debug');
 		if ( $is_web ) {
 			$response = wp_remote_post( $url_web, $args );
 		} else {

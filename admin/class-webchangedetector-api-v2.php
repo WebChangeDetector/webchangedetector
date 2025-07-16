@@ -159,7 +159,7 @@ class WebChangeDetector_API_V2
      */
     public static function start_url_sync($delete_missing_urls = true, $collection_uuid = null)
     {
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Start URL sync: ' . $collection_uuid);
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Start URL sync: ' . $collection_uuid, 'start_url_sync', 'debug');
         return self::api_v2(
             array(
                 'action'              => 'start-sync',
@@ -622,7 +622,7 @@ class WebChangeDetector_API_V2
                 );
             }
             if (! empty($args)) {
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($args));
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($args), 'api_v2', 'debug');
                 $responses = \WpOrg\Requests\Requests::request_multiple(
                     $args,
                     array(
@@ -634,14 +634,14 @@ class WebChangeDetector_API_V2
                 foreach ($responses as $response) {
                     ++$i;
                     if (isset($response->headers['date'])) {
-                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Responsetime Request $i: " . $response->headers['date']);
+                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Responsetime Request $i: " . $response->headers['date'], 'api_v2', 'debug');
                     }
 
                     // Process each response
                     $response_code = (int) $response->status_code;
                     $body = $response->body;
 
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Response $i code: " . $response_code);
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Response $i code: " . $response_code, 'api_v2', 'debug');
 
                     // Decode the response body
                     $decoded_body = json_decode($body, true);
@@ -656,7 +656,7 @@ class WebChangeDetector_API_V2
                         }
                     } else {
                         // Error response
-                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Multicall request $i failed with code $response_code: " . $body);
+                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("Multicall request $i failed with code $response_code: " . $body, 'api_v2', 'error');
                         if (JSON_ERROR_NONE === json_last_error() && ! empty($decoded_body)) {
                             $results[] = $decoded_body;
                         } else {
@@ -665,7 +665,7 @@ class WebChangeDetector_API_V2
                     }
                 }
 
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' Multicall completed with ' . count($results) . ' results');
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' Multicall completed with ' . count($results) . ' results', 'api_v2', 'debug');
 
                 // Return the results for multicall
                 return $results;
@@ -685,7 +685,7 @@ class WebChangeDetector_API_V2
             );
 
             $log_args = $args;
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($log_args));
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($log_args), 'api_v2', 'debug');
 
             if ($is_web) {
                 $response = wp_remote_request($url_web, $args);
@@ -699,15 +699,15 @@ class WebChangeDetector_API_V2
             $body          = wp_remote_retrieve_body($response);
             $response_code = (int) wp_remote_retrieve_response_code($response);
 
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Responsecode: ' . $response_code);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Responsecode: ' . $response_code, 'api_v2', 'debug');
             $decoded_body = json_decode($body, (bool) JSON_OBJECT_AS_ARRAY);
             if (200 !== $response_code) {
                 if (! empty($decoded_body) && is_array($decoded_body)) {
                     // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($decoded_body, 1));
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($decoded_body, 1), 'api_v2', 'error');
                 } else {
                     // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($body, 1));
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($body, 1), 'api_v2', 'error');
                 }
             }
         }

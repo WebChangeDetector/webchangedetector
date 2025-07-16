@@ -325,7 +325,7 @@ class WebChangeDetector_Admin_WordPress
         }
 
         if (! $to_sync) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post type not configured for sync: ' . $post_category);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post type not configured for sync: ' . $post_category, 'update_post', 'debug');
             return true;
         }
 
@@ -335,7 +335,7 @@ class WebChangeDetector_Admin_WordPress
             'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol($post_url),
         );
 
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('New post published, scheduling single post sync: ' . $post_id);
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('New post published, scheduling single post sync: ' . $post_id, 'wcd_sync_post_after_save', 'debug');
         // Schedule async single post sync instead of full sync.
         $this->schedule_async_single_post_sync($data);
         return true;
@@ -368,10 +368,10 @@ class WebChangeDetector_Admin_WordPress
         $scheduled = wp_schedule_single_event(time() + 10, $hook, array($data));
 
         if ($scheduled !== false) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Scheduled async single post sync to run in 10 seconds');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Scheduled async single post sync to run in 10 seconds', 'schedule_async_single_post_sync', 'debug');
             return true;
         } else {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Failed to schedule async single post sync');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Failed to schedule async single post sync', 'schedule_async_single_post_sync', 'error');
             return false;
         }
     }
@@ -392,10 +392,10 @@ class WebChangeDetector_Admin_WordPress
         $scheduled = wp_schedule_single_event(time() + 1, $hook, array($force_sync));
 
         if ($scheduled !== false) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Scheduled async full sync (force: ' . ($force_sync ? 'yes' : 'no') . ') to run in 10 seconds');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Scheduled async full sync (force: ' . ($force_sync ? 'yes' : 'no') . ') to run in 10 seconds', 'schedule_async_full_sync', 'debug');
             return true;
         } else {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Failed to schedule async full sync');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Failed to schedule async full sync', 'schedule_async_full_sync', 'error');
             return false;
         }
     }
@@ -409,7 +409,7 @@ class WebChangeDetector_Admin_WordPress
      */
     public function async_single_post_sync_handler($data)
     {
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Executing async single post sync');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Executing async single post sync', 'async_single_post_sync_handler', 'debug');
         $this->sync_single_post($data);
     }
 
@@ -422,7 +422,7 @@ class WebChangeDetector_Admin_WordPress
      */
     public function async_full_sync_handler($force_sync = false)
     {
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Executing async full sync (force: ' . ($force_sync ? 'yes' : 'no') . ')');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Executing async full sync (force: ' . ($force_sync ? 'yes' : 'no') . ')', 'async_full_sync_handler', 'debug');
         $this->sync_posts($force_sync);
     }
 
@@ -517,7 +517,7 @@ class WebChangeDetector_Admin_WordPress
         $monitoring_group_uuid = $this->admin->monitoring_group_uuid;
 
         if (! $manual_group_uuid || ! $monitoring_group_uuid) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Group UUIDs not found - Manual: ' . $manual_group_uuid . ', Monitoring: ' . $monitoring_group_uuid);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Group UUIDs not found - Manual: ' . $manual_group_uuid . ', Monitoring: ' . $monitoring_group_uuid, 'get_url_monitoring_status', 'error');
             return false;
         }
 
@@ -526,7 +526,7 @@ class WebChangeDetector_Admin_WordPress
             'url' => $url,
         );
 
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Searching for URL: ' . $url);
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Searching for URL: ' . $url, 'get_url_monitoring_status', 'debug');
 
         // Search in both groups for the URL.
         $manual_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2($manual_group_uuid, $url_filter);
@@ -537,7 +537,7 @@ class WebChangeDetector_Admin_WordPress
         $monitoring_urls = $monitoring_group_urls['data'] ?? array();
 
         if (empty($manual_urls) && empty($monitoring_urls)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] URL not found in any group: ' . $url);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] URL not found in any group: ' . $url, 'get_url_monitoring_status', 'error');
             return false;
         }
 
@@ -569,25 +569,25 @@ class WebChangeDetector_Admin_WordPress
 
         // Fallback: If we still don't have a URL ID but we have URL data, use the first available ID
         if (! $wcd_url_id) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] No exact URL match found, using fallback logic for URL: ' . $url);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] No exact URL match found, using fallback logic for URL: ' . $url, 'get_url_monitoring_status', 'debug');
 
             // Try to get ID from first manual URL
             if (! empty($manual_urls) && isset($manual_urls[0]['id'])) {
                 $wcd_url_id = $manual_urls[0]['id'];
                 $manual_url_data = $manual_urls[0];
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Using first manual URL ID: ' . $wcd_url_id);
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Using first manual URL ID: ' . $wcd_url_id, 'get_url_monitoring_status', 'debug');
             }
             // If not found in manual, try monitoring group
             elseif (! empty($monitoring_urls) && isset($monitoring_urls[0]['id'])) {
                 $wcd_url_id = $monitoring_urls[0]['id'];
                 $monitoring_url_data = $monitoring_urls[0];
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Using first monitoring URL ID: ' . $wcd_url_id);
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Using first monitoring URL ID: ' . $wcd_url_id, 'get_url_monitoring_status', 'debug');
             }
         }
 
         // Final check: Make sure we have a URL ID
         if (! $wcd_url_id) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] ERROR: No URL ID found for URL: ' . $url . ' - Manual URLs: ' . wp_json_encode($manual_urls) . ' - Monitoring URLs: ' . wp_json_encode($monitoring_urls));
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] ERROR: No URL ID found for URL: ' . $url . ' - Manual URLs: ' . wp_json_encode($manual_urls) . ' - Monitoring URLs: ' . wp_json_encode($monitoring_urls), 'get_url_monitoring_status', 'error');
             return false;
         }
 
@@ -608,7 +608,7 @@ class WebChangeDetector_Admin_WordPress
             ),
         );
 
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Response data: ' . wp_json_encode($response_data));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('[WCD Admin Bar] Response data: ' . wp_json_encode($response_data), 'get_url_monitoring_status', 'debug');
 
         return $response_data;
     }
@@ -787,7 +787,7 @@ class WebChangeDetector_Admin_WordPress
             $posts_per_batch = 1000;  // Number of posts to retrieve per query.
 
             do {
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Getting next chunk. Offset: ' . $offset);
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Getting next chunk. Offset: ' . $offset, 'get_all_posts_data', 'debug');
                 // Set up WP_Query arguments.
                 $args = array(
                     'post_type'      => $single_post_type,  // Pass the array of post types.
@@ -829,7 +829,7 @@ class WebChangeDetector_Admin_WordPress
 
                 // Increment the offset for the next batch.
                 $offset += $posts_per_batch;
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Sending Posts.');
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Sending Posts.', 'get_all_posts_data', 'debug');
 
                 // Call uploadUrls after every batch.
                 $this->upload_urls_in_batches($all_posts_data);
@@ -940,12 +940,12 @@ class WebChangeDetector_Admin_WordPress
     public function sync_single_post($single_post)
     {
         if (! empty($single_post)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Start single url sync');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Start single url sync', 'sync_single_post', 'debug');
             $collection_uuid = wp_generate_uuid4();
             $response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls($single_post, $collection_uuid);
             $response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync(false, $collection_uuid);
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response upload URLs: ' . $response_sync_urls);
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response Start URL sync: ' . $response_start_url_sync);
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response upload URLs: ' . $response_sync_urls, 'sync_single_post', 'debug');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response Start URL sync: ' . $response_start_url_sync, 'sync_single_post', 'debug');
         }
     }
 
@@ -968,7 +968,7 @@ class WebChangeDetector_Admin_WordPress
             return date_i18n('d.m.Y H:i', $last_sync);
         }
 
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Starting Sync');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Starting Sync', 'sync_posts', 'debug');
         update_option('wcd_last_urls_sync', date_i18n('U'));
 
         // Clear any existing sync URLs to start fresh.
@@ -982,7 +982,7 @@ class WebChangeDetector_Admin_WordPress
 
         // We only sync the frontpage.
         if (! empty($website_details['allowances']['only_frontpage'])) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("only frontpage: " . print_r($website_details['allowances']['only_frontpage'], true));
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error("only frontpage: " . print_r($website_details['allowances']['only_frontpage'], true), 'sync_posts', 'debug');
             $array['frontpage%%Frontpage'][] = array(
                 'url'        => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
                 'html_title' => get_bloginfo('name'),
@@ -1010,7 +1010,7 @@ class WebChangeDetector_Admin_WordPress
             }
 
             if (! empty($post_type_names)) {
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing post types: ' . implode(', ', $post_type_names));
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing post types: ' . implode(', ', $post_type_names), 'sync_posts', 'debug');
                 $this->get_all_posts_data($post_type_names);
             }
 
@@ -1031,7 +1031,7 @@ class WebChangeDetector_Admin_WordPress
             }
 
             if (! empty($taxonomy_post_names)) {
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing taxonomies: ' . implode(', ', $taxonomy_post_names));
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing taxonomies: ' . implode(', ', $taxonomy_post_names), 'sync_posts', 'debug');
                 $this->get_all_terms_data($taxonomy_post_names);
             }
         }
@@ -1121,13 +1121,13 @@ class WebChangeDetector_Admin_WordPress
 
         // Check if we have any URLs to sync.
         if (empty($this->admin->sync_urls)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No URLs found to sync');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No URLs found to sync', 'sync_posts', 'error');
             return 'No URLs found to sync';
         }
 
         // Log the number of URL batches being synced.
         $total_batches = count($this->admin->sync_urls);
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing ' . $total_batches . ' URL batches');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing ' . $total_batches . ' URL batches', 'sync_posts', 'debug');
 
         // Create uuid for sync urls.
         $collection_uuid = wp_generate_uuid4();
@@ -1135,8 +1135,8 @@ class WebChangeDetector_Admin_WordPress
         // Sync urls.
         $response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls($this->admin->sync_urls, $collection_uuid);
         $response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync(true, $collection_uuid);
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response upload URLs: ' . print_r($response_sync_urls, 1));
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response Start URL sync: ' . print_r($response_start_url_sync, 1));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response upload URLs: ' . print_r($response_sync_urls, 1), 'sync_posts', 'debug');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response Start URL sync: ' . print_r($response_start_url_sync, 1), 'sync_posts', 'debug');
 
         return date_i18n('d/m/Y H:i');
     }

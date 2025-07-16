@@ -663,8 +663,6 @@ function currentlyProcessing() {
                 if (response.success && response.data) {
                     const data = response.data;
 
-                    // Debug logging
-                    console.log(data);
                     // Update monitoring stats
                     const monitoringElement = $('#wcd-monitoring-stats');
                     if (monitoringElement.length > 0) {

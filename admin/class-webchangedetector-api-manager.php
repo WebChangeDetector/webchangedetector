@@ -59,7 +59,7 @@ class WebChangeDetector_API_Manager {
 	 */
 	public function __construct( $api_token = '', $api_base_url = '' ) {
 		$this->api_token       = $api_token ?: get_option( 'webchangedetector_api_token', '' );
-		$this->api_base_url    = $api_base_url ?: 'https://api.webchangedetector.com/api/v1';
+		$this->api_base_url    = $api_base_url ?: 'https://api.webchangedetector.com/api/v2';
 		$this->default_timeout = 30;
 	}
 
@@ -416,13 +416,13 @@ class WebChangeDetector_API_Manager {
 	private function make_request( $url, $args ) {
 		// Log the request if debugging is enabled
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "API Request: {$args['method']} {$url}", 'API' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "API Request: {$args['method']} {$url}", 'api_manager', 'debug' );
 		}
 
 		$response = wp_remote_request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API Request failed: ' . $response->get_error_message(), 'API' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API Request failed: ' . $response->get_error_message(), 'api_manager', 'error' );
 			return $response;
 		}
 
@@ -431,7 +431,7 @@ class WebChangeDetector_API_Manager {
 
 		// Log the response if debugging is enabled
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "API Response: {$response_code}", 'API' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "API Response: {$response_code}", 'api_manager', 'debug' );
 		}
 
 		if ( $response_code >= 400 ) {
@@ -445,7 +445,7 @@ class WebChangeDetector_API_Manager {
 				}
 			}
 
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( $error_message, 'API' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( $error_message, 'api_manager', 'error' );
 			return new \WP_Error( 'api_error', $error_message, array( 'status' => $response_code ) );
 		}
 

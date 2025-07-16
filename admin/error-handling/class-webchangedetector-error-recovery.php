@@ -154,7 +154,7 @@ class WebChangeDetector_Error_Recovery {
 		);
 
 		// Store health check results.
-		update_option( 'webchangedetector_health_status', $health_results );
+		update_option( WCD_WP_OPTION_KEY_HEALTH_STATUS, $health_results );
 
 		return $health_results;
 	}
@@ -206,6 +206,7 @@ class WebChangeDetector_Error_Recovery {
 				
 				delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
 				delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
+				delete_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
 				
 				return array(
 					'success' => true,
@@ -469,7 +470,7 @@ class WebChangeDetector_Error_Recovery {
 	 * @return array Current health status.
 	 */
 	public function get_health_status() {
-		$health_status = get_option( 'webchangedetector_health_status' );
+		$health_status = get_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
 		
 		if ( empty( $health_status ) ) {
 			// Perform initial health check if none exists.
@@ -485,7 +486,7 @@ class WebChangeDetector_Error_Recovery {
 	 * @return array Fresh health status.
 	 */
 	public function refresh_health_status() {
-		delete_option( 'webchangedetector_health_status' );
+		delete_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
 		return $this->perform_health_check();
 	}
 } 

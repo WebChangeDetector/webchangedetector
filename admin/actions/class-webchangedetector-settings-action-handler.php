@@ -40,7 +40,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings data: ' . print_r( $data, true ) );
+            $this->admin->logger->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
 			if ( ! empty( $data['monitoring'] ) && (int)$data['monitoring'] === 1 ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
@@ -64,7 +64,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate monitoring settings.
 		$validation = $this->validate_monitoring_settings( $data );
 		if ( ! $validation['success'] ) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
+            $this->admin->logger->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
 			return $validation;
 		}
 
@@ -72,7 +72,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		$result = $this->admin->settings_handler->update_monitoring_settings( $data );
 		
 		// Debug: Log the result from update_monitoring_settings
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring settings update result: ' . print_r( $result, true ) );
+		$this->admin->logger->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
 		
 		// The settings handler now returns a standardized response format
 		return $result;
@@ -120,6 +120,34 @@ class WebChangeDetector_Settings_Action_Handler {
 			return array(
 				'success' => false,
 				'message' => 'Error saving admin bar setting: ' . $e->getMessage(),
+			);
+		}
+	}
+
+	/**
+	 * Handle debug logging setting save.
+	 *
+	 * @param array $data The debug logging setting data.
+	 * @return array Result with success status and message.
+	 */
+	public function handle_save_debug_logging_setting( $data ) {
+		try {
+			$enable_debug_logging = isset( $data['wcd_debug_logging'] ) ? 1 : 0;
+			update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $enable_debug_logging );
+			
+			// Update the logger instance if it exists
+			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'set_debug_enabled' ) ) {
+				$this->admin->logger->set_debug_enabled( $enable_debug_logging );
+			}
+			
+			return array(
+				'success' => true,
+				'message' => 'Debug logging setting saved successfully.',
+			);
+		} catch ( \Exception $e ) {
+			return array(
+				'success' => false,
+				'message' => 'Error saving debug logging setting: ' . $e->getMessage(),
 			);
 		}
 	}

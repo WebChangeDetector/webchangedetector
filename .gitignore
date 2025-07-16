@@ -4,3 +4,4 @@ vendor/*
 deploy-wp.sh
 test-routines.txt
 tests/*
+logs/*

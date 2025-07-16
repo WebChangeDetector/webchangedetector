@@ -123,6 +123,33 @@ class WebChangeDetector_Settings_Controller {
 				</div>
 			</div>
 
+			<hr />
+
+			<div class="wcd-settings-section">
+				<div class="wcd-settings-card">
+					<h2>Debug Logging</h2>
+					<form method="post">
+					<?php wp_nonce_field( 'save_debug_logging_setting' ); ?>
+					<input type="hidden" name="wcd_action" value="save_debug_logging_setting">
+						
+						<div class="wcd-form-row">
+							<div class="wcd-form-label-wrapper">
+								<label class="wcd-form-label">Enable Debug Logging</label>
+								<div class="wcd-description">Enable detailed debug logging to help troubleshoot issues. Logs are stored in the plugin directory and older logs are automatically cleaned up after 14 days.</div>
+							</div>
+							<div class="wcd-form-control">
+								<label>
+									<input type="checkbox" name="wcd_debug_logging" value="1" <?php checked( get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, 0 ), 1 ); ?> />
+									Enable Debug Logging
+								</label>
+							</div>
+						</div>
+						
+						<?php submit_button( 'Save Debug Logging Setting' ); ?>
+					</form>
+				</div>
+			</div>
+
 			<hr>
 			<?php
 			if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * WebChange Detector Admin Utilities
  *
@@ -24,492 +25,499 @@ namespace WebChangeDetector;
  * @subpackage WebChangeDetector/admin
  * @author     WebChange Detector <support@webchangedetector.com>
  */
-class WebChangeDetector_Admin_Utils {
+class WebChangeDetector_Admin_Utils
+{
 
-	/**
-	 * Remove URL protocol from a given URL.
-	 *
-	 * Removes http:// or https:// protocol from URLs for display purposes
-	 * or when protocol-agnostic URLs are needed.
-	 *
-	 * @since 1.0.0
-	 * @param string $url The URL to process.
-	 * @return string The URL without protocol.
-	 */
-	public static function remove_url_protocol( $url ) {
-		if ( empty( $url ) ) {
-			return '';
-		}
+    /**
+     * Remove URL protocol from a given URL.
+     *
+     * Removes http:// or https:// protocol from URLs for display purposes
+     * or when protocol-agnostic URLs are needed.
+     *
+     * @since 1.0.0
+     * @param string $url The URL to process.
+     * @return string The URL without protocol.
+     */
+    public static function remove_url_protocol($url)
+    {
+        if (empty($url)) {
+            return '';
+        }
 
-		// Remove http:// or https:// protocol
-		$url = preg_replace( '/^https?:\/\//', '', $url );
+        // Remove http:// or https:// protocol
+        $url = preg_replace('/^https?:\/\//', '', $url);
 
-		return $url;
-	}
-
-
-	/**
-	 * Check if a string is valid JSON.
-	 *
-	 * Validates whether a given string contains valid JSON data.
-	 * Uses WordPress coding standards for validation.
-	 *
-	 * @since 1.0.0
-	 * @param string $string The string to validate.
-	 * @return bool True if valid JSON, false otherwise.
-	 */
-	public static function is_json( $string ) {
-		if ( empty( $string ) || ! is_string( $string ) ) {
-			return false;
-		}
-
-		// Attempt to decode JSON
-		json_decode( $string );
-
-		// Check if JSON decoding was successful
-		return json_last_error() === JSON_ERROR_NONE;
-	}
-
-	/**
-	 * Get device icon HTML for display.
-	 *
-	 * Returns appropriate icon HTML for desktop or mobile devices
-	 * following WordPress admin interface standards.
-	 *
-	 * @since 1.0.0
-	 * @param string $device The device type ('desktop' or 'mobile').
-	 * @return string HTML icon element.
-	 */
-	 public static function get_device_icon( $icon, $css_class = '' ) {
-		
-		$output = '';
-		if ( 'thumbnail' === $icon ) {
-			$output = '<span class="dashicons dashicons-camera-alt"></span>';
-		}
-		if ( 'desktop' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-laptop"></span>';
-		}
-		if ( 'mobile' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-smartphone"></span>';
-		}
-		if ( 'page' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-media-default"></span>';
-		}
-		if ( 'change-detections' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-view-site"></span>';
-		}
-		if ( 'dashboard' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-home"></span>';
-		}
-		if ( 'logs' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-menu-alt"></span>';
-		}
-		if ( 'settings' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-generic"></span>';
-		}
-		if ( 'website-settings' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-widgets-menus"></span>';
-		}
-		if ( 'help' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-editor-help"></span>';
-		}
-		if ( 'auto-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-clock"></span>';
-		}
-		if ( 'update-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
-		}
-		if ( 'auto-update-group' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
-		}
-		if ( 'trash' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
-		}
-		if ( 'check' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
-		}
-		if ( 'fail' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
-		}
-		if ( 'warning' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
-		}
-		if ( 'upgrade' === $icon ) {
-			$output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
-		}
-
-		echo wp_kses( $output, array( 'span' => array( 'class' => array() ) ) );
+        return $url;
     }
 
-	/**
-	 * Get user-friendly comparison status name.
-	 *
-	 * Converts internal comparison status codes to user-readable names
-	 * with proper internationalization support.
-	 *
-	 * @since 1.0.0
-	 * @param string $status The comparison status code.
-	 * @return string User-friendly status name.
-	 */
-	public static function get_comparison_status_name( $status ) {
-		$status_names = array(
-			'new'            => __( 'New', 'webchangedetector' ),
-			'ok'             => __( 'Ok', 'webchangedetector' ),
-			'to_fix'         => __( 'To Fix', 'webchangedetector' ),
-			'false_positive' => __( 'False Positive', 'webchangedetector' ),
-			'failed'         => __( 'Failed', 'webchangedetector' ),
-		);
 
-		return isset( $status_names[ $status ] ) ? $status_names[ $status ] : __( 'New', 'webchangedetector' );
-	}
+    /**
+     * Check if a string is valid JSON.
+     *
+     * Validates whether a given string contains valid JSON data.
+     * Uses WordPress coding standards for validation.
+     *
+     * @since 1.0.0
+     * @param string $string The string to validate.
+     * @return bool True if valid JSON, false otherwise.
+     */
+    public static function is_json($string)
+    {
+        if (empty($string) || ! is_string($string)) {
+            return false;
+        }
 
-	/**
-	 * Log error messages for debugging.
-	 *
-	 * Logs error messages using WordPress debugging standards.
-	 * Only logs when WP_DEBUG is enabled.
-	 *
-	 * @since 1.0.0
-	 * @param string $message The error message to log.
-	 * @param string $context Optional context for the error.
-	 */
-	public static function log_error( $message, $context = '' ) {
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			return;
-		}
+        // Attempt to decode JSON
+        json_decode($string);
 
-		$log_message = '[WebChangeDetector] ' . $message;
-		if ( ! empty( $context ) ) {
-			$log_message .= ' [Context: ' . $context . ']';
-		}
+        // Check if JSON decoding was successful
+        return json_last_error() === JSON_ERROR_NONE;
+    }
 
-		// Use WordPress error logging if available
-		if ( function_exists( 'error_log' ) ) {
-			error_log( $log_message );
-		}
-	}
+    /**
+     * Get device icon HTML for display.
+     *
+     * Returns appropriate icon HTML for desktop or mobile devices
+     * following WordPress admin interface standards.
+     *
+     * @since 1.0.0
+     * @param string $device The device type ('desktop' or 'mobile').
+     * @return string HTML icon element.
+     */
+    public static function get_device_icon($icon, $css_class = '')
+    {
 
-	/**
-	 * Extract domain from site URL.
-	 *
-	 * Extracts the domain name from a complete site URL,
-	 * removing protocol, www, and path components.
-	 *
-	 * @since 1.0.0
-	 * @param string $site_url The complete site URL.
-	 * @return string The extracted domain name.
-	 */
-	public static function get_domain_from_site_url( $site_url = '' ) {
-		if ( empty( $site_url ) ) {
-			$site_url = get_site_url();
-		}
+        $output = '';
+        if ('thumbnail' === $icon) {
+            $output = '<span class="dashicons dashicons-camera-alt"></span>';
+        }
+        if ('desktop' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-laptop"></span>';
+        }
+        if ('mobile' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-smartphone"></span>';
+        }
+        if ('page' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-media-default"></span>';
+        }
+        if ('change-detections' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-view-site"></span>';
+        }
+        if ('dashboard' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-home"></span>';
+        }
+        if ('logs' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-menu-alt"></span>';
+        }
+        if ('settings' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-generic"></span>';
+        }
+        if ('website-settings' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-widgets-menus"></span>';
+        }
+        if ('help' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-editor-help"></span>';
+        }
+        if ('auto-group' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-clock"></span>';
+        }
+        if ('update-group' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
+        }
+        if ('auto-update-group' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
+        }
+        if ('trash' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
+        }
+        if ('check' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
+        }
+        if ('fail' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
+        }
+        if ('warning' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
+        }
+        if ('upgrade' === $icon) {
+            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
+        }
 
-		// Parse URL components
-		$parsed_url = wp_parse_url( $site_url );
-		
-		if ( ! isset( $parsed_url['host'] ) ) {
-			return '';
-		}
+        echo wp_kses($output, array('span' => array('class' => array())));
+    }
 
-		$domain = $parsed_url['host'];
+    /**
+     * Get user-friendly comparison status name.
+     *
+     * Converts internal comparison status codes to user-readable names
+     * with proper internationalization support.
+     *
+     * @since 1.0.0
+     * @param string $status The comparison status code.
+     * @return string User-friendly status name.
+     */
+    public static function get_comparison_status_name($status)
+    {
+        $status_names = array(
+            'new'            => __('New', 'webchangedetector'),
+            'ok'             => __('Ok', 'webchangedetector'),
+            'to_fix'         => __('To Fix', 'webchangedetector'),
+            'false_positive' => __('False Positive', 'webchangedetector'),
+            'failed'         => __('Failed', 'webchangedetector'),
+        );
 
-		// Remove www prefix if present
-		$domain = preg_replace( '/^www\./', '', $domain );
+        return isset($status_names[$status]) ? $status_names[$status] : __('New', 'webchangedetector');
+    }
 
-		return $domain;
-	}
+    /**
+     * Log error messages for debugging.
+     *
+     * Logs error messages using WordPress debugging standards.
+     * Only logs when WP_DEBUG is enabled.
+     *
+     * @since 1.0.0
+     * @param string $message The error message to log.
+     * @param string $context Optional context for the error.
+     */
+    public static function log_error($message, $context = 'general', $severity = 'info')
+    {
+        $logger = new \WebChangeDetector\WebChangeDetector_Logger();
+        $logger->log($message, $context, $severity);
+    }
 
-	/**
-	 * Get post type slug.
-	 *
-	 * Retrieves the slug for a given post type object or name.
-	 *
-	 * @since 1.0.0
-	 * @param string|WP_Post_Type $post_type Post type object or name.
-	 * @return string Post type slug.
-	 */
-	public static function get_post_type_slug( $post_type ) {
-		if ( is_object( $post_type ) ) {
-			// Check if rest_base is set and not false/empty, otherwise use the post type name.
-			if ( ! empty( $post_type->rest_base ) ) {
-				return $post_type->rest_base;
-			}
-			if ( ! empty( $post_type->name ) ) {
-				return $post_type->name;
-			}
-		}
+    /**
+     * Extract domain from site URL.
+     *
+     * Extracts the domain name from a complete site URL,
+     * removing protocol, www, and path components.
+     *
+     * @since 1.0.0
+     * @param string $site_url The complete site URL.
+     * @return string The extracted domain name.
+     */
+    public static function get_domain_from_site_url($site_url = '')
+    {
+        if (empty($site_url)) {
+            $site_url = get_site_url();
+        }
 
-		if ( is_string( $post_type ) ) {
-			return $post_type;
-		}
+        // Parse URL components
+        $parsed_url = wp_parse_url($site_url);
 
-		return '';
-	}
+        if (! isset($parsed_url['host'])) {
+            return '';
+        }
 
-	/**
-	 * Get post type display name.
-	 *
-	 * Retrieves the human-readable name for a given post type.
-	 * Uses labels->name to match exactly what the sync process uses.
-	 *
-	 * @since 1.0.0
-	 * @param string|WP_Post_Type $post_type Post type object or name.
-	 * @return string Post type display name.
-	 */
-	public static function get_post_type_name( $post_type ) {
-		if ( is_object( $post_type ) && isset( $post_type->labels->name ) ) {
-			return $post_type->labels->name;
-		}
+        $domain = $parsed_url['host'];
 
-		if ( is_string( $post_type ) ) {
+        // Remove www prefix if present
+        $domain = preg_replace('/^www\./', '', $domain);
+
+        return $domain;
+    }
+
+    /**
+     * Get post type slug.
+     *
+     * Retrieves the slug for a given post type object or name.
+     *
+     * @since 1.0.0
+     * @param string|WP_Post_Type $post_type Post type object or name.
+     * @return string Post type slug.
+     */
+    public static function get_post_type_slug($post_type)
+    {
+        if (is_object($post_type)) {
+            // Check if rest_base is set and not false/empty, otherwise use the post type name.
+            if (! empty($post_type->rest_base)) {
+                return $post_type->rest_base;
+            }
+            if (! empty($post_type->name)) {
+                return $post_type->name;
+            }
+        }
+
+        if (is_string($post_type)) {
+            return $post_type;
+        }
+
+        return '';
+    }
+
+    /**
+     * Get post type display name.
+     *
+     * Retrieves the human-readable name for a given post type.
+     * Uses labels->name to match exactly what the sync process uses.
+     *
+     * @since 1.0.0
+     * @param string|WP_Post_Type $post_type Post type object or name.
+     * @return string Post type display name.
+     */
+    public static function get_post_type_name($post_type)
+    {
+        if (is_object($post_type) && isset($post_type->labels->name)) {
+            return $post_type->labels->name;
+        }
+
+        if (is_string($post_type)) {
             $post_type = self::get_post_type_slug_from_rest_base($post_type);
-			$post_type_object = get_post_type_object( $post_type );
-           
-			if ( $post_type_object && isset( $post_type_object->labels->name ) ) {
-				return $post_type_object->labels->name;
-			}
-		}
+            $post_type_object = get_post_type_object($post_type);
 
-		return ucfirst( $post_type );
-	}
+            if ($post_type_object && isset($post_type_object->labels->name)) {
+                return $post_type_object->labels->name;
+            }
+        }
 
-	/**
-	 * Get post type name from rest_base or slug.
-	 *
-	 * Converts rest_base back to actual post type name, then gets the label.
-	 * This handles cases where we have rest_base but need the actual post type label.
-	 * Uses labels->name to match exactly what the sync process uses.
-	 *
-	 * @since 1.0.0
-	 * @param string $rest_base_or_slug The rest_base or post type slug.
-	 * @return string Post type display name.
-	 */
-	public static function get_post_type_name_from_rest_base( $rest_base_or_slug ) {
-		// First try as direct post type name
-		$post_type_object = get_post_type_object( $rest_base_or_slug );
-		if ( $post_type_object && isset( $post_type_object->labels->name ) ) {
-			return $post_type_object->labels->name;
-		}
+        return ucfirst($post_type);
+    }
 
-		// If not found, search through all post types to find one with matching rest_base
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
-		foreach ( $post_types as $post_type ) {
-			$current_rest_base = self::get_post_type_slug( $post_type );
-			if ( $current_rest_base === $rest_base_or_slug ) {
-				return $post_type->labels->name;
-			}
-		}
+    /**
+     * Get post type name from rest_base or slug.
+     *
+     * Converts rest_base back to actual post type name, then gets the label.
+     * This handles cases where we have rest_base but need the actual post type label.
+     * Uses labels->name to match exactly what the sync process uses.
+     *
+     * @since 1.0.0
+     * @param string $rest_base_or_slug The rest_base or post type slug.
+     * @return string Post type display name.
+     */
+    public static function get_post_type_name_from_rest_base($rest_base_or_slug)
+    {
+        // First try as direct post type name
+        $post_type_object = get_post_type_object($rest_base_or_slug);
+        if ($post_type_object && isset($post_type_object->labels->name)) {
+            return $post_type_object->labels->name;
+        }
 
-		// Fallback to ucfirst if not found
-		return ucfirst( $rest_base_or_slug );
-	}
+        // If not found, search through all post types to find one with matching rest_base
+        $post_types = get_post_types(array('public' => true), 'objects');
+        foreach ($post_types as $post_type) {
+            $current_rest_base = self::get_post_type_slug($post_type);
+            if ($current_rest_base === $rest_base_or_slug) {
+                return $post_type->labels->name;
+            }
+        }
 
-	/**
-	 * Get WordPress post type slug from rest_base.
-	 *
-	 * Converts rest_base back to the actual WordPress post type slug (internal name).
-	 * This is needed when we have rest_base but need the WordPress post type slug.
-	 *
-	 * @since 1.0.0
-	 * @param string $rest_base The rest_base to convert.
-	 * @return string WordPress post type slug.
-	 */
-	public static function get_post_type_slug_from_rest_base( $rest_base ) {
-		// First try as direct post type slug
-		if ( post_type_exists( $rest_base ) ) {
-			return $rest_base;
-		}
+        // Fallback to ucfirst if not found
+        return ucfirst($rest_base_or_slug);
+    }
 
-		// If not found, search through all post types to find one with matching rest_base
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
-		foreach ( $post_types as $post_type ) {
-			$current_rest_base = self::get_post_type_slug( $post_type );
-			if ( $current_rest_base === $rest_base ) {
-				return $post_type->name; // Return the actual WordPress post type slug
-			}
-		}
+    /**
+     * Get WordPress post type slug from rest_base.
+     *
+     * Converts rest_base back to the actual WordPress post type slug (internal name).
+     * This is needed when we have rest_base but need the WordPress post type slug.
+     *
+     * @since 1.0.0
+     * @param string $rest_base The rest_base to convert.
+     * @return string WordPress post type slug.
+     */
+    public static function get_post_type_slug_from_rest_base($rest_base)
+    {
+        // First try as direct post type slug
+        if (post_type_exists($rest_base)) {
+            return $rest_base;
+        }
 
-		// Fallback to the input if not found
-		return $rest_base;
-	}
+        // If not found, search through all post types to find one with matching rest_base
+        $post_types = get_post_types(array('public' => true), 'objects');
+        foreach ($post_types as $post_type) {
+            $current_rest_base = self::get_post_type_slug($post_type);
+            if ($current_rest_base === $rest_base) {
+                return $post_type->name; // Return the actual WordPress post type slug
+            }
+        }
 
-	/**
-	 * Get taxonomy slug.
-	 *
-	 * Retrieves the slug for a given taxonomy object or name.
-	 *
-	 * @since 1.0.0
-	 * @param string|WP_Taxonomy $taxonomy Taxonomy object or name.
-	 * @return string Taxonomy slug.
-	 */
-	public static function get_taxonomy_slug( $taxonomy ) {
-		if ( is_object( $taxonomy ) && isset( $taxonomy->name ) ) {
-			return $taxonomy->name;
-		}
+        // Fallback to the input if not found
+        return $rest_base;
+    }
 
-		if ( is_string( $taxonomy ) ) {
-			return $taxonomy;
-		}
+    /**
+     * Get taxonomy slug.
+     *
+     * Retrieves the slug for a given taxonomy object or name.
+     *
+     * @since 1.0.0
+     * @param string|WP_Taxonomy $taxonomy Taxonomy object or name.
+     * @return string Taxonomy slug.
+     */
+    public static function get_taxonomy_slug($taxonomy)
+    {
+        if (is_object($taxonomy) && isset($taxonomy->name)) {
+            return $taxonomy->name;
+        }
 
-		return '';
-	}
+        if (is_string($taxonomy)) {
+            return $taxonomy;
+        }
 
-	/**
-	 * Get taxonomy display name.
-	 *
-	 * Retrieves the human-readable name for a given taxonomy.
-	 * Uses labels->name to match exactly what the sync process uses.
-	 *
-	 * @since 1.0.0
-	 * @param string|WP_Taxonomy $taxonomy Taxonomy object or name.
-	 * @return string Taxonomy display name.
-	 */
-	public static function get_taxonomy_name( $taxonomy ) {
-		if ( is_object( $taxonomy ) && isset( $taxonomy->labels->name ) ) {
-			return $taxonomy->labels->name;
-		}
+        return '';
+    }
 
-		if ( is_string( $taxonomy ) ) {
-			$taxonomy_object = get_taxonomy( $taxonomy );
-			if ( $taxonomy_object && isset( $taxonomy_object->labels->name ) ) {
-				return $taxonomy_object->labels->name;
-			}
-		}
+    /**
+     * Get taxonomy display name.
+     *
+     * Retrieves the human-readable name for a given taxonomy.
+     * Uses labels->name to match exactly what the sync process uses.
+     *
+     * @since 1.0.0
+     * @param string|WP_Taxonomy $taxonomy Taxonomy object or name.
+     * @return string Taxonomy display name.
+     */
+    public static function get_taxonomy_name($taxonomy)
+    {
+        if (is_object($taxonomy) && isset($taxonomy->labels->name)) {
+            return $taxonomy->labels->name;
+        }
 
-		return ucfirst( $taxonomy );
-	}
+        if (is_string($taxonomy)) {
+            $taxonomy_object = get_taxonomy($taxonomy);
+            if ($taxonomy_object && isset($taxonomy_object->labels->name)) {
+                return $taxonomy_object->labels->name;
+            }
+        }
 
-	/**
-	 * Get taxonomy name from slug.
-	 *
-	 * Handles cases where we have taxonomy slug but need the actual taxonomy label.
-	 * Unlike post types, taxonomy slugs are typically the same as the taxonomy name.
-	 * Uses labels->name to match exactly what the sync process uses.
-	 *
-	 * @since 1.0.0
-	 * @param string $taxonomy_slug The taxonomy slug.
-	 * @return string Taxonomy display name.
-	 */
-	public static function get_taxonomy_name_from_slug( $taxonomy_slug ) {
-		// Try direct lookup first
-		$taxonomy_object = get_taxonomy( $taxonomy_slug );
-		if ( $taxonomy_object && isset( $taxonomy_object->labels->name ) ) {
-			return $taxonomy_object->labels->name;
-		}
+        return ucfirst($taxonomy);
+    }
 
-		// For taxonomies, the slug is typically the same as the name, 
-		// so we don't need complex reverse lookup like with post types
-		return ucfirst( $taxonomy_slug );
-	}
+    /**
+     * Get taxonomy name from slug.
+     *
+     * Handles cases where we have taxonomy slug but need the actual taxonomy label.
+     * Unlike post types, taxonomy slugs are typically the same as the taxonomy name.
+     * Uses labels->name to match exactly what the sync process uses.
+     *
+     * @since 1.0.0
+     * @param string $taxonomy_slug The taxonomy slug.
+     * @return string Taxonomy display name.
+     */
+    public static function get_taxonomy_name_from_slug($taxonomy_slug)
+    {
+        // Try direct lookup first
+        $taxonomy_object = get_taxonomy($taxonomy_slug);
+        if ($taxonomy_object && isset($taxonomy_object->labels->name)) {
+            return $taxonomy_object->labels->name;
+        }
 
-	/**
-	 * Sanitize and validate comparison status.
-	 *
-	 * Ensures comparison status is valid and safe to use.
-	 *
-	 * @since 1.0.0
-	 * @param string $status The status to validate.
-	 * @return string Valid status or empty string if invalid.
-	 */
-	public static function sanitize_comparison_status( $status ) {
-		$valid_statuses = array( 'new', 'ok', 'to_fix', 'false_positive' );
-		
-		$status = sanitize_text_field( $status );
-		
-		return in_array( $status, $valid_statuses, true ) ? $status : '';
-	}
+        // For taxonomies, the slug is typically the same as the name, 
+        // so we don't need complex reverse lookup like with post types
+        return ucfirst($taxonomy_slug);
+    }
 
-	/**
-	 * Format file size for display.
-	 *
-	 * Converts bytes to human-readable format following WordPress standards.
-	 *
-	 * @since 1.0.0
-	 * @param int $bytes File size in bytes.
-	 * @param int $precision Number of decimal places.
-	 * @return string Formatted file size.
-	 */
-	public static function format_file_size( $bytes, $precision = 2 ) {
-		if ( $bytes <= 0 ) {
-			return '0 B';
-		}
+    /**
+     * Sanitize and validate comparison status.
+     *
+     * Ensures comparison status is valid and safe to use.
+     *
+     * @since 1.0.0
+     * @param string $status The status to validate.
+     * @return string Valid status or empty string if invalid.
+     */
+    public static function sanitize_comparison_status($status)
+    {
+        $valid_statuses = array('new', 'ok', 'to_fix', 'false_positive');
 
-		$units = array( 'B', 'KB', 'MB', 'GB', 'TB' );
-		$base  = log( $bytes, 1024 );
-		$index = floor( $base );
+        $status = sanitize_text_field($status);
 
-		if ( $index >= count( $units ) ) {
-			$index = count( $units ) - 1;
-		}
+        return in_array($status, $valid_statuses, true) ? $status : '';
+    }
 
-		$size = round( pow( 1024, $base - $index ), $precision );
+    /**
+     * Format file size for display.
+     *
+     * Converts bytes to human-readable format following WordPress standards.
+     *
+     * @since 1.0.0
+     * @param int $bytes File size in bytes.
+     * @param int $precision Number of decimal places.
+     * @return string Formatted file size.
+     */
+    public static function format_file_size($bytes, $precision = 2)
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
 
-		return $size . ' ' . $units[ $index ];
-	}
+        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $base  = log($bytes, 1024);
+        $index = floor($base);
 
-	/**
-	 * Check if current user has required capabilities.
-	 *
-	 * Validates user permissions for WebChangeDetector operations.
-	 *
-	 * @since 1.0.0
-	 * @param string $capability Required capability.
-	 * @return bool True if user has capability, false otherwise.
-	 */
-	public static function current_user_can_manage_webchangedetector( $capability = 'manage_options' ) {
-		return current_user_can( $capability );
-	}
+        if ($index >= count($units)) {
+            $index = count($units) - 1;
+        }
 
-	/**
-	 * Generate nonce for WebChangeDetector actions.
-	 *
-	 * Creates secure nonces following WordPress security standards.
-	 *
-	 * @since 1.0.0
-	 * @param string $action The action for which to create nonce.
-	 * @return string Generated nonce.
-	 */
-	public static function create_nonce( $action ) {
-		return wp_create_nonce( 'webchangedetector_' . $action );
-	}
+        $size = round(pow(1024, $base - $index), $precision);
 
-	/**
-	 * Verify nonce for WebChangeDetector actions.
-	 *
-	 * Validates nonces following WordPress security standards.
-	 *
-	 * @since 1.0.0
-	 * @param string $nonce  The nonce to verify.
-	 * @param string $action The action for which to verify nonce.
-	 * @return bool True if nonce is valid, false otherwise.
-	 */
-	public static function verify_nonce( $nonce, $action ) {
-		return wp_verify_nonce( $nonce, 'webchangedetector_' . $action );
-	}
+        return $size . ' ' . $units[$index];
+    }
 
-	/**
-	 * Get parameters from URL.
-	 *
-	 * Extracts URL parameters and returns them as an array.
-	 * Handles various URL formats following WordPress standards.
-	 *
-	 * @since 1.0.0
-	 * @param string $url The URL to extract parameters from.
-	 * @return array Array of URL parameters.
-	 */
-	public static function get_params_of_url( $url ) {
-		if ( empty( $url ) ) {
-			return false;
-		}
+    /**
+     * Check if current user has required capabilities.
+     *
+     * Validates user permissions for WebChangeDetector operations.
+     *
+     * @since 1.0.0
+     * @param string $capability Required capability.
+     * @return bool True if user has capability, false otherwise.
+     */
+    public static function current_user_can_manage_webchangedetector($capability = 'manage_options')
+    {
+        return current_user_can($capability);
+    }
 
-		$url_components = wp_parse_url( $url );
-		if ( ! isset( $url_components['query'] ) ) {
-			return array();
-		}
+    /**
+     * Generate nonce for WebChangeDetector actions.
+     *
+     * Creates secure nonces following WordPress security standards.
+     *
+     * @since 1.0.0
+     * @param string $action The action for which to create nonce.
+     * @return string Generated nonce.
+     */
+    public static function create_nonce($action)
+    {
+        return wp_create_nonce('webchangedetector_' . $action);
+    }
 
-		parse_str( $url_components['query'], $params );
-		return $params;
-	}
+    /**
+     * Verify nonce for WebChangeDetector actions.
+     *
+     * Validates nonces following WordPress security standards.
+     *
+     * @since 1.0.0
+     * @param string $nonce  The nonce to verify.
+     * @param string $action The action for which to verify nonce.
+     * @return bool True if nonce is valid, false otherwise.
+     */
+    public static function verify_nonce($nonce, $action)
+    {
+        return wp_verify_nonce($nonce, 'webchangedetector_' . $action);
+    }
 
+    /**
+     * Get parameters from URL.
+     *
+     * Extracts URL parameters and returns them as an array.
+     * Handles various URL formats following WordPress standards.
+     *
+     * @since 1.0.0
+     * @param string $url The URL to extract parameters from.
+     * @return array Array of URL parameters.
+     */
+    public static function get_params_of_url($url)
+    {
+        if (empty($url)) {
+            return false;
+        }
 
+        $url_components = wp_parse_url($url);
+        if (! isset($url_components['query'])) {
+            return array();
+        }
+
+        parse_str($url_components['query'], $params);
+        return $params;
+    }
 }

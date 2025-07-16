@@ -274,7 +274,7 @@ class WebChangeDetector_Admin_AJAX {
 		// Delegate to WordPress handler
 		if ( $this->admin && $this->admin->wordpress_handler && method_exists( $this->admin->wordpress_handler, 'sync_posts' ) && method_exists( $this->admin->settings_handler, 'get_website_details' ) ) {
 			$force = isset( $_POST['force'] ) ? sanitize_text_field( wp_unslash( $_POST['force'] ) ) : 0;
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Force? ' . (bool) $force, 'sync_posts', 'debug');
 			$response = $this->admin->wordpress_handler->sync_posts( (bool) $force, $this->admin->settings_handler->get_website_details() );
 			if ( $response ) {
 				echo esc_html( $response );
@@ -505,13 +505,13 @@ class WebChangeDetector_Admin_AJAX {
 				$result = $this->admin->create_website_and_groups();
 				
 				if ( isset( $result['error'] ) ) {
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Can't create website and groups. Response: " . wp_json_encode( $result ) );
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Can't create website and groups. Response: " . wp_json_encode( $result ), 'create_website_and_groups', 'error');
 					wp_send_json_error( array( 'message' => $result['error'] ) );
 				} else {
 					wp_send_json_success( $result );
 				}
 			} catch ( \Exception $e ) {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Exception during website creation: " . $e->getMessage() );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Exception during website creation: " . $e->getMessage(), 'create_website_and_groups', 'error');
 				wp_send_json_error( array( 'message' => $e->getMessage() ) );
 			}
 		} else {
@@ -642,7 +642,7 @@ class WebChangeDetector_Admin_AJAX {
 				}
 			} catch ( \Exception $e ) {
 				// Error accessing account - still waiting for activation
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Account activation check failed: ' . $e->getMessage() );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Account activation check failed: ' . $e->getMessage(), 'check_activation_status', 'error');
 				wp_send_json_success( array( 'activated' => false, 'message' => __( 'Account activation pending.', 'webchangedetector' ) ) );
 			}
 		} else {
@@ -792,19 +792,19 @@ class WebChangeDetector_Admin_AJAX {
 	 * @since 1.0.0
 	 */
 	public function ajax_update_sync_types_with_local_labels() {
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: update_sync_types_with_local_labels called' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: update_sync_types_with_local_labels called', 'update_sync_types_with_local_labels', 'debug');
 		
 		// Verify nonce for security
 		check_ajax_referer( 'wcd_ajax_nonce', 'nonce' );
 
 		// Verify user capabilities
 		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::current_user_can_manage_webchangedetector() ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: User capabilities check failed' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: User capabilities check failed', 'update_sync_types_with_local_labels', 'error');
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'webchangedetector' ) ), 403 );
 		}
 
 		try {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Starting sync types update with local labels' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Starting sync types update with local labels', 'update_sync_types_with_local_labels', 'debug');
 			
 			// Get current website details with existing sync_url_types
 			$website_details = $this->admin->settings_handler->get_website_details( true );
@@ -814,7 +814,7 @@ class WebChangeDetector_Admin_AJAX {
 				wp_send_json_error( array( 'message' => __( 'Unable to load website details.', 'webchangedetector' ) ) );
 			}
 
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Website details loaded, sync_url_types count: ' . ( ! empty( $website_details['sync_url_types'] ) ? count( $website_details['sync_url_types'] ) : '0' ) );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Website details loaded, sync_url_types count: ' . ( ! empty( $website_details['sync_url_types'] ) ? count( $website_details['sync_url_types'] ) : '0' ), 'update_sync_types_with_local_labels', 'debug');
 
 			// If no sync_url_types exist, create default ones (Posts and Pages as per API defaults)
 			if ( empty( $website_details['sync_url_types'] ) ) {
@@ -877,33 +877,33 @@ class WebChangeDetector_Admin_AJAX {
 				}
 				
 				$website_details['sync_url_types'] = $default_sync_types;
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Created default sync types: ' . print_r( $default_sync_types, true ) );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Created default sync types: ' . print_r( $default_sync_types, true ), 'update_sync_types_with_local_labels', 'debug');
 			}
 
 			// Update sync_url_types with local labels using existing method
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updating sync types with local names' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updating sync types with local names', 'update_sync_types_with_local_labels', 'debug');
 			
 			// Check if the method exists
 			if ( ! method_exists( $this->admin->settings_handler, 'update_sync_url_types_with_local_names' ) ) {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Method update_sync_url_types_with_local_names does not exist' );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Method update_sync_url_types_with_local_names does not exist', 'update_sync_types_with_local_labels', 'error');
 				wp_send_json_error( array( 'message' => __( 'Update method not available.', 'webchangedetector' ) ) );
 			}
 			
 			$updated_sync_types = $this->admin->settings_handler->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
 			
 			if ( empty( $updated_sync_types ) ) {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updated sync types is empty' );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Updated sync types is empty', 'update_sync_types_with_local_labels', 'error');
 				wp_send_json_error( array( 'message' => __( 'Failed to update sync types.', 'webchangedetector' ) ) );
 			}
 			
 			$website_details['sync_url_types'] = $updated_sync_types;
 			
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Saving updated website details' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Saving updated website details', 'update_sync_types_with_local_labels', 'debug');
 			
 			// Save the updated website details
 			$update_result = $this->admin->settings_handler->update_website_details( $website_details );
 			
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Update result: ' . print_r( $update_result, true ) );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Update result: ' . print_r( $update_result, true ), 'update_sync_types_with_local_labels', 'debug');
 			
 			wp_send_json_success( array( 
 				'message' => __( 'Sync types updated with local labels.', 'webchangedetector' ),
@@ -911,7 +911,7 @@ class WebChangeDetector_Admin_AJAX {
 			) );
 
 		} catch ( \Exception $e ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Exception in sync types update: ' . $e->getMessage() );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WCD AJAX: Exception in sync types update: ' . $e->getMessage(), 'update_sync_types_with_local_labels', 'error');
 			wp_send_json_error( array( 'message' => 'Error: ' . $e->getMessage() ) );
 		}
 	}

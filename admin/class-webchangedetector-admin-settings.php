@@ -80,8 +80,8 @@ class WebChangeDetector_Admin_Settings
     public function update_monitoring_settings($group_data)
     {
         // Debug: Log what we received for monitoring settings
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Monitoring POST data received: ' . print_r($group_data, true));
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Full $_POST data: ' . print_r($_POST, true));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Monitoring POST data received: ' . print_r($group_data, true), 'monitoring_settings', 'debug');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Full $_POST data: ' . print_r($_POST, true), 'monitoring_settings', 'debug');
 
         $monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2($this->admin->monitoring_group_uuid)['data'];
 
@@ -100,12 +100,12 @@ class WebChangeDetector_Admin_Settings
         }
 
         // Debug: Log what we're sending to the API
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API update args: ' . print_r($args, true));
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Monitoring group UUID: ' . $this->admin->monitoring_group_uuid);
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API update args: ' . print_r($args, true), 'monitoring_settings', 'debug');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug');
 
         // Check if monitoring group UUID exists
         if (empty($this->admin->monitoring_group_uuid)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('ERROR: Monitoring group UUID is empty!');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error');
             return array(
                 'success' => false,
                 'message' => 'Monitoring group UUID is not set. Please contact support.',
@@ -114,7 +114,7 @@ class WebChangeDetector_Admin_Settings
         $result = \WebChangeDetector\WebChangeDetector_API_V2::update_group($this->admin->monitoring_group_uuid, $args);
 
         // Debug: Log the API response
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API response: ' . print_r($result, true));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API response: ' . print_r($result, true), 'monitoring_settings', 'debug');
 
         // Return standardized response format
         if ($result && ! is_string($result)) {
@@ -145,7 +145,7 @@ class WebChangeDetector_Admin_Settings
     public function update_manual_check_group_settings($postdata)
     {
         // Debug: Log what we received
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('POST data received: ' . print_r($postdata, true));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('POST data received: ' . print_r($postdata, true), 'manual_check_group_settings', 'debug');
 
         // Saving auto update settings.
         $auto_update_settings = array();
@@ -182,7 +182,7 @@ class WebChangeDetector_Admin_Settings
         }
 
         // Debug: Log what auto update settings we extracted
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto update settings extracted: ' . print_r($auto_update_settings, true));
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto update settings extracted: ' . print_r($auto_update_settings, true), 'manual_check_group_settings', 'debug');
 
         $this->admin->website_details['auto_update_settings'] = $auto_update_settings;
         $this->update_website_details($this->admin->website_details);
