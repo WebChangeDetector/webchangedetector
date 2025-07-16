@@ -125,6 +125,12 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
                 </div>
             </div>
 
+            <div class="wcd-form-row monitoring-setting wcd-monitoring-alert-zapier" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+                <label class="wcd-form-label">Notification to Zapier</label>
+                <p>Conntect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.</p>
+                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a></p>
+            </div>
+
             <div class="wcd-form-row css-injection wcd-monitoring-css">
                 <div class="wcd-form-label-wrapper">
                     <label class="wcd-form-label">CSS Settings</label>
@@ -145,36 +151,17 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
 
     <script type="text/javascript">
         function wcdValidateFormAutoSettings() {
-            // Debug: Log form validation attempt
-            if (typeof console !== 'undefined') {
-                console.log('Auto settings form validation started');
-            }
-            
             // Only validate if monitoring is enabled
             var monitoringEnabled = document.querySelector('input[name="enabled"]');
             if (monitoringEnabled && monitoringEnabled.checked) {
-                // Debug: Log validation state
-                if (typeof console !== 'undefined') {
-                    console.log('Monitoring enabled, validating...');
-                }
-                
                 // Validate email if present.
                 if (typeof window['validate_alert_emails'] === 'function') {
-                    if (typeof console !== 'undefined') {
-                        console.log('Calling alert emails validation function');
-                    }
                     if (!window['validate_alert_emails']()) {
-                        if (typeof console !== 'undefined') {
-                            console.log('Alert emails validation failed');
-                        }
                         return false;
                     }
                 }
             }
 
-            if (typeof console !== 'undefined') {
-                console.log('Auto settings form validation passed');
-            }
             return true;
         }
     </script>

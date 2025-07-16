@@ -53,15 +53,14 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/toggle-section.php';
                     ?>
                 </div>
-            </div>
-
-            <!-- Auto Update Information Accordion - Always visible underneath the toggle -->
-            <div class="wcd-form-row wcd-auto-update-setting-enabled-auto-updates">
-                <div class="wcd-form-control" style="grid-column: 1 / -1;">
-                    <?php
-                    // Auto Update Information Component.
-                    include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-info.php';
-                    ?>
+                <!-- Auto Update Information Accordion - Always visible underneath the toggle -->
+                <div class="wcd-form-row wcd-auto-update-setting-enabled-auto-updates">
+                    <div class="wcd-form-control" style="grid-column: 1 / -1;">
+                        <?php
+                        // Auto Update Information Component.
+                        include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-info.php';
+                        ?>
+                    </div>
                 </div>
             </div>
 
@@ -119,6 +118,12 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
                     ?>
                 </div>
+            </div>
+
+            <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-zapier" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+                <label class="wcd-form-label">Notification to Zapier</label>
+                <p>Conntect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.</p>
+                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a></p>
             </div>
 
             <div class="wcd-form-row wcd-auto-update-setting-threshold">
@@ -183,14 +188,11 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
             // Only validate if auto update checks are enabled
             var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
             if (autoUpdateEnabled && autoUpdateEnabled.checked) {
-                // Validate weekdays.
-                var weekdayCheckboxes = document.querySelectorAll('input[name*="auto_update_checks_"]:checked');
-                if (weekdayCheckboxes.length === 0) {
-                    var errorElement = document.getElementById('error-on-days-validation');
-                    if (errorElement) {
-                        errorElement.style.display = 'block';
+                // Validate weekdays using the component's validation function
+                if (typeof window['validate_weekdays_auto_update_checks'] === 'function') {
+                    if (!window['validate_weekdays_auto_update_checks']()) {
+                        return false;
                     }
-                    return false;
                 }
 
                 // Validate email if present.

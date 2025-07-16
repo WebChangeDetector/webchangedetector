@@ -88,17 +88,6 @@ $weekdays = array(
             function validateWeekdays() {
                 var checkedBoxes = document.querySelectorAll('#auto_update_checks_weekday_container input[name*="' + namePrefix + '"][type="checkbox"]:checked');
 
-                // Debug: Log validation attempt
-                if (typeof console !== 'undefined') {
-                    console.log('Validating weekdays with prefix: ' + namePrefix);
-                    console.log('Query selector: input[name*="' + namePrefix + '"][type="checkbox"]:checked');
-                    console.log('Found checked boxes: ' + checkedBoxes.length);
-
-                    // Additional debug: Show what we found
-                    for (var i = 0; i < checkedBoxes.length; i++) {
-                        console.log('Checked box ' + i + ': name=' + checkedBoxes[i].name + ', value=' + checkedBoxes[i].value + ', type=' + checkedBoxes[i].type);
-                    }
-                }
 
                 if (checkedBoxes.length === 0) {
                     if (errorElement) errorElement.style.display = 'block';
@@ -119,11 +108,6 @@ $weekdays = array(
             // Make validation function globally available for form submission
             window['validate_weekdays_' + namePrefix.replace(/_$/, '')] = validateWeekdays;
 
-            // Debug: Log function registration
-            if (typeof console !== 'undefined') {
-                console.log('Weekday validation function registered: validate_weekdays_' + namePrefix.replace(/_$/, ''));
-                console.log('Function available: ' + typeof window['validate_weekdays_' + namePrefix.replace(/_$/, '')]);
-            }
         });
     </script>
 <?php endif; ?>
