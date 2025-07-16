@@ -1,5 +1,5 @@
 === Web Change Detector ===
-Contributors: Mike.Miler,Repat
+Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.8
@@ -56,10 +56,11 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 = 4.0.0 =
 * Improvement: New design
-* Improvement: Refactoring 
+* Improvement: Code refactoring 
 * Improvement: Optimized url sync 
 * Feature: Browser console log checks
 * Feature: Clear caches at auto update checks
+* Feature: New optional logging system
 
 = 3.2.4 =
 * Impromenent: URL sync via daily cron

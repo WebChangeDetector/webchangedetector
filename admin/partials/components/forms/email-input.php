@@ -82,9 +82,21 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
                 var emailField = document.getElementById('<?php echo esc_js($field_name); ?>');
                 var errorElement = document.getElementById('<?php echo esc_js($validation_id); ?>');
 
+                // Debug: Log validation attempt
+                if (typeof console !== 'undefined') {
+                    console.log('Validating email field:', '<?php echo esc_js($field_name); ?>');
+                    console.log('Email field found:', !!emailField);
+                    console.log('Error element found:', !!errorElement);
+                }
+
                 if (!emailField || !errorElement) return true;
 
                 var emailValue = emailField.value.trim();
+                
+                // Debug: Log email value
+                if (typeof console !== 'undefined') {
+                    console.log('Email value:', emailValue);
+                }
 
                 if (!emailValue) {
                     errorElement.style.display = 'none';
@@ -135,6 +147,12 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
 
             // Make validation function globally available
             window['validate_' + '<?php echo esc_js($field_name); ?>'] = validateEmailField;
+            
+            // Debug: Log function registration
+            if (typeof console !== 'undefined') {
+                console.log('Email validation function registered:', 'validate_' + '<?php echo esc_js($field_name); ?>');
+                console.log('Function available:', typeof window['validate_' + '<?php echo esc_js($field_name); ?>']);
+            }
         });
     </script>
 <?php endif; ?>

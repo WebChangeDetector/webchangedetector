@@ -35,7 +35,6 @@ class WebChangeDetector_Error_Handler {
 	 * Error categories.
 	 */
 	const CATEGORY_API = 'api';
-	const CATEGORY_DATABASE = 'database';
 	const CATEGORY_FILESYSTEM = 'filesystem';
 	const CATEGORY_NETWORK = 'network';
 	const CATEGORY_VALIDATION = 'validation';
@@ -194,24 +193,6 @@ class WebChangeDetector_Error_Handler {
 		return $this->execute_with_error_handling( $api_call, $args, $options );
 	}
 
-	/**
-	 * Handle database errors specifically.
-	 *
-	 * @param callable $db_operation Database operation.
-	 * @param array    $args         Arguments for operation.
-	 * @param array    $options      Options for error handling.
-	 * @return array Result array.
-	 */
-	public function handle_database_error( $db_operation, $args = array(), $options = array() ) {
-		$options = wp_parse_args( $options, array(
-			'category'     => self::CATEGORY_DATABASE,
-			'user_message' => 'Database operation failed. Please try again.',
-			'context'      => 'Database Operation',
-			'retries'      => 1, // Fewer retries for DB operations.
-		) );
-
-		return $this->execute_with_error_handling( $db_operation, $args, $options );
-	}
 
 	/**
 	 * Handle validation errors.
@@ -298,13 +279,6 @@ class WebChangeDetector_Error_Handler {
 			wp_cache_delete( 'wcd_api_response', 'webchangedetector' );
 		} );
 
-		// Database error callback.
-		$this->register_error_callback( self::CATEGORY_DATABASE, function( $exception, $category, $attempt ) {
-			// Log database errors to WordPress debug log as well.
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[WCD DB Error]: ' . $exception->getMessage() );
-			}
-		} );
 
 		// Critical error callback.
 		$this->register_error_callback( self::SEVERITY_CRITICAL, function( $exception, $category, $attempt ) {
@@ -352,7 +326,6 @@ class WebChangeDetector_Error_Handler {
 	public function create_user_friendly_message( $exception, $category ) {
 		$messages = array(
 			self::CATEGORY_API => 'Unable to connect to WebChangeDetector service. Please check your internet connection and try again.',
-			self::CATEGORY_DATABASE => 'A database error occurred. Please try again in a moment.',
 			self::CATEGORY_FILESYSTEM => 'File system error occurred. Please check file permissions.',
 			self::CATEGORY_NETWORK => 'Network error occurred. Please check your connection and try again.',
 			self::CATEGORY_VALIDATION => 'Please check your input and try again.',

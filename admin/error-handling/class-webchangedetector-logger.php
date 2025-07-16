@@ -1,4 +1,5 @@
 <?php
+
 /**
  * WebChangeDetector Logger
  *
@@ -11,8 +12,8 @@
 namespace WebChangeDetector;
 
 // Prevent direct access.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -20,284 +21,294 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Provides simple file-based logging with daily rotation.
  */
-class WebChangeDetector_Logger {
+class WebChangeDetector_Logger
+{
 
-	/**
-	 * Log directory path.
-	 *
-	 * @var string
-	 */
-	private $log_dir;
+    /**
+     * Log directory path.
+     *
+     * @var string
+     */
+    private $log_dir;
 
-	/**
-	 * Whether debug logging is enabled.
-	 *
-	 * @var bool
-	 */
-	private $debug_enabled;
+    /**
+     * Whether debug logging is enabled.
+     *
+     * @var bool
+     */
+    private $debug_enabled;
 
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		// Set log directory to plugin root/logs
-		$this->log_dir = plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'logs';
-		$this->debug_enabled = get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, false );
-		
-		// Ensure log directory exists
-		$this->ensure_log_directory();
-		
-		// Schedule cleanup if not already scheduled
-		if ( ! wp_next_scheduled( 'wcd_cleanup_old_logs' ) ) {
-			wp_schedule_event( time(), 'daily', 'wcd_cleanup_old_logs' );
-		}
-		
-		add_action( 'wcd_cleanup_old_logs', array( $this, 'cleanup_old_logs' ) );
-	}
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        // Set log directory to plugin root/logs
+        $this->log_dir = plugin_dir_path(dirname(dirname(__FILE__))) . 'logs';
+        $this->debug_enabled = get_option(WCD_WP_OPTION_KEY_DEBUG_LOGGING, false);
 
-	/**
-	 * Main logging function.
-	 *
-	 * @param string $message  Log message.
-	 * @param string $context  Log context/category (optional).
-	 * @param string $severity Log severity for future use (optional).
-	 * @return bool True on success, false on failure.
-	 */
-	public function log( $message, $context = 'general', $severity = 'info' ) {
-		// Check if debug logging is enabled
-		if ( ! $this->debug_enabled ) {
-			// Always log errors regardless of debug setting
-			if ( ! in_array( $severity, array( 'error', 'critical' ), true ) ) {
-				return false;
-			}
-		}
+        // Ensure log directory exists
+        $this->ensure_log_directory();
 
-		// Get current date for daily log file
-		$date = current_time( 'Y-m-d' );
-		$log_file = $this->log_dir . '/wcd-' . $date . '.log';
+        // Schedule cleanup if not already scheduled
+        if (! wp_next_scheduled('wcd_cleanup_old_logs')) {
+            wp_schedule_event(time(), 'daily', 'wcd_cleanup_old_logs');
+        }
 
-		// Format timestamp
-		$timestamp = current_time( 'Y-m-d H:i:s' );
-		
-		// Format log entry
-		$log_entry = sprintf(
-			"[%s] [%s] [%s] %s",
-			$timestamp,
-			strtoupper( $severity ),
-			$context,
-			$message
-		);
+        add_action('wcd_cleanup_old_logs', array($this, 'cleanup_old_logs'));
+    }
 
-		// Write to file
-		$result = error_log( $log_entry . PHP_EOL, 3, $log_file );
-		
-		// Also log to WordPress debug.log if WP_DEBUG is enabled
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			error_log( '[WebChangeDetector] ' . $log_entry );
-		}
+    /**
+     * Main logging function.
+     *
+     * @param string $message  Log message.
+     * @param string $context  Log context/category (optional).
+     * @param string $severity Log severity for future use (optional).
+     * @return bool True on success, false on failure.
+     */
+    public function log($message, $context = 'general', $severity = 'info')
+    {
+        // Check if debug logging is enabled
+        if (! $this->debug_enabled) {
+            // Always log errors regardless of debug setting
+            if (! in_array($severity, array('error', 'critical'), true)) {
+                return false;
+            }
+        }
 
-		return $result !== false;
-	}
+        // Get current date for daily log file
+        $date = current_time('Y-m-d');
+        $log_file = $this->log_dir . '/wcd-' . $date . '.log';
 
-	/**
-	 * Convenience method for error logging (always logs regardless of debug setting).
-	 *
-	 * @param string $message Log message.
-	 * @param string $context Log context/category.
-	 * @return bool True on success, false on failure.
-	 */
-	public function error( $message, $context = 'general' ) {
-		return $this->log( $message, $context, 'error' );
-	}
+        // Format timestamp
+        $timestamp = current_time('Y-m-d H:i:s');
 
-	/**
-	 * Convenience method for debug logging.
-	 *
-	 * @param string $message Log message.
-	 * @param string $context Log context/category.
-	 * @return bool True on success, false on failure.
-	 */
-	public function debug( $message, $context = 'general' ) {
-		return $this->log( $message, $context, 'debug' );
-	}
+        // Format log entry
+        $log_entry = sprintf(
+            "[%s] [%s] [%s] %s",
+            $timestamp,
+            strtoupper($severity),
+            $context,
+            $message
+        );
 
-	/**
-	 * Convenience method for info logging.
-	 *
-	 * @param string $message Log message.
-	 * @param string $context Log context/category.
-	 * @return bool True on success, false on failure.
-	 */
-	public function info( $message, $context = 'general' ) {
-		return $this->log( $message, $context, 'info' );
-	}
+        // Write to file
+        $result = error_log($log_entry . PHP_EOL, 3, $log_file);
 
-	/**
-	 * Convenience method for warning logging.
-	 *
-	 * @param string $message Log message.
-	 * @param string $context Log context/category.
-	 * @return bool True on success, false on failure.
-	 */
-	public function warning( $message, $context = 'general' ) {
-		return $this->log( $message, $context, 'warning' );
-	}
+        return $result !== false;
+    }
 
-	/**
-	 * Convenience method for critical logging.
-	 *
-	 * @param string $message Log message.
-	 * @param string $context Log context/category.
-	 * @return bool True on success, false on failure.
-	 */
-	public function critical( $message, $context = 'general' ) {
-		return $this->log( $message, $context, 'critical' );
-	}
+    /**
+     * Convenience method for error logging (always logs regardless of debug setting).
+     *
+     * @param string $message Log message.
+     * @param string $context Log context/category.
+     * @return bool True on success, false on failure.
+     */
+    public function error($message, $context = 'general')
+    {
+        return $this->log($message, $context, 'error');
+    }
 
-	/**
-	 * Ensure log directory exists with proper security.
-	 */
-	private function ensure_log_directory() {
-		if ( ! is_dir( $this->log_dir ) ) {
-			wp_mkdir_p( $this->log_dir );
-			
-			// Create .htaccess to prevent direct access
-			$htaccess_content = "Order deny,allow\nDeny from all\n";
-			file_put_contents( $this->log_dir . '/.htaccess', $htaccess_content );
-			
-			// Create index.php for additional security
-			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );
-		}
-	}
+    /**
+     * Convenience method for debug logging.
+     *
+     * @param string $message Log message.
+     * @param string $context Log context/category.
+     * @return bool True on success, false on failure.
+     */
+    public function debug($message, $context = 'general')
+    {
+        return $this->log($message, $context, 'debug');
+    }
 
-	/**
-	 * Clean up log files older than 14 days.
-	 */
-	public function cleanup_old_logs() {
-		$files = glob( $this->log_dir . '/wcd-*.log' );
-		
-		if ( ! is_array( $files ) ) {
-			return;
-		}
+    /**
+     * Convenience method for info logging.
+     *
+     * @param string $message Log message.
+     * @param string $context Log context/category.
+     * @return bool True on success, false on failure.
+     */
+    public function info($message, $context = 'general')
+    {
+        return $this->log($message, $context, 'info');
+    }
 
-		$cutoff_time = time() - ( 14 * DAY_IN_SECONDS );
+    /**
+     * Convenience method for warning logging.
+     *
+     * @param string $message Log message.
+     * @param string $context Log context/category.
+     * @return bool True on success, false on failure.
+     */
+    public function warning($message, $context = 'general')
+    {
+        return $this->log($message, $context, 'warning');
+    }
 
-		foreach ( $files as $file ) {
-			// Extract date from filename (wcd-YYYY-MM-DD.log)
-			if ( preg_match( '/wcd-(\d{4}-\d{2}-\d{2})\.log$/', $file, $matches ) ) {
-				$file_date = strtotime( $matches[1] );
-				if ( $file_date && $file_date < $cutoff_time ) {
-					@unlink( $file );
-				}
-			}
-		}
-	}
+    /**
+     * Convenience method for critical logging.
+     *
+     * @param string $message Log message.
+     * @param string $context Log context/category.
+     * @return bool True on success, false on failure.
+     */
+    public function critical($message, $context = 'general')
+    {
+        return $this->log($message, $context, 'critical');
+    }
 
-	/**
-	 * Get the current debug logging status.
-	 *
-	 * @return bool Whether debug logging is enabled.
-	 */
-	public function is_debug_enabled() {
-		return $this->debug_enabled;
-	}
+    /**
+     * Ensure log directory exists with proper security.
+     */
+    private function ensure_log_directory()
+    {
+        if (! is_dir($this->log_dir)) {
+            wp_mkdir_p($this->log_dir);
 
-	/**
-	 * Update debug logging status.
-	 *
-	 * @param bool $enabled Whether to enable debug logging.
-	 */
-	public function set_debug_enabled( $enabled ) {
-		$this->debug_enabled = (bool) $enabled;
-		update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $this->debug_enabled );
-	}
+            // Create .htaccess to prevent direct access
+            $htaccess_content = "Order deny,allow\nDeny from all\n";
+            file_put_contents($this->log_dir . '/.htaccess', $htaccess_content);
 
-	/**
-	 * Get available log files.
-	 *
-	 * @return array Array of log file info with date, size, and path.
-	 */
-	public function get_available_log_files() {
-		$files = glob( $this->log_dir . '/wcd-*.log' );
-		$log_files = array();
+            // Create index.php for additional security
+            file_put_contents($this->log_dir . '/index.php', '<?php // Silence is golden.');
+        }
+    }
 
-		if ( ! is_array( $files ) ) {
-			return $log_files;
-		}
+    /**
+     * Clean up log files older than 14 days.
+     */
+    public function cleanup_old_logs()
+    {
+        $files = glob($this->log_dir . '/wcd-*.log');
 
-		foreach ( $files as $file ) {
-			if ( preg_match( '/wcd-(\d{4}-\d{2}-\d{2})\.log$/', basename( $file ), $matches ) ) {
-				$date = $matches[1];
-				$size = file_exists( $file ) ? filesize( $file ) : 0;
-				
-				$log_files[] = array(
-					'date' => $date,
-					'filename' => basename( $file ),
-					'size' => $size,
-					'size_formatted' => $this->format_file_size( $size ),
-					'path' => $file,
-				);
-			}
-		}
+        if (! is_array($files)) {
+            return;
+        }
 
-		// Sort by date (newest first)
-		usort( $log_files, function( $a, $b ) {
-			return strcmp( $b['date'], $a['date'] );
-		});
+        $cutoff_time = time() - (14 * DAY_IN_SECONDS);
 
-		return $log_files;
-	}
+        foreach ($files as $file) {
+            // Extract date from filename (wcd-YYYY-MM-DD.log)
+            if (preg_match('/wcd-(\d{4}-\d{2}-\d{2})\.log$/', $file, $matches)) {
+                $file_date = strtotime($matches[1]);
+                if ($file_date && $file_date < $cutoff_time) {
+                    @unlink($file);
+                }
+            }
+        }
+    }
 
-	/**
-	 * Download a specific log file.
-	 *
-	 * @param string $filename The log filename to download.
-	 * @return bool|WP_Error True on success, WP_Error on failure.
-	 */
-	public function download_log_file( $filename ) {
-		// Validate filename format
-		if ( ! preg_match( '/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename ) ) {
-			return new \WP_Error( 'invalid_filename', 'Invalid log filename format.' );
-		}
+    /**
+     * Get the current debug logging status.
+     *
+     * @return bool Whether debug logging is enabled.
+     */
+    public function is_debug_enabled()
+    {
+        return $this->debug_enabled;
+    }
 
-		$file_path = $this->log_dir . '/' . $filename;
+    /**
+     * Update debug logging status.
+     *
+     * @param bool $enabled Whether to enable debug logging.
+     */
+    public function set_debug_enabled($enabled)
+    {
+        $this->debug_enabled = (bool) $enabled;
+        update_option(WCD_WP_OPTION_KEY_DEBUG_LOGGING, $this->debug_enabled);
+    }
 
-		// Check if file exists
-		if ( ! file_exists( $file_path ) ) {
-			return new \WP_Error( 'file_not_found', 'Log file not found.' );
-		}
+    /**
+     * Get available log files.
+     *
+     * @return array Array of log file info with date, size, and path.
+     */
+    public function get_available_log_files()
+    {
+        $files = glob($this->log_dir . '/wcd-*.log');
+        $log_files = array();
 
-		// Check if file is readable
-		if ( ! is_readable( $file_path ) ) {
-			return new \WP_Error( 'file_not_readable', 'Log file is not readable.' );
-		}
+        if (! is_array($files)) {
+            return $log_files;
+        }
 
-		// Set headers for download
-		header( 'Content-Type: text/plain' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-		header( 'Content-Length: ' . filesize( $file_path ) );
-		header( 'Cache-Control: no-cache, must-revalidate' );
-		header( 'Expires: 0' );
+        foreach ($files as $file) {
+            if (preg_match('/wcd-(\d{4}-\d{2}-\d{2})\.log$/', basename($file), $matches)) {
+                $date = $matches[1];
+                $size = file_exists($file) ? filesize($file) : 0;
 
-		// Output file content
-		readfile( $file_path );
-		exit;
-	}
+                $log_files[] = array(
+                    'date' => $date,
+                    'filename' => basename($file),
+                    'size' => $size,
+                    'size_formatted' => $this->format_file_size($size),
+                    'path' => $file,
+                );
+            }
+        }
 
-	/**
-	 * Format file size in human readable format.
-	 *
-	 * @param int $size File size in bytes.
-	 * @return string Formatted file size.
-	 */
-	private function format_file_size( $size ) {
-		if ( $size == 0 ) {
-			return '0 B';
-		}
+        // Sort by date (newest first)
+        usort($log_files, function ($a, $b) {
+            return strcmp($b['date'], $a['date']);
+        });
 
-		$units = array( 'B', 'KB', 'MB', 'GB' );
-		$factor = floor( log( $size, 1024 ) );
-		
-		return sprintf( '%.1f %s', $size / pow( 1024, $factor ), $units[ $factor ] );
-	}
+        return $log_files;
+    }
+
+    /**
+     * Download a specific log file.
+     *
+     * @param string $filename The log filename to download.
+     * @return bool|WP_Error True on success, WP_Error on failure.
+     */
+    public function download_log_file($filename)
+    {
+        // Validate filename format
+        if (! preg_match('/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename)) {
+            return new \WP_Error('invalid_filename', 'Invalid log filename format.');
+        }
+
+        $file_path = $this->log_dir . '/' . $filename;
+
+        // Check if file exists
+        if (! file_exists($file_path)) {
+            return new \WP_Error('file_not_found', 'Log file not found.');
+        }
+
+        // Check if file is readable
+        if (! is_readable($file_path)) {
+            return new \WP_Error('file_not_readable', 'Log file is not readable.');
+        }
+
+        // Set headers for download
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . filesize($file_path));
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: 0');
+
+        // Output file content
+        readfile($file_path);
+        exit;
+    }
+
+    /**
+     * Format file size in human readable format.
+     *
+     * @param int $size File size in bytes.
+     * @return string Formatted file size.
+     */
+    private function format_file_size($size)
+    {
+        if ($size == 0) {
+            return '0 B';
+        }
+
+        $units = array('B', 'KB', 'MB', 'GB');
+        $factor = floor(log($size, 1024));
+
+        return sprintf('%.1f %s', $size / pow(1024, $factor), $units[$factor]);
+    }
 }

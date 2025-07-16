@@ -159,67 +159,6 @@ class WebChangeDetector_API_Exception extends WebChangeDetector_Exception {
 	}
 }
 
-/**
- * Database Exception for database-related errors.
- */
-class WebChangeDetector_Database_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'database';
-	protected $user_message = 'A database error occurred. Please try again.';
-
-	/**
-	 * Database error code.
-	 *
-	 * @var string
-	 */
-	protected $db_error_code = '';
-
-	/**
-	 * SQL query that caused the error.
-	 *
-	 * @var string
-	 */
-	protected $sql_query = '';
-
-	/**
-	 * Constructor.
-	 *
-	 * @param string     $message       Technical error message.
-	 * @param string     $db_error_code Database error code.
-	 * @param string     $sql_query     SQL query.
-	 * @param string     $user_message  User-friendly message.
-	 * @param \Throwable $previous      Previous exception.
-	 */
-	public function __construct( $message = '', $db_error_code = '', $sql_query = '', $user_message = '', \Throwable $previous = null ) {
-		$this->db_error_code = $db_error_code;
-		$this->sql_query = $sql_query;
-		
-		$context = array(
-			'db_error_code' => $db_error_code,
-			'sql_query'     => $sql_query,
-		);
-		
-		parent::__construct( $message, $user_message, $context, 0, $previous );
-	}
-
-	/**
-	 * Get database error code.
-	 *
-	 * @return string Database error code.
-	 */
-	public function get_db_error_code() {
-		return $this->db_error_code;
-	}
-
-	/**
-	 * Get SQL query.
-	 *
-	 * @return string SQL query.
-	 */
-	public function get_sql_query() {
-		return $this->sql_query;
-	}
-}
 
 /**
  * Validation Exception for validation errors.

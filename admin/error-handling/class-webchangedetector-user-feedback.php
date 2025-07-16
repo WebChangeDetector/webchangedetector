@@ -290,13 +290,6 @@ class WebChangeDetector_User_Feedback {
 			}
 		}
 
-		if ( $exception instanceof WebChangeDetector_Database_Exception ) {
-			$actions[] = array(
-				'label' => 'Database Health Check',
-				'url'   => admin_url( 'admin.php?page=webchangedetector-logs&tab=health' ),
-				'type'  => 'primary',
-			);
-		}
 
 		if ( $exception instanceof WebChangeDetector_Permission_Exception ) {
 			$actions[] = array(

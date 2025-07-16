@@ -145,17 +145,36 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
 
     <script type="text/javascript">
         function wcdValidateFormAutoSettings() {
+            // Debug: Log form validation attempt
+            if (typeof console !== 'undefined') {
+                console.log('Auto settings form validation started');
+            }
+            
             // Only validate if monitoring is enabled
             var monitoringEnabled = document.querySelector('input[name="enabled"]');
             if (monitoringEnabled && monitoringEnabled.checked) {
+                // Debug: Log validation state
+                if (typeof console !== 'undefined') {
+                    console.log('Monitoring enabled, validating...');
+                }
+                
                 // Validate email if present.
                 if (typeof window['validate_alert_emails'] === 'function') {
+                    if (typeof console !== 'undefined') {
+                        console.log('Calling alert emails validation function');
+                    }
                     if (!window['validate_alert_emails']()) {
+                        if (typeof console !== 'undefined') {
+                            console.log('Alert emails validation failed');
+                        }
                         return false;
                     }
                 }
             }
 
+            if (typeof console !== 'undefined') {
+                console.log('Auto settings form validation passed');
+            }
             return true;
         }
     </script>

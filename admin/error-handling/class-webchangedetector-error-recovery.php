@@ -276,9 +276,6 @@ class WebChangeDetector_Error_Recovery {
 			return 'api';
 		}
 		
-		if ( $exception instanceof WebChangeDetector_Database_Exception ) {
-			return 'database';
-		}
 		
 		if ( $exception instanceof WebChangeDetector_Filesystem_Exception ) {
 			return 'filesystem';
