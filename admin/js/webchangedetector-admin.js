@@ -828,100 +828,15 @@ function mmToggle(source, column, groupId) {
 * Validates comma separated emails in a form
 * Called `onsubmit=` in HTML
 */
-function wcdValidateFormManualSettings() {
-
-    // Early return if auto update checks are disabled.
-    var autoUpdateChecksEnabled = document.getElementById("auto_update_checks_enabled").checked;
-    if (!autoUpdateChecksEnabled) {
-        return true;
-    }
-
-    // Validation from and to time.
-    var from = document.getElementById("auto_update_checks_from");
-    var to = document.getElementById("auto_update_checks_to");
-
-
-
-    // Validation weekday.
-    var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');
-    if (
-        !document.getElementsByName("auto_update_checks_monday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_tuesday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_wednesday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_thursday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_friday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_saturday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_sunday")[1].checked
-    ) {
-        jQuery(weekdayContainer).css("border", "2px solid #d63638");
-        jQuery("#error-on-days-validation").css("display", "block");
-        weekdayContainer.scrollIntoView({
-            behavior: 'smooth'
-        });
-        return false;
-    }
-
-    // Validation Notification emails
-
-    // get all emails.
-    var emailsElement = document.getElementsByName("auto_update_checks_emails")[0];
-    if (emailsElement.value !== "") {
-        // split by comma.
-        let emails = emailsElement.value.split(",");
-
-        // Validation failed.
-        if (false === validateEmail(emails)) {
-            jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#manual_checks_settings_accordion").css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({ behavior: "smooth" });
-            return false;
-        }
-
-        // Validation succeeded.
-        jQuery("#error-email-validation").css("display", "none");
-        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
-        jQuery(emailsElement).css("border", "2px solid green");
-    }
-    return true;
-
-}
+/**
+ * Legacy validation function removed - now handled by modern component-based system
+ * This function was using legacy element selectors that don't match the modern component structure
+ */
 
 /**
- * Validates comma separated emails in a form
- * Called `onsubmit=` in HTML
+ * Legacy validation function removed - now handled by modern component-based system
+ * This function was conflicting with the modern wcdValidateFormAutoSettings() in templates
  */
-function wcdValidateFormAutoSettings() {
-
-    // Check if monitoring is enabled.
-    if ('on' !== document.getElementById("auto-enabled").value) {
-        return true;
-    }
-
-    // get all emails.
-    var emailsElement = document.getElementById("alert_emails");
-
-    // split by comma.
-    let emails = emailsElement.value.split(",");
-
-    // Validate emails if it's filled.
-    if (emailsElement.value !== "") {
-        if (false === validateEmail(emails)) {
-            // Validation failed.
-            jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({ behavior: "smooth" });
-            return false;
-
-        }
-        // Validation succeeded.
-        jQuery("#error-email-validation").css("display", "none");
-        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
-        jQuery(emailsElement).css("border", "2px solid green");
-    }
-    return true;
-}
 
 function validateEmail(emails) {
     // init email regex

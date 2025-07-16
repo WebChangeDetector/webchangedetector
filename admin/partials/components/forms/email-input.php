@@ -72,7 +72,7 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
 <?php if ($show_validation) : ?>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            // Email validation for <?php echo esc_js($field_name); ?>
+            // Email validation
             function validateEmail(email) {
                 var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email);
@@ -84,7 +84,7 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
 
                 // Debug: Log validation attempt
                 if (typeof console !== 'undefined') {
-                    console.log('Validating email field:', '<?php echo esc_js($field_name); ?>');
+                    console.log('Validating email field: <?php echo esc_js($field_name); ?>');
                     console.log('Email field found:', !!emailField);
                     console.log('Error element found:', !!errorElement);
                 }
@@ -92,10 +92,10 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
                 if (!emailField || !errorElement) return true;
 
                 var emailValue = emailField.value.trim();
-                
+
                 // Debug: Log email value
                 if (typeof console !== 'undefined') {
-                    console.log('Email value:', emailValue);
+                    console.log('Email value: ' + emailValue);
                 }
 
                 if (!emailValue) {
@@ -146,12 +146,18 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
             }
 
             // Make validation function globally available
-            window['validate_' + '<?php echo esc_js($field_name); ?>'] = validateEmailField;
-            
+            window['validate_<?php echo esc_js($field_name); ?>'] = validateEmailField;
+
             // Debug: Log function registration
             if (typeof console !== 'undefined') {
-                console.log('Email validation function registered:', 'validate_' + '<?php echo esc_js($field_name); ?>');
-                console.log('Function available:', typeof window['validate_' + '<?php echo esc_js($field_name); ?>']);
+                console.log('Email validation function registered: validate_<?php echo esc_js($field_name); ?>');
+                console.log('Function available: ' + typeof window['validate_<?php echo esc_js($field_name); ?>']);
+
+                // Test if the function actually works
+                console.log('Testing validation function...');
+                if (typeof window['validate_<?php echo esc_js($field_name); ?>'] === 'function') {
+                    console.log('Validation function test result: ' + window['validate_<?php echo esc_js($field_name); ?>']());
+                }
             }
         });
     </script>

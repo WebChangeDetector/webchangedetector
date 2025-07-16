@@ -83,18 +83,23 @@ $weekdays = array(
         document.addEventListener('DOMContentLoaded', function() {
             var namePrefix = '<?php echo esc_js($name_prefix); ?>';
             var errorElement = document.getElementById('error-on-days-validation');
-            
+
             // Weekday validation function
             function validateWeekdays() {
-                var checkedBoxes = document.querySelectorAll('input[name*="' + namePrefix + '"]:checked');
-                
+                var checkedBoxes = document.querySelectorAll('#auto_update_checks_weekday_container input[name*="' + namePrefix + '"][type="checkbox"]:checked');
+
                 // Debug: Log validation attempt
                 if (typeof console !== 'undefined') {
-                    console.log('Validating weekdays with prefix:', namePrefix);
-                    console.log('Query selector:', 'input[name*="' + namePrefix + '"]:checked');
-                    console.log('Found checked boxes:', checkedBoxes.length);
+                    console.log('Validating weekdays with prefix: ' + namePrefix);
+                    console.log('Query selector: input[name*="' + namePrefix + '"][type="checkbox"]:checked');
+                    console.log('Found checked boxes: ' + checkedBoxes.length);
+
+                    // Additional debug: Show what we found
+                    for (var i = 0; i < checkedBoxes.length; i++) {
+                        console.log('Checked box ' + i + ': name=' + checkedBoxes[i].name + ', value=' + checkedBoxes[i].value + ', type=' + checkedBoxes[i].type);
+                    }
                 }
-                
+
                 if (checkedBoxes.length === 0) {
                     if (errorElement) errorElement.style.display = 'block';
                     return false;
@@ -103,7 +108,7 @@ $weekdays = array(
                     return true;
                 }
             }
-            
+
             // Use event delegation for cleaner code
             document.addEventListener('change', function(event) {
                 if (event.target.matches('input[name*="' + namePrefix + '"][type="checkbox"]')) {
@@ -113,11 +118,11 @@ $weekdays = array(
 
             // Make validation function globally available for form submission
             window['validate_weekdays_' + namePrefix.replace(/_$/, '')] = validateWeekdays;
-            
+
             // Debug: Log function registration
             if (typeof console !== 'undefined') {
-                console.log('Weekday validation function registered:', 'validate_weekdays_' + namePrefix.replace(/_$/, ''));
-                console.log('Function available:', typeof window['validate_weekdays_' + namePrefix.replace(/_$/, '')]);
+                console.log('Weekday validation function registered: validate_weekdays_' + namePrefix.replace(/_$/, ''));
+                console.log('Function available: ' + typeof window['validate_weekdays_' + namePrefix.replace(/_$/, '')]);
             }
         });
     </script>
