@@ -211,4 +211,93 @@ class WebChangeDetector_Logger {
 		$this->debug_enabled = (bool) $enabled;
 		update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $this->debug_enabled );
 	}
+
+	/**
+	 * Get available log files.
+	 *
+	 * @return array Array of log file info with date, size, and path.
+	 */
+	public function get_available_log_files() {
+		$files = glob( $this->log_dir . '/wcd-*.log' );
+		$log_files = array();
+
+		if ( ! is_array( $files ) ) {
+			return $log_files;
+		}
+
+		foreach ( $files as $file ) {
+			if ( preg_match( '/wcd-(\d{4}-\d{2}-\d{2})\.log$/', basename( $file ), $matches ) ) {
+				$date = $matches[1];
+				$size = file_exists( $file ) ? filesize( $file ) : 0;
+				
+				$log_files[] = array(
+					'date' => $date,
+					'filename' => basename( $file ),
+					'size' => $size,
+					'size_formatted' => $this->format_file_size( $size ),
+					'path' => $file,
+				);
+			}
+		}
+
+		// Sort by date (newest first)
+		usort( $log_files, function( $a, $b ) {
+			return strcmp( $b['date'], $a['date'] );
+		});
+
+		return $log_files;
+	}
+
+	/**
+	 * Download a specific log file.
+	 *
+	 * @param string $filename The log filename to download.
+	 * @return bool|WP_Error True on success, WP_Error on failure.
+	 */
+	public function download_log_file( $filename ) {
+		// Validate filename format
+		if ( ! preg_match( '/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename ) ) {
+			return new \WP_Error( 'invalid_filename', 'Invalid log filename format.' );
+		}
+
+		$file_path = $this->log_dir . '/' . $filename;
+
+		// Check if file exists
+		if ( ! file_exists( $file_path ) ) {
+			return new \WP_Error( 'file_not_found', 'Log file not found.' );
+		}
+
+		// Check if file is readable
+		if ( ! is_readable( $file_path ) ) {
+			return new \WP_Error( 'file_not_readable', 'Log file is not readable.' );
+		}
+
+		// Set headers for download
+		header( 'Content-Type: text/plain' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . filesize( $file_path ) );
+		header( 'Cache-Control: no-cache, must-revalidate' );
+		header( 'Expires: 0' );
+
+		// Output file content
+		readfile( $file_path );
+		exit;
+	}
+
+	/**
+	 * Format file size in human readable format.
+	 *
+	 * @param int $size File size in bytes.
+	 * @return string Formatted file size.
+	 */
+	private function format_file_size( $size ) {
+		if ( $size == 0 ) {
+			return '0 B';
+		}
+
+		$units = array( 'B', 'KB', 'MB', 'GB' );
+		$factor = floor( log( $size, 1024 ) );
+		
+		return sprintf( '%.1f %s', $size / pow( 1024, $factor ), $units[ $factor ] );
+	}
 }

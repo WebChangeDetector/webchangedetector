@@ -153,6 +153,57 @@ class WebChangeDetector_Settings_Action_Handler {
 	}
 
 	/**
+	 * Handle download log file action.
+	 *
+	 * @param array $data The download data containing filename.
+	 * @return array|void Result with success status and message, or triggers download.
+	 */
+	public function handle_download_log_file( $data ) {
+		// Verify user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return array(
+				'success' => false,
+				'message' => 'Insufficient permissions to download log files.',
+			);
+		}
+
+		// Check if filename is provided
+		if ( empty( $data['filename'] ) ) {
+			return array(
+				'success' => false,
+				'message' => 'No log file specified for download.',
+			);
+		}
+
+		$filename = sanitize_file_name( $data['filename'] );
+
+		try {
+			// Use the logger to download the file
+			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'download_log_file' ) ) {
+				$result = $this->admin->logger->download_log_file( $filename );
+				
+				if ( is_wp_error( $result ) ) {
+					return array(
+						'success' => false,
+						'message' => 'Error downloading log file: ' . $result->get_error_message(),
+					);
+				}
+				// If successful, the download_log_file method will handle the download and exit
+			} else {
+				return array(
+					'success' => false,
+					'message' => 'Logger not available for file download.',
+				);
+			}
+		} catch ( \Exception $e ) {
+			return array(
+				'success' => false,
+				'message' => 'Error downloading log file: ' . $e->getMessage(),
+			);
+		}
+	}
+
+	/**
 	 * Handle URL sync action.
 	 *
 	 * @param array $data The sync data.

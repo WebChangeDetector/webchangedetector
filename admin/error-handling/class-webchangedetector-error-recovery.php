@@ -325,21 +325,28 @@ class WebChangeDetector_Error_Recovery {
 	 */
 	private function check_api_connectivity() {
 		try {
-			// Simple API health check using test_connection method.
-			$api_manager = new WebChangeDetector_API_Manager();
-			$result = $api_manager->test_connection();
+			// Simple API health check using account endpoint.
+			$result = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2();
 			
-			if ( is_wp_error( $result ) ) {
+			if ( is_string( $result ) && in_array( $result, array( 'unauthorized', 'activate account', 'update plugin' ), true ) ) {
 				return array(
 					'status'  => false,
-					'message' => 'API connectivity failed: ' . $result->get_error_message(),
-					'details' => array( 'error' => $result->get_error_message() ),
+					'message' => 'API connectivity failed: ' . $result,
+					'details' => array( 'error' => $result ),
+				);
+			}
+			
+			if ( ! empty( $result['data'] ) ) {
+				return array(
+					'status'  => true,
+					'message' => 'API connectivity OK',
 				);
 			}
 			
 			return array(
-				'status'  => true,
-				'message' => 'API connectivity OK',
+				'status'  => false,
+				'message' => 'API connectivity failed: Invalid response',
+				'details' => array( 'error' => 'Invalid response format' ),
 			);
 		} catch ( \Exception $e ) {
 			return array(

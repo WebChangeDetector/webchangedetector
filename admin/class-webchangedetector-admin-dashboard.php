@@ -38,14 +38,6 @@ class WebChangeDetector_Admin_Dashboard
      */
     private $admin;
 
-    /**
-     * Reference to the API manager instance.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      WebChangeDetector_API_Manager    $api_manager    The API manager instance.
-     */
-    private $api_manager;
 
     /**
      * Reference to the WordPress handler instance.
@@ -61,13 +53,11 @@ class WebChangeDetector_Admin_Dashboard
      *
      * @since    1.0.0
      * @param    WebChangeDetector_Admin           $admin        The admin instance.
-     * @param    WebChangeDetector_API_Manager     $api_manager  The API manager instance.
      * @param    WebChangeDetector_Admin_WordPress $wordpress_handler The WordPress handler instance.
      */
-    public function __construct($admin, $api_manager, $wordpress_handler)
+    public function __construct($admin, $wordpress_handler)
     {
         $this->admin       = $admin;
-        $this->api_manager = $api_manager;
         $this->wordpress_handler = $wordpress_handler;
     }
 

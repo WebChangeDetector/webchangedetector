@@ -117,10 +117,6 @@ class WebChangeDetector {
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-utils.php';
 
-		/**
-		 * The centralized API manager for all WebChangeDetector API calls.
-		 */
-		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-api-manager.php';
 
 		/**
 		 * The settings management class for all WebChangeDetector configuration.

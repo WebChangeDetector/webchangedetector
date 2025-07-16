@@ -37,25 +37,15 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 */
 	protected $admin;
 
-	/**
-	 * The API manager instance.
-	 *
-	 * @since    4.0.0
-	 * @access   protected
-	 * @var      WebChangeDetector_API_Manager    $api_manager    The API manager instance.
-	 */
-	protected $api_manager;
 
 	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.0.0
 	 * @param    WebChangeDetector_Admin           $admin         The main admin class instance.
-	 * @param    WebChangeDetector_API_Manager     $api_manager   The API manager instance.
 	 */
-	public function __construct( $admin, $api_manager ) {
+	public function __construct( $admin ) {
 		$this->admin = $admin;
-		$this->api_manager = $api_manager;
 	}
 
 	/**

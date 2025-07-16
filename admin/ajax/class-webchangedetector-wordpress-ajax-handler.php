@@ -49,12 +49,11 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 	 *
 	 * @since    4.0.0
 	 * @param    WebChangeDetector_Admin             $admin             The main admin class instance.
-	 * @param    WebChangeDetector_API_Manager       $api_manager       The API manager instance.
 	 * @param    WebChangeDetector_Admin_WordPress   $wordpress_handler The WordPress handler instance.
 	 * @param    WebChangeDetector_Admin_Settings    $settings_handler  The settings handler instance.
 	 */
-	public function __construct( $admin, $api_manager, $wordpress_handler, $settings_handler ) {
-		parent::__construct( $admin, $api_manager );
+	public function __construct( $admin, $wordpress_handler, $settings_handler ) {
+		parent::__construct( $admin );
 		
 		$this->wordpress_handler = $wordpress_handler;
 		$this->settings_handler = $settings_handler;

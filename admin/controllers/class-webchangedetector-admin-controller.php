@@ -248,6 +248,10 @@ class WebChangeDetector_Admin_Controller
                 $result = $this->admin->settings_action_handler->handle_save_debug_logging_setting($postdata);
                 break;
 
+            case 'download_log_file':
+                $result = $this->admin->settings_action_handler->handle_download_log_file($postdata);
+                break;
+
             case 'update_detection_step':
                 $result = $this->admin->wordpress_action_handler->handle_update_detection_step($postdata);
                 break;

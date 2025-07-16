@@ -28,14 +28,6 @@ namespace WebChangeDetector;
  */
 class WebChangeDetector_Admin_Account {
 
-	/**
-	 * The API manager instance.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      WebChangeDetector_API_Manager    $api_manager    API communication handler.
-	 */
-	private $api_manager;
 
 	/**
 	 * Cached account details.
@@ -50,10 +42,8 @@ class WebChangeDetector_Admin_Account {
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
-	 * @param    WebChangeDetector_API_Manager    $api_manager    The API manager instance.
 	 */
-	public function __construct( $api_manager ) {
-		$this->api_manager = $api_manager;
+	public function __construct() {
 	}
 
 	/**

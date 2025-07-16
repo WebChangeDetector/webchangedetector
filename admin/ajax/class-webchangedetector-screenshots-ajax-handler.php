@@ -49,12 +49,11 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 	 *
 	 * @since    4.0.0
 	 * @param    WebChangeDetector_Admin                $admin               The main admin class instance.
-	 * @param    WebChangeDetector_API_Manager          $api_manager         The API manager instance.
 	 * @param    WebChangeDetector_Admin_Screenshots    $screenshots_handler The screenshots handler instance.
 	 * @param    WebChangeDetector_Admin_Account        $account_handler     The account handler instance.
 	 */
-	public function __construct( $admin, $api_manager, $screenshots_handler, $account_handler ) {
-		parent::__construct( $admin, $api_manager );
+	public function __construct( $admin, $screenshots_handler, $account_handler ) {
+		parent::__construct( $admin );
 		
 		$this->screenshots_handler = $screenshots_handler;
 		$this->account_handler = $account_handler;
@@ -100,7 +99,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			}
 
 			$uuid = $website_details['uuid'];
-			$queue_data = $this->api_manager->get_processing_queue( $uuid );
+			$queue_data = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $uuid, 'processing,open', false, array( 'per_page' => 30 ) );
 			
 			if ( is_wp_error( $queue_data ) ) {
 				$this->send_error_response( 
@@ -292,7 +291,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$batch_id = $post_data['batch_id'];
 			
 			// Get failed queue items.
-			$failed_queues = $this->api_manager->get_failed_queues( $batch_id );
+			$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', false, array() );
 			
 			if ( is_wp_error( $failed_queues ) ) {
 				$this->send_error_response( 

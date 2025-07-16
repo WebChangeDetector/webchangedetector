@@ -41,7 +41,8 @@ class WebChangeDetector_Admin
         'start_manual_checks',
         'sync_urls',
         'save_admin_bar_setting',
-        'save_debug_logging_setting'
+        'save_debug_logging_setting',
+        'download_log_file',
     );
 
     const VALID_SC_TYPES = array(
@@ -131,14 +132,6 @@ class WebChangeDetector_Admin
      */
     public $screenshots_handler;
 
-    /**
-     * API Manager instance.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      WebChangeDetector_API_Manager $api_manager API communication handler.
-     */
-    private $api_manager;
 
     /**
      * Account handler instance.
@@ -295,12 +288,11 @@ class WebChangeDetector_Admin
         $this->sync_urls = array();
 
         // Initialize specialized handlers.
-        $this->api_manager = new WebChangeDetector_API_Manager();
-        $this->account_handler = new WebChangeDetector_Admin_Account($this->api_manager);
+        $this->account_handler = new WebChangeDetector_Admin_Account();
         $this->wordpress_handler = new WebChangeDetector_Admin_WordPress($this->plugin_name, $this->version, $this);
         $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots($this);
         $this->settings_handler = new WebChangeDetector_Admin_Settings($this);
-        $this->dashboard_handler = new WebChangeDetector_Admin_Dashboard($this, $this->api_manager, $this->wordpress_handler);
+        $this->dashboard_handler = new WebChangeDetector_Admin_Dashboard($this, $this->wordpress_handler);
         $this->view_renderer = new WebChangeDetector_View_Renderer($this);
 
         // Initialize action handlers.

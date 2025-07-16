@@ -40,11 +40,10 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	 *
 	 * @since    4.0.0
 	 * @param    WebChangeDetector_Admin             $admin            The main admin class instance.
-	 * @param    WebChangeDetector_API_Manager       $api_manager      The API manager instance.
 	 * @param    WebChangeDetector_Admin_Settings    $settings_handler The settings handler instance.
 	 */
-	public function __construct( $admin, $api_manager, $settings_handler ) {
-		parent::__construct( $admin, $api_manager );
+	public function __construct( $admin, $settings_handler ) {
+		parent::__construct( $admin );
 		
 		$this->settings_handler = $settings_handler;
 	}

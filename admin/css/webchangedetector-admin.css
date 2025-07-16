@@ -64,6 +64,33 @@
     line-height: 1.5;
 }
 
+
+.webchangedetector .wcd-log-files-list {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background: #f9f9f9;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.webchangedetector .wcd-log-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    gap: 20px;
+}
+
+.webchangedetector .wcd-log-file-item:last-child {
+    border-bottom: none;
+}
+
+.wcd-log-file-info {
+    flex-grow: 1;
+}
+
 .webchangedetector .wcd-form-row {
     display: block;
     padding: 20px 0;

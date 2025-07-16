@@ -26,13 +26,6 @@ namespace WebChangeDetector;
  */
 class WebChangeDetector_Admin_AJAX {
 
-	/**
-	 * The API Manager instance.
-	 *
-	 * @since 1.0.0
-	 * @var WebChangeDetector_API_Manager
-	 */
-	private $api_manager;
 
 	/**
 	 * The main admin class instance for access to existing methods.
@@ -107,10 +100,9 @@ class WebChangeDetector_Admin_AJAX {
 	 */
 	public function __construct( $admin = null ) {
 		$this->admin       = $admin;
-		$this->api_manager = new WebChangeDetector_API_Manager();
-        $this->account_handler = new WebChangeDetector_Admin_Account( $this->api_manager );
+        $this->account_handler = new WebChangeDetector_Admin_Account();
         $this->wordpress_handler = new WebChangeDetector_Admin_WordPress( 'webchangedetector', WEBCHANGEDETECTOR_VERSION, $this->admin );
-        $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin, $this->api_manager, $this->account_handler );
+        $this->screenshots_handler = new WebChangeDetector_Admin_Screenshots( $this->admin );
         
         // Initialize new focused AJAX handlers.
         $this->init_ajax_handlers();
@@ -128,7 +120,6 @@ class WebChangeDetector_Admin_AJAX {
 		// Initialize screenshots AJAX handler.
 		$this->screenshots_ajax_handler = new \WebChangeDetector\WebChangeDetector_Screenshots_Ajax_Handler(
 			$this->admin,
-			$this->api_manager,
 			$this->screenshots_handler,
 			$this->account_handler
 		);
@@ -136,14 +127,12 @@ class WebChangeDetector_Admin_AJAX {
 		// Initialize settings AJAX handler.
 		$this->settings_ajax_handler = new \WebChangeDetector\WebChangeDetector_Settings_Ajax_Handler(
 			$this->admin,
-			$this->api_manager,
 			$this->admin->settings_handler ?? null
 		);
 
 		// Initialize WordPress AJAX handler.
 		$this->wordpress_ajax_handler = new \WebChangeDetector\WebChangeDetector_WordPress_Ajax_Handler(
 			$this->admin,
-			$this->api_manager,
 			$this->wordpress_handler,
 			$this->admin->settings_handler ?? null
 		);
@@ -151,7 +140,6 @@ class WebChangeDetector_Admin_AJAX {
 		// Initialize account AJAX handler.
 		$this->account_ajax_handler = new \WebChangeDetector\WebChangeDetector_Account_Ajax_Handler(
 			$this->admin,
-			$this->api_manager,
 			$this->account_handler
 		);
 

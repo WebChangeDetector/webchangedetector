@@ -40,11 +40,10 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 	 *
 	 * @since    4.0.0
 	 * @param    WebChangeDetector_Admin            $admin           The main admin class instance.
-	 * @param    WebChangeDetector_API_Manager      $api_manager     The API manager instance.
 	 * @param    WebChangeDetector_Admin_Account    $account_handler The account handler instance.
 	 */
-	public function __construct( $admin, $api_manager, $account_handler ) {
-		parent::__construct( $admin, $api_manager );
+	public function __construct( $admin, $account_handler ) {
+		parent::__construct( $admin );
 		
 		$this->account_handler = $account_handler;
 	}
