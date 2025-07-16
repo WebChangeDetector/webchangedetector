@@ -157,14 +157,31 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
                         // Initialize CodeMirror for CSS textarea when monitoring is enabled
                         var cssTextarea = $('.wcd-monitoring-css .wcd-css-textarea')[0];
                         if (cssTextarea && window.wp && window.wp.codeEditor) {
-                            // Only initialize if not already initialized
-                            if (!cssTextarea.nextElementSibling || !cssTextarea.nextElementSibling.classList.contains('CodeMirror')) {
-                                // Get settings from the localized script
+                            // Check if CodeMirror is already initialized
+                            var existingEditor = null;
+                            if (cssTextarea.nextElementSibling && cssTextarea.nextElementSibling.classList.contains('CodeMirror')) {
+                                // CodeMirror already exists, just refresh it
+                                var cmInstance = cssTextarea.nextElementSibling.CodeMirror;
+                                if (cmInstance) {
+                                    // Refresh after a small delay to ensure the element is fully visible
+                                    setTimeout(function() {
+                                        cmInstance.refresh();
+                                    }, 100);
+                                }
+                            } else {
+                                // Initialize new CodeMirror instance
                                 var editorSettings = {};
                                 if (typeof cm_settings !== 'undefined' && cm_settings.codeEditor) {
                                     editorSettings = cm_settings.codeEditor;
                                 }
-                                wp.codeEditor.initialize(cssTextarea, editorSettings);
+                                var editor = wp.codeEditor.initialize(cssTextarea, editorSettings);
+                                
+                                // Refresh the editor after initialization to fix line numbers
+                                if (editor && editor.codemirror) {
+                                    setTimeout(function() {
+                                        editor.codemirror.refresh();
+                                    }, 100);
+                                }
                             }
                         }
                     });
