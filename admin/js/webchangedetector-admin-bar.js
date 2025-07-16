@@ -205,13 +205,13 @@
             if (!urlId || !groupId) {
                 console.error('WCD Admin Bar Error: Missing URL ID or Group ID for toggle AJAX call.', { urlId: urlId, groupId: groupId });
                 $checkbox.prop('checked', !isChecked); // Revert change
-                alert('Error: Missing data needed to save the change.');
+                alert(wcdAdminBarData.error_missing_data);
                 return;
             }
             if (!wcdAdminBarData || !wcdAdminBarData.nonce || !wcdAdminBarData.ajax_url) {
                 console.error('WCD Admin Bar Error: Missing nonce or AJAX URL for toggle.');
                 $checkbox.prop('checked', !isChecked); // Revert change
-                alert('Error: Configuration data missing. Cannot save change.');
+                alert(wcdAdminBarData.error_config_missing);
                 return;
             }
 
@@ -249,7 +249,7 @@
                     console.error('WCD Admin Bar Toggle AJAX Error:', textStatus, errorThrown, jqXHR.responseText);
                     // Revert checkbox state visually ONLY on explicit error
                     $checkbox.prop('checked', !isChecked);
-                    alert('Failed to update setting. Please try again.');
+                    alert(wcdAdminBarData.failed_update_setting);
                 },
                 complete: function () {
                     // Re-enable checkbox(es) after request completes

@@ -99,7 +99,7 @@ class WebChangeDetector_Admin_Settings
             \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error');
             return array(
                 'success' => false,
-                'message' => 'Monitoring group UUID is not set. Please contact support.',
+                'message' => __('Monitoring group UUID is not set. Please contact support.', 'webchangedetector'),
             );
         }
         $result = \WebChangeDetector\WebChangeDetector_API_V2::update_group($this->admin->monitoring_group_uuid, $args);
@@ -111,13 +111,13 @@ class WebChangeDetector_Admin_Settings
         if ($result && ! is_string($result)) {
             return array(
                 'success' => true,
-                'message' => 'Monitoring settings saved successfully.',
+                'message' => __('Monitoring settings saved successfully.', 'webchangedetector'),
                 'data'    => $result,
             );
         } else {
-            $error_msg = 'Failed to save monitoring settings.';
+            $error_msg = __('Failed to save monitoring settings.', 'webchangedetector');
             if (is_string($result)) {
-                $error_msg .= ' Error: ' . $result;
+                $error_msg .= ' ' . __('Error:', 'webchangedetector') . ' ' . $result;
             }
             return array(
                 'success' => false,
@@ -208,7 +208,7 @@ class WebChangeDetector_Admin_Settings
         // Sync urls - post_types defined in function @TODO make settings for post_types to sync.
 
         if (! empty($_GET['_wpnonce']) && ! wp_verify_nonce(wp_unslash(sanitize_key($_GET['_wpnonce'])))) {
-            echo 'Something went wrong. Try again.';
+            echo esc_html__('Something went wrong. Try again.', 'webchangedetector');
             wp_die();
         }
 
@@ -265,7 +265,7 @@ class WebChangeDetector_Admin_Settings
         if (! $group_and_urls['selected_urls_count']) {
 ?>
             <div class="notice notice-warning">
-                <p><strong>WebChange Detector:</strong> Select URLs for manual checks to get started.</p>
+                <p><strong><?php echo esc_html__('WebChange Detector:', 'webchangedetector'); ?></strong> <?php echo esc_html__('Select URLs for manual checks to get started.', 'webchangedetector'); ?></p>
             </div>
         <?php
         }
@@ -287,12 +287,12 @@ class WebChangeDetector_Admin_Settings
                     <div class="wcd-settings-card wcd-start-checks-card wizard-start-manual-checks">
                         <div class="wcd-form-row">
                             <div class="wcd-form-label-wrapper">
-                                <label class="wcd-form-label"><span class="dashicons dashicons-controls-play"></span> Manual Checks Workflow</label>
-                                <div class="wcd-description">Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.</div>
+                                <label class="wcd-form-label"><span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__('Manual Checks Workflow', 'webchangedetector'); ?></label>
+                                <div class="wcd-description"><?php echo esc_html__('Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.', 'webchangedetector'); ?></div>
                             </div>
                             <div class="wcd-form-control">
                                 <button style="margin-top: 10px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js($group_id); ?>')">
-                                    <span class="dashicons dashicons-controls-play"></span> Start Manual Checks
+                                    <span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__('Start Manual Checks', 'webchangedetector'); ?>
                                 </button>
                             </div>
                         </div>
@@ -319,11 +319,11 @@ class WebChangeDetector_Admin_Settings
                 ?>
 
                     <div class="wcd-url-selection wcd-settings-card">
-                        <h2>Select URLs to Check<br><small></small></h2>
+                        <h2><?php echo esc_html__('Select URLs to Check', 'webchangedetector'); ?><br><small></small></h2>
                         <p style="text-align: center;">
-                            <strong>Currently selected URLs: <?php echo esc_html($group_and_urls['selected_urls_count']); ?></strong><br>
-                            Missing URLs? Select them from other post types and taxonomies by enabling them in the
-                            <a href="?page=webchangedetector-settings">Settings</a><br>
+                            <strong><?php echo esc_html__('Currently selected URLs:', 'webchangedetector'); ?> <?php echo esc_html($group_and_urls['selected_urls_count']); ?></strong><br>
+                            <?php echo esc_html__('Missing URLs? Select them from other post types and taxonomies by enabling them in the', 'webchangedetector'); ?>
+                            <a href="?page=webchangedetector-settings"><?php echo esc_html__('Settings', 'webchangedetector'); ?></a><br>
 
                         </p>
                         <input type="hidden" value="webchangedetector" name="page">
@@ -334,9 +334,9 @@ class WebChangeDetector_Admin_Settings
                                 <input type="hidden" name="page" value="webchangedetector-<?php echo esc_html($tab); ?>">
 
                                 <div style="display: inline-block; margin-right: 15px; vertical-align: top;">
-                                    <label for="filter-post-type" style="display: block; font-weight: 600; margin-bottom: 4px;">Post types</label>
+                                    <label for="filter-post-type" style="display: block; font-weight: 600; margin-bottom: 4px;"><?php echo esc_html__('Post types', 'webchangedetector'); ?></label>
                                     <select id="filter-post-type" name="post-type">
-                                        <option value="0">All</option>
+                                        <option value="0"><?php echo esc_html__('All', 'webchangedetector'); ?></option>
                                         <?php
                                         $selected_post_type = isset($_GET['post-type']) ? sanitize_text_field(wp_unslash($_GET['post-type'])) : array();
 
@@ -349,7 +349,7 @@ class WebChangeDetector_Admin_Settings
 
                                         if (! get_option('page_on_front') && ! empty($sync_url_types) && ! in_array('frontpage', array_column($sync_url_types, 'post_type_slug'), true)) {
                                         ?>
-                                            <option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>>Frontpage</option>
+                                            <option value="frontpage" <?php echo 'frontpage' === $selected_post_type ? 'selected' : ''; ?>><?php echo esc_html__('Frontpage', 'webchangedetector'); ?></option>
                                         <?php
                                         }
 
@@ -367,9 +367,9 @@ class WebChangeDetector_Admin_Settings
                                 </div>
 
                                 <div style="display: inline-block; margin-right: 15px; vertical-align: top;">
-                                    <label for="filter-taxonomy" style="display: block; font-weight: 600; margin-bottom: 4px;">Taxonomies</label>
+                                    <label for="filter-taxonomy" style="display: block; font-weight: 600; margin-bottom: 4px;"><?php echo esc_html__('Taxonomies', 'webchangedetector'); ?></label>
                                     <select id="filter-taxonomy" name="taxonomy">
-                                        <option value="0">All</option>
+                                        <option value="0"><?php echo esc_html__('All', 'webchangedetector'); ?></option>
                                         <?php
                                         $selected_post_type = isset($_GET['taxonomy']) ? sanitize_text_field(wp_unslash($_GET['taxonomy'])) : '';
 
@@ -387,7 +387,7 @@ class WebChangeDetector_Admin_Settings
                                 </div>
 
                                 <div style="display: inline-block; vertical-align: top; margin-top: 22px;">
-                                    <button class="button button-secondary">Filter</button>
+                                    <button class="button button-secondary"><?php echo esc_html__('Filter', 'webchangedetector'); ?></button>
                                 </div>
                             </form>
 
@@ -407,17 +407,17 @@ class WebChangeDetector_Admin_Settings
 
                             <form method="get" style="float: right;">
                                 <input type="hidden" name="page" value="webchangedetector-<?php echo esc_html($tab); ?>">
-                                <button type="submit" style="float: right" class="button button-secondary">Search</button>
-                                <input style="margin: 0" name="search" type="text" placeholder="Search" value="<?php echo esc_html(sanitize_text_field(wp_unslash($_GET['search'] ?? ''))); ?>">
+                                <button type="submit" style="float: right" class="button button-secondary"><?php echo esc_html__('Search', 'webchangedetector'); ?></button>
+                                <input style="margin: 0" name="search" type="text" placeholder="<?php echo esc_attr__('Search', 'webchangedetector'); ?>" value="<?php echo esc_html(sanitize_text_field(wp_unslash($_GET['search'] ?? ''))); ?>">
                             </form>
                             <div class="clear" style="margin-bottom: 20px;"></div>
 
                             <table class="no-margin filter-table">
                                 <tr>
-                                    <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('desktop'); ?><br>Desktop</th>
-                                    <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('mobile'); ?> Mobile</th>
-                                    <th style="width: 100%">URL</th>
-                                    <th style="min-width: 90px">Post type</th>
+                                    <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('desktop'); ?><br><?php echo esc_html__('Desktop', 'webchangedetector'); ?></th>
+                                    <th style="min-width: 50px; text-align: center;"><?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('mobile'); ?> <?php echo esc_html__('Mobile', 'webchangedetector'); ?></th>
+                                    <th style="width: 100%"><?php echo esc_html__('URL', 'webchangedetector'); ?></th>
+                                    <th style="min-width: 90px"><?php echo esc_html__('Post type', 'webchangedetector'); ?></th>
                                 </tr>
                                 <?php if (count($urls)) { ?>
                                     <?php // Select all from same device. 
@@ -445,7 +445,7 @@ class WebChangeDetector_Admin_Settings
                                             </label>
                                         </td>
 
-                                        <td><strong>Select all</strong></td>
+                                        <td><strong><?php echo esc_html__('Select all', 'webchangedetector'); ?></strong></td>
                                         <td></td>
                                     </tr>
                                     <?php
@@ -529,7 +529,7 @@ class WebChangeDetector_Admin_Settings
                                         $total_items               = $urls_meta['total'] ?? 0;
                                         ?>
                                         <div class="wcd-pagination-info">
-                                            <span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;">Showing page <?php echo esc_html($current_page); ?> of <?php echo esc_html($total_pages); ?> (<?php echo esc_html($total_items); ?> total URLs)</span>
+                                            <span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php echo esc_html(sprintf(__('Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector'), $current_page, $total_pages, $total_items)); ?></span>
                                         </div>
                                         <div class="wcd-pagination-links" style="margin-top: 15px;">
                                             <?php
@@ -539,9 +539,9 @@ class WebChangeDetector_Admin_Settings
                                                 $prev_page                  = $current_page - 1;
                                                 $pagination_params['paged'] = $prev_page;
                                                 $prev_url                   = add_query_arg($pagination_params, admin_url('admin.php'));
-                                                echo '<a class="wcd-pagination-btn et_pb_button" href="' . esc_url($prev_url) . '" style="margin: 0 3px;">‹ Previous</a> ';
+                                                echo '<a class="wcd-pagination-btn et_pb_button" href="' . esc_url($prev_url) . '" style="margin: 0 3px;">‹ ' . esc_html__('Previous', 'webchangedetector') . '</a> ';
                                             } else {
-                                                echo '<span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">‹ Previous</span> ';
+                                                echo '<span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">‹ ' . esc_html__('Previous', 'webchangedetector') . '</span> ';
                                             }
 
                                             // Page numbers with smart truncation.
@@ -581,9 +581,9 @@ class WebChangeDetector_Admin_Settings
                                                 $next_page                  = $current_page + 1;
                                                 $pagination_params['paged'] = $next_page;
                                                 $next_url                   = add_query_arg($pagination_params, admin_url('admin.php'));
-                                                echo ' <a class="wcd-pagination-btn et_pb_button" href="' . esc_url($next_url) . '" style="margin: 0 3px;">Next ›</a>';
+                                                echo ' <a class="wcd-pagination-btn et_pb_button" href="' . esc_url($next_url) . '" style="margin: 0 3px;">' . esc_html__('Next', 'webchangedetector') . ' ›</a>';
                                             } else {
-                                                echo ' <span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">Next ›</span>';
+                                                echo ' <span class="wcd-pagination-btn et_pb_button disabled" style="margin: 0 3px; opacity: 0.5; cursor: not-allowed; background: #dcdcde;">' . esc_html__('Next', 'webchangedetector') . ' ›</span>';
                                             }
                                             ?>
                                         </div>
@@ -669,7 +669,7 @@ class WebChangeDetector_Admin_Settings
                     $websites = \WebChangeDetector\WebChangeDetector_API_V2::get_websites_v2(true, $current_page);
 
                     if (empty($websites['data'])) {
-                        return 'No website details. Create them first.';
+                        return __('No website details. Create them first.', 'webchangedetector');
                     }
 
                     foreach ($websites['data'] as $website) {
@@ -837,7 +837,7 @@ class WebChangeDetector_Admin_Settings
         $active_tab = 'webchangedetector';
 
         if (! empty($_GET['_wpnonce']) && ! wp_verify_nonce(wp_unslash(sanitize_key($_GET['_wpnonce'])))) {
-            echo 'Something went wrong. Please try again.';
+            echo esc_html__('Something went wrong. Please try again.', 'webchangedetector');
         }
 
         if (isset($_GET['page'])) {
@@ -849,37 +849,37 @@ class WebChangeDetector_Admin_Settings
             <?php if ($this->is_allowed('dashboard_view')) { ?>
                 <a href="?page=webchangedetector"
                     class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('dashboard'); ?> Dashboard
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('dashboard'); ?> <?php echo esc_html__('Dashboard', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
             <?php if ($this->is_allowed('manual_checks_view')) { ?>
                 <a href="?page=webchangedetector-update-settings"
                     class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('update-group'); ?> Auto Update Checks & Manual Checks
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('update-group'); ?> <?php echo esc_html__('Auto Update Checks & Manual Checks', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
             <?php if ($this->is_allowed('monitoring_checks_view')) { ?>
                 <a href="?page=webchangedetector-auto-settings"
                     class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('auto-group'); ?> Monitoring
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('auto-group'); ?> <?php echo esc_html__('Monitoring', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
             <?php if ($this->is_allowed('change_detections_view')) { ?>
                 <a href="?page=webchangedetector-change-detections"
                     class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('change-detections'); ?> Change Detections
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('change-detections'); ?> <?php echo esc_html__('Change Detections', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
             <?php if ($this->is_allowed('logs_view')) { ?>
                 <a href="?page=webchangedetector-logs"
                     class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('logs'); ?> Queue
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('logs'); ?> <?php echo esc_html__('Queue', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
             <?php if ($this->is_allowed('settings_view')) { ?>
                 <a href="?page=webchangedetector-settings"
                     class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('settings'); ?> Settings
+                    <?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('settings'); ?> <?php echo esc_html__('Settings', 'webchangedetector'); ?>
                 </a>
             <?php } ?>
         </h2>

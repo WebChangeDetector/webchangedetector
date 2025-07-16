@@ -267,7 +267,7 @@ function currentlyProcessing() {
 
         // Confirm cancel manual checks
         $('#frm-cancel-update-detection').submit(function () {
-            return confirm("Are you sure you want to cancel the manual checks?");
+            return confirm(wcdL10n.confirmCancelChecks);
         });
 
         // Change bg color of comparison percentages
@@ -426,26 +426,26 @@ function currentlyProcessing() {
 
                     if ('failed' === response) {
                         $(statusElement).html(initialStatusContent);
-                        alert('Something went wrong. Please try again.');
+                        alert(wcdL10n.somethingWentWrong);
                         return false;
                     }
 
                     let status_nice_name;
                     if ('ok' === response) {
-                        status_nice_name = 'Ok';
+                        status_nice_name = wcdL10n.statusOk;
                     } else if ('to_fix' === response) {
-                        status_nice_name = 'To Fix';
+                        status_nice_name = wcdL10n.statusToFix;
                     } else if ('false_positive' === response) {
-                        status_nice_name = 'False Positive';
+                        status_nice_name = wcdL10n.statusFalsePositive;
                     } else if ('failed' === response) {
-                        status_nice_name = 'Failed';
+                        status_nice_name = wcdL10n.statusFailed;
                     } else if ('new' === response) {
-                        status_nice_name = 'New';
+                        status_nice_name = wcdL10n.statusNew;
                     } else {
                         // Unexpected response - log it and show generic error
                         console.error('WebChangeDetector: Unexpected status response:', response);
                         $(statusElement).html(initialStatusContent);
-                        alert('Unexpected response from server. Please try again.');
+                        alert(wcdL10n.unexpectedResponse);
                         return false;
                     }
 

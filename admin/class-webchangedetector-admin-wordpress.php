@@ -99,6 +99,34 @@ class WebChangeDetector_Admin_WordPress
     {
         if (strpos($hook_suffix, 'webchangedetector') !== false) {
             wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/webchangedetector-admin.js', array('jquery'), $this->version, false);
+            
+            // Localize script for translations
+            wp_localize_script($this->plugin_name, 'wcdL10n', array(
+                'unsavedChanges' => __('Changes were not saved. Do you wish to leave the page without saving?', 'webchangedetector'),
+                'confirmResetAccount' => __('Are you sure you want to reset your account? This cannot be undone.', 'webchangedetector'),
+                'confirmOverwriteSettings' => __('Are you sure you want to overwrite the %s detection settings? This cannot be undone.', 'webchangedetector'),
+                'confirmCancelChecks' => __('Are you sure you want to cancel the manual checks?', 'webchangedetector'),
+                'noTrackingsActive' => __('No trackings active', 'webchangedetector'),
+                'currently' => __('Currently', 'webchangedetector'),
+                'nextMonitoringChecks' => __('Next monitoring checks in ', 'webchangedetector'),
+                'notTracking' => __('Not Tracking', 'webchangedetector'),
+                'somethingWentWrong' => __('Something went wrong. Please try again.', 'webchangedetector'),
+                'unexpectedResponse' => __('Unexpected response from server. Please try again.', 'webchangedetector'),
+                'healthCheckSuccessful' => __('Health check completed successfully.', 'webchangedetector'),
+                'healthCheckFailed' => __('Health check failed: %s', 'webchangedetector'),
+                'healthCheckRequestFailed' => __('Health check request failed.', 'webchangedetector'),
+                'manualRecoveryAttempt' => __('Manual recovery attempt', 'webchangedetector'),
+                'attemptingRecovery' => __('Attempting Recovery...', 'webchangedetector'),
+                'recoverySuccessful' => __('Recovery successful: %s', 'webchangedetector'),
+                'recoveryComplete' => __('Recovery Successful', 'webchangedetector'),
+                'confirmClearLogs' => __('Are you sure you want to clear the logs? This action cannot be undone.', 'webchangedetector'),
+                'statusOk' => __('Ok', 'webchangedetector'),
+                'statusToFix' => __('To Fix', 'webchangedetector'),
+                'statusFalsePositive' => __('False Positive', 'webchangedetector'),
+                'statusFailed' => __('Failed', 'webchangedetector'),
+                'statusNew' => __('New', 'webchangedetector')
+            ));
+            
             wp_enqueue_script('jquery-ui-accordion');
             wp_enqueue_script('twentytwenty-js', plugin_dir_url(__FILE__) . 'js/jquery.twentytwenty.js', array('jquery'), $this->version, false);
             wp_enqueue_script('twentytwenty-move-js', plugin_dir_url(__FILE__) . 'js/jquery.event.move.js', array('jquery'), $this->version, false);
@@ -169,6 +197,9 @@ class WebChangeDetector_Admin_WordPress
                 'mobile_label'     => __('Mobile', 'webchangedetector'),
                 'dashboard_label'  => __('WCD Dashboard', 'webchangedetector'),
                 'dashboard_url'    => admin_url('admin.php?page=webchangedetector'),
+                'error_missing_data' => __('Error: Missing data needed to save the change.', 'webchangedetector'),
+                'error_config_missing' => __('Error: Configuration data missing. Cannot save change.', 'webchangedetector'),
+                'failed_update_setting' => __('Failed to update setting. Please try again.', 'webchangedetector'),
             ));
         }
     }
@@ -184,29 +215,29 @@ class WebChangeDetector_Admin_WordPress
         require_once 'partials/webchangedetector-admin-display.php';
         $allowances = get_option(WCD_ALLOWANCES);
 
-        add_menu_page('WebChange Detector', 'WebChange Detector', 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init', plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg');
-        add_submenu_page('webchangedetector', 'Dashboard', 'Dashboard', 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init');
+        add_menu_page(__('WebChange Detector', 'webchangedetector'), __('WebChange Detector', 'webchangedetector'), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init', plugin_dir_url(__FILE__) . 'img/icon-wp-backend.svg');
+        add_submenu_page('webchangedetector', __('Dashboard', 'webchangedetector'), __('Dashboard', 'webchangedetector'), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init');
 
         if (is_array($allowances) && $allowances['change_detections_view']) {
-            add_submenu_page('webchangedetector', 'Change Detections', 'Change Detections', 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Change Detections', 'webchangedetector'), __('Change Detections', 'webchangedetector'), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['manual_checks_view']) {
-            add_submenu_page('webchangedetector', 'Auto Update Checks & Manual Checks', 'Auto Update Checks & Manual Checks', 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Auto Update Checks & Manual Checks', 'webchangedetector'), __('Auto Update Checks & Manual Checks', 'webchangedetector'), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['monitoring_checks_view']) {
-            add_submenu_page('webchangedetector', 'Monitoring', 'Monitoring', 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Monitoring', 'webchangedetector'), __('Monitoring', 'webchangedetector'), 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['logs_view']) {
-            add_submenu_page('webchangedetector', 'Queue', 'Queue', 'manage_options', 'webchangedetector-logs', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Queue', 'webchangedetector'), __('Queue', 'webchangedetector'), 'manage_options', 'webchangedetector-logs', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['settings_view']) {
-            add_submenu_page('webchangedetector', 'Settings', 'Settings', 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Settings', 'webchangedetector'), __('Settings', 'webchangedetector'), 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init');
         }
 
         // Hidden submenu pages (not visible in menu but accessible via URL).
         if (is_array($allowances) && $allowances['change_detections_view']) {
-            add_submenu_page(null, 'Show Detection', 'Show Detection', 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init');
-            add_submenu_page(null, 'Show Screenshot', 'Show Screenshot', 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init');
+            add_submenu_page(null, __('Show Detection', 'webchangedetector'), __('Show Detection', 'webchangedetector'), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init');
+            add_submenu_page(null, __('Show Screenshot', 'webchangedetector'), __('Show Screenshot', 'webchangedetector'), 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init');
         }
     }
 
@@ -1121,8 +1152,8 @@ class WebChangeDetector_Admin_WordPress
 
         // Check if we have any URLs to sync.
         if (empty($this->admin->sync_urls)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No URLs found to sync', 'sync_posts', 'error');
-            return 'No URLs found to sync';
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(__('No URLs found to sync', 'webchangedetector'), 'sync_posts', 'error');
+            return __('No URLs found to sync', 'webchangedetector');
         }
 
         // Log the number of URL batches being synced.
@@ -1161,7 +1192,7 @@ class WebChangeDetector_Admin_WordPress
 
         $status   = wp_remote_retrieve_response_code($response);
         if ($status !== 200) {
-            return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
+            return __('We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website', 'webchangedetector');
         }
         $body       = wp_remote_retrieve_body($response);
         $api_routes = json_decode($body, true);

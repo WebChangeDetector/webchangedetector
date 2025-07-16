@@ -178,17 +178,17 @@ class WebChangeDetector_Form_View {
 		?>
 		<table class="form-table">
 			<tr valign="top">
-				<th scope="row">Disable Admin Bar Menu</th>
+				<th scope="row"><?php _e('Disable Admin Bar Menu', 'webchangedetector'); ?></th>
 				<td>
 					<label>
 						<input type="checkbox" name="wcd_disable_admin_bar_menu" value="1" <?php checked( get_option( 'wcd_disable_admin_bar_menu', 0 ), 1 ); ?> />
-						Disable WCD Menu in Admin Bar
+						<?php _e('Disable WCD Menu in Admin Bar', 'webchangedetector'); ?>
 					</label>
-					<p class="description">Check this box to hide the WCD menu item in the frontend admin bar.</p>
+					<p class="description"><?php _e('Check this box to hide the WCD menu item in the frontend admin bar.', 'webchangedetector'); ?></p>
 				</td>
 			</tr>
 		</table>
-		<?php submit_button( 'Save Admin Bar Setting' ); ?>
+		<?php submit_button( __('Save Admin Bar Setting', 'webchangedetector') ); ?>
 		<?php
 		$this->render_form_end();
 	}

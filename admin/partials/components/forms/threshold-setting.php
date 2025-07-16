@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 $threshold = $threshold ?? 0.0;
-$label = $label ?? 'Threshold';
-$description = $description ?? 'Only flag changes above this threshold percentage as significant.';
+$label = $label ?? __('Threshold', 'webchangedetector');
+$description = $description ?? __('Only flag changes above this threshold percentage as significant.', 'webchangedetector');
 $css_class = $css_class ?? '';
 ?>
 

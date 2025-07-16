@@ -24,8 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $current_hour = $current_hour ?? 0;
 $field_name = $field_name ?? 'hour_of_day';
-$label = $label ?? 'Hour of the day';
-$description = $description ?? 'Set the hour on which the monitoring checks should be done.';
+$label = $label ?? __('Hour of the day', 'webchangedetector');
+$description = $description ?? __('Set the hour on which the monitoring checks should be done.', 'webchangedetector');
 $css_class = $css_class ?? '';
 ?>
 

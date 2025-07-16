@@ -28,12 +28,12 @@ if (! defined('ABSPATH')) {
 
 $email_value = $email_value ?? get_option('admin_email');
 $field_name = $field_name ?? 'email';
-$label = $label ?? 'Email address';
-$description = $description ?? 'Enter the email address for notifications.';
+$label = $label ?? __('Email address', 'webchangedetector');
+$description = $description ?? __('Enter the email address for notifications.', 'webchangedetector');
 $css_class = $css_class ?? '';
 $multiple = $multiple ?? false;
 $show_validation = $show_validation ?? true;
-$placeholder = $placeholder ?? ($multiple ? 'email1@example.com, email2@example.com' : 'email@example.com');
+$placeholder = $placeholder ?? ($multiple ? __('email1@example.com, email2@example.com', 'webchangedetector') : __('email@example.com', 'webchangedetector'));
 
 $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
 ?>
@@ -42,7 +42,7 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
     <label for="<?php echo esc_attr($field_name); ?>">
         <?php echo esc_html($label); ?>
         <?php if ($multiple) : ?>
-            Alert email addresses (comma separated)
+            <?php _e('Alert email addresses (comma separated)', 'webchangedetector'); ?>
         <?php endif; ?>
     </label>
     <input
@@ -63,7 +63,7 @@ $validation_id = 'error-' . sanitize_title($field_name) . '-validation';
     <?php if ($show_validation) : ?>
         <span class="notice notice-error" id="<?php echo esc_attr($validation_id); ?>" style="display: none;">
             <span style="padding: 10px; display: block;" class="default-bg">
-                Please check your email address<?php echo $multiple ? '(es)' : ''; ?>.
+                <?php _e('Please check your email address', 'webchangedetector'); ?><?php echo $multiple ? __('(es)', 'webchangedetector') : ''; ?>.
             </span>
         </span>
     <?php endif; ?>

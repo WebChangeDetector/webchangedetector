@@ -223,19 +223,19 @@ class WebChangeDetector_Admin_Account {
 				<div class="wcd-settings-card">
 					<h2><span class="dashicons dashicons-admin-users"></span> Account</h2>
 					<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
-						onsubmit="return confirm('Are sure you want to reset the API token?');">
+						onsubmit="return confirm('<?php echo esc_js(__('Are you sure you want to reset the API token?', 'webchangedetector')); ?>');">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
 
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
-								<label class="wcd-form-label">Account Information</label>
-								<div class="wcd-description">Your account details and API token for WebChange Detector service.</div>
+								<label class="wcd-form-label"><?php esc_html_e( 'Account Information', 'webchangedetector' ); ?></label>
+								<div class="wcd-description"><?php esc_html_e( 'Your account details and API token for WebChange Detector service.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<div class="wcd-account-info">
-									<p><strong>Email:</strong> <?php echo esc_html( $this->get_account()['email'] ); ?></p>
-									<p><strong>API Token:</strong></p>
+									<p><strong><?php esc_html_e( 'Email:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $this->get_account()['email'] ); ?></p>
+									<p><strong><?php esc_html_e( 'API Token:', 'webchangedetector' ); ?></strong></p>
 									<div class="wcd-api-token-section">
 										<div class="wcd-api-token-controls">
 											<span id="api-token-display" style="display: none; font-family: monospace; font-size: 13px;"><?php echo esc_html( $api_token ); ?></span>
@@ -245,7 +245,7 @@ class WebChangeDetector_Admin_Account {
 											</button>
 										</div>
 										<p class="wcd-security-note" style="font-size: 12px; color: #666; margin-top: 8px;">
-											Keep your API token secure and never share it publicly
+											<?php esc_html_e( 'Keep your API token secure and never share it publicly', 'webchangedetector' ); ?>
 										</p>
 									</div>
 									
@@ -280,11 +280,11 @@ class WebChangeDetector_Admin_Account {
 						
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
-								<label class="wcd-form-label">Reset API Token</label>
-								<div class="wcd-description">With resetting the API Token, auto detections still continue and your settings will be still available when you use the same api token with this website again.</div>
+								<label class="wcd-form-label"><?php esc_html_e( 'Reset API Token', 'webchangedetector' ); ?></label>
+								<div class="wcd-description"><?php esc_html_e( 'With resetting the API Token, auto detections still continue and your settings will be still available when you use the same api token with this website again.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
-								<input type="submit" value="Reset API Token" class="button button-delete">
+								<input type="submit" value="<?php esc_attr_e( 'Reset API Token', 'webchangedetector' ); ?>" class="button button-delete">
 							</div>
 						</div>
 					</form>
@@ -293,14 +293,14 @@ class WebChangeDetector_Admin_Account {
 
 			<div class="wcd-settings-section">
 				<div class="wcd-settings-card">
-					<h2><span class="dashicons dashicons-trash"></span> Delete Account</h2>
+					<h2><span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Delete Account', 'webchangedetector' ); ?></h2>
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label">Account Deletion</label>
-							<div class="wcd-description">To completely remove your account and all associated data.</div>
+							<label class="wcd-form-label"><?php esc_html_e( 'Account Deletion', 'webchangedetector' ); ?></label>
+							<div class="wcd-description"><?php esc_html_e( 'To completely remove your account and all associated data.', 'webchangedetector' ); ?></div>
 						</div>
 						<div class="wcd-form-control">
-							<p>To delete your account completely, please login to your account at
+							<p><?php esc_html_e( 'To delete your account completely, please login to your account at', 'webchangedetector' ); ?>
 								<a href="https://www.webchangedetector.com" target="_blank">webchangedetector.com</a>.
 							</p>
 						</div>
@@ -318,13 +318,13 @@ class WebChangeDetector_Admin_Account {
 				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
 					<input type="hidden" name="wcd_action" value="save_api_token">
 					<?php wp_nonce_field( 'save_api_token' ); ?>
-					<h2>Use Existing API Token</h2>
+					<h2><?php esc_html_e( 'Use Existing API Token', 'webchangedetector' ); ?></h2>
 					<p>
-						Use the API token of your existing account. To get your API token, please login to your account at
+						<?php esc_html_e( 'Use the API token of your existing account. To get your API token, please login to your account at', 'webchangedetector' ); ?>
 						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>
 					</p>
 					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" required>
-					<input type="submit" value="Save" class="button button-primary">
+					<input type="submit" value="<?php esc_attr_e( 'Save', 'webchangedetector' ); ?>" class="button button-primary">
 				</form>
 			</div>
 			<?php

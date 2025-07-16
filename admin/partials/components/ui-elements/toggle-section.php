@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $toggle_name = $toggle_name ?? 'toggle_enabled';
 $is_enabled = $is_enabled ?? false;
-$toggle_label = $toggle_label ?? 'Enable';
+$toggle_label = $toggle_label ?? __('Enable', 'webchangedetector');
 $toggle_description = $toggle_description ?? '';
 $content = $content ?? '';
 $css_class = $css_class ?? '';

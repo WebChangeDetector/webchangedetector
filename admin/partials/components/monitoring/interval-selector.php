@@ -26,44 +26,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 $current_interval = $current_interval ?? 24;
 $show_minute_intervals = $show_minute_intervals ?? false;
 $field_name = $field_name ?? 'interval_in_h';
-$label = $label ?? 'Interval in hours';
-$description = $description ?? 'This is the interval in which the checks are done.';
+$label = $label ?? __('Interval in hours', 'webchangedetector');
+$description = $description ?? __('This is the interval in which the checks are done.', 'webchangedetector');
 $css_class = $css_class ?? '';
 
 $intervals = array(
 	array(
 		'value' => '0.25',
-		'label' => 'Every 15 minutes',
+		'label' => __('Every 15 minutes', 'webchangedetector'),
 		'requires_premium' => true,
 	),
 	array(
 		'value' => '0.5',
-		'label' => 'Every 30 minutes',
+		'label' => __('Every 30 minutes', 'webchangedetector'),
 		'requires_premium' => true,
 	),
 	array(
 		'value' => '1',
-		'label' => 'Every 1 hour',
+		'label' => __('Every 1 hour', 'webchangedetector'),
 		'requires_premium' => false,
 	),
 	array(
 		'value' => '3',
-		'label' => 'Every 3 hours',
+		'label' => __('Every 3 hours', 'webchangedetector'),
 		'requires_premium' => false,
 	),
 	array(
 		'value' => '6',
-		'label' => 'Every 6 hours',
+		'label' => __('Every 6 hours', 'webchangedetector'),
 		'requires_premium' => false,
 	),
 	array(
 		'value' => '12',
-		'label' => 'Every 12 hours',
+		'label' => __('Every 12 hours', 'webchangedetector'),
 		'requires_premium' => false,
 	),
 	array(
 		'value' => '24',
-		'label' => 'Every 24 hours',
+		'label' => __('Every 24 hours', 'webchangedetector'),
 		'requires_premium' => false,
 	),
 );
@@ -84,7 +84,7 @@ $intervals = array(
 			>
 				<?php echo esc_html( $interval['label'] ); ?>
 				<?php if ( $is_disabled ) : ?>
-					("Freelancer" plan or higher)
+					<?php _e('("Freelancer" plan or higher)', 'webchangedetector'); ?>
 				<?php endif; ?>
 			</option>
 		<?php endforeach; ?>

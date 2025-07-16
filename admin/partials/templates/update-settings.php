@@ -27,7 +27,7 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 ?>
 
     <div class="wcd-settings-card">
-        <h2>WP Auto Update & Manual Checks Settings</h2>
+        <h2><?php _e('WP Auto Update & Manual Checks Settings', 'webchangedetector'); ?></h2>
         <form action="admin.php?page=webchangedetector-update-settings" method="post">
             <input type="hidden" name="wcd_action" value="save_group_settings">
             <input type="hidden" name="step" value="pre-update">
@@ -36,8 +36,8 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row wcd-auto-update-setting-enabled">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">Auto Update Checks</label>
-                    <div class="wcd-description">WP auto updates have to be enabled. This option only enables checks during auto updates.</div>
+                    <label class="wcd-form-label"><?php _e('Auto Update Checks', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -66,8 +66,8 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">Auto Update Timeframe</label>
-                    <div class="wcd-description">Set the time frame in which you want to allow WP auto updates.</div>
+                    <label class="wcd-form-label"><?php _e('Auto Update Timeframe', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('Set the time frame in which you want to allow WP auto updates.', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -76,7 +76,7 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
                     $to_time = $auto_update_settings['auto_update_checks_to'] ?? gmdate('H:i', strtotime('+2 hours'));
                     $from_name = 'auto_update_checks_from';
                     $to_name = 'auto_update_checks_to';
-                    $label = 'Only';
+                    $label = __('Only', 'webchangedetector');
                     $description = '';
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/time-range-selector.php';
                     ?>
@@ -85,8 +85,8 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">Weekdays</label>
-                    <div class="wcd-description">Set the weekdays in which you want to allow WP auto updates.</div>
+                    <label class="wcd-form-label"><?php _e('Weekdays', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('Set the weekdays in which you want to allow WP auto updates.', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -103,15 +103,15 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">Notification Email</label>
-                    <div class="wcd-description">Enter the email address(es) which should get notified about auto update checks.</div>
+                    <label class="wcd-form-label"><?php _e('Notification Email', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('Enter the email address(es) which should get notified about auto update checks.', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
                     // Email Input Component.
                     $email_value = $auto_update_settings['auto_update_checks_emails'] ?? get_option('admin_email');
                     $field_name = 'auto_update_checks_emails';
-                    $label = 'Notification email to';
+                    $label = __('Notification email to', 'webchangedetector');
                     $description = '';
                     $multiple = true;
                     $show_validation = true;
@@ -121,15 +121,15 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
             </div>
 
             <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-zapier" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
-                <label class="wcd-form-label">Notification to Zapier</label>
-                <p>Conntect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.</p>
-                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a></p>
+                <label class="wcd-form-label"><?php _e('Notification to Zapier', 'webchangedetector'); ?></label>
+                <p><?php _e('Connect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.', 'webchangedetector'); ?></p>
+                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank"><?php _e('Zapier', 'webchangedetector'); ?></a></p>
             </div>
 
             <div class="wcd-form-row wcd-auto-update-setting-threshold">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">Change Detection Threshold</label>
-                    <div class="wcd-description">Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.</div>
+                    <label class="wcd-form-label"><?php _e('Change Detection Threshold', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -144,13 +144,13 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row wcd-auto-update-setting-css">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label">CSS Settings</label>
-                    <div class="wcd-description">Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).</div>
+                    <label class="wcd-form-label"><?php _e('CSS Settings', 'webchangedetector'); ?></label>
+                    <div class="wcd-description"><?php _e('Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector'); ?></div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
                     // CSS Injection using Accordion Component.
-                    $header_text = 'CSS Injection';
+                    $header_text = __('CSS Injection', 'webchangedetector');
                     $accordion_id = 'css-injection-manual';
                     $open = false;
 

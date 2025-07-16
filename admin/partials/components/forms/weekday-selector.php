@@ -26,19 +26,19 @@ if (! defined('ABSPATH')) {
 
 $selected_days = $selected_days ?? array();
 $name_prefix = $name_prefix ?? 'weekday_';
-$label = $label ?? 'On days';
-$description = $description ?? 'Select the days for the operation.';
+$label = $label ?? __('On days', 'webchangedetector');
+$description = $description ?? __('Select the days for the operation.', 'webchangedetector');
 $css_class = $css_class ?? '';
 $show_validation = $show_validation ?? true;
 
 $weekdays = array(
-    'monday'    => 'Monday',
-    'tuesday'   => 'Tuesday',
-    'wednesday' => 'Wednesday',
-    'thursday'  => 'Thursday',
-    'friday'    => 'Friday',
-    'saturday'  => 'Saturday',
-    'sunday'    => 'Sunday',
+    'monday'    => __('Monday', 'webchangedetector'),
+    'tuesday'   => __('Tuesday', 'webchangedetector'),
+    'wednesday' => __('Wednesday', 'webchangedetector'),
+    'thursday'  => __('Thursday', 'webchangedetector'),
+    'friday'    => __('Friday', 'webchangedetector'),
+    'saturday'  => __('Saturday', 'webchangedetector'),
+    'sunday'    => __('Sunday', 'webchangedetector'),
 );
 ?>
 
@@ -72,7 +72,7 @@ $weekdays = array(
     <?php if ($show_validation) : ?>
         <span class="notice notice-error" id="error-on-days-validation" style="display: none;">
             <span style="padding: 10px; display: block;" class="default-bg">
-                At least one weekday has to be selected.
+                <?php _e('At least one weekday has to be selected.', 'webchangedetector'); ?>
             </span>
         </span>
     <?php endif; ?>
