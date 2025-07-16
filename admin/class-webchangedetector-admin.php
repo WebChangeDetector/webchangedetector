@@ -352,15 +352,6 @@ class WebChangeDetector_Admin {
 
 
 
-	/**
-	 * Get the domain from wp site_url.
-	 *
-	 * @return string
-	 */
-	public static function get_domain_from_site_url() {
-		return rtrim( preg_replace( '(^https?://)', '', get_site_url() ?? '' ), '/' ); // Site might be in subdir.
-	}
-	
 
 	/** Get queues for status processing and open.
 	 *
@@ -386,7 +377,7 @@ class WebChangeDetector_Admin {
 	 * @return array
 	 */
 	public function create_website_and_groups() {
-		$domain = self::get_domain_from_site_url();
+		$domain = WebChangeDetector_Admin_Utils::get_domain_from_site_url();
 		
 		// Create monitoring group.
 		$monitoring_group_args = array(
@@ -857,6 +848,11 @@ if ( ! defined( 'WCD_WP_OPTION_KEY_UPGRADE_URL' ) ) {
 
 if ( ! defined( 'WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED' ) ) {
 	define( 'WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED', 'wcd_initial_setup_needed' );
+}
+
+// Website ID for API calls.
+if ( ! defined( 'WCD_WP_OPTION_KEY_WEBSITE_ID' ) ) {
+	define( 'WCD_WP_OPTION_KEY_WEBSITE_ID', 'webchangedetector_website_id' );
 }
 
 // Steps in update change detection.

@@ -205,6 +205,7 @@ class WebChangeDetector_Error_Recovery {
 				 strpos( $exception->getMessage(), 'unauthorized' ) !== false ) {
 				
 				delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
+				delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 				
 				return array(
 					'success' => true,

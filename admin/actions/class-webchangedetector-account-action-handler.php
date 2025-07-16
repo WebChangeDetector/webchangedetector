@@ -92,6 +92,7 @@ class WebChangeDetector_Account_Action_Handler {
 			// Clear the stored API token.
 			delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
 			delete_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
+			delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 			delete_option( WCD_WEBSITE_GROUPS );
 			
 			// Clear wizard tracking.

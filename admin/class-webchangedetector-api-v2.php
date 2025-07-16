@@ -39,15 +39,30 @@ class WebChangeDetector_API_V2
 
     /**
      * Get websites.
-     *
+     * 
+     * @param bool $force Force getting new websites.
+     * @param int $page Page number for pagination.
      * @return mixed|string
      */
-    public static function get_websites_v2()
+    public static function get_websites_v2($force = false, $page = 1)
     {
+        static $websites;
+        if ($websites && !$force && $page === 1) {
+            return $websites;
+        }
+
         $args = array(
             'action' => 'websites',
+            'page' => $page,
         );
-        return self::api_v2($args, 'GET');
+        $result = self::api_v2($args, 'GET');
+
+        // Only cache the first page
+        if ($page === 1) {
+            $websites = $result;
+        }
+
+        return $result;
     }
 
     /**
@@ -124,12 +139,10 @@ class WebChangeDetector_API_V2
             return false;
         }
 
-        error_log(print_r($posts, 1));
-
         $args = array(
             'action'          => 'sync-urls',
             'collection_uuid' => $collection_uuid,
-            'domain'          => WebChangeDetector_Admin::get_domain_from_site_url(),
+            'domain'          => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
             'urls'            => $posts,
             'multi_call'      => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
         );
@@ -602,7 +615,7 @@ class WebChangeDetector_API_V2
                     'headers' => array(
                         'Accept'        => 'application/json',
                         'Authorization' => 'Bearer ' . $api_token,
-                        'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+                        'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
                         'x-wcd-wp-id'   => get_current_user_id(),
                         'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
                     ),
@@ -665,7 +678,7 @@ class WebChangeDetector_API_V2
                 'headers' => array(
                     'Accept'        => 'application/json',
                     'Authorization' => 'Bearer ' . $api_token,
-                    'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+                    'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
                     'x-wcd-wp-id'   => get_current_user_id(),
                     'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
                 ),
