@@ -188,7 +188,6 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-view-renderer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-notification-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-form-view.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-table-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-card-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-modal-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-template-view.php';

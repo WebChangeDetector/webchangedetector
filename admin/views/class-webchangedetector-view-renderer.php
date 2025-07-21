@@ -47,7 +47,6 @@ class WebChangeDetector_View_Renderer {
 		$this->view_components = array(
 			'notifications' => new WebChangeDetector_Notification_View( $this->admin ),
 			'forms'         => new WebChangeDetector_Form_View( $this->admin ),
-			'tables'        => new WebChangeDetector_Table_View( $this->admin ),
 			'cards'         => new WebChangeDetector_Card_View( $this->admin ),
 			'modals'        => new WebChangeDetector_Modal_View( $this->admin ),
 			'templates'     => new WebChangeDetector_Template_View( $this->admin ),
