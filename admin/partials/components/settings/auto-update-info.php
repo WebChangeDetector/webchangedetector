@@ -109,7 +109,7 @@ ob_start();
 $content = ob_get_clean();
 
 // Include accordion component.
-$header_text = 'Currently enabled auto-updates: ' . $summary;
+$header_text = __('Currently enabled auto-updates: ', 'webchangedetector') . $summary;
 $accordion_id = 'auto-update-info';
 $open = false;
 

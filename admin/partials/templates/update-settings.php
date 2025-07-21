@@ -166,7 +166,7 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <input type="hidden" name="group_name" value="<?php echo esc_html($group_and_urls['name'] ?? ''); ?>">
 
-            <?php submit_button('Save Settings', 'primary', 'submit', true, array('onclick' => 'return wcdValidateFormGroupSettings()')); ?>
+            <?php submit_button(__('Save Settings', 'webchangedetector'), 'primary', 'submit', true, array('onclick' => 'return wcdValidateFormGroupSettings()')); ?>
         </form>
     </div>
 

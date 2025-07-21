@@ -332,12 +332,12 @@ function currentlyProcessing() {
         if ($("#auto-enabled").is(':checked') || $('input[name="enabled"]').is(':checked')) {
             autoEnabled = true;
         }
-        let txtNextScIn = "No trackings active";
+        let txtNextScIn = wcdL10n.noTrackingsActive;
         let nextScIn;
         let nextScDate = $("#next_sc_date").data("date");
         let amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
 
-        $("#txt_next_sc_in").html("Currently");
+        $("#txt_next_sc_in").html(wcdL10n.currently);
         $("#next_sc_date").html("");
 
         if (nextScDate && autoEnabled && amountSelectedTotal > 0) {

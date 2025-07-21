@@ -183,49 +183,49 @@ class WebChangeDetector_View_Renderer {
 				<?php if ( $this->admin->settings_handler->is_allowed( 'dashboard_view' ) ) : ?>
 				<a href="?page=webchangedetector"
 					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> Dashboard
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> <?php echo esc_html__( 'Dashboard', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) ) : ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> Auto Update Checks & Manual Checks
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & Manual Checks', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' ) ) : ?>
 				<a href="?page=webchangedetector-auto-settings"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> Monitoring
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> <?php echo esc_html__( 'Monitoring', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) : ?>
 				<a href="?page=webchangedetector-change-detections"
 					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> Change Detections
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'logs_view' ) ) : ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> Queue
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Queue', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'settings_view' ) ) : ?>
 				<a href="?page=webchangedetector-settings"
 					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> Settings
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Settings', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) : ?>
 				<a href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> Upgrade Account
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> <?php echo esc_html__( 'Upgrade Account', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 			</h2>

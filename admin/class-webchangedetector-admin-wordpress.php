@@ -153,6 +153,107 @@ class WebChangeDetector_Admin_WordPress
             wp_localize_script('wcd-wizard', 'wcdWizardData', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce'    => wp_create_nonce('wcd_wizard_nonce'),
+                'translations' => array(
+                    // Navigation buttons
+                    'nextBtnText' => __('Next →', 'webchangedetector'),
+                    'prevBtnText' => __('← Previous', 'webchangedetector'),
+                    'doneBtnText' => __('Finish Wizard', 'webchangedetector'),
+                    'closeBtnText' => __('Exit Wizard', 'webchangedetector'),
+                    'progressText' => __('Step {{current}} of {{total}}', 'webchangedetector'),
+                    'finishTour' => __('Finish Tour →', 'webchangedetector'),
+                    
+                    // Loading/navigation messages
+                    'letsContinue' => __('Let\'s continue on the next page.', 'webchangedetector'),
+                    'loading' => __('Loading...', 'webchangedetector'),
+                    'wizardComplete' => __('Wizard Complete!', 'webchangedetector'),
+                    'returningToDashboard' => __('Returning to dashboard...', 'webchangedetector'),
+                    
+                    // Dashboard steps
+                    'welcomeTitle' => __('Welcome to WebChange Detector', 'webchangedetector'),
+                    'welcomeDesc' => __('WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s start the tour!', 'webchangedetector'),
+                    'checkCreditsTitle' => __('Your Check Credits', 'webchangedetector'),
+                    'checkCreditsDesc' => __('This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits.', 'webchangedetector'),
+                    'recentChangesTitle' => __('Recent Changes', 'webchangedetector'),
+                    'recentChangesDesc' => __('Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector'),
+                    
+                    // URL selection steps
+                    'manualChecksTitle' => __('Manual Checks & Auto Update Settings', 'webchangedetector'),
+                    'manualChecksDesc' => __('You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector'),
+                    'enableAutoUpdateTitle' => __('Enable Auto Update Checks', 'webchangedetector'),
+                    'enableAutoUpdateDesc' => __('Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.', 'webchangedetector'),
+                    'enabledAutoUpdatesTitle' => __('Enabled Auto Updates', 'webchangedetector'),
+                    'enabledAutoUpdatesDesc' => __('Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings.', 'webchangedetector'),
+                    'autoUpdateTimeframeTitle' => __('Auto Update Timeframe', 'webchangedetector'),
+                    'autoUpdateTimeframeDesc' => __('Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.', 'webchangedetector'),
+                    'weekdaySelectionTitle' => __('Weekday Selection', 'webchangedetector'),
+                    'weekdaySelectionDesc' => __('Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.', 'webchangedetector'),
+                    'notificationEmailsTitle' => __('Notification Emails', 'webchangedetector'),
+                    'notificationEmailsDesc' => __('Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.', 'webchangedetector'),
+                    'changeThresholdTitle' => __('Change Detection Threshold', 'webchangedetector'),
+                    'changeThresholdDesc' => __('Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.', 'webchangedetector'),
+                    'cssInjectionTitle' => __('CSS Injection', 'webchangedetector'),
+                    'cssInjectionDesc' => __('Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }', 'webchangedetector'),
+                    'urlSelectionTitle' => __('URL Selection Table', 'webchangedetector'),
+                    'urlSelectionDesc' => __('Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.', 'webchangedetector'),
+                    'saveSettingsTitle' => __('Save Your Settings', 'webchangedetector'),
+                    'saveSettingsDesc' => __('Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.', 'webchangedetector'),
+                    
+                    // Monitoring steps
+                    'monitoringSettingsTitle' => __('Automatic Monitoring Settings', 'webchangedetector'),
+                    'monitoringSettingsDesc' => __('Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues.', 'webchangedetector'),
+                    'enableMonitoringTitle' => __('Enable Monitoring', 'webchangedetector'),
+                    'enableMonitoringDesc' => __('Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.', 'webchangedetector'),
+                    'checkFrequencyTitle' => __('Check Frequency', 'webchangedetector'),
+                    'checkFrequencyDesc' => __('How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.', 'webchangedetector'),
+                    'preferredCheckTimeTitle' => __('Preferred Check Time', 'webchangedetector'),
+                    'preferredCheckTimeDesc' => __('Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.', 'webchangedetector'),
+                    'changeSensitivityTitle' => __('Change Sensitivity', 'webchangedetector'),
+                    'changeSensitivityDesc' => __('Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.', 'webchangedetector'),
+                    'alertRecipientsTitle' => __('Alert Recipients', 'webchangedetector'),
+                    'alertRecipientsDesc' => __('Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.', 'webchangedetector'),
+                    'cssCustomizationTitle' => __('CSS Customization', 'webchangedetector'),
+                    'cssCustomizationDesc' => __('Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.', 'webchangedetector'),
+                    'saveMonitoringTitle' => __('Save Monitoring Settings', 'webchangedetector'),
+                    'saveMonitoringDesc' => __('Save your configuration to activate monitoring. Changes take effect immediately.', 'webchangedetector'),
+                    'selectPagesToMonitorTitle' => __('Select Pages to Monitor', 'webchangedetector'),
+                    'selectPagesToMonitorDesc' => __('Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.', 'webchangedetector'),
+                    
+                    // Change detection steps
+                    'changeDetectionHistoryTitle' => __('Change Detection History', 'webchangedetector'),
+                    'changeDetectionHistoryDesc' => __('This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector'),
+                    'detectionTableTitle' => __('Detection Table', 'webchangedetector'),
+                    'detectionTableDesc' => __('Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.', 'webchangedetector'),
+                    'filterOptionsTitle' => __('Filter Options', 'webchangedetector'),
+                    'filterOptionsDesc' => __('Use these filters to find specific changes by date, check type, status, or to show only changes with differences.', 'webchangedetector'),
+                    
+                    // Logs steps
+                    'activityLogsTitle' => __('Activity Logs', 'webchangedetector'),
+                    'activityLogsDesc' => __('Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.', 'webchangedetector'),
+                    'logDetailsTitle' => __('Log Details', 'webchangedetector'),
+                    'logDetailsDesc' => __('Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors.', 'webchangedetector'),
+                    
+                    // Settings steps
+                    'urlManagementTitle' => __('URL Management', 'webchangedetector'),
+                    'urlManagementDesc' => __('Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.', 'webchangedetector'),
+                    'urlSyncTitle' => __('URL Synchronization', 'webchangedetector'),
+                    'urlSyncDesc' => __('WebChange Detector syncs your site\'s URLs automatically. Use "Sync Now" after adding new content or if URLs are missing.', 'webchangedetector'),
+                    'quickAccessTitle' => __('Quick Access', 'webchangedetector'),
+                    'quickAccessDesc' => __('The admin bar menu provides quick access to WebChange Detector from your site\'s frontend. Disable if you prefer a cleaner toolbar.', 'webchangedetector'),
+                    'apiConnectionTitle' => __('API Connection', 'webchangedetector'),
+                    'apiConnectionDesc' => __('Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!', 'webchangedetector'),
+                    'setupCompleteTitle' => __('Setup Complete!', 'webchangedetector'),
+                    'setupCompleteDesc' => __('You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.', 'webchangedetector'),
+                    
+                    // Generic steps
+                    'genericTitle' => __('WebChange Detector', 'webchangedetector'),
+                    'genericDesc' => __('Welcome to WebChange Detector! Use the navigation tabs to access different features.', 'webchangedetector'),
+                    
+                    // Notification messages
+                    'requiredSetting' => __('Required Setting', 'webchangedetector'),
+                    'requiredSettingMessage' => __('Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.', 'webchangedetector'),
+                    'autoUpdateChecks' => __('Auto Update Checks', 'webchangedetector'),
+                    'monitoring' => __('Monitoring', 'webchangedetector')
+                )
             ));
 
             wp_localize_script($this->plugin_name, 'wcdAjaxData', array(

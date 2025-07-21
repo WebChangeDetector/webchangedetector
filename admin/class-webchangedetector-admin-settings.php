@@ -595,16 +595,16 @@ class WebChangeDetector_Admin_Settings
                         </div>
                     </div>
             </div> <!-- Close flex container -->
-            <?php
+        <?php
                 } else {
                     // Close flex container even if URL selection is not allowed
-            ?>
-        </div> <!-- Close flex container -->
-        <?php
-                }
         ?>
-    </div>
+        </div> <!-- Close flex container -->
     <?php
+                }
+    ?>
+    </div>
+<?php
     }
 
     /**
@@ -643,7 +643,7 @@ class WebChangeDetector_Admin_Settings
                     $website = $website_response['data'];
 
                     // Verify the domain still matches our site
-                    if (str_starts_with(rtrim($website['domain'], '/'), rtrim(\WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/'))) {
+                    if (strpos(rtrim($website['domain'], '/'), rtrim(\WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/')) === 0) {
                         $website_details                   = $website;
                         $website_details['sync_url_types'] = is_string($website['sync_url_types']) ? json_decode($website['sync_url_types'], true) : $website['sync_url_types'] ?? array();
                         $website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names($website_details['sync_url_types']);
@@ -673,7 +673,7 @@ class WebChangeDetector_Admin_Settings
                     }
 
                     foreach ($websites['data'] as $website) {
-                        if (str_starts_with(rtrim($website['domain'], '/'), $our_domain)) {
+                        if (strpos(rtrim($website['domain'], '/'), $our_domain) === 0) {
                             $website_details                   = $website;
                             $website_details['sync_url_types'] = is_string($website['sync_url_types']) ? json_decode($website['sync_url_types'], true) : $website['sync_url_types'] ?? array();
                             $website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names($website_details['sync_url_types']);

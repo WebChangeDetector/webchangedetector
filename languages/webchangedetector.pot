@@ -789,6 +789,11 @@ msgstr ""
 msgid "All"
 msgstr ""
 
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:105
+#: admin/views/class-webchangedetector-form-view.php:76
+msgid "All Checks"
+msgstr ""
+
 #: admin/class-webchangedetector-admin-settings.php:390
 msgid "Filter"
 msgstr ""
@@ -1543,4 +1548,320 @@ msgstr ""
 
 #: admin/partials/templates/update-settings.php:153
 msgid "CSS Injection"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:158
+msgid "Next →"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:159
+msgid "← Previous"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:160
+msgid "Finish Wizard"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:161
+msgid "Exit Wizard"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:162
+msgid "Step {{current}} of {{total}}"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:163
+msgid "Finish Tour →"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:166
+msgid "Let's continue on the next page."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:167
+msgid "Loading..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:168
+msgid "Wizard Complete!"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:169
+msgid "Returning to dashboard..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:172
+msgid "Welcome to WebChange Detector"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:173
+msgid "WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let's start the tour!"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:174
+msgid "Your Check Credits"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:175
+msgid "This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:176
+msgid "Recent Changes"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:177
+msgid "Your latest detected changes appear here. You'll see visual comparisons highlighting what changed on your site."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:180
+msgid "Manual Checks & Auto Update Settings"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:181
+msgid "You can start the Manual Checks here. But first, let's walk through each important setting."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:182
+msgid "Enable Auto Update Checks"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:183
+msgid "Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don't want to use it."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:184
+msgid "Enabled Auto Updates"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:185
+msgid "Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:187
+msgid "Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:188
+msgid "Weekday Selection"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:189
+msgid "Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:190
+msgid "Notification Emails"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:191
+msgid "Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:192
+msgid "Change Detection Threshold"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:193
+msgid "Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:195
+msgid "Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:196
+msgid "URL Selection Table"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:197
+msgid "Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:198
+msgid "Save Your Settings"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:199
+msgid "Don't forget to save! Your settings will be applied to both manual checks and auto-update monitoring."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:202
+msgid "Automatic Monitoring Settings"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:203
+msgid "Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:204
+msgid "Enable Monitoring"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:205
+msgid "Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:206
+msgid "Check Frequency"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:207
+msgid "How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:208
+msgid "Preferred Check Time"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:209
+msgid "Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:210
+msgid "Change Sensitivity"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:211
+msgid "Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:212
+msgid "Alert Recipients"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:213
+msgid "Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:214
+msgid "CSS Customization"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:215
+msgid "Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:216
+msgid "Save Monitoring Settings"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:217
+msgid "Save your configuration to activate monitoring. Changes take effect immediately."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:218
+msgid "Select Pages to Monitor"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:219
+msgid "Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:222
+msgid "Change Detection History"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:223
+msgid "This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:224
+msgid "Detection Table"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:225
+msgid "Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:226
+msgid "Filter Options"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:227
+msgid "Use these filters to find specific changes by date, check type, status, or to show only changes with differences."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:230
+msgid "Activity Logs"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:231
+msgid "Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:232
+msgid "Log Details"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:233
+msgid "Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:236
+msgid "URL Management"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:237
+msgid "Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:238
+msgid "URL Synchronization"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:239
+msgid "WebChange Detector syncs your site's URLs automatically. Use \"Sync Now\" after adding new content or if URLs are missing."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:240
+msgid "Quick Access"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:241
+msgid "The admin bar menu provides quick access to WebChange Detector from your site's frontend. Disable if you prefer a cleaner toolbar."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:242
+msgid "API Connection"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:243
+msgid "Your API token connects this site to WebChange Detector's screenshot service. Keep it secret and secure!"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:244
+msgid "Setup Complete!"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:245
+msgid "You're all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:248
+msgid "WebChange Detector"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:249
+msgid "Welcome to WebChange Detector! Use the navigation tabs to access different features."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:252
+msgid "Required Setting"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:253
+msgid "Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:254
+msgid "Auto Update Checks"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:255
+msgid "Monitoring"
+msgstr ""
+
+#: admin/views/class-webchangedetector-view-renderer.php:228
+msgid "Upgrade Account"
 msgstr ""

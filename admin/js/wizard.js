@@ -30,6 +30,18 @@
         }
 
         /**
+         * Get translation with fallback
+         */
+        getTranslation(key, fallback) {
+            if (typeof wcdWizardData !== 'undefined' &&
+                wcdWizardData.translations &&
+                wcdWizardData.translations[key]) {
+                return wcdWizardData.translations[key];
+            }
+            return fallback;
+        }
+
+        /**
          * Initialize the wizard system
          */
         init() {
@@ -119,11 +131,11 @@
                 stageRadius: 5,
                 popoverOffset: 10,
                 showButtons: ['next', 'previous', 'close'],
-                nextBtnText: 'Next →',
-                prevBtnText: '← Previous',
-                doneBtnText: 'Finish Wizard',
-                closeBtnText: 'Exit Wizard',
-                progressText: 'Step {{current}} of {{total}}',
+                nextBtnText: (wcdWizardData.translations && wcdWizardData.translations.nextBtnText) || 'Next →',
+                prevBtnText: (wcdWizardData.translations && wcdWizardData.translations.prevBtnText) || '← Previous',
+                doneBtnText: (wcdWizardData.translations && wcdWizardData.translations.doneBtnText) || 'Finish Wizard',
+                closeBtnText: (wcdWizardData.translations && wcdWizardData.translations.closeBtnText) || 'Exit Wizard',
+                progressText: (wcdWizardData.translations && wcdWizardData.translations.progressText) || 'Step {{current}} of {{total}}',
                 popoverClass: 'wcd-wizard-popover',
 
                 // Global event handlers
@@ -190,12 +202,14 @@
 
             // Add a brief loading message
             const loadingDiv = document.createElement('div');
+            const continueText = (wcdWizardData.translations && wcdWizardData.translations.letsContinue) || 'Let\'s continue on the next page.';
+            const loadingText = (wcdWizardData.translations && wcdWizardData.translations.loading) || 'Loading...';
             loadingDiv.innerHTML = `
                 <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                            background: #266FCB; color: white; padding: 20px; border-radius: 5px; 
                            z-index: 10001; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
-                    <h3 style="margin: 0 0 10px 0; color: white;">Let’s continue on the next page.</h3>
-                    <div style="text-align: center;">Loading...</div>
+                    <h3 style="margin: 0 0 10px 0; color: white;">${continueText}</h3>
+                    <div style="text-align: center;">${loadingText}</div>
                 </div>
             `;
             document.body.appendChild(loadingDiv);
@@ -215,12 +229,14 @@
 
             // Show completion message
             const loadingDiv = document.createElement('div');
+            const completeText = (wcdWizardData.translations && wcdWizardData.translations.wizardComplete) || 'Wizard Complete!';
+            const returningText = (wcdWizardData.translations && wcdWizardData.translations.returningToDashboard) || 'Returning to dashboard...';
             loadingDiv.innerHTML = `
                 <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                            background: #266FCB; color: white; padding: 20px; border-radius: 5px; 
                            z-index: 10001; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
-                    <h3 style="margin: 0 0 10px 0; color: white;">Wizard Complete!</h3>
-                    <div style="text-align: center;">Returning to dashboard...</div>
+                    <h3 style="margin: 0 0 10px 0; color: white;">${completeText}</h3>
+                    <div style="text-align: center;">${returningText}</div>
                 </div>
             `;
             document.body.appendChild(loadingDiv);
@@ -252,8 +268,8 @@
             return [
                 {
                     popover: {
-                        title: 'Welcome to WebChange Detector',
-                        description: 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s start the tour!',
+                        title: this.getTranslation('welcomeTitle', 'Welcome to WebChange Detector'),
+                        description: this.getTranslation('welcomeDesc', 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s start the tour!'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -261,8 +277,8 @@
                 {
                     element: '.webchangedetector .box-half.credit',
                     popover: {
-                        title: 'Your Check Credits',
-                        description: 'This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits.',
+                        title: this.getTranslation('checkCreditsTitle', 'Your Check Credits'),
+                        description: this.getTranslation('checkCreditsDesc', 'This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -270,11 +286,11 @@
                 {
                     element: '.webchangedetector .wizard-dashboard-latest-change-detections',
                     popover: {
-                        title: 'Recent Changes',
-                        description: 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.',
+                        title: this.getTranslation('recentChangesTitle', 'Recent Changes'),
+                        description: this.getTranslation('recentChangesDesc', 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.'),
                         side: 'top',
                         align: 'start',
-                        nextBtnText: 'Next →',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
                             // Navigate to URL selection page with wizard parameter
                             this.navigateToPage('webchangedetector-update-settings');
@@ -292,8 +308,8 @@
                 {
                     element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'Manual Checks & Auto Update Settings',
-                        description: 'You can start the Manual Checks here. But first, let\'s walk through each important setting.',
+                        title: this.getTranslation('manualChecksTitle', 'Manual Checks & Auto Update Settings'),
+                        description: this.getTranslation('manualChecksDesc', 'You can start the Manual Checks here. But first, let\'s walk through each important setting.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -301,8 +317,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-enabled',
                     popover: {
-                        title: 'Enable Auto Update Checks',
-                        description: 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.',
+                        title: this.getTranslation('enableAutoUpdateTitle', 'Enable Auto Update Checks'),
+                        description: this.getTranslation('enableAutoUpdateDesc', 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.'),
                         side: 'right',
                         align: 'center',
                         onNextClick: (element, step, options) => {
@@ -313,7 +329,7 @@
 
                             if (!autoUpdateCheckbox || !autoUpdateCheckbox.checked) {
                                 // Create a more user-friendly notification
-                                window.WCDWizard.showRequiredSettingNotification('Auto Update Checks');
+                                window.WCDWizard.showRequiredSettingNotification(window.WCDWizard.getTranslation('autoUpdateChecks', 'Auto Update Checks'));
 
                                 autoUpdateCheckbox.focus();
                                 return; // Don't proceed if validation fails
@@ -325,19 +341,10 @@
                     }
                 },
                 {
-                    element: '.wcd-form-row.wcd-auto-update-setting-enabled-auto-updates',
-                    popover: {
-                        title: 'Enabled Auto Updates',
-                        description: 'Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings.',
-                        side: 'right',
-                        align: 'center'
-                    }
-                },
-                {
                     element: '.wcd-form-row.wcd-auto-update-setting-from',
                     popover: {
-                        title: 'Auto Update Timeframe',
-                        description: 'Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.',
+                        title: this.getTranslation('autoUpdateTimeframeTitle', 'Auto Update Timeframe'),
+                        description: this.getTranslation('autoUpdateTimeframeDesc', 'Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -345,8 +352,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-weekday',
                     popover: {
-                        title: 'Weekday Selection',
-                        description: 'Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.',
+                        title: this.getTranslation('weekdaySelectionTitle', 'Weekday Selection'),
+                        description: this.getTranslation('weekdaySelectionDesc', 'Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -354,8 +361,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-emails',
                     popover: {
-                        title: 'Notification Emails',
-                        description: 'Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.',
+                        title: this.getTranslation('notificationEmailsTitle', 'Notification Emails'),
+                        description: this.getTranslation('notificationEmailsDesc', 'Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -363,8 +370,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-threshold',
                     popover: {
-                        title: 'Change Detection Threshold',
-                        description: 'Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.',
+                        title: this.getTranslation('changeThresholdTitle', 'Change Detection Threshold'),
+                        description: this.getTranslation('changeThresholdDesc', 'Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -372,8 +379,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-css',
                     popover: {
-                        title: 'CSS Injection',
-                        description: 'Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }',
+                        title: this.getTranslation('cssInjectionTitle', 'CSS Injection'),
+                        description: this.getTranslation('cssInjectionDesc', 'Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }'),
                         side: 'left',
                         align: 'start'
                     }
@@ -381,8 +388,8 @@
                 {
                     element: '.webchangedetector .group_urls_container table',
                     popover: {
-                        title: 'URL Selection Table',
-                        description: 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.',
+                        title: this.getTranslation('urlSelectionTitle', 'URL Selection Table'),
+                        description: this.getTranslation('urlSelectionDesc', 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.'),
                         side: 'top',
                         align: 'center'
                     }
@@ -390,10 +397,11 @@
                 {
                     element: '.webchangedetector input[type="submit"][value="Save Settings"]',
                     popover: {
-                        title: 'Save Your Settings',
-                        description: 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.',
+                        title: this.getTranslation('saveSettingsTitle', 'Save Your Settings'),
+                        description: this.getTranslation('saveSettingsDesc', 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.'),
                         side: 'top',
                         align: 'center',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
                             // Navigate to monitoring settings page with wizard parameter
                             this.navigateToPage('webchangedetector-auto-settings');
@@ -411,8 +419,8 @@
                 {
                     element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'Automatic Monitoring Settings',
-                        description: 'Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues. ',
+                        title: this.getTranslation('monitoringSettingsTitle', 'Automatic Monitoring Settings'),
+                        description: this.getTranslation('monitoringSettingsDesc', 'Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -420,8 +428,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-enabled',
                     popover: {
-                        title: 'Enable Monitoring',
-                        description: 'Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.',
+                        title: this.getTranslation('enableMonitoringTitle', 'Enable Monitoring'),
+                        description: this.getTranslation('enableMonitoringDesc', 'Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.'),
                         side: 'left',
                         align: 'start',
                         onNextClick: (element, step, options) => {
@@ -429,7 +437,7 @@
                             const monitoringCheckbox = document.querySelector('input[name="enabled"]');
                             if (!monitoringCheckbox || !monitoringCheckbox.checked) {
                                 // Create a more user-friendly notification
-                                window.WCDWizard.showRequiredSettingNotification('Monitoring');
+                                window.WCDWizard.showRequiredSettingNotification(window.WCDWizard.getTranslation('monitoring', 'Monitoring'));
 
                                 monitoringCheckbox.focus();
                                 return; // Don't proceed if validation fails
@@ -443,8 +451,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-interval',
                     popover: {
-                        title: 'Check Frequency',
-                        description: 'How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.',
+                        title: this.getTranslation('checkFrequencyTitle', 'Check Frequency'),
+                        description: this.getTranslation('checkFrequencyDesc', 'How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -452,8 +460,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-hour-of-day',
                     popover: {
-                        title: 'Preferred Check Time',
-                        description: 'Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.',
+                        title: this.getTranslation('preferredCheckTimeTitle', 'Preferred Check Time'),
+                        description: this.getTranslation('preferredCheckTimeDesc', 'Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -461,8 +469,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-threshold',
                     popover: {
-                        title: 'Change Sensitivity',
-                        description: 'Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.',
+                        title: this.getTranslation('changeSensitivityTitle', 'Change Sensitivity'),
+                        description: this.getTranslation('changeSensitivityDesc', 'Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -470,8 +478,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-alert-emails',
                     popover: {
-                        title: 'Alert Recipients',
-                        description: 'Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.',
+                        title: this.getTranslation('alertRecipientsTitle', 'Alert Recipients'),
+                        description: this.getTranslation('alertRecipientsDesc', 'Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -479,8 +487,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-css',
                     popover: {
-                        title: 'CSS Customization',
-                        description: 'Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.',
+                        title: this.getTranslation('cssCustomizationTitle', 'CSS Customization'),
+                        description: this.getTranslation('cssCustomizationDesc', 'Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -488,8 +496,8 @@
                 {
                     element: '.webchangedetector input[type="submit"][value="Save Settings"]',
                     popover: {
-                        title: 'Save Monitoring Settings',
-                        description: 'Save your configuration to activate monitoring. Changes take effect immediately.',
+                        title: this.getTranslation('saveMonitoringTitle', 'Save Monitoring Settings'),
+                        description: this.getTranslation('saveMonitoringDesc', 'Save your configuration to activate monitoring. Changes take effect immediately.'),
                         side: 'top',
                         align: 'center'
                     }
@@ -497,10 +505,11 @@
                 {
                     element: '.webchangedetector .group_urls_container',
                     popover: {
-                        title: 'Select Pages to Monitor',
-                        description: 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.',
+                        title: this.getTranslation('selectPagesToMonitorTitle', 'Select Pages to Monitor'),
+                        description: this.getTranslation('selectPagesToMonitorDesc', 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.'),
                         side: 'top',
                         align: 'start',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
                             // Navigate to change detections page with wizard parameter
                             this.navigateToPage('webchangedetector-change-detections');
@@ -518,28 +527,20 @@
                 {
                     element: '.webchangedetector .wizard-change-detections',
                     popover: {
-                        title: 'Change Detection History',
-                        description: 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.',
+                        title: this.getTranslation('changeDetectionHistoryTitle', 'Change Detection History'),
+                        description: this.getTranslation('changeDetectionHistoryDesc', 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.'),
                         side: 'bottom',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.webchangedetector .wizard-change-detections table',
-                    popover: {
-                        title: 'Detection Table',
-                        description: 'Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.',
-                        side: 'top',
-                        align: 'center'
-                    }
-                },
-                {
                     element: '.webchangedetector .wizard-change-detections form',
                     popover: {
-                        title: 'Filter Options',
-                        description: 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.',
+                        title: this.getTranslation('filterOptionsTitle', 'Filter Options'),
+                        description: this.getTranslation('filterOptionsDesc', 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.'),
                         side: 'bottom',
                         align: 'start',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
                             // Navigate to logs page with wizard parameter
                             this.navigateToPage('webchangedetector-logs');
@@ -557,25 +558,12 @@
                 {
                     element: '.webchangedetector .wizard-logs',
                     popover: {
-                        title: 'Activity Logs',
-                        description: 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.',
+                        title: this.getTranslation('activityLogsTitle', 'Activity Logs'),
+                        description: this.getTranslation('activityLogsDesc', 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.'),
                         side: 'bottom',
                         align: 'start'
                     }
                 },
-                {
-                    element: '.webchangedetector .wizard-logs table',
-                    popover: {
-                        title: 'Log Details',
-                        description: 'Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors.',
-                        side: 'top',
-                        align: 'center',
-                        onNextClick: () => {
-                            // Navigate to settings page with wizard parameter
-                            this.navigateToPage('webchangedetector-settings');
-                        }
-                    }
-                }
             ];
         }
 
@@ -587,8 +575,8 @@
                 {
                     element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: 'URL Management',
-                        description: 'Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.',
+                        title: this.getTranslation('urlManagementTitle', 'URL Management'),
+                        description: this.getTranslation('urlManagementDesc', 'Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -596,8 +584,8 @@
                 {
                     element: '.wcd-form-row:has(button[onclick*="sync_urls"])',
                     popover: {
-                        title: 'URL Synchronization',
-                        description: 'WebChange Detector syncs your site\'s URLs automatically. Use "Sync Now" after adding new content or if URLs are missing.',
+                        title: this.getTranslation('urlSyncTitle', 'URL Synchronization'),
+                        description: this.getTranslation('urlSyncDesc', 'WebChange Detector syncs your site\'s URLs automatically. Use "Sync Now" after adding new content or if URLs are missing.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -605,8 +593,8 @@
                 {
                     element: '.wcd-settings-card:has(input[name="wcd_disable_admin_bar_menu"])',
                     popover: {
-                        title: 'Quick Access',
-                        description: 'The admin bar menu provides quick access to WebChange Detector from your site\'s frontend. Disable if you prefer a cleaner toolbar.',
+                        title: this.getTranslation('quickAccessTitle', 'Quick Access'),
+                        description: this.getTranslation('quickAccessDesc', 'The admin bar menu provides quick access to WebChange Detector from your site\'s frontend. Disable if you prefer a cleaner toolbar.'),
                         side: 'top',
                         align: 'start'
                     }
@@ -614,8 +602,8 @@
                 {
                     element: '.wcd-settings-section-api-token',
                     popover: {
-                        title: 'API Connection',
-                        description: 'Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!',
+                        title: this.getTranslation('apiConnectionTitle', 'API Connection'),
+                        description: this.getTranslation('apiConnectionDesc', 'Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!'),
                         side: 'top',
                         align: 'start'
                     }
@@ -623,12 +611,12 @@
                 {
                     element: '.webchangedetector',
                     popover: {
-                        title: 'Setup Complete!',
-                        description: 'You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.',
+                        title: this.getTranslation('setupCompleteTitle', 'Setup Complete!'),
+                        description: this.getTranslation('setupCompleteDesc', 'You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.'),
                         side: 'bottom',
                         align: 'start',
-                        doneBtnText: 'Finish Tour →',
-                        nextBtnText: 'Finish Tour →',
+                        doneBtnText: this.getTranslation('finishTour', 'Finish Tour →'),
+                        nextBtnText: this.getTranslation('finishTour', 'Finish Tour →'),
                         onNextClick: () => {
                             // Complete the wizard and navigate back to dashboard without wizard parameter
                             this.completeWizard();
@@ -646,8 +634,8 @@
                 {
                     element: '.webchangedetector',
                     popover: {
-                        title: 'WebChange Detector',
-                        description: 'Welcome to WebChange Detector! Use the navigation tabs to access different features.',
+                        title: this.getTranslation('genericTitle', 'WebChange Detector'),
+                        description: this.getTranslation('genericDesc', 'Welcome to WebChange Detector! Use the navigation tabs to access different features.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -791,9 +779,13 @@
                 text-align: center;
                 max-width: 400px;
             `;
+            const requiredSettingTitle = this.getTranslation('requiredSetting', 'Required Setting');
+            const requiredSettingMessage = this.getTranslation('requiredSettingMessage', 'Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.');
+            const message = requiredSettingMessage.replace('%s', settingName);
+
             notification.innerHTML = `
-                <h3 style="margin: 0 0 10px 0; color: white;">Required Setting</h3>
-                <p style="margin: 0 0 15px 0;">Please enable <strong>${settingName}</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.</p>
+                <h3 style="margin: 0 0 10px 0; color: white;">${requiredSettingTitle}</h3>
+                <p style="margin: 0 0 15px 0;">${message}</p>
             `;
             document.body.appendChild(notification);
 

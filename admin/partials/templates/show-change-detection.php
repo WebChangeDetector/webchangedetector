@@ -260,7 +260,7 @@ if (!function_exists('safe_extract_console_message')) {
 </div>
 
 <?php
-if ( str_contains( $compare['screenshot_1_link'], '_dev_.png' ) ) {
+if ( strpos( $compare['screenshot_1_link'], '_dev_.png' ) !== false ) {
 	$sc_1_compressed          = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['screenshot_1_link'] );
 	$sc_2_compressed          = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['screenshot_2_link'] );
 	$sc_comparison_compressed = str_replace( '_dev_.png', '_dev_compressed.jpeg', $compare['link'] );

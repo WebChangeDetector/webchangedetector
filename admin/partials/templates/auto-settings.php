@@ -143,7 +143,7 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
                 </div>
             </div>
 
-            <?php submit_button('Save Settings', 'primary wizard-save-auto-settings', 'submit', true, array('onclick' => 'return wcdValidateFormAutoSettings()')); ?>
+            <?php submit_button(__('Save Settings', 'webchangedetector'), 'primary wizard-save-auto-settings', 'submit', true, array('onclick' => 'return wcdValidateFormAutoSettings()')); ?>
         </form>
     </div>
 

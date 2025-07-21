@@ -102,23 +102,23 @@ class WebChangeDetector_Change_Detections_Controller {
 				to <input name="to" value="<?php echo esc_html( $to ); ?>" type="date">
 
 				<select name="group_type">
-					<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>>All Checks</option>
-					<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>>Auto Update Checks & Manual Checks</option>
-					<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>>Monitoring Checks</option>
+					<option value="" <?php echo ! $group_type ? 'selected' : ''; ?>><?php _e('All Checks', 'webchangedetector'); ?></option>
+					<option value="post" <?php echo 'post' === $group_type ? 'selected' : ''; ?>><?php _e('Auto Update Checks & Manual Checks', 'webchangedetector'); ?></option>
+					<option value="auto" <?php echo 'auto' === $group_type ? 'selected' : ''; ?>><?php _e('Monitoring Checks', 'webchangedetector'); ?></option>
 				</select>
 				<select name="status" class="js-dropdown">
-					<option value="" <?php echo ! $status ? 'selected' : ''; ?>>All Status</option>
-					<option value="new" <?php echo 'new' === $status ? 'selected' : ''; ?>>New</option>
-					<option value="ok" <?php echo 'ok' === $status ? 'selected' : ''; ?>>Ok</option>
-					<option value="to_fix" <?php echo 'to_fix' === $status ? 'selected' : ''; ?>>To Fix</option>
-					<option value="false_positive" <?php echo 'false_positive' === $status ? 'selected' : ''; ?>>False Positive</option>
+					<option value="" <?php echo ! $status ? 'selected' : ''; ?>><?php _e('All Status', 'webchangedetector'); ?></option>
+					<option value="new" <?php echo 'new' === $status ? 'selected' : ''; ?>><?php _e('New', 'webchangedetector'); ?></option>
+					<option value="ok" <?php echo 'ok' === $status ? 'selected' : ''; ?>><?php _e('Ok', 'webchangedetector'); ?></option>
+					<option value="to_fix" <?php echo 'to_fix' === $status ? 'selected' : ''; ?>><?php _e('To Fix', 'webchangedetector'); ?></option>
+					<option value="false_positive" <?php echo 'false_positive' === $status ? 'selected' : ''; ?>><?php _e('False Positive', 'webchangedetector'); ?></option>
 				</select>
 				<select name="difference_only" class="js-dropdown">
-					<option value="0" <?php echo ! $difference_only ? 'selected' : ''; ?>>All detections</option>
-					<option value="1" <?php echo $difference_only ? 'selected' : ''; ?>>With difference</option>
+					<option value="0" <?php echo ! $difference_only ? 'selected' : ''; ?>><?php _e('All detections', 'webchangedetector'); ?></option>
+					<option value="1" <?php echo $difference_only ? 'selected' : ''; ?>><?php _e('With difference', 'webchangedetector'); ?></option>
 				</select>
 
-				<input class="button" type="submit" value="Filter">
+				<input class="button" type="submit" value="<?php _e('Filter', 'webchangedetector'); ?>">
 			</form>
 
 			<?php
