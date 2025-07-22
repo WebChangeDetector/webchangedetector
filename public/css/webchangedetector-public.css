@@ -22,48 +22,43 @@ Admin Bar Menu Slider Styles
     min-height: 0;
     /* Override potential theme styles */
     cursor: default !important;
-    /* Prevent hover effects on the container item */
+    /* Prevent hover effects on slider containers */
 }
 
-/* Slider container */
+/* Individual slider styling */
 .wcd-admin-bar-slider {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    /* Push label and switch apart */
-    padding: 2px 0;
-    min-width: 150px;
-    /* Give it some width */
-    cursor: default;
+    gap: 8px;
+    margin: 2px 0;
+    padding: 3px 0;
+    white-space: nowrap;
+    font-size: 12px;
 }
 
 .wcd-slider-label {
-    margin-right: 10px;
-    white-space: nowrap;
-    cursor: default;
+    min-width: 80px;
+    font-size: 11px;
+    color: #a0a5aa;
 }
 
-/* The switch - the box around the slider */
 #wpadminbar .wcd-switch {
     position: relative;
     display: inline-block;
-    width: 44px;
-    /* Reduced width */
-    height: 24px;
-    /* Reduced height */
+    width: 34px;
+    height: 18px;
+    margin: 0 5px;
     vertical-align: middle;
-    /* Align with label */
-    cursor: pointer;
 }
 
-/* Hide default HTML checkbox */
+/* Hide default checkbox */
 #wpadminbar .wcd-switch input.wcd-admin-bar-toggle {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-/* The slider track */
+/* The slider */
 #wpadminbar .wcd-switch .wcd-slider-round {
     position: absolute;
     cursor: pointer;
@@ -71,54 +66,563 @@ Admin Bar Menu Slider Styles
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
-    -webkit-transition: .2s;
-    transition: .2s;
-    border-radius: 24px;
-    /* Keep it round */
+    background-color: #555;
+    transition: 0.3s;
+    border-radius: 18px;
 }
 
-/* The slider knob */
+/* Slider handle */
 #wpadminbar .wcd-switch .wcd-slider-round:before {
     position: absolute;
     content: "";
-    height: 18px;
-    /* Smaller knob */
-    width: 18px;
-    /* Smaller knob */
-    left: 3px;
-    /* Adjust position */
-    bottom: 3px;
-    /* Adjust position */
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
     background-color: white;
-    -webkit-transition: .2s;
-    transition: .2s;
+    transition: 0.3s;
     border-radius: 50%;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Checked state styles */
+/* Checked state */
 #wpadminbar .wcd-switch input.wcd-admin-bar-toggle:checked+.wcd-slider-round {
-    background-color: #2271b1;
-    /* WP Admin Blue */
+    background-color: #00a0d2;
 }
 
 #wpadminbar .wcd-switch input.wcd-admin-bar-toggle:focus+.wcd-slider-round {
-    box-shadow: 0 0 0 1px #2271b1;
+    box-shadow: 0 0 1px #00a0d2;
 }
 
 #wpadminbar .wcd-switch input.wcd-admin-bar-toggle:checked+.wcd-slider-round:before {
-    -webkit-transform: translateX(20px);
-    /* Adjust translation distance */
-    -ms-transform: translateX(20px);
-    transform: translateX(20px);
+    transform: translateX(16px);
 }
 
-/* Separator styling (optional, WP might handle) */
+/* Separator styling */
 #wpadminbar .wcd-admin-bar-separator .ab-item {
-    height: 1px !important;
     background-color: #eee;
     margin: 5px 0;
     padding: 0 !important;
     cursor: default !important;
+}
+
+/*---------------------------------------------------------------
+Modern Detection Summary Styling
+---------------------------------------------------------------*/
+
+.wcd-detection-summary-container {
+    max-width: 100%;
+    margin: 15px auto 25px auto;
+}
+
+.wcd-section-headline {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Visual Changes Section */
+.wcd-visual-changes-section,
+.wcd-console-changes-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wcd-visual-diff-display {
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0;
+}
+
+.wcd-diff-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.wcd-diff-percentage {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.wcd-diff-label {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.wcd-threshold-note {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
+/* Visual diff color coding - maintaining existing logic */
+.wcd-visual-diff-display[data-diff_percent="0"] {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-visual-diff-display[data-diff_percent]:not([data-diff_percent="0"]) {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-visual-diff-display[data-diff_percent^="1"],
+.wcd-visual-diff-display[data-diff_percent^="2"],
+.wcd-visual-diff-display[data-diff_percent^="3"],
+.wcd-visual-diff-display[data-diff_percent^="4"] {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Browser Console Section */
+.wcd-console-display {
+    min-height: 60px;
+}
+
+.wcd-console-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.wcd-console-changed {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-console-unchanged {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+/* Console indicator status-specific background colors */
+.wcd-console-indicator.removed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-console-indicator.added {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.wcd-console-indicator.mixed {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Console changes section styling for popup - green when entries removed */
+.wcd-console-changes-section.console-removed .wcd-console-indicator,
+.wcd-console-changes-section.only-removed .wcd-console-indicator {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.wcd-console-changes-section.console-removed,
+.wcd-console-changes-section.only-removed {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, #ffffff 100%);
+}
+
+.wcd-console-status {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.wcd-console-logs {
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.wcd-console-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 4px 0;
+}
+
+.wcd-console-entry:last-child {
+    margin-bottom: 0;
+}
+
+.wcd-console-prefix {
+    font-weight: 700;
+    min-width: 12px;
+    display: inline-block;
+}
+
+.wcd-console-added .wcd-console-prefix {
+    color: #ef4444;
+}
+
+.wcd-console-removed .wcd-console-prefix {
+    color: #22c55e;
+}
+
+.wcd-console-message {
+    color: #f1f5f9;
+    word-break: break-word;
+    flex: 1;
+}
+
+.wcd-console-added .wcd-console-message {
+    background: rgba(239, 68, 68, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 2px solid #ef4444;
+}
+
+.wcd-console-removed .wcd-console-message {
+    background: rgba(34, 197, 94, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 2px solid #22c55e;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.wcd-console-info .wcd-console-message {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.wcd-console-more {
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* Table Column Styling - for comparison tables */
+.wcd-visual-changes-column,
+.wcd-console-changes-column {
+    text-align: center;
+    vertical-align: top;
+    padding: 8px;
+}
+
+.wcd-visual-diff-box,
+.wcd-console-diff-box {
+    border-radius: 12px;
+    padding: 12px 8px;
+    margin: 0 auto;
+    max-width: 120px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.wcd-visual-diff-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-diff-box {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #ef4444;
+}
+
+.wcd-visual-percentage {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    color: #64748b;
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-percentage {
+    color: white;
+}
+
+.wcd-threshold-text {
+    font-size: 10px;
+    opacity: 0.8;
+    margin-top: 2px;
+    color: #94a3b8;
+}
+
+/* Console diff box styling */
+.wcd-console-diff-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.wcd-console-changes-column.has-console-changes .wcd-console-diff-box {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-color: #f59e0b;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-indicator-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+}
+
+.wcd-console-diff-box .wcd-console-indicator-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    margin: 0;
+}
+
+.wcd-console-diff-box .wcd-console-indicator-badge .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 1;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-indicator-badge .dashicons,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-count {
+    color: white;
+}
+
+.wcd-console-diff-box .wcd-console-count {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 2px 6px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 1;
+    color: white;
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-count,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box .wcd-console-text {
+    color: white;
+}
+
+.wcd-console-diff-box .wcd-console-text {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    color: white;
+}
+
+.wcd-no-console-changes {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.wcd-console-none-text {
+    font-size: 10px;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* Hover effects */
+.wcd-visual-diff-box:hover,
+.wcd-console-diff-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.wcd-visual-changes-column.is-difference .wcd-visual-diff-box:hover {
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.wcd-console-changes-column.has-console-changes .wcd-console-diff-box:hover {
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box:hover,
+.wcd-console-changes-column.no-console-changes .wcd-console-diff-box:hover .wcd-console-indicator-badge {
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Console Indicators for Status Areas - Updated to match modern status badges */
+.wcd-console-indicator-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    margin: 4px 0;
+    text-decoration: none;
+}
+
+.wcd-console-indicator-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+.wcd-console-indicator-badge .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+    color: inherit;
+}
+
+.wcd-console-count {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 3px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.wcd-console-text {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+}
+
+/* Individual Comparison Console Badges - Enhanced styling */
+.wcd-changes-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.wcd-visual-diff {
+    flex: 1;
+}
+
+.wcd-console-diff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.wcd-console-diff-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+.wcd-console-diff-badge .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    line-height: 1;
+}
+
+.wcd-console-diff-count {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 2px 6px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 1;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .wcd-detection-summary-container {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+
+    .wcd-visual-changes-section,
+    .wcd-console-changes-section {
+        padding: 15px;
+    }
+
+    .wcd-section-headline {
+        font-size: 16px;
+    }
+
+    .wcd-diff-percentage {
+        font-size: 20px;
+    }
+
+    .wcd-console-logs {
+        font-size: 12px;
+    }
+
+    .wcd-visual-diff-box,
+    .wcd-console-diff-box {
+        min-height: 55px;
+        padding: 10px 6px;
+        border-radius: 10px;
+    }
+
+    .wcd-visual-percentage {
+        font-size: 18px;
+    }
+
+    .wcd-console-count {
+        font-size: 16px;
+    }
+
+    .wcd-console-diff-box .wcd-console-indicator-badge .dashicons {
+        font-size: 20px;
+    }
+
+    .wcd-console-diff-badge {
+        align-self: flex-end;
+    }
 }
