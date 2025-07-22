@@ -9,6 +9,8 @@
  * @subpackage WebChangeDetector/includes
  */
 
+namespace WebChangeDetector;
+
 /**
  * Fired during plugin activation.
  *

@@ -12,7 +12,7 @@ function updateProcessingStep() {
             nonce: wcdAjaxData.nonce
         };
 
-        $.post(ajaxurl, data, function (response) {
+        $.post(wcdAjaxData.ajax_url, data, function (response) {
 
             response = JSON.parse(response);
 
@@ -199,16 +199,27 @@ function currentlyProcessing() {
             });
         });
 
+
+
         $(".codearea").each(function (index, item) {
+            // Skip CSS textareas that are inside closed accordions - they will be initialized when accordion opens
+            if ($(item).hasClass('wcd-css-textarea')) {
+                var accordionContent = $(item).closest('.accordion-content');
+                if (accordionContent.length && accordionContent.is(':hidden')) {
+                    return; // Skip this textarea, it will be initialized when accordion opens
+                }
+            }
             wp.codeEditor.initialize(item);
         });
 
         // Init accordions
         $(".accordion").each(function (index, item) {
             $(item).accordion({
+                heightStyle: "content",
                 header: "h3",
                 collapsible: true,
                 active: false,
+                animate: 200,
                 icons: {
                     "header": "dashicons dashicons-plus",
                     "activeHeader": "dashicons dashicons-minus"
@@ -246,17 +257,17 @@ function currentlyProcessing() {
 
         // Confirm taking pre screenshots
         $('#frm-take-pre-sc').submit(function () {
-            return confirm("Please confirm taking pre-update screenshots.");
+            return true;
         });
 
         // Confirm taking post screenshots
         $('#frm-take-post-sc').submit(function () {
-            return confirm("Please confirm to create change detections.");
+            return true;
         });
 
         // Confirm cancel manual checks
         $('#frm-cancel-update-detection').submit(function () {
-            return confirm("Are you sure you want to cancel the manual checks?");
+            return confirm(wcdL10n.confirmCancelChecks);
         });
 
         // Change bg color of comparison percentages
@@ -318,15 +329,15 @@ function currentlyProcessing() {
 
         // Set time until next screenshots
         let autoEnabled = false;
-        if ($("#auto-enabled").is(':checked')) {
+        if ($("#auto-enabled").is(':checked') || $('input[name="enabled"]').is(':checked')) {
             autoEnabled = true;
         }
-        let txtNextScIn = "No trackings active";
+        let txtNextScIn = wcdL10n.noTrackingsActive;
         let nextScIn;
         let nextScDate = $("#next_sc_date").data("date");
         let amountSelectedTotal = $("#sc_available_until_renew").data("amount_selected_urls");
 
-        $("#txt_next_sc_in").html("Currently");
+        $("#txt_next_sc_in").html(wcdL10n.currently);
         $("#next_sc_date").html("");
 
         if (nextScDate && autoEnabled && amountSelectedTotal > 0) {
@@ -373,11 +384,146 @@ function currentlyProcessing() {
         // This needs to instantly be executed
         currentlyProcessing();
 
+        // Function to get current filters from the filter form
+        function getCurrentFilters() {
+            const filterForm = $('#form-filter-change-detections');
+            if (filterForm.length === 0) {
+                return null;
+            }
+
+            const formData = {};
+            filterForm.find('input, select').each(function () {
+                const name = $(this).attr('name');
+                const value = $(this).val();
+                if (name && value !== '' && name !== 'action' && name !== 'pagination') {
+                    formData[name] = value;
+                }
+            });
+
+            return Object.keys(formData).length > 0 ? formData : null;
+        }
+
+        // Function to initialize comparison status change buttons
+        function initComparisonStatusButtons(container) {
+            container.find(".ajax_update_comparison_status").off("click").on("click", function () {
+                let e = $(this);
+                let status = $(this).data('status');
+                let statusElement = $(e).parent().parent().find(".current_comparison_status");
+                var data = {
+                    action: 'update_comparison_status',
+                    nonce: $(this).data('nonce'),
+                    id: $(this).data('id'),
+                    status: status
+                };
+
+                // Replace content with loading img.
+                let initialStatusContent = $(statusElement).html();
+                $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
+
+                $.post(wcdAjaxData.ajax_url, data, function (response) {
+                    // Debug logging
+                    console.log('WebChangeDetector: Status update response:', response);
+
+                    if ('failed' === response) {
+                        $(statusElement).html(initialStatusContent);
+                        alert(wcdL10n.somethingWentWrong);
+                        return false;
+                    }
+
+                    let status_nice_name;
+                    if ('ok' === response) {
+                        status_nice_name = wcdL10n.statusOk;
+                    } else if ('to_fix' === response) {
+                        status_nice_name = wcdL10n.statusToFix;
+                    } else if ('false_positive' === response) {
+                        status_nice_name = wcdL10n.statusFalsePositive;
+                    } else if ('failed' === response) {
+                        status_nice_name = wcdL10n.statusFailed;
+                    } else if ('new' === response) {
+                        status_nice_name = wcdL10n.statusNew;
+                    } else {
+                        // Unexpected response - log it and show generic error
+                        console.error('WebChangeDetector: Unexpected status response:', response);
+                        $(statusElement).html(initialStatusContent);
+                        alert(wcdL10n.unexpectedResponse);
+                        return false;
+                    }
+
+                    $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_new");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
+                    $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
+                    $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_" + response);
+                });
+            });
+        }
+
+        // Function to re-initialize all components after AJAX content loads
+        function reinitializeAfterAjax(container) {
+            // Re-initialize accordion widgets for new content
+            container.find(".accordion").each(function () {
+                // Destroy existing accordion if it exists
+                if ($(this).hasClass('ui-accordion')) {
+                    $(this).accordion("destroy");
+                }
+                // Initialize accordion
+                $(this).accordion({
+                    heightStyle: "content",
+                    header: "h3",
+                    collapsible: true,
+                    active: false, // Don't auto-open on load
+                    animate: 200
+                });
+            });
+
+            // Re-apply background colors for difference tiles
+            container.find(".diff-tile").each(function () {
+                var diffPercent = $(this).data("diff_percent");
+                if (diffPercent > 0) {
+                    var bgColor = getDifferenceBgColor($(this).data("diff_percent"));
+                    $(this).css("background", bgColor);
+                }
+            });
+
+            // Re-initialize comparison row click handlers
+            container.find(".comparison_row").off("click").on("click", function () {
+                const token = $(this).data("token");
+                const currentKey = $(this).index();
+                const maxKey = $(this).closest("tbody").find(".comparison_row").length;
+
+                if (token) {
+                    // Use the global function if available
+                    if (typeof ajaxShowChangeDetectionPopup === 'function') {
+                        ajaxShowChangeDetectionPopup(token, currentKey, maxKey);
+                    }
+                }
+            });
+
+            // Re-initialize comparison status change buttons
+            initComparisonStatusButtons(container);
+
+            // Re-initialize any other event handlers that might be needed
+            container.find(".ajax_paginate_batch_comparisons").off("click").on("click", function () {
+                const batchContainer = $(this).closest(".accordion-container");
+                const batchId = batchContainer.data("batch_id");
+                const page = $(this).data("page");
+                const filters = $(this).data("filters");
+                loadBatchComparisons($(this), batchId, page, filters, true);
+            });
+        }
+
         // Load batch comparisons content and handle pagination
         function loadBatchComparisons(element, batchId, page = 1, filters = null, shouldScroll = false) {
             const batchContainer = $(".accordion-container[data-batch_id='" + batchId + "']");
             const contentContainer = batchContainer.find(".ajax_batch_comparisons_content");
             const failedCount = batchContainer.data("failed_count");
+            const consoleChangesCount = batchContainer.data("console_changes_count") || 0;
+
+            // If filters are not provided, get them from the current filter form
+            if (filters === null) {
+                filters = getCurrentFilters();
+            }
 
             const args = {
                 action: 'get_batch_comparisons_view',
@@ -385,11 +531,9 @@ function currentlyProcessing() {
                 page: page,
                 filters: filters,
                 failed_count: failedCount,
+                console_changes_count: consoleChangesCount,
                 nonce: wcdAjaxData.nonce
             }
-
-            // Show loading placeholder
-            contentContainer.html('<div class="ajax-loading-container"><img decoding="async" src="' + wcdAjaxData.plugin_url + 'img/loader.gif" style="margin-left: calc(50% - 10px)"><div style="text-align: center;">Loading</div></div>');
 
             // Only scroll for pagination, not initial load
             if (shouldScroll) {
@@ -398,23 +542,11 @@ function currentlyProcessing() {
                 }, 500);
             }
 
-            $.post(ajaxurl, args, function (response) {
+            $.post(wcdAjaxData.ajax_url, args, function (response) {
                 contentContainer.html(response);
 
-                // Bg color for difference
-                $(".diff-tile").each(function () {
-                    var diffPercent = $(this).data("diff_percent");
-                    if (diffPercent > 0) {
-                        var bgColor = getDifferenceBgColor($(this).data("diff_percent"), $(this).data("threshold"));
-                        $(this).css("background", bgColor);
-                    }
-                });
-
-                // Refresh the accordion to recalculate heights and prevent overlapping
-                const accordion = batchContainer.find(".accordion");
-                if (accordion.length > 0) {
-                    accordion.accordion("refresh");
-                }
+                // Re-initialize all components for the new content
+                reinitializeAfterAjax(contentContainer);
 
                 initBatchComparisonsPagination();
             });
@@ -477,7 +609,7 @@ function currentlyProcessing() {
 
                     // Load content via AJAX
                     $.ajax({
-                        url: ajaxurl,
+                        url: wcdAjaxData.ajax_url,
                         type: 'POST',
                         data: {
                             action: 'load_failed_queues',
@@ -503,45 +635,8 @@ function currentlyProcessing() {
             }
         }
 
-        $(".ajax_update_comparison_status").click(function () {
-            let e = $(this);
-            let status = $(this).data('status');
-            let statusElement = $(e).parent().parent().find(".current_comparison_status");
-            var data = {
-                action: 'update_comparison_status',
-                nonce: $(this).data('nonce'),
-                id: $(this).data('id'),
-                status: status
-            };
-
-            // Replace content with loading img.
-            let initialStatusContent = $(statusElement).html();
-            $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
-
-            $.post(ajaxurl, data, function (response) {
-                if ('failed' === response) {
-                    $(statusElement).html(initialStatusContent);
-                    alert('Something went wrong. Please try again.');
-                    return false;
-                }
-
-                let status_nice_name;
-                if ('ok' === response) {
-                    status_nice_name = 'Ok';
-                } else if ('to_fix' === response) {
-                    status_nice_name = 'To Fix';
-                } else if ('false_positive' === response) {
-                    status_nice_name = 'False Positive';
-                }
-                $(e).parent().parent().find(".current_comparison_status").html(status_nice_name);
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_new");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_ok");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_to_fix");
-                $(e).parent().parent().find(".current_comparison_status").removeClass("comparison_status_false_positive");
-                $(e).parent().parent().find(".current_comparison_status").addClass("comparison_status_" + response);
-            });
-
-        })
+        // Initialize comparison status buttons for initial page load
+        initComparisonStatusButtons($(document));
 
         initBatchComparisonsPagination();
 
@@ -557,7 +652,7 @@ function currentlyProcessing() {
         }
 
         $.ajax({
-            url: ajaxurl,
+            url: wcdAjaxData.ajax_url,
             type: 'POST',
             data: {
                 action: 'get_dashboard_usage_stats',
@@ -567,8 +662,6 @@ function currentlyProcessing() {
 
                 if (response.success && response.data) {
                     const data = response.data;
-
-                    // Debug logging
 
                     // Update monitoring stats
                     const monitoringElement = $('#wcd-monitoring-stats');
@@ -582,8 +675,9 @@ function currentlyProcessing() {
 
                     // Update auto-update stats
                     const autoUpdateElement = $('#wcd-auto-update-stats');
+                    console.log(data.auto_update_settings.auto_update_checks_enabled);
                     if (autoUpdateElement.length > 0) {
-                        if (data.max_auto_update_checks > 0) {
+                        if (data.max_auto_update_checks > 0 && data.auto_update_settings.auto_update_checks_enabled) {
                             autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
                         } else {
                             autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: red; font-weight: 900">Off</span>');
@@ -645,7 +739,7 @@ function sync_urls(force = 0) {
     // Show the button as disabled.
     jQuery('.button-sync-urls').prop('disabled', true);
 
-    jQuery.post(ajaxurl, data, function (response) {
+    jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
         // We get the last sync date as response.
         jQuery('#ajax_sync_urls_status').html(response);
         jQuery('.button-sync-urls').prop('disabled', false);
@@ -686,7 +780,7 @@ function postUrl(postId) {
         }
     }
 
-    jQuery.post(ajaxurl, data, function (response) {
+    jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
         // TODO confirm saving.
     });
 }
@@ -734,100 +828,15 @@ function mmToggle(source, column, groupId) {
 * Validates comma separated emails in a form
 * Called `onsubmit=` in HTML
 */
-function wcdValidateFormManualSettings() {
-
-    // Early return if auto update checks are disabled.
-    var autoUpdateChecksEnabled = document.getElementById("auto_update_checks_enabled").checked;
-    if (!autoUpdateChecksEnabled) {
-        return true;
-    }
-
-    // Validation from and to time.
-    var from = document.getElementById("auto_update_checks_from");
-    var to = document.getElementById("auto_update_checks_to");
-
-
-
-    // Validation weekday.
-    var weekdayContainer = document.getElementById('auto_update_checks_weekday_container');
-    if (
-        !document.getElementsByName("auto_update_checks_monday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_tuesday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_wednesday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_thursday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_friday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_saturday")[1].checked &&
-        !document.getElementsByName("auto_update_checks_sunday")[1].checked
-    ) {
-        jQuery(weekdayContainer).css("border", "2px solid #d63638");
-        jQuery("#error-on-days-validation").css("display", "block");
-        weekdayContainer.scrollIntoView({
-            behavior: 'smooth'
-        });
-        return false;
-    }
-
-    // Validation Notification emails
-
-    // get all emails.
-    var emailsElement = document.getElementsByName("auto_update_checks_emails")[0];
-    if (emailsElement.value !== "") {
-        // split by comma.
-        let emails = emailsElement.value.split(",");
-
-        // Validation failed.
-        if (false === validateEmail(emails)) {
-            jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#manual_checks_settings_accordion").css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({ behavior: "smooth" });
-            return false;
-        }
-
-        // Validation succeeded.
-        jQuery("#error-email-validation").css("display", "none");
-        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
-        jQuery(emailsElement).css("border", "2px solid green");
-    }
-    return true;
-
-}
+/**
+ * Legacy validation function removed - now handled by modern component-based system
+ * This function was using legacy element selectors that don't match the modern component structure
+ */
 
 /**
- * Validates comma separated emails in a form
- * Called `onsubmit=` in HTML
+ * Legacy validation function removed - now handled by modern component-based system
+ * This function was conflicting with the modern wcdValidateFormAutoSettings() in templates
  */
-function wcdValidateFormAutoSettings() {
-
-    // Check if monitoring is enabled.
-    if ('on' !== document.getElementById("auto-enabled").value) {
-        return true;
-    }
-
-    // get all emails.
-    var emailsElement = document.getElementById("alert_emails");
-
-    // split by comma.
-    let emails = emailsElement.value.split(",");
-
-    // Validate emails if it's filled.
-    if (emailsElement.value !== "") {
-        if (false === validateEmail(emails)) {
-            // Validation failed.
-            jQuery(emailsElement).css("border", "2px solid red");
-            jQuery("#accordion-auto-detection-settings").css("border", "2px solid red");
-            jQuery("#error-email-validation").css("display", "block");
-            emailsElement.scrollIntoView({ behavior: "smooth" });
-            return false;
-
-        }
-        // Validation succeeded.
-        jQuery("#error-email-validation").css("display", "none");
-        jQuery("#accordion-auto-detection-settings").css("border", "1px solid #276ECC");
-        jQuery(emailsElement).css("border", "2px solid green");
-    }
-    return true;
-}
 
 function validateEmail(emails) {
     // init email regex
@@ -846,5 +855,42 @@ function validateEmail(emails) {
 
 function showUpdates() {
     jQuery("#updates").toggle("slow");
+}
+
+/**
+ * Start manual checks by advancing to the pre-screenshot step
+ * @param {string} groupId - The group ID for manual checks
+ */
+function startManualChecks(groupId) {
+    // Create a form and submit it to start manual checks
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
+
+    // Add the action to advance to next step
+    var actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'wcd_action';
+    actionInput.value = 'start_manual_checks';
+    form.appendChild(actionInput);
+
+    // Add the step parameter to advance to pre-screenshot step
+    var stepInput = document.createElement('input');
+    stepInput.type = 'hidden';
+    stepInput.name = 'step';
+    stepInput.value = 'pre-update';
+    form.appendChild(stepInput);
+
+    // Add nonce for security - WordPress expects a nonce field that matches the action name
+    var nonceInput = document.createElement('input');
+    nonceInput.type = 'hidden';
+    nonceInput.name = '_wpnonce';
+    // Use the correct nonce for the start_manual_checks action
+    nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
+    form.appendChild(nonceInput);
+
+    // Add form to body and submit
+    document.body.appendChild(form);
+    form.submit();
 }
 
