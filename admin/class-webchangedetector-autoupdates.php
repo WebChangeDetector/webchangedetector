@@ -194,27 +194,50 @@ class WebChangeDetector_Autoupdates
      */
     public function wcd_save_update_group_settings($group_settings, $skip_api_save = false)
     {
-        // Get the new time in local time zone.
+        // Load timezone helper for time conversion.
+        require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+
+        // Get the new time in UTC from API.
         if (isset($group_settings['auto_update_checks_from'])) {
-            $auto_update_checks_from = $group_settings['auto_update_checks_from'];
+            $auto_update_checks_from_utc = $group_settings['auto_update_checks_from'];
         } else {
             $auto_update_settings = self::get_auto_update_settings();
             if (! $auto_update_settings) {
                 return;
             }
-            $auto_update_checks_from = $auto_update_settings['auto_update_checks_from'];
+            $auto_update_checks_from_utc = $auto_update_settings['auto_update_checks_from'];
         }
 
-        // Convert the local time into gmt time.
-        $should_next_run     = gmdate('U', strtotime($auto_update_checks_from));
-        $should_next_run_gmt = get_gmt_from_date(gmdate('Y-m-d H:i:s', $should_next_run), 'U');
+        // Convert UTC time to site timezone.
+        $auto_update_checks_from_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($auto_update_checks_from_utc);
 
-        $now_gmt = get_gmt_from_date(current_time('Y-m-d H:i:s'), 'U');
+        // Create a timestamp for today at the scheduled time in site timezone.
+        // We use current_time('Y-m-d') to get today's date in site timezone.
+        $today_date = current_time('Y-m-d');
+        $scheduled_datetime_string = $today_date . ' ' . $auto_update_checks_from_site;
+        
+        // Convert the site timezone datetime to GMT timestamp for WordPress cron.
+        $should_next_run_gmt = get_gmt_from_date($scheduled_datetime_string, 'U');
+
+        $now_gmt = time(); // Current GMT timestamp
 
         // Add a day if we passed the auto_update_checks_from time already.
         if ($now_gmt > $should_next_run_gmt) {
             $should_next_run_gmt = strtotime('+1 day', $should_next_run_gmt);
         }
+
+        // Log scheduling details for debugging
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+            sprintf(
+                'Scheduling wp_version_check - UTC time: %s, Site time: %s, Scheduled for GMT: %s, Local: %s',
+                $auto_update_checks_from_utc,
+                $auto_update_checks_from_site,
+                gmdate('Y-m-d H:i:s', $should_next_run_gmt),
+                get_date_from_gmt(gmdate('Y-m-d H:i:s', $should_next_run_gmt), 'Y-m-d H:i:s')
+            ),
+            'wcd_save_update_group_settings',
+            'debug'
+        );
 
         // Reschedule the wp_version_check cron to our "from" time.
         wp_clear_scheduled_hook('wp_version_check');
@@ -293,9 +316,16 @@ class WebChangeDetector_Autoupdates
         // Get the current time in the same format (HH:MM).
         $current_time = current_time('H:i');
 
+        // Load timezone helper for time conversion.
+        require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+
+        // Convert UTC times from API to site timezone for comparison.
+        $from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($auto_update_settings['auto_update_checks_from']);
+        $to_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($auto_update_settings['auto_update_checks_to']);
+
         // Convert the times to timestamps for comparison.
-        $from_timestamp    = strtotime($auto_update_settings['auto_update_checks_from']);
-        $to_timestamp      = strtotime($auto_update_settings['auto_update_checks_to']);
+        $from_timestamp    = strtotime($from_time_site);
+        $to_timestamp      = strtotime($to_time_site);
         $current_timestamp = strtotime($current_time);
 
         // Check if current time is between from_time and to_time.
@@ -304,20 +334,22 @@ class WebChangeDetector_Autoupdates
             if ($current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp) {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
                     'Canceling auto updates: ' . current_time('H:i') .
-                        ' is not between ' . $auto_update_settings['auto_update_checks_from'] .
-                        ' and ' . $auto_update_settings['auto_update_checks_to']
+                        ' is not between ' . $from_time_site .
+                        ' and ' . $to_time_site .
+                        ' (site timezone)'
                 , 'wp_maybe_auto_update', 'debug');
                 $this->set_lock();
                 return;
             }
         } else {
             // Case 2: Time range spans midnight.
-            $to_timestamp = strtotime($auto_update_settings['auto_update_checks_to'] . ' +1 day');
+            $to_timestamp = strtotime($to_time_site . ' +1 day');
             if (! ($current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp)) {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
                     'Canceling auto updates: ' . current_time('H:i') .
-                        ' is not between ' . $auto_update_settings['auto_update_checks_from'] .
-                        ' and ' . $auto_update_settings['auto_update_checks_to']
+                        ' is not between ' . $from_time_site .
+                        ' and ' . $to_time_site .
+                        ' (site timezone, spans midnight)'
                 , 'wp_maybe_auto_update', 'debug');
                 $this->set_lock();
                 return;

@@ -72,12 +72,18 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
                 <div class="wcd-form-control">
                     <?php
                     // Time Range Selector Component.
-                    $from_time = $auto_update_settings['auto_update_checks_from'] ?? gmdate('H:i');
-                    $to_time = $auto_update_settings['auto_update_checks_to'] ?? gmdate('H:i', strtotime('+2 hours'));
+                    // Convert UTC times from API to site timezone for display.
+                    require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+                    $utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? gmdate('H:i');
+                    $utc_to_time = $auto_update_settings['auto_update_checks_to'] ?? gmdate('H:i', strtotime('+2 hours'));
+                    $from_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($utc_from_time);
+                    $to_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($utc_to_time);
                     $from_name = 'auto_update_checks_from';
                     $to_name = 'auto_update_checks_to';
                     $label = __('Only', 'webchangedetector');
-                    $description = '';
+                    $timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
+                    $current_time = current_time('H:i');
+                    $description = sprintf(__('Times are displayed in your website timezone: %s | Current website time: %s', 'webchangedetector'), $timezone_display, $current_time);
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/time-range-selector.php';
                     ?>
                 </div>

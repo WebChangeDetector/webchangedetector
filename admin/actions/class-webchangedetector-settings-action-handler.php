@@ -249,11 +249,14 @@ class WebChangeDetector_Settings_Action_Handler {
 				return $validation;
 			}
 
+			// Load timezone helper for time conversion.
+			require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+
 			// Build settings array.
 			$settings = array(
 				'auto_update_checks_enabled'   => !empty( $data['auto_update_checks_enabled'] ) && $data['auto_update_checks_enabled'] === '1',
-				'auto_update_checks_from'      => sanitize_text_field( $data['auto_update_checks_from'] ?? '' ),
-				'auto_update_checks_to'        => sanitize_text_field( $data['auto_update_checks_to'] ?? '' ),
+				'auto_update_checks_from'      => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_from'] ?? '' ) ),
+				'auto_update_checks_to'        => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_to'] ?? '' ) ),
 				'auto_update_checks_emails'    => sanitize_textarea_field( $data['auto_update_checks_emails'] ?? '' ),
 			);
 

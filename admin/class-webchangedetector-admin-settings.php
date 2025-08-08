@@ -138,6 +138,9 @@ class WebChangeDetector_Admin_Settings
         // Debug: Log what we received
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('POST data received: ' . print_r($postdata, true), 'manual_check_group_settings', 'debug');
 
+        // Load timezone helper for time conversion.
+        require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+
         // Saving auto update settings.
         $auto_update_settings = array();
         foreach ($postdata as $key => $value) {
@@ -160,8 +163,11 @@ class WebChangeDetector_Admin_Settings
                 ) {
                     // Convert checkbox values to boolean
                     $auto_update_settings[$key] = ($value === '1' || $value === 1 || $value === true);
+                } elseif ($key === 'auto_update_checks_from' || $key === 'auto_update_checks_to') {
+                    // Convert time from site timezone to UTC before saving
+                    $auto_update_settings[$key] = \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc($value);
                 } else {
-                    // Handle other auto update settings (time, emails, etc.)
+                    // Handle other auto update settings (emails, etc.)
                     $auto_update_settings[$key] = $value;
                 }
             }
