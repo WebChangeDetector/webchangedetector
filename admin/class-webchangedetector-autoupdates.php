@@ -597,9 +597,7 @@ class WebChangeDetector_Autoupdates
     public function handle_webhook_trigger()
     {
         $is_authorized = false;
-
-        // Method 1: Check for key-based auth (new style).
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+     
         // We're using a custom API key verification approach instead of nonces since this is an external webhook
         // that needs to remain valid for several hours. The 'key' parameter contains a random 32-character string
         // that's verified against our stored option.
@@ -613,66 +611,7 @@ class WebChangeDetector_Autoupdates
                     $is_authorized = true;
                 }
             }
-        } elseif (! get_transient('wcd_updated_legacy_cron')) {
-            // Method 2: Fallback for old webhooks - verify request comes from our API server.
-            // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-            // We're validating the IP address against known API server IPs as a secondary authentication mechanism.
-
-            // Get the remote host/IP.
-            $remote_host = '';
-            if (isset($_SERVER['REMOTE_ADDR'])) {
-                $remote_host = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
-            }
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Remote host: ' . $remote_host, 'handle_webhook_trigger', 'debug');
-            // Our API server IP.
-            $api_server_ip    = '138.68.83.218';
-            $api_server_ip_v6 = '2a03:b0c0:3:d0::f94:7001';
-
-            if (defined('WCD_API_SERVER_IP') && WCD_API_SERVER_IP) {
-                $api_server_ip = WCD_API_SERVER_IP;
-            }
-            if (defined('WCD_API_SERVER_IP_V6') && WCD_API_SERVER_IP_V6) {
-                $api_server_ip_v6 = WCD_API_SERVER_IP_V6;
-            }
-
-            // Check if request is from one of our API servers.
-            if (gethostbyname($remote_host) === gethostbyname($api_server_ip) || gethostbyname($remote_host) === gethostbyname($api_server_ip_v6)) {
-
-                // Get the webhook ID from our local option.
-                $webhook_id = get_option(WCD_WORDPRESS_CRON);
-
-                // Check if we have a webhook ID.
-                if ($webhook_id) {
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Legacy webhook request validated by host: ' . $remote_host, 'handle_webhook_trigger', 'debug');
-
-                    // Create our external webhook url.
-                    $webhook_url = add_query_arg(
-                        array(
-                            'wcd_action' => WCD_TRIGGER_AUTO_UPDATE_CRON,
-                            'key'        => $this->get_or_create_webhook_key(),
-                        ),
-                        site_url()
-                    );
-
-                    // Update the webhook.
-                    $result = \WebChangeDetector\WebChangeDetector_API_V2::update_webhook_v2($webhook_id, $webhook_url);
-
-                    // Check if the webhook was updated successfully.
-                    if (! empty($result['data'])) {
-                        // We have a valid webhook, so we can authorize the request.
-                        $is_authorized = true;
-                        set_transient('wcd_updated_legacy_cron', true, 60 * 60 * 24);
-                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Updated webhook: ' . wp_json_encode($result), 'handle_webhook_trigger', 'debug');
-                    } else {
-                        // We have an invalid webhook, so we can't authorize the request and delete our local webhook.
-                        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Failed to update webhook: ' . wp_json_encode($result), 'handle_webhook_trigger', 'debug');
-                        delete_option(WCD_WORDPRESS_CRON);
-                    }
-                }
-            }
-            // phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-        }
-        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+        } 
 
         if ($is_authorized) {
             \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Processing authorized webhook trigger', 'handle_webhook_trigger', 'debug' );
