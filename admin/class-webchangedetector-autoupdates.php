@@ -64,6 +64,12 @@ class WebChangeDetector_Autoupdates
         // Add webhook endpoint for triggering cron jobs.
         add_action('init', array($this, 'handle_webhook_trigger'), 5);
 
+        // Add hourly sync check for auto-update settings from API.
+        add_action('wcd_sync_auto_update_schedule', array($this, 'sync_auto_update_schedule_from_api'));
+        if (!wp_next_scheduled('wcd_sync_auto_update_schedule')) {
+            wp_schedule_event(time(), 'hourly', 'wcd_sync_auto_update_schedule');
+        }
+
         $wcd_groups = get_option(WCD_WEBSITE_GROUPS);
         if (! $wcd_groups) {
             return;
@@ -183,9 +189,10 @@ class WebChangeDetector_Autoupdates
     /** Reset next cron run of wp_version_check to our auto_update_checks_from.
      *
      * @param array $group_settings Array of group settings.
+     * @param bool $skip_api_save Whether to skip saving settings back to API (for sync operations).
      * @return void
      */
-    public function wcd_save_update_group_settings($group_settings)
+    public function wcd_save_update_group_settings($group_settings, $skip_api_save = false)
     {
         // Get the new time in local time zone.
         if (isset($group_settings['auto_update_checks_from'])) {
@@ -469,23 +476,63 @@ class WebChangeDetector_Autoupdates
 
     /** Get the auto-update settings.
      *
+     * @param bool $force_refresh Force refresh from API, bypassing static cache.
      * @return false|mixed|null
      */
-    public static function get_auto_update_settings()
+    public static function get_auto_update_settings($force_refresh = false)
     {
         static $auto_update_settings;
-        if ($auto_update_settings) {
+        
+        // Return cached version unless force refresh is requested
+        if ($auto_update_settings && !$force_refresh) {
             return $auto_update_settings;
         }
 
         $wcd                  = new WebChangeDetector_Admin();
-        $auto_update_settings = $wcd->settings_handler->get_website_details()['auto_update_settings'] ?? [];
+        $auto_update_settings = $wcd->settings_handler->get_website_details($force_refresh)['auto_update_settings'] ?? [];
 
         // Enable auto-update checks if the defines are set.
         if (defined('WCD_AUTO_UPDATES_ENABLED') && true === \WCD_AUTO_UPDATES_ENABLED) {
             $auto_update_settings['auto_update_checks_enabled'] = true;
         }
         return $auto_update_settings;
+    }
+
+    /**
+     * Sync auto-update schedule from API settings.
+     * This runs hourly to ensure local schedulers match API settings.
+     *
+     * @return void
+     */
+    public function sync_auto_update_schedule_from_api()
+    {
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Starting auto-update schedule sync with API', 'sync_auto_update_schedule_from_api', 'debug');
+
+        // Get fresh settings from API (force refresh)
+        $wcd = new WebChangeDetector_Admin();
+        $fresh_website_details = $wcd->settings_handler->get_website_details(true); // Force refresh from API
+        $api_auto_update_settings = $fresh_website_details['auto_update_settings'] ?? [];
+
+        if (empty($api_auto_update_settings)) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No auto-update settings from API, skipping sync', 'sync_auto_update_schedule_from_api', 'debug');
+            return;
+        }
+
+        // Clear the static cache in get_auto_update_settings
+        self::get_auto_update_settings(true);
+        
+        // Update the schedule using existing method (this reschedules the crons)
+        // The wcd_save_update_group_settings method already handles everything:
+        // - Reschedules wp_version_check
+        // - Reschedules wcd_wp_version_check
+        // - Sets the correct timeframe
+        $this->wcd_save_update_group_settings($api_auto_update_settings, true); // true = skip API save
+        
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+            'Auto-update schedule synced with API settings',
+            'sync_auto_update_schedule_from_api',
+            'debug'
+        );
     }
 
     /**

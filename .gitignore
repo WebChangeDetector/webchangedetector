@@ -5,3 +5,5 @@ deploy-wp.sh
 test-routines.txt
 tests/*
 logs/*
+CLAUDE.md
+REFACTOR.md
