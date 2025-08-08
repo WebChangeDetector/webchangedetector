@@ -282,6 +282,26 @@ class WebChangeDetector_Logger
             return new \WP_Error('file_not_readable', 'Log file is not readable.');
         }
 
+        // Check if headers have already been sent
+        if (headers_sent($file, $line)) {
+            // If headers already sent, use JavaScript redirect to download
+            $content = file_get_contents($file_path);
+            $base64 = base64_encode($content);
+            $mime = 'text/plain';
+            
+            echo '<script>
+                var link = document.createElement("a");
+                link.download = "' . esc_js($filename) . '";
+                link.href = "data:' . $mime . ';base64,' . $base64 . '";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.history.back();
+            </script>';
+            echo '<p>If the download does not start automatically, <a href="data:' . $mime . ';base64,' . $base64 . '" download="' . esc_attr($filename) . '">click here</a>.</p>';
+            exit;
+        }
+
         // Set headers for download
         header('Content-Type: text/plain');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
