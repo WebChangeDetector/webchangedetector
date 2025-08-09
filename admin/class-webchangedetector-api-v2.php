@@ -622,7 +622,12 @@ class WebChangeDetector_API_V2
                 );
             }
             if (! empty($args)) {
-                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($args), 'api_v2', 'debug');
+                $log_args = $args;
+                $args_json = wp_json_encode($log_args);
+                if (strlen($args_json) > 1000) {
+                    $args_json = substr($args_json, 0, 1000) . '... [truncated, total length: ' . strlen($args_json) . ' chars]';
+                }
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . $args_json, 'api_v2', 'debug');
                 $responses = \WpOrg\Requests\Requests::request_multiple(
                     $args,
                     array(
@@ -685,7 +690,11 @@ class WebChangeDetector_API_V2
             );
 
             $log_args = $args;
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode($log_args), 'api_v2', 'debug');
+            $args_json = wp_json_encode($log_args);
+            if (strlen($args_json) > 1000) {
+                $args_json = substr($args_json, 0, 1000) . '... [truncated, total length: ' . strlen($args_json) . ' chars]';
+            }
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(' API V2 "' . $method . '" request: ' . $url . ' | args: ' . $args_json, 'api_v2', 'debug');
 
             if ($is_web) {
                 $response = wp_remote_request($url_web, $args);

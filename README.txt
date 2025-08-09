@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.8
-Stable tag: 3.9.10
+Stable tag: 3.9.11
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -58,6 +58,8 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 * Improvement: New design
 * Improvement: Code refactoring 
 * Improvement: Optimized url sync 
+* Impromenent: More robust auto update checks system
+* Feature: Get 1000 Checks for 1 month at signup
 * Feature: Browser console log checks
 * Feature: Clear caches at auto update checks
 * Feature: New optional logging system
