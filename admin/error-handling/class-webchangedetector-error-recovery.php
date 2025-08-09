@@ -30,17 +30,6 @@ class WebChangeDetector_Error_Recovery {
 	private $recovery_strategies = array();
 
 	/**
-	 * Health check intervals in seconds.
-	 *
-	 * @var array
-	 */
-	private $health_check_intervals = array(
-		'api'        => 300,  // 5 minutes.
-		'database'   => 600,  // 10 minutes.
-		'filesystem' => 1800, // 30 minutes.
-	);
-
-	/**
 	 * Logger instance.
 	 *
 	 * @var WebChangeDetector_Logger
@@ -55,7 +44,7 @@ class WebChangeDetector_Error_Recovery {
 	public function __construct( $logger = null ) {
 		$this->logger = $logger ?: new WebChangeDetector_Logger();
 		$this->register_default_recovery_strategies();
-		$this->schedule_health_checks();
+		// Health checks are now handled by the hourly sync in WebChangeDetector_Autoupdates
 	}
 
 	/**
@@ -110,53 +99,34 @@ class WebChangeDetector_Error_Recovery {
 	}
 
 	/**
-	 * Perform system health check.
+	 * Get current health status.
+	 * Health checks are now performed via the hourly sync in WebChangeDetector_Autoupdates.
+	 * This method simply retrieves the stored status.
 	 *
-	 * @return array Health check results.
+	 * @return array Current health status.
 	 */
-	public function perform_health_check() {
-		$health_results = array(
-			'overall_status' => 'healthy',
-			'checks'         => array(),
-			'timestamp'      => current_time( 'mysql' ),
-		);
-
-		// API connectivity check.
-		$api_check = $this->check_api_connectivity();
-		$health_results['checks']['api'] = $api_check;
-
-		// Database connectivity check.
-		$db_check = $this->check_database_connectivity();
-		$health_results['checks']['database'] = $db_check;
-
-		// Filesystem permissions check.
-		$fs_check = $this->check_filesystem_permissions();
-		$health_results['checks']['filesystem'] = $fs_check;
-
-		// Plugin configuration check.
-		$config_check = $this->check_plugin_configuration();
-		$health_results['checks']['configuration'] = $config_check;
-
-		// Determine overall status.
-		$failed_checks = array_filter( $health_results['checks'], function( $check ) {
-			return ! $check['status'];
-		} );
-
-		if ( ! empty( $failed_checks ) ) {
-			$health_results['overall_status'] = 'unhealthy';
+	public function get_health_status() {
+		$health_status = get_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
+		
+		if ( empty( $health_status ) ) {
+			// Return a default healthy status if none exists
+			$health_status = array(
+				'overall_status' => 'healthy',
+				'checks'         => array(
+					'api' => array(
+						'status'  => true,
+						'message' => 'Awaiting first sync',
+					),
+					'configuration' => array(
+						'status'  => true,
+						'message' => 'Awaiting first sync',
+					),
+				),
+				'timestamp'      => current_time( 'mysql' ),
+			);
 		}
-
-		// Log health check results.
-		$this->logger->info(
-			"Health check completed: {$health_results['overall_status']}",
-			'health_check',
-			$health_results
-		);
-
-		// Store health check results.
-		update_option( WCD_WP_OPTION_KEY_HEALTH_STATUS, $health_results );
-
-		return $health_results;
+		
+		return $health_status;
 	}
 
 	/**
@@ -316,181 +286,18 @@ class WebChangeDetector_Error_Recovery {
 	}
 
 	/**
-	 * Check API connectivity.
-	 *
-	 * @return array Check result.
-	 */
-	private function check_api_connectivity() {
-		try {
-			// Simple API health check using account endpoint.
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2();
-			
-			if ( is_string( $result ) && in_array( $result, array( 'unauthorized', 'activate account', 'update plugin' ), true ) ) {
-				return array(
-					'status'  => false,
-					'message' => 'API connectivity failed: ' . $result,
-					'details' => array( 'error' => $result ),
-				);
-			}
-			
-			if ( ! empty( $result['data'] ) ) {
-				return array(
-					'status'  => true,
-					'message' => 'API connectivity OK',
-				);
-			}
-			
-			return array(
-				'status'  => false,
-				'message' => 'API connectivity failed: Invalid response',
-				'details' => array( 'error' => 'Invalid response format' ),
-			);
-		} catch ( \Exception $e ) {
-			return array(
-				'status'  => false,
-				'message' => 'API connectivity failed: ' . $e->getMessage(),
-				'details' => array( 'error' => $e->getMessage() ),
-			);
-		}
-	}
-
-	/**
-	 * Check database connectivity.
-	 *
-	 * @return array Check result.
-	 */
-	private function check_database_connectivity() {
-		global $wpdb;
-
-		try {
-			$result = $wpdb->get_var( 'SELECT 1' );
-			
-			if ( $result == 1 ) {
-				return array(
-					'status'  => true,
-					'message' => 'Database connectivity OK',
-				);
-			} else {
-				return array(
-					'status'  => false,
-					'message' => 'Database query failed',
-				);
-			}
-		} catch ( \Exception $e ) {
-			return array(
-				'status'  => false,
-				'message' => 'Database connectivity failed: ' . $e->getMessage(),
-				'details' => array( 'error' => $e->getMessage() ),
-			);
-		}
-	}
-
-	/**
-	 * Check filesystem permissions.
-	 *
-	 * @return array Check result.
-	 */
-	private function check_filesystem_permissions() {
-		$upload_dir = wp_upload_dir();
-		$log_dir = WP_CONTENT_DIR . '/webchangedetector-logs';
-		
-		$issues = array();
-		
-		// Check if upload directory is writable.
-		if ( ! is_writable( $upload_dir['basedir'] ) ) {
-			$issues[] = 'Upload directory not writable: ' . $upload_dir['basedir'];
-		}
-		
-		// Check if log directory exists and is writable.
-		if ( ! is_dir( $log_dir ) ) {
-			$issues[] = 'Log directory does not exist: ' . $log_dir;
-		} elseif ( ! is_writable( $log_dir ) ) {
-			$issues[] = 'Log directory not writable: ' . $log_dir;
-		}
-		
-		if ( empty( $issues ) ) {
-			return array(
-				'status'  => true,
-				'message' => 'Filesystem permissions OK',
-			);
-		} else {
-			return array(
-				'status'  => false,
-				'message' => 'Filesystem permission issues found',
-				'details' => array( 'issues' => $issues ),
-			);
-		}
-	}
-
-	/**
-	 * Check plugin configuration.
-	 *
-	 * @return array Check result.
-	 */
-	private function check_plugin_configuration() {
-		$issues = array();
-		
-		// Check if API token is set.
-		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
-		if ( empty( $api_token ) ) {
-			$issues[] = 'API token not configured';
-		}
-		
-		// Check if website groups are set.
-		$groups = get_option( WCD_WEBSITE_GROUPS );
-		if ( empty( $groups ) ) {
-			$issues[] = 'Website groups not configured';
-		}
-		
-		if ( empty( $issues ) ) {
-			return array(
-				'status'  => true,
-				'message' => 'Plugin configuration OK',
-			);
-		} else {
-			return array(
-				'status'  => false,
-				'message' => 'Plugin configuration issues found',
-				'details' => array( 'issues' => $issues ),
-			);
-		}
-	}
-
-	/**
-	 * Schedule health checks.
-	 */
-	private function schedule_health_checks() {
-		// Schedule regular health checks.
-		if ( ! wp_next_scheduled( 'webchangedetector_health_check' ) ) {
-			wp_schedule_event( time(), 'hourly', 'webchangedetector_health_check' );
-		}
-		
-		add_action( 'webchangedetector_health_check', array( $this, 'perform_health_check' ) );
-	}
-
-	/**
-	 * Get current health status.
-	 *
-	 * @return array Current health status.
-	 */
-	public function get_health_status() {
-		$health_status = get_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
-		
-		if ( empty( $health_status ) ) {
-			// Perform initial health check if none exists.
-			$health_status = $this->perform_health_check();
-		}
-		
-		return $health_status;
-	}
-
-	/**
-	 * Force health check refresh.
+	 * Force health status refresh.
+	 * Triggers the sync which will update the health status.
 	 *
 	 * @return array Fresh health status.
 	 */
 	public function refresh_health_status() {
-		delete_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
-		return $this->perform_health_check();
+		// Trigger the sync to get fresh health status
+		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Autoupdates' ) ) {
+			$autoupdates = new \WebChangeDetector\WebChangeDetector_Autoupdates();
+			$autoupdates->sync_auto_update_schedule_from_api();
+		}
+		
+		return $this->get_health_status();
 	}
 } 

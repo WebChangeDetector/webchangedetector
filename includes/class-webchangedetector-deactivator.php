@@ -24,12 +24,17 @@ namespace WebChangeDetector;
 class WebChangeDetector_Deactivator {
 
 	/**
-	 * Short Description. (use period)
+	 * Clean up scheduled cron jobs on deactivation.
 	 *
-	 * Long Description.
+	 * Removes all scheduled cron jobs created by the plugin.
 	 *
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
+		// Clear the auto-update sync cron
+		wp_clear_scheduled_hook( 'wcd_sync_auto_update_schedule' );
+		
+		// Clear other plugin crons
+		wp_clear_scheduled_hook( 'wcd_wp_version_check' );
 	}
 }

@@ -535,6 +535,7 @@ class WebChangeDetector_Autoupdates
     /**
      * Sync auto-update schedule from API settings.
      * This runs hourly to ensure local schedulers match API settings.
+     * Also performs basic health checks since API call validates connectivity.
      *
      * @return void
      */
@@ -542,31 +543,71 @@ class WebChangeDetector_Autoupdates
     {
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Starting auto-update schedule sync with API', 'sync_auto_update_schedule_from_api', 'debug');
 
-        // Get fresh settings from API (force refresh)
-        $wcd = new WebChangeDetector_Admin();
-        $fresh_website_details = $wcd->settings_handler->get_website_details(true); // Force refresh from API
-        $api_auto_update_settings = $fresh_website_details['auto_update_settings'] ?? [];
-
-        if (empty($api_auto_update_settings)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No auto-update settings from API, skipping sync', 'sync_auto_update_schedule_from_api', 'debug');
-            return;
-        }
-
-        // Clear the static cache in get_auto_update_settings
-        self::get_auto_update_settings(true);
-        
-        // Update the schedule using existing method (this reschedules the crons)
-        // The wcd_save_update_group_settings method already handles everything:
-        // - Reschedules wp_version_check
-        // - Reschedules wcd_wp_version_check
-        // - Sets the correct timeframe
-        $this->wcd_save_update_group_settings($api_auto_update_settings); // true = skip API save
-        
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-            'Auto-update schedule synced with API settings',
-            'sync_auto_update_schedule_from_api',
-            'debug'
+        // Perform basic health status update
+        $health_status = array(
+            'overall_status' => 'healthy',
+            'checks' => array(),
+            'timestamp' => current_time( 'mysql' ),
         );
+
+        try {
+            // Get fresh settings from API (force refresh)
+            // This call effectively validates API connectivity and authentication
+            $wcd = new WebChangeDetector_Admin();
+            $fresh_website_details = $wcd->settings_handler->get_website_details(true); // Force refresh from API
+            
+            // API call succeeded - mark as healthy
+            $health_status['checks']['api'] = array(
+                'status' => true,
+                'message' => 'API connectivity OK',
+            );
+            
+            // Check configuration while we have the data
+            $api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+            $groups = get_option( WCD_WEBSITE_GROUPS );
+            $health_status['checks']['configuration'] = array(
+                'status' => ! empty( $api_token ) && ! empty( $groups ),
+                'message' => ( ! empty( $api_token ) && ! empty( $groups ) ) ? 'Configuration OK' : 'Configuration incomplete',
+            );
+            
+            $api_auto_update_settings = $fresh_website_details['auto_update_settings'] ?? [];
+
+            if (empty($api_auto_update_settings)) {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No auto-update settings from API, skipping sync', 'sync_auto_update_schedule_from_api', 'debug');
+            } else {
+                // Clear the static cache in get_auto_update_settings
+                self::get_auto_update_settings(true);
+                
+                // Update the schedule using existing method (this reschedules the crons)
+                // The wcd_save_update_group_settings method already handles everything:
+                // - Reschedules wp_version_check
+                // - Reschedules wcd_wp_version_check
+                // - Sets the correct timeframe
+                $this->wcd_save_update_group_settings($api_auto_update_settings); // true = skip API save
+                
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Auto-update schedule synced with API settings',
+                    'sync_auto_update_schedule_from_api',
+                    'debug'
+                );
+            }
+        } catch ( \Exception $e ) {
+            // API call failed - mark as unhealthy
+            $health_status['checks']['api'] = array(
+                'status' => false,
+                'message' => 'API connectivity failed: ' . $e->getMessage(),
+            );
+            $health_status['overall_status'] = 'unhealthy';
+            
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Failed to sync auto-update schedule: ' . $e->getMessage(),
+                'sync_auto_update_schedule_from_api',
+                'error'
+            );
+        }
+        
+        // Update health status
+        update_option( WCD_WP_OPTION_KEY_HEALTH_STATUS, $health_status );
     }
 
     /**
