@@ -337,16 +337,6 @@ class WebChangeDetector_Error_Handler {
 	}
 
 	/**
-	 * Get error statistics.
-	 *
-	 * @param string $timeframe Timeframe for statistics (hour, day, week).
-	 * @return array Error statistics.
-	 */
-	public function get_error_statistics( $timeframe = 'day' ) {
-		return $this->logger->get_statistics( $timeframe );
-	}
-
-	/**
 	 * Clear old error logs.
 	 *
 	 * @param int $days Number of days to keep logs.

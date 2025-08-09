@@ -243,7 +243,7 @@ class WebChangeDetector_Logger
                     'date' => $date,
                     'filename' => basename($file),
                     'size' => $size,
-                    'size_formatted' => $this->format_file_size($size),
+                    'size_formatted' => size_format($size, 2),
                     'path' => $file,
                 );
             }
@@ -314,21 +314,4 @@ class WebChangeDetector_Logger
         exit;
     }
 
-    /**
-     * Format file size in human readable format.
-     *
-     * @param int $size File size in bytes.
-     * @return string Formatted file size.
-     */
-    private function format_file_size($size)
-    {
-        if ($size == 0) {
-            return '0 B';
-        }
-
-        $units = array('B', 'KB', 'MB', 'GB');
-        $factor = floor(log($size, 1024));
-
-        return sprintf('%.1f %s', $size / pow(1024, $factor), $units[$factor]);
-    }
 }

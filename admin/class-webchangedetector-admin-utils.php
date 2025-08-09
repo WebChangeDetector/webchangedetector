@@ -52,29 +52,6 @@ class WebChangeDetector_Admin_Utils
 
 
     /**
-     * Check if a string is valid JSON.
-     *
-     * Validates whether a given string contains valid JSON data.
-     * Uses WordPress coding standards for validation.
-     *
-     * @since 1.0.0
-     * @param string $string The string to validate.
-     * @return bool True if valid JSON, false otherwise.
-     */
-    public static function is_json($string)
-    {
-        if (empty($string) || ! is_string($string)) {
-            return false;
-        }
-
-        // Attempt to decode JSON
-        json_decode($string);
-
-        // Check if JSON decoding was successful
-        return json_last_error() === JSON_ERROR_NONE;
-    }
-
-    /**
      * Get device icon HTML for display.
      *
      * Returns appropriate icon HTML for desktop or mobile devices
@@ -86,63 +63,40 @@ class WebChangeDetector_Admin_Utils
      */
     public static function get_device_icon($icon, $css_class = '')
     {
-
-        $output = '';
-        if ('thumbnail' === $icon) {
-            $output = '<span class="dashicons dashicons-camera-alt"></span>';
+        $icons = array(
+            'thumbnail'         => 'camera-alt',
+            'desktop'          => 'laptop',
+            'mobile'           => 'smartphone',
+            'page'             => 'media-default',
+            'change-detections' => 'welcome-view-site',
+            'dashboard'        => 'admin-home',
+            'logs'             => 'menu-alt',
+            'settings'         => 'admin-generic',
+            'website-settings' => 'welcome-widgets-menus',
+            'help'             => 'editor-help',
+            'auto-group'       => 'clock',
+            'update-group'     => 'admin-page',
+            'auto-update-group'=> 'update',
+            'trash'            => 'trash',
+            'check'            => 'yes-alt',
+            'fail'             => 'dismiss',
+            'warning'          => 'warning',
+            'upgrade'          => 'cart',
+        );
+        
+        if (!isset($icons[$icon])) {
+            return;
         }
-        if ('desktop' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-laptop"></span>';
-        }
-        if ('mobile' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-smartphone"></span>';
-        }
-        if ('page' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-media-default"></span>';
-        }
-        if ('change-detections' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-view-site"></span>';
-        }
-        if ('dashboard' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-home"></span>';
-        }
-        if ('logs' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-menu-alt"></span>';
-        }
-        if ('settings' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-generic"></span>';
-        }
-        if ('website-settings' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-welcome-widgets-menus"></span>';
-        }
-        if ('help' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-editor-help"></span>';
-        }
-        if ('auto-group' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-clock"></span>';
-        }
-        if ('update-group' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-admin-page"></span>';
-        }
-        if ('auto-update-group' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-update"></span>';
-        }
-        if ('trash' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-trash"></span>';
-        }
-        if ('check' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-yes-alt"></span>';
-        }
-        if ('fail' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-dismiss"></span>';
-        }
-        if ('warning' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-warning"></span>';
-        }
-        if ('upgrade' === $icon) {
-            $output = '<span class="group_icon ' . $css_class . ' dashicons dashicons-cart"></span>';
-        }
-
+        
+        // Special case for thumbnail which doesn't use group_icon class
+        $class_prefix = ($icon === 'thumbnail') ? '' : 'group_icon ' . $css_class . ' ';
+        
+        $output = sprintf(
+            '<span class="%sdashicons dashicons-%s"></span>',
+            $class_prefix,
+            $icons[$icon]
+        );
+        
         echo wp_kses($output, array('span' => array('class' => array())));
     }
 
@@ -422,35 +376,6 @@ class WebChangeDetector_Admin_Utils
         $status = sanitize_text_field($status);
 
         return in_array($status, $valid_statuses, true) ? $status : '';
-    }
-
-    /**
-     * Format file size for display.
-     *
-     * Converts bytes to human-readable format following WordPress standards.
-     *
-     * @since 1.0.0
-     * @param int $bytes File size in bytes.
-     * @param int $precision Number of decimal places.
-     * @return string Formatted file size.
-     */
-    public static function format_file_size($bytes, $precision = 2)
-    {
-        if ($bytes <= 0) {
-            return '0 B';
-        }
-
-        $units = array('B', 'KB', 'MB', 'GB', 'TB');
-        $base  = log($bytes, 1024);
-        $index = floor($base);
-
-        if ($index >= count($units)) {
-            $index = count($units) - 1;
-        }
-
-        $size = round(pow(1024, $base - $index), $precision);
-
-        return $size . ' ' . $units[$index];
     }
 
     /**

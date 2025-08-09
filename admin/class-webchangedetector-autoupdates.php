@@ -219,10 +219,9 @@ class WebChangeDetector_Autoupdates
         $scheduled_datetime_utc = $today_utc . ' ' . $auto_update_checks_from_utc . ':00';
         $should_next_run_gmt = strtotime($scheduled_datetime_utc);
         
-        // If we've already passed this time today, schedule for tomorrow
-        if (time() > $should_next_run_gmt) {
-            $should_next_run_gmt = strtotime('+1 day', $should_next_run_gmt);
-        }
+        // We skip delaying to next day if current time passed "from" time.
+        // The cron will run now if the time is already passed. 
+        // If the end time of our time window is still higher than now, we do the updates now this way. Otherwise it will skip.
 
         // Log for debugging
         require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';

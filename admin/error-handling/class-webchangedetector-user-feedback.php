@@ -353,18 +353,6 @@ class WebChangeDetector_User_Feedback {
 	}
 
 	/**
-	 * Get feedback statistics.
-	 *
-	 * @param string $timeframe Timeframe for statistics.
-	 * @return array Feedback statistics.
-	 */
-	public function get_feedback_statistics( $timeframe = 'day' ) {
-		// This would integrate with the logger to get feedback/error statistics.
-		$logger = new WebChangeDetector_Logger();
-		return $logger->get_statistics( $timeframe );
-	}
-
-	/**
 	 * Add JavaScript for enhanced notice functionality.
 	 */
 	public function enqueue_feedback_scripts() {
