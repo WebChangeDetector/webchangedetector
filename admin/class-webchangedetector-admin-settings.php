@@ -187,7 +187,7 @@ class WebChangeDetector_Admin_Settings
         // Force refresh website details cache after saving
         $this->get_website_details(true);
 
-        do_action('wcd_save_update_group_settings', $postdata);
+        do_action('wcd_save_update_group_settings');
 
         // Update group settings in API.
         $args = array(

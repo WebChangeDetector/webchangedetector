@@ -426,51 +426,6 @@ class WebChangeDetector_Settings_Controller
                 </form>
             </div>
 
-            <style>
-                .wcd-log-viewer {
-                    background: #23282d;
-                    color: #f1f1f1;
-                    padding: 20px;
-                    border-radius: 4px;
-                    overflow-x: auto;
-                    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    max-height: 600px;
-                    overflow-y: auto;
-                }
-                .wcd-log-line {
-                    margin: 0;
-                    padding: 2px 0;
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                }
-                .wcd-log-line:hover {
-                    background: #32373c;
-                }
-                .wcd-log-timestamp {
-                    color: #87ceeb;
-                }
-                .wcd-log-level-error {
-                    color: #ff6b6b;
-                }
-                .wcd-log-level-warning {
-                    color: #ffd93d;
-                }
-                .wcd-log-level-info {
-                    color: #6bcf7f;
-                }
-                .wcd-log-level-debug {
-                    color: #a0a0a0;
-                }
-                .wcd-log-context {
-                    color: #b19cd9;
-                }
-                .wcd-log-message {
-                    color: #f1f1f1;
-                }
-            </style>
-
             <div class="wcd-log-viewer">
                 <?php
                 foreach ($lines as $line) {
@@ -512,10 +467,10 @@ class WebChangeDetector_Settings_Controller
         $line = preg_replace('/\[([^\]]+)\]/', '<span class="wcd-log-context">[$1]</span>', $line);
         
         // Highlight URLs
-        $line = preg_replace('/(https?:\/\/[^\s]+)/', '<span style="color: #4fc3f7;">$1</span>', $line);
+        $line = preg_replace('/(https?:\/\/[^\s]+)/', '<span class="wcd-log-url">$1</span>', $line);
         
         // Highlight file paths
-        $line = preg_replace('/(\/[^\s:]+\.(php|js|css|html))/', '<span style="color: #81c784;">$1</span>', $line);
+        $line = preg_replace('/(\/[^\s:]+\.(php|js|css|html))/', '<span class="wcd-log-filepath">$1</span>', $line);
         
         return '<div class="wcd-log-line">' . $line . '</div>';
     }

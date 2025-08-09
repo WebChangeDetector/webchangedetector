@@ -189,15 +189,11 @@ class WebChangeDetector_Autoupdates
     /** Reset next cron run of wp_version_check to our auto_update_checks_from.
      *
      * @param array $group_settings Array of group settings.
-     * @param bool $skip_api_save Whether to skip saving settings back to API (for sync operations).
      * @return void
      */
-    public function wcd_save_update_group_settings($group_settings, $skip_api_save = false)
+    public function wcd_save_update_group_settings($group_settings)
     {
-        // Load timezone helper for time conversion.
-        require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
-
-        // Get the new time in UTC from API.
+        // Get the time in UTC from API
         if (isset($group_settings['auto_update_checks_from'])) {
             $auto_update_checks_from_utc = $group_settings['auto_update_checks_from'];
         } else {
@@ -208,42 +204,48 @@ class WebChangeDetector_Autoupdates
             $auto_update_checks_from_utc = $auto_update_settings['auto_update_checks_from'];
         }
 
-        // Convert UTC time to site timezone.
-        $auto_update_checks_from_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($auto_update_checks_from_utc);
-
-        // Create a timestamp for today at the scheduled time in site timezone.
-        // We use current_time('Y-m-d') to get today's date in site timezone.
-        $today_date = current_time('Y-m-d');
-        $scheduled_datetime_string = $today_date . ' ' . $auto_update_checks_from_site;
+        // IMPORTANT: The time from API is in UTC and represents when the user wants 
+        // the check to run IN THEIR LOCAL TIME. 
+        // Example: User wants checks at 09:00 local time (EST)
+        // - User enters: 09:00
+        // - We convert and save to API: 14:00 UTC (09:00 + 5 hours)
+        // - API returns: 14:00 UTC
+        // - We schedule cron for: 14:00 UTC
+        // - Cron runs at: 14:00 UTC which is 09:00 EST (correct!)
         
-        // Convert the site timezone datetime to GMT timestamp for WordPress cron.
-        $should_next_run_gmt = get_gmt_from_date($scheduled_datetime_string, 'U');
-
-        $now_gmt = time(); // Current GMT timestamp
-
-        // Add a day if we passed the auto_update_checks_from time already.
-        if ($now_gmt > $should_next_run_gmt) {
+        // Create DateTime for today at the scheduled UTC time
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Got the time from API: ' . $auto_update_checks_from_utc, 'wcd_save_update_group_settings', 'debug');
+        $today_utc = gmdate('Y-m-d');
+        $scheduled_datetime_utc = $today_utc . ' ' . $auto_update_checks_from_utc . ':00';
+        $should_next_run_gmt = strtotime($scheduled_datetime_utc);
+        
+        // If we've already passed this time today, schedule for tomorrow
+        if (time() > $should_next_run_gmt) {
             $should_next_run_gmt = strtotime('+1 day', $should_next_run_gmt);
         }
 
-        // Log scheduling details for debugging
+        // Log for debugging
+        require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+        $site_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time($auto_update_checks_from_utc);
+        
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
             sprintf(
-                'Scheduling wp_version_check - UTC time: %s, Site time: %s, Scheduled for GMT: %s, Local: %s',
+                'Scheduling wp_version_check - API stores as %s UTC, Scheduling cron for %s UTC (%s local)',
                 $auto_update_checks_from_utc,
-                $auto_update_checks_from_site,
                 gmdate('Y-m-d H:i:s', $should_next_run_gmt),
-                get_date_from_gmt(gmdate('Y-m-d H:i:s', $should_next_run_gmt), 'Y-m-d H:i:s')
+                $site_time
             ),
             'wcd_save_update_group_settings',
             'debug'
         );
 
-        // Reschedule the wp_version_check cron to our "from" time.
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Scheduling wp_version_check for ' . gmdate('Y-m-d H:i:s', $should_next_run_gmt), 'wcd_save_update_group_settings', 'debug');
+
+        // Clear and reschedule the WordPress update check crons
         wp_clear_scheduled_hook('wp_version_check');
         wp_schedule_event($should_next_run_gmt, 'twicedaily', 'wp_version_check');
 
-        // Backup cron in case something else changes the wp_version_check cron.
+        // Backup cron in case something else changes the wp_version_check cron
         wp_clear_scheduled_hook('wcd_wp_version_check');
         wp_schedule_event($should_next_run_gmt, 'daily', 'wcd_wp_version_check');
     }
@@ -558,7 +560,7 @@ class WebChangeDetector_Autoupdates
         // - Reschedules wp_version_check
         // - Reschedules wcd_wp_version_check
         // - Sets the correct timeframe
-        $this->wcd_save_update_group_settings($api_auto_update_settings, true); // true = skip API save
+        $this->wcd_save_update_group_settings($api_auto_update_settings); // true = skip API save
         
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
             'Auto-update schedule synced with API settings',
