@@ -119,6 +119,7 @@ class WebChangeDetector_Autoupdates
             array(
                 'status'   => 'processing',
                 'batch_id' => $response['batch'],
+                'timestamp' => time(), // Add timestamp for timeout detection
             ),
             false
         );
@@ -143,6 +144,34 @@ class WebChangeDetector_Autoupdates
     public function wcd_cron_check_post_queues()
     {
         $post_sc_option = get_option(WCD_POST_AUTO_UPDATE);
+        
+        // Check if we have a stuck post-update process
+        if ($post_sc_option) {
+            if (isset($post_sc_option['timestamp'])) {
+                // New format with timestamp - check if older than 1 hour
+                $age_in_seconds = time() - $post_sc_option['timestamp'];
+                if ($age_in_seconds > 3600) { // 1 hour timeout
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                        'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up.',
+                        'wcd_cron_check_post_queues',
+                        'warning'
+                    );
+                    delete_option(WCD_POST_AUTO_UPDATE);
+                    delete_option(WCD_WORDPRESS_CRON);
+                    $post_sc_option = false;
+                }
+            } else {
+                // Old format without timestamp - assume it's stuck from a previous version
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Found old post-update process without timestamp (likely from version 3.x). Cleaning up.',
+                    'wcd_cron_check_post_queues',
+                    'warning'
+                );
+                delete_option(WCD_POST_AUTO_UPDATE);
+                delete_option(WCD_WORDPRESS_CRON);
+                $post_sc_option = false;
+            }
+        }
 
         // Check if we still have the post_sc_option. If not, we already sent the mail.
         if (! $post_sc_option) {
@@ -265,10 +294,34 @@ class WebChangeDetector_Autoupdates
         }
 
         // Check if post-update screenshots are already done. Then we skip the auto updates.
-        if (get_option(WCD_POST_AUTO_UPDATE)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-update screenshots already processed. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
-            $this->set_lock();
-            return;
+        $post_update_data = get_option(WCD_POST_AUTO_UPDATE);
+        if ($post_update_data) {
+            if (isset($post_update_data['timestamp'])) {
+                // New format with timestamp - check if older than 1 hour
+                $age_in_seconds = time() - $post_update_data['timestamp'];
+                if ($age_in_seconds > 3600) { // 1 hour timeout
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                        'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up and continuing.',
+                        'wp_maybe_auto_update',
+                        'warning'
+                    );
+                    delete_option(WCD_POST_AUTO_UPDATE);
+                    delete_option(WCD_WORDPRESS_CRON);
+                } else {
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-update screenshots already processed. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
+                    $this->set_lock();
+                    return;
+                }
+            } else {
+                // Old format without timestamp - assume it's stuck from a previous version
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Found old post-update process without timestamp (likely from version 3.x). Cleaning up and continuing.',
+                    'wp_maybe_auto_update',
+                    'warning'
+                );
+                delete_option(WCD_POST_AUTO_UPDATE);
+                delete_option(WCD_WORDPRESS_CRON);
+            }
         }
 
         // Make auto-updates only once every 24h. Otherwise we skip the auto updates.
@@ -369,6 +422,35 @@ class WebChangeDetector_Autoupdates
 
         // Start pre-update screenshots and do the WCD Magic.
         $wcd_pre_update_data = get_option(WCD_PRE_AUTO_UPDATE);
+        
+        // Check if we have a stuck process
+        if ($wcd_pre_update_data) {
+            if (isset($wcd_pre_update_data['timestamp'])) {
+                // New format with timestamp - check if older than 1 hour
+                $age_in_seconds = time() - $wcd_pre_update_data['timestamp'];
+                if ($age_in_seconds > 3600) { // 1 hour timeout
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                        'Found stuck pre-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up.',
+                        'wp_maybe_auto_update',
+                        'warning'
+                    );
+                    delete_option(WCD_PRE_AUTO_UPDATE);
+                    delete_option(WCD_AUTO_UPDATES_RUNNING);
+                    $wcd_pre_update_data = false;
+                }
+            } else {
+                // Old format without timestamp - assume it's stuck from a previous version
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Found old pre-update process without timestamp (likely from version 3.x). Cleaning up.',
+                    'wp_maybe_auto_update',
+                    'warning'
+                );
+                delete_option(WCD_PRE_AUTO_UPDATE);
+                delete_option(WCD_AUTO_UPDATES_RUNNING);
+                $wcd_pre_update_data = false;
+            }
+        }
+        
         if (false === $wcd_pre_update_data) { // We don't have an option yet. So we start screenshots.
 
             // Create scheduled wp_maybe_auto_update check and external cron at wcd api to make sure the scheduler is triggered every minute.
@@ -383,6 +465,7 @@ class WebChangeDetector_Autoupdates
             $option_data = array(
                 'status'   => 'processing',
                 'batch_id' => esc_html($sc_response['batch']),
+                'timestamp' => time(), // Add timestamp for timeout detection
             );
 
             // Save the data to the option.
@@ -399,6 +482,10 @@ class WebChangeDetector_Autoupdates
             // We check if the queues are done. If so, we update the status.
             if (count($response['data']) === 0) {
                 $wcd_pre_update_data['status'] = 'done';
+                // Preserve timestamp for timeout detection
+                if (!isset($wcd_pre_update_data['timestamp'])) {
+                    $wcd_pre_update_data['timestamp'] = time();
+                }
                 update_option(WCD_PRE_AUTO_UPDATE, $wcd_pre_update_data, false);
             }
 
