@@ -79,11 +79,49 @@ class WebChangeDetector_Autoupdates
     }
 
     /** This just calls the version check from a backup cron.
+     * We need to be careful not to interfere with an already running update process.
      *
      * @return void
      */
     public function wcd_wp_version_check()
     {
+        // Check if updates are already in progress
+        if (get_option(WCD_AUTO_UPDATES_RUNNING)) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Skipping backup version check - auto updates already running',
+                'wcd_wp_version_check',
+                'debug'
+            );
+            return;
+        }
+        
+        // Check if pre-update screenshots are in progress
+        $pre_update_data = get_option(WCD_PRE_AUTO_UPDATE);
+        if ($pre_update_data && isset($pre_update_data['status']) && $pre_update_data['status'] === 'processing') {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Skipping backup version check - pre-update screenshots in progress',
+                'wcd_wp_version_check',
+                'debug'
+            );
+            return;
+        }
+        
+        // Check if post-update screenshots are in progress
+        if (get_option(WCD_POST_AUTO_UPDATE)) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Skipping backup version check - post-update screenshots in progress',
+                'wcd_wp_version_check',
+                'debug'
+            );
+            return;
+        }
+        
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+            'Running backup wp_version_check',
+            'wcd_wp_version_check',
+            'debug'
+        );
+        
         wp_version_check();
     }
 
@@ -97,13 +135,19 @@ class WebChangeDetector_Autoupdates
     {
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Automatic Updates Complete. Running post-update stuff.', 'automatic_updates_complete', 'debug');
 
-        // Auto updates are done. So we remove the option.
+        // Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
         delete_option(WCD_AUTO_UPDATES_RUNNING);
 
         // We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
         $auto_update_settings = self::get_auto_update_settings();
-        if (! array_key_exists('auto_update_checks_enabled', $auto_update_settings) || ! get_option(WCD_PRE_AUTO_UPDATE)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Skipping after update stuff as checks are disabled or we don\'t have pre-update checks.', 'automatic_updates_complete', 'debug');
+        if (! array_key_exists('auto_update_checks_enabled', $auto_update_settings)) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Skipping after update stuff as checks are disabled.', 'automatic_updates_complete', 'debug');
+            return;
+        }
+        
+        $pre_update_data = get_option(WCD_PRE_AUTO_UPDATE);
+        if (! $pre_update_data) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Skipping after update stuff as we don\'t have pre-update checks. This could happen if they were cleaned up due to timeout.', 'automatic_updates_complete', 'debug');
             return;
         }
 
@@ -112,17 +156,36 @@ class WebChangeDetector_Autoupdates
 
         // Start the post-update screenshots.
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Starting post-update screenshots and comparisons.', 'automatic_updates_complete', 'debug');
-        $response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2($this->manual_group_id, 'post');
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-Screenshot Response: ' . wp_json_encode($response), 'automatic_updates_complete', 'debug');
-        update_option(
-            WCD_POST_AUTO_UPDATE,
-            array(
+        
+        try {
+            $response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2($this->manual_group_id, 'post');
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-Screenshot Response: ' . wp_json_encode($response), 'automatic_updates_complete', 'debug');
+            
+            // Validate response structure
+            if (empty($response) || !isset($response['batch'])) {
+                throw new \Exception('Invalid API response for post-update screenshots: missing batch ID');
+            }
+            
+            $post_update_data = array(
                 'status'   => 'processing',
                 'batch_id' => $response['batch'],
                 'timestamp' => time(), // Add timestamp for timeout detection
-            ),
-            false
-        );
+            );
+        } catch (\Exception $e) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Failed to start post-update screenshots: ' . $e->getMessage() . '. Cleaning up.',
+                'automatic_updates_complete',
+                'error'
+            );
+            // Clean up pre-update data since we can't complete the comparison
+            delete_option(WCD_PRE_AUTO_UPDATE);
+            return;
+        }
+        
+        update_option(WCD_POST_AUTO_UPDATE, $post_update_data, false);
+        
+        // Set transient for automatic timeout (2 hours) - hybrid approach
+        set_transient('wcd_post_auto_update_timeout', time(), 2 * HOUR_IN_SECONDS);
 
         // Add the batch id to the comparison batches. This is used to send the mail and for showing "Auto Update Checks" in the change detection page.
         $comparison_batches = get_option(WCD_AUTO_UPDATE_COMPARISON_BATCHES);
@@ -144,33 +207,44 @@ class WebChangeDetector_Autoupdates
     public function wcd_cron_check_post_queues()
     {
         $post_sc_option = get_option(WCD_POST_AUTO_UPDATE);
+        $timeout_active = get_transient('wcd_post_auto_update_timeout');
         
-        // Check if we have a stuck post-update process
-        if ($post_sc_option) {
-            if (isset($post_sc_option['timestamp'])) {
-                // New format with timestamp - check if older than 1 hour
-                $age_in_seconds = time() - $post_sc_option['timestamp'];
-                if ($age_in_seconds > 3600) { // 1 hour timeout
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                        'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up.',
-                        'wcd_cron_check_post_queues',
-                        'warning'
-                    );
-                    delete_option(WCD_POST_AUTO_UPDATE);
-                    delete_option(WCD_WORDPRESS_CRON);
-                    $post_sc_option = false;
-                }
-            } else {
-                // Old format without timestamp - assume it's stuck from a previous version
+        // Check for expired state using hybrid approach
+        if ($post_sc_option && !$timeout_active) {
+            // State exists but timeout expired - automatic recovery
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Post-update state found but timeout expired. Initiating automatic recovery.',
+                'wcd_cron_check_post_queues',
+                'warning'
+            );
+            delete_option(WCD_POST_AUTO_UPDATE);
+            delete_option(WCD_WORDPRESS_CRON);
+            $post_sc_option = false;
+        } elseif ($post_sc_option && isset($post_sc_option['timestamp'])) {
+            // Fallback: timestamp-based check for compatibility
+            $age_in_seconds = time() - $post_sc_option['timestamp'];
+            if ($age_in_seconds > 7200) { // 2 hour fallback timeout
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                    'Found old post-update process without timestamp (likely from version 3.x). Cleaning up.',
+                    'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago (fallback timeout). Cleaning up.',
                     'wcd_cron_check_post_queues',
                     'warning'
                 );
                 delete_option(WCD_POST_AUTO_UPDATE);
                 delete_option(WCD_WORDPRESS_CRON);
+                delete_transient('wcd_post_auto_update_timeout');
                 $post_sc_option = false;
             }
+        } elseif ($post_sc_option && !isset($post_sc_option['timestamp'])) {
+            // Old format without timestamp - assume it's stuck from a previous version
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Found old post-update process without timestamp (likely from version 3.x). Cleaning up.',
+                'wcd_cron_check_post_queues',
+                'warning'
+            );
+            delete_option(WCD_POST_AUTO_UPDATE);
+            delete_option(WCD_WORDPRESS_CRON);
+            delete_transient('wcd_post_auto_update_timeout');
+            $post_sc_option = false;
         }
 
         // Check if we still have the post_sc_option. If not, we already sent the mail.
@@ -196,11 +270,15 @@ class WebChangeDetector_Autoupdates
             // We don't need the webhook anymore.
             \WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2(get_option(WCD_WORDPRESS_CRON));
 
-            // Cleanup wp_options and cron webhook.
+            // Cleanup wp_options, transients, and cron webhook.
             delete_option(WCD_WORDPRESS_CRON);
             delete_option(WCD_PRE_AUTO_UPDATE);
             delete_option(WCD_POST_AUTO_UPDATE);
             delete_option(WCD_AUTO_UPDATES_RUNNING);
+            
+            // Clean up hybrid timeout transients
+            delete_transient('wcd_pre_auto_update_timeout');
+            delete_transient('wcd_post_auto_update_timeout');
         }
     }
 
@@ -213,6 +291,40 @@ class WebChangeDetector_Autoupdates
     {
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Setting Lock', 'set_lock', 'debug');
         update_option($this->lock_name, time() - HOUR_IN_SECONDS + MINUTE_IN_SECONDS);
+    }
+
+    /**
+     * Clean up stuck auto-update state (helper method for recovery)
+     * 
+     * This method provides a centralized way to clean up all auto-update related
+     * options and transients when the system gets stuck or needs to be reset.
+     *
+     * @return void
+     */
+    public function cleanup_stuck_auto_update_state()
+    {
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Cleaning up stuck auto-update state', 'cleanup_stuck_auto_update_state', 'warning');
+        
+        // Clean up all auto update related options
+        delete_option(WCD_PRE_AUTO_UPDATE);
+        delete_option(WCD_POST_AUTO_UPDATE);
+        delete_option(WCD_AUTO_UPDATES_RUNNING);
+        
+        // Clean up hybrid timeout transients
+        delete_transient('wcd_pre_auto_update_timeout');
+        delete_transient('wcd_post_auto_update_timeout');
+        
+        // Delete webhook if exists
+        $webhook_id = get_option(WCD_WORDPRESS_CRON);
+        if ($webhook_id) {
+            \WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2($webhook_id);
+            delete_option(WCD_WORDPRESS_CRON);
+        }
+        
+        // Clear WordPress auto updater locks
+        delete_option($this->lock_name);
+        
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto-update state cleanup completed', 'cleanup_stuck_auto_update_state', 'info');
     }
 
     /** Reset next cron run of wp_version_check to our auto_update_checks_from.
@@ -243,7 +355,7 @@ class WebChangeDetector_Autoupdates
         // - Cron runs at: 14:00 UTC which is 09:00 EST (correct!)
         
         // Create DateTime for today at the scheduled UTC time
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Got the time from API: ' . $auto_update_checks_from_utc, 'wcd_save_update_group_settings', 'debug');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto update checks "from" time from API (UTC): ' . $auto_update_checks_from_utc, 'wcd_save_update_group_settings', 'debug');
         $today_utc = gmdate('Y-m-d');
         $scheduled_datetime_utc = $today_utc . ' ' . $auto_update_checks_from_utc . ':00';
         $should_next_run_gmt = strtotime($scheduled_datetime_utc);
@@ -288,40 +400,77 @@ class WebChangeDetector_Autoupdates
     {
 
         // Check if the auto updates are already started. Then we skip the auto updates.
-        if (get_option(WCD_AUTO_UPDATES_RUNNING)) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto updates are already started. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
-            return;
+        $auto_updates_running = get_option(WCD_AUTO_UPDATES_RUNNING);
+        if ($auto_updates_running) {
+            // Check if this is a stuck flag (WordPress updates shouldn't take more than 1 hour)
+            // WCD_AUTO_UPDATES_RUNNING is set to true (boolean), but we can check when PRE_AUTO_UPDATE was set
+            $pre_update_data = get_option(WCD_PRE_AUTO_UPDATE);
+            if ($pre_update_data && isset($pre_update_data['timestamp'])) {
+                $age_in_seconds = time() - $pre_update_data['timestamp'];
+                if ($age_in_seconds > 3600) { // 1 hour timeout
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                        'Auto updates flag is stuck (running for ' . $age_in_seconds . ' seconds). Clearing flag.',
+                        'wp_maybe_auto_update',
+                        'warning'
+                    );
+                    delete_option(WCD_AUTO_UPDATES_RUNNING);
+                    // Continue with normal flow
+                } else {
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Auto updates are already started. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
+                    return;
+                }
+            } else {
+                // No timestamp available, but flag is set - could be stuck from old version
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Auto updates flag found without timestamp context. Clearing potentially stuck flag.',
+                    'wp_maybe_auto_update',
+                    'warning'
+                );
+                delete_option(WCD_AUTO_UPDATES_RUNNING);
+                // Continue with normal flow
+            }
         }
 
         // Check if post-update screenshots are already done. Then we skip the auto updates.
         $post_update_data = get_option(WCD_POST_AUTO_UPDATE);
-        if ($post_update_data) {
-            if (isset($post_update_data['timestamp'])) {
-                // New format with timestamp - check if older than 1 hour
-                $age_in_seconds = time() - $post_update_data['timestamp'];
-                if ($age_in_seconds > 3600) { // 1 hour timeout
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                        'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up and continuing.',
-                        'wp_maybe_auto_update',
-                        'warning'
-                    );
-                    delete_option(WCD_POST_AUTO_UPDATE);
-                    delete_option(WCD_WORDPRESS_CRON);
-                } else {
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-update screenshots already processed. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
-                    $this->set_lock();
-                    return;
-                }
-            } else {
-                // Old format without timestamp - assume it's stuck from a previous version
+        $post_timeout_active = get_transient('wcd_post_auto_update_timeout');
+        
+        if ($post_update_data && !$post_timeout_active) {
+            // State exists but timeout expired - automatic recovery
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Post-update state found but timeout expired. Cleaning up and continuing.',
+                'wp_maybe_auto_update',
+                'warning'
+            );
+            delete_option(WCD_POST_AUTO_UPDATE);
+            delete_option(WCD_WORDPRESS_CRON);
+        } elseif ($post_update_data && isset($post_update_data['timestamp'])) {
+            // Check if this is recent enough to still be valid
+            $age_in_seconds = time() - $post_update_data['timestamp'];
+            if ($age_in_seconds > 7200) { // 2 hour fallback timeout
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                    'Found old post-update process without timestamp (likely from version 3.x). Cleaning up and continuing.',
+                    'Found stuck post-update process from ' . $age_in_seconds . ' seconds ago (fallback timeout). Cleaning up and continuing.',
                     'wp_maybe_auto_update',
                     'warning'
                 );
                 delete_option(WCD_POST_AUTO_UPDATE);
                 delete_option(WCD_WORDPRESS_CRON);
+                delete_transient('wcd_post_auto_update_timeout');
+            } else {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Post-update screenshots already processed. Skipping auto updates.', 'wp_maybe_auto_update', 'debug');
+                $this->set_lock();
+                return;
             }
+        } elseif ($post_update_data && !isset($post_update_data['timestamp'])) {
+            // Old format without timestamp - assume it's stuck from a previous version
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Found old post-update process without timestamp (likely from version 3.x). Cleaning up and continuing.',
+                'wp_maybe_auto_update',
+                'warning'
+            );
+            delete_option(WCD_POST_AUTO_UPDATE);
+            delete_option(WCD_WORDPRESS_CRON);
+            delete_transient('wcd_post_auto_update_timeout');
         }
 
         // Make auto-updates only once every 24h. Otherwise we skip the auto updates.
@@ -335,6 +484,16 @@ class WebChangeDetector_Autoupdates
             return;
         }
 
+        // Check if lock is stuck (WordPress uses 1 hour as the lock timeout)
+        $lock = get_option($this->lock_name);
+        if ($lock && $lock < (time() - HOUR_IN_SECONDS)) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Found stuck auto_updater.lock (age: ' . (time() - $lock - HOUR_IN_SECONDS) . ' seconds). Removing it.',
+                'wp_maybe_auto_update',
+                'warning'
+            );
+        }
+        
         // Remove the lock to start the updates.
         delete_option($this->lock_name);
 
@@ -421,34 +580,46 @@ class WebChangeDetector_Autoupdates
         }
 
         // Start pre-update screenshots and do the WCD Magic.
+        // Use hybrid approach: option for state reliability + transient for timeout
         $wcd_pre_update_data = get_option(WCD_PRE_AUTO_UPDATE);
+        $timeout_active = get_transient('wcd_pre_auto_update_timeout');
         
-        // Check if we have a stuck process
-        if ($wcd_pre_update_data) {
-            if (isset($wcd_pre_update_data['timestamp'])) {
-                // New format with timestamp - check if older than 1 hour
-                $age_in_seconds = time() - $wcd_pre_update_data['timestamp'];
-                if ($age_in_seconds > 3600) { // 1 hour timeout
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                        'Found stuck pre-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up.',
-                        'wp_maybe_auto_update',
-                        'warning'
-                    );
-                    delete_option(WCD_PRE_AUTO_UPDATE);
-                    delete_option(WCD_AUTO_UPDATES_RUNNING);
-                    $wcd_pre_update_data = false;
-                }
-            } else {
-                // Old format without timestamp - assume it's stuck from a previous version
+        // Check for expired state (hybrid timeout mechanism)
+        if ($wcd_pre_update_data && !$timeout_active) {
+            // State exists but timeout expired - automatic recovery
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Pre-update state found but timeout expired. Initiating automatic recovery.',
+                'wp_maybe_auto_update',
+                'warning'
+            );
+            delete_option(WCD_PRE_AUTO_UPDATE);
+            delete_option(WCD_AUTO_UPDATES_RUNNING);
+            $wcd_pre_update_data = false;
+        } elseif ($wcd_pre_update_data && isset($wcd_pre_update_data['timestamp'])) {
+            // Fallback: timestamp-based check for older implementation compatibility
+            $age_in_seconds = time() - $wcd_pre_update_data['timestamp'];
+            if ($age_in_seconds > 7200) { // 2 hour fallback timeout
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                    'Found old pre-update process without timestamp (likely from version 3.x). Cleaning up.',
+                    'Found stuck pre-update process from ' . $age_in_seconds . ' seconds ago (fallback timeout). Cleaning up.',
                     'wp_maybe_auto_update',
                     'warning'
                 );
                 delete_option(WCD_PRE_AUTO_UPDATE);
                 delete_option(WCD_AUTO_UPDATES_RUNNING);
+                delete_transient('wcd_pre_auto_update_timeout');
                 $wcd_pre_update_data = false;
             }
+        } elseif ($wcd_pre_update_data && !isset($wcd_pre_update_data['timestamp'])) {
+            // Old format without timestamp - assume it's stuck from a previous version
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Found old pre-update process without timestamp (likely from version 3.x). Cleaning up.',
+                'wp_maybe_auto_update',
+                'warning'
+            );
+            delete_option(WCD_PRE_AUTO_UPDATE);
+            delete_option(WCD_AUTO_UPDATES_RUNNING);
+            delete_transient('wcd_pre_auto_update_timeout');
+            $wcd_pre_update_data = false;
         }
         
         if (false === $wcd_pre_update_data) { // We don't have an option yet. So we start screenshots.
@@ -460,25 +631,65 @@ class WebChangeDetector_Autoupdates
             $this->clear_wordpress_caches();
 
             // Take the screenshots and set the status to processing.
-            $sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2($this->manual_group_id, 'pre');
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Pre update SC data: ' . wp_json_encode($sc_response), 'wp_maybe_auto_update', 'debug');
-            $option_data = array(
-                'status'   => 'processing',
-                'batch_id' => esc_html($sc_response['batch']),
-                'timestamp' => time(), // Add timestamp for timeout detection
-            );
+            try {
+                $sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2($this->manual_group_id, 'pre');
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Pre update SC data: ' . wp_json_encode($sc_response), 'wp_maybe_auto_update', 'debug');
+                
+                // Validate response structure
+                if (empty($sc_response) || !isset($sc_response['batch'])) {
+                    throw new \Exception('Invalid API response: missing batch ID');
+                }
+                
+                $option_data = array(
+                    'status'   => 'processing',
+                    'batch_id' => esc_html($sc_response['batch']),
+                    'timestamp' => time(), // Add timestamp for timeout detection
+                );
+            } catch (\Exception $e) {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Failed to start pre-update screenshots: ' . $e->getMessage(),
+                    'wp_maybe_auto_update',
+                    'error'
+                );
+                // Clean up and allow retry on next run
+                delete_option(WCD_AUTO_UPDATES_RUNNING);
+                return;
+            }
 
-            // Save the data to the option.
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Started taking screenshots and setting options', 'wp_maybe_auto_update', 'debug');
+            // Save the data using hybrid approach: option + transient
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Started taking screenshots and setting options with hybrid timeout', 'wp_maybe_auto_update', 'debug');
             update_option(WCD_PRE_AUTO_UPDATE, $option_data, false);
+            
+            // Set transient for automatic timeout (2 hours)
+            set_transient('wcd_pre_auto_update_timeout', time(), 2 * HOUR_IN_SECONDS);
+            
             // Set the lock to prevent WP from starting the auto updates.
             $this->set_lock();
         } else {
             // Screenshots were already started. Now we check if they are done.
             \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Checking if screenshots are ready');
-            $response = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2($wcd_pre_update_data['batch_id'], 'open,processing');
-
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Queue: ' . wp_json_encode($response), 'wp_maybe_auto_update', 'debug');
+            
+            try {
+                $response = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2($wcd_pre_update_data['batch_id'], 'open,processing');
+                
+                // Validate response structure
+                if (!is_array($response) || !isset($response['data'])) {
+                    throw new \Exception('Invalid queue response structure');
+                }
+                
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Queue: ' . wp_json_encode($response), 'wp_maybe_auto_update', 'debug');
+            } catch (\Exception $e) {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'Failed to check queue status: ' . $e->getMessage() . '. Will retry on next run.',
+                    'wp_maybe_auto_update',
+                    'warning'
+                );
+                // Don't update status, keep lock, retry on next cron
+                $this->reschedule('wp_maybe_auto_update');
+                $this->set_lock();
+                return;
+            }
+            
             // We check if the queues are done. If so, we update the status.
             if (count($response['data']) === 0) {
                 $wcd_pre_update_data['status'] = 'done';
@@ -487,6 +698,9 @@ class WebChangeDetector_Autoupdates
                     $wcd_pre_update_data['timestamp'] = time();
                 }
                 update_option(WCD_PRE_AUTO_UPDATE, $wcd_pre_update_data, false);
+                
+                // Extend timeout slightly for final processing (30 minutes)
+                set_transient('wcd_pre_auto_update_timeout', time(), 30 * MINUTE_IN_SECONDS);
             }
 
             // If the queues are not done yet, we set the lock. So the WP auto updates are delayed.
