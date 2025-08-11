@@ -374,7 +374,8 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update checks "from" time from API (UTC): ' . $auto_update_checks_from_utc, 'wcd_save_update_group_settings', 'debug' );
 		$today_utc              = gmdate( 'Y-m-d' );
 		$scheduled_datetime_utc = $today_utc . ' ' . $auto_update_checks_from_utc . ':00';
-		$should_next_run_gmt    = strtotime( $scheduled_datetime_utc );
+		// Use strtotime with explicit UTC timezone to ensure correct parsing
+		$should_next_run_gmt    = strtotime( $scheduled_datetime_utc . ' UTC' );
 
 		// We skip delaying to next day if current time passed "from" time.
 		// The cron will run now if the time is already passed.
@@ -422,6 +423,7 @@ class WebChangeDetector_Autoupdates {
 				'wp_maybe_auto_update', 
 				'debug' 
 			);
+            // We don't need to set the lock here. We just need to return.
 			return;
 		}
 		
@@ -567,10 +569,18 @@ class WebChangeDetector_Autoupdates {
 		$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $auto_update_settings['auto_update_checks_from'] );
 		$to_time_site   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $auto_update_settings['auto_update_checks_to'] );
 
-		// Convert the times to timestamps for comparison.
-		$from_timestamp    = strtotime( $from_time_site );
-		$to_timestamp      = strtotime( $to_time_site );
-		$current_timestamp = strtotime( $current_time );
+		// Use WordPress timezone-aware datetime for accurate comparison
+		$wp_timezone = wp_timezone();
+		$now_wp = new \DateTime( 'now', $wp_timezone );
+		
+		// Create DateTime objects for from and to times in WordPress timezone
+		$from_datetime = new \DateTime( $now_wp->format( 'Y-m-d' ) . ' ' . $from_time_site, $wp_timezone );
+		$to_datetime   = new \DateTime( $now_wp->format( 'Y-m-d' ) . ' ' . $to_time_site, $wp_timezone );
+		
+		// Get timestamps for comparison (these will be UTC timestamps)
+		$from_timestamp    = $from_datetime->getTimestamp();
+		$to_timestamp      = $to_datetime->getTimestamp();
+		$current_timestamp = $now_wp->getTimestamp();
 
 		// Check if current time is between from_time and to_time.
 		if ( $from_timestamp < $to_timestamp ) {
@@ -589,7 +599,8 @@ class WebChangeDetector_Autoupdates {
 			}
 		} else {
 			// Case 2: Time range spans midnight.
-			$to_timestamp = strtotime( $to_time_site . ' +1 day' );
+			$to_datetime->modify( '+1 day' );
+			$to_timestamp = $to_datetime->getTimestamp();
 			if ( ! ( $current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp ) ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 					'Canceling auto updates: ' . current_time( 'H:i' ) .
@@ -759,8 +770,7 @@ class WebChangeDetector_Autoupdates {
 				// Check if WordPress is in the middle of an install
 				if ( ! wp_installing() ) {
                     // We can just return here. Then the wp hook of wp_maybe_auto_update will be triggered.
-					return;
-					
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WordPress is not installing. Returning to trigger the wp hook of wp_maybe_auto_update.', 'wp_maybe_auto_update', 'debug' );
 					
 				} else {
 					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cannot run updates: WordPress is currently installing.', 'wp_maybe_auto_update', 'debug' );
@@ -769,8 +779,7 @@ class WebChangeDetector_Autoupdates {
 					delete_option( WCD_AUTO_UPDATES_RUNNING );
 				}
 				
-				// Clear execution lock when we're done
-				delete_transient( 'wcd_update_check_running' );
+				
 			}
 		}
 		
