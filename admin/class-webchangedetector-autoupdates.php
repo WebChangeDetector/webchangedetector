@@ -720,6 +720,10 @@ class WebChangeDetector_Autoupdates
             } else {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('SCs are ready. Continuing with the updates.', 'wp_maybe_auto_update', 'debug');
                 update_option(WCD_AUTO_UPDATES_RUNNING, true);
+                
+                // IMPORTANT: Remove the lock so WordPress can actually run the updates!
+                delete_option($this->lock_name);
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Removed auto_updater.lock to allow WordPress to proceed with updates.', 'wp_maybe_auto_update', 'debug');
             }
         }
     }
