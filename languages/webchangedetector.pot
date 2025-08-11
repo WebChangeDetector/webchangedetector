@@ -1057,7 +1057,7 @@ msgid "Finalizing setup..."
 msgstr ""
 
 #: admin/controllers/class-webchangedetector-dashboard-controller.php:352
-msgid "Setup complete! Starting wizard..."
+msgid "Setup complete!"
 msgstr ""
 
 #: admin/controllers/class-webchangedetector-dashboard-controller.php:360

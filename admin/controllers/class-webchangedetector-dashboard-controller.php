@@ -349,7 +349,7 @@ class WebChangeDetector_Dashboard_Controller
                         success: function(response) {
 
                             // Redirect to dashboard with wizard enabled
-                            $('.wcd-status-text').text('<?php esc_html_e('Setup complete! Starting wizard...', 'webchangedetector'); ?>');
+                            $('.wcd-status-text').text('<?php esc_html_e('Setup complete!', 'webchangedetector'); ?>');
 
                             setTimeout(function() {
                                 window.location.href = '<?php echo esc_url(admin_url('admin.php?page=webchangedetector')); ?>';

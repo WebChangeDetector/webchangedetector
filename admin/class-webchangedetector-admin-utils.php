@@ -165,7 +165,7 @@ class WebChangeDetector_Admin_Utils
         $domain = $parsed_url['host'];
 
         // Remove www prefix if present
-        $domain = preg_replace('/^www\./', '', $domain);
+        //$domain = preg_replace('/^www\./', '', $domain);
 
         return $domain;
     }
