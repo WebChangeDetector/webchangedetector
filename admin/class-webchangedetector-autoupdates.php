@@ -506,7 +506,7 @@ class WebChangeDetector_Autoupdates {
 		// Only once in 12 hours are auto updates allowed. We shouldn't do every 24 hours as the successful time is at the end of the auto updates.
 		// And when we start the auto updates on the next day, 24 hours might not be over yet.
         $last_successfull_auto_updates = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
-        if ( !defined( 'WCD_OPTION_KEY_DEBUG_LOGGING' ) || !WCD_OPTION_KEY_DEBUG_LOGGING ) {    
+        if ( !get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING ) ) {    
 		    if ( $last_successfull_auto_updates && $last_successfull_auto_updates + 12 * HOUR_IN_SECONDS > time() ) {
 			// We already did auto-updates in the last 24h. Skipping this one now.
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto updates already done at ' . gmdate( 'Y-m-d H:i:s', get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES ) ) . '. We only do them once per day. Skipping auto updates.', 'wp_maybe_auto_update', 'debug' );
@@ -758,41 +758,10 @@ class WebChangeDetector_Autoupdates {
 				
 				// Check if WordPress is in the middle of an install
 				if ( ! wp_installing() ) {
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Triggering WordPress Core auto-updater directly.', 'wp_maybe_auto_update', 'debug' );
+                    // We can just return here. Then the wp hook of wp_maybe_auto_update will be triggered.
+					return;
 					
-					try {
-						// Run WordPress's auto-updater immediately since we've removed the lock
-						// This ensures updates happen in the current execution
-						if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
-							require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
-						}
-						
-						// Include necessary files for the updater
-						require_once ABSPATH . 'wp-admin/includes/admin.php';
-						require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-						
-						$updater = new \WP_Automatic_Updater();
-						// WordPress's updater will handle all checks including VCS, maintenance mode, etc.
-						$updater->run();
-						
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WordPress Core auto-updater triggered successfully.', 'wp_maybe_auto_update', 'debug' );
-					} catch ( \Exception $e ) {
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 
-							'Failed to trigger auto-updater: ' . $e->getMessage() . '. Scheduling fallback update check.', 
-							'wp_maybe_auto_update', 
-							'error' 
-						);
-						
-						// Fallback: Schedule a fresh wp_maybe_auto_update
-						if ( ! wp_next_scheduled( 'wp_maybe_auto_update' ) ) {
-							wp_schedule_single_event( time() + 60, 'wp_maybe_auto_update' );
-						}
-						
-						// Also schedule wp_version_check as additional fallback
-						if ( ! wp_next_scheduled( 'wp_version_check' ) ) {
-							wp_schedule_single_event( time() + 30, 'wp_version_check' );
-						}
-					}
+					
 				} else {
 					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cannot run updates: WordPress is currently installing.', 'wp_maybe_auto_update', 'debug' );
 					
