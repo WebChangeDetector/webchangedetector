@@ -134,6 +134,9 @@ class WebChangeDetector_Autoupdates {
 
 		// Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
+		
+		// Also ensure lock is removed in case it got stuck
+		delete_option( $this->lock_name );
 
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = self::get_auto_update_settings();
@@ -296,6 +299,17 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Setting Lock', 'set_lock', 'debug' );
 		update_option( $this->lock_name, time() - HOUR_IN_SECONDS + MINUTE_IN_SECONDS );
 	}
+	
+	/**
+	 * Clear the execution lock transient
+	 * Helper method to ensure consistent cleanup
+	 *
+	 * @return void
+	 */
+	private function clear_execution_lock() {
+		delete_transient( 'wcd_update_check_running' );
+	}
+
 
 	/**
 	 * Clean up stuck auto-update state (helper method for recovery)
@@ -399,6 +413,20 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function wp_maybe_auto_update() {
+		// Prevent concurrent executions using a transient lock
+		$execution_lock = get_transient( 'wcd_update_check_running' );
+		if ( $execution_lock && ( time() - $execution_lock ) < 30 ) {
+			// Another instance is running (started less than 30 seconds ago)
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 
+				'Skipping - another update check is already running (started ' . ( time() - $execution_lock ) . ' seconds ago).', 
+				'wp_maybe_auto_update', 
+				'debug' 
+			);
+			return;
+		}
+		
+		// Set our execution lock
+		set_transient( 'wcd_update_check_running', time(), 60 );
 
 		// Check if the auto updates are already started. Then we skip the auto updates.
 		$auto_updates_running = get_option( WCD_AUTO_UPDATES_RUNNING );
@@ -717,44 +745,71 @@ class WebChangeDetector_Autoupdates {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'SCs are ready. Continuing with the updates.', 'wp_maybe_auto_update', 'debug' );
 				update_option( WCD_AUTO_UPDATES_RUNNING, true );
 
+				// Clear our pre-update data so we don't interfere when WordPress runs again.
+				delete_option( WCD_PRE_AUTO_UPDATE );
+				delete_transient( 'wcd_pre_auto_update_timeout' );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cleared pre-update data to avoid interference.', 'wp_maybe_auto_update', 'debug' );
+
 				// IMPORTANT: Remove the lock so WordPress can actually run the updates!
 				delete_option( $this->lock_name );
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Removed auto_updater.lock to allow WordPress to proceed with updates.', 'wp_maybe_auto_update', 'debug' );
 
-				// Check if we're being called from WordPress or our own cron
-				if ( ! doing_filter( 'wp_maybe_auto_update' ) ) {
-					// We're being called from our cron check, not from WordPress
-					// We need to trigger WordPress to actually run the updates
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Not in WordPress update flow. Need to trigger WordPress updates.', 'wp_maybe_auto_update', 'debug' );
-
-					// First, clear our pre-update data so we don't interfere when WordPress calls wp_maybe_auto_update
-					delete_option( WCD_PRE_AUTO_UPDATE );
-					delete_transient( 'wcd_pre_auto_update_timeout' );
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cleared pre-update data to allow WordPress to proceed without interference.', 'wp_maybe_auto_update', 'debug' );
-
-					// Now schedule WordPress to check and run updates
-					// We schedule both wp_version_check (to check for updates) and wp_maybe_auto_update (to run them)
-					if ( ! wp_next_scheduled( 'wp_version_check' ) ) {
-						wp_schedule_single_event( time() + 10, 'wp_version_check' );
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduled wp_version_check to check for updates.', 'wp_maybe_auto_update', 'debug' );
-					}
-
-					// Also schedule wp_maybe_auto_update directly to ensure updates run
-					if ( ! wp_next_scheduled( 'wp_maybe_auto_update' ) ) {
-						wp_schedule_single_event( time() + 30, 'wp_maybe_auto_update' );
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduled wp_maybe_auto_update to run the actual updates.', 'wp_maybe_auto_update', 'debug' );
+				// We need to trigger WordPress to actually run the updates.
+				// Since we're currently in the wp_maybe_auto_update action at priority 5,
+				// WordPress's update logic (usually at priority 10) has already been blocked by our lock.
+				// We must trigger the update process directly.
+				
+				// Check if WordPress is in the middle of an install
+				if ( ! wp_installing() ) {
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Triggering WordPress Core auto-updater directly.', 'wp_maybe_auto_update', 'debug' );
+					
+					try {
+						// Run WordPress's auto-updater immediately since we've removed the lock
+						// This ensures updates happen in the current execution
+						if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
+							require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
+						}
+						
+						// Include necessary files for the updater
+						require_once ABSPATH . 'wp-admin/includes/admin.php';
+						require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+						
+						$updater = new \WP_Automatic_Updater();
+						// WordPress's updater will handle all checks including VCS, maintenance mode, etc.
+						$updater->run();
+						
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WordPress Core auto-updater triggered successfully.', 'wp_maybe_auto_update', 'debug' );
+					} catch ( \Exception $e ) {
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 
+							'Failed to trigger auto-updater: ' . $e->getMessage() . '. Scheduling fallback update check.', 
+							'wp_maybe_auto_update', 
+							'error' 
+						);
+						
+						// Fallback: Schedule a fresh wp_maybe_auto_update
+						if ( ! wp_next_scheduled( 'wp_maybe_auto_update' ) ) {
+							wp_schedule_single_event( time() + 60, 'wp_maybe_auto_update' );
+						}
+						
+						// Also schedule wp_version_check as additional fallback
+						if ( ! wp_next_scheduled( 'wp_version_check' ) ) {
+							wp_schedule_single_event( time() + 30, 'wp_version_check' );
+						}
 					}
 				} else {
-					// We're already in the WordPress update flow
-					// WordPress should continue with updates since lock is removed
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Already in WordPress update flow, updates should proceed automatically.', 'wp_maybe_auto_update', 'debug' );
-
-					// Still clear our pre-update data to not interfere on next call
-					delete_option( WCD_PRE_AUTO_UPDATE );
-					delete_transient( 'wcd_pre_auto_update_timeout' );
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cannot run updates: WordPress is currently installing.', 'wp_maybe_auto_update', 'debug' );
+					
+					// Clean up our state since updates won't run
+					delete_option( WCD_AUTO_UPDATES_RUNNING );
 				}
+				
+				// Clear execution lock when we're done
+				delete_transient( 'wcd_update_check_running' );
 			}
 		}
+		
+		// Clear execution lock at the end if we haven't already
+		delete_transient( 'wcd_update_check_running' );
 	}
 
 	/** Send the change detection mail.
