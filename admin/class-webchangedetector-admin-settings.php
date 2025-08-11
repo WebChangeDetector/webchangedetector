@@ -820,6 +820,12 @@ class WebChangeDetector_Admin_Settings
             $allowances['upgrade_account'] = false;
         }
 
+
+        // Format allowances to boolean values.
+        foreach ($allowances as $key => $value) {
+            $allowances[$key] = (bool) $value;
+        }
+
         // Save allowances as option for the admin menu.
         update_option(WCD_ALLOWANCES, ($allowances));
 
