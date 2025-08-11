@@ -762,6 +762,11 @@ class WebChangeDetector_Autoupdates {
 				delete_option( $this->lock_name );
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Removed auto_updater.lock to allow WordPress to proceed with updates.', 'wp_maybe_auto_update', 'debug' );
 
+                // Remove cached update data.
+                delete_option( '_site_transient_update_core' );
+                delete_option( '_site_transient_update_plugins' );
+                delete_option( '_site_transient_update_themes' );
+
 				// We need to trigger WordPress to actually run the updates.
 				// Since we're currently in the wp_maybe_auto_update action at priority 5,
 				// WordPress's update logic (usually at priority 10) has already been blocked by our lock.
