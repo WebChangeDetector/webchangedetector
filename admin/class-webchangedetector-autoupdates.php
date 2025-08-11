@@ -502,15 +502,17 @@ class WebChangeDetector_Autoupdates {
 			delete_transient( 'wcd_post_auto_update_timeout' );
 		}
 
-		// Make auto-updates only once every 24h. Otherwise we skip the auto updates.
-		$last_successfull_auto_updates = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
+		// Make auto-updates only once every 24h. Otherwise we skip the auto updates if debug logging is disabled.
 		// Only once in 12 hours are auto updates allowed. We shouldn't do every 24 hours as the successful time is at the end of the auto updates.
 		// And when we start the auto updates on the next day, 24 hours might not be over yet.
-		if ( $last_successfull_auto_updates && $last_successfull_auto_updates + 12 * HOUR_IN_SECONDS > time() ) {
+        $last_successfull_auto_updates = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
+        if ( !defined( 'WCD_OPTION_KEY_DEBUG_LOGGING' ) || !WCD_OPTION_KEY_DEBUG_LOGGING ) {    
+		    if ( $last_successfull_auto_updates && $last_successfull_auto_updates + 12 * HOUR_IN_SECONDS > time() ) {
 			// We already did auto-updates in the last 24h. Skipping this one now.
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto updates already done at ' . gmdate( 'Y-m-d H:i:s', get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES ) ) . '. We only do them once per day. Skipping auto updates.', 'wp_maybe_auto_update', 'debug' );
 			$this->set_lock();
 			return;
+            }
 		}
 
 		// Check if lock is stuck (WordPress uses 1 hour as the lock timeout)
@@ -744,11 +746,6 @@ class WebChangeDetector_Autoupdates {
 			} else {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'SCs are ready. Continuing with the updates.', 'wp_maybe_auto_update', 'debug' );
 				update_option( WCD_AUTO_UPDATES_RUNNING, true );
-
-				// Clear our pre-update data so we don't interfere when WordPress runs again.
-				delete_option( WCD_PRE_AUTO_UPDATE );
-				delete_transient( 'wcd_pre_auto_update_timeout' );
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cleared pre-update data to avoid interference.', 'wp_maybe_auto_update', 'debug' );
 
 				// IMPORTANT: Remove the lock so WordPress can actually run the updates!
 				delete_option( $this->lock_name );
