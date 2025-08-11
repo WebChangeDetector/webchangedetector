@@ -106,8 +106,11 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
 
             <div class="wcd-form-row monitoring-setting wcd-monitoring-alert-emails" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label"><?php _e('Alert Email Addresses', 'webchangedetector'); ?></label>
-                    <div class="wcd-description"><?php _e('Enter the email address(es) which should get notified about monitoring alerts.', 'webchangedetector'); ?></div>
+                    <label class="wcd-form-label"><?php _e('Alerts', 'webchangedetector'); ?></label>
+                    <div class="wcd-description">
+                        <?php _e('Enter the email address(es) which should get notified about monitoring alerts.', 'webchangedetector'); ?><br>
+                        <?php _e('You can also connect <a href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a> to get alerts directly in 6000+ apps.', 'webchangedetector'); ?>    
+                    </div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -121,12 +124,6 @@ if (! empty($this->admin->website_details['allowances']['monitoring_checks_setti
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
                     ?>
                 </div>
-            </div>
-
-            <div class="wcd-form-row monitoring-setting wcd-monitoring-alert-zapier" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
-                <label class="wcd-form-label"><?php _e('Notification to Zapier', 'webchangedetector'); ?></label>
-                <p><?php _e('Connect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.', 'webchangedetector'); ?></p>
-                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank"><?php _e('Zapier', 'webchangedetector'); ?></a></p>
             </div>
 
             <div class="wcd-form-row monitoring-setting wcd-monitoring-css" style="<?php echo $enabled ? '' : 'display: none;'; ?>">

@@ -109,8 +109,11 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
 
             <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
                 <div class="wcd-form-label-wrapper">
-                    <label class="wcd-form-label"><?php _e('Notification Email', 'webchangedetector'); ?></label>
-                    <div class="wcd-description"><?php _e('Enter the email address(es) which should get notified about auto update checks.', 'webchangedetector'); ?></div>
+                    <label class="wcd-form-label"><?php _e('Notifications', 'webchangedetector'); ?></label>
+                    <div class="wcd-description">
+                        <?php _e('Enter the email address(es) which should get notified about auto update checks.', 'webchangedetector'); ?><br>
+                        <?php _e('You can also connect <a href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a> to get alerts directly in 6000+ apps.', 'webchangedetector'); ?>    
+                    </div>
                 </div>
                 <div class="wcd-form-control">
                     <?php
@@ -123,13 +126,8 @@ if (! empty($this->admin->website_details['allowances']['manual_checks_settings'
                     $show_validation = true;
                     include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
                     ?>
+                    
                 </div>
-            </div>
-
-            <div class="wcd-form-row auto-update-setting wcd-auto-update-setting-zapier" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
-                <label class="wcd-form-label"><?php _e('Notification to Zapier', 'webchangedetector'); ?></label>
-                <p><?php _e('Connect Zapier with your WebChange Detector account and get alerts directly in 6000+ apps.', 'webchangedetector'); ?></p>
-                <p><a class="button" href="https://zapier.com/apps/webchange-detector/integrations" target="_blank"><?php _e('Zapier', 'webchangedetector'); ?></a></p>
             </div>
 
             <div class="wcd-form-row wcd-auto-update-setting-threshold">
