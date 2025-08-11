@@ -96,6 +96,17 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+        // Check if we have available updates.
+        $available_updates = $this->check_for_available_updates();
+        if ( ! $available_updates ) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'No updates available. Skipping backup version check.',
+                'wcd_wp_version_check',
+                'debug'
+            );
+            return;
+        }
+
 		// Check if pre-update screenshots are in progress
 		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
 		if ( $pre_update_data && isset( $pre_update_data['status'] ) && $pre_update_data['status'] === 'processing' ) {
@@ -137,7 +148,7 @@ class WebChangeDetector_Autoupdates {
 
 		// Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
-		
+
 		// Also ensure lock is removed in case it got stuck
 		delete_option( $this->lock_name );
 
@@ -306,7 +317,7 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Setting Lock', 'set_lock', 'debug' );
 		update_option( $this->lock_name, time() - HOUR_IN_SECONDS + MINUTE_IN_SECONDS );
 	}
-	
+
 	/**
 	 * Clear the execution lock transient
 	 * Helper method to ensure consistent cleanup
@@ -512,6 +523,84 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
+	 * Check if any WordPress updates are available.
+	 *
+	 * @return array|false Array with update info if updates available, false otherwise.
+	 */
+	private function check_for_available_updates() {
+		// Force a fresh check for updates
+		wp_version_check();
+		wp_update_plugins();
+		wp_update_themes();
+
+		$has_updates = array(
+			'core'    => false,
+			'plugins' => false,
+			'themes'  => false,
+			'total'   => 0,
+		);
+
+		// Check for core updates
+		$core_updates = get_site_transient( 'update_core' );
+		if ( $core_updates && ! empty( $core_updates->updates ) ) {
+			foreach ( $core_updates->updates as $update ) {
+				if ( 'upgrade' === $update->response || 'development' === $update->response ) {
+					$has_updates['core'] = true;
+					++$has_updates['total'];
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+						'Core update available: ' . $update->version,
+						'check_for_available_updates',
+						'debug'
+					);
+					break;
+				}
+			}
+		}
+
+		// Check for plugin updates
+		$plugin_updates = get_site_transient( 'update_plugins' );
+		if ( $plugin_updates && ! empty( $plugin_updates->response ) ) {
+			$update_count = count( $plugin_updates->response );
+			if ( $update_count > 0 ) {
+				$has_updates['plugins'] = true;
+				$has_updates['total']  += $update_count;
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Plugin updates available: ' . $update_count,
+					'check_for_available_updates',
+					'debug'
+				);
+			}
+		}
+
+		// Check for theme updates
+		$theme_updates = get_site_transient( 'update_themes' );
+		if ( $theme_updates && ! empty( $theme_updates->response ) ) {
+			$update_count = count( $theme_updates->response );
+			if ( $update_count > 0 ) {
+				$has_updates['themes'] = true;
+				$has_updates['total'] += $update_count;
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Theme updates available: ' . $update_count,
+					'check_for_available_updates',
+					'debug'
+				);
+			}
+		}
+
+		// Also check if auto-updates are enabled for any of these
+		if ( $has_updates['total'] > 0 ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Total updates available: ' . $has_updates['total'],
+				'check_for_available_updates',
+				'info'
+			);
+			return $has_updates;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Check if WCD auto-update checks are properly configured and enabled.
 	 *
 	 * @return array|false Auto-update settings or false if not configured.
@@ -531,7 +620,7 @@ class WebChangeDetector_Autoupdates {
 
 		// Check if auto-update checks are enabled
 		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
-			 empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Running auto updates without checks. They are disabled in WCD.',
 				'wp_maybe_auto_update',
@@ -554,7 +643,7 @@ class WebChangeDetector_Autoupdates {
 		$weekday_key    = 'auto_update_checks_' . $todays_weekday;
 
 		if ( ! array_key_exists( $weekday_key, $auto_update_settings ) ||
-			 empty( $auto_update_settings[ $weekday_key ] ) ) {
+			empty( $auto_update_settings[ $weekday_key ] ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Canceling auto updates: ' . $todays_weekday . ' is disabled.',
 				'wp_maybe_auto_update',
@@ -579,7 +668,7 @@ class WebChangeDetector_Autoupdates {
 		$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
 			$auto_update_settings['auto_update_checks_from']
 		);
-		$to_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
+		$to_time_site   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
 			$auto_update_settings['auto_update_checks_to']
 		);
 
@@ -643,9 +732,9 @@ class WebChangeDetector_Autoupdates {
 	 */
 	private function log_filter_context() {
 		if ( ! doing_filter( 'wp_maybe_auto_update' ) &&
-			 ! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
-			 ! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
-			 ! doing_filter( 'jetpack_pre_core_upgrade' ) ) {
+			! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
+			! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
+			! doing_filter( 'jetpack_pre_core_upgrade' ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Not called from one of the known filters. Continuing anyway.',
 				'wp_maybe_auto_update',
@@ -890,7 +979,7 @@ class WebChangeDetector_Autoupdates {
 		// Schedule check in 2 minutes to see if updates are done
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
 		wp_schedule_single_event( time() + 120, 'wcd_check_update_completion' );
-		
+
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 			'Scheduled fallback check for update completion in 2 minutes.',
 			'schedule_update_completion_check',
@@ -915,11 +1004,11 @@ class WebChangeDetector_Autoupdates {
 
 		// Check if the auto_updater.lock still exists
 		$lock = get_option( $this->lock_name );
-		
+
 		if ( $lock ) {
 			// Lock still exists, WordPress might still be checking/updating
 			$lock_age = time() - $lock;
-			
+
 			// WordPress uses 1 hour as lock timeout, so if it's older, it's stuck
 			if ( $lock_age > HOUR_IN_SECONDS ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
@@ -946,7 +1035,7 @@ class WebChangeDetector_Autoupdates {
 				'check_update_completion',
 				'debug'
 			);
-			
+
 			// Check how long ago we triggered the updates
 			$triggered_time = get_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
 			if ( $triggered_time ) {
@@ -957,7 +1046,7 @@ class WebChangeDetector_Autoupdates {
 					'debug'
 				);
 			}
-			
+
 			// Handle the case where no updates were available
 			$this->handle_no_updates_scenario();
 		}
@@ -1013,7 +1102,7 @@ class WebChangeDetector_Autoupdates {
 		$today_utc              = gmdate( 'Y-m-d' );
 		$scheduled_datetime_utc = $today_utc . ' ' . $auto_update_checks_from_utc . ':00';
 		// Use strtotime with explicit UTC timezone to ensure correct parsing
-		$should_next_run_gmt    = strtotime( $scheduled_datetime_utc . ' UTC' );
+		$should_next_run_gmt = strtotime( $scheduled_datetime_utc . ' UTC' );
 
 		// We skip delaying to next day if current time passed "from" time.
 		// The cron will run now if the time is already passed.
@@ -1101,10 +1190,55 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Step 9: Log filter context (informational only)
+		// Step 9: Check if there are actually updates available
+		$available_updates = $this->check_for_available_updates();
+
+		/**
+		 * Filter whether to skip screenshots when no updates are available.
+		 *
+		 * @param bool $skip_screenshots Whether to skip taking screenshots. Default true.
+		 * @param array|false $available_updates The available updates array or false if none.
+		 */
+		$skip_screenshots_when_no_updates = apply_filters( 'wcd_skip_screenshots_when_no_updates', true, $available_updates );
+
+		if ( ! $available_updates && $skip_screenshots_when_no_updates ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'No updates available. Skipping auto-update process and screenshots.',
+				'wp_maybe_auto_update',
+				'info'
+			);
+
+			// Clear any stuck state since there's nothing to update
+			delete_option( WCD_PRE_AUTO_UPDATE );
+			delete_option( WCD_POST_AUTO_UPDATE );
+			delete_option( WCD_AUTO_UPDATES_RUNNING );
+			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+
+			// Set lock to prevent checking again too soon
+			$this->set_lock();
+			return;
+		} elseif ( ! $available_updates && ! $skip_screenshots_when_no_updates ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'No updates available, but continuing with screenshots (filter override).',
+				'wp_maybe_auto_update',
+				'info'
+			);
+			// Continue with screenshots even though no updates are available
+		} elseif ( $available_updates ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Updates available - Core: ' . $available_updates['core'] .
+				', Plugins: ' . $available_updates['plugins'] .
+				', Themes: ' . $available_updates['themes'] .
+				'. Proceeding with auto-update process.',
+				'wp_maybe_auto_update',
+				'info'
+			);
+		}
+
+		// Step 10: Log filter context (informational only)
 		$this->log_filter_context();
 
-		// Step 10: Handle pre-update screenshots
+		// Step 11: Handle pre-update screenshots
 		$wcd_pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
 		$wcd_pre_update_data = $this->check_and_clean_stuck_pre_update( $wcd_pre_update_data );
 
@@ -1116,7 +1250,7 @@ class WebChangeDetector_Autoupdates {
 		} else {
 			// Check existing pre-update screenshots status
 			$is_ready = $this->check_pre_update_screenshots_status( $wcd_pre_update_data );
-			
+
 			if ( $is_ready && 'done' === $wcd_pre_update_data['status'] ) {
 				// Screenshots are ready, trigger WordPress updates
 				$this->trigger_wordpress_updates();
@@ -1401,10 +1535,10 @@ class WebChangeDetector_Autoupdates {
 
 			// Also trigger our fallback check for update completion
 			if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 
-					'Webhook trigger: Also checking update completion status', 
-					'handle_webhook_trigger', 
-					'debug' 
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Webhook trigger: Also checking update completion status',
+					'handle_webhook_trigger',
+					'debug'
 				);
 				$this->check_update_completion();
 			}

@@ -406,6 +406,8 @@
     padding: 12px 20px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    border: none;
+    border-radius: 10px;
 }
 
 .webchangedetector .mm_accordion_title:hover {
@@ -844,7 +846,6 @@
 
 .webchangedetector .mm_accordion_title {
     background: #fff;
-    border: 1px solid #ddd;
     padding: 0;
 }
 
