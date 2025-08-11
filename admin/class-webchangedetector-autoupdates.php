@@ -385,7 +385,7 @@ class WebChangeDetector_Autoupdates {
 		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
 		if ( $pre_update_data && isset( $pre_update_data['timestamp'] ) ) {
 			$age_in_seconds = time() - $pre_update_data['timestamp'];
-			if ( $age_in_seconds > 3600 ) { // 1 hour timeout
+			if ( $age_in_seconds > HOUR_IN_SECONDS ) { // 1 hour timeout
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 					'Auto updates flag is stuck (running for ' . $age_in_seconds . ' seconds). Clearing flag.',
 					'wp_maybe_auto_update',
