@@ -186,6 +186,15 @@ class WebChangeDetector_Autoupdates
         
         // Set transient for automatic timeout (2 hours) - hybrid approach
         set_transient('wcd_post_auto_update_timeout', time(), 2 * HOUR_IN_SECONDS);
+        
+        // IMPORTANT: Schedule the cron to check post-update queue status
+        // This was missing and causing the process to get stuck!
+        $this->reschedule('wcd_cron_check_post_queues');
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+            'Scheduled wcd_cron_check_post_queues to check post-update screenshot status',
+            'automatic_updates_complete',
+            'debug'
+        );
 
         // Add the batch id to the comparison batches. This is used to send the mail and for showing "Auto Update Checks" in the change detection page.
         $comparison_batches = get_option(WCD_AUTO_UPDATE_COMPARISON_BATCHES);
