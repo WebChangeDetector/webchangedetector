@@ -1002,6 +1002,14 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Logging for Checking for update completion
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Checking for update completion',
+			'check_update_completion',
+			'debug'
+		);
+		
+
 		// Check if the auto_updater.lock still exists
 		$lock = get_option( $this->lock_name );
 
@@ -1251,7 +1259,7 @@ class WebChangeDetector_Autoupdates {
 			// Check existing pre-update screenshots status
 			$is_ready = $this->check_pre_update_screenshots_status( $wcd_pre_update_data );
 
-			if ( $is_ready && 'done' === $wcd_pre_update_data['status'] ) {
+			if ( $is_ready ) {
 				// Screenshots are ready, trigger WordPress updates
 				$this->trigger_wordpress_updates();
 			}

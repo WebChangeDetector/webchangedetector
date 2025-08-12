@@ -138,9 +138,6 @@ class WebChangeDetector_Admin_Controller
         echo '</div>'; // Close webchangedetector div.
         echo '</div>'; // Close wrap div.
 
-        // Add inline JavaScript for sync_urls function.
-        echo '<script>jQuery(document).ready(function() {sync_urls(); });</script>';
-
         return true;
     }
 

@@ -47,7 +47,7 @@ class WebChangeDetector_Template_View {
 	 * @param array $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
-	public function render_auto_settings( $group_and_urls, $group_id ) {
+	public function render_auto_settings() {
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
 		
@@ -62,7 +62,7 @@ class WebChangeDetector_Template_View {
 	 * @param array $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
-	public function render_update_settings( $group_and_urls, $group_id ) {
+	public function render_update_settings() {
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
 		

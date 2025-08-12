@@ -314,10 +314,10 @@ class WebChangeDetector_Admin_Settings
                 <?php
                 // Include the group settings.
                 if (! $monitoring_group) {
-                    $this->admin->view_renderer->get_component('templates')->render_update_settings($group_and_urls, $group_id);
+                    $this->admin->view_renderer->get_component('templates')->render_update_settings();
                 } else {
                     // Monitoring settings.
-                    $this->admin->view_renderer->get_component('templates')->render_auto_settings($group_and_urls, $group_id);
+                    $this->admin->view_renderer->get_component('templates')->render_auto_settings();
                 }
 
                 // Select URLs section.
