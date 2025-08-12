@@ -885,15 +885,9 @@ class WebChangeDetector_Autoupdates {
 				'debug'
 			);
 
-			// Check if queues are done
+			// Check if queues are done.
 			if ( count( $response['data'] ) === 0 ) {
-				// Update status to done
-				$pre_update_data['status'] = 'done';
-				if ( ! isset( $pre_update_data['timestamp'] ) ) {
-					$pre_update_data['timestamp'] = time();
-				}
-				update_option( WCD_PRE_AUTO_UPDATE, $pre_update_data, false );
-				set_transient( 'wcd_pre_auto_update_timeout', time(), 30 * MINUTE_IN_SECONDS );
+                // Queues are done.
 				return true;
 			}
 
@@ -1260,6 +1254,14 @@ class WebChangeDetector_Autoupdates {
 			$is_ready = $this->check_pre_update_screenshots_status( $wcd_pre_update_data );
 
 			if ( $is_ready ) {
+                // Update status to done
+				$pre_update_data['status'] = 'done';
+				if ( ! isset( $pre_update_data['timestamp'] ) ) {
+					$pre_update_data['timestamp'] = time();
+				}
+				update_option( WCD_PRE_AUTO_UPDATE, $pre_update_data, false );
+				set_transient( 'wcd_pre_auto_update_timeout', time(), 30 * MINUTE_IN_SECONDS );
+
 				// Screenshots are ready, trigger WordPress updates
 				$this->trigger_wordpress_updates();
 			}
