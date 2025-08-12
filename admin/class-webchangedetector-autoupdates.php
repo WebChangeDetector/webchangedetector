@@ -1372,21 +1372,21 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Create a cron at our api to trigger a hook after a certain time.
+	 * Create scheduled event and create a cron at our api to trigger it.
 	 *
 	 * @param string $hook Hook name.
 	 * @return void
 	 */
 	private function reschedule( $hook ) {
 		// Our cron method for the hook.
-		$how_long = 50; // 50 seconds.
+		$how_long = 30; // 30 seconds.
 		wp_clear_scheduled_hook( $hook );
 		wp_schedule_single_event( time() + $how_long, $hook );
 
-		// Store the webhook ID to avoid duplication.
+		// Check if we need to create a new webhook.
 		$webhook_id = get_option( WCD_WORDPRESS_CRON, false );
 		if ( $webhook_id ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'We already have a webhook for this hook. Skipping...', 'reschedule', 'debug' );
+			// Webhook is already created, so we skip.
 			return;
 		}
 
