@@ -80,36 +80,17 @@ class WebChangeDetector_Autoupdates {
 		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
 	}
 
-	/** This just calls the version check from a backup cron.
-	 * We need to be careful not to interfere with an already running update process.
-	 *
-	 * @return void
-	 */
-	public function wcd_wp_version_check() {
-		// Check if updates are already in progress
-		if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Skipping backup version check - auto updates already running',
-				'wcd_wp_version_check',
-				'debug'
-			);
-			return;
-		}
-
-        // Check if we have available updates.
-        $available_updates = $this->check_for_available_updates();
-        if ( ! $available_updates ) {
-            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-                'No updates available. Skipping backup version check.',
-                'wcd_wp_version_check',
-                'debug'
-            );
-            return;
-        }
-
-		// Check if pre-update screenshots are in progress
+    /**
+     * This is a backup cron job for checking for updates.
+     * We need to be careful not to interfere with an already running update process.
+     *
+     * @return void
+     */
+    public function wcd_wp_version_check() {
+        // Check if pre-update screenshots are in progress. If so, we skip the version check.
 		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-		if ( $pre_update_data && isset( $pre_update_data['status'] ) && $pre_update_data['status'] === 'processing' ) {
+        $this->check_and_clean_stuck_pre_update( $pre_update_data );
+		if ( $pre_update_data && isset( $pre_update_data['status'] ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Skipping backup version check - pre-update screenshots in progress',
 				'wcd_wp_version_check',
@@ -118,24 +99,13 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Check if post-update screenshots are in progress
-		if ( get_option( WCD_POST_AUTO_UPDATE ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Skipping backup version check - post-update screenshots in progress',
-				'wcd_wp_version_check',
-				'debug'
-			);
-			return;
-		}
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 			'Running backup wp_version_check',
 			'wcd_wp_version_check',
 			'debug'
 		);
-
-		wp_version_check();
-	}
+        wp_version_check();
+    }
 
 
 	/**
@@ -768,9 +738,10 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
+        // Check if pre-update screenshots are in progress.
 		if ( isset( $pre_update_data['timestamp'] ) ) {
 			$age_in_seconds = time() - $pre_update_data['timestamp'];
-			if ( $age_in_seconds > 7200 ) { // 2 hour fallback timeout
+			if ( $age_in_seconds > 2 * HOUR_IN_SECONDS ) { // 2 hour fallback timeout
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 					'Found stuck pre-update process from ' . $age_in_seconds . ' seconds ago. Cleaning up.',
 					'wp_maybe_auto_update',
@@ -1126,9 +1097,9 @@ class WebChangeDetector_Autoupdates {
 		wp_clear_scheduled_hook( 'wp_version_check' );
 		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
 
-		// Backup cron in case something else changes the wp_version_check cron
+		// Backup cron in case something else changes the wp_version_check cron. We add 1 second to let it run 2nd.
 		wp_clear_scheduled_hook( 'wcd_wp_version_check' );
-		wp_schedule_event( $should_next_run_gmt, 'daily', 'wcd_wp_version_check' );
+		wp_schedule_event( $should_next_run_gmt + 1, 'daily', 'wcd_wp_version_check' );
 	}
 
 	/** Starting the pre-update screenshots before auto-updates are started.
@@ -1146,104 +1117,91 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Set execution lock
+		// Set execution lock for this function.
 		set_transient( 'wcd_update_check_running', time(), 60 );
 
 		// Step 2: Check if auto-updates are already running
 		if ( $this->check_and_clean_stuck_running_flag() ) {
+            $this->set_lock();
 			return;
 		}
 
-		// Step 3: Check if post-update screenshots are in progress
+		// Step 4: Check if post-update screenshots are in progress
 		if ( $this->check_and_clean_stuck_post_update() ) {
 			$this->set_lock();
 			return;
 		}
 
-		// Step 4: Check cooldown period
+		// Step 5: Check cooldown period
 		if ( $this->is_within_cooldown_period() ) {
 			$this->set_lock();
 			return;
 		}
 
-		// Step 5: Clean stuck WordPress lock if needed
+		// Step 6: Clean stuck WordPress lock if needed
 		$this->check_and_clean_stuck_wordpress_lock();
 
-		// Step 6: Validate WCD configuration
+		// Step 7: Validate WCD configuration
 		$auto_update_settings = $this->validate_wcd_configuration();
 		if ( ! $auto_update_settings ) {
 			return;
 		}
 
-		// Step 7: Check if updates are allowed today
+		// Step 8: Check if updates are allowed today
 		if ( ! $this->is_allowed_today( $auto_update_settings ) ) {
 			$this->set_lock();
 			return;
 		}
 
-		// Step 8: Check if current time is within allowed window
+		// Step 9: Check if current time is within allowed window
 		if ( ! $this->is_within_time_window( $auto_update_settings ) ) {
 			$this->set_lock();
 			return;
 		}
 
-		// Step 9: Check if there are actually updates available
-		$available_updates = $this->check_for_available_updates();
-
-		/**
-		 * Filter whether to skip screenshots when no updates are available.
-		 *
-		 * @param bool $skip_screenshots Whether to skip taking screenshots. Default true.
-		 * @param array|false $available_updates The available updates array or false if none.
-		 */
-		$skip_screenshots_when_no_updates = apply_filters( 'wcd_skip_screenshots_when_no_updates', true, $available_updates );
-
-		if ( ! $available_updates && $skip_screenshots_when_no_updates ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'No updates available. Skipping auto-update process and screenshots.',
-				'wp_maybe_auto_update',
-				'info'
-			);
-
-			// Clear any stuck state since there's nothing to update
-			delete_option( WCD_PRE_AUTO_UPDATE );
-			delete_option( WCD_POST_AUTO_UPDATE );
-			delete_option( WCD_AUTO_UPDATES_RUNNING );
-			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
-
-			// Set lock to prevent checking again too soon
-			$this->set_lock();
-			return;
-		} elseif ( ! $available_updates && ! $skip_screenshots_when_no_updates ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'No updates available, but continuing with screenshots (filter override).',
-				'wp_maybe_auto_update',
-				'info'
-			);
-			// Continue with screenshots even though no updates are available
-		} elseif ( $available_updates ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Updates available - Core: ' . $available_updates['core'] .
-				', Plugins: ' . $available_updates['plugins'] .
-				', Themes: ' . $available_updates['themes'] .
-				'. Proceeding with auto-update process.',
-				'wp_maybe_auto_update',
-				'info'
-			);
-		}
-
-		// Step 10: Log filter context (informational only)
+		// Step 11: Log filter context (informational only)
 		$this->log_filter_context();
 
-		// Step 11: Handle pre-update screenshots
+		// Step 12: Handle pre-update screenshots.
 		$wcd_pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
 		$wcd_pre_update_data = $this->check_and_clean_stuck_pre_update( $wcd_pre_update_data );
 
 		if ( false === $wcd_pre_update_data ) {
-			// Start new pre-update screenshots
-			if ( ! $this->start_pre_update_screenshots() ) {
-				return;
-			}
+
+            // Step 10: Check if there are actually updates available. 
+            $available_updates = $this->check_for_available_updates();
+
+            // If we don't have updates to install, we remove all options and set the lock. 
+            if ( ! $available_updates ) {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                    'No updates available. Skipping auto-update process and screenshots.',
+                    'wp_maybe_auto_update',
+                    'info'
+                );
+
+                // Clear any stuck state since there's nothing to update
+                delete_option( WCD_PRE_AUTO_UPDATE );
+                delete_option( WCD_POST_AUTO_UPDATE );
+                delete_option( WCD_AUTO_UPDATES_RUNNING );
+                delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+
+                // Set lock to prevent checking again too soon
+                $this->set_lock();
+                return;
+            } 
+            
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+                'Updates available - Core: ' . $available_updates['core'] .
+                ', Plugins: ' . $available_updates['plugins'] .
+                ', Themes: ' . $available_updates['themes'] .
+                '. Proceeding with auto-update process.',
+                'wp_maybe_auto_update',
+                'info'
+            );
+            
+			// Start new pre-update screenshots and reschedule wp_maybe_auto_update.
+			$this->start_pre_update_screenshots();
+				
 		} else {
 			// Check existing pre-update screenshots status
 			$is_ready = $this->check_pre_update_screenshots_status( $wcd_pre_update_data );
