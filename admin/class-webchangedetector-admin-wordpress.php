@@ -481,8 +481,6 @@ class WebChangeDetector_Admin_WordPress
      */
     public function daily_sync_posts_cron_job()
     {
-        // We deactivate the sync for now.
-        return;
         $this->sync_posts(true);
     }
 
@@ -1368,7 +1366,7 @@ class WebChangeDetector_Admin_WordPress
 
         // Sync urls.
         $response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls($this->admin->sync_urls, $collection_uuid);
-        $response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync(true, $collection_uuid);
+        $response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync(false, $collection_uuid);
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response upload URLs: ' . print_r($response_sync_urls, 1), 'sync_posts', 'debug');
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Response Start URL sync: ' . print_r($response_start_url_sync, 1), 'sync_posts', 'debug');
 
