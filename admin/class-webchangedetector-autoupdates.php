@@ -1420,8 +1420,8 @@ class WebChangeDetector_Autoupdates {
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Creating webhook to trigger ' . $hook, 'reschedule', 'debug' );
 
-		// Create a new WordPress cron webhook.
-		$result = \WebChangeDetector\WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_cron', gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS * 3 ) );
+		// Create a new WordPress cron webhook checking every minute and expires in 2 hours.
+		$result = \WebChangeDetector\WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_cron', gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS * 2 ) );
 
 		if ( is_array( $result ) && isset( $result['data'] ) && isset( $result['data']['id'] ) ) {
 			// Store the webhook ID for later reference.
