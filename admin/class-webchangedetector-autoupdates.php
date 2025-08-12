@@ -1030,9 +1030,10 @@ class WebChangeDetector_Autoupdates {
 		// Use strtotime with explicit UTC timezone to ensure correct parsing
 		$should_next_run_gmt = strtotime( $scheduled_datetime_utc . ' UTC' );
 
-		// We skip delaying to next day if current time passed "from" time.
-		// The cron will run now if the time is already passed.
-		// If the end time of our time window is still higher than now, we do the updates now this way. Otherwise it will skip.
+        // If the next run is in the past, we skip to the next day.
+        if( $should_next_run_gmt < time() ) {
+            $should_next_run_gmt = $should_next_run_gmt + DAY_IN_SECONDS;
+        }
 
 		// Log for debugging
 		require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
@@ -1058,6 +1059,39 @@ class WebChangeDetector_Autoupdates {
 		// Backup cron in case something else changes the wp_version_check cron. We add 1 second to let it run 2nd.
 		wp_clear_scheduled_hook( 'wcd_wp_version_check' );
 		wp_schedule_event( $should_next_run_gmt + 1, 'daily', 'wcd_wp_version_check' );
+
+        // Create our external webhook url for checking for updates daily.
+		$webhook_url = add_query_arg(
+			array(
+				'wcd_action' => WCD_TRIGGER_WP_VERSION_CHECK,
+				'key'        => $this->get_or_create_webhook_key(),
+			),
+			site_url()
+		);
+
+		// Set the webhook to expire at the next run. Expires is the next and only run time for this webhook.
+        $expires_at = $should_next_run_gmt + MINUTE_IN_SECONDS;
+
+        // Check if we have a webhook for the single call. If so, we update it.
+        $webhook_id = get_transient( 'wcd_single_call_webhook_id' );
+        if( $webhook_id ) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook already exists. Deleting it.', 'reschedule', 'debug' );
+            $result = \WebChangeDetector\WebChangeDetector_API_V2::update_webhook_v2( $webhook_id, $webhook_url, gmdate('Y-m-d H:i:s', $expires_at ) );
+            if(isset($result['data']['id'] ) ) {
+                set_transient ( 'wcd_single_call_webhook_id', $result['data']['id'],  $expires_at - time());
+            } else {
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook update failed. Deleting it.', 'reschedule', 'debug' );
+                delete_transient( 'wcd_single_call_webhook_id' );
+            }
+        } else {
+            // Add a one-time webhook to trigger the wp_version_check cron.
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Creating webhook to trigger ' . WCD_TRIGGER_WP_VERSION_CHECK, 'reschedule', 'debug' );
+            $result = \WebChangeDetector\WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_single_call', gmdate('Y-m-d H:i:s', $expires_at ) );
+            if(isset( $result['data']['id'] ) ) {
+                set_transient ( 'wcd_single_call_webhook_id', $result['data']['id'],  $expires_at - time() );
+            }
+        }
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook result: ' . wp_json_encode( $result ), 'reschedule', 'debug' );
 	}
 
 	/** Starting the pre-update screenshots before auto-updates are started.
@@ -1442,16 +1476,22 @@ class WebChangeDetector_Autoupdates {
 			$wcd_action = sanitize_text_field( wp_unslash( $_GET['wcd_action'] ) );
 			$key        = sanitize_text_field( wp_unslash( $_GET['key'] ) );
 
-			if ( WCD_TRIGGER_AUTO_UPDATE_CRON === $wcd_action && ! empty( $key ) ) {
+            $authorized_actions = array(
+                WCD_TRIGGER_AUTO_UPDATE_CRON,
+                WCD_TRIGGER_WP_VERSION_CHECK,
+            );
+
+			if ( in_array( $wcd_action, $authorized_actions, true ) && ! empty( $key ) ) {
 				$webhook_key = $this->get_or_create_webhook_key();
 				if ( ! empty( $webhook_key ) && $key === $webhook_key ) {
 					$is_authorized = true;
 				}
 			}
+
 		}
 
 		if ( $is_authorized ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Processing authorized webhook trigger', 'handle_webhook_trigger', 'debug' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Processing authorized webhook trigger: ' . $wcd_action, 'handle_webhook_trigger', 'debug' );
 
 			// Also trigger our fallback check for update completion
 			if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
@@ -1460,6 +1500,8 @@ class WebChangeDetector_Autoupdates {
 					'handle_webhook_trigger',
 					'debug'
 				);
+
+                // TODO: This should be checked somewhere else.
 				$this->check_update_completion();
 			}
 
@@ -1519,6 +1561,10 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_TRIGGER_AUTO_UPDATE_CRON' ) ) {
 			define( 'WCD_TRIGGER_AUTO_UPDATE_CRON', 'trigger_auto_update_cron' );
+		}
+
+        if ( ! defined( 'WCD_TRIGGER_WP_VERSION_CHECK' ) ) {
+			define( 'WCD_TRIGGER_WP_VERSION_CHECK', 'trigger_wp_version_check' );
 		}
 		if ( ! defined( 'WCD_AUTO_UPDATE_TRIGGERED_TIME' ) ) {
 			define( 'WCD_AUTO_UPDATE_TRIGGERED_TIME', 'wcd_auto_update_triggered_time' );

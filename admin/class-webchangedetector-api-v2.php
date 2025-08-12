@@ -486,12 +486,15 @@ class WebChangeDetector_API_V2
      * @param string $url The url to send the webhook to.
      * @return mixed|string
      */
-    public static function update_webhook_v2($id, $url)
+    public static function update_webhook_v2($id, $url, $expires_at = false)
     {
         $args = array(
             'action' => 'webhooks/' . $id,
             'url'    => $url,
         );
+        if( $expires_at ) {
+            $args['expires_at'] = $expires_at;
+        }
         return self::api_v2($args, 'PUT');
     }
 
