@@ -937,11 +937,6 @@ class WebChangeDetector_Autoupdates {
 			'debug'
 		);
 
-		// Clear update transients to force fresh check
-		delete_option( '_site_transient_update_core' );
-		delete_option( '_site_transient_update_plugins' );
-		delete_option( '_site_transient_update_themes' );
-
 		// Check if WordPress is installing
 		if ( wp_installing() ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
