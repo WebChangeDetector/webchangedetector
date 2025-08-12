@@ -780,6 +780,7 @@ class WebChangeDetector_Admin_WordPress
             'numberposts' => -1,
             'order'       => 'ASC',
             'orderby'     => 'title',
+            'suppress_filters' => false, // need this for wpml to work.
         );
         $wpml_languages = $this->get_wpml_languages();
 
