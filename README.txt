@@ -59,10 +59,12 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 * Improvement: Code refactoring 
 * Improvement: Optimized url sync 
 * Impromenent: More robust auto update checks system
+* Improvement: URL sync with polylang and wpml
 * Feature: Get 1000 Checks for 1 month at signup
 * Feature: Browser console log checks
 * Feature: Clear caches at auto update checks
 * Feature: New optional logging system
+* Feature: Multilingual support
 
 = 3.2.4 =
 * Impromenent: URL sync via daily cron

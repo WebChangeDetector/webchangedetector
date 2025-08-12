@@ -60,9 +60,9 @@ foreach ( $all_themes as $theme_slug => $theme_obj ) {
 }
 
 // Build summary.
-$summary  = 'Core: ' . ( $core_auto_update_enabled ? 'Enabled' : 'Disabled' );
-$summary .= ' | Plugins: ' . count( $plugins_auto_update );
-$summary .= ' | Themes: ' . count( $themes_auto_update );
+$summary  = 'Core: ' . ( $core_auto_update_enabled ? '✓' : '✗' );
+$summary .= ' | Plugins: ' . count( $plugins_auto_update ) . ' / ' . count( $all_plugins );
+$summary .= ' | Themes: ' . count( $themes_auto_update ) . ' / ' . count( $all_themes );
 
 // Build content.
 ob_start();
