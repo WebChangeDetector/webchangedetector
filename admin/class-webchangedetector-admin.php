@@ -919,10 +919,3 @@ if (! defined('WCD_TAB_SETTINGS')) {
 if (! defined('WCD_REQUEST_TIMEOUT')) {
     define('WCD_REQUEST_TIMEOUT', 30);
 }
-if (! defined('WCD_POLYLANG_PLUGIN_FILE')) {
-    define('WCD_POLYLANG_PLUGIN_FILE', 'polylang/polylang.php');
-}
-
-if (! defined('WCD_WPML_PLUGIN_FILE')) {
-    define('WCD_WPML_PLUGIN_FILE', 'sitepress-multilingual-cms/sitepress.php');
-}

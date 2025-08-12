@@ -476,11 +476,13 @@ class WebChangeDetector_Admin_WordPress
     /**
      * Daily synchronization cron job handler.
      *
-     * @since    1.0.0
+     * @since    4.0.0
      * @return   void
      */
     public function daily_sync_posts_cron_job()
     {
+        // We deactivate the sync for now.
+        return;
         $this->sync_posts(true);
     }
 
@@ -785,12 +787,15 @@ class WebChangeDetector_Admin_WordPress
         $wpml_languages = $this->get_wpml_languages();
 
         if (! $wpml_languages) {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('No WPML languages found, getting posts without WPML.', 'get_posts', 'debug');
             $posts = get_posts($args);
         } else {
+            \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('WPML languages found, getting posts with WPML.', 'get_posts', 'debug');
             $posts = array();
-            foreach ($wpml_languages['languages'] as $language) {
-                do_action('wpml_switch_language', $language['code']);
+            foreach ($wpml_languages['languages'] as $language_code) {
+                do_action('wpml_switch_language', $language_code);
                 $posts = array_merge($posts, get_posts($args));
+                \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Posts: ' . print_r($posts, 1), 'get_posts', 'debug');
             }
             do_action('wpml_switch_language', $wpml_languages['current_language']);
         }
@@ -856,7 +861,7 @@ class WebChangeDetector_Admin_WordPress
             'number'        => '0',
             'taxonomy'      => $taxonomy,
             'hide_empty'    => false,
-            'wpml_language' => 'de',
+            'suppress_filters' => false, // need this for wpml to work.
         );
 
         // Get terms for all languages if WPML is enabled.
@@ -868,8 +873,8 @@ class WebChangeDetector_Admin_WordPress
         } else {
             // With languages, we loop through them and return all of them.
             $terms = array();
-            foreach ($wpml_languages['languages'] as $language) {
-                do_action('wpml_switch_language', $language['code']);
+            foreach ($wpml_languages['languages'] as $language_code) {
+                do_action('wpml_switch_language', $language_code);
                 $terms = array_merge($terms, get_terms($args));
             }
             do_action('wpml_switch_language', $wpml_languages['current_language']);
@@ -885,17 +890,43 @@ class WebChangeDetector_Admin_WordPress
      */
     public function get_wpml_languages()
     {
+       
         if (! class_exists('SitePress')) {
             return false;
         }
-        $languages        = apply_filters('wpml_active_languages', null);
+        $wpml_languages = apply_filters( 'wpml_active_languages', null );
+        if ( empty( $wpml_languages ) ) {
+            return false;
+        }
+        
+        // Get just the language codes
+        $languages        = array_keys( (array) $wpml_languages );
         $current_language = apply_filters('wpml_current_language', null);
-        return array_merge(
-            array(
-                'current_language' => $current_language,
-                'languages'        => $languages,
-            )
+        
+        return array (
+            'current_language' => $current_language,
+            'languages'        => $languages,
         );
+    }
+
+    /**
+     * Check if WPML is active.
+     *
+     * @since    4.0.0
+     * @return   bool
+     */
+    public function wpml_is_active() {
+        return class_exists('SitePress');
+    }
+
+    /**
+     * Check if Polylang is active.
+     *
+     * @since    4.0.0
+     * @return   bool
+     */
+    public function polylang_is_active() {
+        return class_exists('Polylang');
     }
 
     /**
@@ -915,9 +946,13 @@ class WebChangeDetector_Admin_WordPress
         }
 
         foreach ($post_types as $single_post_type) {
+
+           
+
             // Set the batch size for both retrieving and uploading.
             $offset          = 0;
             $posts_per_batch = 1000;  // Number of posts to retrieve per query.
+
 
             do {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Getting next chunk. Offset: ' . $offset, 'get_all_posts_data', 'debug');
@@ -1144,7 +1179,38 @@ class WebChangeDetector_Admin_WordPress
 
             if (! empty($post_type_names)) {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing post types: ' . implode(', ', $post_type_names), 'sync_posts', 'debug');
-                $this->get_all_posts_data($post_type_names);
+                
+                if($this->wpml_is_active()) {
+                    $wpml_languages = $this->get_wpml_languages();
+                    foreach($wpml_languages['languages'] as $lang_code) {
+                        do_action('wpml_switch_language', $lang_code);
+                        $this->get_all_posts_data($post_type_names);
+                    }
+                    do_action('wpml_switch_language', $wpml_languages['current_language']);
+                } elseif($this->polylang_is_active() && function_exists('pll_languages_list')) {
+                    // Get all Polylang language codes
+                    $polylang_languages = pll_languages_list();
+                    $current_lang = function_exists('pll_current_language') ? pll_current_language() : false;
+                    
+                    if (!empty($polylang_languages)) {
+                        foreach($polylang_languages as $lang_code) {
+                            // Switch to each language
+                            if (function_exists('PLL')) {
+                                PLL()->curlang = PLL()->model->get_language($lang_code);
+                            }
+                            $this->get_all_posts_data($post_type_names);
+                        }
+                        // Switch back to original language
+                        if ($current_lang && function_exists('PLL')) {
+                            PLL()->curlang = PLL()->model->get_language($current_lang);
+                        }
+                    } else {
+                        // No languages found, sync without language switching
+                        $this->get_all_posts_data($post_type_names);
+                    }
+                } else {
+                    $this->get_all_posts_data($post_type_names);
+                }
             }
 
             // Get all WP taxonomies.
@@ -1165,11 +1231,42 @@ class WebChangeDetector_Admin_WordPress
 
             if (! empty($taxonomy_post_names)) {
                 \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Syncing taxonomies: ' . implode(', ', $taxonomy_post_names), 'sync_posts', 'debug');
-                $this->get_all_terms_data($taxonomy_post_names);
+                
+                // WPML fix.
+                if($this->wpml_is_active()) {
+                    $wpml_languages = $this->get_wpml_languages();
+                    foreach($wpml_languages['languages'] as $lang_code) {
+                        do_action('wpml_switch_language', $lang_code);
+                        $this->get_all_terms_data($taxonomy_post_names);
+                    }
+                    do_action('wpml_switch_language', $wpml_languages['current_language']);
+                } elseif($this->polylang_is_active() && function_exists('pll_languages_list')) {
+                    // Polylang fix.
+                    // Get all Polylang language codes.
+                    $polylang_languages = pll_languages_list();
+                    $current_lang = function_exists('pll_current_language') ? pll_current_language() : false;
+                    
+                    if (!empty($polylang_languages)) {
+                        foreach($polylang_languages as $lang_code) {
+                            // Switch to each language
+                            if (function_exists('PLL')) {
+                                PLL()->curlang = PLL()->model->get_language($lang_code);
+                            }
+                            $this->get_all_terms_data($taxonomy_post_names);
+                        }
+                        // Switch back to original language
+                        if ($current_lang && function_exists('PLL')) {
+                            PLL()->curlang = PLL()->model->get_language($current_lang);
+                        }
+                    } else {
+                        // No languages found, sync without language switching
+                        $this->get_all_terms_data($taxonomy_post_names);
+                    }
+                } else {
+                    $this->get_all_terms_data($taxonomy_post_names);
+                }
             }
         }
-
-        $active_plugins = get_option('active_plugins');
 
         // Check if frontpage is already in the sync settings.
         $frontpage_exists = array_filter(
@@ -1183,15 +1280,11 @@ class WebChangeDetector_Admin_WordPress
         if (! get_option('page_on_front')) {
 
             // WPML fix.
-            if ($active_plugins && in_array(WCD_WPML_PLUGIN_FILE, $active_plugins, true)) {
-                $languages = icl_get_languages('skip_missing=0'); // Get all active languages.
+            if ($this->wpml_is_active()) {
+                $wpml_languages = $this->get_wpml_languages();
 
-                if (! empty($languages)) {
-
-                    // Store the current language to switch back later.
-                    $current_lang = apply_filters('wpml_current_language', null);
-                    foreach ($languages as $lang_code => $lang_info) {
-
+                if (! empty($wpml_languages)) {
+                    foreach ($wpml_languages['languages'] as $lang_code ) {
                         // Switch to each language.
                         do_action('wpml_switch_language', $lang_code);
 
@@ -1203,25 +1296,33 @@ class WebChangeDetector_Admin_WordPress
                     }
 
                     // Switch back to the original language.
-                    do_action('wpml_switch_language', $current_lang);
+                    do_action('wpml_switch_language', $wpml_languages['current_language']);
                 }
 
                 // Polylang fix.
-            } elseif ($active_plugins && in_array(WCD_POLYLANG_PLUGIN_FILE, $active_plugins, true)) {
-                if (isset($GLOBALS['polylang'])) {
-                    $languages = $GLOBALS['polylang']->model->get_languages_list();
+            } elseif ($this->polylang_is_active()) {
+                
+                if (function_exists('pll_languages_list')) {
+                    // Get all language codes (returns array of language slugs like ['en', 'fr', 'de'])
+                    $language_codes = pll_languages_list();
+                    
+                    if (!empty($language_codes)) {
+                        foreach ($language_codes as $lang_code) {
+                            // Get the home URL for this language
+                            $home_url = function_exists('pll_home_url') ? pll_home_url($lang_code) : false;
+                            
+                            if (!$home_url) {
+                                continue;
+                            }
 
-                    foreach ($languages as $language) {
-
-                        // Check if home_url is available in the language info.
-                        if (! empty($language->home_url)) {
                             $array['frontpage%%Frontpage'][] = array(
-                                'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol($language->home_url),
+                                'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol($home_url),
                                 'html_title' => get_bloginfo('name'),
                             );
                         }
                     }
                 }
+                
             } else {
                 $array['frontpage%%Frontpage'][] = array(
                     'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol(get_option('home')),
