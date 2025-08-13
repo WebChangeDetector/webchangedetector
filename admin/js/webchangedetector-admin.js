@@ -313,19 +313,7 @@ function currentlyProcessing() {
             $(this).html(localHour.toLocaleString(navigator.language, options));
         });
 
-        // Replace time with local time
-        $(".local-time").each(function (i, e) {
-            if ($(this).data("date")) {
-                $(this).text(getLocalDateTime($(this).data("date")));
-            }
-        });
-
-        // Replace date with local date
-        $(".local-date").each(function (i, e) {
-            if ($(this).data("date")) {
-                $(this).text(getLocalDate($(this).data("date")));
-            }
-        });
+        
 
         // Set time until next screenshots
         let autoEnabled = false;

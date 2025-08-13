@@ -108,7 +108,7 @@ class WebChangeDetector_Logs_Controller {
 					<th style="width: 100%">Page & URL</th>
 					<th style="min-width: 150px;">Type</th>
 					<th>Status</th>
-					<th style="min-width: 120px;">Time added /<br> Time updated</th>
+					<th style="min-width: 200px;">Time added /<br> Time updated</th>
 					<th>Show</th>
 				</tr>
 				<?php
@@ -128,12 +128,13 @@ class WebChangeDetector_Logs_Controller {
 						echo '<td>' . esc_html( $type_nice_name[ $queue['sc_type'] ] ) . '</td>';
 						echo '<td>' . esc_html( ucfirst( $queue['status'] ) ) . '</td>';
 						echo '<td><span class="local-time" data-date="' . esc_html( strtotime( $queue['created_at'] ) ) . '">' .
-							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['created_at'] ) ) ) . '</span><br>';
+							esc_html( get_date_from_gmt( $queue['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) . '</span><br>';
 						echo '<span class="local-time" data-date="' . esc_html( strtotime( $queue['updated_at'] ) ) . '">' .
-							esc_html( gmdate( 'd/m/Y H:i:s', strtotime( $queue['updated_at'] ) ) ) . '</span></td>';
+							esc_html( get_date_from_gmt( $queue['updated_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) . '</span></td>';
 						echo '<td>';
 
 						// Show screenshot button.
+						
 						if (
 							in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
 							'done' === $queue['status'] &&
@@ -224,7 +225,7 @@ class WebChangeDetector_Logs_Controller {
 												</span>
 											</div>
 											<div class="accordion-batch-title-tile" style="width: 250px;">
-												<strong><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['timestamp'] ) ); ?></strong>
+												<strong><?php echo esc_html( get_date_from_gmt( date( 'Y-m-d H:i:s', $entry['timestamp'] ), get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></strong>
 											</div>
 											<div class="accordion-batch-title-tile">
 												<?php
@@ -236,13 +237,7 @@ class WebChangeDetector_Logs_Controller {
 												) );
 												?>
 											</div>
-											<?php if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) : ?>
-												<div class="accordion-batch-title-tile">
-													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
-														<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
-													</a>
-												</div>
-											<?php endif; ?>
+											
 										</div>
 										<div style="clear: both;"></div>
 									</h3>
@@ -263,6 +258,17 @@ class WebChangeDetector_Logs_Controller {
 												line-height: 1.6;
 											}
 										</style>
+										<?php 
+											// Use post-update batch_id for comparisons (the main batch_id field)
+											// This will be the post-update batch_id once it's available
+											if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) : 
+											?>
+												<p>
+													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
+														<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
+													</a>
+												</p>
+											<?php endif; ?>
 										<?php if ( isset( $entry['updates']['core'] ) && $entry['updates']['core'] ) : ?>
 											<div class="update-section">
 												<h4><?php _e( 'WordPress Core', 'webchangedetector' ); ?></h4>

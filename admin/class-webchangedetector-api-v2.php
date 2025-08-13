@@ -520,13 +520,26 @@ class WebChangeDetector_API_V2
      * @param array $filter Filters for the batches.
      * @return mixed|string
      */
-    public static function get_batches($filter = array())
+    public static function get_batches_v2($filter = array())
     {
         if (empty($filter['group_ids'])) {
             $filter['group_ids'] = implode(',', get_option(WCD_WEBSITE_GROUPS));
         }
         $args = array(
             'action' => 'batches?' . build_query($filter),
+        );
+        return self::api_v2($args, 'GET');
+    }
+
+    /** Get batch.
+     *
+     * @param array $filter Filters for the batches.
+     * @return mixed|string
+     */
+    public static function get_batch_v2($batch_id)
+    {
+        $args = array(
+            'action' => 'batches/' . $batch_id,
         );
         return self::api_v2($args, 'GET');
     }

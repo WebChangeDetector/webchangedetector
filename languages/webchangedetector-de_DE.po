@@ -887,6 +887,55 @@ msgstr "%1$d von %2$d Updates erfolgreich"
 msgid "View Visual Comparisons"
 msgstr "Visuelle Vergleiche anzeigen"
 
+#: admin/class-webchangedetector-admin-dashboard.php:343
+msgid "Core"
+msgstr "Core"
+
+#: admin/class-webchangedetector-admin-dashboard.php:347
+#: admin/class-webchangedetector-admin-dashboard.php:350
+msgid "%d plugin"
+msgid_plural "%d plugins"
+msgstr[0] "%d Plugin"
+msgstr[1] "%d Plugins"
+
+#: admin/class-webchangedetector-admin-dashboard.php:351
+msgid "%d theme"
+msgid_plural "%d themes"
+msgstr[0] "%d Theme"
+msgstr[1] "%d Themes"
+
+#: admin/class-webchangedetector-admin-dashboard.php:427
+msgid "Related Auto-Update"
+msgstr "Zugehöriges Auto-Update"
+
+#: admin/class-webchangedetector-admin-dashboard.php:460
+msgid "%d plugin updated successfully"
+msgid_plural "%d plugins updated successfully"
+msgstr[0] "%d Plugin erfolgreich aktualisiert"
+msgstr[1] "%d Plugins erfolgreich aktualisiert"
+
+#: admin/class-webchangedetector-admin-dashboard.php:466
+msgid "%d plugin update failed"
+msgid_plural "%d plugin updates failed"
+msgstr[0] "%d Plugin-Update fehlgeschlagen"
+msgstr[1] "%d Plugin-Updates fehlgeschlagen"
+
+#: admin/class-webchangedetector-admin-dashboard.php:479
+msgid "%d theme updated successfully"
+msgid_plural "%d themes updated successfully"
+msgstr[0] "%d Theme erfolgreich aktualisiert"
+msgstr[1] "%d Themes erfolgreich aktualisiert"
+
+#: admin/class-webchangedetector-admin-dashboard.php:485
+msgid "%d theme update failed"
+msgid_plural "%d theme updates failed"
+msgstr[0] "%d Theme-Update fehlgeschlagen"
+msgstr[1] "%d Theme-Updates fehlgeschlagen"
+
+#: admin/class-webchangedetector-admin-dashboard.php:501
+msgid "View Full Update Details"
+msgstr "Vollständige Update-Details anzeigen"
+
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:175
 msgid "Viewing Auto-Update Check visual comparisons. "
 msgstr "Zeige visuelle Vergleiche der Auto-Update-Überprüfung. "

@@ -119,10 +119,7 @@ class WebChangeDetector_Autoupdates {
 		// Remove the backup complete checker.
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
 
-		// Save the update results to options for display in frontend (only if we have results).
-		if ( ! empty( $update_results ) ) {
-			$this->save_update_results($update_results);
-		}
+		
 
 		// Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
@@ -175,6 +172,11 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		update_option( WCD_POST_AUTO_UPDATE, $post_update_data, false );
+
+		// Save the update results to options for display in frontend (only if we have results).
+		if ( ! empty( $update_results ) && ! empty( $response['batch'] ) ) {
+			$this->save_update_results($update_results, $response['batch']);
+		}
 
 		// Schedule the cron to check post-update queue status
 		$this->reschedule( 'wcd_cron_check_post_queues' );
@@ -1887,7 +1889,7 @@ class WebChangeDetector_Autoupdates {
 	 * @param array $update_results The update results from WordPress.
 	 * @return void
 	 */
-	private function save_update_results( $update_results ) {
+	private function save_update_results( $update_results, $batch_id_post_update = null ) {
 		try {
 			// Log the raw update results for debugging.
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
@@ -1902,13 +1904,6 @@ class WebChangeDetector_Autoupdates {
 				$history = array();
 			}
 
-			// Get the batch ID from post-update data if available.
-			$post_update_data = get_option( WCD_POST_AUTO_UPDATE );
-			$batch_id = null;
-			if ( is_array( $post_update_data ) && isset( $post_update_data['batch_id'] ) ) {
-				$batch_id = $post_update_data['batch_id'];
-			}
-
 			// Parse results with error handling.
 			$parsed_updates = $this->parse_update_results( $update_results );
 			$summary = $this->calculate_summary( $update_results );
@@ -1916,10 +1911,9 @@ class WebChangeDetector_Autoupdates {
 			// Create new entry with parsed results.
 			$new_entry = array(
 				'timestamp' => time(),
-				'batch_id'  => $batch_id,
+				'batch_id'  => $batch_id_post_update, 
 				'updates'   => $parsed_updates,
 				'summary'   => $summary,
-				'raw_data'  => wp_json_encode( $update_results ), // Store raw data for debugging.
 			);
 
 			// Add new entry to beginning of array.

@@ -162,7 +162,7 @@ class WebChangeDetector_Change_Detections_Controller {
 				$single_batch = \WebChangeDetector\WebChangeDetector_API_V2::get_batch_v2( $batch_id );
 				if ( $single_batch ) {
 					$batches = array(
-						'data' => array( $single_batch ),
+						'data' => array( $single_batch['data'] ),
 						'meta' => array(
 							'total' => 1,
 							'links' => array(),
@@ -181,7 +181,7 @@ class WebChangeDetector_Change_Detections_Controller {
 					$batches = array( 'data' => array() );
 				}
 			} else {
-				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2( array_merge( $filter_batches, $extra_filters ) );
 			}
 
 			if ( ! empty( $batches['data'] ) ) {

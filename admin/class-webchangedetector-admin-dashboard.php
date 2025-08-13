@@ -148,7 +148,7 @@ class WebChangeDetector_Admin_Dashboard
                     'per_page'   => 5,
                 );
 
-                $batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches($filter_batches);
+                $batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2($filter_batches);
                 // Pass only batch data to create accordion containers, content will be loaded via AJAX.
                 $this->compare_view_v2($batches['data'] ?? array());
 
@@ -209,6 +209,30 @@ class WebChangeDetector_Admin_Dashboard
     }
 
     /**
+     * Get auto-update entry for a specific batch ID.
+     *
+     * @since    1.0.0
+     * @param    string $batch_id The batch ID to check.
+     * @return   array|false The auto-update entry if found, false otherwise.
+     */
+    private function get_auto_update_for_batch($batch_id) {
+        // Check if batch is from auto-update
+        $auto_update_batches = get_option(WCD_AUTO_UPDATE_COMPARISON_BATCHES, array());
+        if (!in_array($batch_id, $auto_update_batches)) {
+            return false;
+        }
+        
+        // Find corresponding auto-update entry
+        $update_history = get_option('wcd_auto_update_history', array());
+        foreach ($update_history as $entry) {
+            if (isset($entry['batch_id']) && $entry['batch_id'] === $batch_id) {
+                return $entry;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Display comparison view accordion for batches with statistics and actions.
      *
      * @since    1.0.0
@@ -261,6 +285,9 @@ class WebChangeDetector_Admin_Dashboard
 
             // Get created_at from batch data.
             $batch_finished_at = $batch['finished_at'] ?? __('processing...', 'webchangedetector');
+            
+            // Get auto-update data if this batch is from an auto-update
+            $auto_update_data = $this->get_auto_update_for_batch($batch_id);
         ?>
             <div class="accordion-container" data-batch_id="<?php echo esc_attr($batch_id); ?>" data-failed_count="<?php echo esc_attr($amount_failed); ?>" data-console_changes_count="<?php echo esc_attr($console_changes_count); ?>" style="margin-top: 20px;">
                 <div class="accordion accordion-batch">
@@ -308,6 +335,26 @@ class WebChangeDetector_Admin_Dashboard
                                     } elseif (is_array($auto_update_batches) && in_array($batch_id, $auto_update_batches, true)) {
                                         \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('auto-update-group');
                                         echo ' ' . esc_html__('Auto Update Checks', 'webchangedetector');
+                                        
+                                        // Show auto-update summary if available
+                                        if ($auto_update_data) {
+                                            $update_summary = array();
+                                            if (isset($auto_update_data['updates']['core']) && $auto_update_data['updates']['core']) {
+                                                $update_summary[] = __('Core', 'webchangedetector');
+                                            }
+                                            $plugin_count = isset($auto_update_data['updates']['plugins']) ? count($auto_update_data['updates']['plugins']) : 0;
+                                            if ($plugin_count > 0) {
+                                                $update_summary[] = sprintf(_n('%d plugin', '%d plugins', $plugin_count, 'webchangedetector'), $plugin_count);
+                                            }
+                                            $theme_count = isset($auto_update_data['updates']['themes']) ? count($auto_update_data['updates']['themes']) : 0;
+                                            if ($theme_count > 0) {
+                                                $update_summary[] = sprintf(_n('%d theme', '%d themes', $theme_count, 'webchangedetector'), $theme_count);
+                                            }
+                                            
+                                            if (!empty($update_summary)) {
+                                                echo '<span style="color: #666; font-size: 12px; margin-left: 10px;">(' . implode(', ', $update_summary) . ')</span>';
+                                            }
+                                        }
                                     } else {
                                         \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon('update-group');
                                         echo ' ' . esc_html__('Manual Checks', 'webchangedetector');
@@ -321,7 +368,7 @@ class WebChangeDetector_Admin_Dashboard
                                         if (! empty($batch_finished_at) && 'processing...' !== $batch_finished_at) {
                                             /* translators: %s: time difference */
                                             echo esc_html(sprintf(__('%s ago', 'webchangedetector'), human_time_diff(gmdate('U'), gmdate('U', strtotime($batch_finished_at)))));
-                                            echo ' (' . esc_html(get_date_from_gmt($batch_finished_at)) . ')';
+                                            echo ' (' . esc_html(get_date_from_gmt($batch_finished_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ))) . ')';
                                         } else {
                                             echo esc_html__('processing...', 'webchangedetector');
                                         }
@@ -370,6 +417,95 @@ class WebChangeDetector_Admin_Dashboard
      */
     public function load_comparisons_view($batch_id, $comparisons, $filters, $console_changes_count = 0)
     {
+        // Check if this batch is from an auto-update and display details if so
+        $auto_update_data = $this->get_auto_update_for_batch($batch_id);
+        if ($auto_update_data) {
+            ?>
+            <div class="wcd-auto-update-details" style="background: #f0f8ff; border: 1px solid #2271b1; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="dashicons dashicons-update" style="color: #2271b1; margin-right: 8px; font-size: 20px;"></span>
+                    <strong style="color: #2271b1; font-size: 14px;"><?php _e('Related Auto-Update', 'webchangedetector'); ?></strong>
+                    <span style="margin-left: auto; color: #666; font-size: 12px;">
+                        <?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $auto_update_data['timestamp'] ) ); ?>
+                    </span>
+                </div>
+                
+                <div style="margin-left: 28px;">
+                    <?php
+                    // Show summary of what was updated
+                    $update_items = array();
+                    
+                    // Core update
+                    if (isset($auto_update_data['updates']['core']) && $auto_update_data['updates']['core']) {
+                        $core = $auto_update_data['updates']['core'];
+                        $status_icon = $core['success'] ? '✓' : '✗';
+                        $status_color = $core['success'] ? '#46b450' : '#dc3232';
+                        $update_items[] = sprintf(
+                            '<span style="color: %s;">%s</span> WordPress Core: %s → %s',
+                            $status_color,
+                            $status_icon,
+                            esc_html($core['from_version']),
+                            esc_html($core['to_version'])
+                        );
+                    }
+                    
+                    // Plugin updates
+                    if (isset($auto_update_data['updates']['plugins']) && !empty($auto_update_data['updates']['plugins'])) {
+                        $successful_plugins = array_filter($auto_update_data['updates']['plugins'], function($p) { return $p['success']; });
+                        $failed_plugins = array_filter($auto_update_data['updates']['plugins'], function($p) { return !$p['success']; });
+                        
+                        if (count($successful_plugins) > 0) {
+                            $update_items[] = sprintf(
+                                '<span style="color: #46b450;">✓</span> %s',
+                                sprintf(_n('%d plugin updated successfully', '%d plugins updated successfully', count($successful_plugins), 'webchangedetector'), count($successful_plugins))
+                            );
+                        }
+                        if (count($failed_plugins) > 0) {
+                            $update_items[] = sprintf(
+                                '<span style="color: #dc3232;">✗</span> %s',
+                                sprintf(_n('%d plugin update failed', '%d plugin updates failed', count($failed_plugins), 'webchangedetector'), count($failed_plugins))
+                            );
+                        }
+                    }
+                    
+                    // Theme updates
+                    if (isset($auto_update_data['updates']['themes']) && !empty($auto_update_data['updates']['themes'])) {
+                        $successful_themes = array_filter($auto_update_data['updates']['themes'], function($t) { return $t['success']; });
+                        $failed_themes = array_filter($auto_update_data['updates']['themes'], function($t) { return !$t['success']; });
+                        
+                        if (count($successful_themes) > 0) {
+                            $update_items[] = sprintf(
+                                '<span style="color: #46b450;">✓</span> %s',
+                                sprintf(_n('%d theme updated successfully', '%d themes updated successfully', count($successful_themes), 'webchangedetector'), count($successful_themes))
+                            );
+                        }
+                        if (count($failed_themes) > 0) {
+                            $update_items[] = sprintf(
+                                '<span style="color: #dc3232;">✗</span> %s',
+                                sprintf(_n('%d theme update failed', '%d theme updates failed', count($failed_themes), 'webchangedetector'), count($failed_themes))
+                            );
+                        }
+                    }
+                    
+                    if (!empty($update_items)) {
+                        echo '<ul style="margin: 10px 0; padding-left: 20px;">';
+                        foreach ($update_items as $item) {
+                            echo '<li style="margin: 5px 0;">' . $item . '</li>';
+                        }
+                        echo '</ul>';
+                    }
+                    ?>
+                    
+                    <div style="margin-top: 10px;">
+                        <a href="?page=webchangedetector-logs&tab=auto-updates" class="button button-small">
+                            <?php _e('View Full Update Details', 'webchangedetector'); ?> →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php
+        }
+        
         // Get failed queues for this batch
         $failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2($batch_id, 'failed', false, array('per_page' => 100));
 
@@ -484,7 +620,7 @@ class WebChangeDetector_Admin_Dashboard
             <tr>
                 <th style="min-width: 140px; text-align: center;"><?php echo esc_html__('Status', 'webchangedetector'); ?></th>
                 <th style="width: 100%"><?php echo esc_html__('URL', 'webchangedetector'); ?></th>
-                <th style="min-width: 150px"><?php echo esc_html__('Compared Screenshots', 'webchangedetector'); ?></th>
+                <th style="min-width: 200px"><?php echo esc_html__('Compared Screenshots', 'webchangedetector'); ?></th>
                 <th style="min-width: 50px"><?php echo esc_html__('Difference', 'webchangedetector'); ?></th>
             </tr>
 
@@ -570,8 +706,8 @@ class WebChangeDetector_Admin_Dashboard
                         ?>
                     </td>
                     <td>
-                        <div><?php echo esc_html(get_date_from_gmt($compare['screenshot_1_created_at'])); ?></div>
-                        <div><?php echo esc_html(get_date_from_gmt($compare['screenshot_2_created_at'])); ?></div>
+                        <div><?php echo esc_html(get_date_from_gmt($compare['screenshot_1_created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ))); ?></div>
+                        <div><?php echo esc_html(get_date_from_gmt($compare['screenshot_2_created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ))); ?></div>
                     </td>
                     <td class="<?php echo esc_html($class); ?> diff-tile"
                         data-diff_percent="<?php echo esc_html($compare['difference_percent']); ?>">
