@@ -329,7 +329,7 @@ class WebChangeDetector_Admin_WordPress
             add_submenu_page('webchangedetector', __('Monitoring', 'webchangedetector'), __('Monitoring', 'webchangedetector'), 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['logs_view']) {
-            add_submenu_page('webchangedetector', __('Queue', 'webchangedetector'), __('Queue', 'webchangedetector'), 'manage_options', 'webchangedetector-logs', 'wcd_webchangedetector_init');
+            add_submenu_page('webchangedetector', __('Logs', 'webchangedetector'), __('Logs', 'webchangedetector'), 'manage_options', 'webchangedetector-logs', 'wcd_webchangedetector_init');
         }
         if (is_array($allowances) && $allowances['settings_view']) {
             add_submenu_page('webchangedetector', __('Settings', 'webchangedetector'), __('Settings', 'webchangedetector'), 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init');

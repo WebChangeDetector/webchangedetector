@@ -48,6 +48,28 @@ class WebChangeDetector_Logs_Controller {
 	 * Render logs page.
 	 */
 	private function render_logs_page() {
+		// Check if we're viewing a specific tab.
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'queue';
+
+		// Display tabs.
+		?>
+		<h2 class="nav-tab-wrapper">
+			<a href="?page=webchangedetector-logs&tab=queue" class="nav-tab <?php echo 'queue' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				<?php _e( 'Queue', 'webchangedetector' ); ?>
+			</a>
+			<a href="?page=webchangedetector-logs&tab=auto-updates" class="nav-tab <?php echo 'auto-updates' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				<?php _e( 'Auto-Update History', 'webchangedetector' ); ?>
+			</a>
+		</h2>
+		<?php
+
+		// Render the appropriate tab content.
+		if ( 'auto-updates' === $active_tab ) {
+			$this->render_auto_update_history();
+			return;
+		}
+
+		// Continue with regular queue view.
 		// Wizard functionality temporarily removed for phase 1
 		// Will be moved to view renderer in later phases
 
@@ -159,6 +181,183 @@ class WebChangeDetector_Logs_Controller {
 			</div>
 		</div>
 		<div class="clear"></div>
+		<?php
+	}
+
+	/**
+	 * Render auto-update history tab.
+	 */
+	private function render_auto_update_history() {
+		// Get auto-update history from options.
+		$update_history = get_option( 'wcd_auto_update_history', array() );
+
+		?>
+		<div class="wrap webchangedetector">
+			<div class="action-container">
+				<?php if ( empty( $update_history ) ) : ?>
+					<div style="background: #fff; padding: 20px; text-align: center; margin: 20px 0;">
+						<strong><?php _e( 'No auto-update history yet.', 'webchangedetector' ); ?></strong><br>
+						<?php _e( 'Auto-update results will appear here after WordPress performs automatic updates.', 'webchangedetector' ); ?>
+					</div>
+				<?php else : ?>
+					<?php foreach ( $update_history as $index => $entry ) : ?>
+						<div class="accordion-container" style="margin-top: 20px;">
+							<div class="accordion accordion-batch accordion-auto-update">
+								<div class="mm_accordion_title">
+									<h3>
+										<div style="display: inline-block;">
+											<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
+												<?php
+												$status_class = 'status-' . str_replace( '_', '', $entry['summary']['status'] );
+												$status_text = 'completed' === $entry['summary']['status'] ? __( 'Completed', 'webchangedetector' ) :
+													( 'completed_with_errors' === $entry['summary']['status'] ? __( 'Completed with Errors', 'webchangedetector' ) :
+													__( 'Failed', 'webchangedetector' ) );
+												
+												$status_icon = 'completed' === $entry['summary']['status'] ? '✓' :
+													( 'completed_with_errors' === $entry['summary']['status'] ? '⚠' : '✗' );
+												
+												$status_color = 'completed' === $entry['summary']['status'] ? '#46b450' :
+													( 'completed_with_errors' === $entry['summary']['status'] ? '#ffb900' : '#dc3232' );
+												?>
+												<span style="color: <?php echo esc_attr( $status_color ); ?>; font-weight: bold;">
+													<?php echo esc_html( $status_icon . ' ' . $status_text ); ?>
+												</span>
+											</div>
+											<div class="accordion-batch-title-tile" style="width: 250px;">
+												<strong><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['timestamp'] ) ); ?></strong>
+											</div>
+											<div class="accordion-batch-title-tile">
+												<?php
+												/* translators: 1: number of successful updates, 2: total attempted updates */
+												echo esc_html( sprintf(
+													__( '%1$d of %2$d updates successful', 'webchangedetector' ),
+													$entry['summary']['successful'],
+													$entry['summary']['total_attempted']
+												) );
+												?>
+											</div>
+											<?php if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) : ?>
+												<div class="accordion-batch-title-tile">
+													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
+														<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
+													</a>
+												</div>
+											<?php endif; ?>
+										</div>
+										<div style="clear: both;"></div>
+									</h3>
+									<div class="mm_accordion_content" style="padding: 20px;">
+										<style>
+											.update-section {
+												margin-bottom: 20px;
+											}
+											.update-section h4 {
+												margin: 0 0 10px 0;
+												color: #23282d;
+												font-size: 14px;
+												font-weight: 600;
+											}
+											.update-item {
+												padding: 5px 0;
+												margin-left: 20px;
+												line-height: 1.6;
+											}
+										</style>
+										<?php if ( isset( $entry['updates']['core'] ) && $entry['updates']['core'] ) : ?>
+											<div class="update-section">
+												<h4><?php _e( 'WordPress Core', 'webchangedetector' ); ?></h4>
+												<div class="update-item">
+													<?php if ( $entry['updates']['core']['success'] ) : ?>
+														<span style="color: #46b450;">✓</span>
+													<?php else : ?>
+														<span style="color: #dc3232;">✗</span>
+													<?php endif; ?>
+													<?php
+													echo esc_html( sprintf(
+														__( 'Version %1$s → %2$s', 'webchangedetector' ),
+														$entry['updates']['core']['from_version'],
+														$entry['updates']['core']['to_version']
+													) );
+													?>
+													<?php if ( isset( $entry['updates']['core']['error'] ) && $entry['updates']['core']['error'] ) : ?>
+														<br><span style="color: #dc3232;"><?php echo esc_html( $entry['updates']['core']['error'] ); ?></span>
+													<?php endif; ?>
+												</div>
+											</div>
+										<?php endif; ?>
+
+										<?php if ( isset( $entry['updates']['plugins'] ) && ! empty( $entry['updates']['plugins'] ) ) : ?>
+											<div class="update-section">
+												<h4><?php _e( 'Plugins', 'webchangedetector' ); ?></h4>
+												<?php foreach ( $entry['updates']['plugins'] as $plugin ) : ?>
+													<div class="update-item">
+														<?php if ( $plugin['success'] ) : ?>
+															<span style="color: #46b450;">✓</span>
+														<?php else : ?>
+															<span style="color: #dc3232;">✗</span>
+														<?php endif; ?>
+														<strong><?php echo esc_html( $plugin['name'] ); ?></strong>:
+														<?php
+														echo esc_html( sprintf(
+															__( 'Version %1$s → %2$s', 'webchangedetector' ),
+															$plugin['from_version'] ?: '?',
+															$plugin['to_version']
+														) );
+														?>
+														<?php if ( isset( $plugin['error'] ) && $plugin['error'] ) : ?>
+															<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $plugin['error'] ); ?></span>
+														<?php endif; ?>
+													</div>
+												<?php endforeach; ?>
+											</div>
+										<?php endif; ?>
+
+										<?php if ( isset( $entry['updates']['themes'] ) && ! empty( $entry['updates']['themes'] ) ) : ?>
+											<div class="update-section">
+												<h4><?php _e( 'Themes', 'webchangedetector' ); ?></h4>
+												<?php foreach ( $entry['updates']['themes'] as $theme ) : ?>
+													<div class="update-item">
+														<?php if ( $theme['success'] ) : ?>
+															<span style="color: #46b450;">✓</span>
+														<?php else : ?>
+															<span style="color: #dc3232;">✗</span>
+														<?php endif; ?>
+														<strong><?php echo esc_html( $theme['name'] ); ?></strong>:
+														<?php
+														echo esc_html( sprintf(
+															__( 'Version %1$s → %2$s', 'webchangedetector' ),
+															$theme['from_version'] ?: '?',
+															$theme['to_version']
+														) );
+														?>
+														<?php if ( isset( $theme['error'] ) && $theme['error'] ) : ?>
+															<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $theme['error'] ); ?></span>
+														<?php endif; ?>
+													</div>
+												<?php endforeach; ?>
+											</div>
+										<?php endif; ?>
+									</div>
+								</div>
+							</div>
+						</div>
+					<?php endforeach; ?>
+
+					<script>
+						jQuery(document).ready(function($) {
+							// Initialize accordion for auto-update history
+							$('.accordion-auto-update').accordion({
+								heightStyle: "content",
+								header: "h3",
+								collapsible: true,
+								active: false, // Don't auto-open on load
+								animate: 200
+							});
+						});
+					</script>
+				<?php endif; ?>
+			</div>
+		</div>
 		<?php
 	}
 }

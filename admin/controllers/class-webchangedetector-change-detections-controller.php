@@ -154,7 +154,35 @@ class WebChangeDetector_Change_Detections_Controller {
 
 			$comparisons   = array();
 			$failed_queues = array();
-			$batches       = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+			
+			// Check if we're filtering by a specific batch_id from auto-update history.
+			if ( isset( $_GET['batch_id'] ) ) {
+				$batch_id = sanitize_text_field( wp_unslash( $_GET['batch_id'] ) );
+				// Get specific batch.
+				$single_batch = \WebChangeDetector\WebChangeDetector_API_V2::get_batch_v2( $batch_id );
+				if ( $single_batch ) {
+					$batches = array(
+						'data' => array( $single_batch ),
+						'meta' => array(
+							'total' => 1,
+							'links' => array(),
+						),
+					);
+					// Show notice that we're viewing a specific batch.
+					$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
+					if ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
+						echo '<div class="notice notice-info"><p>';
+						echo __( 'Viewing Auto-Update Check visual comparisons. ', 'webchangedetector' );
+						echo '<a href="?page=webchangedetector-logs&tab=auto-updates">' . __( '← Back to Auto-Update History', 'webchangedetector' ) . '</a>';
+						echo '</p></div>';
+					}
+				} else {
+					echo '<div class="notice notice-error"><p>' . __( 'Batch not found.', 'webchangedetector' ) . '</p></div>';
+					$batches = array( 'data' => array() );
+				}
+			} else {
+				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches( array_merge( $filter_batches, $extra_filters ) );
+			}
 
 			if ( ! empty( $batches['data'] ) ) {
 				$filter_batches_in_comparisons = array();

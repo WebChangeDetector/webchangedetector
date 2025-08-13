@@ -113,8 +113,16 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @return void
 	 */
-	public function automatic_updates_complete() {
+	public function automatic_updates_complete($update_results) {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Automatic Updates Complete. Running post-update stuff.', 'automatic_updates_complete', 'debug' );
+
+		// Remove the backup complete checker.
+		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+
+		// Save the update results to options for display in frontend (only if we have results).
+		if ( ! empty( $update_results ) ) {
+			$this->save_update_results($update_results);
+		}
 
 		// Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
@@ -1871,5 +1879,368 @@ class WebChangeDetector_Autoupdates {
 		if ( empty( $cleared_caches ) && empty( $failed_caches ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cache plugins detected or cleared.', 'clear_wordpress_caches', 'debug' );
 		}
+	}
+
+	/**
+	 * Save auto-update results to options for frontend display.
+	 *
+	 * @param array $update_results The update results from WordPress.
+	 * @return void
+	 */
+	private function save_update_results( $update_results ) {
+		try {
+			// Log the raw update results for debugging.
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Raw update results structure: ' . wp_json_encode( $update_results ),
+				'save_update_results',
+				'debug'
+			);
+
+			// Get existing history or initialize empty array.
+			$history = get_option( 'wcd_auto_update_history', array() );
+			if ( ! is_array( $history ) ) {
+				$history = array();
+			}
+
+			// Get the batch ID from post-update data if available.
+			$post_update_data = get_option( WCD_POST_AUTO_UPDATE );
+			$batch_id = null;
+			if ( is_array( $post_update_data ) && isset( $post_update_data['batch_id'] ) ) {
+				$batch_id = $post_update_data['batch_id'];
+			}
+
+			// Parse results with error handling.
+			$parsed_updates = $this->parse_update_results( $update_results );
+			$summary = $this->calculate_summary( $update_results );
+
+			// Create new entry with parsed results.
+			$new_entry = array(
+				'timestamp' => time(),
+				'batch_id'  => $batch_id,
+				'updates'   => $parsed_updates,
+				'summary'   => $summary,
+				'raw_data'  => wp_json_encode( $update_results ), // Store raw data for debugging.
+			);
+
+			// Add new entry to beginning of array.
+			array_unshift( $history, $new_entry );
+
+			// Keep only last 30 entries to prevent option bloat.
+			$history = array_slice( $history, 0, 30 );
+
+			// Save updated history.
+			update_option( 'wcd_auto_update_history', $history, false );
+
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Successfully saved auto-update results. Total history entries: ' . count( $history ),
+				'save_update_results',
+				'debug'
+			);
+		} catch ( \Exception $e ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Error saving auto-update results: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString(),
+				'save_update_results',
+				'error'
+			);
+		}
+	}
+
+	/**
+	 * Parse WordPress update results into structured format.
+	 * Based on WordPress core structure from class-wp-automatic-updater.php
+	 *
+	 * @param array $update_results Raw update results from WordPress.
+	 * @return array Parsed update results.
+	 */
+	private function parse_update_results( $update_results ) {
+		$parsed = array(
+			'core'    => null,
+			'plugins' => array(),
+			'themes'  => array(),
+		);
+
+		try {
+			// Parse core updates.
+			if ( isset( $update_results['core'] ) && is_array( $update_results['core'] ) ) {
+				foreach ( $update_results['core'] as $core_update ) {
+					try {
+						// Safely check if this is an object.
+						if ( ! is_object( $core_update ) ) {
+							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+								'Core update entry is not an object: ' . wp_json_encode( $core_update ),
+								'parse_update_results',
+								'warning'
+							);
+							continue;
+						}
+
+						$core_data = array(
+							'attempted'     => true,
+							'success'       => false,
+							'from_version'  => 'unknown',
+							'to_version'    => 'unknown',
+							'error'         => null,
+						);
+
+						// Safely get versions.
+						if ( isset( $core_update->item ) && is_object( $core_update->item ) ) {
+							$core_data['from_version'] = property_exists( $core_update->item, 'current' ) ? $core_update->item->current : 'unknown';
+							$core_data['to_version'] = property_exists( $core_update->item, 'version' ) ? $core_update->item->version : 'unknown';
+						}
+
+						// Check result.
+						if ( property_exists( $core_update, 'result' ) ) {
+							if ( is_wp_error( $core_update->result ) ) {
+								$core_data['success'] = false;
+								$core_data['error'] = $core_update->result->get_error_message();
+							} else {
+								$core_data['success'] = true;
+							}
+						}
+
+						$parsed['core'] = $core_data;
+					} catch ( \Exception $e ) {
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+							'Error parsing core update: ' . $e->getMessage(),
+							'parse_update_results',
+							'error'
+						);
+					}
+				}
+			}
+
+			// Parse plugin updates.
+			if ( isset( $update_results['plugin'] ) && is_array( $update_results['plugin'] ) ) {
+				foreach ( $update_results['plugin'] as $plugin_update ) {
+					try {
+						// Safely check if this is an object.
+						if ( ! is_object( $plugin_update ) ) {
+							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+								'Plugin update entry is not an object: ' . wp_json_encode( $plugin_update ),
+								'parse_update_results',
+								'warning'
+							);
+							continue;
+						}
+
+						$plugin_data = array(
+							'slug'         => 'unknown',
+							'name'         => 'Unknown Plugin',
+							'from_version' => '',
+							'to_version'   => 'unknown',
+							'success'      => false,
+							'error'        => null,
+						);
+
+						// Safely get plugin info.
+						if ( property_exists( $plugin_update, 'name' ) ) {
+							$plugin_data['name'] = $plugin_update->name;
+						}
+
+						if ( isset( $plugin_update->item ) && is_object( $plugin_update->item ) ) {
+							if ( property_exists( $plugin_update->item, 'slug' ) ) {
+								$plugin_data['slug'] = $plugin_update->item->slug;
+							}
+							if ( property_exists( $plugin_update->item, 'new_version' ) ) {
+								$plugin_data['to_version'] = $plugin_update->item->new_version;
+							}
+
+							// Try to get current version from plugin file.
+							if ( property_exists( $plugin_update->item, 'plugin' ) ) {
+								$plugin_file = WP_PLUGIN_DIR . '/' . $plugin_update->item->plugin;
+								if ( file_exists( $plugin_file ) && function_exists( 'get_plugin_data' ) ) {
+									$plugin_info = get_plugin_data( $plugin_file, false );
+									if ( isset( $plugin_info['Version'] ) ) {
+										$plugin_data['from_version'] = $plugin_info['Version'];
+									}
+								}
+							}
+						}
+
+						// Check result.
+						if ( property_exists( $plugin_update, 'result' ) ) {
+							if ( is_wp_error( $plugin_update->result ) ) {
+								$plugin_data['success'] = false;
+								$plugin_data['error'] = $plugin_update->result->get_error_message();
+							} else {
+								$plugin_data['success'] = true;
+							}
+						}
+
+						$parsed['plugins'][] = $plugin_data;
+					} catch ( \Exception $e ) {
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+							'Error parsing plugin update: ' . $e->getMessage(),
+							'parse_update_results',
+							'error'
+						);
+					}
+				}
+			}
+
+			// Parse theme updates.
+			if ( isset( $update_results['theme'] ) && is_array( $update_results['theme'] ) ) {
+				foreach ( $update_results['theme'] as $theme_update ) {
+					try {
+						// Safely check if this is an object.
+						if ( ! is_object( $theme_update ) ) {
+							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+								'Theme update entry is not an object: ' . wp_json_encode( $theme_update ),
+								'parse_update_results',
+								'warning'
+							);
+							continue;
+						}
+
+						$theme_data = array(
+							'slug'         => 'unknown',
+							'name'         => 'Unknown Theme',
+							'from_version' => '',
+							'to_version'   => 'unknown',
+							'success'      => false,
+							'error'        => null,
+						);
+
+						// Safely get theme info.
+						if ( property_exists( $theme_update, 'name' ) ) {
+							$theme_data['name'] = $theme_update->name;
+						}
+
+						if ( isset( $theme_update->item ) && is_object( $theme_update->item ) ) {
+							if ( property_exists( $theme_update->item, 'theme' ) ) {
+								$theme_data['slug'] = $theme_update->item->theme;
+
+								// Try to get current version from theme.
+								$theme = wp_get_theme( $theme_update->item->theme );
+								if ( $theme->exists() ) {
+									$theme_data['from_version'] = $theme->get( 'Version' );
+								}
+							}
+							if ( property_exists( $theme_update->item, 'new_version' ) ) {
+								$theme_data['to_version'] = $theme_update->item->new_version;
+							}
+						}
+
+						// Check result.
+						if ( property_exists( $theme_update, 'result' ) ) {
+							if ( is_wp_error( $theme_update->result ) ) {
+								$theme_data['success'] = false;
+								$theme_data['error'] = $theme_update->result->get_error_message();
+							} else {
+								$theme_data['success'] = true;
+							}
+						}
+
+						$parsed['themes'][] = $theme_data;
+					} catch ( \Exception $e ) {
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+							'Error parsing theme update: ' . $e->getMessage(),
+							'parse_update_results',
+							'error'
+						);
+					}
+				}
+			}
+		} catch ( \Exception $e ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Fatal error in parse_update_results: ' . $e->getMessage(),
+				'parse_update_results',
+				'error'
+			);
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * Calculate summary statistics for update results.
+	 *
+	 * @param array $update_results Raw update results from WordPress.
+	 * @return array Summary statistics.
+	 */
+	private function calculate_summary( $update_results ) {
+		$summary = array(
+			'total_attempted' => 0,
+			'successful'      => 0,
+			'failed'          => 0,
+			'status'          => 'completed',
+		);
+
+		try {
+			// Count core updates.
+			if ( isset( $update_results['core'] ) && is_array( $update_results['core'] ) ) {
+				foreach ( $update_results['core'] as $core_update ) {
+					if ( ! is_object( $core_update ) ) {
+						continue;
+					}
+					++$summary['total_attempted'];
+					if ( property_exists( $core_update, 'result' ) ) {
+						if ( ! is_wp_error( $core_update->result ) && false !== $core_update->result ) {
+							++$summary['successful'];
+						} else {
+							++$summary['failed'];
+						}
+					} else {
+						// If no result property, consider it failed.
+						++$summary['failed'];
+					}
+				}
+			}
+
+			// Count plugin updates.
+			if ( isset( $update_results['plugin'] ) && is_array( $update_results['plugin'] ) ) {
+				foreach ( $update_results['plugin'] as $plugin_update ) {
+					if ( ! is_object( $plugin_update ) ) {
+						continue;
+					}
+					++$summary['total_attempted'];
+					if ( property_exists( $plugin_update, 'result' ) ) {
+						if ( ! is_wp_error( $plugin_update->result ) && false !== $plugin_update->result ) {
+							++$summary['successful'];
+						} else {
+							++$summary['failed'];
+						}
+					} else {
+						// If no result property, consider it failed.
+						++$summary['failed'];
+					}
+				}
+			}
+
+			// Count theme updates.
+			if ( isset( $update_results['theme'] ) && is_array( $update_results['theme'] ) ) {
+				foreach ( $update_results['theme'] as $theme_update ) {
+					if ( ! is_object( $theme_update ) ) {
+						continue;
+					}
+					++$summary['total_attempted'];
+					if ( property_exists( $theme_update, 'result' ) ) {
+						if ( ! is_wp_error( $theme_update->result ) && false !== $theme_update->result ) {
+							++$summary['successful'];
+						} else {
+							++$summary['failed'];
+						}
+					} else {
+						// If no result property, consider it failed.
+						++$summary['failed'];
+					}
+				}
+			}
+
+			// Determine overall status.
+			if ( $summary['failed'] > 0 && $summary['successful'] > 0 ) {
+				$summary['status'] = 'completed_with_errors';
+			} elseif ( $summary['failed'] > 0 && $summary['successful'] === 0 ) {
+				$summary['status'] = 'failed';
+			}
+		} catch ( \Exception $e ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Error calculating summary: ' . $e->getMessage(),
+				'calculate_summary',
+				'error'
+			);
+		}
+
+		return $summary;
 	}
 }

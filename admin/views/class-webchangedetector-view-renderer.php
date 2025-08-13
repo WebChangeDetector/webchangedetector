@@ -210,7 +210,7 @@ class WebChangeDetector_View_Renderer {
 				<?php if ( $this->admin->settings_handler->is_allowed( 'logs_view' ) ) : ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Queue', 'webchangedetector' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Logs', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				

@@ -846,7 +846,85 @@ msgstr "Monitoring"
 #: admin/class-webchangedetector-admin-wordpress.php:332
 #: admin/views/class-webchangedetector-view-renderer.php:213
 msgid "Queue"
-msgstr "Logs"
+msgstr "Warteschlange"
+
+#: admin/class-webchangedetector-admin-wordpress.php:332
+#: admin/controllers/class-webchangedetector-logs-controller.php:58
+msgid "Logs"
+msgstr "Protokolle"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:61
+msgid "Auto-Update History"
+msgstr "Auto-Update-Verlauf"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:199
+msgid "No auto-update history yet."
+msgstr "Noch kein Auto-Update-Verlauf vorhanden."
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:200
+msgid "Auto-update results will appear here after WordPress performs automatic updates."
+msgstr "Auto-Update-Ergebnisse werden hier angezeigt, nachdem WordPress automatische Updates durchgeführt hat."
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:280
+msgid "Completed"
+msgstr "Abgeschlossen"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:281
+msgid "Completed with Errors"
+msgstr "Mit Fehlern abgeschlossen"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:282
+#: admin/class-webchangedetector-admin-utils.php:120
+#: admin/class-webchangedetector-admin-wordpress.php:126
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:291
+msgid "%1$d of %2$d updates successful"
+msgstr "%1$d von %2$d Updates erfolgreich"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:299
+msgid "View Visual Comparisons"
+msgstr "Visuelle Vergleiche anzeigen"
+
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:175
+msgid "Viewing Auto-Update Check visual comparisons. "
+msgstr "Zeige visuelle Vergleiche der Auto-Update-Überprüfung. "
+
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:176
+msgid "← Back to Auto-Update History"
+msgstr "← Zurück zur Auto-Update-Historie"
+
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:180
+msgid "Batch not found."
+msgstr "Batch nicht gefunden."
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:305
+#: admin/controllers/class-webchangedetector-logs-controller.php:398
+msgid "Show Details"
+msgstr "Details anzeigen"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:313
+msgid "WordPress Core"
+msgstr "WordPress Core"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:336
+msgid "Plugins"
+msgstr "Plugins"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:362
+msgid "Themes"
+msgstr "Themes"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:322
+#: admin/controllers/class-webchangedetector-logs-controller.php:347
+#: admin/controllers/class-webchangedetector-logs-controller.php:373
+msgid "Version %1$s → %2$s"
+msgstr "Version %1$s → %2$s"
+
+#: admin/controllers/class-webchangedetector-logs-controller.php:396
+msgid "Hide Details"
+msgstr "Details ausblenden"
 
 #: admin/class-webchangedetector-admin-utils.php:116
 #: admin/class-webchangedetector-admin-utils.php:123
@@ -854,11 +932,6 @@ msgstr "Logs"
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:111
 msgid "New"
 msgstr "Neu"
-
-#: admin/class-webchangedetector-admin-utils.php:120
-#: admin/class-webchangedetector-admin-wordpress.php:126
-msgid "Failed"
-msgstr "Fehlgeschlagen"
 
 #: admin/class-webchangedetector-admin-wordpress.php:105
 msgid "Changes were not saved. Do you wish to leave the page without saving?"
