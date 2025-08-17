@@ -407,6 +407,7 @@ class WebChangeDetector_Admin_Settings
                             </script>
 
                             <form method="get" style="float: right;">
+                                <label for="filter-post-type" style="display: block; font-weight: 600; margin-bottom: 4px;">&nbsp;</label>
                                 <input type="hidden" name="page" value="webchangedetector-<?php echo esc_html($tab); ?>">
                                 <button type="submit" style="float: right" class="button button-secondary"><?php echo esc_html__('Search', 'webchangedetector'); ?></button>
                                 <input style="margin: 0" name="search" type="text" placeholder="<?php echo esc_attr__('Search', 'webchangedetector'); ?>" value="<?php echo esc_html(sanitize_text_field(wp_unslash($_GET['search'] ?? ''))); ?>">
