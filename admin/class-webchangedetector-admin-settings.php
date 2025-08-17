@@ -84,11 +84,8 @@ class WebChangeDetector_Admin_Settings
             'alert_emails'  => isset($group_data['alert_emails']) ? explode(',', sanitize_textarea_field($group_data['alert_emails'])) : $monitoring_settings['alert_emails'],
             'name'          => isset($group_data['group_name']) ? sanitize_text_field($group_data['group_name']) : $monitoring_settings['name'],
             'threshold'     => isset($group_data['threshold']) ? sanitize_text_field($group_data['threshold']) : $monitoring_settings['threshold'],
+            'css'           => isset($group_data['css']) ? sanitize_textarea_field($group_data['css']) : $monitoring_settings['css'],
         );
-
-        if (! empty($group_data['css'])) {
-            $args['css'] = sanitize_textarea_field($group_data['css']);
-        }
 
         // Debug: Log what we're sending to the API
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API update args: ' . print_r($args, true), 'monitoring_settings', 'debug');
@@ -191,8 +188,11 @@ class WebChangeDetector_Admin_Settings
         $args = array(
             'name'      => $postdata['group_name'],
             'threshold' => sanitize_text_field($postdata['threshold']),
-            'css'       => sanitize_textarea_field($postdata['css']),
         );
+
+        if (isset($postdata['css'])) {
+            $args['css'] = sanitize_textarea_field($postdata['css']);
+        }
 
         return (\WebChangeDetector\WebChangeDetector_API_V2::update_group_v2($this->admin->manual_group_uuid, $args));
     }
