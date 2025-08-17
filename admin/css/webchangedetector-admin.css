@@ -1855,9 +1855,9 @@ Settings
     text-decoration: none !important;
 }
 
-.webchangedetector .button:hover,
-.webchangedetector input[type="submit"]:hover,
-.webchangedetector input[type="button"]:hover {
+.webchangedetector .button:not([disabled]):hover,
+.webchangedetector input[type="submit"]:not([disabled]):hover,
+.webchangedetector input[type="button"]:not([disabled]):hover {
     background: #005a87 !important;
     color: #fff !important;
     transform: translateY(-1px) !important;
@@ -3046,6 +3046,10 @@ Settings
 
 .webchangedetector .wcd-failed-checks-accordion .dashicons-warning {
     font-size: 18px;
+}
+
+.webchangedetector .accordion-auto-update h3.ui-accordion-header {
+    padding: 30px 20px;
 }
 
 

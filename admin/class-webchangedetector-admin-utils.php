@@ -442,4 +442,21 @@ class WebChangeDetector_Admin_Utils
         parse_str($url_components['query'], $params);
         return $params;
     }
+
+    
+    /**
+     * Format difference percentage for display.
+     * Shows "< 0.01" for values between 0 and 0.005, otherwise rounds to 2 decimal places.
+     *
+     * @since 4.0.0
+     * @param float $difference_percent The difference percentage value
+     * @return string Formatted percentage value (without % sign)
+     */
+    public static function format_difference_percent($difference_percent) {
+        if ($difference_percent > 0 && $difference_percent < 0.005) {
+            return "< 0.01";
+        }
+        return round($difference_percent, 2);
+    }
+    
 }

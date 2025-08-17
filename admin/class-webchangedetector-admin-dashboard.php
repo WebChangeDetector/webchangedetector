@@ -711,7 +711,7 @@ class WebChangeDetector_Admin_Dashboard
                     </td>
                     <td class="<?php echo esc_html($class); ?> diff-tile"
                         data-diff_percent="<?php echo esc_html($compare['difference_percent']); ?>">
-                        <?php echo esc_html($compare['difference_percent']); ?>%
+                        <?php echo esc_html(\WebChangeDetector\WebChangeDetector_Admin_Utils::format_difference_percent($compare['difference_percent'])); ?>%
                     </td>
                     <td data-comparison_id="<?php echo esc_html($compare['id']); ?>" style="display: none;">
                         <form action="<?php echo esc_url(admin_url('admin.php?page=webchangedetector-show-detection&id=' . esc_html($compare['id']))); ?>" method="post">

@@ -139,7 +139,7 @@ if (!function_exists('safe_extract_console_message')) {
              data-threshold="<?php echo esc_attr($compare['threshold'] ?? 0); ?>">
             <?php if($compare['difference_percent'] > 0) { ?>
                 <div class="wcd-diff-indicator">
-                    <span class="wcd-diff-percentage"><?php echo esc_html($compare['difference_percent']); ?>%</span>
+                    <span class="wcd-diff-percentage"><?php echo esc_html(\WebChangeDetector\WebChangeDetector_Admin_Utils::format_difference_percent($compare['difference_percent'])); ?>%</span>
                     <span class="wcd-diff-label"><?php _e('Screenshot Difference', 'webchangedetector'); ?></span>
                 </div>
             <?php } else { ?>
