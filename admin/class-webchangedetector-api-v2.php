@@ -175,13 +175,14 @@ class WebChangeDetector_API_V2
      * @param array  $group_settings Group settings to save.
      * @return mixed|string
      */
-    public static function update_group($group_id, $group_settings)
+    public static function update_group_v2($group_id, $group_settings)
     {
         $args = array(
             'action' => 'groups/' . $group_id,
         );
         $args = array_merge($args, $group_settings);
 
+        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('Update group settings: ' . print_r($args, true), 'update_group', 'debug');
         return self::api_v2($args, 'PUT');
     }
 

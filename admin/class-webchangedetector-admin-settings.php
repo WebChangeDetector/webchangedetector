@@ -102,7 +102,7 @@ class WebChangeDetector_Admin_Settings
                 'message' => __('Monitoring group UUID is not set. Please contact support.', 'webchangedetector'),
             );
         }
-        $result = \WebChangeDetector\WebChangeDetector_API_V2::update_group($this->admin->monitoring_group_uuid, $args);
+        $result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2($this->admin->monitoring_group_uuid, $args);
 
         // Debug: Log the API response
         \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('API response: ' . print_r($result, true), 'monitoring_settings', 'debug');
@@ -135,9 +135,7 @@ class WebChangeDetector_Admin_Settings
      */
     public function update_manual_check_group_settings($postdata)
     {
-        // Debug: Log what we received
-        \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error('POST data received: ' . print_r($postdata, true), 'manual_check_group_settings', 'debug');
-
+        
         // Load timezone helper for time conversion.
         require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
 
@@ -193,13 +191,10 @@ class WebChangeDetector_Admin_Settings
         $args = array(
             'name'      => $postdata['group_name'],
             'threshold' => sanitize_text_field($postdata['threshold']),
+            'css'       => sanitize_textarea_field($postdata['css']),
         );
 
-        if (! empty($postdata['css'])) {
-            $args['css'] = sanitize_textarea_field($postdata['css']);
-        }
-
-        return (\WebChangeDetector\WebChangeDetector_API_V2::update_group($this->admin->manual_group_uuid, $args));
+        return (\WebChangeDetector\WebChangeDetector_API_V2::update_group_v2($this->admin->manual_group_uuid, $args));
     }
 
     /**
@@ -314,10 +309,10 @@ class WebChangeDetector_Admin_Settings
                 <?php
                 // Include the group settings.
                 if (! $monitoring_group) {
-                    $this->admin->view_renderer->get_component('templates')->render_update_settings();
+                    $this->admin->view_renderer->get_component('templates')->render_update_settings($group_and_urls, $group_id);
                 } else {
                     // Monitoring settings.
-                    $this->admin->view_renderer->get_component('templates')->render_auto_settings();
+                    $this->admin->view_renderer->get_component('templates')->render_auto_settings($group_and_urls, $group_id);
                 }
 
                 // Select URLs section.
