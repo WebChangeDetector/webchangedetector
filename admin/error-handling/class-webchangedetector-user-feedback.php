@@ -252,7 +252,7 @@ class WebChangeDetector_User_Feedback {
 			wp_die( 'Invalid nonce' );
 		}
 
-		$notice_id = sanitize_text_field( $_POST['notice_id'] ?? '' );
+		$notice_id = sanitize_text_field( wp_unslash( $_POST['notice_id'] ?? '' ) );
 		if ( empty( $notice_id ) ) {
 			wp_die( 'Invalid notice ID' );
 		}

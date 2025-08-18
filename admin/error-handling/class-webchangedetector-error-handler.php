@@ -69,7 +69,7 @@ class WebChangeDetector_Error_Handler {
 	 * @param WebChangeDetector_Logger $logger Logger instance.
 	 */
 	public function __construct( $logger = null ) {
-		$this->logger = $logger ?: new WebChangeDetector_Logger();
+		$this->logger = $logger ?? new WebChangeDetector_Logger();
 		$this->register_default_callbacks();
 	}
 
