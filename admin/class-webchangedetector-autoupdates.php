@@ -113,7 +113,7 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @return void
 	 */
-	public function automatic_updates_complete( $update_results = [] ) {
+	public function automatic_updates_complete( $update_results = array() ) {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Automatic Updates Complete. Running post-update stuff.', 'automatic_updates_complete', 'debug' );
 
 		// Remove the backup complete checker.

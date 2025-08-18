@@ -285,8 +285,8 @@ class WebChangeDetector_Admin {
 		$this->component_manager         = new WebChangeDetector_Component_Manager();
 
 		// Initialize simplified error handling components.
-		$this->error_handler  = new \WebChangeDetector_Error_Handler();
-		$this->admin_notices  = new \WebChangeDetector_Admin_Notices();
+		$this->error_handler = new \WebChangeDetector_Error_Handler();
+		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
 		// Add cron job for daily sync (after WordPress handler is initialized).
 		add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
