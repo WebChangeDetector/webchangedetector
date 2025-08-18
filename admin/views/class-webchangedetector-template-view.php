@@ -44,13 +44,13 @@ class WebChangeDetector_Template_View {
 	/**
 	 * Render the auto settings template.
 	 *
-	 * @param array $group_and_urls The group and URLs data.
+	 * @param array  $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
 	public function render_auto_settings( $group_and_urls, $group_id ) {
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
-		
+
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
 		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/auto-settings.php';
@@ -59,13 +59,13 @@ class WebChangeDetector_Template_View {
 	/**
 	 * Render the update settings template.
 	 *
-	 * @param array $group_and_urls The group and URLs data.
+	 * @param array  $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
 	public function render_update_settings( $group_and_urls, $group_id ) {
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
-		
+
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
 		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/update-settings.php';
@@ -78,10 +78,10 @@ class WebChangeDetector_Template_View {
 	 */
 	public function render_show_change_detection( $comparison ) {
 		// Set up template variables.
-		$compare = $comparison;
-		$token = $comparison['token'] ?? '';
+		$compare      = $comparison;
+		$token        = $comparison['token'] ?? '';
 		$public_token = $comparison['token'] ?? '';
-		
+
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
 		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/show-change-detection.php';
@@ -113,24 +113,24 @@ class WebChangeDetector_Template_View {
 	 * Render update detection step templates.
 	 *
 	 * @param string $step The current step.
-	 * @param array $data Additional data for the template.
+	 * @param array  $data Additional data for the template.
 	 */
 	public function render_update_detection_step( $step, $data = array() ) {
 		// Set up variables that templates expect.
-		$wcd = $this->admin;
-		$utils_handler = \WebChangeDetector\WebChangeDetector_Admin_Utils::class;
+		$wcd             = $this->admin;
+		$utils_handler   = \WebChangeDetector\WebChangeDetector_Admin_Utils::class;
 		$account_details = $data['account_details'] ?? $wcd->account_handler->get_account();
-		
+
 		// Extract progress variables for tiles background.
-		$progress_setting = $data['progress_setting'] ?? '';
-		$progress_pre = $data['progress_pre'] ?? '';
-		$progress_make_update = $data['progress_make_update'] ?? '';
-		$progress_post = $data['progress_post'] ?? '';
+		$progress_setting          = $data['progress_setting'] ?? '';
+		$progress_pre              = $data['progress_pre'] ?? '';
+		$progress_make_update      = $data['progress_make_update'] ?? '';
+		$progress_post             = $data['progress_post'] ?? '';
 		$progress_change_detection = $data['progress_change_detection'] ?? '';
-		
+
 		// Extract other template variables.
 		$sc_processing = $data['sc_processing'] ?? null;
-		
+
 		// Map step names to template files.
 		$template_map = array(
 			'pre'              => 'update-step-pre-sc.php',
@@ -155,4 +155,4 @@ class WebChangeDetector_Template_View {
 			echo '<p>Unknown step: ' . esc_html( $step ) . '</p>';
 		}
 	}
-} 
+}

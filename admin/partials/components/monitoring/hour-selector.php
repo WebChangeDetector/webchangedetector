@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var int    $current_hour    Current hour value (0-23)
  * @var string $field_name      Form field name
  * @var string $label           Label text
@@ -23,10 +24,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 $current_hour = $current_hour ?? 0;
-$field_name = $field_name ?? 'hour_of_day';
-$label = $label ?? __('Hour of the day', 'webchangedetector');
-$description = $description ?? __('Set the hour on which the monitoring checks should be done.', 'webchangedetector');
-$css_class = $css_class ?? '';
+$field_name   = $field_name ?? 'hour_of_day';
+$label        = $label ?? __( 'Hour of the day', 'webchangedetector' );
+$description  = $description ?? __( 'Set the hour on which the monitoring checks should be done.', 'webchangedetector' );
+$css_class    = $css_class ?? '';
 ?>
 
 <div class="setting-row <?php echo esc_attr( $css_class ); ?>">

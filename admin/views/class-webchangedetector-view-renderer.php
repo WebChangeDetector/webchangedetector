@@ -69,7 +69,7 @@ class WebChangeDetector_View_Renderer {
 				<?php
 				// Render any flash messages.
 				$this->render_flash_messages();
-				
+
 				// Render the main content.
 				if ( is_callable( $content_callback ) ) {
 					call_user_func( $content_callback, $data );
@@ -85,7 +85,7 @@ class WebChangeDetector_View_Renderer {
 	 */
 	public function render_flash_messages() {
 		$messages = get_option( 'wcd_flash_messages', array() );
-		
+
 		if ( ! empty( $messages ) ) {
 			foreach ( $messages as $message ) {
 				$this->view_components['notifications']->render_notice(
@@ -93,7 +93,7 @@ class WebChangeDetector_View_Renderer {
 					$message['type'] ?? 'info'
 				);
 			}
-			
+
 			// Clear messages after displaying.
 			delete_option( 'wcd_flash_messages' );
 		}
@@ -106,7 +106,7 @@ class WebChangeDetector_View_Renderer {
 	 * @param string $type    The message type (success, error, warning, info).
 	 */
 	public function add_flash_message( $message, $type = 'info' ) {
-		$messages = get_option( 'wcd_flash_messages', array() );
+		$messages   = get_option( 'wcd_flash_messages', array() );
 		$messages[] = array(
 			'message' => $message,
 			'type'    => $type,
@@ -162,9 +162,9 @@ class WebChangeDetector_View_Renderer {
 		?>
 		<div id="wcd-loading-overlay" style="display: none;">
 			<div class="wcd-loading-content">
-				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
+				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . '../admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
 				<p class="wcd-loading-text"><?php echo esc_html( $message ); ?></p>
-				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . '../admin/img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
+				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . '../admin/img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
 			</div>
 		</div>
 		<?php
@@ -273,6 +273,4 @@ class WebChangeDetector_View_Renderer {
 		</script>
 		<?php
 	}
-
-
-} 
+}

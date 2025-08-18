@@ -39,12 +39,12 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.0.0
-	 * @param    WebChangeDetector_Admin             $admin            The main admin class instance.
-	 * @param    WebChangeDetector_Admin_Settings    $settings_handler The settings handler instance.
+	 * @param    WebChangeDetector_Admin          $admin            The main admin class instance.
+	 * @param    WebChangeDetector_Admin_Settings $settings_handler The settings handler instance.
 	 */
 	public function __construct( $admin, $settings_handler ) {
 		parent::__construct( $admin );
-		
+
 		$this->settings_handler = $settings_handler;
 	}
 
@@ -85,20 +85,19 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 				ob_start();
 				$this->admin->post_urls( $_POST );
 				ob_get_clean();
-				
-				$this->send_success_response( 
+
+				$this->send_success_response(
 					null,
 					__( 'Settings saved successfully.', 'webchangedetector' )
 				);
 			} else {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Method not available.', 'webchangedetector' ),
 					'post_urls method missing'
 				);
 			}
-			
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while saving settings.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -119,21 +118,20 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 		try {
 			$result = update_option( 'wcd_wizard_disabled', true );
-			
+
 			if ( $result ) {
-				$this->send_success_response( 
+				$this->send_success_response(
 					array( 'wizard_disabled' => true ),
 					__( 'Wizard disabled successfully.', 'webchangedetector' )
 				);
 			} else {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Failed to disable wizard.', 'webchangedetector' ),
 					'Option update failed'
 				);
 			}
-			
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while disabling wizard.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -154,19 +152,18 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 		try {
 			$result = $this->admin->create_website_and_groups();
-			
+
 			if ( isset( $result['error'] ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					$result['error'],
 					'Website creation failed'
 				);
 			} else {
 				$this->send_success_response( $result );
 			}
-			
 		} catch ( \Exception $e ) {
 			$this->admin->log_error( 'Exception during website creation: ' . $e->getMessage() );
-			$this->send_error_response( 
+			$this->send_error_response(
 				$e->getMessage(),
 				'Exception during website creation'
 			);
@@ -187,15 +184,15 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 		try {
 			$setup_data = array(
-				'website_details' => $this->admin->website_details,
+				'website_details'      => $this->admin->website_details,
 				'available_sync_types' => $this->settings_handler->get_available_sync_types(),
-				'current_sync_types' => get_option( 'wcd_sync_url_types', array() ),
+				'current_sync_types'   => get_option( 'wcd_sync_url_types', array() ),
 			);
-			
+
 			$this->send_success_response( $setup_data );
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'Failed to get initial setup data.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -216,9 +213,9 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 		try {
 			$post_data = $this->validate_post_data( array( 'sync_types' ) );
-			
+
 			if ( false === $post_data ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Missing sync types data.', 'webchangedetector' ),
 					'Missing sync_types'
 				);
@@ -226,26 +223,26 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 			}
 
 			$sync_types = $post_data['sync_types'];
-			
+
 			// Validate sync types.
 			$available_types = $this->settings_handler->get_available_sync_types();
-			$valid_types = array();
-			
+			$valid_types     = array();
+
 			foreach ( $sync_types as $type ) {
 				if ( isset( $available_types[ $type ] ) ) {
 					$valid_types[] = $type;
 				}
 			}
-			
+
 			update_option( 'wcd_sync_url_types', $valid_types );
-			
-			$this->send_success_response( 
+
+			$this->send_success_response(
 				array( 'sync_types' => $valid_types ),
 				__( 'Initial setup saved successfully.', 'webchangedetector' )
 			);
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while saving initial setup.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -266,18 +263,18 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 		try {
 			$post_data = $this->validate_post_data( array( 'sync_types' ) );
-			
+
 			if ( false === $post_data ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Missing sync types data.', 'webchangedetector' ),
 					'Missing sync_types'
 				);
 				return;
 			}
 
-			$sync_types = $post_data['sync_types'];
+			$sync_types      = $post_data['sync_types'];
 			$available_types = $this->settings_handler->get_available_sync_types();
-			
+
 			// Validate and update sync types.
 			$updated_sync_types = array();
 			foreach ( $sync_types as $type ) {
@@ -285,16 +282,16 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 					$updated_sync_types[] = $type;
 				}
 			}
-			
+
 			update_option( 'wcd_sync_url_types', $updated_sync_types );
-			
-			$this->send_success_response( 
+
+			$this->send_success_response(
 				array( 'sync_url_types' => $updated_sync_types ),
 				__( 'Sync types updated successfully.', 'webchangedetector' )
 			);
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while updating sync types.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -317,18 +314,20 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 			// Mark setup as completed.
 			update_option( 'wcd_initial_setup_completed', true );
 			update_option( 'wcd_wizard_disabled', true );
-			
-			$this->send_success_response( 
-				array( 'setup_completed' => true, 'wizard_disabled' => true ),
+
+			$this->send_success_response(
+				array(
+					'setup_completed' => true,
+					'wizard_disabled' => true,
+				),
 				__( 'Initial setup completed successfully.', 'webchangedetector' )
 			);
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while completing initial setup.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
 		}
 	}
-
 }

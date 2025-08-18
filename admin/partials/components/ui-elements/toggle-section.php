@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var string $toggle_name      Name for the toggle checkbox
  * @var bool   $is_enabled       Whether the toggle is currently enabled
  * @var string $toggle_label     Label for the toggle
@@ -24,13 +25,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $section_id       Unique ID for the toggle section
  */
 
-$toggle_name = $toggle_name ?? 'toggle_enabled';
-$is_enabled = $is_enabled ?? false;
-$toggle_label = $toggle_label ?? __('Enable', 'webchangedetector');
+$toggle_name        = $toggle_name ?? 'toggle_enabled';
+$is_enabled         = $is_enabled ?? false;
+$toggle_label       = $toggle_label ?? __( 'Enable', 'webchangedetector' );
 $toggle_description = $toggle_description ?? '';
-$content = $content ?? '';
-$css_class = $css_class ?? '';
-$section_id = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
+$content            = $content ?? '';
+$css_class          = $css_class ?? '';
+$section_id         = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 ?>
 
 <div class="setting-row <?php echo esc_attr( $css_class ); ?>">

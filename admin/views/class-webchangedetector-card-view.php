@@ -72,7 +72,7 @@ class WebChangeDetector_Card_View {
 	 */
 	public function render_monitoring_status_card( $group ) {
 		// Calculate monitoring details.
-		$date_next_sc = false;
+		$date_next_sc      = false;
 		$amount_sc_per_day = 0;
 
 		// Check for intervals >= 1h.
@@ -182,10 +182,10 @@ class WebChangeDetector_Card_View {
 	 */
 	public function render_update_step_card( $current_step, $step_data ) {
 		$steps = array(
-			WCD_OPTION_UPDATE_STEP_SETTINGS     => 'Configure Settings',
-			WCD_OPTION_UPDATE_STEP_PRE          => 'Take Pre-Update Screenshots',
-			WCD_OPTION_UPDATE_STEP_MAKE_UPDATES => 'Make Your Updates',
-			WCD_OPTION_UPDATE_STEP_POST         => 'Take Post-Update Screenshots',
+			WCD_OPTION_UPDATE_STEP_SETTINGS         => 'Configure Settings',
+			WCD_OPTION_UPDATE_STEP_PRE              => 'Take Pre-Update Screenshots',
+			WCD_OPTION_UPDATE_STEP_MAKE_UPDATES     => 'Make Your Updates',
+			WCD_OPTION_UPDATE_STEP_POST             => 'Take Post-Update Screenshots',
 			WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION => 'View Change Detections',
 		);
 
@@ -195,9 +195,9 @@ class WebChangeDetector_Card_View {
 			<div class="step-progress">
 				<?php foreach ( $steps as $step_key => $step_label ) : ?>
 					<?php
-					$is_current = $current_step === $step_key;
+					$is_current   = $current_step === $step_key;
 					$is_completed = array_search( $step_key, array_keys( $steps ), true ) < array_search( $current_step, array_keys( $steps ), true );
-					$step_class = $is_current ? 'current' : ( $is_completed ? 'completed' : 'pending' );
+					$step_class   = $is_current ? 'current' : ( $is_completed ? 'completed' : 'pending' );
 					?>
 					<div class="step-item <?php echo esc_attr( $step_class ); ?>">
 						<div class="step-indicator">
@@ -241,7 +241,7 @@ class WebChangeDetector_Card_View {
 					<?php foreach ( $actions as $action ) : ?>
 						<?php if ( 'link' === $action['type'] ) : ?>
 							<a href="<?php echo esc_url( $action['url'] ); ?>" 
-							   class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
+								class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
 								<?php echo esc_html( $action['label'] ); ?>
 							</a>
 						<?php elseif ( 'form' === $action['type'] ) : ?>
@@ -254,7 +254,7 @@ class WebChangeDetector_Card_View {
 									<?php endforeach; ?>
 								<?php endif; ?>
 								<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>" 
-								       class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
+										class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
 							</form>
 						<?php endif; ?>
 					<?php endforeach; ?>
@@ -291,7 +291,7 @@ class WebChangeDetector_Card_View {
 								<?php endforeach; ?>
 							<?php endif; ?>
 							<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>" 
-							       class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
+									class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
 						</form>
 					<?php endforeach; ?>
 				</div>
@@ -299,4 +299,4 @@ class WebChangeDetector_Card_View {
 		</div>
 		<?php
 	}
-} 
+}

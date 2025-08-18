@@ -15,16 +15,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var float  $threshold     The current threshold value
  * @var string $label         Optional custom label (defaults to "Threshold")
  * @var string $description   Optional custom description
  * @var string $css_class     Optional additional CSS classes
  */
 
-$threshold = $threshold ?? 0.0;
-$label = $label ?? __('Threshold', 'webchangedetector');
-$description = $description ?? __('Only flag changes above this threshold percentage as significant.', 'webchangedetector');
-$css_class = $css_class ?? '';
+$threshold   = $threshold ?? 0.0;
+$label       = $label ?? __( 'Threshold', 'webchangedetector' );
+$description = $description ?? __( 'Only flag changes above this threshold percentage as significant.', 'webchangedetector' );
+$css_class   = $css_class ?? '';
 ?>
 
 <div class="setting-row <?php echo esc_attr( $css_class ); ?>">

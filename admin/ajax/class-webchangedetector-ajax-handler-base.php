@@ -42,7 +42,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.0.0
-	 * @param    WebChangeDetector_Admin           $admin         The main admin class instance.
+	 * @param    WebChangeDetector_Admin $admin         The main admin class instance.
 	 */
 	public function __construct( $admin ) {
 		$this->admin = $admin;
@@ -70,7 +70,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 */
 	protected function verify_nonce( $action = 'ajax-nonce' ) {
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-		
+
 		if ( empty( $nonce ) ) {
 			return false;
 		}
@@ -110,10 +110,10 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 			$this->admin->log_error( $log_message, 'ajax' );
 		}
 
-		wp_send_json_error( 
-			array( 
+		wp_send_json_error(
+			array(
 				'message' => $message,
-				'code' => $code,
+				'code'    => $code,
 			)
 		);
 	}
@@ -130,11 +130,11 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 */
 	protected function send_success_response( $data = null, $message = '' ) {
 		$response = array();
-		
+
 		if ( ! empty( $message ) ) {
 			$response['message'] = $message;
 		}
-		
+
 		if ( $data !== null ) {
 			$response['data'] = $data;
 		}
@@ -155,7 +155,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 */
 	protected function validate_post_data( $required_fields = array(), $sanitization_map = array() ) {
 		$post_data = array();
-		
+
 		// Check that all required fields are present.
 		foreach ( $required_fields as $field ) {
 			if ( ! isset( $_POST[ $field ] ) ) {
@@ -199,7 +199,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 */
 	protected function security_check( $action = 'ajax-nonce', $capability = 'manage_options' ) {
 		if ( ! $this->verify_nonce( $action ) ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'Security check failed. Please refresh the page and try again.', 'webchangedetector' ),
 				'Nonce verification failed',
 				403
@@ -208,7 +208,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 		}
 
 		if ( ! $this->check_capability( $capability ) ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
 				'Capability check failed',
 				403
@@ -218,5 +218,4 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 
 		return true;
 	}
-
 }

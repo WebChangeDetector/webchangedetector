@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var string $css_class    Optional CSS classes
  */
 
@@ -79,9 +80,10 @@ ob_start();
 
 <div style="margin-bottom: 20px;">
 	<h4 style="margin-bottom: 10px;">Plugins</h4>
-	<?php foreach ( $all_plugins as $plugin_file => $plugin_data ) : 
+	<?php
+	foreach ( $all_plugins as $plugin_file => $plugin_data ) :
 		$is_auto_update = is_array( $auto_update_plugins ) && in_array( $plugin_file, $auto_update_plugins, true );
-	?>
+		?>
 		<div style="display: flex; align-items: center; margin-bottom: 5px;">
 			<span style="color: <?php echo $is_auto_update ? '#46b450' : '#dc3232'; ?>; margin-right: 8px; font-size: 16px;">
 				<?php echo $is_auto_update ? '✓' : '✗'; ?>
@@ -93,9 +95,10 @@ ob_start();
 
 <div style="margin-bottom: 20px;">
 	<h4 style="margin-bottom: 10px;">Themes</h4>
-	<?php foreach ( $all_themes as $theme_slug => $theme_obj ) : 
+	<?php
+	foreach ( $all_themes as $theme_slug => $theme_obj ) :
 		$is_auto_update = is_array( $auto_update_themes ) && in_array( $theme_slug, $auto_update_themes, true );
-	?>
+		?>
 		<div style="display: flex; align-items: center; margin-bottom: 5px;">
 			<span style="color: <?php echo $is_auto_update ? '#46b450' : '#dc3232'; ?>; margin-right: 8px; font-size: 16px;">
 				<?php echo $is_auto_update ? '✓' : '✗'; ?>
@@ -109,10 +112,10 @@ ob_start();
 $content = ob_get_clean();
 
 // Include accordion component.
-$header_text = __('Currently enabled auto-updates: ', 'webchangedetector') . $summary;
+$header_text  = __( 'Currently enabled auto-updates: ', 'webchangedetector' ) . $summary;
 $accordion_id = 'auto-update-info';
-$open = false;
+$open         = false;
 
-include dirname( __DIR__ ) . '/ui-elements/accordion.php';
-?> 
+require dirname( __DIR__ ) . '/ui-elements/accordion.php';
+?>
 </div>

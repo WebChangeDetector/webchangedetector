@@ -25,22 +25,22 @@ class WebChangeDetector_Error_Handler {
 	/**
 	 * Error severity levels.
 	 */
-	const SEVERITY_DEBUG = 'debug';
-	const SEVERITY_INFO = 'info';
-	const SEVERITY_WARNING = 'warning';
-	const SEVERITY_ERROR = 'error';
+	const SEVERITY_DEBUG    = 'debug';
+	const SEVERITY_INFO     = 'info';
+	const SEVERITY_WARNING  = 'warning';
+	const SEVERITY_ERROR    = 'error';
 	const SEVERITY_CRITICAL = 'critical';
 
 	/**
 	 * Error categories.
 	 */
-	const CATEGORY_API = 'api';
+	const CATEGORY_API        = 'api';
 	const CATEGORY_FILESYSTEM = 'filesystem';
-	const CATEGORY_NETWORK = 'network';
+	const CATEGORY_NETWORK    = 'network';
 	const CATEGORY_VALIDATION = 'validation';
-	const CATEGORY_AUTH = 'authentication';
+	const CATEGORY_AUTH       = 'authentication';
 	const CATEGORY_PERMISSION = 'permission';
-	const CATEGORY_GENERAL = 'general';
+	const CATEGORY_GENERAL    = 'general';
 
 	/**
 	 * Maximum number of retry attempts.
@@ -82,17 +82,20 @@ class WebChangeDetector_Error_Handler {
 	 * @return array Result array with success/error status.
 	 */
 	public function execute_with_error_handling( $operation, $args = array(), $options = array() ) {
-		$options = wp_parse_args( $options, array(
-			'retries'         => $this->max_retries,
-			'category'        => self::CATEGORY_GENERAL,
-			'context'         => '',
-			'user_message'    => 'An error occurred. Please try again.',
-			'log_errors'      => true,
-			'return_wp_error' => false,
-			'timeout'         => 30,
-		) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'retries'         => $this->max_retries,
+				'category'        => self::CATEGORY_GENERAL,
+				'context'         => '',
+				'user_message'    => 'An error occurred. Please try again.',
+				'log_errors'      => true,
+				'return_wp_error' => false,
+				'timeout'         => 30,
+			)
+		);
 
-		$attempts = 0;
+		$attempts   = 0;
 		$last_error = null;
 
 		while ( $attempts <= $options['retries'] ) {
@@ -118,7 +121,7 @@ class WebChangeDetector_Error_Handler {
 				);
 
 			} catch ( \Exception $e ) {
-				$attempts++;
+				++$attempts;
 				$last_error = $e;
 
 				// Log the error.
@@ -153,7 +156,7 @@ class WebChangeDetector_Error_Handler {
 
 		// Handle final failure.
 		$error_message = $last_error ? $last_error->getMessage() : 'Unknown error occurred';
-		
+
 		if ( $options['return_wp_error'] ) {
 			return new \WP_Error(
 				'operation_failed',
@@ -167,11 +170,11 @@ class WebChangeDetector_Error_Handler {
 		}
 
 		return array(
-			'success' => false,
-			'message' => $options['user_message'],
-			'error'   => $error_message,
+			'success'  => false,
+			'message'  => $options['user_message'],
+			'error'    => $error_message,
 			'category' => $options['category'],
-			'retries' => $attempts - 1,
+			'retries'  => $attempts - 1,
 		);
 	}
 
@@ -184,11 +187,14 @@ class WebChangeDetector_Error_Handler {
 	 * @return array Result array.
 	 */
 	public function handle_api_error( $api_call, $args = array(), $options = array() ) {
-		$options = wp_parse_args( $options, array(
-			'category'     => self::CATEGORY_API,
-			'user_message' => 'Failed to communicate with WebChangeDetector service. Please check your connection and try again.',
-			'context'      => 'API Operation',
-		) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'category'     => self::CATEGORY_API,
+				'user_message' => 'Failed to communicate with WebChangeDetector service. Please check your connection and try again.',
+				'context'      => 'API Operation',
+			)
+		);
 
 		return $this->execute_with_error_handling( $api_call, $args, $options );
 	}
@@ -202,10 +208,13 @@ class WebChangeDetector_Error_Handler {
 	 * @return array Result array.
 	 */
 	public function handle_validation_errors( $validation_errors, $options = array() ) {
-		$options = wp_parse_args( $options, array(
-			'category' => self::CATEGORY_VALIDATION,
-			'context'  => 'Validation',
-		) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'category' => self::CATEGORY_VALIDATION,
+				'context'  => 'Validation',
+			)
+		);
 
 		if ( empty( $validation_errors ) ) {
 			return array(
@@ -223,10 +232,10 @@ class WebChangeDetector_Error_Handler {
 		);
 
 		return array(
-			'success'         => false,
-			'message'         => 'Validation failed. Please correct the errors and try again.',
+			'success'           => false,
+			'message'           => 'Validation failed. Please correct the errors and try again.',
 			'validation_errors' => $validation_errors,
-			'category'        => $options['category'],
+			'category'          => $options['category'],
 		);
 	}
 
@@ -274,17 +283,22 @@ class WebChangeDetector_Error_Handler {
 	 */
 	private function register_default_callbacks() {
 		// API error callback.
-		$this->register_error_callback( self::CATEGORY_API, function( $exception, $category, $attempt ) {
-			// Clear any cached API responses on API errors.
-			wp_cache_delete( 'wcd_api_response', 'webchangedetector' );
-		} );
-
+		$this->register_error_callback(
+			self::CATEGORY_API,
+			function ( $exception, $category, $attempt ) {
+				// Clear any cached API responses on API errors.
+				wp_cache_delete( 'wcd_api_response', 'webchangedetector' );
+			}
+		);
 
 		// Critical error callback.
-		$this->register_error_callback( self::SEVERITY_CRITICAL, function( $exception, $category, $attempt ) {
-			// Send admin notification for critical errors.
-			$this->send_admin_notification( $exception, $category );
-		} );
+		$this->register_error_callback(
+			self::SEVERITY_CRITICAL,
+			function ( $exception, $category, $attempt ) {
+				// Send admin notification for critical errors.
+				$this->send_admin_notification( $exception, $category );
+			}
+		);
 	}
 
 	/**
@@ -296,7 +310,7 @@ class WebChangeDetector_Error_Handler {
 	private function send_admin_notification( $exception, $category ) {
 		// Prevent spam by checking if we've already sent notification recently.
 		$notification_key = 'wcd_error_notification_' . md5( $exception->getMessage() );
-		$last_sent = get_transient( $notification_key );
+		$last_sent        = get_transient( $notification_key );
 
 		if ( $last_sent ) {
 			return; // Already sent notification for this error recently.
@@ -305,13 +319,13 @@ class WebChangeDetector_Error_Handler {
 		// Set transient to prevent spam (1 hour).
 		set_transient( $notification_key, time(), HOUR_IN_SECONDS );
 
-		$subject = 'WebChangeDetector Critical Error on ' . get_bloginfo( 'name' );
-		$message = "A critical error occurred in WebChangeDetector:\n\n";
-		$message .= "Error: " . $exception->getMessage() . "\n";
-		$message .= "Category: " . $category . "\n";
-		$message .= "Site: " . get_site_url() . "\n";
-		$message .= "Time: " . current_time( 'mysql' ) . "\n\n";
-		$message .= "Please check the plugin logs for more details.";
+		$subject  = 'WebChangeDetector Critical Error on ' . get_bloginfo( 'name' );
+		$message  = "A critical error occurred in WebChangeDetector:\n\n";
+		$message .= 'Error: ' . $exception->getMessage() . "\n";
+		$message .= 'Category: ' . $category . "\n";
+		$message .= 'Site: ' . get_site_url() . "\n";
+		$message .= 'Time: ' . current_time( 'mysql' ) . "\n\n";
+		$message .= 'Please check the plugin logs for more details.';
 
 		wp_mail( get_option( 'admin_email' ), $subject, $message );
 	}
@@ -325,11 +339,11 @@ class WebChangeDetector_Error_Handler {
 	 */
 	public function create_user_friendly_message( $exception, $category ) {
 		$messages = array(
-			self::CATEGORY_API => 'Unable to connect to WebChangeDetector service. Please check your internet connection and try again.',
+			self::CATEGORY_API        => 'Unable to connect to WebChangeDetector service. Please check your internet connection and try again.',
 			self::CATEGORY_FILESYSTEM => 'File system error occurred. Please check file permissions.',
-			self::CATEGORY_NETWORK => 'Network error occurred. Please check your connection and try again.',
+			self::CATEGORY_NETWORK    => 'Network error occurred. Please check your connection and try again.',
 			self::CATEGORY_VALIDATION => 'Please check your input and try again.',
-			self::CATEGORY_AUTH => 'Authentication failed. Please check your API credentials.',
+			self::CATEGORY_AUTH       => 'Authentication failed. Please check your API credentials.',
 			self::CATEGORY_PERMISSION => 'You do not have permission to perform this action.',
 		);
 
@@ -344,4 +358,4 @@ class WebChangeDetector_Error_Handler {
 	public function cleanup_old_logs( $days = 30 ) {
 		$this->logger->cleanup_old_logs( $days );
 	}
-} 
+}

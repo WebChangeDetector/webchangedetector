@@ -26,9 +26,9 @@ class WebChangeDetector_User_Feedback {
 	 * Notification types.
 	 */
 	const TYPE_SUCCESS = 'success';
-	const TYPE_INFO = 'info';
+	const TYPE_INFO    = 'info';
 	const TYPE_WARNING = 'warning';
-	const TYPE_ERROR = 'error';
+	const TYPE_ERROR   = 'error';
 
 	/**
 	 * Constructor.
@@ -46,13 +46,16 @@ class WebChangeDetector_User_Feedback {
 	 * @param array  $options     Additional options.
 	 */
 	public function add_feedback( $message, $type = self::TYPE_INFO, $options = array() ) {
-		$options = wp_parse_args( $options, array(
-			'dismissible' => true,
-			'persistent'  => false,
-			'actions'     => array(),
-			'context'     => '',
-			'error_code'  => '',
-		) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'dismissible' => true,
+				'persistent'  => false,
+				'actions'     => array(),
+				'context'     => '',
+				'error_code'  => '',
+			)
+		);
 
 		$feedback = array(
 			'message'     => $message,
@@ -68,7 +71,7 @@ class WebChangeDetector_User_Feedback {
 
 		// Store in transients for non-persistent or options for persistent.
 		if ( $options['persistent'] ) {
-			$persistent_messages = get_option( 'webchangedetector_persistent_feedback', array() );
+			$persistent_messages                    = get_option( 'webchangedetector_persistent_feedback', array() );
 			$persistent_messages[ $feedback['id'] ] = $feedback;
 			update_option( 'webchangedetector_persistent_feedback', $persistent_messages );
 		} else {
@@ -132,11 +135,14 @@ class WebChangeDetector_User_Feedback {
 			? $exception->get_user_message()
 			: 'An unexpected error occurred. Please try again.';
 
-		$options = wp_parse_args( $options, array(
-			'error_code' => $exception->getCode(),
-			'context'    => get_class( $exception ),
-			'actions'    => $this->get_exception_actions( $exception ),
-		) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'error_code' => $exception->getCode(),
+				'context'    => get_class( $exception ),
+				'actions'    => $this->get_exception_actions( $exception ),
+			)
+		);
 
 		$this->add_error( $message, $options );
 	}
@@ -290,7 +296,6 @@ class WebChangeDetector_User_Feedback {
 			}
 		}
 
-
 		if ( $exception instanceof WebChangeDetector_Permission_Exception ) {
 			$actions[] = array(
 				'label' => 'Check User Permissions',
@@ -317,7 +322,7 @@ class WebChangeDetector_User_Feedback {
 	 */
 	private function is_webchangedetector_page() {
 		$current_screen = get_current_screen();
-		
+
 		if ( ! $current_screen ) {
 			return false;
 		}
@@ -346,7 +351,7 @@ class WebChangeDetector_User_Feedback {
 		if ( $persistent ) {
 			// Clear persistent messages.
 			delete_option( 'webchangedetector_persistent_feedback' );
-			
+
 			// Clear dismissed notices.
 			delete_user_meta( get_current_user_id(), 'webchangedetector_dismissed_notices' );
 		}
@@ -368,9 +373,13 @@ class WebChangeDetector_User_Feedback {
 			true
 		);
 
-		wp_localize_script( 'webchangedetector-feedback', 'wcdFeedback', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'webchangedetector_dismiss_notice' ),
-		) );
+		wp_localize_script(
+			'webchangedetector-feedback',
+			'wcdFeedback',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'webchangedetector_dismiss_notice' ),
+			)
+		);
 	}
-} 
+}

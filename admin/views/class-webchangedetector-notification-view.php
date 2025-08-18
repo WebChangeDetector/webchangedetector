@@ -41,7 +41,7 @@ class WebChangeDetector_Notification_View {
 	 */
 	public function render_notice( $message, $type = 'info', $dismissible = true ) {
 		$css_class = 'notice';
-		
+
 		switch ( $type ) {
 			case 'success':
 				$css_class .= ' notice-success';
@@ -56,11 +56,11 @@ class WebChangeDetector_Notification_View {
 				$css_class .= ' notice-info';
 				break;
 		}
-		
+
 		if ( $dismissible ) {
 			$css_class .= ' is-dismissible';
 		}
-		
+
 		?>
 		<div class="<?php echo esc_attr( $css_class ); ?>">
 			<p><?php echo wp_kses_post( $message ); ?></p>
@@ -107,13 +107,13 @@ class WebChangeDetector_Notification_View {
 	 * Render API error notice.
 	 */
 	public function render_api_error_notice() {
-		$message = 'Something went wrong. Maybe the API token is invalid?';
+		$message  = 'Something went wrong. Maybe the API token is invalid?';
 		$message .= '<form method="post" style="margin-top: 10px;">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
 		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
 		$message .= '</form>';
-		
+
 		$this->render_notice( $message, 'error', false );
 	}
 
@@ -123,7 +123,7 @@ class WebChangeDetector_Notification_View {
 	 * @param string $status The account status.
 	 */
 	public function render_inactive_account_notice( $status ) {
-		$message = '<h3>Your account status is ' . esc_html( $status ) . '</h3>';
+		$message  = '<h3>Your account status is ' . esc_html( $status ) . '</h3>';
 		$message .= '<p>Please <a href="' . esc_url( $this->admin->account_handler->get_upgrade_url() ) . '">Upgrade</a> to re-activate your account.</p>';
 		$message .= '<p>To use a different account, please reset the API token.</p>';
 		$message .= '<form method="post">';
@@ -131,7 +131,7 @@ class WebChangeDetector_Notification_View {
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
 		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
 		$message .= '</form>';
-		
+
 		$this->render_notice( $message, 'error', false );
 	}
 
@@ -140,8 +140,8 @@ class WebChangeDetector_Notification_View {
 	 */
 	public function render_website_details_error() {
 		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
-		
-		$message = 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.';
+
+		$message  = 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.';
 		$message .= '<p>Your current API token is: <strong>' . esc_html( $api_token ) . '</strong>.</p>';
 		$message .= '<form method="post">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
@@ -149,7 +149,7 @@ class WebChangeDetector_Notification_View {
 		$message .= '<input type="hidden" name="api_token" value="' . esc_attr( $api_token ) . '">';
 		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
 		$message .= '</form>';
-		
+
 		$this->render_notice( $message, 'error', false );
 	}
 
@@ -172,7 +172,7 @@ class WebChangeDetector_Notification_View {
 			$message .= ' ' . esc_html( $item );
 		}
 		$message .= '.';
-		
+
 		$this->render_notice( $message, 'success' );
 	}
-} 
+}

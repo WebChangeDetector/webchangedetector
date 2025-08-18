@@ -39,12 +39,12 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.0.0
-	 * @param    WebChangeDetector_Admin            $admin           The main admin class instance.
-	 * @param    WebChangeDetector_Admin_Account    $account_handler The account handler instance.
+	 * @param    WebChangeDetector_Admin         $admin           The main admin class instance.
+	 * @param    WebChangeDetector_Admin_Account $account_handler The account handler instance.
 	 */
 	public function __construct( $admin, $account_handler ) {
 		parent::__construct( $admin );
-		
+
 		$this->account_handler = $account_handler;
 	}
 
@@ -74,7 +74,7 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 
 		try {
 			if ( ! $this->account_handler ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Account handler not available.', 'webchangedetector' ),
 					'Account handler missing'
 				);
@@ -82,35 +82,34 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 			}
 
 			$token = get_option( 'wcd_api_token' );
-			
+
 			if ( empty( $token ) ) {
-				$this->send_success_response( 
+				$this->send_success_response(
 					array( 'activated' => false ),
 					__( 'No API token found.', 'webchangedetector' )
 				);
 				return;
 			}
-			
+
 			$account_details = $this->account_handler->get_account();
-			
+
 			if ( is_array( $account_details ) && ! empty( $account_details ) ) {
-				$this->send_success_response( 
-					array( 
-						'activated' => true,
+				$this->send_success_response(
+					array(
+						'activated'       => true,
 						'account_details' => $account_details,
 					),
 					__( 'Account is activated.', 'webchangedetector' )
 				);
 			} else {
-				$this->send_success_response( 
+				$this->send_success_response(
 					array( 'activated' => false ),
 					__( 'Account activation pending.', 'webchangedetector' )
 				);
 			}
-			
 		} catch ( \Exception $e ) {
 			$this->admin->log_error( 'Account activation check failed: ' . $e->getMessage() );
-			$this->send_success_response( 
+			$this->send_success_response(
 				array( 'activated' => false ),
 				__( 'Account activation pending.', 'webchangedetector' )
 			);

@@ -41,8 +41,8 @@ class WebChangeDetector_Comparison_Action_Handler {
 	public function handle_change_comparison_status( $data ) {
 		try {
 			$comparison_id = sanitize_text_field( $data['comparison_id'] ?? '' );
-			$status = sanitize_text_field( $data['status'] ?? '' );
-			
+			$status        = sanitize_text_field( $data['status'] ?? '' );
+
 			// Validate inputs.
 			$validation = $this->validate_status_change( $comparison_id, $status );
 			if ( ! $validation['success'] ) {
@@ -51,11 +51,11 @@ class WebChangeDetector_Comparison_Action_Handler {
 
 			// Update comparison status via API.
 			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_comparison_v2( $comparison_id, $status );
-			
+
 			if ( $result['success'] ?? false ) {
 				return array(
-					'success' => true,
-					'message' => 'Comparison status updated successfully.',
+					'success'    => true,
+					'message'    => 'Comparison status updated successfully.',
 					'new_status' => $status,
 				);
 			} else {
@@ -81,7 +81,7 @@ class WebChangeDetector_Comparison_Action_Handler {
 	public function handle_show_comparison( $data ) {
 		try {
 			$comparison_id = sanitize_text_field( $data['comparison_id'] ?? '' );
-			
+
 			if ( empty( $comparison_id ) ) {
 				return array(
 					'success' => false,
@@ -91,7 +91,7 @@ class WebChangeDetector_Comparison_Action_Handler {
 
 			// Get comparison details from API.
 			$comparison = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $comparison_id );
-			
+
 			if ( empty( $comparison['data'] ) ) {
 				return array(
 					'success' => false,
@@ -100,8 +100,8 @@ class WebChangeDetector_Comparison_Action_Handler {
 			}
 
 			return array(
-				'success' => true,
-				'message' => 'Comparison retrieved successfully.',
+				'success'    => true,
+				'message'    => 'Comparison retrieved successfully.',
 				'comparison' => $comparison['data'],
 			);
 		} catch ( \Exception $e ) {
@@ -122,10 +122,10 @@ class WebChangeDetector_Comparison_Action_Handler {
 		try {
 			// Build filter parameters.
 			$filters = $this->build_filter_parameters( $data );
-			
+
 			// Get filtered comparisons from API.
 			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filters );
-			
+
 			if ( ! isset( $comparisons['data'] ) ) {
 				return array(
 					'success' => false,
@@ -134,11 +134,11 @@ class WebChangeDetector_Comparison_Action_Handler {
 			}
 
 			return array(
-				'success' => true,
-				'message' => 'Comparisons filtered successfully.',
+				'success'     => true,
+				'message'     => 'Comparisons filtered successfully.',
 				'comparisons' => $comparisons['data'],
-				'meta' => $comparisons['meta'] ?? array(),
-				'filters' => $filters,
+				'meta'        => $comparisons['meta'] ?? array(),
+				'filters'     => $filters,
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -157,8 +157,8 @@ class WebChangeDetector_Comparison_Action_Handler {
 	public function handle_bulk_comparison_actions( $data ) {
 		try {
 			$comparison_ids = $data['comparison_ids'] ?? array();
-			$action = sanitize_text_field( $data['bulk_action'] ?? '' );
-			
+			$action         = sanitize_text_field( $data['bulk_action'] ?? '' );
+
 			if ( empty( $comparison_ids ) || ! is_array( $comparison_ids ) ) {
 				return array(
 					'success' => false,
@@ -173,35 +173,41 @@ class WebChangeDetector_Comparison_Action_Handler {
 				);
 			}
 
-			$results = array();
+			$results          = array();
 			$successful_count = 0;
-			$errors = array();
+			$errors           = array();
 
 			foreach ( $comparison_ids as $comparison_id ) {
 				$comparison_id = sanitize_text_field( $comparison_id );
-				
+
 				switch ( $action ) {
 					case 'mark_ok':
-						$result = $this->handle_change_comparison_status( array(
-							'comparison_id' => $comparison_id,
-							'status' => 'ok',
-						) );
+						$result = $this->handle_change_comparison_status(
+							array(
+								'comparison_id' => $comparison_id,
+								'status'        => 'ok',
+							)
+						);
 						break;
-					
+
 					case 'mark_false_positive':
-						$result = $this->handle_change_comparison_status( array(
-							'comparison_id' => $comparison_id,
-							'status' => 'false_positive',
-						) );
+						$result = $this->handle_change_comparison_status(
+							array(
+								'comparison_id' => $comparison_id,
+								'status'        => 'false_positive',
+							)
+						);
 						break;
-					
+
 					case 'mark_to_fix':
-						$result = $this->handle_change_comparison_status( array(
-							'comparison_id' => $comparison_id,
-							'status' => 'to_fix',
-						) );
+						$result = $this->handle_change_comparison_status(
+							array(
+								'comparison_id' => $comparison_id,
+								'status'        => 'to_fix',
+							)
+						);
 						break;
-					
+
 					default:
 						$result = array(
 							'success' => false,
@@ -210,20 +216,20 @@ class WebChangeDetector_Comparison_Action_Handler {
 				}
 
 				$results[ $comparison_id ] = $result;
-				
+
 				if ( $result['success'] ) {
-					$successful_count++;
+					++$successful_count;
 				} else {
 					$errors[] = 'ID ' . $comparison_id . ': ' . $result['message'];
 				}
 			}
 
-			$message = sprintf( 
-				'Bulk action completed: %d of %d comparisons updated successfully.', 
-				$successful_count, 
-				count( $comparison_ids ) 
+			$message = sprintf(
+				'Bulk action completed: %d of %d comparisons updated successfully.',
+				$successful_count,
+				count( $comparison_ids )
 			);
-			
+
 			if ( ! empty( $errors ) ) {
 				$message .= ' Errors: ' . implode( ', ', array_slice( $errors, 0, 3 ) );
 				if ( count( $errors ) > 3 ) {
@@ -232,12 +238,12 @@ class WebChangeDetector_Comparison_Action_Handler {
 			}
 
 			return array(
-				'success' => $successful_count > 0,
-				'message' => $message,
+				'success'          => $successful_count > 0,
+				'message'          => $message,
 				'successful_count' => $successful_count,
-				'total_count' => count( $comparison_ids ),
-				'errors' => $errors,
-				'results' => $results,
+				'total_count'      => count( $comparison_ids ),
+				'errors'           => $errors,
+				'results'          => $results,
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -257,30 +263,30 @@ class WebChangeDetector_Comparison_Action_Handler {
 		try {
 			// Get comparisons with filters.
 			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filters );
-			
+
 			if ( empty( $comparisons['data'] ) ) {
 				return array(
-					'total' => 0,
-					'new' => 0,
-					'ok' => 0,
-					'to_fix' => 0,
+					'total'          => 0,
+					'new'            => 0,
+					'ok'             => 0,
+					'to_fix'         => 0,
 					'false_positive' => 0,
 				);
 			}
 
 			// Count by status.
 			$stats = array(
-				'total' => count( $comparisons['data'] ),
-				'new' => 0,
-				'ok' => 0,
-				'to_fix' => 0,
+				'total'          => count( $comparisons['data'] ),
+				'new'            => 0,
+				'ok'             => 0,
+				'to_fix'         => 0,
 				'false_positive' => 0,
 			);
 
 			foreach ( $comparisons['data'] as $comparison ) {
 				$status = $comparison['status'] ?? 'new';
 				if ( isset( $stats[ $status ] ) ) {
-					$stats[ $status ]++;
+					++$stats[ $status ];
 				}
 			}
 
@@ -394,12 +400,12 @@ class WebChangeDetector_Comparison_Action_Handler {
 	 */
 	public function handle_export_comparisons( $data ) {
 		try {
-			$format = sanitize_text_field( $data['format'] ?? 'csv' );
+			$format  = sanitize_text_field( $data['format'] ?? 'csv' );
 			$filters = $this->build_filter_parameters( $data );
-			
+
 			// Get comparisons for export.
 			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filters );
-			
+
 			if ( empty( $comparisons['data'] ) ) {
 				return array(
 					'success' => false,
@@ -409,13 +415,13 @@ class WebChangeDetector_Comparison_Action_Handler {
 
 			// Format data for export.
 			$export_data = $this->format_export_data( $comparisons['data'], $format );
-			
+
 			return array(
 				'success' => true,
 				'message' => 'Export data prepared successfully.',
-				'data' => $export_data,
-				'format' => $format,
-				'count' => count( $comparisons['data'] ),
+				'data'    => $export_data,
+				'format'  => $format,
+				'count'   => count( $comparisons['data'] ),
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -436,10 +442,10 @@ class WebChangeDetector_Comparison_Action_Handler {
 		switch ( $format ) {
 			case 'csv':
 				return $this->format_csv_export( $comparisons );
-			
+
 			case 'json':
 				return wp_json_encode( $comparisons, JSON_PRETTY_PRINT );
-			
+
 			default:
 				return $comparisons;
 		}
@@ -453,7 +459,7 @@ class WebChangeDetector_Comparison_Action_Handler {
 	 */
 	private function format_csv_export( $comparisons ) {
 		$csv_data = "ID,URL,Device,Status,Date,Difference,Notes\n";
-		
+
 		foreach ( $comparisons as $comparison ) {
 			$csv_data .= sprintf(
 				"%s,%s,%s,%s,%s,%s,%s\n",
@@ -466,7 +472,7 @@ class WebChangeDetector_Comparison_Action_Handler {
 				'"' . str_replace( '"', '""', $comparison['notes'] ?? '' ) . '"'
 			);
 		}
-		
+
 		return $csv_data;
 	}
-} 
+}

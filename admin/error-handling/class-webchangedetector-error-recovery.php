@@ -74,16 +74,16 @@ class WebChangeDetector_Error_Recovery {
 
 				try {
 					$result = call_user_func( $strategy['callback'], $exception );
-					
+
 					if ( $result['success'] ) {
-						$recovery_result = array_merge( $recovery_result, $result );
+						$recovery_result             = array_merge( $recovery_result, $result );
 						$recovery_result['strategy'] = $strategy['name'];
-						
+
 						$this->logger->info(
 							"Recovery successful using strategy: {$strategy['name']}",
 							'recovery'
 						);
-						
+
 						break; // Stop trying other strategies.
 					}
 				} catch ( \Exception $recovery_exception ) {
@@ -107,13 +107,13 @@ class WebChangeDetector_Error_Recovery {
 	 */
 	public function get_health_status() {
 		$health_status = get_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
-		
+
 		if ( empty( $health_status ) ) {
 			// Return a default healthy status if none exists
 			$health_status = array(
 				'overall_status' => 'healthy',
 				'checks'         => array(
-					'api' => array(
+					'api'           => array(
 						'status'  => true,
 						'message' => 'Awaiting first sync',
 					),
@@ -125,7 +125,7 @@ class WebChangeDetector_Error_Recovery {
 				'timestamp'      => current_time( 'mysql' ),
 			);
 		}
-		
+
 		return $health_status;
 	}
 
@@ -149,9 +149,12 @@ class WebChangeDetector_Error_Recovery {
 		);
 
 		// Sort by priority.
-		usort( $this->recovery_strategies[ $category ], function( $a, $b ) {
-			return $a['priority'] - $b['priority'];
-		} );
+		usort(
+			$this->recovery_strategies[ $category ],
+			function ( $a, $b ) {
+				return $a['priority'] - $b['priority'];
+			}
+		);
 	}
 
 	/**
@@ -159,80 +162,105 @@ class WebChangeDetector_Error_Recovery {
 	 */
 	private function register_default_recovery_strategies() {
 		// API error recovery strategies.
-		$this->register_recovery_strategy( 'api', 'Clear API Cache', function( $exception ) {
-			wp_cache_delete( 'wcd_api_response', 'webchangedetector' );
-			delete_transient( 'webchangedetector_api_status' );
-			
-			return array(
-				'success' => true,
-				'message' => 'API cache cleared.',
-			);
-		}, 1 );
+		$this->register_recovery_strategy(
+			'api',
+			'Clear API Cache',
+			function ( $exception ) {
+				wp_cache_delete( 'wcd_api_response', 'webchangedetector' );
+				delete_transient( 'webchangedetector_api_status' );
 
-		$this->register_recovery_strategy( 'api', 'Reset API Token', function( $exception ) {
-			// Only reset if we have authentication errors.
-			if ( strpos( $exception->getMessage(), 'authentication' ) !== false ||
-				 strpos( $exception->getMessage(), 'unauthorized' ) !== false ) {
-				
-				delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
-				delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
-				delete_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
-				
 				return array(
 					'success' => true,
-					'message' => 'API token reset. Please re-authenticate.',
+					'message' => 'API cache cleared.',
 				);
-			}
-			
-			return array( 'success' => false );
-		}, 5 );
+			},
+			1
+		);
+
+		$this->register_recovery_strategy(
+			'api',
+			'Reset API Token',
+			function ( $exception ) {
+				// Only reset if we have authentication errors.
+				if ( strpos( $exception->getMessage(), 'authentication' ) !== false ||
+				strpos( $exception->getMessage(), 'unauthorized' ) !== false ) {
+
+					delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
+					delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
+					delete_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
+
+					return array(
+						'success' => true,
+						'message' => 'API token reset. Please re-authenticate.',
+					);
+				}
+
+				return array( 'success' => false );
+			},
+			5
+		);
 
 		// Database error recovery strategies.
-		$this->register_recovery_strategy( 'database', 'Recreate Database Tables', function( $exception ) {
-			// Attempt to recreate plugin tables.
-			// Creating a new logger instance will automatically create the log table via constructor.
-			$logger = new WebChangeDetector_Logger();
-			
-			return array(
-				'success' => true,
-				'message' => 'Database tables recreated.',
-			);
-		}, 1 );
+		$this->register_recovery_strategy(
+			'database',
+			'Recreate Database Tables',
+			function ( $exception ) {
+				// Attempt to recreate plugin tables.
+				// Creating a new logger instance will automatically create the log table via constructor.
+				$logger = new WebChangeDetector_Logger();
+
+				return array(
+					'success' => true,
+					'message' => 'Database tables recreated.',
+				);
+			},
+			1
+		);
 
 		// Filesystem error recovery strategies.
-		$this->register_recovery_strategy( 'filesystem', 'Fix Directory Permissions', function( $exception ) {
-			$upload_dir = wp_upload_dir();
-			$plugin_dir = WP_CONTENT_DIR . '/webchangedetector-logs';
-			
-			$fixed = false;
-			
-			// Try to fix log directory permissions.
-			if ( is_dir( $plugin_dir ) && ! is_writable( $plugin_dir ) ) {
-				if ( chmod( $plugin_dir, 0755 ) ) {
-					$fixed = true;
+		$this->register_recovery_strategy(
+			'filesystem',
+			'Fix Directory Permissions',
+			function ( $exception ) {
+				$upload_dir = wp_upload_dir();
+				$plugin_dir = WP_CONTENT_DIR . '/webchangedetector-logs';
+
+				$fixed = false;
+
+				// Try to fix log directory permissions.
+				if ( is_dir( $plugin_dir ) && ! is_writable( $plugin_dir ) ) {
+					if ( chmod( $plugin_dir, 0755 ) ) {
+						$fixed = true;
+					}
 				}
-			}
-			
-			return array(
-				'success' => $fixed,
-				'message' => $fixed ? 'Directory permissions fixed.' : 'Could not fix permissions.',
-			);
-		}, 1 );
+
+				return array(
+					'success' => $fixed,
+					'message' => $fixed ? 'Directory permissions fixed.' : 'Could not fix permissions.',
+				);
+			},
+			1
+		);
 
 		// General error recovery strategies.
-		$this->register_recovery_strategy( 'general', 'Clear All Caches', function( $exception ) {
-			// Clear WordPress object cache.
-			wp_cache_flush();
-			
-			// Clear plugin-specific caches.
-			delete_transient( 'webchangedetector_api_status' );
-			delete_transient( 'webchangedetector_account_details' );
-			
-			return array(
-				'success' => true,
-				'message' => 'All caches cleared.',
-			);
-		}, 10 );
+		$this->register_recovery_strategy(
+			'general',
+			'Clear All Caches',
+			function ( $exception ) {
+				// Clear WordPress object cache.
+				wp_cache_flush();
+
+				// Clear plugin-specific caches.
+				delete_transient( 'webchangedetector_api_status' );
+				delete_transient( 'webchangedetector_account_details' );
+
+				return array(
+					'success' => true,
+					'message' => 'All caches cleared.',
+				);
+			},
+			10
+		);
 	}
 
 	/**
@@ -245,39 +273,38 @@ class WebChangeDetector_Error_Recovery {
 		if ( $exception instanceof WebChangeDetector_API_Exception ) {
 			return 'api';
 		}
-		
-		
+
 		if ( $exception instanceof WebChangeDetector_Filesystem_Exception ) {
 			return 'filesystem';
 		}
-		
+
 		if ( $exception instanceof WebChangeDetector_Network_Exception ) {
 			return 'network';
 		}
-		
+
 		if ( $exception instanceof WebChangeDetector_Authentication_Exception ) {
 			return 'authentication';
 		}
-		
+
 		if ( $exception instanceof WebChangeDetector_Permission_Exception ) {
 			return 'permission';
 		}
-		
+
 		if ( $exception instanceof WebChangeDetector_Validation_Exception ) {
 			return 'validation';
 		}
 
 		// Check message for known patterns.
 		$message = strtolower( $exception->getMessage() );
-		
+
 		if ( strpos( $message, 'api' ) !== false || strpos( $message, 'request' ) !== false ) {
 			return 'api';
 		}
-		
+
 		if ( strpos( $message, 'database' ) !== false || strpos( $message, 'sql' ) !== false ) {
 			return 'database';
 		}
-		
+
 		if ( strpos( $message, 'file' ) !== false || strpos( $message, 'permission' ) !== false ) {
 			return 'filesystem';
 		}
@@ -297,7 +324,7 @@ class WebChangeDetector_Error_Recovery {
 			$autoupdates = new \WebChangeDetector\WebChangeDetector_Autoupdates();
 			$autoupdates->sync_auto_update_schedule_from_api();
 		}
-		
+
 		return $this->get_health_status();
 	}
-} 
+}

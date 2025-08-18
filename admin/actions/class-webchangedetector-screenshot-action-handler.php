@@ -42,7 +42,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 		try {
 			// Validate screenshot type.
 			$sc_type = sanitize_text_field( $data['sc_type'] ?? '' );
-			
+
 			if ( ! in_array( $sc_type, WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
 				return array(
 					'success' => false,
@@ -52,7 +52,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 
 			// Determine group UUID based on context.
 			$group_uuid = $this->get_group_uuid_for_screenshot_type( $sc_type, $data );
-			
+
 			if ( ! $group_uuid ) {
 				return array(
 					'success' => false,
@@ -62,17 +62,17 @@ class WebChangeDetector_Screenshot_Action_Handler {
 
 			// Take screenshots via API.
 			$results = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $group_uuid, $sc_type );
-			
+
 			if ( isset( $results['batch'] ) ) {
 				// Store batch ID for tracking.
 				update_option( 'wcd_manual_checks_batch', $results['batch'] );
-				
+
 				// Update step tracking for manual checks.
 				$this->update_step_tracking( $sc_type );
-				
+
 				return array(
-					'success' => true,
-					'message' => 'Screenshots initiated successfully.',
+					'success'  => true,
+					'message'  => 'Screenshots initiated successfully.',
 					'batch_id' => $results['batch'],
 				);
 			} else {
@@ -98,7 +98,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 	public function handle_screenshot_comparison( $data ) {
 		try {
 			$batch_id = sanitize_text_field( $data['batch_id'] ?? '' );
-			
+
 			if ( empty( $batch_id ) ) {
 				return array(
 					'success' => false,
@@ -107,10 +107,12 @@ class WebChangeDetector_Screenshot_Action_Handler {
 			}
 
 			// Get comparison results from API.
-			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array(
-				'batch_id' => $batch_id,
-			) );
-			
+			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2(
+				array(
+					'batch_id' => $batch_id,
+				)
+			);
+
 			if ( empty( $comparisons['data'] ) ) {
 				return array(
 					'success' => false,
@@ -119,10 +121,10 @@ class WebChangeDetector_Screenshot_Action_Handler {
 			}
 
 			return array(
-				'success' => true,
-				'message' => 'Comparisons retrieved successfully.',
+				'success'     => true,
+				'message'     => 'Comparisons retrieved successfully.',
 				'comparisons' => $comparisons['data'],
-				'meta' => $comparisons['meta'] ?? array(),
+				'meta'        => $comparisons['meta'] ?? array(),
 			);
 		} catch ( \Exception $e ) {
 			return array(
@@ -142,25 +144,25 @@ class WebChangeDetector_Screenshot_Action_Handler {
 		try {
 			$batch_id = sanitize_text_field( $data['batch_id'] ?? '' );
 			$per_page = intval( $data['per_page'] ?? 30 );
-			
+
 			// Get processing queue status.
 			$queue_data = $this->admin->get_processing_queue_v2( $batch_id, $per_page );
-			
+
 			if ( empty( $queue_data['data'] ) ) {
 				return array(
 					'success' => true,
 					'message' => 'No items in queue.',
-					'queue' => array(),
-					'status' => 'empty',
+					'queue'   => array(),
+					'status'  => 'empty',
 				);
 			}
 
 			// Analyze queue status.
-			$status_counts = array_count_values( array_column( $queue_data['data'], 'status' ) );
-			$total_items = count( $queue_data['data'] );
-			$completed_items = $status_counts['done'] ?? 0;
+			$status_counts    = array_count_values( array_column( $queue_data['data'], 'status' ) );
+			$total_items      = count( $queue_data['data'] );
+			$completed_items  = $status_counts['done'] ?? 0;
 			$processing_items = $status_counts['processing'] ?? 0;
-			$open_items = $status_counts['open'] ?? 0;
+			$open_items       = $status_counts['open'] ?? 0;
 
 			$overall_status = 'processing';
 			if ( $completed_items === $total_items ) {
@@ -171,21 +173,21 @@ class WebChangeDetector_Screenshot_Action_Handler {
 
 			return array(
 				'success' => true,
-				'message' => sprintf( 
+				'message' => sprintf(
 					'Queue status: %d completed, %d processing, %d pending of %d total.',
 					$completed_items,
 					$processing_items,
 					$open_items,
 					$total_items
 				),
-				'queue' => $queue_data['data'],
-				'meta' => $queue_data['meta'] ?? array(),
-				'status' => $overall_status,
-				'stats' => array(
-					'total' => $total_items,
-					'completed' => $completed_items,
+				'queue'   => $queue_data['data'],
+				'meta'    => $queue_data['meta'] ?? array(),
+				'status'  => $overall_status,
+				'stats'   => array(
+					'total'      => $total_items,
+					'completed'  => $completed_items,
 					'processing' => $processing_items,
-					'pending' => $open_items,
+					'pending'    => $open_items,
 				),
 			);
 		} catch ( \Exception $e ) {
@@ -213,7 +215,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 		switch ( $sc_type ) {
 			case 'auto':
 				return $this->admin->monitoring_group_uuid;
-			
+
 			case 'pre':
 			case 'post':
 			case 'compare':
@@ -232,7 +234,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 			case 'pre':
 				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
 				break;
-			
+
 			case 'post':
 				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
 				break;
@@ -273,7 +275,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 
 		return array(
 			'success' => empty( $errors ),
-			'errors' => $errors,
+			'errors'  => $errors,
 		);
 	}
-} 
+}

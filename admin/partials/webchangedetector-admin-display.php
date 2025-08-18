@@ -16,7 +16,7 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 
 	/**
 	 * Init for plugin view
-	 * 
+	 *
 	 * This function has been refactored to use the new controller-based architecture.
 	 * The massive 1000+ line function has been broken down into specialized controllers.
 	 * All required classes are now loaded in the main plugin loading process.
@@ -79,4 +79,4 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		// Initialize and run the controller.
 		return $controller->init();
 	}
-} 
+}

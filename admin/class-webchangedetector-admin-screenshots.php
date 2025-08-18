@@ -60,7 +60,7 @@ class WebChangeDetector_Admin_Screenshots {
 	}
 
 
-	
+
 
 	/**
 	 * Load and display failed queues view for batch.
@@ -74,7 +74,7 @@ class WebChangeDetector_Admin_Screenshots {
 	 */
 	public function load_failed_queues_view( $batch_id ) {
 		$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( array( $batch_id ), 'failed', array( 'per_page' => 100 ) );
-       
+
 		// Handle pagination for failed queues if needed.
 		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
 			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
@@ -161,7 +161,7 @@ class WebChangeDetector_Admin_Screenshots {
 
 		if ( isset( $token ) ) {
 			$api_response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token );
-			
+
 			// Check if API response is valid
 			if ( empty( $api_response ) || ! isset( $api_response['data'] ) ) {
 				echo '<p class="notice notice-error" style="padding: 10px;">' .
@@ -169,11 +169,11 @@ class WebChangeDetector_Admin_Screenshots {
 					' <a href="?page=webchangedetector-change-detections">' . esc_html__( 'Go back to Change Detections', 'webchangedetector' ) . '</a></p>';
 				return;
 			}
-			
+
 			$compare = $api_response['data'];
 
 			// $public_token = $compare['token']; // Unused variable
-			$all_tokens   = array();
+			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
 
@@ -225,7 +225,7 @@ class WebChangeDetector_Admin_Screenshots {
 			echo '</div>';
 
 		} else {
-			echo '<p class="notice notice-error" style="padding: 10px;">' . 
+			echo '<p class="notice notice-error" style="padding: 10px;">' .
 				esc_html__( 'Ooops! There was no change detection selected. Please go to', 'webchangedetector' ) . ' ' .
 				'<a href="?page=webchangedetector-change-detections">' . esc_html__( 'Change Detections', 'webchangedetector' ) . '</a> ' .
 				esc_html__( 'and select a change detection to show.', 'webchangedetector' ) . '</p>';
@@ -251,4 +251,4 @@ class WebChangeDetector_Admin_Screenshots {
 
 		echo '<div style="width: 100%; text-align: center;"><img style="max-width: 100%" src="' . esc_url( $postdata['img_url'] ) . '"></div>';
 	}
-} 
+}

@@ -48,15 +48,15 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.0.0
-	 * @param    WebChangeDetector_Admin             $admin             The main admin class instance.
-	 * @param    WebChangeDetector_Admin_WordPress   $wordpress_handler The WordPress handler instance.
-	 * @param    WebChangeDetector_Admin_Settings    $settings_handler  The settings handler instance.
+	 * @param    WebChangeDetector_Admin           $admin             The main admin class instance.
+	 * @param    WebChangeDetector_Admin_WordPress $wordpress_handler The WordPress handler instance.
+	 * @param    WebChangeDetector_Admin_Settings  $settings_handler  The settings handler instance.
 	 */
 	public function __construct( $admin, $wordpress_handler, $settings_handler ) {
 		parent::__construct( $admin );
-		
+
 		$this->wordpress_handler = $wordpress_handler;
-		$this->settings_handler = $settings_handler;
+		$this->settings_handler  = $settings_handler;
 	}
 
 	/**
@@ -86,9 +86,9 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 
 		try {
 			$post_data = $this->validate_post_data( array( 'sync_types' ) );
-			
+
 			if ( false === $post_data ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Missing sync types data.', 'webchangedetector' ),
 					'Missing sync_types'
 				);
@@ -96,49 +96,49 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 			}
 
 			$sync_types = $post_data['sync_types'];
-			
+
 			// Validate sync types.
 			$available_types = $this->settings_handler->get_available_sync_types();
-			$valid_types = array();
-			
+			$valid_types     = array();
+
 			foreach ( $sync_types as $type ) {
 				if ( isset( $available_types[ $type ] ) ) {
 					$valid_types[] = $type;
 				}
 			}
-			
+
 			if ( empty( $valid_types ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'No valid sync types provided.', 'webchangedetector' ),
 					'No valid sync types'
 				);
 				return;
 			}
-			
+
 			// Perform URL synchronization.
 			$sync_result = $this->wordpress_handler->sync_urls( $valid_types );
-			
+
 			if ( is_wp_error( $sync_result ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Failed to synchronize URLs.', 'webchangedetector' ),
 					'Sync error: ' . $sync_result->get_error_message()
 				);
 				return;
 			}
-			
+
 			// Update stored sync types.
 			update_option( 'wcd_sync_url_types', $valid_types );
-			
-			$this->send_success_response( 
-				array( 
+
+			$this->send_success_response(
+				array(
 					'synced_urls' => $sync_result,
-					'sync_types' => $valid_types,
+					'sync_types'  => $valid_types,
 				),
 				__( 'URLs synchronized successfully.', 'webchangedetector' )
 			);
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while synchronizing URLs.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -159,26 +159,26 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 
 		try {
 			$website_details = $this->admin->website_details;
-			
+
 			if ( empty( $website_details ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Website details not available.', 'webchangedetector' ),
 					'Website details missing'
 				);
 				return;
 			}
-			
+
 			// Get admin bar status information.
 			$admin_bar_status = array(
-				'enabled' => get_option( 'wcd_admin_bar_enabled', true ),
+				'enabled'      => get_option( 'wcd_admin_bar_enabled', true ),
 				'website_uuid' => $website_details['uuid'] ?? '',
-				'last_update' => get_option( 'wcd_last_admin_bar_update', 0 ),
+				'last_update'  => get_option( 'wcd_last_admin_bar_update', 0 ),
 			);
-			
+
 			$this->send_success_response( $admin_bar_status );
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while getting admin bar status.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
@@ -199,46 +199,45 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 
 		try {
 			$post_data = $this->validate_post_data();
-			
+
 			// Get sync method (optional).
 			$sync_method = isset( $post_data['sync_method'] ) ? $post_data['sync_method'] : 'default';
-			
+
 			// Get available sync methods.
 			$available_methods = $this->wordpress_handler->get_available_sync_methods();
-			
+
 			if ( ! isset( $available_methods[ $sync_method ] ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Sync method not available.', 'webchangedetector' ),
 					'Invalid sync method: ' . $sync_method
 				);
 				return;
 			}
-			
+
 			// Perform post synchronization.
 			$sync_result = $this->wordpress_handler->sync_posts( $sync_method );
-			
+
 			if ( is_wp_error( $sync_result ) ) {
-				$this->send_error_response( 
+				$this->send_error_response(
 					__( 'Failed to synchronize posts.', 'webchangedetector' ),
 					'Sync error: ' . $sync_result->get_error_message()
 				);
 				return;
 			}
-			
-			$this->send_success_response( 
-				array( 
+
+			$this->send_success_response(
+				array(
 					'synced_posts' => $sync_result,
-					'sync_method' => $sync_method,
+					'sync_method'  => $sync_method,
 				),
 				__( 'Posts synchronized successfully.', 'webchangedetector' )
 			);
-			
+
 		} catch ( \Exception $e ) {
-			$this->send_error_response( 
+			$this->send_error_response(
 				__( 'An error occurred while synchronizing posts.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
 		}
 	}
-
 }

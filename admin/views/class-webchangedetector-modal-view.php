@@ -262,7 +262,7 @@ class WebChangeDetector_Modal_View {
 								</th>
 								<td>
 									<input type="email" id="email" name="email" class="regular-text" required 
-									       value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
+											value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
 									<p class="description">
 										We'll create a trial account with this email address.
 									</p>
@@ -427,4 +427,4 @@ class WebChangeDetector_Modal_View {
 		</style>
 		<?php
 	}
-} 
+}

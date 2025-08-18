@@ -40,8 +40,8 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
-            $this->admin->logger->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
-			if ( ! empty( $data['monitoring'] ) && (int)$data['monitoring'] === 1 ) {
+			$this->admin->logger->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
+			if ( ! empty( $data['monitoring'] ) && (int) $data['monitoring'] === 1 ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
 				return $this->handle_manual_check_settings( $data );
@@ -64,16 +64,16 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate monitoring settings.
 		$validation = $this->validate_monitoring_settings( $data );
 		if ( ! $validation['success'] ) {
-            $this->admin->logger->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
+			$this->admin->logger->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
 			return $validation;
 		}
 
 		// Update monitoring settings via API.
 		$result = $this->admin->settings_handler->update_monitoring_settings( $data );
-		
+
 		// Debug: Log the result from update_monitoring_settings
 		$this->admin->logger->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
-		
+
 		// The settings handler now returns a standardized response format
 		return $result;
 	}
@@ -87,7 +87,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	private function handle_manual_check_settings( $data ) {
 		// Update manual check group settings.
 		$result = $this->admin->settings_handler->update_manual_check_group_settings( $data );
-		
+
 		if ( $result ) {
 			return array(
 				'success' => true,
@@ -111,7 +111,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		try {
 			$disable_admin_bar = isset( $data['wcd_disable_admin_bar_menu'] ) ? 1 : 0;
 			update_option( 'wcd_disable_admin_bar_menu', $disable_admin_bar );
-			
+
 			return array(
 				'success' => true,
 				'message' => 'Admin bar setting saved successfully.',
@@ -134,12 +134,12 @@ class WebChangeDetector_Settings_Action_Handler {
 		try {
 			$enable_debug_logging = isset( $data['wcd_debug_logging'] ) ? 1 : 0;
 			update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $enable_debug_logging );
-			
+
 			// Update the logger instance if it exists
 			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'set_debug_enabled' ) ) {
 				$this->admin->logger->set_debug_enabled( $enable_debug_logging );
 			}
-			
+
 			return array(
 				'success' => true,
 				'message' => 'Debug logging setting saved successfully.',
@@ -181,7 +181,7 @@ class WebChangeDetector_Settings_Action_Handler {
 			// Use the logger to download the file
 			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'download_log_file' ) ) {
 				$result = $this->admin->logger->download_log_file( $filename );
-				
+
 				if ( is_wp_error( $result ) ) {
 					return array(
 						'success' => false,
@@ -212,10 +212,10 @@ class WebChangeDetector_Settings_Action_Handler {
 	public function handle_sync_urls( $data ) {
 		try {
 			$force = ! empty( $data['force'] );
-			
+
 			// Perform URL sync.
 			$result = $this->admin->wordpress_handler->sync_posts( $force );
-			
+
 			if ( $result ) {
 				return array(
 					'success' => true,
@@ -254,10 +254,10 @@ class WebChangeDetector_Settings_Action_Handler {
 
 			// Build settings array.
 			$settings = array(
-				'auto_update_checks_enabled'   => !empty( $data['auto_update_checks_enabled'] ) && $data['auto_update_checks_enabled'] === '1',
-				'auto_update_checks_from'      => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_from'] ?? '' ) ),
-				'auto_update_checks_to'        => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_to'] ?? '' ) ),
-				'auto_update_checks_emails'    => sanitize_textarea_field( $data['auto_update_checks_emails'] ?? '' ),
+				'auto_update_checks_enabled' => ! empty( $data['auto_update_checks_enabled'] ) && $data['auto_update_checks_enabled'] === '1',
+				'auto_update_checks_from'    => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_from'] ?? '' ) ),
+				'auto_update_checks_to'      => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_to'] ?? '' ) ),
+				'auto_update_checks_emails'  => sanitize_textarea_field( $data['auto_update_checks_emails'] ?? '' ),
 			);
 
 			// Add weekday settings.
@@ -267,7 +267,7 @@ class WebChangeDetector_Settings_Action_Handler {
 
 			// Save via API.
 			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], array( 'auto_update_settings' => $settings ) );
-			
+
 			if ( $result['success'] ?? false ) {
 				return array(
 					'success' => true,
@@ -295,8 +295,8 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_url_selection( $data ) {
 		try {
-			$active_posts = array();
-			$count_selected = 0;
+			$active_posts          = array();
+			$count_selected        = 0;
 			$already_processed_ids = array();
 
 			// Process URL selection data.
@@ -333,7 +333,7 @@ class WebChangeDetector_Settings_Action_Handler {
 			}
 
 			$group_id = sanitize_text_field( $data['group_id'] ?? '' );
-			
+
 			if ( empty( $group_id ) ) {
 				return array(
 					'success' => false,
@@ -343,11 +343,11 @@ class WebChangeDetector_Settings_Action_Handler {
 
 			// Update URLs in group via API.
 			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id, $active_posts );
-			
+
 			if ( $result ) {
 				return array(
-					'success' => true,
-					'message' => sprintf( 'URL selection saved. %d URLs selected for monitoring.', $count_selected ),
+					'success'        => true,
+					'message'        => sprintf( 'URL selection saved. %d URLs selected for monitoring.', $count_selected ),
 					'selected_count' => $count_selected,
 				);
 			} else {
@@ -375,9 +375,9 @@ class WebChangeDetector_Settings_Action_Handler {
 
 		// Validate interval.
 		if ( ! empty( $data['interval_in_h'] ) ) {
-			$interval = floatval( $data['interval_in_h'] );
+			$interval        = floatval( $data['interval_in_h'] );
 			$valid_intervals = array( 0.25, 0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0, 24.0 );
-			
+
 			if ( ! in_array( $interval, $valid_intervals, true ) ) {
 				$errors[] = 'Invalid monitoring interval selected.';
 			}
@@ -393,7 +393,7 @@ class WebChangeDetector_Settings_Action_Handler {
 
 		return array(
 			'success' => empty( $errors ),
-			'errors' => $errors,
+			'errors'  => $errors,
 		);
 	}
 
@@ -432,7 +432,7 @@ class WebChangeDetector_Settings_Action_Handler {
 
 		return array(
 			'success' => empty( $errors ),
-			'errors' => $errors,
+			'errors'  => $errors,
 		);
 	}
 
@@ -446,15 +446,15 @@ class WebChangeDetector_Settings_Action_Handler {
 		switch ( $settings_type ) {
 			case 'monitoring':
 				return $this->get_monitoring_settings();
-			
+
 			case 'auto_update':
 				return $this->get_auto_update_settings();
-			
+
 			case 'admin_bar':
 				return array(
 					'wcd_disable_admin_bar_menu' => get_option( 'wcd_disable_admin_bar_menu', 0 ),
 				);
-			
+
 			default:
 				return array();
 		}
@@ -467,11 +467,11 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	private function get_monitoring_settings() {
 		$group_and_urls = $this->admin->get_group_and_urls( $this->admin->monitoring_group_uuid );
-		
+
 		return array(
-			'interval_in_h' => $group_and_urls['interval_in_h'] ?? 24,
-			'hour_of_day' => $group_and_urls['hour_of_day'] ?? 0,
-			'enabled' => $group_and_urls['enabled'] ?? false,
+			'interval_in_h'       => $group_and_urls['interval_in_h'] ?? 24,
+			'hour_of_day'         => $group_and_urls['hour_of_day'] ?? 0,
+			'enabled'             => $group_and_urls['enabled'] ?? false,
 			'selected_urls_count' => $group_and_urls['selected_urls_count'] ?? 0,
 		);
 	}
@@ -483,19 +483,19 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	private function get_auto_update_settings() {
 		$website_details = $this->admin->website_details ?? array();
-		
+
 		return $website_details['auto_update_settings'] ?? array(
-			'auto_update_checks_enabled' => false,
-			'auto_update_checks_from' => '09:00',
-			'auto_update_checks_to' => '17:00',
-			'auto_update_checks_emails' => get_option( 'admin_email' ),
-			'auto_update_checks_monday' => true,
-			'auto_update_checks_tuesday' => true,
+			'auto_update_checks_enabled'   => false,
+			'auto_update_checks_from'      => '09:00',
+			'auto_update_checks_to'        => '17:00',
+			'auto_update_checks_emails'    => get_option( 'admin_email' ),
+			'auto_update_checks_monday'    => true,
+			'auto_update_checks_tuesday'   => true,
 			'auto_update_checks_wednesday' => true,
-			'auto_update_checks_thursday' => true,
-			'auto_update_checks_friday' => true,
-			'auto_update_checks_saturday' => false,
-			'auto_update_checks_sunday' => false,
+			'auto_update_checks_thursday'  => true,
+			'auto_update_checks_friday'    => true,
+			'auto_update_checks_saturday'  => false,
+			'auto_update_checks_sunday'    => false,
 		);
 	}
-} 
+}

@@ -117,7 +117,6 @@ class WebChangeDetector {
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-utils.php';
 
-
 		/**
 		 * The settings management class for all WebChangeDetector configuration.
 		 */
@@ -248,14 +247,14 @@ class WebChangeDetector {
 	 * @access   private
 	 */
 	private function define_admin_hooks() {
-		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name() );
-		$plugin_ajax = new WebChangeDetector_Admin_AJAX( $plugin_admin );
-        $plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
+		$plugin_admin     = new WebChangeDetector_Admin( $this->get_plugin_name() );
+		$plugin_ajax      = new WebChangeDetector_Admin_AJAX( $plugin_admin );
+		$plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
-		
+
 		// AJAX handlers now managed by dedicated AJAX class
 		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_ajax, 'ajax_get_processing_queue' );
 		$this->loader->add_action( 'wp_ajax_post_url', $plugin_ajax, 'ajax_post_url' );

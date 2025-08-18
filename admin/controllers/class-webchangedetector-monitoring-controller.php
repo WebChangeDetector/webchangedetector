@@ -60,4 +60,4 @@ class WebChangeDetector_Monitoring_Controller {
 		<div class="clear"></div>
 		<?php
 	}
-} 
+}

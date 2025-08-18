@@ -134,7 +134,7 @@ class WebChangeDetector_Logs_Controller {
 						echo '<td>';
 
 						// Show screenshot button.
-						
+
 						if (
 							in_array( $queue['sc_type'], array( 'pre', 'post', 'auto', 'compare' ), true ) &&
 							'done' === $queue['status'] &&
@@ -210,13 +210,13 @@ class WebChangeDetector_Logs_Controller {
 											<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 												<?php
 												$status_class = 'status-' . str_replace( '_', '', $entry['summary']['status'] );
-												$status_text = 'completed' === $entry['summary']['status'] ? __( 'Completed', 'webchangedetector' ) :
+												$status_text  = 'completed' === $entry['summary']['status'] ? __( 'Completed', 'webchangedetector' ) :
 													( 'completed_with_errors' === $entry['summary']['status'] ? __( 'Completed with Errors', 'webchangedetector' ) :
 													__( 'Failed', 'webchangedetector' ) );
-												
+
 												$status_icon = 'completed' === $entry['summary']['status'] ? '✓' :
 													( 'completed_with_errors' === $entry['summary']['status'] ? '⚠' : '✗' );
-												
+
 												$status_color = 'completed' === $entry['summary']['status'] ? '#46b450' :
 													( 'completed_with_errors' === $entry['summary']['status'] ? '#ffb900' : '#dc3232' );
 												?>
@@ -230,11 +230,13 @@ class WebChangeDetector_Logs_Controller {
 											<div class="accordion-batch-title-tile">
 												<?php
 												/* translators: 1: number of successful updates, 2: total attempted updates */
-												echo esc_html( sprintf(
-													__( '%1$d of %2$d updates successful', 'webchangedetector' ),
-													$entry['summary']['successful'],
-													$entry['summary']['total_attempted']
-												) );
+												echo esc_html(
+													sprintf(
+														__( '%1$d of %2$d updates successful', 'webchangedetector' ),
+														$entry['summary']['successful'],
+														$entry['summary']['total_attempted']
+													)
+												);
 												?>
 											</div>
 											
@@ -258,14 +260,14 @@ class WebChangeDetector_Logs_Controller {
 												line-height: 1.6;
 											}
 										</style>
-										<?php 
+										<?php
 											// Use post-update batch_id for comparisons (the main batch_id field)
 											// This will be the post-update batch_id once it's available
-											if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) : 
+										if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) :
 											?>
 												<p>
 													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
-														<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
+													<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
 													</a>
 												</p>
 											<?php endif; ?>
@@ -279,11 +281,13 @@ class WebChangeDetector_Logs_Controller {
 														<span style="color: #dc3232;">✗</span>
 													<?php endif; ?>
 													<?php
-													echo esc_html( sprintf(
-														__( 'Version %1$s → %2$s', 'webchangedetector' ),
-														$entry['updates']['core']['from_version'],
-														$entry['updates']['core']['to_version']
-													) );
+													echo esc_html(
+														sprintf(
+															__( 'Version %1$s → %2$s', 'webchangedetector' ),
+															$entry['updates']['core']['from_version'],
+															$entry['updates']['core']['to_version']
+														)
+													);
 													?>
 													<?php if ( isset( $entry['updates']['core']['error'] ) && $entry['updates']['core']['error'] ) : ?>
 														<br><span style="color: #dc3232;"><?php echo esc_html( $entry['updates']['core']['error'] ); ?></span>
@@ -304,11 +308,13 @@ class WebChangeDetector_Logs_Controller {
 														<?php endif; ?>
 														<strong><?php echo esc_html( $plugin['name'] ); ?></strong>:
 														<?php
-														echo esc_html( sprintf(
-															__( 'Version %1$s → %2$s', 'webchangedetector' ),
-															$plugin['from_version'] ?: '?',
-															$plugin['to_version']
-														) );
+														echo esc_html(
+															sprintf(
+																__( 'Version %1$s → %2$s', 'webchangedetector' ),
+																$plugin['from_version'] ?: '?',
+																$plugin['to_version']
+															)
+														);
 														?>
 														<?php if ( isset( $plugin['error'] ) && $plugin['error'] ) : ?>
 															<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $plugin['error'] ); ?></span>
@@ -330,11 +336,13 @@ class WebChangeDetector_Logs_Controller {
 														<?php endif; ?>
 														<strong><?php echo esc_html( $theme['name'] ); ?></strong>:
 														<?php
-														echo esc_html( sprintf(
-															__( 'Version %1$s → %2$s', 'webchangedetector' ),
-															$theme['from_version'] ?: '?',
-															$theme['to_version']
-														) );
+														echo esc_html(
+															sprintf(
+																__( 'Version %1$s → %2$s', 'webchangedetector' ),
+																$theme['from_version'] ?: '?',
+																$theme['to_version']
+															)
+														);
 														?>
 														<?php if ( isset( $theme['error'] ) && $theme['error'] ) : ?>
 															<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $theme['error'] ); ?></span>

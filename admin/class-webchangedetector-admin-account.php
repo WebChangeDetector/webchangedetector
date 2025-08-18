@@ -53,7 +53,7 @@ class WebChangeDetector_Admin_Account {
 	 * hashing the password, and sending the request to the WebChange Detector API.
 	 *
 	 * @since    1.0.0
-	 * @param    array    $postdata    The form data containing user information.
+	 * @param    array $postdata    The form data containing user information.
 	 * @return   string|array          The API response or error message.
 	 */
 	public function create_trial_account( $postdata ) {
@@ -61,7 +61,7 @@ class WebChangeDetector_Admin_Account {
 		$validation_string = wp_generate_password( 40 );
 		update_option( WCD_VERIFY_SECRET, $validation_string, false );
 		$postdata['password'] = wp_hash_password( $postdata['password'] );
-		
+
 		$args = array_merge(
 			array(
 				'action'            => 'add_trial_account',
@@ -83,8 +83,8 @@ class WebChangeDetector_Admin_Account {
 	 * for account activation purposes.
 	 *
 	 * @since    1.0.0
-	 * @param    array     $postdata     The form data containing user information.
-	 * @param    string    $api_token    The API token to save.
+	 * @param    array  $postdata     The form data containing user information.
+	 * @param    string $api_token    The API token to save.
 	 * @return   bool                    True if saved successfully, false otherwise.
 	 */
 	public function save_api_token( $postdata, $api_token ) {
@@ -116,7 +116,7 @@ class WebChangeDetector_Admin_Account {
 	 * with caching support to avoid unnecessary API calls.
 	 *
 	 * @since    1.0.0
-	 * @param    bool    $force    Force fresh data from API, bypassing cache.
+	 * @param    bool $force    Force fresh data from API, bypassing cache.
 	 * @return   array|string|bool Account data array, error message string, or false on failure.
 	 */
 	public function get_account( $force = false ) {
@@ -156,14 +156,14 @@ class WebChangeDetector_Admin_Account {
 
 		$account_details = $this->get_account();
 
-		$allowances = get_option( WCD_ALLOWANCES, array() );
+		$allowances      = get_option( WCD_ALLOWANCES, array() );
 		$upgrade_allowed = isset( $allowances['upgrade_account'] ) ? $allowances['upgrade_account'] : 1;
-		
+
 		// Disable upgrade account for subaccounts.
 		if ( ! empty( $account_details['is_subaccount'] ) && $account_details['is_subaccount'] ) {
 			$upgrade_allowed = 0;
 		}
-		
+
 		if ( ! $upgrade_allowed || ! is_array( $account_details ) || empty( $account_details['magic_login_secret'] ) ) {
 			return '?page=webchangedetector-no-billing-account';
 		}
@@ -213,7 +213,7 @@ class WebChangeDetector_Admin_Account {
 	 * for connecting their WordPress site to WebChange Detector.
 	 *
 	 * @since    1.0.0
-	 * @param    string|bool    $api_token    Existing API token or false.
+	 * @param    string|bool $api_token    Existing API token or false.
 	 * @return   void                         Outputs the form HTML.
 	 */
 	public function get_api_token_form( $api_token = false ) {
@@ -223,7 +223,7 @@ class WebChangeDetector_Admin_Account {
 				<div class="wcd-settings-card">
 					<h2><span class="dashicons dashicons-admin-users"></span> Account</h2>
 					<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
-						onsubmit="return confirm('<?php echo esc_js(__('Are you sure you want to reset the API token?', 'webchangedetector')); ?>');">
+						onsubmit="return confirm('<?php echo esc_js( __( 'Are you sure you want to reset the API token?', 'webchangedetector' ) ); ?>');">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
 
@@ -338,7 +338,7 @@ class WebChangeDetector_Admin_Account {
 	 * a valid account or API token configured.
 	 *
 	 * @since    1.0.0
-	 * @param    string    $api_token    Optional API token for pre-filling forms.
+	 * @param    string $api_token    Optional API token for pre-filling forms.
 	 * @return   void                    Outputs the no account page HTML.
 	 */
 	public function get_no_account_page( $api_token = '' ) {
@@ -346,15 +346,15 @@ class WebChangeDetector_Admin_Account {
 		if ( empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN, '' ) ) ) {
 			update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
 		}
-		
-		$user = wp_get_current_user();
+
+		$user       = wp_get_current_user();
 		$first_name = $user->user_firstname;
-		$last_name = $user->user_lastname;
-		$email = $user->user_email;
+		$last_name  = $user->user_lastname;
+		$email      = $user->user_email;
 		?>
 		<div class="no-account-page">
 			<div class="no-account">
-				<img src="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
+				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . 'admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
 				<h2><?php echo esc_html__( 'See what changed before your users do.', 'webchangedetector' ); ?></h2>
 			</div>
 			<div class="highlight-wrapper">
@@ -390,7 +390,7 @@ class WebChangeDetector_Admin_Account {
 	 * newly created accounts.
 	 *
 	 * @since    1.0.0
-	 * @param    string    $error    Optional error message to display.
+	 * @param    string $error    Optional error message to display.
 	 * @return   void               Outputs the activation page HTML.
 	 */
 	public function show_activate_account( $error ) {
@@ -490,25 +490,25 @@ class WebChangeDetector_Admin_Account {
 	 * @return   bool    True if first visit, false otherwise.
 	 */
 	public function is_first_time_dashboard_visit() {
-		$user_id = get_current_user_id();
+		$user_id    = get_current_user_id();
 		$option_key = 'wcd_first_time_visit_' . $user_id;
-		
+
 		// Check if the user has visited before.
 		$has_visited = get_option( $option_key, false );
-		
+
 		if ( ! $has_visited ) {
 			// Additional check: Only show wizard if user doesn't have significant activity yet.
 			// This prevents wizard from showing for users who might have reset their settings.
 			$client_account = $this->get_account();
-			$has_activity = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
-			
+			$has_activity   = ! empty( $client_account['checks_done'] ) && $client_account['checks_done'] > 0;
+
 			if ( ! $has_activity ) {
 				// Mark as visited for future requests.
 				update_option( $option_key, true );
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -519,8 +519,8 @@ class WebChangeDetector_Admin_Account {
 	 * with proper error handling and response processing.
 	 *
 	 * @since    1.0.0
-	 * @param    array    $post     Request data.
-	 * @param    bool     $is_web   Is web request.
+	 * @param    array $post     Request data.
+	 * @param    bool  $is_web   Is web request.
 	 * @return   string|array       API response or error message.
 	 */
 	public function api_v1( $post, $is_web = false ) {
@@ -564,7 +564,7 @@ class WebChangeDetector_Admin_Account {
 			),
 		);
 
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ), 'api_v1', 'debug');
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ), 'api_v1', 'debug' );
 		if ( $is_web ) {
 			$response = wp_remote_post( $url_web, $args );
 		} else {
@@ -622,15 +622,15 @@ class WebChangeDetector_Admin_Account {
 		if ( ! empty( $account_details['data'] ) ) {
 			$account_details                 = $account_details['data'];
 			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
-			
+
 			// Cache the account details if no specific token was used.
 			if ( empty( $api_token ) ) {
 				$this->account_details = $account_details;
 			}
-			
+
 			return $account_details;
 		}
-		
+
 		if ( ! empty( $account_details['message'] ) ) {
 			return $account_details['message'];
 		}
@@ -639,4 +639,4 @@ class WebChangeDetector_Admin_Account {
 	}
 
 	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller
-} 
+}

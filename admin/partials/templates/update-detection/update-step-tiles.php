@@ -9,11 +9,11 @@
 <div class="wcd-workflow-steps">
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_pre ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_pre === 'done' ): ?>
+			<?php if ( $progress_pre === 'done' ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_pre === 'active' ): ?>
+			<?php elseif ( $progress_pre === 'active' ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
-			<?php else: ?>
+			<?php else : ?>
 				<span class="wcd-step-number">1</span>
 			<?php endif; ?>
 		</div>
@@ -27,11 +27,11 @@
 	
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_post ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_post === 'done' ): ?>
+			<?php if ( $progress_post === 'done' ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_post === 'active' ): ?>
+			<?php elseif ( $progress_post === 'active' ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
-			<?php else: ?>
+			<?php else : ?>
 				<span class="wcd-step-number">2</span>
 			<?php endif; ?>
 		</div>
@@ -45,11 +45,11 @@
 	
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_change_detection ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_change_detection === 'done' ): ?>
+			<?php if ( $progress_change_detection === 'done' ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_change_detection === 'active' ): ?>
+			<?php elseif ( $progress_change_detection === 'active' ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
-			<?php else: ?>
+			<?php else : ?>
 				<span class="wcd-step-number">3</span>
 			<?php endif; ?>
 		</div>

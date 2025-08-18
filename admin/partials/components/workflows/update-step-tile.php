@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var string $step_key         Step identifier (e.g., 'pre-update', 'make-update')
  * @var string $step_title       Display title for the step
  * @var string $step_description Description of what this step does
@@ -26,15 +27,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $css_class        Optional CSS classes
  */
 
-$step_key = $step_key ?? '';
-$step_title = $step_title ?? 'Step';
+$step_key         = $step_key ?? '';
+$step_title       = $step_title ?? 'Step';
 $step_description = $step_description ?? '';
-$is_current = $is_current ?? false;
-$is_completed = $is_completed ?? false;
-$icon_class = $icon_class ?? 'dashicons-admin-generic';
-$button_text = $button_text ?? '';
-$button_action = $button_action ?? '';
-$css_class = $css_class ?? '';
+$is_current       = $is_current ?? false;
+$is_completed     = $is_completed ?? false;
+$icon_class       = $icon_class ?? 'dashicons-admin-generic';
+$button_text      = $button_text ?? '';
+$button_action    = $button_action ?? '';
+$css_class        = $css_class ?? '';
 
 // Determine tile state class.
 $state_class = '';
@@ -48,7 +49,7 @@ if ( $is_completed ) {
 ?>
 
 <div class="update-step-tile <?php echo esc_attr( $state_class ); ?> <?php echo esc_attr( $css_class ); ?>" 
-     data-step="<?php echo esc_attr( $step_key ); ?>">
+	data-step="<?php echo esc_attr( $step_key ); ?>">
 	<div class="step-icon">
 		<span class="dashicons <?php echo esc_attr( $icon_class ); ?>"></span>
 		<?php if ( $is_completed ) : ?>

@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Expected variables:
+ *
  * @var string $header_text      Header text for the accordion
  * @var string $content          Content HTML (should be escaped by caller)
  * @var bool   $open             Whether accordion starts open
@@ -22,10 +23,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $accordion_id     Unique ID for the accordion
  */
 
-$header_text = $header_text ?? 'Click to expand';
-$content = $content ?? '';
-$open = $open ?? false;
-$css_class = $css_class ?? '';
+$header_text  = $header_text ?? 'Click to expand';
+$content      = $content ?? '';
+$open         = $open ?? false;
+$css_class    = $css_class ?? '';
 $accordion_id = $accordion_id ?? 'accordion-' . wp_rand( 1000, 9999 );
 ?>
 

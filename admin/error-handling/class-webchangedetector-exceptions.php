@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Base WebChangeDetector Exception
  */
 class WebChangeDetector_Exception extends \Exception {
-	
+
 	/**
 	 * Error category.
 	 *
@@ -52,11 +52,11 @@ class WebChangeDetector_Exception extends \Exception {
 	 */
 	public function __construct( $message = '', $user_message = '', $context = array(), $code = 0, \Throwable $previous = null ) {
 		parent::__construct( $message, $code, $previous );
-		
+
 		if ( ! empty( $user_message ) ) {
 			$this->user_message = $user_message;
 		}
-		
+
 		$this->context = $context;
 	}
 
@@ -101,8 +101,8 @@ class WebChangeDetector_Exception extends \Exception {
  * API Exception for API-related errors.
  */
 class WebChangeDetector_API_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'api';
+
+	protected $category     = 'api';
 	protected $user_message = 'Failed to communicate with WebChangeDetector service. Please check your connection and try again.';
 
 	/**
@@ -129,14 +129,14 @@ class WebChangeDetector_API_Exception extends WebChangeDetector_Exception {
 	 * @param \Throwable $previous      Previous exception.
 	 */
 	public function __construct( $message = '', $http_code = 0, $response_data = array(), $user_message = '', \Throwable $previous = null ) {
-		$this->http_code = $http_code;
+		$this->http_code     = $http_code;
 		$this->response_data = $response_data;
-		
+
 		$context = array(
 			'http_code'     => $http_code,
 			'response_data' => $response_data,
 		);
-		
+
 		parent::__construct( $message, $user_message, $context, $http_code, $previous );
 	}
 
@@ -164,8 +164,8 @@ class WebChangeDetector_API_Exception extends WebChangeDetector_Exception {
  * Validation Exception for validation errors.
  */
 class WebChangeDetector_Validation_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'validation';
+
+	protected $category     = 'validation';
 	protected $user_message = 'Please correct the validation errors and try again.';
 
 	/**
@@ -185,15 +185,15 @@ class WebChangeDetector_Validation_Exception extends WebChangeDetector_Exception
 	 */
 	public function __construct( $validation_errors = array(), $message = '', $user_message = '', \Throwable $previous = null ) {
 		$this->validation_errors = $validation_errors;
-		
+
 		if ( empty( $message ) ) {
 			$message = 'Validation failed: ' . wp_json_encode( $validation_errors );
 		}
-		
+
 		$context = array(
 			'validation_errors' => $validation_errors,
 		);
-		
+
 		parent::__construct( $message, $user_message, $context, 0, $previous );
 	}
 
@@ -213,7 +213,7 @@ class WebChangeDetector_Validation_Exception extends WebChangeDetector_Exception
 	 * @param string $error Error message.
 	 */
 	public function add_validation_error( $field, $error ) {
-		$this->validation_errors[ $field ] = $error;
+		$this->validation_errors[ $field ]  = $error;
 		$this->context['validation_errors'] = $this->validation_errors;
 	}
 }
@@ -222,8 +222,8 @@ class WebChangeDetector_Validation_Exception extends WebChangeDetector_Exception
  * Authentication Exception for authentication errors.
  */
 class WebChangeDetector_Authentication_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'authentication';
+
+	protected $category     = 'authentication';
 	protected $user_message = 'Authentication failed. Please check your API credentials.';
 }
 
@@ -231,8 +231,8 @@ class WebChangeDetector_Authentication_Exception extends WebChangeDetector_Excep
  * Permission Exception for permission errors.
  */
 class WebChangeDetector_Permission_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'permission';
+
+	protected $category     = 'permission';
 	protected $user_message = 'You do not have permission to perform this action.';
 
 	/**
@@ -252,15 +252,15 @@ class WebChangeDetector_Permission_Exception extends WebChangeDetector_Exception
 	 */
 	public function __construct( $required_capability = '', $message = '', $user_message = '', \Throwable $previous = null ) {
 		$this->required_capability = $required_capability;
-		
+
 		if ( empty( $message ) ) {
 			$message = "Permission denied. Required capability: {$required_capability}";
 		}
-		
+
 		$context = array(
 			'required_capability' => $required_capability,
 		);
-		
+
 		parent::__construct( $message, $user_message, $context, 0, $previous );
 	}
 
@@ -278,8 +278,8 @@ class WebChangeDetector_Permission_Exception extends WebChangeDetector_Exception
  * Filesystem Exception for file system errors.
  */
 class WebChangeDetector_Filesystem_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'filesystem';
+
+	protected $category     = 'filesystem';
 	protected $user_message = 'File system error occurred. Please check file permissions.';
 
 	/**
@@ -308,16 +308,16 @@ class WebChangeDetector_Filesystem_Exception extends WebChangeDetector_Exception
 	public function __construct( $file_path = '', $operation = '', $message = '', $user_message = '', \Throwable $previous = null ) {
 		$this->file_path = $file_path;
 		$this->operation = $operation;
-		
+
 		if ( empty( $message ) ) {
 			$message = "Filesystem error: {$operation} failed on {$file_path}";
 		}
-		
+
 		$context = array(
 			'file_path' => $file_path,
 			'operation' => $operation,
 		);
-		
+
 		parent::__construct( $message, $user_message, $context, 0, $previous );
 	}
 
@@ -344,8 +344,8 @@ class WebChangeDetector_Filesystem_Exception extends WebChangeDetector_Exception
  * Network Exception for network-related errors.
  */
 class WebChangeDetector_Network_Exception extends WebChangeDetector_Exception {
-	
-	protected $category = 'network';
+
+	protected $category     = 'network';
 	protected $user_message = 'Network error occurred. Please check your connection and try again.';
 
 	/**
@@ -372,18 +372,18 @@ class WebChangeDetector_Network_Exception extends WebChangeDetector_Exception {
 	 * @param \Throwable $previous       Previous exception.
 	 */
 	public function __construct( $request_url = '', $request_method = '', $message = '', $user_message = '', \Throwable $previous = null ) {
-		$this->request_url = $request_url;
+		$this->request_url    = $request_url;
 		$this->request_method = $request_method;
-		
+
 		if ( empty( $message ) ) {
 			$message = "Network error: {$request_method} request to {$request_url} failed";
 		}
-		
+
 		$context = array(
 			'request_url'    => $request_url,
 			'request_method' => $request_method,
 		);
-		
+
 		parent::__construct( $message, $user_message, $context, 0, $previous );
 	}
 
@@ -404,4 +404,4 @@ class WebChangeDetector_Network_Exception extends WebChangeDetector_Exception {
 	public function get_request_method() {
 		return $this->request_method;
 	}
-} 
+}
