@@ -53,6 +53,7 @@ class WebChangeDetector_Template_View {
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_include_once_file_path
 		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/auto-settings.php';
 	}
 

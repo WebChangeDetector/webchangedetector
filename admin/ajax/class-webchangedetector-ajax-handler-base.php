@@ -1,7 +1,4 @@
 <?php
-
-namespace WebChangeDetector;
-
 /**
  * Base class for AJAX handlers.
  *
@@ -14,6 +11,8 @@ namespace WebChangeDetector;
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/ajax
  */
+
+namespace WebChangeDetector;
 
 /**
  * Base class for AJAX handlers.
@@ -135,7 +134,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 			$response['message'] = $message;
 		}
 
-		if ( $data !== null ) {
+		if ( null !== $data ) {
 			$response['data'] = $data;
 		}
 
@@ -173,13 +172,11 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 				} else {
 					$post_data[ $key ] = sanitize_text_field( wp_unslash( $value ) );
 				}
-			} else {
+			} elseif ( is_array( $value ) ) {
 				// Default sanitization.
-				if ( is_array( $value ) ) {
-					$post_data[ $key ] = array_map( 'sanitize_text_field', wp_unslash( $value ) );
-				} else {
-					$post_data[ $key ] = sanitize_text_field( wp_unslash( $value ) );
-				}
+				$post_data[ $key ] = array_map( 'sanitize_text_field', wp_unslash( $value ) );
+			} else {
+				$post_data[ $key ] = sanitize_text_field( wp_unslash( $value ) );
 			}
 		}
 

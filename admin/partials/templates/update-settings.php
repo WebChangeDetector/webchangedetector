@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Manual checks settings - Refactored with Components
  *
@@ -23,7 +22,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 		$weekdays_data[ $weekday ] = ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] );
 	}
 
-	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( $auto_update_settings['auto_update_checks_enabled'] === true || $auto_update_settings['auto_update_checks_enabled'] === '1' || $auto_update_settings['auto_update_checks_enabled'] === 1 );
+	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( true === $auto_update_settings['auto_update_checks_enabled'] || '1' === $auto_update_settings['auto_update_checks_enabled'] || 1 === $auto_update_settings['auto_update_checks_enabled'] );
 	?>
 
 	<div class="wcd-settings-card">
@@ -83,7 +82,8 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$label            = __( 'Only', 'webchangedetector' );
 					$timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
 					$current_time     = current_time( 'H:i' );
-					$description      = sprintf( __( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ), $timezone_display, $current_time );
+					// translators: %1$s is the timezone display string, %2$s is the current website time.
+					$description = sprintf( __( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ), $timezone_display, $current_time );
 					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>

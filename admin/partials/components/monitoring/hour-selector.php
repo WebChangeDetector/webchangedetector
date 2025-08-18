@@ -39,7 +39,7 @@ $css_class    = $css_class ?? '';
 				value="<?php echo esc_attr( $i ); ?>" 
 				<?php selected( $current_hour, $i ); ?>
 			>
-				<?php printf( '%02d:00', $i ); ?>
+				<?php printf( '%02d:00', esc_html( $i ) ); ?>
 			</option>
 		<?php endfor; ?>
 	</select>

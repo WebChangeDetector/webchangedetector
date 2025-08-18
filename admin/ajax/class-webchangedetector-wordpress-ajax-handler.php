@@ -1,7 +1,4 @@
 <?php
-
-namespace WebChangeDetector;
-
 /**
  * WordPress AJAX handler.
  *
@@ -13,6 +10,8 @@ namespace WebChangeDetector;
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/ajax
  */
+
+namespace WebChangeDetector;
 
 /**
  * WordPress AJAX handler.

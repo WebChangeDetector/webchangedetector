@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Email Input Component
  *
@@ -64,7 +63,7 @@ $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 	<?php if ( $show_validation ) : ?>
 		<span class="notice notice-error" id="<?php echo esc_attr( $validation_id ); ?>" style="display: none;">
 			<span style="padding: 10px; display: block;" class="default-bg">
-				<?php esc_html_e( 'Please check your email address', 'webchangedetector' ); ?><?php echo $multiple ? __( '(es)', 'webchangedetector' ) : ''; ?>.
+				<?php esc_html_e( 'Please check your email address', 'webchangedetector' ); ?><?php echo $multiple ? esc_html__( '(es)', 'webchangedetector' ) : ''; ?>.
 			</span>
 		</span>
 	<?php endif; ?>

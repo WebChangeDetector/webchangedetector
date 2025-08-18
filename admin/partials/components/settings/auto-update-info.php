@@ -26,7 +26,7 @@ $core_auto_update_enabled = false;
 if ( defined( 'WP_AUTO_UPDATE_CORE' ) ) {
 	// Constant overrides site option.
 	$wp_auto_update_core = constant( 'WP_AUTO_UPDATE_CORE' );
-	if ( $wp_auto_update_core === true || in_array( $wp_auto_update_core, array( 'minor', 'beta', 'rc', 'development', 'branch-development' ), true ) ) {
+	if ( true === $wp_auto_update_core || in_array( $wp_auto_update_core, array( 'minor', 'beta', 'rc', 'development', 'branch-development' ), true ) ) {
 		$core_auto_update_enabled = true;
 	}
 } else {

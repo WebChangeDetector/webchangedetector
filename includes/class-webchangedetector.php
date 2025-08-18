@@ -213,6 +213,11 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';
 
 		/**
+		 * The database logger class for structured logging.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-database-logger.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */

@@ -44,10 +44,18 @@ class WebChangeDetector_Error_Handler {
 	private $debug_enabled;
 
 	/**
+	 * The database logger instance.
+	 *
+	 * @var WebChangeDetector_Database_Logger
+	 */
+	private $database_logger;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->debug_enabled = get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, false );
+		$this->debug_enabled   = get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, false );
+		$this->database_logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
 	}
 
 	/**
@@ -167,7 +175,7 @@ class WebChangeDetector_Error_Handler {
 	}
 
 	/**
-	 * Main logging function using WordPress debug logging.
+	 * Main logging function using database logging.
 	 *
 	 * @param string $message  Log message.
 	 * @param string $context  Log context/category.
@@ -175,21 +183,8 @@ class WebChangeDetector_Error_Handler {
 	 * @return bool True on success, false on failure.
 	 */
 	public function log( $message, $context = 'general', $level = 'info' ) {
-		// Check if debug logging is enabled (always log errors and critical).
-		if ( ! $this->debug_enabled && ! in_array( $level, array( 'error', 'critical' ), true ) ) {
-			return false;
-		}
-
-		// Format log entry.
-		$log_entry = sprintf(
-			'[WCD] [%s] [%s] %s',
-			strtoupper( $level ),
-			$context,
-			$message
-		);
-
-		// Use WordPress error logging.
-		return error_log( $log_entry );
+		// Use the database logger for all logging.
+		return $this->database_logger->log( $message, $context, $level );
 	}
 
 	/**
@@ -280,6 +275,6 @@ class WebChangeDetector_Error_Handler {
 	 */
 	public function set_debug_enabled( $enabled ) {
 		$this->debug_enabled = (bool) $enabled;
-		update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $this->debug_enabled );
+		$this->database_logger->set_debug_enabled( $enabled );
 	}
 }

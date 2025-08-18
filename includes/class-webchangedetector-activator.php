@@ -26,12 +26,14 @@ class WebChangeDetector_Activator {
 	/**
 	 * Plugin activation handler.
 	 *
-	 * Sets up initial options and cleans up any stuck auto-update state
+	 * Sets up initial options, creates database tables, and cleans up any stuck auto-update state
 	 * from previous installations.
 	 *
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+		// Create database tables.
+		self::create_database_tables();
 		// Set up wizard option for first-time users.
 		add_option( 'wcd_wizard', true, '', false );
 
@@ -92,6 +94,38 @@ class WebChangeDetector_Activator {
 					'Plugin activated. No stuck auto-update state found.',
 					'activator',
 					'info'
+				);
+			}
+		}
+	}
+
+	/**
+	 * Create database tables required by the plugin.
+	 *
+	 * @since 4.0.0
+	 */
+	private static function create_database_tables() {
+		// Ensure the WebChangeDetector_Database_Logger class is available.
+		if ( ! class_exists( '\WebChangeDetector\WebChangeDetector_Database_Logger' ) ) {
+			require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-database-logger.php';
+		}
+
+		// Create the logs table.
+		$result = \WebChangeDetector\WebChangeDetector_Database_Logger::create_table();
+
+		// Log the table creation result.
+		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Admin_Utils' ) ) {
+			if ( $result ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Database tables created successfully during activation.',
+					'activator',
+					'info'
+				);
+			} else {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Failed to create database tables during activation.',
+					'activator',
+					'error'
 				);
 			}
 		}

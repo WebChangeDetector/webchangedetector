@@ -59,6 +59,9 @@ class WebChangeDetector_Deactivator {
 			}
 		}
 
+		// Note: We don't drop the logs table on deactivation to preserve log history.
+		// Database tables are only cleaned up during uninstall.
+
 		// Log the cleanup for debugging.
 		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Admin_Utils' ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(

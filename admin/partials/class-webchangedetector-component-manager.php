@@ -51,7 +51,7 @@ class WebChangeDetector_Component_Manager {
 
 		if ( ! file_exists( $full_path ) ) {
 			if ( WP_DEBUG ) {
-				error_log( "WebChangeDetector Component not found: {$full_path}" );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Component not found: {$full_path}", 'component_manager', 'error' );
 			}
 			return $return ? '' : null;
 		}

@@ -14,9 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Get auto update settings.
 $auto_update_settings       = $this->admin->website_details['auto_update_settings'] ?? array();
 $auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) &&
-	( $auto_update_settings['auto_update_checks_enabled'] === true ||
-	$auto_update_settings['auto_update_checks_enabled'] === '1' ||
-	$auto_update_settings['auto_update_checks_enabled'] === 1 );
+	( true === $auto_update_settings['auto_update_checks_enabled'] ||
+	'1' === $auto_update_settings['auto_update_checks_enabled'] ||
+	1 === $auto_update_settings['auto_update_checks_enabled'] );
 
 // Check if there are selected URLs.
 $selected_urls_count = $group_and_urls['selected_urls_count'] ?? 0;
@@ -70,7 +70,8 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		$status_message = __( 'Next check in', 'webchangedetector' );
 
 		// Calculate time until next run.
-		$time_until      = human_time_diff( current_time( 'timestamp' ), $next_auto_update );
+		// Use time() instead of current_time('timestamp') to avoid discouraged usage and get the current Unix timestamp.
+		$time_until = human_time_diff( time(), $next_auto_update );
 		$next_check_time = $time_until;
 		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
 	} else {

@@ -156,33 +156,100 @@ class WebChangeDetector_Settings_Action_Handler {
 	 * Handle download log file action.
 	 *
 	 * @param array $data The download data containing filename.
-	 * @return array|void Result with success status and message, or triggers download.
+	 * @return array Result with success status and message.
 	 */
 	public function handle_download_log_file( $data ) {
+		// Log file downloads are no longer supported with the database logging.
+		// Users should use the export functionality instead.
+		return array(
+			'success' => false,
+			'message' => 'Log file downloads are no longer available. Please use the Export to CSV functionality in the Debug Logs tab.',
+		);
+	}
+
+	/**
+	 * Handle export logs action.
+	 *
+	 * @param array $data The export data containing filters.
+	 * @return void Exits with CSV download.
+	 */
+	public function handle_export_logs( $data ) {
+		// Verify user capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions to export logs.', 'webchangedetector' ) );
+		}
+
+		// Initialize database logger.
+		$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+
+		// Get filters if provided.
+		$filters       = array();
+		$filter_fields = array( 'level', 'context', 'search', 'date_from', 'date_to' );
+		foreach ( $filter_fields as $field ) {
+			if ( ! empty( $data[ $field ] ) ) {
+				$filters[ $field ] = sanitize_text_field( $data[ $field ] );
+			}
+		}
+
+		// Generate CSV.
+		$csv_content = $logger->export_to_csv( $filters );
+
+		// Set headers for download.
+		$filename = 'wcd-logs-' . gmdate( 'Y-m-d-H-i-s' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+		header( 'Content-Length: ' . strlen( $csv_content ) );
+		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+		header( 'Pragma: public' );
+
+		// Output CSV content.
+		echo $csv_content;
+		exit;
+	}
+
+	/**
+	 * Handle clear logs action.
+	 *
+	 * @param array $data The action data.
+	 * @return array Result with success status and message.
+	 */
+	public function handle_clear_logs( $data ) {
 		// Verify user capabilities.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return array(
 				'success' => false,
-				'message' => 'Insufficient permissions to download log files.',
+				'message' => 'Insufficient permissions to clear logs.',
 			);
 		}
 
-		// Check if filename is provided.
-		if ( empty( $data['filename'] ) ) {
+		try {
+			// Initialize database logger.
+			$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+
+			// Clear all logs.
+			$result = $logger->clear_all_logs();
+
+			if ( $result ) {
+				// Log the action.
+				$logger->log( 'All logs cleared by user', 'admin_action', 'info' );
+
+				return array(
+					'success' => true,
+					'message' => 'All logs have been cleared successfully.',
+				);
+			} else {
+				return array(
+					'success' => false,
+					'message' => 'Failed to clear logs. Please try again.',
+				);
+			}
+		} catch ( \Exception $e ) {
 			return array(
 				'success' => false,
-				'message' => 'No log file specified for download.',
+				'message' => 'Error clearing logs: ' . $e->getMessage(),
 			);
 		}
-
-		$filename = sanitize_file_name( $data['filename'] );
-
-		// Log file downloads are no longer supported with the simplified error handler.
-		// The new system uses WordPress debug logging instead of custom files.
-		return array(
-			'success' => false,
-			'message' => 'Log file downloads are no longer available. Error logging now uses WordPress debug logging.',
-		);
 	}
 
 	/**

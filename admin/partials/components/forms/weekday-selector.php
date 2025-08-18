@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Weekday Selector Component
  *

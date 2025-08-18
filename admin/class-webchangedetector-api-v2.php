@@ -45,7 +45,7 @@ class WebChangeDetector_API_V2 {
 	 */
 	public static function get_websites_v2( $force = false, $page = 1 ) {
 		static $websites;
-		if ( $websites && ! $force && $page === 1 ) {
+		if ( $websites && ! $force && 1 === $page ) {
 			return $websites;
 		}
 
@@ -56,7 +56,7 @@ class WebChangeDetector_API_V2 {
 		$result = self::api_v2( $args, 'GET' );
 
 		// Only cache the first page.
-		if ( $page === 1 ) {
+		if ( 1 === $page ) {
 			$websites = $result;
 		}
 

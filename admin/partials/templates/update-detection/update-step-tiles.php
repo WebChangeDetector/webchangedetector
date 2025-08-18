@@ -9,9 +9,9 @@
 <div class="wcd-workflow-steps">
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_pre ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_pre === 'done' ) : ?>
+			<?php if ( 'done' === $progress_pre ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_pre === 'active' ) : ?>
+			<?php elseif ( 'active' === $progress_pre ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
 				<span class="wcd-step-number">1</span>
@@ -23,13 +23,13 @@
 		</div>
 	</div>
 	
-	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( $progress_pre === 'done' ? 'active' : 'inactive' ); ?>"></div>
+	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( 'done' === $progress_pre ? 'active' : 'inactive' ); ?>"></div>
 	
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_post ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_post === 'done' ) : ?>
+			<?php if ( 'done' === $progress_post ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_post === 'active' ) : ?>
+			<?php elseif ( 'active' === $progress_post ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
 				<span class="wcd-step-number">2</span>
@@ -41,13 +41,13 @@
 		</div>
 	</div>
 	
-	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( $progress_post === 'done' ? 'active' : 'inactive' ); ?>"></div>
+	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( 'done' === $progress_post ? 'active' : 'inactive' ); ?>"></div>
 	
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_change_detection ); ?>">
 		<div class="wcd-step-icon">
-			<?php if ( $progress_change_detection === 'done' ) : ?>
+			<?php if ( 'done' === $progress_change_detection ) : ?>
 				<span class="dashicons dashicons-yes-alt"></span>
-			<?php elseif ( $progress_change_detection === 'active' ) : ?>
+			<?php elseif ( 'active' === $progress_change_detection ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
 				<span class="wcd-step-number">3</span>

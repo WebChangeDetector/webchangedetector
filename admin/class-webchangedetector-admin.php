@@ -43,6 +43,8 @@ class WebChangeDetector_Admin {
 		'save_admin_bar_setting',
 		'save_debug_logging_setting',
 		'download_log_file',
+		'export_logs',
+		'clear_logs',
 	);
 
 	const VALID_SC_TYPES = array(

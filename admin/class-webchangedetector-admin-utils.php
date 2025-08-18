@@ -139,22 +139,18 @@ class WebChangeDetector_Admin_Utils {
 	/**
 	 * Log error messages for debugging.
 	 *
-	 * Logs error messages using WordPress debugging standards.
-	 * Only logs when WP_DEBUG is enabled.
+	 * Logs error messages using the database logging system.
+	 * Only logs when debug logging is enabled.
 	 *
 	 * @since 1.0.0
 	 * @param string $message The error message to log.
 	 * @param string $context Optional context for the error.
+	 * @param string $severity Optional severity level.
 	 */
 	public static function log_error( $message, $context = 'general', $severity = 'info' ) {
-		// Use WordPress debug logging directly for static method.
-		$log_entry = sprintf(
-			'[WCD] [%s] [%s] %s',
-			strtoupper( $severity ),
-			$context,
-			$message
-		);
-		error_log( $log_entry );
+		// Use the database logger for static logging.
+		$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+		$logger->log( $message, $context, $severity );
 	}
 
 	/**

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Settings Controller for WebChangeDetector
  *
@@ -43,12 +42,10 @@ class WebChangeDetector_Settings_Controller {
 			return;
 		}
 
-		// Check if viewing a log file.
-		if ( isset( $_GET['view_log'] ) && isset( $_GET['_wpnonce'] ) ) {
-			if ( wp_verify_nonce( $_GET['_wpnonce'], 'view_log_file' ) ) {
-				$this->render_log_viewer();
-				return;
-			}
+		// Redirect old log file viewers to the new debug logs page.
+		if ( isset( $_GET['view_log'] ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) );
+			exit;
 		}
 
 		$this->render_settings_page();
@@ -152,7 +149,7 @@ class WebChangeDetector_Settings_Controller {
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
 								<label class="wcd-form-label"><?php esc_html_e( 'Enable Debug Logging', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php esc_html_e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the plugin directory and older logs are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
+								<div class="wcd-description"><?php esc_html_e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the database and older logs are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<label>
@@ -163,49 +160,20 @@ class WebChangeDetector_Settings_Controller {
 						</div>
 
 						<?php
-						// Show available log files if debug logging is enabled or if log files exist.
-						$logger    = isset( $this->admin->logger ) ? $this->admin->logger : null;
-						$log_files = array();
+						// Database logging is now used - no log files to show.
 
-						if ( $logger && method_exists( $logger, 'get_available_log_files' ) ) {
-							$log_files = $logger->get_available_log_files();
-						}
-
-						if ( ! empty( $log_files ) ) :
-							?>
-
-						<?php endif; ?>
-
-						<?php submit_button( __( 'Save Debug Logging Setting', 'webchangedetector' ) ); ?>
+						submit_button( __( 'Save Debug Logging Setting', 'webchangedetector' ) );
+						?>
 					</form>
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label"><?php esc_html_e( 'Available Log Files', 'webchangedetector' ); ?></label>
-							<div class="wcd-description"><?php esc_html_e( 'Download debug log files. Files are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
+							<label class="wcd-form-label"><?php esc_html_e( 'View Debug Logs', 'webchangedetector' ); ?></label>
+							<div class="wcd-description"><?php esc_html_e( 'Logs are now stored in the database for better performance and searchability.', 'webchangedetector' ); ?></div>
 						</div>
 						<div class="wcd-form-control">
-							<div class="wcd-log-files-list">
-								<?php foreach ( $log_files as $log_file ) : ?>
-									<div class="wcd-log-file-item" style="margin-bottom: 10px;">
-										<span class="wcd-log-file-info">
-											<strong><?php echo esc_html( $log_file['date'] ); ?></strong>
-											(<?php echo esc_html( $log_file['size_formatted'] ); ?>)
-										</span>
-										<a href="?page=webchangedetector-settings&view_log=<?php echo esc_attr( $log_file['filename'] ); ?>&_wpnonce=<?php echo wp_create_nonce( 'view_log_file' ); ?>" class="button button-small" style="margin-left: 10px;">
-											<?php esc_html_e( 'View', 'webchangedetector' ); ?>
-										</a>
-										<form method="post" style="display: inline-block; margin-left: 5px;">
-											<?php wp_nonce_field( 'download_log_file' ); ?>
-											<input type="hidden" name="wcd_action" value="download_log_file">
-											<input type="hidden" name="filename" value="<?php echo esc_attr( $log_file['filename'] ); ?>">
-											<button type="submit" class="button button-small">
-												<?php esc_html_e( 'Download', 'webchangedetector' ); ?>
-											</button>
-										</form>
-									</div>
-								<?php endforeach; ?>
-							</div>
-
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) ); ?>" class="button">
+								<?php esc_html_e( 'View Debug Logs', 'webchangedetector' ); ?>
+							</a>
 						</div>
 					</div>
 				</div>
@@ -361,117 +329,5 @@ class WebChangeDetector_Settings_Controller {
 			<p><i><?php esc_html_e( 'All available taxonomies are already shown.', 'webchangedetector' ); ?></i></p>
 			<?php
 		}
-	}
-
-	/**
-	 * Render log file viewer.
-	 */
-	private function render_log_viewer() {
-		$filename = isset( $_GET['view_log'] ) ? sanitize_file_name( $_GET['view_log'] ) : '';
-
-		// Validate filename format.
-		if ( ! preg_match( '/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename ) ) {
-			echo '<div class="error notice"><p>Invalid log file.</p></div>';
-			return;
-		}
-
-		$logger = isset( $this->admin->logger ) ? $this->admin->logger : null;
-		if ( ! $logger ) {
-			echo '<div class="error notice"><p>Logger not available.</p></div>';
-			return;
-		}
-
-		// Get log directory - same as in logger class.
-		$log_dir   = plugin_dir_path( dirname( __DIR__ ) ) . 'logs';
-		$file_path = $log_dir . '/' . $filename;
-
-		if ( ! file_exists( $file_path ) ) {
-			echo '<div class="error notice"><p>Log file not found at: ' . esc_html( $file_path ) . '</p></div>';
-			echo '<div class="notice notice-info"><p>Log directory: ' . esc_html( $log_dir ) . '</p></div>';
-			echo '<div class="notice notice-info"><p>Looking for: ' . esc_html( $filename ) . '</p></div>';
-
-			// Show available files in the directory.
-			if ( is_dir( $log_dir ) ) {
-				$files = scandir( $log_dir );
-				echo '<div class="notice notice-info"><p>Available files in log directory: ' . esc_html( implode( ', ', $files ) ) . '</p></div>';
-			} else {
-				echo '<div class="error notice"><p>Log directory does not exist!</p></div>';
-			}
-			return;
-		}
-
-		if ( ! is_readable( $file_path ) ) {
-			echo '<div class="error notice"><p>Log file exists but is not readable.</p></div>';
-			return;
-		}
-
-		// Read log content.
-		$log_content = file_get_contents( $file_path );
-		$lines       = explode( "\n", $log_content );
-
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Log Viewer', 'webchangedetector' ); ?>: <?php echo esc_html( $filename ); ?></h1>
-			
-			<div style="margin: 20px 0;">
-				<a href="?page=webchangedetector-settings" class="button">
-					<?php esc_html_e( '← Back to Settings', 'webchangedetector' ); ?>
-				</a>
-				<form method="post" style="display: inline-block; margin-left: 10px;">
-					<?php wp_nonce_field( 'download_log_file' ); ?>
-					<input type="hidden" name="wcd_action" value="download_log_file">
-					<input type="hidden" name="filename" value="<?php echo esc_attr( $filename ); ?>">
-					<button type="submit" class="button button-primary">
-						<?php esc_html_e( 'Download Log File', 'webchangedetector' ); ?>
-					</button>
-				</form>
-			</div>
-
-			<div class="wcd-log-viewer">
-				<?php
-				foreach ( $lines as $line ) {
-					if ( empty( trim( $line ) ) ) {
-						continue;
-					}
-
-					// Parse log line for better formatting.
-					$formatted_line = $this->format_log_line( $line );
-					echo $formatted_line;
-				}
-				?>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Format a log line with syntax highlighting.
-	 *
-	 * @param string $line The log line to format.
-	 * @return string The formatted HTML.
-	 */
-	private function format_log_line( $line ) {
-		// Escape HTML.
-		$line = esc_html( $line );
-
-		// Highlight timestamps (format: [YYYY-MM-DD HH:MM:SS]).
-		$line = preg_replace( '/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/', '<span class="wcd-log-timestamp">[$1]</span>', $line );
-
-		// Highlight log levels.
-		$line = preg_replace( '/\[ERROR\]/i', '<span class="wcd-log-level-error">[ERROR]</span>', $line );
-		$line = preg_replace( '/\[WARNING\]/i', '<span class="wcd-log-level-warning">[WARNING]</span>', $line );
-		$line = preg_replace( '/\[INFO\]/i', '<span class="wcd-log-level-info">[INFO]</span>', $line );
-		$line = preg_replace( '/\[DEBUG\]/i', '<span class="wcd-log-level-debug">[DEBUG]</span>', $line );
-
-		// Highlight context in brackets.
-		$line = preg_replace( '/\[([^\]]+)\]/', '<span class="wcd-log-context">[$1]</span>', $line );
-
-		// Highlight URLs.
-		$line = preg_replace( '/(https?:\/\/[^\s]+)/', '<span class="wcd-log-url">$1</span>', $line );
-
-		// Highlight file paths.
-		$line = preg_replace( '/(\/[^\s:]+\.(php|js|css|html))/', '<span class="wcd-log-filepath">$1</span>', $line );
-
-		return '<div class="wcd-log-line">' . $line . '</div>';
 	}
 }

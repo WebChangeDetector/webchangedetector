@@ -44,7 +44,7 @@ $accordion_id = $accordion_id ?? 'accordion-' . wp_rand( 1000, 9999 );
 		id="<?php echo esc_attr( $accordion_id ); ?>-content"
 		style="<?php echo $open ? '' : 'display:none;'; ?> border:1px solid #ddd; padding:10px;"
 	>
-		<?php echo $content; // Content should be escaped by caller ?>.
+		<?php echo $content; // Content should be escaped by caller. ?>.
 	</div>
 </div>
 

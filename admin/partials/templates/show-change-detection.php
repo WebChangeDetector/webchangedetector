@@ -80,14 +80,14 @@ $browser_console_added   = isset( $compare['browser_console_added'] ) && is_arra
 $browser_console_removed = isset( $compare['browser_console_removed'] ) && is_array( $compare['browser_console_removed'] ) ? $compare['browser_console_removed'] : array();
 $browser_console_change  = isset( $compare['browser_console_change'] ) ? $compare['browser_console_change'] : 'unchanged';
 
-$hasBrowserConsoleData = ! empty( $browser_console_added ) ||
+$has_browser_console_data = ! empty( $browser_console_added ) ||
 						! empty( $browser_console_removed ) ||
-						( $browser_console_change && $browser_console_change !== 'unchanged' );
+						( $browser_console_change && 'unchanged' !== $browser_console_change );
 
 // Check user plan access for browser console feature - with safety checks.
-$user_account            = null;
-$user_plan               = 'free'; // Default to free plan.
-$canAccessBrowserConsole = false; // Default to no access.
+$user_account               = null;
+$user_plan                  = 'free'; // Default to free plan.
+$can_access_browser_console = false; // Default to no access.
 
 try {
 	if ( isset( $this->account_handler ) && method_exists( $this->account_handler, 'get_account' ) ) {
@@ -96,36 +96,42 @@ try {
 	}
 
 	if ( isset( $this->admin ) && method_exists( $this->admin, 'can_access_feature' ) ) {
-		$canAccessBrowserConsole = $this->admin->can_access_feature( 'browser_console', $user_plan );
+		$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
 	}
 } catch ( Exception $e ) {
 	// Log error if needed, but fail safely.
-	error_log( 'WebChangeDetector: Console feature access check failed: ' . $e->getMessage() );
-	$canAccessBrowserConsole = false;
+	\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Console feature access check failed: ' . $e->getMessage(), 'template_error', 'error' );
+	$can_access_browser_console = false;
 }
 
 // Helper function to safely extract console message content (for compatibility).
 if ( ! function_exists( 'safe_extract_console_message' ) ) {
+	/**
+	 * Safely extract console message content.
+	 *
+	 * @param mixed $log The console log data.
+	 * @return string The extracted console message content.
+	 */
 	function safe_extract_console_message( $log ) {
-		$textContent = '';
+		$text_content = '';
 		if ( is_array( $log ) ) {
-			$textContent = $log['text'] ?? $log['message'] ?? $log['content'] ?? __( 'Unknown console message', 'webchangedetector' );
+			$text_content = $log['text'] ?? $log['message'] ?? $log['content'] ?? __( 'Unknown console message', 'webchangedetector' );
 		} elseif ( is_string( $log ) ) {
 			// Try to decode JSON, with error handling.
 			$decoded = json_decode( $log, true );
 			if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded ) ) {
-				$textContent = $decoded['text'] ?? $decoded['message'] ?? $decoded['content'] ?? 'Console message (JSON)';
+				$text_content = $decoded['text'] ?? $decoded['message'] ?? $decoded['content'] ?? 'Console message (JSON)';
 			} else {
 				// If not valid JSON, treat as plain text (but limit length for security).
-				$textContent = strlen( $log ) > 200 ? substr( $log, 0, 200 ) . '...' : $log;
+				$text_content = strlen( $log ) > 200 ? substr( $log, 0, 200 ) . '...' : $log;
 			}
 		} else {
-			$textContent = __( 'Invalid console message format', 'webchangedetector' );
+			$text_content = __( 'Invalid console message format', 'webchangedetector' );
 		}
 
 		// Additional security: sanitize the content.
-		$textContent = strip_tags( $textContent );
-		return htmlspecialchars( $textContent, ENT_QUOTES, 'UTF-8' );
+		$text_content = wp_strip_all_tags( $text_content );
+		return htmlspecialchars( $text_content, ENT_QUOTES, 'UTF-8' );
 	}
 }
 ?>
@@ -158,22 +164,22 @@ if ( ! function_exists( 'safe_extract_console_message' ) ) {
 	<!-- Browser Console Changes Section -->
 	<div class="wcd-console-changes-section" style="flex: 1;">
 		<h3 class="wcd-section-headline"><?php esc_html_e( '🔧 Browser Console Changes', 'webchangedetector' ); ?></h3>
-		<?php if ( $canAccessBrowserConsole ) { ?>
+		<?php if ( $can_access_browser_console ) { ?>
 			<div class="wcd-console-display">
 				<?php
-				if ( $hasBrowserConsoleData ) {
-					$hasAdded     = ! empty( $browser_console_added );
-					$hasRemoved   = ! empty( $browser_console_removed );
-					$changeStatus = $browser_console_change ?? 'unchanged';
+				if ( $has_browser_console_data ) {
+					$has_added     = ! empty( $browser_console_added );
+					$has_removed   = ! empty( $browser_console_removed );
+					$change_status = $browser_console_change ?? 'unchanged';
 					?>
 					<div class="wcd-console-indicator wcd-console-changed">
 						<span class="wcd-console-status">
 						<?php
-						if ( $changeStatus === 'mixed' ) {
+						if ( 'mixed' === $change_status ) {
 							esc_html_e( 'Console Changes Detected', 'webchangedetector' );
-						} elseif ( $changeStatus === 'added' ) {
+						} elseif ( 'added' === $change_status ) {
 							esc_html_e( 'New Error Console Entries', 'webchangedetector' );
-						} elseif ( $changeStatus === 'removed' ) {
+						} elseif ( 'removed' === $change_status ) {
 							esc_html_e( 'Error Console Entries Removed', 'webchangedetector' );
 						} else {
 							esc_html_e( 'Console Changed', 'webchangedetector' );
@@ -184,36 +190,46 @@ if ( ! function_exists( 'safe_extract_console_message' ) ) {
 					
 					<div class="wcd-console-logs">
 						<?php
-						if ( $hasAdded && is_array( $browser_console_added ) ) {
+						if ( $has_added && is_array( $browser_console_added ) ) {
 							foreach ( array_slice( $browser_console_added, 0, 3 ) as $log ) {
-								$textContent = safe_extract_console_message( $log );
+								$text_content = safe_extract_console_message( $log );
 								?>
 								<div class="wcd-console-entry wcd-console-added">
 									<span class="wcd-console-prefix">+</span>
-									<span class="wcd-console-message"><?php echo $textContent; ?></span>
+									<span class="wcd-console-message"><?php echo esc_html( $text_content ); ?></span>
 								</div>
 								<?php
 							}
 							if ( count( $browser_console_added ) > 3 ) {
 								?>
-								<div class="wcd-console-more"><?php printf( __( '... and %d more entries', 'webchangedetector' ), count( $browser_console_added ) - 3 ); ?></div>
+								<div class="wcd-console-more">
+									<?php
+									// translators: %d is the number of additional entries.
+									printf( esc_html__( '... and %d more entries', 'webchangedetector' ), count( $browser_console_added ) - 3 );
+									?>
+								</div>
 								<?php
 							}
 						}
 
-						if ( $hasRemoved && is_array( $browser_console_removed ) ) {
+						if ( $has_removed && is_array( $browser_console_removed ) ) {
 							foreach ( array_slice( $browser_console_removed, 0, 2 ) as $log ) {
-								$textContent = safe_extract_console_message( $log );
+								$text_content = safe_extract_console_message( $log );
 								?>
 								<div class="wcd-console-entry wcd-console-removed">
 									<span class="wcd-console-prefix">-</span>
-									<span class="wcd-console-message"><?php echo $textContent; ?></span>
+									<span class="wcd-console-message"><?php echo esc_html( $text_content ); ?></span>
 								</div>
 								<?php
 							}
 							if ( count( $browser_console_removed ) > 2 ) {
 								?>
-								<div class="wcd-console-more"><?php printf( __( '... and %d more removed', 'webchangedetector' ), count( $browser_console_removed ) - 2 ); ?></div>
+								<div class="wcd-console-more">
+									<?php
+									// translators: %d is the number of additional removed entries.
+									printf( esc_html__( '... and %d more removed', 'webchangedetector' ), count( $browser_console_removed ) - 2 );
+									?>
+								</div>
 								<?php
 							}
 						}

@@ -242,6 +242,14 @@ class WebChangeDetector_Admin_Controller {
 				$result = $this->admin->settings_action_handler->handle_download_log_file( $postdata );
 				break;
 
+			case 'export_logs':
+				$this->admin->settings_action_handler->handle_export_logs( $postdata );
+				break;
+
+			case 'clear_logs':
+				$result = $this->admin->settings_action_handler->handle_clear_logs( $postdata );
+				break;
+
 			case 'update_detection_step':
 				$result = $this->admin->wordpress_action_handler->handle_update_detection_step( $postdata );
 				break;

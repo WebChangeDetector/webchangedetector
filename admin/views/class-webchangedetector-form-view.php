@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Form View Component for WebChangeDetector
  *

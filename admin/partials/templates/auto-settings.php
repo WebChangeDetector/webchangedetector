@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Auto Checks - Refactored with Components
  *

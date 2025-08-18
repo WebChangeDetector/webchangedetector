@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Manual checks - post sc started
  *

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Manual checks - step tiles
  *

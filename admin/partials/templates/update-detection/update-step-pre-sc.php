@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Manual checks - pre update sc
  *
@@ -26,7 +25,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 				</div>
 				<div class="wcd-form-control wcd-update-check-urls">
 					<div class="wcd-status-info">
-						<strong><?php echo esc_html( $group_urls['meta']['selected_urls_count'] ); ?></strong> <?php echo __( 'URLs selected for checking', 'webchangedetector' ); ?>
+						<strong><?php echo esc_html( $group_urls['meta']['selected_urls_count'] ); ?></strong> <?php esc_html_e( 'URLs selected for checking', 'webchangedetector' ); ?>
 					</div>
 				</div>
 			</div>
