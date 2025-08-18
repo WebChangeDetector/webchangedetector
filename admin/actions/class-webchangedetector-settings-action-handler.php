@@ -40,7 +40,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
-			$this->admin->logger->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
+			$this->admin->error_handler->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
 			if ( ! empty( $data['monitoring'] ) && (int) $data['monitoring'] === 1 ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
@@ -64,7 +64,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate monitoring settings.
 		$validation = $this->validate_monitoring_settings( $data );
 		if ( ! $validation['success'] ) {
-			$this->admin->logger->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
+			$this->admin->error_handler->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
 			return $validation;
 		}
 
@@ -72,7 +72,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		$result = $this->admin->settings_handler->update_monitoring_settings( $data );
 
 		// Debug: Log the result from update_monitoring_settings.
-		$this->admin->logger->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
+		$this->admin->error_handler->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
 
 		// The settings handler now returns a standardized response format.
 		return $result;
@@ -135,9 +135,9 @@ class WebChangeDetector_Settings_Action_Handler {
 			$enable_debug_logging = isset( $data['wcd_debug_logging'] ) ? 1 : 0;
 			update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $enable_debug_logging );
 
-			// Update the logger instance if it exists.
-			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'set_debug_enabled' ) ) {
-				$this->admin->logger->set_debug_enabled( $enable_debug_logging );
+			// Update the error handler instance if it exists.
+			if ( isset( $this->admin->error_handler ) && method_exists( $this->admin->error_handler, 'set_debug_enabled' ) ) {
+				$this->admin->error_handler->set_debug_enabled( $enable_debug_logging );
 			}
 
 			return array(
@@ -177,30 +177,12 @@ class WebChangeDetector_Settings_Action_Handler {
 
 		$filename = sanitize_file_name( $data['filename'] );
 
-		try {
-			// Use the logger to download the file.
-			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'download_log_file' ) ) {
-				$result = $this->admin->logger->download_log_file( $filename );
-
-				if ( is_wp_error( $result ) ) {
-					return array(
-						'success' => false,
-						'message' => 'Error downloading log file: ' . $result->get_error_message(),
-					);
-				}
-				// If successful, the download_log_file method will handle the download and exit.
-			} else {
-				return array(
-					'success' => false,
-					'message' => 'Logger not available for file download.',
-				);
-			}
-		} catch ( \Exception $e ) {
-			return array(
-				'success' => false,
-				'message' => 'Error downloading log file: ' . $e->getMessage(),
-			);
-		}
+		// Log file downloads are no longer supported with the simplified error handler.
+		// The new system uses WordPress debug logging instead of custom files.
+		return array(
+			'success' => false,
+			'message' => 'Log file downloads are no longer available. Error logging now uses WordPress debug logging.',
+		);
 	}
 
 	/**

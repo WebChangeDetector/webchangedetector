@@ -197,13 +197,10 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/partials/class-webchangedetector-component-manager.php';
 
 		/**
-		 * Error handling and logging classes.
+		 * Simplified error handling and admin notices.
 		 */
-		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-logger.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-exceptions.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-error-handler.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-error-recovery.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/error-handling/class-webchangedetector-user-feedback.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-error-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-notices.php';
 
 		/**
 		 * The class responsible API calls.

@@ -147,8 +147,14 @@ class WebChangeDetector_Admin_Utils {
 	 * @param string $context Optional context for the error.
 	 */
 	public static function log_error( $message, $context = 'general', $severity = 'info' ) {
-		$logger = new \WebChangeDetector\WebChangeDetector_Logger();
-		$logger->log( $message, $context, $severity );
+		// Use WordPress debug logging directly for static method.
+		$log_entry = sprintf(
+			'[WCD] [%s] [%s] %s',
+			strtoupper( $severity ),
+			$context,
+			$message
+		);
+		error_log( $log_entry );
 	}
 
 	/**

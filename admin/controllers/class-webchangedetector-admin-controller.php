@@ -398,7 +398,7 @@ class WebChangeDetector_Admin_Controller {
 			$this->admin->website_details = $this->admin->settings_handler->get_website_details();
 
 			if ( ! $this->admin->website_details ) {
-				$this->admin->logger->debug( "Can't get website_details." );
+				$this->admin->error_handler->debug( "Can't get website_details." );
 				?>
 				<div class="notice notice-error">
 					<p><strong>WebChange Detector:</strong> Sorry, we couldn't retrieve your account settings. Please check your API token or contact support if this issue persists.</p>

@@ -237,36 +237,18 @@ class WebChangeDetector_Admin {
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      WebChangeDetector_Error_Handler $error_handler Error handling.
+	 * @var      \WebChangeDetector_Error_Handler
 	 */
 	public $error_handler;
 
 	/**
-	 * Logger instance.
+	 * Admin notices instance.
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      WebChangeDetector_Logger $logger Logging system.
+	 * @var      \WebChangeDetector_Admin_Notices
 	 */
-	public $logger;
-
-	/**
-	 * Error recovery instance.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      WebChangeDetector_Error_Recovery $error_recovery Error recovery.
-	 */
-	public $error_recovery;
-
-	/**
-	 * User feedback instance.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      WebChangeDetector_User_Feedback $user_feedback User feedback.
-	 */
-	public $user_feedback;
+	public $admin_notices;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -302,11 +284,9 @@ class WebChangeDetector_Admin {
 		$this->comparison_action_handler = new WebChangeDetector_Comparison_Action_Handler( $this );
 		$this->component_manager         = new WebChangeDetector_Component_Manager();
 
-		// Initialize error handling components.
-		$this->logger         = new WebChangeDetector_Logger();
-		$this->error_handler  = new WebChangeDetector_Error_Handler( $this->logger );
-		$this->error_recovery = new WebChangeDetector_Error_Recovery( $this->logger );
-		$this->user_feedback  = new WebChangeDetector_User_Feedback();
+		// Initialize simplified error handling components.
+		$this->error_handler  = new \WebChangeDetector_Error_Handler();
+		$this->admin_notices  = new \WebChangeDetector_Admin_Notices();
 
 		// Add cron job for daily sync (after WordPress handler is initialized).
 		add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
@@ -731,11 +711,11 @@ class WebChangeDetector_Admin {
 	 * @return bool True on success, false on failure.
 	 */
 	public function log_error( $message, $context = 'admin', $severity = 'error' ) {
-		if ( ! $this->logger ) {
+		if ( ! $this->error_handler ) {
 			return false;
 		}
 
-		return $this->logger->log( $message, $severity, $context );
+		return $this->error_handler->log( $message, $context, $severity );
 	}
 
 	/**
