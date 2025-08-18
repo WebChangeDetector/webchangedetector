@@ -163,7 +163,7 @@ class WebChangeDetector_Logger {
 			file_put_contents( $this->log_dir . '/.htaccess', $htaccess_content );
 
 			// Create index.php for additional security.
-			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );.
+			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );
 		}
 	}
 
