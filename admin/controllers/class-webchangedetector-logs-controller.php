@@ -70,8 +70,8 @@ class WebChangeDetector_Logs_Controller {
 		}
 
 		// Continue with regular queue view.
-		// Wizard functionality temporarily removed for phase 1
-		// Will be moved to view renderer in later phases
+		// Wizard functionality temporarily removed for phase 1.
+		// Will be moved to view renderer in later phases.
 
 		$paged = 1;
 		if ( isset( $_GET['paged'] ) ) {
@@ -96,8 +96,8 @@ class WebChangeDetector_Logs_Controller {
 			'compare' => 'Change detection',
 		);
 
-		// Wizard functionality temporarily removed for phase 1
-		// Will be moved to view renderer in later phases
+		// Wizard functionality temporarily removed for phase 1.
+		// Will be moved to view renderer in later phases.
 
 		?>
 
@@ -261,8 +261,8 @@ class WebChangeDetector_Logs_Controller {
 											}
 										</style>
 										<?php
-											// Use post-update batch_id for comparisons (the main batch_id field)
-											// This will be the post-update batch_id once it's available
+											// Use post-update batch_id for comparisons (the main batch_id field).
+											// This will be the post-update batch_id once it's available.
 										if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) :
 											?>
 												<p>
@@ -359,12 +359,12 @@ class WebChangeDetector_Logs_Controller {
 
 					<script>
 						jQuery(document).ready(function($) {
-							// Initialize accordion for auto-update history
+							// Initialize accordion for auto-update history.
 							$('.accordion-auto-update').accordion({
 								heightStyle: "content",
 								header: "h3",
 								collapsible: true,
-								active: false, // Don't auto-open on load
+								active: false, // Don't auto-open on load.
 								animate: 200
 							});
 						});

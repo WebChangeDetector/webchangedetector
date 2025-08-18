@@ -47,7 +47,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$toggle_label       = '';
 					$toggle_description = '';
 					$section_id         = 'auto_update_checks_settings';
-					$content            = ''; // Empty content for the toggle
+					$content            = ''; // Empty content for the toggle.
 
 					// Include Toggle Section Component.
 					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/toggle-section.php';
@@ -176,9 +176,9 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 
 
 	<script type="text/javascript">
-		// Toggle auto update checks settings visibility with slide animation
+		// Toggle auto update checks settings visibility with slide animation.
 		jQuery(document).ready(function($) {
-			// Listen for changes on the toggle switch
+			// Listen for changes on the toggle switch.
 			$(document).on('change', 'input[name="auto_update_checks_enabled"]', function() {
 				if ($(this).is(':checked')) {
 					$('.auto-update-setting').slideDown();
@@ -189,10 +189,10 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 		});
 
 		function wcdValidateFormGroupSettings() {
-			// Only validate if auto update checks are enabled
+			// Only validate if auto update checks are enabled.
 			var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
 			if (autoUpdateEnabled && autoUpdateEnabled.checked) {
-				// Validate weekdays using the component's validation function
+				// Validate weekdays using the component's validation function.
 				if (typeof window['validate_weekdays_auto_update_checks'] === 'function') {
 					if (!window['validate_weekdays_auto_update_checks']()) {
 						return false;

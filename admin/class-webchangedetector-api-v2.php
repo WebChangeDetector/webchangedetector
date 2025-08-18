@@ -55,7 +55,7 @@ class WebChangeDetector_API_V2 {
 		);
 		$result = self::api_v2( $args, 'GET' );
 
-		// Only cache the first page
+		// Only cache the first page.
 		if ( $page === 1 ) {
 			$websites = $result;
 		}
@@ -100,7 +100,7 @@ class WebChangeDetector_API_V2 {
 
 		$args = array_merge( $args, $website_details );
 
-		// Pass custom API token if provided
+		// Pass custom API token if provided.
 		return self::api_v2( $args, 'PUT', false, $api_token );
 	}
 
@@ -630,25 +630,25 @@ class WebChangeDetector_API_V2 {
 						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Responsetime Request $i: " . $response->headers['date'], 'api_v2', 'debug' );
 					}
 
-					// Process each response
+					// Process each response.
 					$response_code = (int) $response->status_code;
 					$body          = $response->body;
 
 					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Response $i code: " . $response_code, 'api_v2', 'debug' );
 
-					// Decode the response body
+					// Decode the response body.
 					$decoded_body = json_decode( $body, true );
 
-					// Handle different response codes
+					// Handle different response codes.
 					if ( 200 === $response_code ) {
-						// Success
+						// Success.
 						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
 							$results[] = $decoded_body;
 						} else {
 							$results[] = $body;
 						}
 					} else {
-						// Error response
+						// Error response.
 						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Multicall request $i failed with code $response_code: " . $body, 'api_v2', 'error' );
 						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
 							$results[] = $decoded_body;
@@ -664,7 +664,7 @@ class WebChangeDetector_API_V2 {
 
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' Multicall completed with ' . count( $results ) . ' results', 'api_v2', 'debug' );
 
-				// Return the results for multicall
+				// Return the results for multicall.
 				return $results;
 			}
 		} else {

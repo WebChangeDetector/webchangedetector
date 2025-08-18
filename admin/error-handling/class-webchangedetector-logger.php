@@ -46,10 +46,10 @@ class WebChangeDetector_Logger {
 		$this->log_dir       = plugin_dir_path( dirname( __DIR__ ) ) . 'logs';
 		$this->debug_enabled = get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, false );
 
-		// Ensure log directory exists
+		// Ensure log directory exists.
 		$this->ensure_log_directory();
 
-		// Schedule cleanup if not already scheduled
+		// Schedule cleanup if not already scheduled.
 		if ( ! wp_next_scheduled( 'wcd_cleanup_old_logs' ) ) {
 			wp_schedule_event( time(), 'daily', 'wcd_cleanup_old_logs' );
 		}
@@ -66,22 +66,22 @@ class WebChangeDetector_Logger {
 	 * @return bool True on success, false on failure.
 	 */
 	public function log( $message, $context = 'general', $severity = 'info' ) {
-		// Check if debug logging is enabled
+		// Check if debug logging is enabled.
 		if ( ! $this->debug_enabled ) {
-			// Always log errors regardless of debug setting
+			// Always log errors regardless of debug setting.
 			if ( ! in_array( $severity, array( 'error', 'critical' ), true ) ) {
 				return false;
 			}
 		}
 
-		// Get current date for daily log file
+		// Get current date for daily log file.
 		$date     = current_time( 'Y-m-d' );
 		$log_file = $this->log_dir . '/wcd-' . $date . '.log';
 
-		// Format timestamp
+		// Format timestamp.
 		$timestamp = current_time( 'Y-m-d H:i:s' );
 
-		// Format log entry
+		// Format log entry.
 		$log_entry = sprintf(
 			'[%s] [%s] [%s] %s',
 			$timestamp,
@@ -90,7 +90,7 @@ class WebChangeDetector_Logger {
 			$message
 		);
 
-		// Write to file
+		// Write to file.
 		$result = error_log( $log_entry . PHP_EOL, 3, $log_file );
 
 		return $result !== false;
@@ -158,12 +158,12 @@ class WebChangeDetector_Logger {
 		if ( ! is_dir( $this->log_dir ) ) {
 			wp_mkdir_p( $this->log_dir );
 
-			// Create .htaccess to prevent direct access
+			// Create .htaccess to prevent direct access.
 			$htaccess_content = "Order deny,allow\nDeny from all\n";
 			file_put_contents( $this->log_dir . '/.htaccess', $htaccess_content );
 
-			// Create index.php for additional security
-			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );
+			// Create index.php for additional security.
+			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );.
 		}
 	}
 
@@ -180,7 +180,7 @@ class WebChangeDetector_Logger {
 		$cutoff_time = time() - ( 14 * DAY_IN_SECONDS );
 
 		foreach ( $files as $file ) {
-			// Extract date from filename (wcd-YYYY-MM-DD.log)
+			// Extract date from filename (wcd-YYYY-MM-DD.log).
 			if ( preg_match( '/wcd-(\d{4}-\d{2}-\d{2})\.log$/', $file, $matches ) ) {
 				$file_date = strtotime( $matches[1] );
 				if ( $file_date && $file_date < $cutoff_time ) {
@@ -237,7 +237,7 @@ class WebChangeDetector_Logger {
 			}
 		}
 
-		// Sort by date (newest first)
+		// Sort by date (newest first).
 		usort(
 			$log_files,
 			function ( $a, $b ) {
@@ -255,26 +255,26 @@ class WebChangeDetector_Logger {
 	 * @return bool|WP_Error True on success, WP_Error on failure.
 	 */
 	public function download_log_file( $filename ) {
-		// Validate filename format
+		// Validate filename format.
 		if ( ! preg_match( '/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename ) ) {
 			return new \WP_Error( 'invalid_filename', 'Invalid log filename format.' );
 		}
 
 		$file_path = $this->log_dir . '/' . $filename;
 
-		// Check if file exists
+		// Check if file exists.
 		if ( ! file_exists( $file_path ) ) {
 			return new \WP_Error( 'file_not_found', 'Log file not found.' );
 		}
 
-		// Check if file is readable
+		// Check if file is readable.
 		if ( ! is_readable( $file_path ) ) {
 			return new \WP_Error( 'file_not_readable', 'Log file is not readable.' );
 		}
 
-		// Check if headers have already been sent
+		// Check if headers have already been sent.
 		if ( headers_sent( $file, $line ) ) {
-			// If headers already sent, use JavaScript redirect to download
+			// If headers already sent, use JavaScript redirect to download.
 			$content = file_get_contents( $file_path );
 			$base64  = base64_encode( $content );
 			$mime    = 'text/plain';
@@ -292,14 +292,14 @@ class WebChangeDetector_Logger {
 			exit;
 		}
 
-		// Set headers for download
+		// Set headers for download.
 		header( 'Content-Type: text/plain' );
 		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 		header( 'Content-Length: ' . filesize( $file_path ) );
 		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'Expires: 0' );
 
-		// Output file content
+		// Output file content.
 		readfile( $file_path );
 		exit;
 	}

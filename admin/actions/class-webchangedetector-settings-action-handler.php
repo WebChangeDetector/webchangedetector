@@ -71,10 +71,10 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Update monitoring settings via API.
 		$result = $this->admin->settings_handler->update_monitoring_settings( $data );
 
-		// Debug: Log the result from update_monitoring_settings
+		// Debug: Log the result from update_monitoring_settings.
 		$this->admin->logger->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
 
-		// The settings handler now returns a standardized response format
+		// The settings handler now returns a standardized response format.
 		return $result;
 	}
 
@@ -135,7 +135,7 @@ class WebChangeDetector_Settings_Action_Handler {
 			$enable_debug_logging = isset( $data['wcd_debug_logging'] ) ? 1 : 0;
 			update_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, $enable_debug_logging );
 
-			// Update the logger instance if it exists
+			// Update the logger instance if it exists.
 			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'set_debug_enabled' ) ) {
 				$this->admin->logger->set_debug_enabled( $enable_debug_logging );
 			}
@@ -159,7 +159,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	 * @return array|void Result with success status and message, or triggers download.
 	 */
 	public function handle_download_log_file( $data ) {
-		// Verify user capabilities
+		// Verify user capabilities.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return array(
 				'success' => false,
@@ -167,7 +167,7 @@ class WebChangeDetector_Settings_Action_Handler {
 			);
 		}
 
-		// Check if filename is provided
+		// Check if filename is provided.
 		if ( empty( $data['filename'] ) ) {
 			return array(
 				'success' => false,
@@ -178,7 +178,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		$filename = sanitize_file_name( $data['filename'] );
 
 		try {
-			// Use the logger to download the file
+			// Use the logger to download the file.
 			if ( isset( $this->admin->logger ) && method_exists( $this->admin->logger, 'download_log_file' ) ) {
 				$result = $this->admin->logger->download_log_file( $filename );
 
@@ -188,7 +188,7 @@ class WebChangeDetector_Settings_Action_Handler {
 						'message' => 'Error downloading log file: ' . $result->get_error_message(),
 					);
 				}
-				// If successful, the download_log_file method will handle the download and exit
+				// If successful, the download_log_file method will handle the download and exit.
 			} else {
 				return array(
 					'success' => false,

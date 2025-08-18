@@ -88,7 +88,7 @@ class WebChangeDetector_Admin_Account {
 	 * @return   bool                    True if saved successfully, false otherwise.
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-		if ( ! is_string( $api_token ) || strlen( $api_token ) < 10 ) { // API_TOKEN_LENGTH constant from original
+		if ( ! is_string( $api_token ) || strlen( $api_token ) < 10 ) { // API_TOKEN_LENGTH constant from original.
 			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
 			} else {
@@ -638,5 +638,5 @@ class WebChangeDetector_Admin_Account {
 		return false;
 	}
 
-	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller
+	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller.
 }

@@ -185,23 +185,23 @@ class WebChangeDetector_Admin_Dashboard {
 		$user_id  = get_current_user_id();
 		$meta_key = 'wcd_first_time_dashboard_visit';
 
-		// Debug: Allow resetting first-time visit with URL parameter
+		// Debug: Allow resetting first-time visit with URL parameter.
 		if ( isset( $_GET['wcd_reset_first_time'] ) && current_user_can( 'manage_options' ) ) {
 			delete_user_meta( $user_id, $meta_key );
 			wp_redirect( remove_query_arg( 'wcd_reset_first_time' ) );
 			exit;
 		}
 
-		// Check user meta first (per-user setting)
+		// Check user meta first (per-user setting).
 		$user_visited = get_user_meta( $user_id, $meta_key, true );
 
 		if ( 'visited' !== $user_visited ) {
-			// Mark user as visited
+			// Mark user as visited.
 			update_user_meta( $user_id, $meta_key, 'visited' );
 			return true;
 		}
 
-		// User has already visited
+		// User has already visited.
 		return false;
 	}
 
@@ -213,13 +213,13 @@ class WebChangeDetector_Admin_Dashboard {
 	 * @return   array|false The auto-update entry if found, false otherwise.
 	 */
 	private function get_auto_update_for_batch( $batch_id ) {
-		// Check if batch is from auto-update
+		// Check if batch is from auto-update.
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, array() );
 		if ( ! in_array( $batch_id, $auto_update_batches ) ) {
 			return false;
 		}
 
-		// Find corresponding auto-update entry
+		// Find corresponding auto-update entry.
 		$update_history = get_option( 'wcd_auto_update_history', array() );
 		foreach ( $update_history as $entry ) {
 			if ( isset( $entry['batch_id'] ) && $entry['batch_id'] === $batch_id ) {
@@ -257,10 +257,10 @@ class WebChangeDetector_Admin_Dashboard {
 		foreach ( $batches as $batch ) {
 			$batch_id = $batch['id'];
 
-			// Get failed count directly from batch data
+			// Get failed count directly from batch data.
 			$amount_failed = $batch['queues_count']['failed'] ?? 0;
 
-			// Calculate console changes count (added + mixed)
+			// Calculate console changes count (added + mixed).
 			$console_changes_count = 0;
 			if ( ! empty( $batch['browser_console_count'] ) ) {
 				$console_changes_count = ( $batch['browser_console_count']['added'] ?? 0 ) + ( $batch['browser_console_count']['mixed'] ?? 0 );
@@ -282,7 +282,7 @@ class WebChangeDetector_Admin_Dashboard {
 			// Get created_at from batch data.
 			$batch_finished_at = $batch['finished_at'] ?? __( 'processing...', 'webchangedetector' );
 
-			// Get auto-update data if this batch is from an auto-update
+			// Get auto-update data if this batch is from an auto-update.
 			$auto_update_data = $this->get_auto_update_for_batch( $batch_id );
 			?>
 			<div class="accordion-container" data-batch_id="<?php echo esc_attr( $batch_id ); ?>" data-failed_count="<?php echo esc_attr( $amount_failed ); ?>" data-console_changes_count="<?php echo esc_attr( $console_changes_count ); ?>" style="margin-top: 20px;">
@@ -332,7 +332,7 @@ class WebChangeDetector_Admin_Dashboard {
 										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-update-group' );
 										echo ' ' . esc_html__( 'Auto Update Checks', 'webchangedetector' );
 
-										// Show auto-update summary if available
+										// Show auto-update summary if available.
 										if ( $auto_update_data ) {
 											$update_summary = array();
 											if ( isset( $auto_update_data['updates']['core'] ) && $auto_update_data['updates']['core'] ) {
@@ -411,7 +411,7 @@ class WebChangeDetector_Admin_Dashboard {
 	 * @return   void
 	 */
 	public function load_comparisons_view( $batch_id, $comparisons, $filters, $console_changes_count = 0 ) {
-		// Check if this batch is from an auto-update and display details if so
+		// Check if this batch is from an auto-update and display details if so.
 		$auto_update_data = $this->get_auto_update_for_batch( $batch_id );
 		if ( $auto_update_data ) {
 			?>
@@ -426,10 +426,10 @@ class WebChangeDetector_Admin_Dashboard {
 				
 				<div style="margin-left: 28px;">
 					<?php
-					// Show summary of what was updated
+					// Show summary of what was updated.
 					$update_items = array();
 
-					// Core update
+					// Core update.
 					if ( isset( $auto_update_data['updates']['core'] ) && $auto_update_data['updates']['core'] ) {
 						$core           = $auto_update_data['updates']['core'];
 						$status_icon    = $core['success'] ? '✓' : '✗';
@@ -443,7 +443,7 @@ class WebChangeDetector_Admin_Dashboard {
 						);
 					}
 
-					// Plugin updates
+					// Plugin updates.
 					if ( isset( $auto_update_data['updates']['plugins'] ) && ! empty( $auto_update_data['updates']['plugins'] ) ) {
 						$successful_plugins = array_filter(
 							$auto_update_data['updates']['plugins'],
@@ -472,7 +472,7 @@ class WebChangeDetector_Admin_Dashboard {
 						}
 					}
 
-					// Theme updates
+					// Theme updates.
 					if ( isset( $auto_update_data['updates']['themes'] ) && ! empty( $auto_update_data['updates']['themes'] ) ) {
 						$successful_themes = array_filter(
 							$auto_update_data['updates']['themes'],
@@ -520,10 +520,10 @@ class WebChangeDetector_Admin_Dashboard {
 			<?php
 		}
 
-		// Get failed queues for this batch
+		// Get failed queues for this batch.
 		$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', false, array( 'per_page' => 100 ) );
 
-		// Handle pagination for failed queues if needed
+		// Handle pagination for failed queues if needed.
 		if ( ! empty( $failed_queues['meta']['last_page'] ) && $failed_queues['meta']['last_page'] > 1 ) {
 			for ( $i = 2; $i <= $failed_queues['meta']['pages']; $i++ ) {
 				$failed_queues_data    = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2(
@@ -538,7 +538,7 @@ class WebChangeDetector_Admin_Dashboard {
 			}
 		}
 
-		// Display failed checks accordion if there are failed checks
+		// Display failed checks accordion if there are failed checks.
 		if ( ! empty( $failed_queues['data'] ) ) {
 			?>
 			<div class="wcd-failed-checks-accordion" style="margin-bottom: 20px;">
@@ -687,7 +687,7 @@ class WebChangeDetector_Admin_Dashboard {
 									onclick="return false;"><?php echo esc_html__( 'False Positive', 'webchangedetector' ); ?></button>
 							</div>
 							<?php
-							// Show console changes badge if present
+							// Show console changes badge if present.
 							$user_account            = $this->admin->account_handler->get_account();
 							$user_plan               = $user_account['plan'] ?? 'free';
 							$canAccessBrowserConsole = $this->admin->can_access_feature( 'browser_console', $user_plan );

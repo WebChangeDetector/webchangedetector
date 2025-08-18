@@ -11,20 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get auto update settings
+// Get auto update settings.
 $auto_update_settings       = $this->admin->website_details['auto_update_settings'] ?? array();
 $auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) &&
 	( $auto_update_settings['auto_update_checks_enabled'] === true ||
 	$auto_update_settings['auto_update_checks_enabled'] === '1' ||
 	$auto_update_settings['auto_update_checks_enabled'] === 1 );
 
-// Check if there are selected URLs
+// Check if there are selected URLs.
 $selected_urls_count = $group_and_urls['selected_urls_count'] ?? 0;
 
-// Get the next scheduled auto-update time
+// Get the next scheduled auto-update time.
 $next_auto_update = wp_next_scheduled( 'wp_version_check' );
 
-// Check enabled weekdays
+// Check enabled weekdays.
 $enabled_weekdays = array();
 $weekdays         = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 foreach ( $weekdays as $weekday ) {
@@ -33,20 +33,20 @@ foreach ( $weekdays as $weekday ) {
 	}
 }
 
-// Get timeframe settings (these are in UTC from API)
+// Get timeframe settings (these are in UTC from API).
 require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
 $utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 $utc_to_time   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 
-// Convert to site timezone for display
+// Convert to site timezone for display.
 $site_from_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
 $site_to_time   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
 
-// Check if there's an auto-update currently running
+// Check if there's an auto-update currently running.
 $auto_updates_running = get_option( 'wcd_auto_updates_running' );
 $pre_update_data      = get_option( 'wcd_pre_auto_update' );
 
-// Determine status
+// Determine status.
 $status_class    = '';
 $status_icon     = '';
 $status_title    = '';
@@ -56,25 +56,25 @@ $next_check_date = '';
 
 if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 	if ( $auto_updates_running || $pre_update_data ) {
-		// Auto-updates currently running
+		// Auto-updates currently running.
 		$status_class    = 'wcd-status-running';
 		$status_icon     = 'update spin';
 		$status_title    = __( 'Auto-Update Checks', 'webchangedetector' );
 		$status_message  = __( 'Checks in progress', 'webchangedetector' );
 		$next_check_time = __( 'Running now...', 'webchangedetector' );
 	} elseif ( $next_auto_update ) {
-		// Auto-updates scheduled
+		// Auto-updates scheduled.
 		$status_class   = 'wcd-status-scheduled';
 		$status_icon    = 'clock';
 		$status_title   = __( 'Auto-Update Checks', 'webchangedetector' );
 		$status_message = __( 'Next check in', 'webchangedetector' );
 
-		// Calculate time until next run
+		// Calculate time until next run.
 		$time_until      = human_time_diff( current_time( 'timestamp' ), $next_auto_update );
 		$next_check_time = $time_until;
 		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
 	} else {
-		// No auto-updates scheduled
+		// No auto-updates scheduled.
 		$status_class    = 'wcd-status-inactive';
 		$status_icon     = 'warning';
 		$status_title    = __( 'Auto-Update Checks', 'webchangedetector' );
@@ -82,14 +82,14 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
 	}
 } elseif ( ! $auto_update_checks_enabled ) {
-	// Auto-update checks disabled
+	// Auto-update checks disabled.
 	$status_class    = 'wcd-status-disabled';
 	$status_icon     = 'dismiss';
 	$status_title    = __( 'Auto-Update Checks', 'webchangedetector' );
 	$status_message  = __( 'Disabled', 'webchangedetector' );
 	$next_check_time = __( 'Enable in settings below', 'webchangedetector' );
 } else {
-	// No URLs selected
+	// No URLs selected.
 	$status_class    = 'wcd-status-no-urls';
 	$status_icon     = 'info';
 	$status_title    = __( 'Auto-Update Checks', 'webchangedetector' );

@@ -85,7 +85,7 @@ $weekdays = array(
 			var namePrefix = '<?php echo esc_js( $name_prefix ); ?>';
 			var errorElement = document.getElementById('error-on-days-validation');
 
-			// Weekday validation function
+			// Weekday validation function.
 			function validateWeekdays() {
 				var checkedBoxes = document.querySelectorAll('#auto_update_checks_weekday_container input[name*="' + namePrefix + '"][type="checkbox"]:checked');
 
@@ -99,14 +99,14 @@ $weekdays = array(
 				}
 			}
 
-			// Use event delegation for cleaner code
+			// Use event delegation for cleaner code.
 			document.addEventListener('change', function(event) {
 				if (event.target.matches('input[name*="' + namePrefix + '"][type="checkbox"]')) {
 					validateWeekdays();
 				}
 			});
 
-			// Make validation function globally available for form submission
+			// Make validation function globally available for form submission.
 			window['validate_weekdays_' + namePrefix.replace(/_$/, '')] = validateWeekdays;
 
 		});

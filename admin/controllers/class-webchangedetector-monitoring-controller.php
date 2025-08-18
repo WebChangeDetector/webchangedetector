@@ -48,8 +48,8 @@ class WebChangeDetector_Monitoring_Controller {
 	 * Render monitoring page.
 	 */
 	private function render_monitoring_page() {
-		// Wizard functionality temporarily removed for phase 1
-		// Will be moved to view renderer in later phases
+		// Wizard functionality temporarily removed for phase 1.
+		// Will be moved to view renderer in later phases.
 
 		?>
 		<div class="action-container">

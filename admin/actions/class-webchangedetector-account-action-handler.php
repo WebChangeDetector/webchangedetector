@@ -166,7 +166,7 @@ class WebChangeDetector_Account_Action_Handler {
 			// Create trial account via API.
 			$result = $this->admin->account_handler->create_trial_account( $account_data );
 
-			// Check if API call was successful
+			// Check if API call was successful.
 			// API can return either an array with data or error strings like 'unauthorized', 'activate account', etc.
 			if ( is_string( $result ) ) {
 				// Store account email.
@@ -188,7 +188,7 @@ class WebChangeDetector_Account_Action_Handler {
 					'setup_result' => $setup_result,
 				);
 			} else {
-				// Handle error responses
+				// Handle error responses.
 				$error_message = 'Failed to create trial account.';
 
 				if ( is_string( $result ) ) {

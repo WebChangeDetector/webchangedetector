@@ -67,11 +67,11 @@ class WebChangeDetector_WordPress_Action_Handler {
 			// Validate post type exists.
 			// Our post_type_slug is actually the post_type->rest_base or post_type->name as fallback.
 			// So we need to skip this check.
-			// if ( ! post_type_exists( $post_type_slug ) ) {
-			// return array(
-			// 'success' => false,
-			// 'message' => 'Post type does not exist: ' . $post_type_slug,
-			// );
+			// if ( ! post_type_exists( $post_type_slug ) ) {.
+			// return array(.
+			// 'success' => false,.
+			// 'message' => 'Post type does not exist: ' . $post_type_slug,.
+			// );.
 			// }
 
 			// Use the existing add_post_type method which handles the JSON data properly.
@@ -349,7 +349,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 	 * @return bool Success status.
 	 */
 	private function sync_specific_post_types( $post_types, $force ) {
-		// For now, we'll use the general sync_posts method
+		// For now, we'll use the general sync_posts method.
 		// since there's no specific sync_post_type method available.
 		// The sync_posts method handles all configured post types.
 		$result = $this->admin->wordpress_handler->sync_posts( $force );

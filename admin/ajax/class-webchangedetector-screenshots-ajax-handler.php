@@ -206,7 +206,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			// Get optional filters.
 			$filters = isset( $post_data['filters'] ) ? $post_data['filters'] : array();
 
-			// Get and sanitize the POST data
+			// Get and sanitize the POST data.
 			$per_page              = isset( $post_data['per_page'] ) ? absint( $post_data['per_page'] ) : 30;
 			$page                  = isset( $post_data['page'] ) ? absint( $post_data['page'] ) : 1;
 			$status                = isset( $post_data['status'] ) ? sanitize_text_field( $post_data['status'] ) : '';
@@ -214,7 +214,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$url_search            = isset( $post_data['url_search'] ) ? sanitize_text_field( $post_data['url_search'] ) : '';
 			$console_changes_count = isset( $post_data['console_changes_count'] ) ? absint( $post_data['console_changes_count'] ) : 0;
 
-			// Build filters array for API call
+			// Build filters array for API call.
 			$api_filters = array(
 				'per_page' => $per_page,
 				'page'     => $page,
@@ -230,10 +230,10 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				$api_filters['url_search'] = $url_search;
 			}
 
-			// Get comparisons from API using the same method as the original handler
+			// Get comparisons from API using the same method as the original handler.
 			$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $api_filters );
 
-			// Build display filters array
+			// Build display filters array.
 			$display_filters = array();
 			if ( ! empty( $status ) ) {
 				$display_filters['status'] = $status;

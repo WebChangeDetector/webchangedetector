@@ -97,7 +97,7 @@ class WebChangeDetector_Admin_WordPress {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
 
-			// Localize script for translations
+			// Localize script for translations.
 			wp_localize_script(
 				$this->plugin_name,
 				'wcdL10n',
@@ -133,7 +133,7 @@ class WebChangeDetector_Admin_WordPress {
 			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
 			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
-			// CodeMirror settings for CSS
+			// CodeMirror settings for CSS.
 			$css_settings              = array(
 				'type'       => 'text/css',
 				'codemirror' => array(
@@ -158,7 +158,7 @@ class WebChangeDetector_Admin_WordPress {
 					'ajax_url'     => admin_url( 'admin-ajax.php' ),
 					'nonce'        => wp_create_nonce( 'wcd_wizard_nonce' ),
 					'translations' => array(
-						// Navigation buttons
+						// Navigation buttons.
 						'nextBtnText'                 => __( 'Next →', 'webchangedetector' ),
 						'prevBtnText'                 => __( '← Previous', 'webchangedetector' ),
 						'doneBtnText'                 => __( 'Finish Wizard', 'webchangedetector' ),
@@ -172,7 +172,7 @@ class WebChangeDetector_Admin_WordPress {
 						'wizardComplete'              => __( 'Wizard Complete!', 'webchangedetector' ),
 						'returningToDashboard'        => __( 'Returning to dashboard...', 'webchangedetector' ),
 
-						// Dashboard steps
+						// Dashboard steps.
 						'welcomeTitle'                => __( 'Welcome to WebChange Detector', 'webchangedetector' ),
 						'welcomeDesc'                 => __( 'WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let\'s start the tour!', 'webchangedetector' ),
 						'checkCreditsTitle'           => __( 'Your Check Credits', 'webchangedetector' ),
@@ -180,7 +180,7 @@ class WebChangeDetector_Admin_WordPress {
 						'recentChangesTitle'          => __( 'Recent Changes', 'webchangedetector' ),
 						'recentChangesDesc'           => __( 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector' ),
 
-						// URL selection steps
+						// URL selection steps.
 						'manualChecksTitle'           => __( 'Manual Checks & Auto Update Settings', 'webchangedetector' ),
 						'manualChecksDesc'            => __( 'You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
@@ -202,7 +202,7 @@ class WebChangeDetector_Admin_WordPress {
 						'saveSettingsTitle'           => __( 'Save Your Settings', 'webchangedetector' ),
 						'saveSettingsDesc'            => __( 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.', 'webchangedetector' ),
 
-						// Monitoring steps
+						// Monitoring steps.
 						'monitoringSettingsTitle'     => __( 'Automatic Monitoring Settings', 'webchangedetector' ),
 						'monitoringSettingsDesc'      => __( 'Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues.', 'webchangedetector' ),
 						'enableMonitoringTitle'       => __( 'Enable Monitoring', 'webchangedetector' ),
@@ -222,7 +222,7 @@ class WebChangeDetector_Admin_WordPress {
 						'selectPagesToMonitorTitle'   => __( 'Select Pages to Monitor', 'webchangedetector' ),
 						'selectPagesToMonitorDesc'    => __( 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.', 'webchangedetector' ),
 
-						// Change detection steps
+						// Change detection steps.
 						'changeDetectionHistoryTitle' => __( 'Change Detection History', 'webchangedetector' ),
 						'changeDetectionHistoryDesc'  => __( 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector' ),
 						'detectionTableTitle'         => __( 'Detection Table', 'webchangedetector' ),
@@ -230,13 +230,13 @@ class WebChangeDetector_Admin_WordPress {
 						'filterOptionsTitle'          => __( 'Filter Options', 'webchangedetector' ),
 						'filterOptionsDesc'           => __( 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.', 'webchangedetector' ),
 
-						// Logs steps
+						// Logs steps.
 						'activityLogsTitle'           => __( 'Activity Logs', 'webchangedetector' ),
 						'activityLogsDesc'            => __( 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.', 'webchangedetector' ),
 						'logDetailsTitle'             => __( 'Log Details', 'webchangedetector' ),
 						'logDetailsDesc'              => __( 'Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors.', 'webchangedetector' ),
 
-						// Settings steps
+						// Settings steps.
 						'urlManagementTitle'          => __( 'URL Management', 'webchangedetector' ),
 						'urlManagementDesc'           => __( 'Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.', 'webchangedetector' ),
 						'urlSyncTitle'                => __( 'URL Synchronization', 'webchangedetector' ),
@@ -248,11 +248,11 @@ class WebChangeDetector_Admin_WordPress {
 						'setupCompleteTitle'          => __( 'Setup Complete!', 'webchangedetector' ),
 						'setupCompleteDesc'           => __( 'You\'re all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed.', 'webchangedetector' ),
 
-						// Generic steps
+						// Generic steps.
 						'genericTitle'                => __( 'WebChange Detector', 'webchangedetector' ),
 						'genericDesc'                 => __( 'Welcome to WebChange Detector! Use the navigation tabs to access different features.', 'webchangedetector' ),
 
-						// Notification messages
+						// Notification messages.
 						'requiredSetting'             => __( 'Required Setting', 'webchangedetector' ),
 						'requiredSettingMessage'      => __( 'Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.', 'webchangedetector' ),
 						'autoUpdateChecks'            => __( 'Auto Update Checks', 'webchangedetector' ),
@@ -289,7 +289,7 @@ class WebChangeDetector_Admin_WordPress {
 		if ( is_admin_bar_showing() && ! is_admin() && current_user_can( 'manage_options' ) ) {
 			$admin_bar_script_handle = 'webchangedetector-admin-bar';
 
-			// Enqueue JavaScript
+			// Enqueue JavaScript.
 			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true );
 
 			wp_localize_script(
@@ -395,7 +395,7 @@ class WebChangeDetector_Admin_WordPress {
 		$website_details = $this->admin->settings_handler->get_website_details();
 		$to_sync         = false;
 
-		// Get the post type slug for comparison
+		// Get the post type slug for comparison.
 		$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
@@ -449,12 +449,12 @@ class WebChangeDetector_Admin_WordPress {
 		$website_details = $this->admin->settings_handler->get_website_details();
 		$to_sync         = false;
 
-		// Get both the WordPress post type name and the rest_base for comparison
-		$wp_post_type_name = $post_type->name; // WordPress internal name (e.g., "product")
-		$wp_rest_base      = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ); // rest_base (e.g., "products")
+		// Get both the WordPress post type name and the rest_base for comparison.
+		$wp_post_type_name = $post_type->name; // WordPress internal name (e.g., "product").
+		$wp_rest_base      = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ); // rest_base (e.g., "products").
 
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-			// Check if the stored slug matches either the WordPress name or the rest_base
+			// Check if the stored slug matches either the WordPress name or the rest_base.
 			if (
 				$wp_post_type_name === $sync_url_type['post_type_slug'] ||
 				$wp_rest_base === $sync_url_type['post_type_slug']
@@ -686,7 +686,7 @@ class WebChangeDetector_Admin_WordPress {
 		$monitoring_url_data = null;
 		$wcd_url_id          = null;
 
-		// First, try to find exact URL matches
+		// First, try to find exact URL matches.
 		foreach ( $manual_urls as $url_data ) {
 			if ( isset( $url_data['url'] ) && \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ) === $url ) {
 				$manual_url_data = $url_data;
@@ -707,17 +707,17 @@ class WebChangeDetector_Admin_WordPress {
 			}
 		}
 
-		// Fallback: If we still don't have a URL ID but we have URL data, use the first available ID
+		// Fallback: If we still don't have a URL ID but we have URL data, use the first available ID.
 		if ( ! $wcd_url_id ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No exact URL match found, using fallback logic for URL: ' . $url, 'get_url_monitoring_status', 'debug' );
 
-			// Try to get ID from first manual URL
+			// Try to get ID from first manual URL.
 			if ( ! empty( $manual_urls ) && isset( $manual_urls[0]['id'] ) ) {
 				$wcd_url_id      = $manual_urls[0]['id'];
 				$manual_url_data = $manual_urls[0];
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Using first manual URL ID: ' . $wcd_url_id, 'get_url_monitoring_status', 'debug' );
 			}
-			// If not found in manual, try monitoring group
+			// If not found in manual, try monitoring group.
 			elseif ( ! empty( $monitoring_urls ) && isset( $monitoring_urls[0]['id'] ) ) {
 				$wcd_url_id          = $monitoring_urls[0]['id'];
 				$monitoring_url_data = $monitoring_urls[0];
@@ -725,7 +725,7 @@ class WebChangeDetector_Admin_WordPress {
 			}
 		}
 
-		// Final check: Make sure we have a URL ID
+		// Final check: Make sure we have a URL ID.
 		if ( ! $wcd_url_id ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] ERROR: No URL ID found for URL: ' . $url . ' - Manual URLs: ' . wp_json_encode( $manual_urls ) . ' - Monitoring URLs: ' . wp_json_encode( $monitoring_urls ), 'get_url_monitoring_status', 'error' );
 			return false;
@@ -764,7 +764,7 @@ class WebChangeDetector_Admin_WordPress {
 		$post_type                                      = json_decode( $postdata['post_type'], true );
 		$this->admin->website_details['sync_url_types'] = array_merge( $post_type, $this->admin->website_details['sync_url_types'] );
 
-		// TODO: Move to settings handler
+		// TODO: Move to settings handler.
 		$website_details = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], $this->admin->website_details );
 		if ( isset( $website_details['data'] ) && ! empty( $website_details['data']['sync_url_types'] ) ) {
 			$this->admin->website_details = $website_details['data'];
@@ -899,7 +899,7 @@ class WebChangeDetector_Admin_WordPress {
 			return false;
 		}
 
-		// Get just the language codes
+		// Get just the language codes.
 		$languages        = array_keys( (array) $wpml_languages );
 		$current_language = apply_filters( 'wpml_current_language', null );
 
@@ -1180,24 +1180,24 @@ class WebChangeDetector_Admin_WordPress {
 					}
 					do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
 				} elseif ( $this->polylang_is_active() && function_exists( 'pll_languages_list' ) ) {
-					// Get all Polylang language codes
+					// Get all Polylang language codes.
 					$polylang_languages = pll_languages_list();
 					$current_lang       = function_exists( 'pll_current_language' ) ? pll_current_language() : false;
 
 					if ( ! empty( $polylang_languages ) ) {
 						foreach ( $polylang_languages as $lang_code ) {
-							// Switch to each language
+							// Switch to each language.
 							if ( function_exists( 'PLL' ) ) {
 								PLL()->curlang = PLL()->model->get_language( $lang_code );
 							}
 							$this->get_all_posts_data( $post_type_names );
 						}
-						// Switch back to original language
+						// Switch back to original language.
 						if ( $current_lang && function_exists( 'PLL' ) ) {
 							PLL()->curlang = PLL()->model->get_language( $current_lang );
 						}
 					} else {
-						// No languages found, sync without language switching
+						// No languages found, sync without language switching.
 						$this->get_all_posts_data( $post_type_names );
 					}
 				} else {
@@ -1240,18 +1240,18 @@ class WebChangeDetector_Admin_WordPress {
 
 					if ( ! empty( $polylang_languages ) ) {
 						foreach ( $polylang_languages as $lang_code ) {
-							// Switch to each language
+							// Switch to each language.
 							if ( function_exists( 'PLL' ) ) {
 								PLL()->curlang = PLL()->model->get_language( $lang_code );
 							}
 							$this->get_all_terms_data( $taxonomy_post_names );
 						}
-						// Switch back to original language
+						// Switch back to original language.
 						if ( $current_lang && function_exists( 'PLL' ) ) {
 							PLL()->curlang = PLL()->model->get_language( $current_lang );
 						}
 					} else {
-						// No languages found, sync without language switching
+						// No languages found, sync without language switching.
 						$this->get_all_terms_data( $taxonomy_post_names );
 					}
 				} else {
@@ -1295,12 +1295,12 @@ class WebChangeDetector_Admin_WordPress {
 			} elseif ( $this->polylang_is_active() ) {
 
 				if ( function_exists( 'pll_languages_list' ) ) {
-					// Get all language codes (returns array of language slugs like ['en', 'fr', 'de'])
+					// Get all language codes (returns array of language slugs like ['en', 'fr', 'de']).
 					$language_codes = pll_languages_list();
 
 					if ( ! empty( $language_codes ) ) {
 						foreach ( $language_codes as $lang_code ) {
-							// Get the home URL for this language
+							// Get the home URL for this language.
 							$home_url = function_exists( 'pll_home_url' ) ? pll_home_url( $lang_code ) : false;
 
 							if ( ! $home_url ) {

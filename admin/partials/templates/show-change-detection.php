@@ -75,7 +75,7 @@
 	</div>
 </div>
 <?php
-// Browser Console Changes Section - with safety checks
+// Browser Console Changes Section - with safety checks.
 $browser_console_added   = isset( $compare['browser_console_added'] ) && is_array( $compare['browser_console_added'] ) ? $compare['browser_console_added'] : array();
 $browser_console_removed = isset( $compare['browser_console_removed'] ) && is_array( $compare['browser_console_removed'] ) ? $compare['browser_console_removed'] : array();
 $browser_console_change  = isset( $compare['browser_console_change'] ) ? $compare['browser_console_change'] : 'unchanged';
@@ -84,10 +84,10 @@ $hasBrowserConsoleData = ! empty( $browser_console_added ) ||
 						! empty( $browser_console_removed ) ||
 						( $browser_console_change && $browser_console_change !== 'unchanged' );
 
-// Check user plan access for browser console feature - with safety checks
+// Check user plan access for browser console feature - with safety checks.
 $user_account            = null;
-$user_plan               = 'free'; // Default to free plan
-$canAccessBrowserConsole = false; // Default to no access
+$user_plan               = 'free'; // Default to free plan.
+$canAccessBrowserConsole = false; // Default to no access.
 
 try {
 	if ( isset( $this->account_handler ) && method_exists( $this->account_handler, 'get_account' ) ) {
@@ -99,31 +99,31 @@ try {
 		$canAccessBrowserConsole = $this->admin->can_access_feature( 'browser_console', $user_plan );
 	}
 } catch ( Exception $e ) {
-	// Log error if needed, but fail safely
+	// Log error if needed, but fail safely.
 	error_log( 'WebChangeDetector: Console feature access check failed: ' . $e->getMessage() );
 	$canAccessBrowserConsole = false;
 }
 
-// Helper function to safely extract console message content (for compatibility)
+// Helper function to safely extract console message content (for compatibility).
 if ( ! function_exists( 'safe_extract_console_message' ) ) {
 	function safe_extract_console_message( $log ) {
 		$textContent = '';
 		if ( is_array( $log ) ) {
 			$textContent = $log['text'] ?? $log['message'] ?? $log['content'] ?? __( 'Unknown console message', 'webchangedetector' );
 		} elseif ( is_string( $log ) ) {
-			// Try to decode JSON, with error handling
+			// Try to decode JSON, with error handling.
 			$decoded = json_decode( $log, true );
 			if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded ) ) {
 				$textContent = $decoded['text'] ?? $decoded['message'] ?? $decoded['content'] ?? 'Console message (JSON)';
 			} else {
-				// If not valid JSON, treat as plain text (but limit length for security)
+				// If not valid JSON, treat as plain text (but limit length for security).
 				$textContent = strlen( $log ) > 200 ? substr( $log, 0, 200 ) . '...' : $log;
 			}
 		} else {
 			$textContent = __( 'Invalid console message format', 'webchangedetector' );
 		}
 
-		// Additional security: sanitize the content
+		// Additional security: sanitize the content.
 		$textContent = strip_tags( $textContent );
 		return htmlspecialchars( $textContent, ENT_QUOTES, 'UTF-8' );
 	}
@@ -232,7 +232,7 @@ if ( ! function_exists( 'safe_extract_console_message' ) ) {
 			</div>
 			<?php
 		} else {
-			// Generate dummy preview content for plans that don't have access
+			// Generate dummy preview content for plans that don't have access.
 			?>
 			<div class="wcd-console-display" style="position: relative;">
 				<div class="wcd-console-indicator wcd-console-changed">

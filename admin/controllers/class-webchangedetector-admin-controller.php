@@ -105,7 +105,7 @@ class WebChangeDetector_Admin_Controller {
 			return false;
 		}
 
-		// Display action result messages
+		// Display action result messages.
 		if ( is_array( $action_result ) && isset( $action_result['success'] ) && isset( $action_result['message'] ) ) {
 			$notice_class = $action_result['success'] ? 'notice-success' : 'notice-error';
 			echo '<div class="notice ' . esc_attr( $notice_class ) . ' is-dismissible"><p>' . esc_html( $action_result['message'] ) . '</p></div>';
@@ -259,8 +259,8 @@ class WebChangeDetector_Admin_Controller {
 				break;
 
 			case 'create_trial_account':
-				// This action should be handled in pre-auth actions, not here
-				// Removing to prevent duplicate calls
+				// This action should be handled in pre-auth actions, not here.
+				// Removing to prevent duplicate calls.
 				break;
 
 			default:
@@ -273,7 +273,7 @@ class WebChangeDetector_Admin_Controller {
 				return false;
 		}
 
-		// Return the result from the action handler (messages will be displayed by init() method)
+		// Return the result from the action handler (messages will be displayed by init() method).
 		return $result;
 	}
 

@@ -36,12 +36,12 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 		
 		<script type="text/javascript">
 			document.addEventListener('DOMContentLoaded', function() {
-				// AJAX account creation functionality
+				// AJAX account creation functionality.
 				if (typeof createAccountViaAjax !== 'undefined' && createAccountViaAjax) {
-					// Show loading overlay immediately
+					// Show loading overlay immediately.
 					document.getElementById('wcd-loading-overlay').style.display = 'flex';
 					
-					// Make AJAX request to create website and groups
+					// Make AJAX request to create website and groups.
 					var xhr = new XMLHttpRequest();
 					xhr.open('POST', ajaxurl, true);
 					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -52,10 +52,10 @@ if ( ! function_exists( 'wcd_webchangedetector_init' ) ) {
 								try {
 									var response = JSON.parse(xhr.responseText);
 									if (response.success) {
-										// Account created successfully, reload the page
+										// Account created successfully, reload the page.
 										window.location.reload();
 									} else {
-										// Hide loading and show error
+										// Hide loading and show error.
 										document.getElementById('wcd-loading-overlay').style.display = 'none';
 										alert('Error creating account: ' + (response.data.message || 'Unknown error'));
 									}

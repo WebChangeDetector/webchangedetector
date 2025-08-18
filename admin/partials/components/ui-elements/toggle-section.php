@@ -56,7 +56,7 @@ $section_id         = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 	id="<?php echo esc_attr( $section_id ); ?>" 
 	style="<?php echo $is_enabled ? '' : 'display: none;'; ?>"
 >
-	<?php echo $content; // Content should be escaped by caller ?>
+	<?php echo $content; // Content should be escaped by caller ?>.
 </div>
 
 <script type="text/javascript">
@@ -65,12 +65,12 @@ function toggleSection(sectionId, isEnabled) {
 	if (section) {
 		if (isEnabled) {
 			section.style.display = '';
-			// Use slideDown effect if jQuery is available
+			// Use slideDown effect if jQuery is available.
 			if (typeof jQuery !== 'undefined') {
 				jQuery('#' + sectionId).slideDown();
 			}
 		} else {
-			// Use slideUp effect if jQuery is available
+			// Use slideUp effect if jQuery is available.
 			if (typeof jQuery !== 'undefined') {
 				jQuery('#' + sectionId).slideUp();
 			} else {
@@ -80,7 +80,7 @@ function toggleSection(sectionId, isEnabled) {
 	}
 }
 
-// Initialize on page load
+// Initialize on page load.
 document.addEventListener('DOMContentLoaded', function() {
 	var checkbox = document.getElementById('<?php echo esc_js( $toggle_name ); ?>');
 	if (checkbox) {

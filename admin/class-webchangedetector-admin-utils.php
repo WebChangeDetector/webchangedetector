@@ -31,7 +31,7 @@ class WebChangeDetector_Admin_Utils {
 	/**
 	 * Remove URL protocol from a given URL.
 	 *
-	 * Removes http:// or https:// protocol from URLs for display purposes
+	 * Removes http:// or https:// protocol from URLs for display purposes.
 	 * or when protocol-agnostic URLs are needed.
 	 *
 	 * @since 1.0.0
@@ -43,7 +43,7 @@ class WebChangeDetector_Admin_Utils {
 			return '';
 		}
 
-		// Remove http:// or https:// protocol
+		// Remove http:// or https:// protocol.
 		$url = preg_replace( '/^https?:\/\//', '', $url );
 
 		return $url;
@@ -86,7 +86,7 @@ class WebChangeDetector_Admin_Utils {
 			return;
 		}
 
-		// Special case for thumbnail which doesn't use group_icon class
+		// Special case for thumbnail which doesn't use group_icon class.
 		$class_prefix = ( $icon === 'thumbnail' ) ? '' : 'group_icon ' . $css_class . ' ';
 
 		$output = sprintf(
@@ -150,7 +150,7 @@ class WebChangeDetector_Admin_Utils {
 			$site_url = get_site_url();
 		}
 
-		// Parse URL components
+		// Parse URL components.
 		$parsed_url = wp_parse_url( $site_url );
 
 		if ( ! isset( $parsed_url['host'] ) ) {
@@ -228,13 +228,13 @@ class WebChangeDetector_Admin_Utils {
 	 * @return string Post type display name.
 	 */
 	public static function get_post_type_name_from_rest_base( $rest_base_or_slug ) {
-		// First try as direct post type name
+		// First try as direct post type name.
 		$post_type_object = get_post_type_object( $rest_base_or_slug );
 		if ( $post_type_object && isset( $post_type_object->labels->name ) ) {
 			return $post_type_object->labels->name;
 		}
 
-		// If not found, search through all post types to find one with matching rest_base
+		// If not found, search through all post types to find one with matching rest_base.
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 		foreach ( $post_types as $post_type ) {
 			$current_rest_base = self::get_post_type_slug( $post_type );
@@ -243,7 +243,7 @@ class WebChangeDetector_Admin_Utils {
 			}
 		}
 
-		// Fallback to ucfirst if not found
+		// Fallback to ucfirst if not found.
 		return ucfirst( $rest_base_or_slug );
 	}
 
@@ -258,21 +258,21 @@ class WebChangeDetector_Admin_Utils {
 	 * @return string WordPress post type slug.
 	 */
 	public static function get_post_type_slug_from_rest_base( $rest_base ) {
-		// First try as direct post type slug
+		// First try as direct post type slug.
 		if ( post_type_exists( $rest_base ) ) {
 			return $rest_base;
 		}
 
-		// If not found, search through all post types to find one with matching rest_base
+		// If not found, search through all post types to find one with matching rest_base.
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 		foreach ( $post_types as $post_type ) {
 			$current_rest_base = self::get_post_type_slug( $post_type );
 			if ( $current_rest_base === $rest_base ) {
-				return $post_type->name; // Return the actual WordPress post type slug
+				return $post_type->name; // Return the actual WordPress post type slug.
 			}
 		}
 
-		// Fallback to the input if not found
+		// Fallback to the input if not found.
 		return $rest_base;
 	}
 
@@ -334,14 +334,14 @@ class WebChangeDetector_Admin_Utils {
 	 * @return string Taxonomy display name.
 	 */
 	public static function get_taxonomy_name_from_slug( $taxonomy_slug ) {
-		// Try direct lookup first
+		// Try direct lookup first.
 		$taxonomy_object = get_taxonomy( $taxonomy_slug );
 		if ( $taxonomy_object && isset( $taxonomy_object->labels->name ) ) {
 			return $taxonomy_object->labels->name;
 		}
 
-		// For taxonomies, the slug is typically the same as the name,
-		// so we don't need complex reverse lookup like with post types
+		// For taxonomies, the slug is typically the same as the name,.
+		// so we don't need complex reverse lookup like with post types.
 		return ucfirst( $taxonomy_slug );
 	}
 

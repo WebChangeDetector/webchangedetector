@@ -162,7 +162,7 @@ class WebChangeDetector_Admin_Screenshots {
 		if ( isset( $token ) ) {
 			$api_response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token );
 
-			// Check if API response is valid
+			// Check if API response is valid.
 			if ( empty( $api_response ) || ! isset( $api_response['data'] ) ) {
 				echo '<p class="notice notice-error" style="padding: 10px;">' .
 					esc_html__( 'Sorry, we couldn\'t find this change detection or you don\'t have permission to view it.', 'webchangedetector' ) .
@@ -172,7 +172,7 @@ class WebChangeDetector_Admin_Screenshots {
 
 			$compare = $api_response['data'];
 
-			// $public_token = $compare['token']; // Unused variable
+			// $public_token = $compare['token']; // Unused variable.
 			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );

@@ -44,7 +44,7 @@ class WebChangeDetector_Error_Recovery {
 	public function __construct( $logger = null ) {
 		$this->logger = $logger ?: new WebChangeDetector_Logger();
 		$this->register_default_recovery_strategies();
-		// Health checks are now handled by the hourly sync in WebChangeDetector_Autoupdates
+		// Health checks are now handled by the hourly sync in WebChangeDetector_Autoupdates.
 	}
 
 	/**
@@ -109,7 +109,7 @@ class WebChangeDetector_Error_Recovery {
 		$health_status = get_option( WCD_WP_OPTION_KEY_HEALTH_STATUS );
 
 		if ( empty( $health_status ) ) {
-			// Return a default healthy status if none exists
+			// Return a default healthy status if none exists.
 			$health_status = array(
 				'overall_status' => 'healthy',
 				'checks'         => array(
@@ -319,7 +319,7 @@ class WebChangeDetector_Error_Recovery {
 	 * @return array Fresh health status.
 	 */
 	public function refresh_health_status() {
-		// Trigger the sync to get fresh health status
+		// Trigger the sync to get fresh health status.
 		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Autoupdates' ) ) {
 			$autoupdates = new \WebChangeDetector\WebChangeDetector_Autoupdates();
 			$autoupdates->sync_auto_update_schedule_from_api();

@@ -32,21 +32,21 @@ class WebChangeDetector_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-		// Clear all plugin cron jobs
+		// Clear all plugin cron jobs.
 		wp_clear_scheduled_hook( 'wcd_sync_auto_update_schedule' );
 		wp_clear_scheduled_hook( 'wcd_wp_version_check' );
 		wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
 		wp_clear_scheduled_hook( 'wcd_cron_check_post_queues' );
 
-		// Clean up auto-update state options to prevent stuck state on reactivation
-		// These constants might not be defined, so we use the actual option names
+		// Clean up auto-update state options to prevent stuck state on reactivation.
+		// These constants might not be defined, so we use the actual option names.
 		delete_option( 'wcd_pre_auto_update' );
 		delete_option( 'wcd_post_auto_update' );
 		delete_option( 'wcd_auto_updates_running' );
 		delete_option( 'wcd_wordpress_cron' );
 
-		// IMPORTANT: Clean up WordPress auto-updater lock if it exists
-		// This prevents WordPress auto-updates from being permanently blocked
+		// IMPORTANT: Clean up WordPress auto-updater lock if it exists.
+		// This prevents WordPress auto-updates from being permanently blocked.
 		$lock = get_option( 'auto_updater.lock' );
 		if ( $lock ) {
 			delete_option( 'auto_updater.lock' );
@@ -59,7 +59,7 @@ class WebChangeDetector_Deactivator {
 			}
 		}
 
-		// Log the cleanup for debugging
+		// Log the cleanup for debugging.
 		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Admin_Utils' ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Plugin deactivated. Cleared all cron jobs and auto-update state.',

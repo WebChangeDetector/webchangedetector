@@ -68,7 +68,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   array|string    The API response or error message.
 	 */
 	public function update_monitoring_settings( $group_data ) {
-		// Debug: Log what we received for monitoring settings
+		// Debug: Log what we received for monitoring settings.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . print_r( $group_data, true ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . print_r( $_POST, true ), 'monitoring_settings', 'debug' );
 
@@ -85,11 +85,11 @@ class WebChangeDetector_Admin_Settings {
 			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
 		);
 
-		// Debug: Log what we're sending to the API
+		// Debug: Log what we're sending to the API.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . print_r( $args, true ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug' );
 
-		// Check if monitoring group UUID exists
+		// Check if monitoring group UUID exists.
 		if ( empty( $this->admin->monitoring_group_uuid ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error' );
 			return array(
@@ -99,10 +99,10 @@ class WebChangeDetector_Admin_Settings {
 		}
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->monitoring_group_uuid, $args );
 
-		// Debug: Log the API response
+		// Debug: Log the API response.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . print_r( $result, true ), 'monitoring_settings', 'debug' );
 
-		// Return standardized response format
+		// Return standardized response format.
 		if ( $result && ! is_string( $result ) ) {
 			return array(
 				'success' => true,
@@ -137,7 +137,7 @@ class WebChangeDetector_Admin_Settings {
 		$auto_update_settings = array();
 		foreach ( $postdata as $key => $value ) {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
-				// Handle checkbox values for enabled field and weekdays
+				// Handle checkbox values for enabled field and weekdays.
 				if (
 					$key === 'auto_update_checks_enabled' ||
 					in_array(
@@ -153,13 +153,13 @@ class WebChangeDetector_Admin_Settings {
 						)
 					)
 				) {
-					// Convert checkbox values to boolean
+					// Convert checkbox values to boolean.
 					$auto_update_settings[ $key ] = ( $value === '1' || $value === 1 || $value === true );
 				} elseif ( $key === 'auto_update_checks_from' || $key === 'auto_update_checks_to' ) {
-					// Convert time from site timezone to UTC before saving
+					// Convert time from site timezone to UTC before saving.
 					$auto_update_settings[ $key ] = \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( $value );
 				} else {
-					// Handle other auto update settings (emails, etc.)
+					// Handle other auto update settings (emails, etc.).
 					$auto_update_settings[ $key ] = $value;
 				}
 			}
@@ -170,13 +170,13 @@ class WebChangeDetector_Admin_Settings {
 			$auto_update_settings['auto_update_checks_enabled'] = false;
 		}
 
-		// Debug: Log what auto update settings we extracted
+		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . print_r( $auto_update_settings, true ), 'manual_check_group_settings', 'debug' );
 
 		$this->admin->website_details['auto_update_settings'] = $auto_update_settings;
 		$this->update_website_details( $this->admin->website_details );
 
-		// Force refresh website details cache after saving
+		// Force refresh website details cache after saving.
 		$this->get_website_details( true );
 
 		do_action( 'wcd_save_update_group_settings' );
@@ -230,7 +230,7 @@ class WebChangeDetector_Admin_Settings {
 
 		$pagination_params = array();
 		if ( ! empty( $_GET['post-type'] ) ) {
-			// Convert rest_base to WordPress post type slug, then get the label that matches what's in the API
+			// Convert rest_base to WordPress post type slug, then get the label that matches what's in the API.
 			$post_type_slug                 = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug_from_rest_base( sanitize_text_field( wp_unslash( $_GET['post-type'] ) ) );
 			$post_type_object               = get_post_type_object( $post_type_slug );
 			$post_type_label                = $post_type_object ? $post_type_object->labels->name : $post_type_slug;
@@ -277,15 +277,15 @@ class WebChangeDetector_Admin_Settings {
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
 			}
 
-			// Add Status Cards section at the top (only for manual checks, not monitoring)
+			// Add Status Cards section at the top (only for manual checks, not monitoring).
 			if ( ! $monitoring_group ) {
 				?>
 				<div class="wcd-status-cards-container">
 					<?php
-					// Add Auto-Update Status Bar
+					// Add Auto-Update Status Bar.
 					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-status-bar.php';
 
-					// Manual Checks Workflow Card
+					// Manual Checks Workflow Card.
 					$manual_checks_status  = 'ready';
 					$manual_checks_icon    = 'controls-play';
 					$manual_checks_message = __( 'Ready to check', 'webchangedetector' );
@@ -555,7 +555,7 @@ class WebChangeDetector_Admin_Settings {
 								<div class="wcd-pagination-container" style="text-align: center; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e5e9;">
 									<div class="wcd-pagination-wrapper">
 										<?php
-										// Initialize pagination variables
+										// Initialize pagination variables.
 										$pagination_params['page'] = 'webchangedetector-' . $tab;
 										$current_page              = $urls_meta['current_page'] ?? $page;
 										$total_pages               = $urls_meta['last_page'];
@@ -630,7 +630,7 @@ class WebChangeDetector_Admin_Settings {
 			</div> <!-- Close flex container -->
 					<?php
 				} else {
-					// Close flex container even if URL selection is not allowed
+					// Close flex container even if URL selection is not allowed.
 					?>
 		</div> <!-- Close flex container -->
 					<?php
@@ -647,8 +647,8 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   void
 	 */
 	public function clear_website_details_cache() {
-		// This method forces a refresh of the static cached website details
-		// by calling get_website_details with the force_refresh parameter
+		// This method forces a refresh of the static cached website details.
+		// by calling get_website_details with the force_refresh parameter.
 		$this->get_website_details( true );
 	}
 
@@ -663,34 +663,34 @@ class WebChangeDetector_Admin_Settings {
 		static $website_details;
 
 		if ( $force_refresh || empty( $website_details ) ) {
-			// Check if we have a saved website ID
+			// Check if we have a saved website ID.
 			$saved_website_id = get_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 
 			if ( $saved_website_id ) {
-				// Try to get website directly by ID
+				// Try to get website directly by ID.
 				$website_response = \WebChangeDetector\WebChangeDetector_API_V2::get_website_v2( $saved_website_id );
 
 				if ( ! empty( $website_response['data'] ) && ! empty( $website_response['data']['id'] ) ) {
 					$website = $website_response['data'];
 
-					// Verify the domain still matches our site
+					// Verify the domain still matches our site.
 					if ( strpos( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) === 0 ) {
 						$website_details                   = $website;
 						$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 						$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
 					} else {
-						// Domain doesn't match, delete the saved ID
+						// Domain doesn't match, delete the saved ID.
 						delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 						$saved_website_id = null;
 					}
 				} else {
-					// Failed to get website by ID, delete the saved ID
+					// Failed to get website by ID, delete the saved ID.
 					delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 					$saved_website_id = null;
 				}
 			}
 
-			// If we don't have website details yet, search through all pages
+			// If we don't have website details yet, search through all pages.
 			if ( empty( $website_details ) || ! $saved_website_id ) {
 				$current_page = 1;
 				$found        = false;
@@ -709,7 +709,7 @@ class WebChangeDetector_Admin_Settings {
 							$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
 							$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
 
-							// Save the website ID for future use
+							// Save the website ID for future use.
 							if ( ! empty( $website['id'] ) ) {
 								update_option( WCD_WP_OPTION_KEY_WEBSITE_ID, $website['id'] );
 							}
@@ -719,7 +719,7 @@ class WebChangeDetector_Admin_Settings {
 						}
 					}
 
-					// Check if there are more pages
+					// Check if there are more pages.
 					$has_more_pages = ! empty( $websites['meta']['last_page'] ) && $websites['meta']['last_page'] > $current_page;
 					++$current_page;
 				} while ( ! $found && $has_more_pages );
@@ -987,7 +987,7 @@ class WebChangeDetector_Admin_Settings {
 					'slug'    => $slug,
 					'name'    => $post_type->labels->name,
 					'type'    => 'post_type',
-					'checked' => false, // Will be set based on current sync_url_types
+					'checked' => false, // Will be set based on current sync_url_types.
 				);
 			}
 		}
@@ -1001,7 +1001,7 @@ class WebChangeDetector_Admin_Settings {
 					'slug'    => $slug,
 					'name'    => $taxonomy->labels->name,
 					'type'    => 'taxonomy',
-					'checked' => false, // Will be set based on current sync_url_types
+					'checked' => false, // Will be set based on current sync_url_types.
 				);
 			}
 		}
@@ -1011,7 +1011,7 @@ class WebChangeDetector_Admin_Settings {
 			'slug'    => 'frontpage',
 			'name'    => __( 'Frontpage', 'webchangedetector' ),
 			'type'    => 'special',
-			'checked' => false, // Will be set based on current sync_url_types
+			'checked' => false, // Will be set based on current sync_url_types.
 		);
 
 		return $available_types;

@@ -255,7 +255,7 @@ class WebChangeDetector {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
 
-		// AJAX handlers now managed by dedicated AJAX class
+		// AJAX handlers now managed by dedicated AJAX class.
 		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_ajax, 'ajax_get_processing_queue' );
 		$this->loader->add_action( 'wp_ajax_post_url', $plugin_ajax, 'ajax_post_url' );
 		$this->loader->add_action( 'wp_ajax_update_comparison_status', $plugin_ajax, 'ajax_update_comparison_status' );

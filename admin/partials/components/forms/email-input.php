@@ -73,7 +73,7 @@ $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 <?php if ( $show_validation ) : ?>
 	<script type="text/javascript">
 		document.addEventListener('DOMContentLoaded', function() {
-			// Email validation
+			// Email validation.
 			function validateEmail(email) {
 				var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 				return emailRegex.test(email);
@@ -91,11 +91,11 @@ $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 
 				if (!emailValue) {
 					errorElement.style.display = 'none';
-					return true; // Empty is allowed, let server-side handle required validation
+					return true; // Empty is allowed, let server-side handle required validation.
 				}
 
 				<?php if ( $multiple ) : ?>
-					// Multiple emails validation
+					// Multiple emails validation.
 					var emails = emailValue.split(',').map(function(email) {
 						return email.trim();
 					});
@@ -112,7 +112,7 @@ $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 						return true;
 					}
 				<?php else : ?>
-					// Single email validation
+					// Single email validation.
 					if (!validateEmail(emailValue)) {
 						errorElement.style.display = 'block';
 						return false;
@@ -123,20 +123,20 @@ $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 				<?php endif; ?>
 			}
 
-			// Add event listener to email field
+			// Add event listener to email field.
 			var emailField = document.getElementById('<?php echo esc_js( $field_name ); ?>');
 			if (emailField) {
 				emailField.addEventListener('blur', validateEmailField);
 				emailField.addEventListener('input', function() {
-					// Hide error on input, validate on blur
+					// Hide error on input, validate on blur.
 					var errorElement = document.getElementById('<?php echo esc_js( $validation_id ); ?>');
 					if (errorElement && this.value.trim() !== '') {
-						setTimeout(validateEmailField, 500); // Debounced validation
+						setTimeout(validateEmailField, 500); // Debounced validation.
 					}
 				});
 			}
 
-			// Make validation function globally available
+			// Make validation function globally available.
 			window['validate_<?php echo esc_js( $field_name ); ?>'] = validateEmailField;
 
 		});

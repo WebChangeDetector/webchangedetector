@@ -42,7 +42,7 @@ class WebChangeDetector_Public {
 	 * @since    3.1.7
 	 */
 	public function enqueue_styles() {
-		// Load the new design CSS files
+		// Load the new design CSS files.
 		wp_enqueue_style( 'webchangedetector-public-legacy', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
 	}
 
@@ -53,7 +53,7 @@ class WebChangeDetector_Public {
 	 */
 	public function enqueue_scripts() {
 
-		// Load WP codemirror
+		// Load WP codemirror.
 		$css_settings              = array(
 			'codemirror' => array( 'theme' => 'darcula' ),
 		);

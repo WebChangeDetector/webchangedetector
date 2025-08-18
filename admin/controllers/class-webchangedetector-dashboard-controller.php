@@ -265,11 +265,11 @@ class WebChangeDetector_Dashboard_Controller {
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
 
-				// Start the setup process immediately
+				// Start the setup process immediately.
 				setupAccountAndSync();
 
 				function setupAccountAndSync() {
-					// Step 1: Update sync_url_types with local labels
+					// Step 1: Update sync_url_types with local labels.
 					$('.wcd-status-text').text('<?php esc_html_e( 'Updating content types...', 'webchangedetector' ); ?>');
 
 					$.ajax({
@@ -283,7 +283,7 @@ class WebChangeDetector_Dashboard_Controller {
 						success: function(response) {
 
 							if (response.success) {
-								// Step 2: Start URL sync
+								// Step 2: Start URL sync.
 								startUrlSync();
 							} else {
 								console.error('WCD Initial Setup: Failed to update sync types', response);
@@ -311,13 +311,13 @@ class WebChangeDetector_Dashboard_Controller {
 						dataType: 'json',
 						success: function(response) {
 
-							// Step 3: Complete setup and start wizard
+							// Step 3: Complete setup and start wizard.
 							completeSetup();
 						},
 						error: function(xhr, status, error) {
 							console.error('WCD Initial Setup: Sync error', error);
 
-							// Even if sync fails, we can still complete setup
+							// Even if sync fails, we can still complete setup.
 							completeSetup();
 						}
 					});
@@ -326,7 +326,7 @@ class WebChangeDetector_Dashboard_Controller {
 				function completeSetup() {
 					$('.wcd-status-text').text('<?php esc_html_e( 'Finalizing setup...', 'webchangedetector' ); ?>');
 
-					// Clear the initial setup needed flag and enable wizard
+					// Clear the initial setup needed flag and enable wizard.
 					$.ajax({
 						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
 						type: 'POST',
@@ -337,7 +337,7 @@ class WebChangeDetector_Dashboard_Controller {
 						dataType: 'json',
 						success: function(response) {
 
-							// Redirect to dashboard with wizard enabled
+							// Redirect to dashboard with wizard enabled.
 							$('.wcd-status-text').text('<?php esc_html_e( 'Setup complete!', 'webchangedetector' ); ?>');
 
 							setTimeout(function() {
@@ -359,6 +359,6 @@ class WebChangeDetector_Dashboard_Controller {
 		</script>
 
 		<?php
-		exit; // Important: Exit to prevent any additional output
+		exit; // Important: Exit to prevent any additional output.
 	}
 }

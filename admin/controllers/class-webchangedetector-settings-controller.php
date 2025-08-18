@@ -43,7 +43,7 @@ class WebChangeDetector_Settings_Controller {
 			return;
 		}
 
-		// Check if viewing a log file
+		// Check if viewing a log file.
 		if ( isset( $_GET['view_log'] ) && isset( $_GET['_wpnonce'] ) ) {
 			if ( wp_verify_nonce( $_GET['_wpnonce'], 'view_log_file' ) ) {
 				$this->render_log_viewer();
@@ -64,8 +64,8 @@ class WebChangeDetector_Settings_Controller {
 			<div class="wcd-settings-section">
 				<div class="wcd-settings-card">
 					<?php
-					// Wizard functionality temporarily removed for phase 1
-					// Will be moved to view renderer in later phases
+					// Wizard functionality temporarily removed for phase 1.
+					// Will be moved to view renderer in later phases.
 					?>
 					<h2><?php _e( 'URL Synchronization Settings', 'webchangedetector' ); ?></h2>
 
@@ -163,7 +163,7 @@ class WebChangeDetector_Settings_Controller {
 						</div>
 
 						<?php
-						// Show available log files if debug logging is enabled or if log files exist
+						// Show available log files if debug logging is enabled or if log files exist.
 						$logger    = isset( $this->admin->logger ) ? $this->admin->logger : null;
 						$log_files = array();
 
@@ -235,7 +235,7 @@ class WebChangeDetector_Settings_Controller {
                                             Resetting your API Token will allow you to switch accounts. Keep in mind to
                                             save your API Token before the reset! </p><p>
                                             When you login with your API token after the reset, all your settings will be still there.</p>';
-			// Wizard functionality temporarily removed for phase 1
+			// Wizard functionality temporarily removed for phase 1.
 			?>
 
 		</div>
@@ -369,7 +369,7 @@ class WebChangeDetector_Settings_Controller {
 	private function render_log_viewer() {
 		$filename = isset( $_GET['view_log'] ) ? sanitize_file_name( $_GET['view_log'] ) : '';
 
-		// Validate filename format
+		// Validate filename format.
 		if ( ! preg_match( '/^wcd-\d{4}-\d{2}-\d{2}\.log$/', $filename ) ) {
 			echo '<div class="error notice"><p>Invalid log file.</p></div>';
 			return;
@@ -381,7 +381,7 @@ class WebChangeDetector_Settings_Controller {
 			return;
 		}
 
-		// Get log directory - same as in logger class
+		// Get log directory - same as in logger class.
 		$log_dir   = plugin_dir_path( dirname( __DIR__ ) ) . 'logs';
 		$file_path = $log_dir . '/' . $filename;
 
@@ -390,7 +390,7 @@ class WebChangeDetector_Settings_Controller {
 			echo '<div class="notice notice-info"><p>Log directory: ' . esc_html( $log_dir ) . '</p></div>';
 			echo '<div class="notice notice-info"><p>Looking for: ' . esc_html( $filename ) . '</p></div>';
 
-			// Show available files in the directory
+			// Show available files in the directory.
 			if ( is_dir( $log_dir ) ) {
 				$files = scandir( $log_dir );
 				echo '<div class="notice notice-info"><p>Available files in log directory: ' . esc_html( implode( ', ', $files ) ) . '</p></div>';
@@ -405,7 +405,7 @@ class WebChangeDetector_Settings_Controller {
 			return;
 		}
 
-		// Read log content
+		// Read log content.
 		$log_content = file_get_contents( $file_path );
 		$lines       = explode( "\n", $log_content );
 
@@ -434,7 +434,7 @@ class WebChangeDetector_Settings_Controller {
 						continue;
 					}
 
-					// Parse log line for better formatting
+					// Parse log line for better formatting.
 					$formatted_line = $this->format_log_line( $line );
 					echo $formatted_line;
 				}
@@ -451,25 +451,25 @@ class WebChangeDetector_Settings_Controller {
 	 * @return string The formatted HTML.
 	 */
 	private function format_log_line( $line ) {
-		// Escape HTML
+		// Escape HTML.
 		$line = esc_html( $line );
 
-		// Highlight timestamps (format: [YYYY-MM-DD HH:MM:SS])
+		// Highlight timestamps (format: [YYYY-MM-DD HH:MM:SS]).
 		$line = preg_replace( '/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/', '<span class="wcd-log-timestamp">[$1]</span>', $line );
 
-		// Highlight log levels
+		// Highlight log levels.
 		$line = preg_replace( '/\[ERROR\]/i', '<span class="wcd-log-level-error">[ERROR]</span>', $line );
 		$line = preg_replace( '/\[WARNING\]/i', '<span class="wcd-log-level-warning">[WARNING]</span>', $line );
 		$line = preg_replace( '/\[INFO\]/i', '<span class="wcd-log-level-info">[INFO]</span>', $line );
 		$line = preg_replace( '/\[DEBUG\]/i', '<span class="wcd-log-level-debug">[DEBUG]</span>', $line );
 
-		// Highlight context in brackets
+		// Highlight context in brackets.
 		$line = preg_replace( '/\[([^\]]+)\]/', '<span class="wcd-log-context">[$1]</span>', $line );
 
-		// Highlight URLs
+		// Highlight URLs.
 		$line = preg_replace( '/(https?:\/\/[^\s]+)/', '<span class="wcd-log-url">$1</span>', $line );
 
-		// Highlight file paths
+		// Highlight file paths.
 		$line = preg_replace( '/(\/[^\s:]+\.(php|js|css|html))/', '<span class="wcd-log-filepath">$1</span>', $line );
 
 		return '<div class="wcd-log-line">' . $line . '</div>';
