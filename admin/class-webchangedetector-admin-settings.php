@@ -281,21 +281,55 @@ class WebChangeDetector_Admin_Settings
                 $this->admin->print_monitoring_status_bar($group_and_urls);
             }
 
-            // Add Manual Checks Workflow section at the top (only for manual checks, not monitoring)
-            if (! $monitoring_group && $group_and_urls['selected_urls_count'] > 0) {
+            // Add Status Cards section at the top (only for manual checks, not monitoring)
+            if (! $monitoring_group) {
             ?>
-                <div class="wcd-settings-section">
-                    <div class="wcd-settings-card wcd-start-checks-card wizard-start-manual-checks">
-                        <div class="wcd-form-row">
-                            <div class="wcd-form-label-wrapper">
-                                <label class="wcd-form-label"><span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__('Manual Checks Workflow', 'webchangedetector'); ?></label>
-                                <div class="wcd-description"><?php echo esc_html__('Ready to start your manual checks? Click the button below to begin checking your selected URLs for changes.', 'webchangedetector'); ?></div>
-                            </div>
-                            <div class="wcd-form-control">
-                                <button style="margin-top: 10px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js($group_id); ?>')">
+                <div class="wcd-status-cards-container">
+                    <?php
+                    // Add Auto-Update Status Bar
+                    include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-status-bar.php';
+                    
+                    // Manual Checks Workflow Card
+                    $manual_checks_status = 'ready';
+                    $manual_checks_icon = 'controls-play';
+                    $manual_checks_message = __('Ready to check', 'webchangedetector');
+                    $manual_checks_value = false;
+                    
+                    if ($group_and_urls['selected_urls_count'] == 0) {
+                        $manual_checks_status = 'no-urls';
+                        $manual_checks_icon = 'info';
+                        $manual_checks_message = __('No URLs selected', 'webchangedetector');
+                        $manual_checks_value = __('Select URLs below', 'webchangedetector');
+                    }
+                    ?>
+                    <div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr('wcd-status-' . $manual_checks_status); ?>">
+                        <div class="wcd-monitoring-status-header">
+                            <h3><span class="dashicons dashicons-<?php echo esc_attr($manual_checks_icon); ?>"></span> <?php echo esc_html__('Manual Checks', 'webchangedetector'); ?></h3>
+                        </div>
+                        <div class="wcd-monitoring-status-content">
+                            <div class="wcd-next-check-container">
+                                <div class="wcd-status-label"><?php echo esc_html($manual_checks_message); ?></div>
+                                <?php if($manual_checks_value) { ?>
+                                    <div class="wcd-status-value"><?php echo esc_html($manual_checks_value); ?></div>
+                                <?php } ?>
+                                <?php if ($group_and_urls['selected_urls_count'] > 0): ?>
+                                <button style="margin-top: 8px;" type="button" class="button button-primary" onclick="startManualChecks('<?php echo esc_js($group_id); ?>')">
                                     <span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__('Start Manual Checks', 'webchangedetector'); ?>
                                 </button>
+                                <?php endif; ?>
                             </div>
+                            <?php if ($group_and_urls['selected_urls_count'] > 0): ?>
+                            <div class="wcd-monitoring-stats">
+                                <div class="wcd-stat-item">
+                                    <span class="wcd-stat-label"><?php _e('Selected URLs', 'webchangedetector'); ?></span>
+                                    <span class="wcd-stat-value"><?php echo esc_html($group_and_urls['selected_urls_count']); ?></span>
+                                </div>
+                                <div class="wcd-stat-item">
+                                    <span class="wcd-stat-label"><?php _e('Check Type', 'webchangedetector'); ?></span>
+                                    <span class="wcd-stat-value"><?php _e('On-Demand', 'webchangedetector'); ?></span>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

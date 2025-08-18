@@ -55,8 +55,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 == Changelog ==
 
 = 4.0.0 =
-* Improvement: New design
-* Improvement: Code refactoring 
+* Improvement: New design & code refactoring
 * Improvement: Optimized url sync 
 * Impromenent: More robust auto update checks system
 * Improvement: URL sync with polylang and wpml
