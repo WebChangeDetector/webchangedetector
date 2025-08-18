@@ -721,9 +721,8 @@ class WebChangeDetector_Admin_WordPress {
 				$wcd_url_id      = $manual_urls[0]['id'];
 				$manual_url_data = $manual_urls[0];
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Using first manual URL ID: ' . $wcd_url_id, 'get_url_monitoring_status', 'debug' );
-			}
-			// If not found in manual, try monitoring group.
-			elseif ( ! empty( $monitoring_urls ) && isset( $monitoring_urls[0]['id'] ) ) {
+			} elseif ( ! empty( $monitoring_urls ) && isset( $monitoring_urls[0]['id'] ) ) {
+				// If not found in manual, try monitoring group.
 				$wcd_url_id          = $monitoring_urls[0]['id'];
 				$monitoring_url_data = $monitoring_urls[0];
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Using first monitoring URL ID: ' . $wcd_url_id, 'get_url_monitoring_status', 'debug' );
@@ -1513,7 +1512,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Check if we have different languages with wpml.
 		$languages = array();
 		foreach ( $url_types as $key => $url_type ) {
-			if ( $url_type['url_type_slug'] === 'wpml_language' ) {
+			if ( 'wpml_language' === $url_type['url_type_slug'] ) {
 				$languages[] = $url_type['post_type_slug'];
 				unset( $url_types[ $key ] );
 			}

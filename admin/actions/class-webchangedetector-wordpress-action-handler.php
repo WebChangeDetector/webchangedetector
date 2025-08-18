@@ -72,7 +72,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 			// 'success' => false,.
 			// 'message' => 'Post type does not exist: ' . $post_type_slug,.
 			// );.
-			// }
+			// }.
 
 			// Use the existing add_post_type method which handles the JSON data properly.
 			$this->admin->wordpress_handler->add_post_type( $data );
@@ -430,7 +430,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 			'is_multisite'   => is_multisite(),
 			'theme'          => get_template(),
 			'active_plugins' => get_option( 'active_plugins', array() ),
-			'timezone'       => get_option( 'timezone_string' ) ?: 'UTC',
+			'timezone'       => get_option( 'timezone_string' ) ? get_option( 'timezone_string' ) : 'UTC',
 		);
 	}
 }

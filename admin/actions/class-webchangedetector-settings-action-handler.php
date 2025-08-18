@@ -41,7 +41,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	public function handle_save_group_settings( $data ) {
 		try {
 			$this->admin->error_handler->debug( 'Monitoring settings data: ' . wp_json_encode( $data ) );
-			if ( ! empty( $data['monitoring'] ) && (int) $data['monitoring'] === 1 ) {
+			if ( ! empty( $data['monitoring'] ) && 1 === (int) $data['monitoring'] ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
 				return $this->handle_manual_check_settings( $data );
@@ -275,5 +275,4 @@ class WebChangeDetector_Settings_Action_Handler {
 			'errors'  => $errors,
 		);
 	}
-
 }

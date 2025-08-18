@@ -47,7 +47,8 @@ $accordion_id = $accordion_id ?? 'accordion-' . wp_rand( 1000, 9999 );
 		<?php
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is pre-escaped by the calling function.
 		echo $content;
-		?>.
+		?>
+		.
 	</div>
 </div>
 

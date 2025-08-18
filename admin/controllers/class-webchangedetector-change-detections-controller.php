@@ -126,7 +126,7 @@ class WebChangeDetector_Change_Detections_Controller {
 			// Wizard functionality temporarily removed for phase 1.
 			// Will be moved to view renderer in later phases.
 
-			$extra_filters          = array();
+			$extra_filters = array();
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 			$extra_filters['paged'] = isset( $_GET['paged'] ) ? sanitize_key( wp_unslash( $_GET['paged'] ) ) : 1;
 

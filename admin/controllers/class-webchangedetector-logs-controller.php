@@ -89,7 +89,9 @@ class WebChangeDetector_Logs_Controller {
 		// Will be moved to view renderer in later phases.
 
 		$paged = 1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 		if ( isset( $_GET['paged'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 			$paged = sanitize_key( wp_unslash( $_GET['paged'] ) );
 		}
 
@@ -175,10 +177,12 @@ class WebChangeDetector_Logs_Controller {
 					<span class="displaying-num"><?php echo esc_html( $queues_meta['total'] ); ?> items</span>
 					<span class="pagination-links">
 						<?php
+						// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 						if ( ! isset( $_GET['paged'] ) ) {
 							$_GET['paged'] = 1;
 						}
 						foreach ( $queues_meta['links'] as $link ) {
+							// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 							$url_params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 
 							if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
@@ -205,6 +209,7 @@ class WebChangeDetector_Logs_Controller {
 	 */
 	private function render_debug_logs() {
 		// Get filters from URL parameters.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET parameters for filtering only.
 		$filters = array(
 			'level'     => isset( $_GET['level'] ) ? sanitize_text_field( wp_unslash( $_GET['level'] ) ) : '',
 			'context'   => isset( $_GET['context'] ) ? sanitize_text_field( wp_unslash( $_GET['context'] ) ) : '',
@@ -214,6 +219,7 @@ class WebChangeDetector_Logs_Controller {
 			'per_page'  => isset( $_GET['per_page'] ) ? max( 10, min( 100, absint( $_GET['per_page'] ) ) ) : 50,
 			'page'      => isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1,
 		);
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Get logs from database.
 		$result = $this->database_logger->get_logs( $filters );

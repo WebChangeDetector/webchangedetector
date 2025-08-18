@@ -244,9 +244,8 @@ class WebChangeDetector_Admin_Controller {
 			case 'export_logs':
 				// Export logs is now handled via AJAX. This case is kept for backwards compatibility.
 				// Redirect to prevent form resubmission.
-				wp_redirect( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) );
+				wp_safe_redirect( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) );
 				exit;
-				break;
 
 			case 'clear_logs':
 				$result = $this->admin->settings_action_handler->handle_clear_logs( $postdata );
@@ -562,7 +561,9 @@ class WebChangeDetector_Admin_Controller {
 	private function route_to_page_controller() {
 		// Get page to view.
 		$tab = 'webchangedetector'; // Default to dashboard.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for tab navigation only.
 		if ( isset( $_GET['page'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for tab navigation only.
 			$tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 		}
 
@@ -602,6 +603,7 @@ class WebChangeDetector_Admin_Controller {
 				}
 				// Handle comparison view.
 				$postdata = array();
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public comparison view, no modification of data.
 				foreach ( $_POST as $key => $post ) {
 					$postdata[ wp_unslash( $key ) ] = wp_unslash( $post );
 				}
@@ -611,6 +613,7 @@ class WebChangeDetector_Admin_Controller {
 			case 'webchangedetector-show-screenshot':
 				// Handle screenshot view.
 				$postdata = array();
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public screenshot view, no modification of data.
 				foreach ( $_POST as $key => $post ) {
 					$postdata[ wp_unslash( $key ) ] = wp_unslash( $post );
 				}
