@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Main Admin Controller for WebChangeDetector
  *

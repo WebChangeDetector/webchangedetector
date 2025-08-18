@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Dashboard Controller for WebChangeDetector
  *

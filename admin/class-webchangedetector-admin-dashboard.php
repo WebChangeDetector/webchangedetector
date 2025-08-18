@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Dashboard and Views Management for WebChange Detector
  *
@@ -188,7 +187,7 @@ class WebChangeDetector_Admin_Dashboard {
 		// Debug: Allow resetting first-time visit with URL parameter.
 		if ( isset( $_GET['wcd_reset_first_time'] ) && current_user_can( 'manage_options' ) ) {
 			delete_user_meta( $user_id, $meta_key );
-			wp_redirect( remove_query_arg( 'wcd_reset_first_time' ) );
+			wp_safe_redirect( remove_query_arg( 'wcd_reset_first_time' ) );
 			exit;
 		}
 
@@ -215,7 +214,7 @@ class WebChangeDetector_Admin_Dashboard {
 	private function get_auto_update_for_batch( $batch_id ) {
 		// Check if batch is from auto-update.
 		$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, array() );
-		if ( ! in_array( $batch_id, $auto_update_batches ) ) {
+		if ( ! in_array( $batch_id, $auto_update_batches, true ) ) {
 			return false;
 		}
 
@@ -303,15 +302,15 @@ class WebChangeDetector_Admin_Dashboard {
 									// Show browser console changes indicator (only for supported plans).
 									$user_account            = $this->admin->account_handler->get_account();
 									$user_plan               = $user_account['plan'] ?? 'free';
-									$canAccessBrowserConsole = $this->admin->can_access_feature( 'browser_console', $user_plan );
+									$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
 
-									if ( $canAccessBrowserConsole && $console_changes_count > 0 ) {
-										$consoleTotal = $console_changes_count;
-										if ( $consoleTotal > 0 ) {
+									if ( $can_access_browser_console && $console_changes_count > 0 ) {
+										$console_total = $console_changes_count;
+										if ( $console_total > 0 ) {
 											echo '<div class="wcd-console-badge-batch">';
 											echo '<span class="dashicons dashicons-editor-code"></span>';
-											echo '<span class="wcd-console-count">' . $consoleTotal . '</span>';
-											echo '<span class="wcd-console-text">Console Change' . ( $consoleTotal > 1 ? 's' : '' ) . '</span>';
+											echo '<span class="wcd-console-count">' . $console_total . '</span>';
+											echo '<span class="wcd-console-text">Console Change' . ( $console_total > 1 ? 's' : '' ) . '</span>';
 											echo '</div>';
 										}
 									}
@@ -340,10 +339,12 @@ class WebChangeDetector_Admin_Dashboard {
 											}
 											$plugin_count = isset( $auto_update_data['updates']['plugins'] ) ? count( $auto_update_data['updates']['plugins'] ) : 0;
 											if ( $plugin_count > 0 ) {
+												// translators: %d: number of plugins.
 												$update_summary[] = sprintf( _n( '%d plugin', '%d plugins', $plugin_count, 'webchangedetector' ), $plugin_count );
 											}
 											$theme_count = isset( $auto_update_data['updates']['themes'] ) ? count( $auto_update_data['updates']['themes'] ) : 0;
 											if ( $theme_count > 0 ) {
+												// translators: %d: number of themes.
 												$update_summary[] = sprintf( _n( '%d theme', '%d themes', $theme_count, 'webchangedetector' ), $theme_count );
 											}
 
@@ -461,12 +462,14 @@ class WebChangeDetector_Admin_Dashboard {
 						if ( count( $successful_plugins ) > 0 ) {
 							$update_items[] = sprintf(
 								'<span style="color: #46b450;">✓</span> %s',
+								// translators: %d: number of plugins.
 								sprintf( _n( '%d plugin updated successfully', '%d plugins updated successfully', count( $successful_plugins ), 'webchangedetector' ), count( $successful_plugins ) )
 							);
 						}
 						if ( count( $failed_plugins ) > 0 ) {
 							$update_items[] = sprintf(
 								'<span style="color: #dc3232;">✗</span> %s',
+								// translators: %d: number of plugins.
 								sprintf( _n( '%d plugin update failed', '%d plugin updates failed', count( $failed_plugins ), 'webchangedetector' ), count( $failed_plugins ) )
 							);
 						}
@@ -490,12 +493,14 @@ class WebChangeDetector_Admin_Dashboard {
 						if ( count( $successful_themes ) > 0 ) {
 							$update_items[] = sprintf(
 								'<span style="color: #46b450;">✓</span> %s',
+								// translators: %d: number of themes.
 								sprintf( _n( '%d theme updated successfully', '%d themes updated successfully', count( $successful_themes ), 'webchangedetector' ), count( $successful_themes ) )
 							);
 						}
 						if ( count( $failed_themes ) > 0 ) {
 							$update_items[] = sprintf(
 								'<span style="color: #dc3232;">✗</span> %s',
+								// translators: %d: number of themes.
 								sprintf( _n( '%d theme update failed', '%d theme updates failed', count( $failed_themes ), 'webchangedetector' ), count( $failed_themes ) )
 							);
 						}
@@ -690,9 +695,9 @@ class WebChangeDetector_Admin_Dashboard {
 							// Show console changes badge if present.
 							$user_account            = $this->admin->account_handler->get_account();
 							$user_plan               = $user_account['plan'] ?? 'free';
-							$canAccessBrowserConsole = $this->admin->can_access_feature( 'browser_console', $user_plan );
+							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
 
-							if ( $canAccessBrowserConsole && ! empty( $compare['browser_console_change'] ) && $compare['browser_console_change'] !== 'unchanged' ) {
+							if ( $can_access_browser_console && ! empty( $compare['browser_console_change'] ) && 'unchanged' !== $compare['browser_console_change'] ) {
 								$console_added   = count( $compare['browser_console_added'] ?? array() );
 								$console_removed = count( $compare['browser_console_removed'] ?? array() );
 								$console_total   = $console_added + $console_removed;
@@ -700,7 +705,7 @@ class WebChangeDetector_Admin_Dashboard {
 								if ( $console_total > 0 ) {
 									echo '<div class="wcd-console-badge-comparison">';
 									echo '<span class="dashicons dashicons-editor-code"></span>';
-									echo '<span class="wcd-console-count">' . $console_total . '</span>';
+									echo '<span class="wcd-console-count">' . esc_html( $console_total ) . '</span>';
 									echo '<span class="wcd-console-text">Console Change' . ( $console_total > 1 ? 's' : '' ) . '</span>';
 									echo '</div>';
 								}

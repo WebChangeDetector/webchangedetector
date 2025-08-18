@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Change Detections Controller for WebChangeDetector
  *
@@ -172,12 +171,12 @@ class WebChangeDetector_Change_Detections_Controller {
 					$auto_update_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 					if ( is_array( $auto_update_batches ) && in_array( $batch_id, $auto_update_batches, true ) ) {
 						echo '<div class="notice notice-info"><p>';
-						echo __( 'Viewing Auto-Update Check visual comparisons. ', 'webchangedetector' );
-						echo '<a href="?page=webchangedetector-logs&tab=auto-updates">' . __( '← Back to Auto-Update History', 'webchangedetector' ) . '</a>';
+						echo esc_html__( 'Viewing Auto-Update Check visual comparisons. ', 'webchangedetector' );
+						echo '<a href="?page=webchangedetector-logs&tab=auto-updates">' . esc_html__( '← Back to Auto-Update History', 'webchangedetector' ) . '</a>';
 						echo '</p></div>';
 					}
 				} else {
-					echo '<div class="notice notice-error"><p>' . __( 'Batch not found.', 'webchangedetector' ) . '</p></div>';
+					echo '<div class="notice notice-error"><p>' . esc_html__( 'Batch not found.', 'webchangedetector' ) . '</p></div>';
 					$batches = array( 'data' => array() );
 				}
 			} else {

@@ -1,9 +1,8 @@
 <?php
-
 /**
-Title: WebChange Detector Auto Update Feature
-Description: Check your website on auto updates visually and see what changed.
-Version: 1.0
+ * Title: WebChange Detector Auto Update Feature
+ * Description: Check your website on auto updates visually and see what changed.
+ * Version: 1.0
  *
  * @package    WebChangeDetector
  */
@@ -111,7 +110,9 @@ class WebChangeDetector_Autoupdates {
 	/**
 	 * Fires when wp auto updates are done.
 	 *
+	 * @param array $update_results Array of update results.
 	 * @return void
+	 * @throws \Exception If the update results are invalid.
 	 */
 	public function automatic_updates_complete( $update_results = array() ) {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Automatic Updates Complete. Running post-update stuff.', 'automatic_updates_complete', 'debug' );
@@ -557,6 +558,7 @@ class WebChangeDetector_Autoupdates {
 	 * Start pre-update screenshots.
 	 *
 	 * @return bool True if started successfully, false on error.
+	 * @throws \Exception If the API response is invalid.
 	 */
 	private function start_pre_update_screenshots() {
 
@@ -614,6 +616,7 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @param array $pre_update_data Pre-update data with batch ID.
 	 * @return bool True if ready, false if still processing.
+	 * @throws \Exception If the API response is invalid.
 	 */
 	private function check_pre_update_screenshots_status( $pre_update_data ) {
 
@@ -757,7 +760,7 @@ class WebChangeDetector_Autoupdates {
 		$lock = get_option( $this->lock_name );
 
 		if ( $lock ) {
-			// Lock still exists, WordPress might still be checking/updating
+			// Lock still exists, WordPress might still be checking/updating.
 			$lock_age = time() - $lock;
 
 			// WordPress uses 1 hour as lock timeout, so if it's older, it's stuck.
@@ -1319,8 +1322,8 @@ class WebChangeDetector_Autoupdates {
 		// Check auto-updates running flag.
 		$auto_updates_running = get_option( WCD_AUTO_UPDATES_RUNNING );
 		if ( $auto_updates_running ) {
-			// This flag should be cleared when pre/post update processes complete
-			// If it exists without corresponding pre/post update data, it's likely stuck
+			// This flag should be cleared when pre/post update processes complete.
+			// If it exists without corresponding pre/post update data, it's likely stuck.
 			$has_active_process = get_option( WCD_PRE_AUTO_UPDATE ) || get_option( WCD_POST_AUTO_UPDATE );
 
 			if ( ! $has_active_process ) {
@@ -1589,10 +1592,10 @@ class WebChangeDetector_Autoupdates {
 		// WP Super Cache.
 		try {
 			if ( function_exists( '\wp_cache_clear_cache' ) ) {
-				@wp_cache_clear_cache( true );
+				wp_cache_clear_cache( true );
 				$cleared_caches[] = 'WP Super Cache';
 			} elseif ( function_exists( '\wp_cache_post_change' ) ) {
-				@wp_cache_post_change( '' );
+				wp_cache_post_change( '' );
 				$cleared_caches[] = 'WP Super Cache';
 			}
 		} catch ( \Exception $e ) {
@@ -1880,7 +1883,8 @@ class WebChangeDetector_Autoupdates {
 	/**
 	 * Save auto-update results to options for frontend display.
 	 *
-	 * @param array $update_results The update results from WordPress.
+	 * @param array       $update_results The update results from WordPress.
+	 * @param string|null $batch_id_post_update The batch ID for the post-update process.
 	 * @return void
 	 */
 	private function save_update_results( $update_results, $batch_id_post_update = null ) {
@@ -2218,7 +2222,7 @@ class WebChangeDetector_Autoupdates {
 			// Determine overall status.
 			if ( $summary['failed'] > 0 && $summary['successful'] > 0 ) {
 				$summary['status'] = 'completed_with_errors';
-			} elseif ( $summary['failed'] > 0 && $summary['successful'] === 0 ) {
+			} elseif ( $summary['failed'] > 0 && 0 === $summary['successful'] ) {
 				$summary['status'] = 'failed';
 			}
 		} catch ( \Exception $e ) {

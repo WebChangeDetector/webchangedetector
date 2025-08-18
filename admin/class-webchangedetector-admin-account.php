@@ -405,7 +405,7 @@ class WebChangeDetector_Admin_Account {
 					<h2><?php esc_html_e( 'Account Activation Required', 'webchangedetector' ); ?></h2>
 				</div>
 				
-				<?php if ( ! empty( $error ) && $error !== 'ActivateAccount' && $error !== 'activate account' ) : ?>
+				<?php if ( ! empty( $error ) && 'ActivateAccount' !== $error && 'activate account' !== $error ) : ?>
 					<div class="wcd-error-card">
 						<span class="dashicons dashicons-warning"></span>
 						<p><?php echo esc_html( $error ); ?></p>

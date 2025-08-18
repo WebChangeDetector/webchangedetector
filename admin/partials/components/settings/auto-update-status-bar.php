@@ -71,7 +71,7 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 
 		// Calculate time until next run.
 		// Use time() instead of current_time('timestamp') to avoid discouraged usage and get the current Unix timestamp.
-		$time_until = human_time_diff( time(), $next_auto_update );
+		$time_until      = human_time_diff( time(), $next_auto_update );
 		$next_check_time = $time_until;
 		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
 	} else {

@@ -16,7 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-
 /**
  * WebChangeDetector Database Logger Class
  *
@@ -106,15 +105,15 @@ class WebChangeDetector_Database_Logger {
 			$this->table_name,
 			$log_data,
 			array(
-				'%s', // timestamp
-				'%s', // level
-				'%s', // context
-				'%s', // message
-				'%d', // user_id
-				'%s', // ip_address
-				'%s', // request_id
-				'%s', // session_id
-				'%s', // additional_data
+				'%s', // timestamp.
+				'%s', // level.
+				'%s', // context.
+				'%s', // message.
+				'%d', // user_id.
+				'%s', // ip_address.
+				'%s', // request_id.
+				'%s', // session_id.
+				'%s', // additional_data.
 			)
 		);
 

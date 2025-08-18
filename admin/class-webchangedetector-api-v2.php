@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The requests to webchangedetector api v2.
  *
@@ -174,7 +173,7 @@ class WebChangeDetector_API_V2 {
 		);
 		$args = array_merge( $args, $group_settings );
 
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Update group settings: ' . print_r( $args, true ), 'update_group', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Update group settings: ' . wp_json_encode( $args ), 'update_group', 'debug' );
 		return self::api_v2( $args, 'PUT' );
 	}
 
@@ -459,10 +458,11 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
-	/** Update webhook
+	/** Update webhook.
 	 *
 	 * @param string $id Id of the webhook.
 	 * @param string $url The url to send the webhook to.
+	 * @param string $expires_at The date and time the webhook expires.
 	 * @return mixed|string
 	 */
 	public static function update_webhook_v2( $id, $url, $expires_at = false ) {
@@ -509,7 +509,7 @@ class WebChangeDetector_API_V2 {
 
 	/** Get batch.
 	 *
-	 * @param array $filter Filters for the batches.
+	 * @param string $batch_id The batch id.
 	 * @return mixed|string
 	 */
 	public static function get_batch_v2( $batch_id ) {

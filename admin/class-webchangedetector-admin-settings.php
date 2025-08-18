@@ -1,7 +1,4 @@
 <?php
-
-namespace WebChangeDetector;
-
 /**
  * WebChange Detector Admin Settings Management
  *
@@ -15,6 +12,8 @@ namespace WebChangeDetector;
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin
  */
+
+namespace WebChangeDetector;
 
 /**
  * WebChange Detector Admin Settings Class
@@ -69,8 +68,8 @@ class WebChangeDetector_Admin_Settings {
 	 */
 	public function update_monitoring_settings( $group_data ) {
 		// Debug: Log what we received for monitoring settings.
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . print_r( $group_data, true ), 'monitoring_settings', 'debug' );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . print_r( $_POST, true ), 'monitoring_settings', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . wp_json_encode( $group_data ), 'monitoring_settings', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . wp_json_encode( $_POST ), 'monitoring_settings', 'debug' );
 
 		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
 
@@ -86,7 +85,7 @@ class WebChangeDetector_Admin_Settings {
 		);
 
 		// Debug: Log what we're sending to the API.
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . print_r( $args, true ), 'monitoring_settings', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . wp_json_encode( $args ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug' );
 
 		// Check if monitoring group UUID exists.
@@ -100,7 +99,7 @@ class WebChangeDetector_Admin_Settings {
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->monitoring_group_uuid, $args );
 
 		// Debug: Log the API response.
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . print_r( $result, true ), 'monitoring_settings', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . wp_json_encode( $result ), 'monitoring_settings', 'debug' );
 
 		// Return standardized response format.
 		if ( $result && ! is_string( $result ) ) {
@@ -154,8 +153,8 @@ class WebChangeDetector_Admin_Settings {
 					)
 				) {
 					// Convert checkbox values to boolean.
-					$auto_update_settings[ $key ] = ( $value === '1' || $value === 1 || $value === true );
-				} elseif ( $key === 'auto_update_checks_from' || $key === 'auto_update_checks_to' ) {
+					$auto_update_settings[ $key ] = ( '1' === $value || 1 === $value || true === $value );
+				} elseif ( 'auto_update_checks_from' === $key || 'auto_update_checks_to' === $key ) {
 					// Convert time from site timezone to UTC before saving.
 					$auto_update_settings[ $key ] = \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( $value );
 				} else {
@@ -171,7 +170,7 @@ class WebChangeDetector_Admin_Settings {
 		}
 
 		// Debug: Log what auto update settings we extracted.
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . print_r( $auto_update_settings, true ), 'manual_check_group_settings', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
 		$this->admin->website_details['auto_update_settings'] = $auto_update_settings;
 		$this->update_website_details( $this->admin->website_details );
@@ -291,7 +290,7 @@ class WebChangeDetector_Admin_Settings {
 					$manual_checks_message = __( 'Ready to check', 'webchangedetector' );
 					$manual_checks_value   = false;
 
-					if ( $group_and_urls['selected_urls_count'] == 0 ) {
+					if ( 0 === $group_and_urls['selected_urls_count'] ) {
 						$manual_checks_status  = 'no-urls';
 						$manual_checks_icon    = 'info';
 						$manual_checks_message = __( 'No URLs selected', 'webchangedetector' );
@@ -562,7 +561,7 @@ class WebChangeDetector_Admin_Settings {
 										$total_items               = $urls_meta['total'] ?? 0;
 										?>
 										<div class="wcd-pagination-info">
-											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php echo esc_html( sprintf( __( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), $current_page, $total_pages, $total_items ) ); ?></span>
+											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php echo sprintf( esc_html__( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), $current_page, $total_pages, $total_items ); ?></span>
 										</div>
 										<div class="wcd-pagination-links" style="margin-top: 15px;">
 											<?php

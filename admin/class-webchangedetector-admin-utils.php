@@ -57,7 +57,8 @@ class WebChangeDetector_Admin_Utils {
 	 * following WordPress admin interface standards.
 	 *
 	 * @since 1.0.0
-	 * @param string $device The device type ('desktop' or 'mobile').
+	 * @param string $icon The icon type.
+	 * @param string $css_class Optional CSS class for the icon.
 	 * @return string HTML icon element.
 	 */
 	public static function get_device_icon( $icon, $css_class = '' ) {
@@ -450,8 +451,8 @@ class WebChangeDetector_Admin_Utils {
 	 * Shows "< 0.01" for values between 0 and 0.005, otherwise rounds to 2 decimal places.
 	 *
 	 * @since 4.0.0
-	 * @param float $difference_percent The difference percentage value
-	 * @return string Formatted percentage value (without % sign)
+	 * @param float $difference_percent The difference percentage value.
+	 * @return string Formatted percentage value (without % sign).
 	 */
 	public static function format_difference_percent( $difference_percent ) {
 		if ( $difference_percent > 0 && $difference_percent < 0.005 ) {

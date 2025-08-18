@@ -62,14 +62,15 @@ class WebChangeDetector_Logs_Controller {
 		// Display tabs.
 		?>
 		<h2 class="nav-tab-wrapper">
-			<a href="?page=webchangedetector-logs&tab=debug-logs" class="nav-tab <?php echo 'debug-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				<?php esc_html_e( 'Debug Logs', 'webchangedetector' ); ?>
-			</a>
+			
 			<a href="?page=webchangedetector-logs&tab=queue" class="nav-tab <?php echo 'queue' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				<?php esc_html_e( 'Queue', 'webchangedetector' ); ?>
 			</a>
 			<a href="?page=webchangedetector-logs&tab=auto-updates" class="nav-tab <?php echo 'auto-updates' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				<?php esc_html_e( 'Auto-Update History', 'webchangedetector' ); ?>
+			</a>
+			<a href="?page=webchangedetector-logs&tab=debug-logs" class="nav-tab <?php echo 'debug-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				<?php esc_html_e( 'Debug Logs', 'webchangedetector' ); ?>
 			</a>
 		</h2>
 		<?php
@@ -288,7 +289,7 @@ class WebChangeDetector_Logs_Controller {
 							<label for="date_from"><?php esc_html_e( 'From Date', 'webchangedetector' ); ?></label><br>
 							<?php
 							// Set default value to now - 7 days if not set.
-							$date_from_value = ! empty( $filters['date_from'] ) ? $filters['date_from'] : date( 'Y-m-d', strtotime( '-7 days' ) );
+							$date_from_value = ! empty( $filters['date_from'] ) ? $filters['date_from'] : gmdate( 'Y-m-d', strtotime( '-7 days' ) );
 							?>
 							<input type="date" name="date_from" id="date_from" value="<?php echo esc_attr( $date_from_value ); ?>">
 						</div>
@@ -297,7 +298,7 @@ class WebChangeDetector_Logs_Controller {
 							<label for="date_to"><?php esc_html_e( 'To Date', 'webchangedetector' ); ?></label><br>
 							<?php
 							// Set default value to now if not set.
-							$date_to_value = ! empty( $filters['date_to'] ) ? $filters['date_to'] : date( 'Y-m-d' );
+							$date_to_value = ! empty( $filters['date_to'] ) ? $filters['date_to'] : gmdate( 'Y-m-d' );
 							?>
 							<input type="date" name="date_to" id="date_to" value="<?php echo esc_attr( $date_to_value ); ?>">
 						</div>
@@ -321,7 +322,7 @@ class WebChangeDetector_Logs_Controller {
 				<!-- Export and Clear Actions -->
 				<div style="margin-bottom: 15px;">
 					<form method="post" style="display: inline-block; margin-right: 10px;">
-						<?php wp_nonce_field( 'wcd_export_logs' ); ?>
+						<?php wp_nonce_field( 'export_logs' ); ?>
 						<input type="hidden" name="wcd_action" value="export_logs">
 						<?php foreach ( $filters as $key => $value ) : ?>
 							<?php if ( ! empty( $value ) && 'page' !== $key ) : ?>
@@ -333,7 +334,7 @@ class WebChangeDetector_Logs_Controller {
 					
 					<?php if ( current_user_can( 'manage_options' ) ) : ?>
 						<form method="post" style="display: inline-block;" onsubmit="return confirm('<?php esc_attr_e( 'Are you sure you want to clear all logs? This action cannot be undone.', 'webchangedetector' ); ?>');">
-							<?php wp_nonce_field( 'wcd_clear_logs' ); ?>
+							<?php wp_nonce_field( 'clear_logs' ); ?>
 							<input type="hidden" name="wcd_action" value="clear_logs">
 							<button type="submit" class="button button-secondary"><?php esc_html_e( 'Clear All Logs', 'webchangedetector' ); ?></button>
 						</form>
@@ -529,14 +530,14 @@ class WebChangeDetector_Logs_Controller {
 												</span>
 											</div>
 											<div class="accordion-batch-title-tile" style="width: 250px;">
-												<strong><?php echo esc_html( get_date_from_gmt( date( 'Y-m-d H:i:s', $entry['timestamp'] ), get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></strong>
+												<strong><?php echo esc_html( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $entry['timestamp'] ), get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></strong>
 											</div>
 											<div class="accordion-batch-title-tile">
 												<?php
-												/* translators: 1: number of successful updates, 2: total attempted updates */
 												echo esc_html(
 													sprintf(
-														__( '%1$d of %2$d updates successful', 'webchangedetector' ),
+														/* translators: 1: number of successful updates, 2: total attempted updates */
+														esc_html__( '%1$d of %2$d updates successful', 'webchangedetector' ),
 														$entry['summary']['successful'],
 														$entry['summary']['total_attempted']
 													)
@@ -587,7 +588,8 @@ class WebChangeDetector_Logs_Controller {
 													<?php
 													echo esc_html(
 														sprintf(
-															__( 'Version %1$s → %2$s', 'webchangedetector' ),
+															/* translators: 1: from version, 2: to version */
+															esc_html__( 'Version %1$s → %2$s', 'webchangedetector' ),
 															$entry['updates']['core']['from_version'],
 															$entry['updates']['core']['to_version']
 														)
@@ -614,8 +616,9 @@ class WebChangeDetector_Logs_Controller {
 														<?php
 														echo esc_html(
 															sprintf(
-																__( 'Version %1$s → %2$s', 'webchangedetector' ),
-																$plugin['from_version'] ?: '?',
+																/* translators: 1: from version, 2: to version */
+																esc_html__( 'Version %1$s → %2$s', 'webchangedetector' ),
+																$plugin['from_version'] ?? '?',
 																$plugin['to_version']
 															)
 														);
@@ -642,8 +645,9 @@ class WebChangeDetector_Logs_Controller {
 														<?php
 														echo esc_html(
 															sprintf(
-																__( 'Version %1$s → %2$s', 'webchangedetector' ),
-																$theme['from_version'] ?: '?',
+																/* translators: 1: from version, 2: to version */
+																esc_html__( 'Version %1$s → %2$s', 'webchangedetector' ),
+																$theme['from_version'] ?? '?',
 																$theme['to_version']
 															)
 														);

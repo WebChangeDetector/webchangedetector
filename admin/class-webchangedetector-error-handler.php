@@ -243,23 +243,6 @@ class WebChangeDetector_Error_Handler {
 	}
 
 	/**
-	 * Create user-friendly error message based on category.
-	 *
-	 * @param string $category Error category.
-	 * @param string $error    Technical error message.
-	 * @return string User-friendly error message.
-	 */
-	public function get_user_friendly_message( $category, $error = '' ) {
-		$messages = array(
-			self::CATEGORY_API        => 'Unable to connect to WebChangeDetector service. Please check your internet connection and try again.',
-			self::CATEGORY_VALIDATION => 'Please check your input and try again.',
-			self::CATEGORY_GENERAL    => 'An unexpected error occurred. Please try again.',
-		);
-
-		return isset( $messages[ $category ] ) ? $messages[ $category ] : $messages[ self::CATEGORY_GENERAL ];
-	}
-
-	/**
 	 * Get current debug logging status.
 	 *
 	 * @return bool Whether debug logging is enabled.
