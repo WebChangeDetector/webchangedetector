@@ -418,7 +418,7 @@ class WebChangeDetector_Admin_Dashboard {
 			<div class="wcd-auto-update-details" style="background: #f0f8ff; border: 1px solid #2271b1; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
 				<div style="display: flex; align-items: center; margin-bottom: 10px;">
 					<span class="dashicons dashicons-update" style="color: #2271b1; margin-right: 8px; font-size: 20px;"></span>
-					<strong style="color: #2271b1; font-size: 14px;"><?php _e( 'Related Auto-Update', 'webchangedetector' ); ?></strong>
+					<strong style="color: #2271b1; font-size: 14px;"><?php esc_html_e( 'Related Auto-Update', 'webchangedetector' ); ?></strong>
 					<span style="margin-left: auto; color: #666; font-size: 12px;">
 						<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $auto_update_data['timestamp'] ) ); ?>
 					</span>
@@ -512,7 +512,7 @@ class WebChangeDetector_Admin_Dashboard {
 					
 					<div style="margin-top: 10px;">
 						<a href="?page=webchangedetector-logs&tab=auto-updates" class="button button-small">
-							<?php _e( 'View Full Update Details', 'webchangedetector' ); ?> →
+							<?php esc_html_e( 'View Full Update Details', 'webchangedetector' ); ?> →
 						</a>
 					</div>
 				</div>

@@ -55,10 +55,10 @@ class WebChangeDetector_Logs_Controller {
 		?>
 		<h2 class="nav-tab-wrapper">
 			<a href="?page=webchangedetector-logs&tab=queue" class="nav-tab <?php echo 'queue' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				<?php _e( 'Queue', 'webchangedetector' ); ?>
+				<?php esc_html_e( 'Queue', 'webchangedetector' ); ?>
 			</a>
 			<a href="?page=webchangedetector-logs&tab=auto-updates" class="nav-tab <?php echo 'auto-updates' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				<?php _e( 'Auto-Update History', 'webchangedetector' ); ?>
+				<?php esc_html_e( 'Auto-Update History', 'webchangedetector' ); ?>
 			</a>
 		</h2>
 		<?php
@@ -197,8 +197,8 @@ class WebChangeDetector_Logs_Controller {
 			<div class="action-container">
 				<?php if ( empty( $update_history ) ) : ?>
 					<div style="background: #fff; padding: 20px; text-align: center; margin: 20px 0;">
-						<strong><?php _e( 'No auto-update history yet.', 'webchangedetector' ); ?></strong><br>
-						<?php _e( 'Auto-update results will appear here after WordPress performs automatic updates.', 'webchangedetector' ); ?>
+						<strong><?php esc_html_e( 'No auto-update history yet.', 'webchangedetector' ); ?></strong><br>
+						<?php esc_html_e( 'Auto-update results will appear here after WordPress performs automatic updates.', 'webchangedetector' ); ?>
 					</div>
 				<?php else : ?>
 					<?php foreach ( $update_history as $index => $entry ) : ?>
@@ -267,13 +267,13 @@ class WebChangeDetector_Logs_Controller {
 											?>
 												<p>
 													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
-													<?php _e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
+													<?php esc_html_e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
 													</a>
 												</p>
 											<?php endif; ?>
 										<?php if ( isset( $entry['updates']['core'] ) && $entry['updates']['core'] ) : ?>
 											<div class="update-section">
-												<h4><?php _e( 'WordPress Core', 'webchangedetector' ); ?></h4>
+												<h4><?php esc_html_e( 'WordPress Core', 'webchangedetector' ); ?></h4>
 												<div class="update-item">
 													<?php if ( $entry['updates']['core']['success'] ) : ?>
 														<span style="color: #46b450;">✓</span>
@@ -298,7 +298,7 @@ class WebChangeDetector_Logs_Controller {
 
 										<?php if ( isset( $entry['updates']['plugins'] ) && ! empty( $entry['updates']['plugins'] ) ) : ?>
 											<div class="update-section">
-												<h4><?php _e( 'Plugins', 'webchangedetector' ); ?></h4>
+												<h4><?php esc_html_e( 'Plugins', 'webchangedetector' ); ?></h4>
 												<?php foreach ( $entry['updates']['plugins'] as $plugin ) : ?>
 													<div class="update-item">
 														<?php if ( $plugin['success'] ) : ?>
@@ -326,7 +326,7 @@ class WebChangeDetector_Logs_Controller {
 
 										<?php if ( isset( $entry['updates']['themes'] ) && ! empty( $entry['updates']['themes'] ) ) : ?>
 											<div class="update-section">
-												<h4><?php _e( 'Themes', 'webchangedetector' ); ?></h4>
+												<h4><?php esc_html_e( 'Themes', 'webchangedetector' ); ?></h4>
 												<?php foreach ( $entry['updates']['themes'] as $theme ) : ?>
 													<div class="update-item">
 														<?php if ( $theme['success'] ) : ?>

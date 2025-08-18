@@ -85,7 +85,7 @@ $intervals = array(
 			>
 				<?php echo esc_html( $interval['label'] ); ?>
 				<?php if ( $is_disabled ) : ?>
-					<?php _e( '("Freelancer" plan or higher)', 'webchangedetector' ); ?>
+					<?php esc_html_e( '("Freelancer" plan or higher)', 'webchangedetector' ); ?>
 				<?php endif; ?>
 			</option>
 		<?php endforeach; ?>

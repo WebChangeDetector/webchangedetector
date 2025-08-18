@@ -317,12 +317,12 @@ class WebChangeDetector_Admin_Settings {
 							<?php if ( $group_and_urls['selected_urls_count'] > 0 ) : ?>
 							<div class="wcd-monitoring-stats">
 								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php _e( 'Selected URLs', 'webchangedetector' ); ?></span>
+									<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
 									<span class="wcd-stat-value"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span>
 								</div>
 								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php _e( 'Check Type', 'webchangedetector' ); ?></span>
-									<span class="wcd-stat-value"><?php _e( 'On-Demand', 'webchangedetector' ); ?></span>
+									<span class="wcd-stat-label"><?php esc_html_e( 'Check Type', 'webchangedetector' ); ?></span>
+									<span class="wcd-stat-value"><?php esc_html_e( 'On-Demand', 'webchangedetector' ); ?></span>
 								</div>
 							</div>
 							<?php endif; ?>

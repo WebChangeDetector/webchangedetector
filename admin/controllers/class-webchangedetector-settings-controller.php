@@ -67,12 +67,12 @@ class WebChangeDetector_Settings_Controller {
 					// Wizard functionality temporarily removed for phase 1.
 					// Will be moved to view renderer in later phases.
 					?>
-					<h2><?php _e( 'URL Synchronization Settings', 'webchangedetector' ); ?></h2>
+					<h2><?php esc_html_e( 'URL Synchronization Settings', 'webchangedetector' ); ?></h2>
 
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label"><?php _e( 'Show Post Types', 'webchangedetector' ); ?></label>
-							<div class="wcd-description"><?php _e( 'Missing URLs to switch on for checking? Show additional post types in the URL list here.', 'webchangedetector' ); ?></div>
+							<label class="wcd-form-label"><?php esc_html_e( 'Show Post Types', 'webchangedetector' ); ?></label>
+							<div class="wcd-description"><?php esc_html_e( 'Missing URLs to switch on for checking? Show additional post types in the URL list here.', 'webchangedetector' ); ?></div>
 						</div>
 						<div class="wcd-form-control">
 							<?php $this->render_post_types_form(); ?>
@@ -81,8 +81,8 @@ class WebChangeDetector_Settings_Controller {
 
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label"><?php _e( 'Show Taxonomies', 'webchangedetector' ); ?></label>
-							<div class="wcd-description"><?php _e( 'Missing taxonomies like categories or tags? Select them here and they appear in the URL list.', 'webchangedetector' ); ?></div>
+							<label class="wcd-form-label"><?php esc_html_e( 'Show Taxonomies', 'webchangedetector' ); ?></label>
+							<div class="wcd-description"><?php esc_html_e( 'Missing taxonomies like categories or tags? Select them here and they appear in the URL list.', 'webchangedetector' ); ?></div>
 						</div>
 						<div class="wcd-form-control">
 							<?php $this->render_taxonomies_form(); ?>
@@ -91,10 +91,10 @@ class WebChangeDetector_Settings_Controller {
 
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label"><?php _e( 'URL Sync Status', 'webchangedetector' ); ?></label>
+							<label class="wcd-form-label"><?php esc_html_e( 'URL Sync Status', 'webchangedetector' ); ?></label>
 							<div class="wcd-description">
 							<?php
-							_e(
+							esc_html_e(
 								'To take screenshots and compare them, we synchronize the website urls with WebChange Detector.
                                 This works automatically in the background. When you add a webpage, you can start the sync manually.',
 								'webchangedetector'
@@ -103,11 +103,11 @@ class WebChangeDetector_Settings_Controller {
 															</div>
 						</div>
 						<div class="wcd-form-control">
-							<p><?php _e( 'Last Sync:', 'webchangedetector' ); ?> <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ) ); ?>">
+							<p><?php esc_html_e( 'Last Sync:', 'webchangedetector' ); ?> <span id="ajax_sync_urls_status" data-nonce="<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ) ); ?>">
 									<?php echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) ); ?>
 								</span>
 							</p>
-							<button class="button button-secondary" onclick="sync_urls(1); return false;"><?php _e( 'Sync URLs Now', 'webchangedetector' ); ?></button>
+							<button class="button button-secondary" onclick="sync_urls(1); return false;"><?php esc_html_e( 'Sync URLs Now', 'webchangedetector' ); ?></button>
 						</div>
 					</div>
 				</div>
@@ -117,20 +117,20 @@ class WebChangeDetector_Settings_Controller {
 
 			<div class="wcd-settings-section">
 				<div class="wcd-settings-card">
-					<h2><?php _e( 'Admin Bar Menu', 'webchangedetector' ); ?></h2>
+					<h2><?php esc_html_e( 'Admin Bar Menu', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
 						<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
 
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
-								<label class="wcd-form-label"><?php _e( 'Disable Admin Bar Menu', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php _e( 'Check this box to hide the WCD menu item in the frontend admin bar.', 'webchangedetector' ); ?></div>
+								<label class="wcd-form-label"><?php esc_html_e( 'Disable Admin Bar Menu', 'webchangedetector' ); ?></label>
+								<div class="wcd-description"><?php esc_html_e( 'Check this box to hide the WCD menu item in the frontend admin bar.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<label>
 									<input type="checkbox" name="wcd_disable_admin_bar_menu" value="1" <?php checked( get_option( 'wcd_disable_admin_bar_menu', 0 ), 1 ); ?> />
-									<?php _e( 'Disable WCD Menu in Admin Bar', 'webchangedetector' ); ?>
+									<?php esc_html_e( 'Disable WCD Menu in Admin Bar', 'webchangedetector' ); ?>
 								</label>
 							</div>
 						</div>
@@ -144,20 +144,20 @@ class WebChangeDetector_Settings_Controller {
 
 			<div class="wcd-settings-section">
 				<div class="wcd-settings-card">
-					<h2><?php _e( 'Debug Logging', 'webchangedetector' ); ?></h2>
+					<h2><?php esc_html_e( 'Debug Logging', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_debug_logging_setting' ); ?>
 						<input type="hidden" name="wcd_action" value="save_debug_logging_setting">
 
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
-								<label class="wcd-form-label"><?php _e( 'Enable Debug Logging', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php _e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the plugin directory and older logs are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
+								<label class="wcd-form-label"><?php esc_html_e( 'Enable Debug Logging', 'webchangedetector' ); ?></label>
+								<div class="wcd-description"><?php esc_html_e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the plugin directory and older logs are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<label>
 									<input type="checkbox" name="wcd_debug_logging" value="1" <?php checked( get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, 0 ), 1 ); ?> />
-									<?php _e( 'Enable Debug Logging', 'webchangedetector' ); ?>
+									<?php esc_html_e( 'Enable Debug Logging', 'webchangedetector' ); ?>
 								</label>
 							</div>
 						</div>
@@ -180,8 +180,8 @@ class WebChangeDetector_Settings_Controller {
 					</form>
 					<div class="wcd-form-row">
 						<div class="wcd-form-label-wrapper">
-							<label class="wcd-form-label"><?php _e( 'Available Log Files', 'webchangedetector' ); ?></label>
-							<div class="wcd-description"><?php _e( 'Download debug log files. Files are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
+							<label class="wcd-form-label"><?php esc_html_e( 'Available Log Files', 'webchangedetector' ); ?></label>
+							<div class="wcd-description"><?php esc_html_e( 'Download debug log files. Files are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
 						</div>
 						<div class="wcd-form-control">
 							<div class="wcd-log-files-list">
@@ -192,14 +192,14 @@ class WebChangeDetector_Settings_Controller {
 											(<?php echo esc_html( $log_file['size_formatted'] ); ?>)
 										</span>
 										<a href="?page=webchangedetector-settings&view_log=<?php echo esc_attr( $log_file['filename'] ); ?>&_wpnonce=<?php echo wp_create_nonce( 'view_log_file' ); ?>" class="button button-small" style="margin-left: 10px;">
-											<?php _e( 'View', 'webchangedetector' ); ?>
+											<?php esc_html_e( 'View', 'webchangedetector' ); ?>
 										</a>
 										<form method="post" style="display: inline-block; margin-left: 5px;">
 											<?php wp_nonce_field( 'download_log_file' ); ?>
 											<input type="hidden" name="wcd_action" value="download_log_file">
 											<input type="hidden" name="filename" value="<?php echo esc_attr( $log_file['filename'] ); ?>">
 											<button type="submit" class="button button-small">
-												<?php _e( 'Download', 'webchangedetector' ); ?>
+												<?php esc_html_e( 'Download', 'webchangedetector' ); ?>
 											</button>
 										</form>
 									</div>
@@ -221,9 +221,9 @@ class WebChangeDetector_Settings_Controller {
 				?>
 				<div class="wcd-settings-section">
 					<div class="wcd-settings-card">
-						<h2><?php _e( 'Need more checks?', 'webchangedetector' ); ?></h2>
-						<p><?php _e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
-						<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php _e( 'Upgrade', 'webchangedetector' ); ?></a>
+						<h2><?php esc_html_e( 'Need more checks?', 'webchangedetector' ); ?></h2>
+						<p><?php esc_html_e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
+						<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php esc_html_e( 'Upgrade', 'webchangedetector' ); ?></a>
 					</div>
 				</div>
 				<?php
@@ -298,7 +298,7 @@ class WebChangeDetector_Settings_Controller {
 			<?php
 		} else {
 			?>
-			<p><i><?php _e( 'All available post types are already shown.', 'webchangedetector' ); ?></i></p>
+			<p><i><?php esc_html_e( 'All available post types are already shown.', 'webchangedetector' ); ?></i></p>
 			<?php
 		}
 	}
@@ -358,7 +358,7 @@ class WebChangeDetector_Settings_Controller {
 			<?php
 		} else {
 			?>
-			<p><i><?php _e( 'All available taxonomies are already shown.', 'webchangedetector' ); ?></i></p>
+			<p><i><?php esc_html_e( 'All available taxonomies are already shown.', 'webchangedetector' ); ?></i></p>
 			<?php
 		}
 	}
@@ -411,18 +411,18 @@ class WebChangeDetector_Settings_Controller {
 
 		?>
 		<div class="wrap">
-			<h1><?php _e( 'Log Viewer', 'webchangedetector' ); ?>: <?php echo esc_html( $filename ); ?></h1>
+			<h1><?php esc_html_e( 'Log Viewer', 'webchangedetector' ); ?>: <?php echo esc_html( $filename ); ?></h1>
 			
 			<div style="margin: 20px 0;">
 				<a href="?page=webchangedetector-settings" class="button">
-					<?php _e( '← Back to Settings', 'webchangedetector' ); ?>
+					<?php esc_html_e( '← Back to Settings', 'webchangedetector' ); ?>
 				</a>
 				<form method="post" style="display: inline-block; margin-left: 10px;">
 					<?php wp_nonce_field( 'download_log_file' ); ?>
 					<input type="hidden" name="wcd_action" value="download_log_file">
 					<input type="hidden" name="filename" value="<?php echo esc_attr( $filename ); ?>">
 					<button type="submit" class="button button-primary">
-						<?php _e( 'Download Log File', 'webchangedetector' ); ?>
+						<?php esc_html_e( 'Download Log File', 'webchangedetector' ); ?>
 					</button>
 				</form>
 			</div>

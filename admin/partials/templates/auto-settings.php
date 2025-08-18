@@ -18,8 +18,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 	?>
 	<div class="wcd-settings-card">
-		<h2><?php _e( 'Monitoring Settings', 'webchangedetector' ); ?></h2>
-		<p><?php _e( 'Configure automatic monitoring settings for your selected URLs and get notified about changes.', 'webchangedetector' ); ?></p>
+		<h2><?php esc_html_e( 'Monitoring Settings', 'webchangedetector' ); ?></h2>
+		<p><?php esc_html_e( 'Configure automatic monitoring settings for your selected URLs and get notified about changes.', 'webchangedetector' ); ?></p>
 
 		<form action="admin.php?page=webchangedetector-auto-settings" method="post">
 			<input type="hidden" name="wcd_action" value="save_group_settings">
@@ -30,8 +30,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row wcd-monitoring-enabled">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'Enable Monitoring', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php _e( 'Enable or disable the monitoring for your selected URLs.', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'Enable Monitoring', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Enable or disable the monitoring for your selected URLs.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -51,8 +51,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-interval" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'Interval in Hours', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php _e( 'This is the interval in which the checks are done.', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'Interval in Hours', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'This is the interval in which the checks are done.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -73,8 +73,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-hour-of-day" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'Hour of the Day', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php _e( 'Set the hour on which the monitoring checks should be done.', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'Hour of the Day', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Set the hour on which the monitoring checks should be done.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -90,8 +90,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-threshold" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php _e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -106,11 +106,21 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-alert-emails" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'Alerts', 'webchangedetector' ); ?></label>
+					<label class="wcd-form-label"><?php esc_html_e( 'Alerts', 'webchangedetector' ); ?></label>
 					<div class="wcd-description">
-						<?php _e( 'Enter the email address(es) which should get notified about monitoring alerts.', 'webchangedetector' ); ?><br>
-						<?php _e( 'You can also connect <a href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a> to get alerts directly in 6000+ apps.', 'webchangedetector' ); ?>    
-					</div>
+						<?php esc_html_e( 'Enter the email address(es) which should get notified about monitoring alerts.', 'webchangedetector' ); ?><br>
+						<?php
+						echo wp_kses(
+							__( 'You can also connect <a href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a> to get alerts directly in 6000+ apps.', 'webchangedetector' ),
+							array(
+								'a' => array(
+									'href'   => array(),
+									'target' => array(),
+								),
+							)
+						);
+						?>
+											</div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -128,8 +138,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-css" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php _e( 'CSS Settings', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php _e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'CSS Settings', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<div style="margin-top: 10px; width: 100%;">

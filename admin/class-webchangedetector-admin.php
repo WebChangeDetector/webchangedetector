@@ -585,7 +585,7 @@ class WebChangeDetector_Admin {
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">
-						<span class="wcd-stat-label"><?php _e( 'Selected URLs', 'webchangedetector' ); ?></span>
+						<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
 						<span class="wcd-stat-value"><?php echo esc_html( $group['selected_urls_count'] ); ?></span>
 					</div>
 					<div class="wcd-stat-item">

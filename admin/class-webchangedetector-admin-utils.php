@@ -99,6 +99,22 @@ class WebChangeDetector_Admin_Utils {
 	}
 
 	/**
+	 * Get allowed HTML for device icon.
+	 *
+	 * Returns an array of allowed HTML for the device icon.
+	 *
+	 * @since 1.0.0
+	 * @return array Allowed HTML for device icon.
+	 */
+	public static function get_device_icon_allowed_html() {
+		return array(
+			'span' => array(
+				'class' => array(),
+			),
+		);
+	}
+
+	/**
 	 * Get user-friendly comparison status name.
 	 *
 	 * Converts internal comparison status codes to user-readable names

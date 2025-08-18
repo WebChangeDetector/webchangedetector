@@ -119,7 +119,7 @@ class WebChangeDetector_Admin_Screenshots {
 					</td>
 					<td>
 						<?php
-						echo \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $failed_queue['device'] );
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $failed_queue['device'] );
 						echo esc_html( ucfirst( $failed_queue['device'] ) );
 						?>
 					</td>
@@ -172,7 +172,6 @@ class WebChangeDetector_Admin_Screenshots {
 
 			$compare = $api_response['data'];
 
-			// $public_token = $compare['token']; // Unused variable.
 			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );

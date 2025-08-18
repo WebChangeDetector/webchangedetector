@@ -73,7 +73,7 @@ $weekdays = array(
 	<?php if ( $show_validation ) : ?>
 		<span class="notice notice-error" id="error-on-days-validation" style="display: none;">
 			<span style="padding: 10px; display: block;" class="default-bg">
-				<?php _e( 'At least one weekday has to be selected.', 'webchangedetector' ); ?>
+				<?php esc_html_e( 'At least one weekday has to be selected.', 'webchangedetector' ); ?>
 			</span>
 		</span>
 	<?php endif; ?>

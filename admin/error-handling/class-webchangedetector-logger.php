@@ -1,5 +1,4 @@
 <?php
-
 /**
  * WebChangeDetector Logger
  *
@@ -42,7 +41,7 @@ class WebChangeDetector_Logger {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Set log directory to plugin root/logs
+		// Set log directory to plugin root/logs.
 		$this->log_dir       = plugin_dir_path( dirname( __DIR__ ) ) . 'logs';
 		$this->debug_enabled = get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING, false );
 
@@ -93,7 +92,7 @@ class WebChangeDetector_Logger {
 		// Write to file.
 		$result = error_log( $log_entry . PHP_EOL, 3, $log_file );
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -160,10 +159,28 @@ class WebChangeDetector_Logger {
 
 			// Create .htaccess to prevent direct access.
 			$htaccess_content = "Order deny,allow\nDeny from all\n";
-			file_put_contents( $this->log_dir . '/.htaccess', $htaccess_content );
+			$this->write_file_with_wp_filesystem( $this->log_dir . '/.htaccess', $htaccess_content );
 
 			// Create index.php for additional security.
-			file_put_contents( $this->log_dir . '/index.php', '<?php // Silence is golden.' );
+			$this->write_file_with_wp_filesystem( $this->log_dir . '/index.php', '<?php // Silence is golden.' );
+		}
+	}
+
+	/**
+	 * Write file with WP_Filesystem API.
+	 *
+	 * @param string $file_path The path to the file.
+	 * @param string $content The content to write to the file.
+	 */
+	private function write_file_with_wp_filesystem( $file_path, $content ) {
+		global $wp_filesystem;
+		if ( ! $wp_filesystem ) {
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		if ( $wp_filesystem ) {
+			$wp_filesystem->put_contents( $file_path, $content, FS_CHMOD_FILE );
 		}
 	}
 
@@ -184,7 +201,7 @@ class WebChangeDetector_Logger {
 			if ( preg_match( '/wcd-(\d{4}-\d{2}-\d{2})\.log$/', $file, $matches ) ) {
 				$file_date = strtotime( $matches[1] );
 				if ( $file_date && $file_date < $cutoff_time ) {
-					@unlink( $file );
+					@wp_delete_file( $file );
 				}
 			}
 		}

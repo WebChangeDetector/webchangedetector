@@ -113,15 +113,15 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		<?php if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) : ?>
 		<div class="wcd-monitoring-stats">
 			<div class="wcd-stat-item">
-				<span class="wcd-stat-label"><?php _e( 'Selected URLs', 'webchangedetector' ); ?></span>
+				<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
 				<span class="wcd-stat-value"><?php echo esc_html( $selected_urls_count ); ?></span>
 			</div>
 			<div class="wcd-stat-item">
-				<span class="wcd-stat-label"><?php _e( 'Active Days', 'webchangedetector' ); ?></span>
+				<span class="wcd-stat-label"><?php esc_html_e( 'Active Days', 'webchangedetector' ); ?></span>
 				<span class="wcd-stat-value"><?php echo count( $enabled_weekdays ); ?>/7</span>
 			</div>
 			<div class="wcd-stat-item">
-				<span class="wcd-stat-label"><?php _e( 'Time Window', 'webchangedetector' ); ?></span>
+				<span class="wcd-stat-label"><?php esc_html_e( 'Time Window', 'webchangedetector' ); ?></span>
 				<span class="wcd-stat-value"><?php echo esc_html( $site_from_time . ' - ' . $site_to_time ); ?></span>
 			</div>
 		</div>
