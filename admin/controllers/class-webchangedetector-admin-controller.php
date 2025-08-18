@@ -242,7 +242,10 @@ class WebChangeDetector_Admin_Controller {
 				break;
 
 			case 'export_logs':
-				$this->admin->settings_action_handler->handle_export_logs( $postdata );
+				// Export logs is now handled via AJAX. This case is kept for backwards compatibility.
+				// Redirect to prevent form resubmission.
+				wp_redirect( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) );
+				exit;
 				break;
 
 			case 'clear_logs':

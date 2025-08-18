@@ -698,6 +698,173 @@ function currentlyProcessing() {
     }
 })(jQuery);
 
+// CSV Export functionality for logs page.
+(function($) {
+    'use strict';
+
+    $(document).ready(function() {
+        // Handle CSV export button click.
+        $('#wcd-export-logs-btn').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const originalText = $button.text();
+            const filters = $button.data('filters') || {};
+            const nonce = wcdAjaxData.nonce;
+            
+            // Show loading state.
+            $button.text('Exporting...').prop('disabled', true);
+            
+            // Prepare data for AJAX request.
+            const ajaxData = {
+                action: 'wcd_export_logs',
+                nonce: nonce
+            };
+            
+            // Add filters to the request.
+            Object.keys(filters).forEach(function(key) {
+                if (filters[key]) {
+                    ajaxData[key] = filters[key];
+                }
+            });
+            
+            // Send AJAX request.
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: ajaxData,
+                success: function(response) {
+                    console.log('CSV Export Response:', response);
+                    if (response.success && response.data && response.data.data.csv_content) {
+                        // Create and trigger download.
+                        downloadCSV(response.data.data.csv_content, response.data.data.filename);
+                    } else {
+                        console.error('Export failed:', response);
+                        
+                        // More detailed debugging
+                        console.log('Response structure check:');
+                        console.log('- response.success:', response.success);
+                        console.log('- response.data:', response.data);
+                        console.log('- response.data.csv_content exists:', !!(response.data && response.data.csv_content));
+                        console.log('- response.data.filename:', response.data ? response.data.filename : 'N/A');
+                        
+                        alert('Failed to export logs: ' + (response.data && response.data.message ? response.data.message : 'Invalid response structure'));
+                    }
+                },
+                error: function() {
+                    alert('Error occurred while exporting logs. Please try again.');
+                },
+                complete: function() {
+                    // Restore button state.
+                    $button.text(originalText).prop('disabled', false);
+                }
+            });
+        });
+        
+        /**
+         * Download CSV file from base64 content.
+         * 
+         * @param {string} csvContent Base64 encoded CSV content.
+         * @param {string} filename Filename for the download.
+         */
+        function downloadCSV(csvContent, filename) {
+            try {
+                console.log('Starting CSV download:', { 
+                    contentLength: csvContent ? csvContent.length : 'null', 
+                    filename: filename 
+                });
+                
+                if (!csvContent || !filename) {
+                    throw new Error('Missing CSV content or filename');
+                }
+                
+                // Decode base64 content.
+                let csvData;
+                try {
+                    csvData = atob(csvContent);
+                    console.log('Decoded CSV data length:', csvData.length);
+                } catch (decodeError) {
+                    console.error('Base64 decode error:', decodeError);
+                    throw new Error('Failed to decode CSV content');
+                }
+                
+                // Create blob and download link.
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                console.log('Created blob:', blob.size, 'bytes');
+                
+                const link = document.createElement('a');
+                
+                // Use modern browser download method
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    // IE10+ specific method
+                    console.log('Using IE download method');
+                    window.navigator.msSaveOrOpenBlob(blob, filename);
+                } else if (link.download !== undefined) {
+                    // Modern browsers with download attribute support
+                    console.log('Using modern download method');
+                    const url = URL.createObjectURL(blob);
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    
+                    console.log('Triggering download click');
+                    link.click();
+                    
+                    // Clean up after a short delay
+                    setTimeout(() => {
+                        try {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                            console.log('Download cleanup completed');
+                        } catch (cleanupError) {
+                            console.warn('Cleanup warning:', cleanupError);
+                        }
+                    }, 1000);
+                } else {
+                    // Fallback for older browsers
+                    console.log('Using fallback download method');
+                    const url = URL.createObjectURL(blob);
+                    const newWindow = window.open(url, '_blank');
+                    if (!newWindow) {
+                        // Try alternative method
+                        console.log('Popup blocked, trying alternative method');
+                        const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData);
+                        const link2 = document.createElement('a');
+                        link2.href = dataUrl;
+                        link2.download = filename;
+                        link2.click();
+                    }
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                }
+                
+                console.log('CSV download initiated successfully');
+            } catch (error) {
+                console.error('Error downloading CSV:', error);
+                alert('Error downloading CSV file: ' + error.message);
+            }
+        }
+        
+        /**
+         * Test function to verify download mechanism works.
+         * Creates a simple test CSV and tries to download it.
+         */
+        function testDownload() {
+            const testCSV = 'Column1,Column2,Column3\nValue1,Value2,Value3\nTest,Data,Here';
+            const testContent = btoa(testCSV); // Base64 encode
+            downloadCSV(testContent, 'test-download.csv');
+        }
+        
+        // Add test button temporarily for debugging
+        if (window.location.search.includes('debug_csv')) {
+            $('#wcd-export-logs-btn').after(
+                '<button type="button" id="test-csv-download" class="button" style="margin-left: 10px;">Test Download</button>'
+            );
+            $('#test-csv-download').on('click', testDownload);
+        }
+    });
+})(jQuery);
+
 // We got jpeg images and png. So we load jpeg for faster page load.
 // If jpeg is not available, we load pngs. To not be stuck in the onerror-loop, we do this.
 function loadFallbackImg(img, fallbackSrc) {

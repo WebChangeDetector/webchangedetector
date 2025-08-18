@@ -62,6 +62,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		add_action( 'wp_ajax_wcd_save_initial_setup', array( $this, 'ajax_save_initial_setup' ) );
 		add_action( 'wp_ajax_wcd_update_sync_types_with_local_labels', array( $this, 'ajax_update_sync_types_with_local_labels' ) );
 		add_action( 'wp_ajax_wcd_complete_initial_setup', array( $this, 'ajax_complete_initial_setup' ) );
+		add_action( 'wp_ajax_wcd_export_logs', array( $this, 'ajax_export_logs' ) );
 	}
 
 	/**
@@ -325,6 +326,109 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		} catch ( \Exception $e ) {
 			$this->send_error_response(
 				__( 'An error occurred while completing initial setup.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * WebChangeDetector-specific security check.
+	 *
+	 * Uses WebChangeDetector_Admin_Utils for nonce verification to maintain
+	 * consistency with the existing codebase that uses prefixed nonces.
+	 *
+	 * @since    4.0.0
+	 * @param    string $action     The nonce action to verify.
+	 * @param    string $capability The capability to check.
+	 * @return   bool True if all checks pass, false otherwise.
+	 */
+	private function wcd_security_check( $action = 'ajax-nonce', $capability = 'manage_options' ) {
+		// Verify nonce using WebChangeDetector utils.
+		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+		
+		if ( empty( $nonce ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, $action ) ) {
+			$this->send_error_response(
+				__( 'Security check failed. Please refresh the page and try again.', 'webchangedetector' ),
+				'Nonce verification failed',
+				403
+			);
+			return false;
+		}
+
+		// Check user capability.
+		if ( ! $this->check_capability( $capability ) ) {
+			$this->send_error_response(
+				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
+				'Capability check failed',
+				403
+			);
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Handle export logs AJAX request.
+	 *
+	 * Exports logs as CSV data and returns it for download.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_export_logs() {
+		// Use WebChangeDetector nonce verification for consistency with the rest of the system.
+		if ( ! $this->wcd_security_check() ) {
+			return;
+		}
+
+		try {
+			// Get filters from POST data.
+			$filters       = array();
+			$filter_fields = array( 'level', 'context', 'search', 'date_from', 'date_to' );
+			foreach ( $filter_fields as $field ) {
+				if ( ! empty( $_POST[ $field ] ) ) {
+					$filters[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
+				}
+			}
+
+			// Initialize database logger.
+			$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+
+			// Generate CSV.
+			$csv_content = $logger->export_to_csv( $filters );
+
+			// Debug logging.
+			if ( $this->admin && method_exists( $this->admin, 'log_error' ) ) {
+				$this->admin->log_error( 'CSV Export: Generated ' . strlen( $csv_content ) . ' bytes of CSV data', 'ajax_export_logs', 'debug' );
+			}
+
+			// Generate filename.
+			$filename = 'wcd-logs-' . gmdate( 'Y-m-d-H-i-s' ) . '.csv';
+
+			// Check if CSV content is valid.
+			if ( empty( $csv_content ) ) {
+				$this->send_error_response(
+					__( 'No logs found to export.', 'webchangedetector' ),
+					'Empty CSV content'
+				);
+				return;
+			}
+
+			$this->send_success_response(
+				array(
+					'csv_content' => base64_encode( $csv_content ),
+					'filename'    => $filename,
+					'debug_info'  => array(
+						'original_size' => strlen( $csv_content ),
+						'encoded_size'  => strlen( base64_encode( $csv_content ) ),
+					),
+				),
+				__( 'Logs exported successfully.', 'webchangedetector' )
+			);
+
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while exporting logs.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
 		}

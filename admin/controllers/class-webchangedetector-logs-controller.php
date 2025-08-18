@@ -321,16 +321,13 @@ class WebChangeDetector_Logs_Controller {
 
 				<!-- Export and Clear Actions -->
 				<div style="margin-bottom: 15px;">
-					<form method="post" style="display: inline-block; margin-right: 10px;">
-						<?php wp_nonce_field( 'export_logs' ); ?>
-						<input type="hidden" name="wcd_action" value="export_logs">
-						<?php foreach ( $filters as $key => $value ) : ?>
-							<?php if ( ! empty( $value ) && 'page' !== $key ) : ?>
-								<input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>">
-							<?php endif; ?>
-						<?php endforeach; ?>
-						<button type="submit" class="button"><?php esc_html_e( 'Export to CSV', 'webchangedetector' ); ?></button>
-					</form>
+					<button type="button" 
+							id="wcd-export-logs-btn" 
+							class="button" 
+							data-filters="<?php echo esc_attr( wp_json_encode( array_filter( $filters, function( $value, $key ) { return ! empty( $value ) && 'page' !== $key; }, ARRAY_FILTER_USE_BOTH ) ) ); ?>"
+							style="margin-right: 10px;">
+						<?php esc_html_e( 'Export to CSV', 'webchangedetector' ); ?>
+					</button>
 					
 					<?php if ( current_user_can( 'manage_options' ) ) : ?>
 						<form method="post" style="display: inline-block;" onsubmit="return confirm('<?php esc_attr_e( 'Are you sure you want to clear all logs? This action cannot be undone.', 'webchangedetector' ); ?>');">

@@ -143,8 +143,11 @@ class WebChangeDetector_Admin_AJAX {
 			$this->account_handler
 		);
 
-		// Note: Hooks are registered in includes/class-webchangedetector.php
-		// The old methods will delegate to these new handlers.
+		// Register hooks for all focused AJAX handlers.
+		$this->screenshots_ajax_handler->register_hooks();
+		$this->settings_ajax_handler->register_hooks();
+		$this->wordpress_ajax_handler->register_hooks();
+		$this->account_ajax_handler->register_hooks();
 	}
 
 	/**
