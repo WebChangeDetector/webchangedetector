@@ -69,6 +69,7 @@ class WebChangeDetector_Admin_Settings {
 	public function update_monitoring_settings( $group_data ) {
 		// Debug: Log what we received for monitoring settings.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring POST data received: ' . wp_json_encode( $group_data ), 'monitoring_settings', 'debug' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in save_generic_settings.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . wp_json_encode( $_POST ), 'monitoring_settings', 'debug' );
 
 		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
@@ -138,7 +139,7 @@ class WebChangeDetector_Admin_Settings {
 			if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
 				// Handle checkbox values for enabled field and weekdays.
 				if (
-					$key === 'auto_update_checks_enabled' ||
+					'auto_update_checks_enabled' === $key ||
 					in_array(
 						$key,
 						array(
@@ -149,7 +150,8 @@ class WebChangeDetector_Admin_Settings {
 							'auto_update_checks_friday',
 							'auto_update_checks_saturday',
 							'auto_update_checks_sunday',
-						)
+						),
+						true
 					)
 				) {
 					// Convert checkbox values to boolean.
@@ -561,7 +563,12 @@ class WebChangeDetector_Admin_Settings {
 										$total_items               = $urls_meta['total'] ?? 0;
 										?>
 										<div class="wcd-pagination-info">
-											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php printf( esc_html__( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), $current_page, $total_pages, $total_items ); ?></span>
+											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;">
+												<?php
+												/* translators: %1$s: Current page number, %2$s: Total pages, %3$s: Total items count */
+												printf( esc_html__( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), esc_html( $current_page ), esc_html( $total_pages ), esc_html( $total_items ) );
+												?>
+											</span>
 										</div>
 										<div class="wcd-pagination-links" style="margin-top: 15px;">
 											<?php
@@ -590,7 +597,7 @@ class WebChangeDetector_Admin_Settings {
 											}
 
 											for ( $i = $start_page; $i <= $end_page; $i++ ) {
-												if ( $i == $current_page ) {
+												if ( $i === $current_page ) {
 													echo '<span class="wcd-page-num et_pb_button small primary current" style="margin: 0 2px; background: #0073aa; color: #fff; font-weight: 700;">' . esc_html( $i ) . '</span> ';
 												} else {
 													$pagination_params['paged'] = $i;

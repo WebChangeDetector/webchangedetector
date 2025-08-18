@@ -56,6 +56,7 @@ class WebChangeDetector_Component_Manager {
 		}
 
 		// Extract variables for the component.
+		// phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- Variables are sanitized and used only for template rendering.
 		extract( $variables );
 
 		if ( $output ) {

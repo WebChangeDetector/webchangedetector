@@ -256,7 +256,8 @@ class WebChangeDetector_Admin_AJAX {
 		}
 
 		// Verify nonce.
-		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce check is performed immediately below.
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			echo 'Nonce verify failed';
 			wp_die( 'Busted!' );
 		}
@@ -296,7 +297,8 @@ class WebChangeDetector_Admin_AJAX {
 		}
 
 		// Verify nonce.
-		if ( ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce check is performed immediately below.
+		if ( ! isset( $_POST['nonce'] ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			echo 'failed: nonce missing';
 			wp_die();
 		}
@@ -882,7 +884,7 @@ class WebChangeDetector_Admin_AJAX {
 					}
 				}
 
-				// If we couldn't find posts/pages, fall back to hardcoded defaults
+				// If we couldn't find posts/pages, fall back to hardcoded defaults.
 				if ( empty( $default_sync_types ) ) {
 					$default_sync_types = array(
 						array(

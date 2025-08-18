@@ -157,12 +157,14 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 
 		// Check that all required fields are present.
 		foreach ( $required_fields as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification handled in calling function.
 			if ( ! isset( $_POST[ $field ] ) ) {
 				return false;
 			}
 		}
 
 		// Sanitize all POST data.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification handled in calling function.
 		foreach ( $_POST as $key => $value ) {
 			if ( isset( $sanitization_map[ $key ] ) ) {
 				// Use custom sanitization function if specified.

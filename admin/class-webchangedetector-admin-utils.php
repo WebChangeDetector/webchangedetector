@@ -1,5 +1,4 @@
 <?php
-
 /**
  * WebChange Detector Admin Utilities
  *
@@ -88,7 +87,7 @@ class WebChangeDetector_Admin_Utils {
 		}
 
 		// Special case for thumbnail which doesn't use group_icon class.
-		$class_prefix = ( $icon === 'thumbnail' ) ? '' : 'group_icon ' . $css_class . ' ';
+		$class_prefix = ( 'thumbnail' === $icon ) ? '' : 'group_icon ' . $css_class . ' ';
 
 		$output = sprintf(
 			'<span class="%sdashicons dashicons-%s"></span>',

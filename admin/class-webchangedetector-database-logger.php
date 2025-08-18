@@ -93,7 +93,7 @@ class WebChangeDetector_Database_Logger {
 			'level'           => sanitize_text_field( $level ),
 			'context'         => sanitize_text_field( $context ),
 			'message'         => wp_kses_post( $message ),
-			'user_id'         => get_current_user_id() ?: null,
+			'user_id'         => get_current_user_id() ? get_current_user_id() : null,
 			'ip_address'      => $this->get_client_ip(),
 			'request_id'      => $this->get_request_id(),
 			'session_id'      => $this->get_session_id(),
@@ -185,10 +185,18 @@ class WebChangeDetector_Database_Logger {
 		$where_clause = implode( ' AND ', $where_conditions );
 
 		// Get total count.
-		$count_query = "SELECT COUNT(*) FROM {$this->table_name} WHERE {$where_clause}";
+		$base_query = "SELECT COUNT(*) FROM `{$this->table_name}` WHERE ";
 		if ( ! empty( $where_values ) ) {
-			$count_query = $this->wpdb->prepare( $count_query, $where_values );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped, placeholders added separately.
+			$count_query = $this->wpdb->prepare(
+				$base_query . $where_clause, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				...$where_values
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped, no user input.
+			$count_query = $base_query . $where_clause;
 		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Query is prepared above when needed.
 		$total_count = (int) $this->wpdb->get_var( $count_query );
 
 		// Calculate pagination.
@@ -201,13 +209,16 @@ class WebChangeDetector_Database_Logger {
 		$order_by = in_array( $filters['order_by'], array( 'timestamp', 'level', 'context' ), true ) ? $filters['order_by'] : 'timestamp';
 		$order    = 'ASC' === strtoupper( $filters['order'] ) ? 'ASC' : 'DESC';
 
-		$query        = "SELECT * FROM {$this->table_name} WHERE {$where_clause} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d";
-		$query_values = array_merge( $where_values, array( $per_page, $offset ) );
+		$base_select_query = "SELECT * FROM `{$this->table_name}` WHERE ";
+		$order_clause      = " ORDER BY `{$order_by}` {$order} LIMIT %d OFFSET %d";
 
-		if ( ! empty( $query_values ) ) {
-			$query = $this->wpdb->prepare( $query, $query_values );
-		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, order by, and order are escaped/validated.
+		$query = $this->wpdb->prepare(
+			$base_select_query . $where_clause . $order_clause, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			...array_merge( $where_values, array( $per_page, $offset ) )
+		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Query is prepared above.
 		$logs = $this->wpdb->get_results( $query, ARRAY_A );
 
 		// Decode additional_data for each log entry.
@@ -232,7 +243,9 @@ class WebChangeDetector_Database_Logger {
 	 * @return array Array of unique contexts.
 	 */
 	public function get_contexts() {
-		$query = "SELECT DISTINCT context FROM {$this->table_name} ORDER BY context ASC";
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped, no user input.
+		$query = "SELECT DISTINCT context FROM `{$this->table_name}` ORDER BY context ASC";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- No user input in query.
 		return $this->wpdb->get_col( $query );
 	}
 
@@ -245,7 +258,9 @@ class WebChangeDetector_Database_Logger {
 		$stats = array();
 
 		// Count by level.
-		$query        = "SELECT level, COUNT(*) as count FROM {$this->table_name} GROUP BY level";
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped, no user input.
+		$query = "SELECT level, COUNT(*) as count FROM `{$this->table_name}` GROUP BY level";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- No user input in query.
 		$level_counts = $this->wpdb->get_results( $query, ARRAY_A );
 
 		$stats['by_level'] = array();
@@ -254,7 +269,9 @@ class WebChangeDetector_Database_Logger {
 		}
 
 		// Count by context (top 10).
-		$query          = "SELECT context, COUNT(*) as count FROM {$this->table_name} GROUP BY context ORDER BY count DESC LIMIT 10";
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped, no user input.
+		$query = "SELECT context, COUNT(*) as count FROM `{$this->table_name}` GROUP BY context ORDER BY count DESC LIMIT 10";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- No user input in query.
 		$context_counts = $this->wpdb->get_results( $query, ARRAY_A );
 
 		$stats['by_context'] = array();
@@ -263,16 +280,17 @@ class WebChangeDetector_Database_Logger {
 		}
 
 		// Total count.
-		$stats['total_count'] = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name}" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is escaped, no user input.
+		$stats['total_count'] = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM `{$this->table_name}`" );
 
 		// Recent activity (last 24 hours).
-		$yesterday             = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
-		$stats['recent_count'] = (int) $this->wpdb->get_var(
-			$this->wpdb->prepare(
-				"SELECT COUNT(*) FROM {$this->table_name} WHERE timestamp >= %s",
-				$yesterday
-			)
+		$yesterday = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is escaped.
+		$recent_query          = $this->wpdb->prepare(
+			"SELECT COUNT(*) FROM `{$this->table_name}` WHERE timestamp >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$yesterday
 		);
+		$stats['recent_count'] = (int) $this->wpdb->get_var( $recent_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		return $stats;
 	}
@@ -299,10 +317,10 @@ class WebChangeDetector_Database_Logger {
 				$log['level'],
 				$log['context'],
 				str_replace( array( "\r", "\n" ), ' ', $log['message'] ), // Remove line breaks.
-				$log['user_id'] ?: '',
-				$log['ip_address'] ?: '',
-				$log['request_id'] ?: '',
-				$log['session_id'] ?: '',
+				$log['user_id'] ? $log['user_id'] : '',
+				$log['ip_address'] ? $log['ip_address'] : '',
+				$log['request_id'] ? $log['request_id'] : '',
+				$log['session_id'] ? $log['session_id'] : '',
 			);
 
 			// Escape CSV values.
@@ -337,20 +355,21 @@ class WebChangeDetector_Database_Logger {
 		);
 
 		// Also cleanup if we exceed max entries.
-		$total_count = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name}" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is escaped, no user input.
+		$total_count = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM `{$this->table_name}`" );
 
 		if ( $total_count > $this->max_log_entries ) {
 			$excess = $total_count - $this->max_log_entries;
-			$this->wpdb->query(
-				$this->wpdb->prepare(
-					"DELETE FROM {$this->table_name} ORDER BY timestamp ASC LIMIT %d",
-					$excess
-				)
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is escaped.
+			$delete_query = $this->wpdb->prepare(
+				"DELETE FROM `{$this->table_name}` ORDER BY timestamp ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$excess
 			);
+			$this->wpdb->query( $delete_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$deleted += $excess;
 		}
 
-		return $deleted ?: 0;
+		return $deleted ? $deleted : 0;
 	}
 
 	/**
@@ -359,7 +378,8 @@ class WebChangeDetector_Database_Logger {
 	 * @return bool True on success, false on failure.
 	 */
 	public function clear_all_logs() {
-		$result = $this->wpdb->query( "TRUNCATE TABLE {$this->table_name}" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Table name is escaped, no user input.
+		$result = $this->wpdb->query( "TRUNCATE TABLE `{$this->table_name}`" );
 		return false !== $result;
 	}
 
@@ -489,7 +509,8 @@ class WebChangeDetector_Database_Logger {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'wcd_logs';
-		$result     = $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+		// Table drop is intentional for uninstall.
+		$result = $wpdb->query( "DROP TABLE IF EXISTS `{$table_name}`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return false !== $result;
 	}

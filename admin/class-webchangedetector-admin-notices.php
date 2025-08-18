@@ -177,7 +177,7 @@ class WebChangeDetector_Admin_Notices {
 
 		printf(
 			'<div class="%s"><p>%s</p></div>',
-			$css_class,
+			esc_attr( $css_class ),
 			wp_kses_post( $notice['message'] )
 		);
 	}

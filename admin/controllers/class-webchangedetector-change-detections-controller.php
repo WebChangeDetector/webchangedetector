@@ -87,7 +87,9 @@ class WebChangeDetector_Change_Detections_Controller {
 		}
 
 		$difference_only = false;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for filtering only.
 		if ( isset( $_GET['difference_only'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for filtering only.
 			$difference_only = sanitize_text_field( wp_unslash( $_GET['difference_only'] ) );
 		}
 
@@ -125,6 +127,7 @@ class WebChangeDetector_Change_Detections_Controller {
 			// Will be moved to view renderer in later phases.
 
 			$extra_filters          = array();
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 			$extra_filters['paged'] = isset( $_GET['paged'] ) ? sanitize_key( wp_unslash( $_GET['paged'] ) ) : 1;
 
 			// Show comparisons.
@@ -155,7 +158,9 @@ class WebChangeDetector_Change_Detections_Controller {
 			$failed_queues = array();
 
 			// Check if we're filtering by a specific batch_id from auto-update history.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for filtering only.
 			if ( isset( $_GET['batch_id'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for filtering only.
 				$batch_id = sanitize_text_field( wp_unslash( $_GET['batch_id'] ) );
 				// Get specific batch.
 				$single_batch = \WebChangeDetector\WebChangeDetector_API_V2::get_batch_v2( $batch_id );

@@ -40,7 +40,7 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
-			$this->admin->error_handler->debug( 'Monitoring settings data: ' . print_r( $data, true ) );
+			$this->admin->error_handler->debug( 'Monitoring settings data: ' . wp_json_encode( $data ) );
 			if ( ! empty( $data['monitoring'] ) && (int) $data['monitoring'] === 1 ) {
 				return $this->handle_monitoring_settings( $data );
 			} else {
@@ -64,7 +64,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate monitoring settings.
 		$validation = $this->validate_monitoring_settings( $data );
 		if ( ! $validation['success'] ) {
-			$this->admin->error_handler->debug( 'Monitoring settings validation failed: ' . print_r( $validation, true ) );
+			$this->admin->error_handler->debug( 'Monitoring settings validation failed: ' . wp_json_encode( $validation ) );
 			return $validation;
 		}
 
@@ -72,7 +72,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		$result = $this->admin->settings_handler->update_monitoring_settings( $data );
 
 		// Debug: Log the result from update_monitoring_settings.
-		$this->admin->error_handler->debug( 'Monitoring settings update result: ' . print_r( $result, true ) );
+		$this->admin->error_handler->debug( 'Monitoring settings update result: ' . wp_json_encode( $result ) );
 
 		// The settings handler now returns a standardized response format.
 		return $result;
@@ -168,47 +168,6 @@ class WebChangeDetector_Settings_Action_Handler {
 	}
 
 	/**
-	 * Handle export logs action.
-	 *
-	 * @param array $data The export data containing filters.
-	 * @return void Exits with CSV download.
-	 */
-	public function handle_export_logs( $data ) {
-		// Verify user capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions to export logs.', 'webchangedetector' ) );
-		}
-
-		// Initialize database logger.
-		$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
-
-		// Get filters if provided.
-		$filters       = array();
-		$filter_fields = array( 'level', 'context', 'search', 'date_from', 'date_to' );
-		foreach ( $filter_fields as $field ) {
-			if ( ! empty( $data[ $field ] ) ) {
-				$filters[ $field ] = sanitize_text_field( $data[ $field ] );
-			}
-		}
-
-		// Generate CSV.
-		$csv_content = $logger->export_to_csv( $filters );
-
-		// Set headers for download.
-		$filename = 'wcd-logs-' . gmdate( 'Y-m-d-H-i-s' ) . '.csv';
-
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=' . $filename );
-		header( 'Content-Length: ' . strlen( $csv_content ) );
-		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-		header( 'Pragma: public' );
-
-		// Output CSV content.
-		echo $csv_content;
-		exit;
-	}
-
-	/**
 	 * Handle clear logs action.
 	 *
 	 * @param array $data The action data.
@@ -285,135 +244,6 @@ class WebChangeDetector_Settings_Action_Handler {
 	}
 
 	/**
-	 * Handle auto update settings save.
-	 *
-	 * @param array $data The auto update settings data.
-	 * @return array Result with success status and message.
-	 */
-	public function handle_save_auto_update_settings( $data ) {
-		try {
-			// Validate auto update settings.
-			$validation = $this->validate_auto_update_settings( $data );
-			if ( ! $validation['success'] ) {
-				return $validation;
-			}
-
-			// Load timezone helper for time conversion.
-			require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
-
-			// Build settings array.
-			$settings = array(
-				'auto_update_checks_enabled' => ! empty( $data['auto_update_checks_enabled'] ) && $data['auto_update_checks_enabled'] === '1',
-				'auto_update_checks_from'    => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_from'] ?? '' ) ),
-				'auto_update_checks_to'      => \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( sanitize_text_field( $data['auto_update_checks_to'] ?? '' ) ),
-				'auto_update_checks_emails'  => sanitize_textarea_field( $data['auto_update_checks_emails'] ?? '' ),
-			);
-
-			// Add weekday settings.
-			foreach ( WebChangeDetector_Admin::WEEKDAYS as $day ) {
-				$settings[ 'auto_update_checks_' . $day ] = isset( $data[ 'auto_update_checks_' . $day ] ) && $data[ 'auto_update_checks_' . $day ] === '1';
-			}
-
-			// Save via API.
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], array( 'auto_update_settings' => $settings ) );
-
-			if ( $result['success'] ?? false ) {
-				return array(
-					'success' => true,
-					'message' => 'Auto update settings saved successfully.',
-				);
-			} else {
-				return array(
-					'success' => false,
-					'message' => $result['message'] ?? 'Failed to save auto update settings.',
-				);
-			}
-		} catch ( \Exception $e ) {
-			return array(
-				'success' => false,
-				'message' => 'Error saving auto update settings: ' . $e->getMessage(),
-			);
-		}
-	}
-
-	/**
-	 * Handle URL selection save.
-	 *
-	 * @param array $data The URL selection data.
-	 * @return array Result with success status and message.
-	 */
-	public function handle_save_url_selection( $data ) {
-		try {
-			$active_posts          = array();
-			$count_selected        = 0;
-			$already_processed_ids = array();
-
-			// Process URL selection data.
-			foreach ( $data as $key => $post ) {
-				if ( 0 === strpos( $key, 'desktop-' ) || 0 === strpos( $key, 'mobile-' ) ) {
-					$post_id = 0 === strpos( $key, 'desktop-' ) ? substr( $key, strlen( 'desktop-' ) ) : substr( $key, strlen( 'mobile-' ) );
-
-					// Avoid processing same post_id twice.
-					if ( in_array( $post_id, $already_processed_ids, true ) ) {
-						continue;
-					}
-					$already_processed_ids[] = $post_id;
-
-					$desktop = array_key_exists( 'desktop-' . $post_id, $data ) ? ( $data[ 'desktop-' . $post_id ] ) : null;
-					$mobile  = array_key_exists( 'mobile-' . $post_id, $data ) ? ( $data[ 'mobile-' . $post_id ] ) : null;
-
-					$new_post = array( 'id' => $post_id );
-					if ( ! is_null( $desktop ) ) {
-						$new_post['desktop'] = $desktop;
-					}
-					if ( ! is_null( $mobile ) ) {
-						$new_post['mobile'] = $mobile;
-					}
-					$active_posts[] = $new_post;
-
-					if ( isset( $data[ 'desktop-' . $post_id ] ) && 1 === $data[ 'desktop-' . $post_id ] ) {
-						++$count_selected;
-					}
-
-					if ( isset( $data[ 'mobile-' . $post_id ] ) && 1 === $data[ 'mobile-' . $post_id ] ) {
-						++$count_selected;
-					}
-				}
-			}
-
-			$group_id = sanitize_text_field( $data['group_id'] ?? '' );
-
-			if ( empty( $group_id ) ) {
-				return array(
-					'success' => false,
-					'message' => 'Group ID is required.',
-				);
-			}
-
-			// Update URLs in group via API.
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id, $active_posts );
-
-			if ( $result ) {
-				return array(
-					'success'        => true,
-					'message'        => sprintf( 'URL selection saved. %d URLs selected for monitoring.', $count_selected ),
-					'selected_count' => $count_selected,
-				);
-			} else {
-				return array(
-					'success' => false,
-					'message' => 'Failed to save URL selection.',
-				);
-			}
-		} catch ( \Exception $e ) {
-			return array(
-				'success' => false,
-				'message' => 'Error saving URL selection: ' . $e->getMessage(),
-			);
-		}
-	}
-
-	/**
 	 * Validate monitoring settings.
 	 *
 	 * @param array $data The settings data to validate.
@@ -446,105 +276,4 @@ class WebChangeDetector_Settings_Action_Handler {
 		);
 	}
 
-	/**
-	 * Validate auto update settings.
-	 *
-	 * @param array $data The settings data to validate.
-	 * @return array Validation result with success status and errors.
-	 */
-	private function validate_auto_update_settings( $data ) {
-		$errors = array();
-
-		// Validate time format.
-		if ( ! empty( $data['auto_update_checks_from'] ) ) {
-			if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $data['auto_update_checks_from'] ) ) {
-				$errors[] = 'Invalid "from" time format. Use HH:MM format.';
-			}
-		}
-
-		if ( ! empty( $data['auto_update_checks_to'] ) ) {
-			if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $data['auto_update_checks_to'] ) ) {
-				$errors[] = 'Invalid "to" time format. Use HH:MM format.';
-			}
-		}
-
-		// Validate email addresses.
-		if ( ! empty( $data['auto_update_checks_emails'] ) ) {
-			$emails = explode( ',', $data['auto_update_checks_emails'] );
-			foreach ( $emails as $email ) {
-				$email = trim( $email );
-				if ( ! empty( $email ) && ! is_email( $email ) ) {
-					$errors[] = 'Invalid email address: ' . $email;
-				}
-			}
-		}
-
-		return array(
-			'success' => empty( $errors ),
-			'errors'  => $errors,
-		);
-	}
-
-	/**
-	 * Get current settings for display.
-	 *
-	 * @param string $settings_type The type of settings to retrieve.
-	 * @return array The current settings.
-	 */
-	public function get_current_settings( $settings_type ) {
-		switch ( $settings_type ) {
-			case 'monitoring':
-				return $this->get_monitoring_settings();
-
-			case 'auto_update':
-				return $this->get_auto_update_settings();
-
-			case 'admin_bar':
-				return array(
-					'wcd_disable_admin_bar_menu' => get_option( 'wcd_disable_admin_bar_menu', 0 ),
-				);
-
-			default:
-				return array();
-		}
-	}
-
-	/**
-	 * Get monitoring settings.
-	 *
-	 * @return array The monitoring settings.
-	 */
-	private function get_monitoring_settings() {
-		$group_and_urls = $this->admin->get_group_and_urls( $this->admin->monitoring_group_uuid );
-
-		return array(
-			'interval_in_h'       => $group_and_urls['interval_in_h'] ?? 24,
-			'hour_of_day'         => $group_and_urls['hour_of_day'] ?? 0,
-			'enabled'             => $group_and_urls['enabled'] ?? false,
-			'selected_urls_count' => $group_and_urls['selected_urls_count'] ?? 0,
-		);
-	}
-
-	/**
-	 * Get auto update settings.
-	 *
-	 * @return array The auto update settings.
-	 */
-	private function get_auto_update_settings() {
-		$website_details = $this->admin->website_details ?? array();
-
-		return $website_details['auto_update_settings'] ?? array(
-			'auto_update_checks_enabled'   => false,
-			'auto_update_checks_from'      => '09:00',
-			'auto_update_checks_to'        => '17:00',
-			'auto_update_checks_emails'    => get_option( 'admin_email' ),
-			'auto_update_checks_monday'    => true,
-			'auto_update_checks_tuesday'   => true,
-			'auto_update_checks_wednesday' => true,
-			'auto_update_checks_thursday'  => true,
-			'auto_update_checks_friday'    => true,
-			'auto_update_checks_saturday'  => false,
-			'auto_update_checks_sunday'    => false,
-		);
-	}
 }

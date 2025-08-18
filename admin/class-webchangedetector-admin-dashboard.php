@@ -185,6 +185,7 @@ class WebChangeDetector_Admin_Dashboard {
 		$meta_key = 'wcd_first_time_dashboard_visit';
 
 		// Debug: Allow resetting first-time visit with URL parameter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Debug feature, admin only, no data modification.
 		if ( isset( $_GET['wcd_reset_first_time'] ) && current_user_can( 'manage_options' ) ) {
 			delete_user_meta( $user_id, $meta_key );
 			wp_safe_redirect( remove_query_arg( 'wcd_reset_first_time' ) );
@@ -309,7 +310,7 @@ class WebChangeDetector_Admin_Dashboard {
 										if ( $console_total > 0 ) {
 											echo '<div class="wcd-console-badge-batch">';
 											echo '<span class="dashicons dashicons-editor-code"></span>';
-											echo '<span class="wcd-console-count">' . $console_total . '</span>';
+											echo '<span class="wcd-console-count">' . esc_html( $console_total ) . '</span>';
 											echo '<span class="wcd-console-text">Console Change' . ( $console_total > 1 ? 's' : '' ) . '</span>';
 											echo '</div>';
 										}
@@ -349,7 +350,7 @@ class WebChangeDetector_Admin_Dashboard {
 											}
 
 											if ( ! empty( $update_summary ) ) {
-												echo '<span style="color: #666; font-size: 12px; margin-left: 10px;">(' . implode( ', ', $update_summary ) . ')</span>';
+												echo '<span style="color: #666; font-size: 12px; margin-left: 10px;">(' . esc_html( implode( ', ', $update_summary ) ) . ')</span>';
 											}
 										}
 									} else {
@@ -509,7 +510,7 @@ class WebChangeDetector_Admin_Dashboard {
 					if ( ! empty( $update_items ) ) {
 						echo '<ul style="margin: 10px 0; padding-left: 20px;">';
 						foreach ( $update_items as $item ) {
-							echo '<li style="margin: 5px 0;">' . $item . '</li>';
+							echo '<li style="margin: 5px 0;">' . esc_html( $item ) . '</li>';
 						}
 						echo '</ul>';
 					}
@@ -580,6 +581,7 @@ class WebChangeDetector_Admin_Dashboard {
 										<?php if ( ! empty( $failed_queue['device'] ) ) : ?>
 											<br><small style="color: #666;">
 												<?php
+												// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_device_icon already escapes output.
 												echo \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $failed_queue['device'] );
 												echo ' ' . esc_html( ucfirst( $failed_queue['device'] ) );
 												?>

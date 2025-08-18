@@ -1427,9 +1427,11 @@ class WebChangeDetector_Autoupdates {
 		// We're using a custom API key verification approach instead of nonces since this is an external webhook.
 		// that needs to remain valid for several hours. The 'key' parameter contains a random 32-character string.
 		// that's verified against our stored option.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Using API key-based authentication instead of nonce for cron requests.
 		if ( isset( $_GET['wcd_action'] ) && isset( $_GET['key'] ) ) {
 			$wcd_action = sanitize_text_field( wp_unslash( $_GET['wcd_action'] ) );
 			$key        = sanitize_text_field( wp_unslash( $_GET['key'] ) );
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 			$authorized_actions = array(
 				WCD_TRIGGER_AUTO_UPDATE_CRON,
@@ -1655,7 +1657,9 @@ class WebChangeDetector_Autoupdates {
 				borlabsCacheClearCache();
 				$cleared_caches[] = 'Borlabs Cache';
 			}
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.ValidHookName.NotLowercase -- Third-party hook name.
 			if ( has_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache' ) ) {
+				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.ValidHookName.NotLowercase -- Third-party hook name.
 				do_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache', true );
 			}
 		} catch ( \Exception $e ) {

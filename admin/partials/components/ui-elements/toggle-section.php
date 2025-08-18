@@ -56,7 +56,10 @@ $section_id         = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 	id="<?php echo esc_attr( $section_id ); ?>" 
 	style="<?php echo $is_enabled ? '' : 'display: none;'; ?>"
 >
-	<?php echo $content; // Content should be escaped by caller. ?>.
+	<?php
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is pre-escaped by the calling function.
+	echo $content;
+	?>.
 </div>
 
 <script type="text/javascript">

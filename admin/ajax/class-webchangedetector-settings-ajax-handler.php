@@ -83,6 +83,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 			if ( $this->admin && method_exists( $this->admin, 'post_urls' ) ) {
 				// Capture any output from the post_urls method.
 				ob_start();
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified above.
 				$this->admin->post_urls( $_POST );
 				ob_get_clean();
 
@@ -344,6 +345,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	 */
 	private function wcd_security_check( $action = 'ajax-nonce', $capability = 'manage_options' ) {
 		// Verify nonce using WebChangeDetector utils.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method IS the nonce verification.
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 
 		if ( empty( $nonce ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, $action ) ) {
@@ -386,7 +388,9 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 			$filters       = array();
 			$filter_fields = array( 'level', 'context', 'search', 'date_from', 'date_to' );
 			foreach ( $filter_fields as $field ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in wcd_security_check.
 				if ( ! empty( $_POST[ $field ] ) ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in wcd_security_check.
 					$filters[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
 				}
 			}
@@ -416,10 +420,12 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 
 			$this->send_success_response(
 				array(
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for safe data transport to JavaScript.
 					'csv_content' => base64_encode( $csv_content ),
 					'filename'    => $filename,
 					'debug_info'  => array(
 						'original_size' => strlen( $csv_content ),
+						// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for safe data transport to JavaScript.
 						'encoded_size'  => strlen( base64_encode( $csv_content ) ),
 					),
 				),

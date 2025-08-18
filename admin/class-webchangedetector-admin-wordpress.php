@@ -1,5 +1,4 @@
 <?php
-
 /**
  * WebChange Detector Admin WordPress Integration Class
  *
@@ -104,6 +103,7 @@ class WebChangeDetector_Admin_WordPress {
 				array(
 					'unsavedChanges'           => __( 'Changes were not saved. Do you wish to leave the page without saving?', 'webchangedetector' ),
 					'confirmResetAccount'      => __( 'Are you sure you want to reset your account? This cannot be undone.', 'webchangedetector' ),
+					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
 					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s detection settings? This cannot be undone.', 'webchangedetector' ),
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the manual checks?', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
@@ -113,10 +113,12 @@ class WebChangeDetector_Admin_WordPress {
 					'somethingWentWrong'       => __( 'Something went wrong. Please try again.', 'webchangedetector' ),
 					'unexpectedResponse'       => __( 'Unexpected response from server. Please try again.', 'webchangedetector' ),
 					'healthCheckSuccessful'    => __( 'Health check completed successfully.', 'webchangedetector' ),
+					/* translators: %s: Error message from the health check */
 					'healthCheckFailed'        => __( 'Health check failed: %s', 'webchangedetector' ),
 					'healthCheckRequestFailed' => __( 'Health check request failed.', 'webchangedetector' ),
 					'manualRecoveryAttempt'    => __( 'Manual recovery attempt', 'webchangedetector' ),
 					'attemptingRecovery'       => __( 'Attempting Recovery...', 'webchangedetector' ),
+					/* translators: %s: Recovery success message */
 					'recoverySuccessful'       => __( 'Recovery successful: %s', 'webchangedetector' ),
 					'recoveryComplete'         => __( 'Recovery Successful', 'webchangedetector' ),
 					'confirmClearLogs'         => __( 'Are you sure you want to clear the logs? This action cannot be undone.', 'webchangedetector' ),
@@ -163,10 +165,11 @@ class WebChangeDetector_Admin_WordPress {
 						'prevBtnText'                 => __( '← Previous', 'webchangedetector' ),
 						'doneBtnText'                 => __( 'Finish Wizard', 'webchangedetector' ),
 						'closeBtnText'                => __( 'Exit Wizard', 'webchangedetector' ),
+						/* translators: {{current}}: Current step number, {{total}}: Total number of steps */
 						'progressText'                => __( 'Step {{current}} of {{total}}', 'webchangedetector' ),
 						'finishTour'                  => __( 'Finish Tour →', 'webchangedetector' ),
 
-						// Loading/navigation messages
+						// Loading/navigation messages.
 						'letsContinue'                => __( 'Let\'s continue on the next page.', 'webchangedetector' ),
 						'loading'                     => __( 'Loading...', 'webchangedetector' ),
 						'wizardComplete'              => __( 'Wizard Complete!', 'webchangedetector' ),
@@ -251,9 +254,12 @@ class WebChangeDetector_Admin_WordPress {
 						// Generic steps.
 						'genericTitle'                => __( 'WebChange Detector', 'webchangedetector' ),
 						'genericDesc'                 => __( 'Welcome to WebChange Detector! Use the navigation tabs to access different features.', 'webchangedetector' ),
+						/* translators: %s: Account creation/validation/recovery message or error */
+						'apiConnectionRestored'       => __( 'API connection restored: %s', 'webchangedetector' ),
 
 						// Notification messages.
 						'requiredSetting'             => __( 'Required Setting', 'webchangedetector' ),
+						// translators: %s: Setting name.
 						'requiredSettingMessage'      => __( 'Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again.', 'webchangedetector' ),
 						'autoUpdateChecks'            => __( 'Auto Update Checks', 'webchangedetector' ),
 						'monitoring'                  => __( 'Monitoring', 'webchangedetector' ),
@@ -430,7 +436,7 @@ class WebChangeDetector_Admin_WordPress {
 	 */
 	public function wcd_sync_post_after_save( $post_id = null, $post = null, $update = false ) {
 		// Skip if this is an update (handled by update_post hook) or if post is not published.
-		if ( $update || ! $post || $post->post_status !== 'publish' ) {
+		if ( $update || ! $post || 'publish' !== $post->post_status ) {
 			return true;
 		}
 
@@ -505,7 +511,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Schedule single event to run in 10 seconds to ensure proper execution.
 		$scheduled = wp_schedule_single_event( time() + 10, $hook, array( $data ) );
 
-		if ( $scheduled !== false ) {
+		if ( false !== $scheduled ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduled async single post sync to run in 10 seconds', 'schedule_async_single_post_sync', 'debug' );
 			return true;
 		} else {
@@ -528,7 +534,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Schedule single event to run in 1 second to ensure proper execution.
 		$scheduled = wp_schedule_single_event( time() + 1, $hook, array( $force_sync ) );
 
-		if ( $scheduled !== false ) {
+		if ( false !== $scheduled ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduled async full sync (force: ' . ( $force_sync ? 'yes' : 'no' ) . ') to run in 10 seconds', 'schedule_async_full_sync', 'debug' );
 			return true;
 		} else {
@@ -710,7 +716,6 @@ class WebChangeDetector_Admin_WordPress {
 		// Fallback: If we still don't have a URL ID but we have URL data, use the first available ID.
 		if ( ! $wcd_url_id ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No exact URL match found, using fallback logic for URL: ' . $url, 'get_url_monitoring_status', 'debug' );
-
 			// Try to get ID from first manual URL.
 			if ( ! empty( $manual_urls ) && isset( $manual_urls[0]['id'] ) ) {
 				$wcd_url_id      = $manual_urls[0]['id'];
@@ -799,7 +804,7 @@ class WebChangeDetector_Admin_WordPress {
 			foreach ( $wpml_languages['languages'] as $language_code ) {
 				do_action( 'wpml_switch_language', $language_code );
 				$posts = array_merge( $posts, get_posts( $args ) );
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Posts: ' . print_r( $posts, 1 ), 'get_posts', 'debug' );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Posts: ' . wp_json_encode( $posts ), 'get_posts', 'debug' );
 			}
 			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
 		}
@@ -1090,6 +1095,7 @@ class WebChangeDetector_Admin_WordPress {
 		if ( ! empty( $upload_array ) ) {
 			$this->admin->sync_urls[] = $upload_array;
 		}
+		return true;
 	}
 
 	/**
@@ -1142,7 +1148,7 @@ class WebChangeDetector_Admin_WordPress {
 
 		// We only sync the frontpage.
 		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'only frontpage: ' . print_r( $website_details['allowances']['only_frontpage'], true ), 'sync_posts', 'debug' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'only frontpage: ' . wp_json_encode( $website_details['allowances']['only_frontpage'] ), 'sync_posts', 'debug' );
 			$array['frontpage%%Frontpage'][] = array(
 				'url'        => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
 				'html_title' => get_bloginfo( 'name' ),
@@ -1360,8 +1366,8 @@ class WebChangeDetector_Admin_WordPress {
 		// Sync urls.
 		$response_sync_urls      = \WebChangeDetector\WebChangeDetector_API_V2::sync_urls( $this->admin->sync_urls, $collection_uuid );
 		$response_start_url_sync = \WebChangeDetector\WebChangeDetector_API_V2::start_url_sync( false, $collection_uuid );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . print_r( $response_sync_urls, 1 ), 'sync_posts', 'debug' );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . print_r( $response_start_url_sync, 1 ), 'sync_posts', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response upload URLs: ' . wp_json_encode( $response_sync_urls ), 'sync_posts', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . wp_json_encode( $response_start_url_sync ), 'sync_posts', 'debug' );
 
 		return date_i18n( 'd/m/Y H:i' );
 	}
@@ -1384,7 +1390,7 @@ class WebChangeDetector_Admin_WordPress {
 		$response = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/' );
 
 		$status = wp_remote_retrieve_response_code( $response );
-		if ( $status !== 200 ) {
+		if ( 200 !== $status ) {
 			return __( 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website', 'webchangedetector' );
 		}
 		$body       = wp_remote_retrieve_body( $response );
@@ -1395,7 +1401,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Get Post Types.
 		$response     = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/types' );
 		$status_types = wp_remote_retrieve_response_code( $response );
-		if ( $status_types !== 200 ) {
+		if ( 200 !== $status_types ) {
 			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
 		}
 		$body       = wp_remote_retrieve_body( $response );
@@ -1405,7 +1411,7 @@ class WebChangeDetector_Admin_WordPress {
 		$response = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/taxonomies' );
 
 		$status_taxonomies = wp_remote_retrieve_response_code( $response );
-		if ( $status_taxonomies !== 200 ) {
+		if ( 200 !== $status_taxonomies ) {
 			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
 		}
 		$body       = wp_remote_retrieve_body( $response );
@@ -1558,7 +1564,7 @@ class WebChangeDetector_Admin_WordPress {
 					$type_urls      = wp_remote_retrieve_body( $response );
 					$type_urls      = json_decode( $type_urls );
 
-					if ( $status_code === 200 ) {
+					if ( 200 === $status_code ) {
 						foreach ( $type_urls as $type_url ) {
 							$clean_link = str_replace( array( 'http://', 'https://' ), '', $type_url->link );
 
@@ -1569,7 +1575,7 @@ class WebChangeDetector_Admin_WordPress {
 								'html_title' => $is_taxonomie ? $type_url->name : $type_url->title->rendered,
 							);
 
-							if ( in_array( $clean_link, array( $domain, $domain . '/', 'www.' . $domain, 'www.' . $domain . '/' ) ) ) {
+							if ( in_array( $clean_link, array( $domain, $domain . '/', 'www.' . $domain, 'www.' . $domain . '/' ), true ) ) {
 								$frontpage_has_id = true;
 							}
 						}
@@ -1580,7 +1586,7 @@ class WebChangeDetector_Admin_WordPress {
 					}
 
 					$offset += 100;
-				} while ( $pages_added == $offset );
+				} while ( $pages_added === $offset );
 			}
 		}
 
@@ -1618,7 +1624,7 @@ class WebChangeDetector_Admin_WordPress {
 		$response = wp_remote_get( 'https://' . $url );
 		$status   = wp_remote_retrieve_response_code( $response );
 
-		if ( $status === 200 ) {
+		if ( 200 === $status ) {
 			$scheme = true;
 		} else {
 			$scheme = false;
