@@ -8,3 +8,4 @@ logs/*
 CLAUDE.md
 REFACTOR.md
 test-*.php
+fix_comments.php
