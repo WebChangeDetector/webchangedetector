@@ -324,7 +324,21 @@ class WebChangeDetector_Logs_Controller {
 					<button type="button" 
 							id="wcd-export-logs-btn" 
 							class="button" 
-							data-filters="<?php echo esc_attr( wp_json_encode( array_filter( $filters, function( $value, $key ) { return ! empty( $value ) && 'page' !== $key; }, ARRAY_FILTER_USE_BOTH ) ) ); ?>"
+							data-filters="
+							<?php
+							echo esc_attr(
+								wp_json_encode(
+									array_filter(
+										$filters,
+										function ( $value, $key ) {
+											return ! empty( $value ) && 'page' !== $key;
+										},
+										ARRAY_FILTER_USE_BOTH
+									)
+								)
+							);
+							?>
+											"
 							style="margin-right: 10px;">
 						<?php esc_html_e( 'Export to CSV', 'webchangedetector' ); ?>
 					</button>

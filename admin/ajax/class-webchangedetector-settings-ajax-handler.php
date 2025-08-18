@@ -345,7 +345,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	private function wcd_security_check( $action = 'ajax-nonce', $capability = 'manage_options' ) {
 		// Verify nonce using WebChangeDetector utils.
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-		
+
 		if ( empty( $nonce ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, $action ) ) {
 			$this->send_error_response(
 				__( 'Security check failed. Please refresh the page and try again.', 'webchangedetector' ),

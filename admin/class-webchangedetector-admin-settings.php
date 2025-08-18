@@ -561,7 +561,7 @@ class WebChangeDetector_Admin_Settings {
 										$total_items               = $urls_meta['total'] ?? 0;
 										?>
 										<div class="wcd-pagination-info">
-											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php echo sprintf( esc_html__( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), $current_page, $total_pages, $total_items ); ?></span>
+											<span class="wcd-displaying-num" style="color: #646970; font-weight: 500; font-size: 14px;"><?php printf( esc_html__( 'Showing page %1$s of %2$s (%3$s total URLs)', 'webchangedetector' ), $current_page, $total_pages, $total_items ); ?></span>
 										</div>
 										<div class="wcd-pagination-links" style="margin-top: 15px;">
 											<?php
