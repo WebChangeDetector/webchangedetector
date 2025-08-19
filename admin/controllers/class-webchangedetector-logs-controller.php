@@ -84,10 +84,6 @@ class WebChangeDetector_Logs_Controller {
 			return;
 		}
 
-		// Continue with regular queue view.
-		// Wizard functionality temporarily removed for phase 1.
-		// Will be moved to view renderer in later phases.
-
 		$paged = 1;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 		if ( isset( $_GET['paged'] ) ) {

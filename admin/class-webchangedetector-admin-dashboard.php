@@ -79,7 +79,7 @@ class WebChangeDetector_Admin_Dashboard {
 			<div class="wcd-settings-card">
 				<div class="box-half no-border">
 					<p>
-						<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
+						<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
 					</p>
 					<hr>
 					<p>
@@ -118,14 +118,14 @@ class WebChangeDetector_Admin_Dashboard {
 					<?php if ( $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>
 						<p id="wcd-monitoring-stats">
 							<strong><?php echo esc_html__( 'Monitoring:', 'webchangedetector' ); ?> </strong>
-							<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
+							<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 						</p>
 					<?php } ?>
 
 					<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
 						<p id="wcd-auto-update-stats">
 							<strong><?php echo esc_html__( 'Auto update checks:', 'webchangedetector' ); ?> </strong>
-							<img src="<?php echo esc_html( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
+							<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
 						</p>
 					<?php } ?>
 
@@ -436,12 +436,19 @@ class WebChangeDetector_Admin_Dashboard {
 						$core           = $auto_update_data['updates']['core'];
 						$status_icon    = $core['success'] ? '✓' : '✗';
 						$status_color   = $core['success'] ? '#46b450' : '#dc3232';
-						$update_items[] = sprintf(
-							'<span style="color: %s;">%s</span> WordPress Core: %s → %s',
-							$status_color,
-							$status_icon,
-							esc_html( $core['from_version'] ),
-							esc_html( $core['to_version'] )
+						$update_items[] = wp_kses(
+							sprintf(
+								'<span style="color: %s;">%s</span> WordPress Core: %s → %s',
+								esc_attr( $status_color ),
+								esc_html( $status_icon ),
+								esc_html( $core['from_version'] ),
+								esc_html( $core['to_version'] )
+							),
+							array(
+								'span' => array(
+									'style' => array(),
+								),
+							)
 						);
 					}
 
@@ -461,17 +468,31 @@ class WebChangeDetector_Admin_Dashboard {
 						);
 
 						if ( count( $successful_plugins ) > 0 ) {
-							$update_items[] = sprintf(
-								'<span style="color: #46b450;">✓</span> %s',
-								// translators: %d: number of plugins.
-								sprintf( _n( '%d plugin updated successfully', '%d plugins updated successfully', count( $successful_plugins ), 'webchangedetector' ), count( $successful_plugins ) )
+							$update_items[] = wp_kses(
+								sprintf(
+									'<span style="color: #46b450;">✓</span> %s',
+									// translators: %d: number of plugins.
+									sprintf( _n( '%d plugin updated successfully', '%d plugins updated successfully', count( $successful_plugins ), 'webchangedetector' ), count( $successful_plugins ) )
+								),
+								array(
+									'span' => array(
+										'style' => array(),
+									),
+								)
 							);
 						}
 						if ( count( $failed_plugins ) > 0 ) {
-							$update_items[] = sprintf(
-								'<span style="color: #dc3232;">✗</span> %s',
-								// translators: %d: number of plugins.
-								sprintf( _n( '%d plugin update failed', '%d plugin updates failed', count( $failed_plugins ), 'webchangedetector' ), count( $failed_plugins ) )
+							$update_items[] = wp_kses(
+								sprintf(
+									'<span style="color: #dc3232;">✗</span> %s',
+									// translators: %d: number of plugins.
+									sprintf( _n( '%d plugin update failed', '%d plugin updates failed', count( $failed_plugins ), 'webchangedetector' ), count( $failed_plugins ) )
+								),
+								array(
+									'span' => array(
+										'style' => array(),
+									),
+								)
 							);
 						}
 					}
@@ -492,17 +513,31 @@ class WebChangeDetector_Admin_Dashboard {
 						);
 
 						if ( count( $successful_themes ) > 0 ) {
-							$update_items[] = sprintf(
-								'<span style="color: #46b450;">✓</span> %s',
-								// translators: %d: number of themes.
-								sprintf( _n( '%d theme updated successfully', '%d themes updated successfully', count( $successful_themes ), 'webchangedetector' ), count( $successful_themes ) )
+							$update_items[] = wp_kses(
+								sprintf(
+									'<span style="color: #46b450;">✓</span> %s',
+									// translators: %d: number of themes.
+									sprintf( _n( '%d theme updated successfully', '%d themes updated successfully', count( $successful_themes ), 'webchangedetector' ), count( $successful_themes ) )
+								),
+								array(
+									'span' => array(
+										'style' => array(),
+									),
+								)
 							);
 						}
 						if ( count( $failed_themes ) > 0 ) {
-							$update_items[] = sprintf(
-								'<span style="color: #dc3232;">✗</span> %s',
-								// translators: %d: number of themes.
-								sprintf( _n( '%d theme update failed', '%d theme updates failed', count( $failed_themes ), 'webchangedetector' ), count( $failed_themes ) )
+							$update_items[] = wp_kses(
+								sprintf(
+									'<span style="color: #dc3232;">✗</span> %s',
+									// translators: %d: number of themes.
+									sprintf( _n( '%d theme update failed', '%d theme updates failed', count( $failed_themes ), 'webchangedetector' ), count( $failed_themes ) )
+								),
+								array(
+									'span' => array(
+										'style' => array(),
+									),
+								)
 							);
 						}
 					}
@@ -510,7 +545,9 @@ class WebChangeDetector_Admin_Dashboard {
 					if ( ! empty( $update_items ) ) {
 						echo '<ul style="margin: 10px 0; padding-left: 20px;">';
 						foreach ( $update_items as $item ) {
-							echo '<li style="margin: 5px 0;">' . esc_html( $item ) . '</li>';
+							// Items already contain properly escaped HTML with wp_kses.
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped when building $update_items.
+							echo '<li style="margin: 5px 0;">' . $item . '</li>';
 						}
 						echo '</ul>';
 					}
@@ -883,8 +920,7 @@ class WebChangeDetector_Admin_Dashboard {
 		if ( isset( $token ) ) {
 			$compare = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
 
-			$public_token = $compare['token'];
-			$all_tokens   = array();
+			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {
 				$all_tokens = ( json_decode( stripslashes( $postdata['all_tokens'] ), true ) );
 
