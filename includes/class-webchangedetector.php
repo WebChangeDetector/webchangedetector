@@ -123,9 +123,9 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-settings.php';
 
 		/**
-		 * The AJAX handlers class for all WebChangeDetector AJAX requests.
+		 * The AJAX coordinator class for initializing all AJAX handlers.
 		 */
-		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-ajax.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-ajax-coordinator.php';
 
 		/**
 		 * The dashboard and views management class for all WebChangeDetector display functionality.
@@ -250,30 +250,14 @@ class WebChangeDetector {
 	 */
 	private function define_admin_hooks() {
 		$plugin_admin     = new WebChangeDetector_Admin( $this->get_plugin_name() );
-		$plugin_ajax      = new WebChangeDetector_Admin_AJAX( $plugin_admin );
+		// Initialize AJAX coordinator which will register all the focused handlers.
+		// The AJAX handlers are now self-registering through their respective handler classes.
+		new WebChangeDetector_Ajax_Coordinator( $plugin_admin );
 		$plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
-
-		// AJAX handlers now managed by dedicated AJAX class.
-		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_ajax, 'ajax_get_processing_queue' );
-		$this->loader->add_action( 'wp_ajax_post_url', $plugin_ajax, 'ajax_post_url' );
-		$this->loader->add_action( 'wp_ajax_update_comparison_status', $plugin_ajax, 'ajax_update_comparison_status' );
-		$this->loader->add_action( 'wp_ajax_sync_urls', $plugin_ajax, 'ajax_sync_urls' );
-		$this->loader->add_action( 'wp_ajax_wcd_disable_wizard', $plugin_ajax, 'ajax_disable_wizard' );
-		$this->loader->add_action( 'wp_ajax_get_batch_comparisons_view', $plugin_ajax, 'ajax_get_batch_comparisons_view' );
-		$this->loader->add_action( 'wp_ajax_load_failed_queues', $plugin_ajax, 'ajax_load_failed_queues' );
-		$this->loader->add_action( 'wp_ajax_create_website_and_groups_ajax', $plugin_ajax, 'ajax_create_website_and_groups' );
-		$this->loader->add_action( 'wp_ajax_get_dashboard_usage_stats', $plugin_ajax, 'ajax_get_dashboard_usage_stats' );
-		$this->loader->add_action( 'wp_ajax_wcd_get_admin_bar_status', $plugin_ajax, 'ajax_get_wcd_admin_bar_status' );
-		$this->loader->add_action( 'wp_ajax_wcd_check_activation_status', $plugin_ajax, 'ajax_check_activation_status' );
-		$this->loader->add_action( 'wp_ajax_wcd_get_initial_setup', $plugin_ajax, 'ajax_get_initial_setup' );
-		$this->loader->add_action( 'wp_ajax_wcd_save_initial_setup', $plugin_ajax, 'ajax_save_initial_setup' );
-		$this->loader->add_action( 'wp_ajax_wcd_sync_posts', $plugin_ajax, 'ajax_sync_posts' );
-		$this->loader->add_action( 'wp_ajax_wcd_update_sync_types_with_local_labels', $plugin_ajax, 'ajax_update_sync_types_with_local_labels' );
-		$this->loader->add_action( 'wp_ajax_wcd_complete_initial_setup', $plugin_ajax, 'ajax_complete_initial_setup' );
 
 		$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
 		$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );

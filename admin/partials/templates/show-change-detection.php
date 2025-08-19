@@ -274,7 +274,7 @@ if ( ! function_exists( 'safe_extract_console_message' ) ) {
 					<div style="text-align: center; padding: 20px;">
 						<p style="margin: 0 0 10px 0; font-weight: 600; color: #333;"><?php esc_html_e( '🔒 Browser Console monitoring', 'webchangedetector' ); ?></p>
 						<p style="margin: 0 0 15px 0; color: #666;"><?php echo wp_kses( __( 'Available on <strong>Personal Pro+</strong> plans', 'webchangedetector' ), array( 'strong' => array() ) ); ?></p>
-						<a href="<?php echo esc_url( method_exists( $this, 'billing_url' ) ? $this->billing_url() : 'https://www.webchangedetector.com/pricing/' ); ?>" target="_blank" style="background: #0073aa; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 500;">
+						<a href="<?php echo esc_url( $this->account_handler->get_upgrade_url() ?? 'https://www.webchangedetector.com/pricing/' ); ?>" target="_blank" style="background: #0073aa; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 500;">
 							<?php esc_html_e( 'Upgrade Plan', 'webchangedetector' ); ?>
 						</a>
 					</div>

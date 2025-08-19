@@ -61,6 +61,7 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 * Verify AJAX nonce for security.
 	 *
 	 * Checks the nonce value against the expected action to prevent CSRF attacks.
+	 * Uses WebChangeDetector_Admin_Utils to handle prefixed nonces.
 	 * Follows WordPress security best practices.
 	 *
 	 * @since    4.0.0
@@ -68,13 +69,15 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 * @return   bool True if nonce is valid, false otherwise.
 	 */
 	protected function verify_nonce( $action = 'ajax-nonce' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method IS the nonce verification.
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 
 		if ( empty( $nonce ) ) {
 			return false;
 		}
 
-		return wp_verify_nonce( $nonce, $action );
+		// Use WebChangeDetector utils which handles the 'webchangedetector_' prefix.
+		return \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, $action );
 	}
 
 	/**

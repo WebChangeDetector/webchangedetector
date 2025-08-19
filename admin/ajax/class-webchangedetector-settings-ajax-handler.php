@@ -332,43 +332,6 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 	}
 
-	/**
-	 * WebChangeDetector-specific security check.
-	 *
-	 * Uses WebChangeDetector_Admin_Utils for nonce verification to maintain
-	 * consistency with the existing codebase that uses prefixed nonces.
-	 *
-	 * @since    4.0.0
-	 * @param    string $action     The nonce action to verify.
-	 * @param    string $capability The capability to check.
-	 * @return   bool True if all checks pass, false otherwise.
-	 */
-	private function wcd_security_check( $action = 'ajax-nonce', $capability = 'manage_options' ) {
-		// Verify nonce using WebChangeDetector utils.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method IS the nonce verification.
-		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-
-		if ( empty( $nonce ) || ! \WebChangeDetector\WebChangeDetector_Admin_Utils::verify_nonce( $nonce, $action ) ) {
-			$this->send_error_response(
-				__( 'Security check failed. Please refresh the page and try again.', 'webchangedetector' ),
-				'Nonce verification failed',
-				403
-			);
-			return false;
-		}
-
-		// Check user capability.
-		if ( ! $this->check_capability( $capability ) ) {
-			$this->send_error_response(
-				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
-				'Capability check failed',
-				403
-			);
-			return false;
-		}
-
-		return true;
-	}
 
 	/**
 	 * Handle export logs AJAX request.
@@ -379,7 +342,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	 */
 	public function ajax_export_logs() {
 		// Use WebChangeDetector nonce verification for consistency with the rest of the system.
-		if ( ! $this->wcd_security_check() ) {
+		if ( ! $this->security_check() ) {
 			return;
 		}
 

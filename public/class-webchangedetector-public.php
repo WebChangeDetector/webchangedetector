@@ -43,7 +43,7 @@ class WebChangeDetector_Public {
 	 */
 	public function enqueue_styles() {
 		// Load the new design CSS files.
-		wp_enqueue_style( 'webchangedetector-public-legacy', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
+		wp_enqueue_style( 'webchangedetector-public', plugin_dir_url( __FILE__ ) . 'css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
 	}
 
 	/**

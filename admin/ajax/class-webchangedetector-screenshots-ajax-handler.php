@@ -126,18 +126,23 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 	 * @since    4.0.0
 	 */
 	public function ajax_update_comparison_status() {
-		if ( ! $this->security_check() ) {
-			return;
+		// Custom security check to return plain text 'failed' instead of JSON.
+		if ( ! $this->verify_nonce( 'ajax-nonce' ) ) {
+			echo 'failed';
+			wp_die();
+		}
+
+		if ( ! $this->check_capability( 'manage_options' ) ) {
+			echo 'failed';
+			wp_die();
 		}
 
 		$post_data = $this->validate_post_data( array( 'id', 'status' ) );
 
 		if ( false === $post_data ) {
-			$this->send_error_response(
-				__( 'Missing required fields.', 'webchangedetector' ),
-				'Missing id or status'
-			);
-			return;
+			// Return plain text 'failed' to match JavaScript expectations.
+			echo 'failed';
+			wp_die();
 		}
 
 		try {
@@ -147,33 +152,59 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			// Validate status value.
 			$valid_statuses = array( 'ok', 'to_fix', 'false_positive', 'new' );
 			if ( ! in_array( $new_status, $valid_statuses, true ) ) {
-				$this->send_error_response(
-					__( 'Invalid status value.', 'webchangedetector' ),
-					'Invalid status: ' . $new_status
-				);
-				return;
+				echo 'failed';
+				wp_die();
 			}
 
 			$result = $this->screenshots_handler->update_comparison_status( $comparison_id, $new_status );
 
-			if ( is_wp_error( $result ) ) {
-				$this->send_error_response(
-					__( 'Failed to update comparison status.', 'webchangedetector' ),
-					'API error: ' . $result->get_error_message()
-				);
-				return;
+			// Handle the response based on the result type.
+			if ( true === $result ) {
+				// API call successful.
+				echo esc_html( $new_status );
+				wp_die();
 			}
 
-			$this->send_success_response(
-				$new_status,
-				__( 'Comparison status updated successfully.', 'webchangedetector' )
-			);
+			if ( is_array( $result ) ) {
+				// Check for explicit success indicators.
+				if ( isset( $result['success'] ) && $result['success'] ) {
+					echo esc_html( $new_status );
+					wp_die();
+				}
+
+				// Check for status in data.
+				if ( isset( $result['data']['status'] ) ) {
+					echo esc_html( $result['data']['status'] );
+					wp_die();
+				}
+
+				// Check for Laravel-style success (no error key).
+				if ( ! isset( $result['error'] ) && ! isset( $result['errors'] ) && ! isset( $result['message'] ) ) {
+					echo esc_html( $new_status );
+					wp_die();
+				}
+
+				// Array contains error information.
+				echo 'failed';
+				wp_die();
+			}
+
+			if ( is_wp_error( $result ) ) {
+				echo 'failed';
+				wp_die();
+			}
+
+			// Unknown result type - assume success.
+			echo esc_html( $new_status );
+			wp_die();
 
 		} catch ( \Exception $e ) {
-			$this->send_error_response(
-				__( 'An error occurred while updating comparison status.', 'webchangedetector' ),
-				'Exception: ' . $e->getMessage()
-			);
+			// Log the error for debugging.
+			if ( $this->admin && method_exists( $this->admin, 'log_error' ) ) {
+				$this->admin->log_error( 'Status update exception: ' . $e->getMessage(), 'ajax' );
+			}
+			echo 'failed';
+			wp_die();
 		}
 	}
 
@@ -201,9 +232,6 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			}
 
 			$batch_id = $post_data['batch_id'];
-
-			// Get optional filters.
-			$filters = isset( $post_data['filters'] ) ? $post_data['filters'] : array();
 
 			// Get and sanitize the POST data.
 			$per_page              = isset( $post_data['per_page'] ) ? absint( $post_data['per_page'] ) : 30;

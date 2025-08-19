@@ -409,9 +409,6 @@ function currentlyProcessing() {
                 $(statusElement).html("<img src='/wp-content/plugins/webchangedetector/admin/img/loader.gif' style='height: 12px; line-height: 12px;'>");
 
                 $.post(wcdAjaxData.ajax_url, data, function (response) {
-                    // Debug logging
-                    console.log('WebChangeDetector: Status update response:', response);
-
                     if ('failed' === response) {
                         $(statusElement).html(initialStatusContent);
                         alert(wcdL10n.somethingWentWrong);
@@ -647,9 +644,9 @@ function currentlyProcessing() {
                 nonce: wcdAjaxData.nonce
             },
             success: function (response) {
-
+                
                 if (response.success && response.data) {
-                    const data = response.data;
+                    const data = response.data.data;
 
                     // Update monitoring stats
                     const monitoringElement = $('#wcd-monitoring-stats');
@@ -663,7 +660,6 @@ function currentlyProcessing() {
 
                     // Update auto-update stats
                     const autoUpdateElement = $('#wcd-auto-update-stats');
-                    console.log(data.auto_update_settings.auto_update_checks_enabled);
                     if (autoUpdateElement.length > 0) {
                         if (data.max_auto_update_checks > 0 && data.auto_update_settings.auto_update_checks_enabled) {
                             autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
@@ -734,20 +730,11 @@ function currentlyProcessing() {
                 type: 'POST',
                 data: ajaxData,
                 success: function(response) {
-                    console.log('CSV Export Response:', response);
+
                     if (response.success && response.data && response.data.data.csv_content) {
                         // Create and trigger download.
                         downloadCSV(response.data.data.csv_content, response.data.data.filename);
-                    } else {
-                        console.error('Export failed:', response);
-                        
-                        // More detailed debugging
-                        console.log('Response structure check:');
-                        console.log('- response.success:', response.success);
-                        console.log('- response.data:', response.data);
-                        console.log('- response.data.csv_content exists:', !!(response.data && response.data.csv_content));
-                        console.log('- response.data.filename:', response.data ? response.data.filename : 'N/A');
-                        
+                    } else {                        
                         alert('Failed to export logs: ' + (response.data && response.data.message ? response.data.message : 'Invalid response structure'));
                     }
                 },
@@ -769,11 +756,6 @@ function currentlyProcessing() {
          */
         function downloadCSV(csvContent, filename) {
             try {
-                console.log('Starting CSV download:', { 
-                    contentLength: csvContent ? csvContent.length : 'null', 
-                    filename: filename 
-                });
-                
                 if (!csvContent || !filename) {
                     throw new Error('Missing CSV content or filename');
                 }
@@ -782,33 +764,27 @@ function currentlyProcessing() {
                 let csvData;
                 try {
                     csvData = atob(csvContent);
-                    console.log('Decoded CSV data length:', csvData.length);
                 } catch (decodeError) {
-                    console.error('Base64 decode error:', decodeError);
                     throw new Error('Failed to decode CSV content');
                 }
                 
                 // Create blob and download link.
                 const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                console.log('Created blob:', blob.size, 'bytes');
                 
                 const link = document.createElement('a');
                 
                 // Use modern browser download method
                 if (window.navigator && window.navigator.msSaveOrOpenBlob) {
                     // IE10+ specific method
-                    console.log('Using IE download method');
                     window.navigator.msSaveOrOpenBlob(blob, filename);
                 } else if (link.download !== undefined) {
                     // Modern browsers with download attribute support
-                    console.log('Using modern download method');
                     const url = URL.createObjectURL(blob);
                     link.href = url;
                     link.download = filename;
                     link.style.display = 'none';
                     document.body.appendChild(link);
                     
-                    console.log('Triggering download click');
                     link.click();
                     
                     // Clean up after a short delay
@@ -816,19 +792,16 @@ function currentlyProcessing() {
                         try {
                             document.body.removeChild(link);
                             URL.revokeObjectURL(url);
-                            console.log('Download cleanup completed');
                         } catch (cleanupError) {
-                            console.warn('Cleanup warning:', cleanupError);
+                            // Ignore.
                         }
                     }, 1000);
                 } else {
                     // Fallback for older browsers
-                    console.log('Using fallback download method');
                     const url = URL.createObjectURL(blob);
                     const newWindow = window.open(url, '_blank');
                     if (!newWindow) {
                         // Try alternative method
-                        console.log('Popup blocked, trying alternative method');
                         const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData);
                         const link2 = document.createElement('a');
                         link2.href = dataUrl;
@@ -837,10 +810,7 @@ function currentlyProcessing() {
                     }
                     setTimeout(() => URL.revokeObjectURL(url), 1000);
                 }
-                
-                console.log('CSV download initiated successfully');
             } catch (error) {
-                console.error('Error downloading CSV:', error);
                 alert('Error downloading CSV file: ' + error.message);
             }
         }
