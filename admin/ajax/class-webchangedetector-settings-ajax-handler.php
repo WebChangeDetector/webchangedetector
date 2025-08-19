@@ -63,6 +63,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		add_action( 'wp_ajax_wcd_update_sync_types_with_local_labels', array( $this, 'ajax_update_sync_types_with_local_labels' ) );
 		add_action( 'wp_ajax_wcd_complete_initial_setup', array( $this, 'ajax_complete_initial_setup' ) );
 		add_action( 'wp_ajax_wcd_export_logs', array( $this, 'ajax_export_logs' ) );
+		add_action( 'wp_ajax_sync_urls', array( $this, 'ajax_sync_urls' ) );
 	}
 
 	/**
@@ -332,6 +333,61 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 	}
 
+
+	/**
+	 * Handle sync URLs AJAX request.
+	 *
+	 * Synchronizes URLs with the WebChangeDetector API using the existing sync_posts method.
+	 * Returns the formatted last sync date as plain text (not JSON) to match JavaScript expectations.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_sync_urls() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in security_check.
+			$force = isset( $_POST['force'] ) ? intval( $_POST['force'] ) : 0;
+			
+			// Get the admin WordPress instance which has the sync_posts method.
+			$admin_wordpress = new \WebChangeDetector\WebChangeDetector_Admin_WordPress( 
+				'webchangedetector', 
+				WEBCHANGEDETECTOR_VERSION,
+				$this->admin
+			);
+			
+			// Call the existing sync_posts method with force parameter.
+			$result = $admin_wordpress->sync_posts( (bool) $force );
+			
+			if ( $result ) {
+				// The sync_posts method returns the formatted date on success or when skipped.
+				if ( is_string( $result ) ) {
+					// Return the formatted date string.
+					echo esc_html( $result );
+				} else {
+					// If true is returned, get the current formatted date.
+					echo esc_html( date_i18n( 'd/m/Y H:i', get_option( 'wcd_last_urls_sync' ) ) );
+				}
+			} else {
+				// Sync failed.
+				echo esc_html__( 'Sync failed', 'webchangedetector' );
+			}
+			
+			wp_die();
+			
+		} catch ( \Exception $e ) {
+			// Log error if possible.
+			if ( $this->admin && method_exists( $this->admin, 'log_error' ) ) {
+				$this->admin->log_error( 'URL sync failed: ' . $e->getMessage() );
+			}
+			
+			// Return error message as plain text.
+			echo esc_html__( 'Sync failed', 'webchangedetector' );
+			wp_die();
+		}
+	}
 
 	/**
 	 * Handle export logs AJAX request.
