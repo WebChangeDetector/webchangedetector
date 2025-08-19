@@ -159,6 +159,8 @@ class WebChangeDetector_Settings_Action_Handler {
 	 * @return array Result with success status and message.
 	 */
 	public function handle_download_log_file( $data ) {
+		// The $data parameter is kept for interface consistency.
+		unset( $data ); // Mark as intentionally unused.
 		// Log file downloads are no longer supported with the database logging.
 		// Users should use the export functionality instead.
 		return array(
@@ -174,6 +176,8 @@ class WebChangeDetector_Settings_Action_Handler {
 	 * @return array Result with success status and message.
 	 */
 	public function handle_clear_logs( $data ) {
+		// The $data parameter is kept for interface consistency.
+		unset( $data ); // Mark as intentionally unused.
 		// Verify user capabilities.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return array(

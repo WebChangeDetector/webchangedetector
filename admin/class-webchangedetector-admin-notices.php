@@ -71,36 +71,6 @@ class WebChangeDetector_Admin_Notices {
 	}
 
 	/**
-	 * Add success notice.
-	 *
-	 * @param string $message Notice message.
-	 * @param array  $options Additional options.
-	 */
-	public function add_success( $message, $options = array() ) {
-		$this->add_notice( $message, self::TYPE_SUCCESS, $options );
-	}
-
-	/**
-	 * Add info notice.
-	 *
-	 * @param string $message Notice message.
-	 * @param array  $options Additional options.
-	 */
-	public function add_info( $message, $options = array() ) {
-		$this->add_notice( $message, self::TYPE_INFO, $options );
-	}
-
-	/**
-	 * Add warning notice.
-	 *
-	 * @param string $message Notice message.
-	 * @param array  $options Additional options.
-	 */
-	public function add_warning( $message, $options = array() ) {
-		$this->add_notice( $message, self::TYPE_WARNING, $options );
-	}
-
-	/**
 	 * Add error notice.
 	 *
 	 * @param string $message Notice message.
@@ -108,36 +78,6 @@ class WebChangeDetector_Admin_Notices {
 	 */
 	public function add_error( $message, $options = array() ) {
 		$this->add_notice( $message, self::TYPE_ERROR, $options );
-	}
-
-	/**
-	 * Add error notice from WP_Error.
-	 *
-	 * @param WP_Error $wp_error WP_Error object.
-	 * @param array    $options  Additional options.
-	 */
-	public function add_wp_error( $wp_error, $options = array() ) {
-		if ( ! is_wp_error( $wp_error ) ) {
-			return;
-		}
-
-		$message = $wp_error->get_error_message();
-		$this->add_error( $message, $options );
-	}
-
-	/**
-	 * Add error notice from Exception.
-	 *
-	 * @param Exception $exception Exception object.
-	 * @param array     $options   Additional options.
-	 */
-	public function add_exception( $exception, $options = array() ) {
-		if ( ! $exception instanceof Exception ) {
-			return;
-		}
-
-		$message = 'An error occurred: ' . $exception->getMessage();
-		$this->add_error( $message, $options );
 	}
 
 	/**

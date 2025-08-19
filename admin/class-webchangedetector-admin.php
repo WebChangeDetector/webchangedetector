@@ -339,11 +339,6 @@ class WebChangeDetector_Admin {
 		return \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing,open', false, array( 'per_page' => $per_page ) );
 	}
 
-
-
-
-
-
 	/**
 	 * Creates Websites and Groups
 	 *
@@ -413,6 +408,12 @@ class WebChangeDetector_Admin {
 							'url_type_name'  => 'Post Types',
 							'post_type_slug' => 'pages',
 							'post_type_name' => 'Pages',
+						),
+						array(
+							'url_type_slug' => 'taxonomies',
+							'url_type_name' => 'Taxonomies',
+							'post_type_slug' => 'category',
+							'post_type_name' => 'Category',
 						),
 					);
 				}
@@ -581,7 +582,6 @@ class WebChangeDetector_Admin {
 		</div>
 		<?php
 	}
-
 
 
 	/** Save url settings.

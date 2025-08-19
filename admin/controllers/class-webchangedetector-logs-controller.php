@@ -57,6 +57,7 @@ class WebChangeDetector_Logs_Controller {
 	 */
 	private function render_logs_page() {
 		// Check if we're viewing a specific tab.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for tab navigation only.
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'debug-logs';
 
 		// Display tabs.
@@ -181,6 +182,7 @@ class WebChangeDetector_Logs_Controller {
 							// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 							$url_params = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] );
 
+							// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for pagination only.
 							if ( $url_params && ! empty( $url_params['page'] ) && sanitize_key( wp_unslash( $_GET['paged'] ) ) !== $url_params['page'] ) {
 								?>
 								<a class="tablenav-pages-navspan button" href="?page=webchangedetector-logs&paged=<?php echo esc_html( $url_params['page'] ); ?>">

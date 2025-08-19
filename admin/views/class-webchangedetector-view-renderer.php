@@ -100,21 +100,6 @@ class WebChangeDetector_View_Renderer {
 	}
 
 	/**
-	 * Add a flash message to be displayed on next page load.
-	 *
-	 * @param string $message The message to display.
-	 * @param string $type    The message type (success, error, warning, info).
-	 */
-	public function add_flash_message( $message, $type = 'info' ) {
-		$messages   = get_option( 'wcd_flash_messages', array() );
-		$messages[] = array(
-			'message' => $message,
-			'type'    => $type,
-		);
-		update_option( 'wcd_flash_messages', $messages );
-	}
-
-	/**
 	 * Render error page.
 	 *
 	 * @param string $title   The error title.

@@ -301,6 +301,8 @@ class WebChangeDetector_WordPress_Action_Handler {
 	 * @return array Step-specific result.
 	 */
 	private function handle_step_specific_actions( $step, $data ) {
+		// The $data parameter is reserved for future use in step implementations.
+		unset( $data ); // Mark as intentionally unused.
 		switch ( $step ) {
 			case WCD_OPTION_UPDATE_STEP_PRE:
 				// Prepare for pre-update screenshots.
