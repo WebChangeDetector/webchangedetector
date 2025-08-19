@@ -149,7 +149,7 @@ class WebChangeDetector_Settings_Controller {
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
 								<label class="wcd-form-label"><?php esc_html_e( 'Enable Debug Logging', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php esc_html_e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the database and older logs are automatically cleaned up after 14 days.', 'webchangedetector' ); ?></div>
+								<div class="wcd-description"><?php esc_html_e( 'Enable detailed debug logging to help troubleshoot issues. Logs are stored in the database and older logs are automatically cleaned up after 30 days.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<label>

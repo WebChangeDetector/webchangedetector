@@ -132,7 +132,7 @@ class WebChangeDetector_Card_View {
 		?>
 		<div class="status_bar">
 			<div class="box full">
-				<div id="txt_next_sc_in">Next monitoring checks in</div>
+				<div id="txt_next_sc_in"><?php esc_html_e( 'Next monitoring checks in ', 'webchangedetector' ); ?></div>
 				<div id="next_sc_in" class="big"></div>
 				<div id="next_sc_date" class="local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 				<div id="sc_available_until_renew"

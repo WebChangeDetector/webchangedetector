@@ -561,7 +561,7 @@ class WebChangeDetector_Admin {
 			</div>
 			<div class="wcd-monitoring-status-content">
 				<div class="wcd-next-check-container">
-					<div id="txt_next_sc_in" class="wcd-status-label">Next monitoring checks in</div>
+					<div id="txt_next_sc_in" class="wcd-status-label"><?php esc_html_e( 'Next monitoring checks in ', 'webchangedetector' ); ?></div>
 					<div id="next_sc_in" class="wcd-status-value"></div>
 					<div id="next_sc_date" class="wcd-status-date local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 				</div>

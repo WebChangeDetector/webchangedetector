@@ -333,11 +333,11 @@ function currentlyProcessing() {
             nextScIn = new Date(nextScDate * 1000); // format time
             nextScIn = new Date(nextScIn - now); // normal time
             nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60)); // add timezone offset to normal time
-            var minutes = nextScIn.getMinutes() == 1 ? " Minute " : " Minutes ";
-            var hours = nextScIn.getHours() == 1 ? " Hour " : " Hours ";
+            var minutes = nextScIn.getMinutes() == 1 ? " " + wcdL10n.minute + " " : " " + wcdL10n.minutes + " ";
+            var hours = nextScIn.getHours() == 1 ? " " + wcdL10n.hour + " " : " " + wcdL10n.hours + " ";
             txtNextScIn = nextScIn.getHours() + hours + nextScIn.getMinutes() + minutes;
             $("#next_sc_date").html(getLocalDateTime(nextScDate));
-            $("#txt_next_sc_in").html("Next monitoring checks in ");
+            $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
         }
         $("#next_sc_in").html(txtNextScIn);
 
@@ -813,24 +813,6 @@ function currentlyProcessing() {
             } catch (error) {
                 alert('Error downloading CSV file: ' + error.message);
             }
-        }
-        
-        /**
-         * Test function to verify download mechanism works.
-         * Creates a simple test CSV and tries to download it.
-         */
-        function testDownload() {
-            const testCSV = 'Column1,Column2,Column3\nValue1,Value2,Value3\nTest,Data,Here';
-            const testContent = btoa(testCSV); // Base64 encode
-            downloadCSV(testContent, 'test-download.csv');
-        }
-        
-        // Add test button temporarily for debugging
-        if (window.location.search.includes('debug_csv')) {
-            $('#wcd-export-logs-btn').after(
-                '<button type="button" id="test-csv-download" class="button" style="margin-left: 10px;">Test Download</button>'
-            );
-            $('#test-csv-download').on('click', testDownload);
         }
     });
 })(jQuery);

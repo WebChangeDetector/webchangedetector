@@ -127,6 +127,10 @@ class WebChangeDetector_Admin_WordPress {
 					'statusFalsePositive'      => __( 'False Positive', 'webchangedetector' ),
 					'statusFailed'             => __( 'Failed', 'webchangedetector' ),
 					'statusNew'                => __( 'New', 'webchangedetector' ),
+					'hour'                     => __( 'Hour', 'webchangedetector' ),
+					'hours'                    => __( 'Hours', 'webchangedetector' ),
+					'minute'                   => __( 'Minute', 'webchangedetector' ),
+					'minutes'                  => __( 'Minutes', 'webchangedetector' ),
 				)
 			);
 

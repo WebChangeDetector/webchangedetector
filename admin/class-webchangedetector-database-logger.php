@@ -343,7 +343,7 @@ class WebChangeDetector_Database_Logger {
 	 * @param int $days Number of days to keep logs.
 	 * @return int Number of deleted entries.
 	 */
-	public function cleanup_old_logs( $days = 14 ) {
+	public function cleanup_old_logs( $days = 30 ) {
 		$cutoff_date = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
 
 		$deleted = $this->wpdb->delete(
