@@ -386,7 +386,7 @@ class WebChangeDetector_Logs_Controller {
 								?>
 								<tr class="<?php echo esc_attr( $level_class ); ?>">
 									<td style="white-space: nowrap;">
-										<?php echo esc_html( get_date_from_gmt( $log['timestamp'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?>
+										<?php echo esc_html( get_date_from_gmt( $log['timestamp'], 'Y-m-d H:i:s.' ) ); ?>
 										<?php if ( $log['request_id'] ) : ?>
 											<br><small style="color: #666;"><?php echo esc_html( $log['request_id'] ); ?></small>
 										<?php endif; ?>
