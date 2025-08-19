@@ -641,7 +641,7 @@ class WebChangeDetector_API_V2 {
 					$decoded_body = json_decode( $body, true );
 
 					// Handle different response codes.
-					if ( 200 === $response_code ) {
+					if ( 200 === $response_code || 201 === $response_code ) {
 						// Success.
 						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
 							$results[] = $decoded_body;
