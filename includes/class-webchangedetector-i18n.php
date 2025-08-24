@@ -12,6 +12,8 @@
  * @subpackage WebChangeDetector/includes
  */
 
+namespace WebChangeDetector;
+
 /**
  * Define the internationalization functionality.
  *

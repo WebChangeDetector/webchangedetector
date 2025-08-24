@@ -1,12 +1,14 @@
 === Web Change Detector ===
-Contributors: Mike.Miler,Repat
+Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
-Tested up to: 6.8.1
-Stable tag: 3.1.8.4
+Tested up to: 6.8
+Stable tag: 3.9.11
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+
+Visually check your site during WP auto updates or run monitoring. Get alerts and instantly see what changed.
 
 == Description ==
 ## The #1 Visual Regression Testing Tool For WordPress
@@ -36,7 +38,7 @@ With our visual regression tests for WordPress you can make sure your website lo
 *   **Share the change detection link** with your web designer to fix issues.
 
 ### Free Plan Limitations
-*   Get **50 checks per month** for the visual regression tests.
+*   Get **1000 checks for the first month** and 50 checks after for free.
 *   Monitoring only works in 24h intervals.
 
 ### Premium Plans
@@ -51,9 +53,38 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
-= 3.1.9 =
-* Fix: Amount of selected urls
+
+= 4.0.0 =
+* Improvement: New design & code refactoring
+* Improvement: Optimized url sync 
+* Impromenent: More robust auto update checks system
+* Improvement: URL sync with polylang and wpml
+* Feature: Get 1000 checks for 1 month at signup
+* Feature: Browser console log checks
+* Feature: Clear caches at auto update checks
+* Feature: Optional logging system
+* Feature: Multilingual support
+* Feature: Auto update history
+* Feature: Health check observer
+
+= 3.2.4 =
+* Impromenent: URL sync via daily cron
+* Improvement: JS file loading optimization
+
+= 3.2.3 =
+* Fix: In some cases error after signup
+
+= 3.2.2 =
+* Fix when creating account
+
+= 3.2.1 =
+* Fix in sync
+
+= 3.2.0 =
+* Fix: Message about no selected urls
+* Fix: Delete of url settings in rare cases
 * Improvement: New Wizard
+* Feature: Beta updates with Git Updater plugin
 
 = 3.1.8 =
 * Fix: Error for new installations

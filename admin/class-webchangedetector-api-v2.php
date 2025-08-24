@@ -7,6 +7,8 @@
  * @author     Mike Miler <mike@wp-mike.com>
  */
 
+namespace WebChangeDetector;
+
 use WpOrg\Requests\Transport\Curl;
 
 /**
@@ -15,6 +17,7 @@ use WpOrg\Requests\Transport\Curl;
  * @package    WebChangeDetector
  */
 class WebChangeDetector_API_V2 {
+
 
 	/** Possible status for comparitons
 	 */
@@ -32,39 +35,109 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( array( 'action' => 'account' ), 'GET' );
 	}
 
-    public static function get_websites_v2() {
-        $args = array(
-            'action' => 'websites'
-        );
-        return self::api_v2( $args, 'GET' );
-    }
+	/**
+	 * Get websites.
+	 *
+	 * @param bool $force Force getting new websites.
+	 * @param int  $page Page number for pagination.
+	 * @return mixed|string
+	 */
+	public static function get_websites_v2( $force = false, $page = 1 ) {
+		static $websites;
+		if ( $websites && ! $force && 1 === $page ) {
+			return $websites;
+		}
 
-    public static function get_website_v2($uuid = false) {
-        if(!$uuid) {
-            return false;
-        }
+		$args   = array(
+			'action' => 'websites',
+			'page'   => $page,
+		);
+		$result = self::api_v2( $args, 'GET' );
 
-        $args = array(
-            'action' => 'websites/' . $uuid
-        );
-        return self::api_v2( $args, 'GET' );
-    }
+		// Only cache the first page.
+		if ( 1 === $page ) {
+			$websites = $result;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get website.
+	 *
+	 * @param string $uuid The website uuid.
+	 * @return mixed|string
+	 */
+	public static function get_website_v2( $uuid = false ) {
+		if ( ! $uuid ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'websites/' . $uuid,
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/**
+	 * Update website.
+	 *
+	 * @param string $uuid The website uuid.
+	 * @param array  $website_details The website details to update.
+	 * @param string $api_token Optional API token to use for the request.
+	 * @return mixed|string
+	 */
+	public static function update_website_v2( $uuid, $website_details, $api_token = null ) {
+		$args = array(
+			'action' => 'websites/' . $uuid,
+		);
+
+		// Api doesn't allow domain as param.
+		if ( isset( $website_details['domain'] ) ) {
+			unset( $website_details['domain'] );
+		}
+
+		$args = array_merge( $args, $website_details );
+
+		// Pass custom API token if provided.
+		return self::api_v2( $args, 'PUT', false, $api_token );
+	}
+
+	/**
+	 * Create website.
+	 *
+	 * @param string $domain The domain for the website.
+	 * @param string $manual_detection_group_id The manual detection group ID.
+	 * @param string $auto_detection_group_id The auto detection group ID.
+	 * @return mixed|string
+	 */
+	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id ) {
+		$args = array(
+			'action'                    => 'websites',
+			'domain'                    => $domain,
+			'manual_detection_group_id' => $manual_detection_group_id,
+			'auto_detection_group_id'   => $auto_detection_group_id,
+		);
+		return self::api_v2( $args, 'POST' );
+	}
 
 	/** Sync urls.
 	 *
-	 * @param array $posts The posts to sync.
+	 * @param array  $posts The posts to sync.
+	 * @param string $collection_uuid The collection uuid.
 	 * @return false|mixed|string
 	 */
-	public static function sync_urls( $posts ) {
+	public static function sync_urls( $posts, $collection_uuid = null ) {
 		if ( ! is_array( $posts ) ) {
 			return false;
 		}
 
 		$args = array(
-			'action'     => 'sync-urls',
-			'domain'     => WebChangeDetector_Admin::get_domain_from_site_url(),
-			'urls'       => $posts,
-			'multi_call' => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
+			'action'          => 'sync-urls',
+			'collection_uuid' => $collection_uuid,
+			'domain'          => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+			'urls'            => $posts,
+			'multi_call'      => 'urls', // This tells our api_v2 to use array_key 'urls' as for multi-curl.
 		);
 
 		// Upload urls.
@@ -74,12 +147,15 @@ class WebChangeDetector_API_V2 {
 	/**
 	 * Start the sync with the already uploaded urls.
 	 *
-	 * @param bool $delete_missing_urls Delete missing urls or not.
+	 * @param bool   $delete_missing_urls Delete missing urls or not.
+	 * @param string $collection_uuid The collection uuid.
 	 */
-	public static function start_url_sync( $delete_missing_urls = true ) {
+	public static function start_url_sync( $delete_missing_urls = true, $collection_uuid = null ) {
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Start URL sync: ' . $collection_uuid, 'start_url_sync', 'debug' );
 		return self::api_v2(
 			array(
 				'action'              => 'start-sync',
+				'collection_uuid'     => $collection_uuid,
 				'delete_missing_urls' => $delete_missing_urls,
 			)
 		);
@@ -91,13 +167,14 @@ class WebChangeDetector_API_V2 {
 	 * @param array  $group_settings Group settings to save.
 	 * @return mixed|string
 	 */
-	public static function update_group( $group_id, $group_settings ) {
+	public static function update_group_v2( $group_id, $group_settings ) {
 		$args = array(
 			'action' => 'groups/' . $group_id,
 		);
 		$args = array_merge( $args, $group_settings );
 
-		return self::api_v2( $args, 'PATCH' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Update group settings: ' . wp_json_encode( $args ), 'update_group', 'debug' );
+		return self::api_v2( $args, 'PUT' );
 	}
 
 	/** Update urls.
@@ -186,6 +263,18 @@ class WebChangeDetector_API_V2 {
 			'url'    => $url,
 		);
 		return self::api_v2( $args );
+	}
+
+	/** Get all URLs.
+	 *
+	 * @param array $filters Optional filters for URLs.
+	 * @return mixed|string
+	 */
+	public static function get_urls_v2( $filters = array() ) {
+		$args = array(
+			'action' => 'urls?' . build_query( $filters ),
+		);
+		return self::api_v2( $args, 'GET' );
 	}
 
 	/** Add urls to group.
@@ -369,17 +458,21 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
-	/** Update webhook
+	/** Update webhook.
 	 *
 	 * @param string $id Id of the webhook.
 	 * @param string $url The url to send the webhook to.
+	 * @param string $expires_at The date and time the webhook expires.
 	 * @return mixed|string
 	 */
-	public static function update_webhook_v2( $id, $url ) {
+	public static function update_webhook_v2( $id, $url, $expires_at = false ) {
 		$args = array(
 			'action' => 'webhooks/' . $id,
 			'url'    => $url,
 		);
+		if ( $expires_at ) {
+			$args['expires_at'] = $expires_at;
+		}
 		return self::api_v2( $args, 'PUT' );
 	}
 
@@ -404,12 +497,24 @@ class WebChangeDetector_API_V2 {
 	 * @param array $filter Filters for the batches.
 	 * @return mixed|string
 	 */
-	public static function get_batches( $filter = array() ) {
+	public static function get_batches_v2( $filter = array() ) {
 		if ( empty( $filter['group_ids'] ) ) {
 			$filter['group_ids'] = implode( ',', get_option( WCD_WEBSITE_GROUPS ) );
 		}
 		$args = array(
 			'action' => 'batches?' . build_query( $filter ),
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Get batch.
+	 *
+	 * @param string $batch_id The batch id.
+	 * @return mixed|string
+	 */
+	public static function get_batch_v2( $batch_id ) {
+		$args = array(
+			'action' => 'batches/' . $batch_id,
 		);
 		return self::api_v2( $args, 'GET' );
 	}
@@ -456,10 +561,11 @@ class WebChangeDetector_API_V2 {
 	 * @param array  $post All params for the request.
 	 * @param string $method The request method.
 	 * @param bool   $is_web Call web interface.
+	 * @param string $custom_api_token Optional custom API token to use instead of default.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false ) {
-		$api_token = get_option( 'webchangedetector_api_token' );
+	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null ) {
+		$api_token = $custom_api_token ? $custom_api_token : get_option( 'webchangedetector_api_token' );
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
 		$url_web = 'https://api.webchangedetector.com/';
@@ -486,11 +592,6 @@ class WebChangeDetector_API_V2 {
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.
 
-		// Increase timeout for php.ini.
-		if ( ! ini_get( 'safe_mode' ) ) {
-			set_time_limit( WCD_REQUEST_TIMEOUT + 10 );
-		}
-
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
@@ -502,31 +603,70 @@ class WebChangeDetector_API_V2 {
 					'headers' => array(
 						'Accept'        => 'application/json',
 						'Authorization' => 'Bearer ' . $api_token,
-						'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+						'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
 						'x-wcd-wp-id'   => get_current_user_id(),
 						'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 					),
 				);
 			}
 			if ( ! empty( $args ) ) {
-				WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $args ) );
-				$responses = WpOrg\Requests\Requests::request_multiple(
+				$log_args  = $args;
+				unset( $log_args['headers'] );
+				$args_json = wp_json_encode( $log_args );
+				if ( strlen( $args_json ) > 1000 ) {
+					$args_json = substr( $args_json, 0, 1000 ) . '... [truncated, total length: ' . strlen( $args_json ) . ' chars]';
+				}
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . $args_json, 'api_v2', 'debug' );
+				$responses = \WpOrg\Requests\Requests::request_multiple(
 					$args,
 					array(
 						'data-format' => 'data',
 					)
 				);
 				$i         = 0;
+				$results   = array();
 				foreach ( $responses as $response ) {
 					++$i;
 					if ( isset( $response->headers['date'] ) ) {
-						WebChangeDetector_Admin::error_log( "Responsetime Request $i: " . $response->headers['date'] );
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Responsetime Request $i: " . $response->headers['date'], 'api_v2', 'debug' );
+					}
+
+					// Process each response.
+					$response_code = (int) $response->status_code;
+					$body          = $response->body;
+
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Response $i code: " . $response_code, 'api_v2', 'debug' );
+
+					// Decode the response body.
+					$decoded_body = json_decode( $body, true );
+
+					// Handle different response codes.
+					if ( 200 === $response_code || 201 === $response_code ) {
+						// Success.
+						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
+							$results[] = $decoded_body;
+						} else {
+							$results[] = $body;
+						}
+					} else {
+						// Error response.
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Multicall request $i failed with code $response_code: " . $body, 'api_v2', 'error' );
+						if ( JSON_ERROR_NONE === json_last_error() && ! empty( $decoded_body ) ) {
+							$results[] = $decoded_body;
+						} else {
+							$results[] = array(
+								'error' => 'Request failed',
+								'code'  => $response_code,
+								'body'  => $body,
+							);
+						}
 					}
 				}
 
-				$response_code = (int) wp_remote_retrieve_response_code( $responses );
-				WebChangeDetector_Admin::error_log( ' Response code curl-multi-call: ' . $response_code );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' Multicall completed with ' . count( $results ) . ' results', 'api_v2', 'debug' );
 
+				// Return the results for multicall.
+				return $results;
 			}
 		} else {
 			$args = array(
@@ -536,14 +676,19 @@ class WebChangeDetector_API_V2 {
 				'headers' => array(
 					'Accept'        => 'application/json',
 					'Authorization' => 'Bearer ' . $api_token,
-					'x-wcd-domain'  => WebChangeDetector_Admin::get_domain_from_site_url(),
+					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
 					'x-wcd-wp-id'   => get_current_user_id(),
 					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 				),
 			);
 
-			$log_args = $args;
-			WebChangeDetector_Admin::error_log( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . wp_json_encode( $log_args ) );
+			$log_args  = $args;
+			unset( $log_args['headers'] );
+			$args_json = wp_json_encode( $log_args );
+			if ( strlen( $args_json ) > 1000 ) {
+				$args_json = substr( $args_json, 0, 1000 ) . '... [truncated, total length: ' . strlen( $args_json ) . ' chars]';
+			}
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( ' API V2 "' . $method . '" request: ' . $url . ' | args: ' . $args_json, 'api_v2', 'debug' );
 
 			if ( $is_web ) {
 				$response = wp_remote_request( $url_web, $args );
@@ -557,25 +702,28 @@ class WebChangeDetector_API_V2 {
 			$body          = wp_remote_retrieve_body( $response );
 			$response_code = (int) wp_remote_retrieve_response_code( $response );
 
-			WebChangeDetector_Admin::error_log( 'Responsecode: ' . $response_code );
+			
 			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
 			if ( 200 !== $response_code ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Responsecode: ' . $response_code, 'api_v2', 'debug' );
 				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
-					// phpcs:ignore
-					WebChangeDetector_Admin::error_log( print_r( $decoded_body, 1 ) );
+                    // phpcs:ignore
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($decoded_body, 1), 'api_v2', 'error');
 				} else {
-					// phpcs:ignore
-					WebChangeDetector_Admin::error_log( print_r( $body, 1 ) );
+                    // phpcs:ignore
+                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($body, 1), 'api_v2', 'error');
 				}
 			}
 		}
 
 		// `message` is part of the Laravel Stacktrace.
-		if ( WCD_HTTP_BAD_REQUEST === $response_code &&
+		if (
+			WCD_HTTP_BAD_REQUEST === $response_code &&
 			! empty( $decoded_body ) &&
 			is_array( $decoded_body ) &&
 			array_key_exists( 'message', $decoded_body ) &&
-			'plugin_update_required' === $decoded_body['message'] ) {
+			'plugin_update_required' === $decoded_body['message']
+		) {
 			return 'update plugin';
 		}
 

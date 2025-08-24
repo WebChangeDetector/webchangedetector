@@ -1,3 +1,13 @@
 vendor/*
 .DS_Store
 *_bkp
+deploy-wp.sh
+test-routines.txt
+tests/*
+logs/*
+CLAUDE.md
+REFACTOR.md
+test-*.php
+fix_comments.php
+fix_comments.php_backup
+.claude/agents/wordpress-standards-enforcer.md

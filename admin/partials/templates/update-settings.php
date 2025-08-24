@@ -1,211 +1,225 @@
 <?php
 /**
- * Help - manual checks settings
+ * Manual checks settings - Refactored with Components
  *
- *  @package    webchangedetector
+ * @package    webchangedetector
  */
 
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // Are we allowed to see the settings?
-if ( ! empty( $this->website_details['allowances']['manual_checks_settings'] ) && $this->website_details['allowances']['manual_checks_settings'] ) {
+if ( ! empty( $this->admin->website_details['allowances']['manual_checks_settings'] ) && $this->admin->website_details['allowances']['manual_checks_settings'] ) {
 
-	$auto_update_settings = $this->website_details['auto_update_settings'];
+	$auto_update_settings = $this->admin->website_details['auto_update_settings'];
 
-	$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
+	// Prepare weekday data for component.
+	$weekdays_data = array();
+	$weekdays      = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 	foreach ( $weekdays as $weekday ) {
-		if ( ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = 'checked';
-		} else {
-			$auto_update_settings[ 'auto_update_checks_' . $weekday ] = '';
-		}
+		$weekdays_data[ $weekday ] = ! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] );
 	}
 
-	if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-		$auto_update_settings['auto_update_checks_enabled'] = 'checked';
-	} else {
-		$auto_update_settings['auto_update_checks_enabled'] = '';
-	}
-
-	$auto_update_checks_enabled = true;
-	if ( ! $auto_update_settings || ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) || 0 === (int) $auto_update_settings['auto_update_checks_enabled'] ) {
-		$auto_update_checks_enabled = false;
-	}
+	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( true === $auto_update_settings['auto_update_checks_enabled'] || '1' === $auto_update_settings['auto_update_checks_enabled'] || 1 === $auto_update_settings['auto_update_checks_enabled'] );
 	?>
 
-	<form class="wcd-frm-settings box-plain" action="admin.php?page=webchangedetector-update-settings" method="post">
-		<input type="hidden" name="wcd_action" value="save_group_settings">
-		<input type="hidden" name="step" value="pre-update">
-		<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
-		<?php wp_nonce_field( 'save_group_settings' ); ?>
-		<h2>Settings</h2>
-		<p style="text-align: center;">Make all settings for auto-update checks and for manual checks. </p>
-		<div class="setting-container-column">
-			<div class="setting-row toggle">
-				<label for="threshold" >Threshold</label>
-				<input name="threshold" class="threshold" type="number" step="0.1" min="0" max="100" value="<?php echo esc_html( $group_and_urls['threshold'] ); ?>"> %<br>
-				<small>Ignore changes in Change Detections below the threshold.</small>
-			</div>
-			<div class="setting-row toggle">
-				<label for="auto_update_checks_enabled" >Checks at WP auto updates</label>
-				<input type="hidden" name="auto_update_checks_enabled" value="0">
-				<input id="auto_update_checks_enabled" value="1" name="auto_update_checks_enabled" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_enabled'] ); ?> class="auto_update_checks_enabled">
-				<small> WP auto updates have to be enabled. This option only enables checks during auto updates.</small>
+	<div class="wcd-settings-card">
+		<h2><?php esc_html_e( 'WP Auto Update & Manual Checks Settings', 'webchangedetector' ); ?></h2>
+		<form action="admin.php?page=webchangedetector-update-settings" method="post">
+			<input type="hidden" name="wcd_action" value="save_group_settings">
+			<input type="hidden" name="step" value="pre-update">
+			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
+			<?php wp_nonce_field( 'save_group_settings' ); ?>
+
+			<div class="wcd-form-row wcd-auto-update-setting-enabled">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Checks', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Auto Update Checks Toggle (without content).
+					$toggle_name        = 'auto_update_checks_enabled';
+					$is_enabled         = $auto_update_checks_enabled;
+					$toggle_label       = '';
+					$toggle_description = '';
+					$section_id         = 'auto_update_checks_settings';
+					$content            = ''; // Empty content for the toggle.
+
+					// Include Toggle Section Component.
+					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/toggle-section.php';
+					?>
+				</div>
+				<!-- Auto Update Information Accordion - Always visible underneath the toggle -->
+				<div class="wcd-form-row wcd-auto-update-setting-enabled-auto-updates">
+					<div class="wcd-form-control" style="grid-column: 1 / -1;">
+						<?php
+						// Auto Update Information Component.
+						include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-info.php';
+						?>
+					</div>
+				</div>
 			</div>
 
-			<div id="auto_update_checks_settings">
-				<?php
-				// Determine core auto-update status, considering constant and site option.
-				$core_auto_update_enabled = false;
-				if ( defined( 'WP_AUTO_UPDATE_CORE' ) ) {
-					// Constant overrides site option.
-					if ( WP_AUTO_UPDATE_CORE === true || in_array( WP_AUTO_UPDATE_CORE, array( 'minor', 'beta', 'rc', 'development', 'branch-development' ), true ) ) {
-						$core_auto_update_enabled = true;
-					}
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Timeframe', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Set the time frame in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Time Range Selector Component.
+					// Convert UTC times from API to site timezone for display.
+					require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+					$utc_from_time    = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
+					$utc_to_time      = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
+					$from_time        = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
+					$to_time          = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
+					$from_name        = 'auto_update_checks_from';
+					$to_name          = 'auto_update_checks_to';
+					$label            = __( 'Only', 'webchangedetector' );
+					$timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
+					$current_time     = current_time( 'H:i' );
+					// translators: %1$s is the timezone display string, %2$s is the current website time.
+					$description = sprintf( __( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ), $timezone_display, $current_time );
+					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/time-range-selector.php';
+					?>
+				</div>
+			</div>
+
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Weekdays', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Set the weekdays in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Weekday Selector Component.
+					$selected_days   = $weekdays_data;
+					$name_prefix     = 'auto_update_checks_';
+					$label           = '';
+					$description     = '';
+					$show_validation = true;
+					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/weekday-selector.php';
+					?>
+				</div>
+			</div>
+
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Notifications', 'webchangedetector' ); ?></label>
+					<div class="wcd-description">
+						<?php esc_html_e( 'Enter the email address(es) which should get notified about auto update checks.', 'webchangedetector' ); ?><br>
+						<?php
+						echo wp_kses(
+							__( 'You can also connect <a href="https://zapier.com/apps/webchange-detector/integrations" target="_blank">Zapier</a> to get alerts directly in 6000+ apps.', 'webchangedetector' ),
+							array(
+								'a' => array(
+									'href'   => array(),
+									'target' => array(),
+								),
+							)
+						);
+						?>
+											</div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Email Input Component.
+					$email_value     = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
+					$field_name      = 'auto_update_checks_emails';
+					$label           = __( 'Notification email to', 'webchangedetector' );
+					$description     = '';
+					$multiple        = true;
+					$show_validation = true;
+					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
+					?>
+					
+				</div>
+			</div>
+
+			<div class="wcd-form-row wcd-auto-update-setting-threshold">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Threshold Setting Component.
+					$label       = '';
+					$description = '';
+					$threshold   = $group_and_urls['threshold'] ?? 0.0;
+					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/threshold-setting.php';
+					?>
+				</div>
+			</div>
+
+			<div class="wcd-form-row wcd-auto-update-setting-css">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'CSS Settings', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// CSS Injection using Accordion Component.
+					$header_text  = __( 'CSS Injection', 'webchangedetector' );
+					$accordion_id = 'css-injection-manual';
+					$open         = false;
+
+					// Build content.
+					?>
+					<div style="margin-top: 10px; width: 100%;">
+						<div class="code-tags default-bg">&lt;style&gt;</div>
+						<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
+						<div class="code-tags default-bg">&lt;/style&gt;</div>
+					</div>
+				</div>
+			</div>
+
+			<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ?? '' ); ?>">
+
+			<?php submit_button( __( 'Save Settings', 'webchangedetector' ), 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormGroupSettings()' ) ); ?>
+		</form>
+	</div>
+
+
+	<script type="text/javascript">
+		// Toggle auto update checks settings visibility with slide animation.
+		jQuery(document).ready(function($) {
+			// Listen for changes on the toggle switch.
+			$(document).on('change', 'input[name="auto_update_checks_enabled"]', function() {
+				if ($(this).is(':checked')) {
+					$('.auto-update-setting').slideDown();
 				} else {
-					// Check site option if constant is not defined.
-					$core_update_setting = get_site_option( 'auto_update_core_major' );
-					if ( 'enabled' === $core_update_setting ) {
-						$core_auto_update_enabled = true;
+					$('.auto-update-setting').slideUp();
+				}
+			});
+		});
+
+		function wcdValidateFormGroupSettings() {
+			// Only validate if auto update checks are enabled.
+			var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
+			if (autoUpdateEnabled && autoUpdateEnabled.checked) {
+				// Validate weekdays using the component's validation function.
+				if (typeof window['validate_weekdays_auto_update_checks'] === 'function') {
+					if (!window['validate_weekdays_auto_update_checks']()) {
+						return false;
 					}
 				}
-				if ( ! function_exists( 'get_plugins' ) ) {
-					require_once ABSPATH . 'wp-admin/includes/plugin.php';
-				}
-				$all_plugins         = get_plugins();
-				$plugins_auto_update = array();
-				$auto_update_plugins = get_site_option( 'auto_update_plugins' );
-				foreach ( $all_plugins as $plugin_file => $plugin_data ) {
-					if ( is_array( $auto_update_plugins ) && in_array( $plugin_file, $auto_update_plugins, true ) ) {
-						$plugins_auto_update[ $plugin_file ] = $plugin_data;
+
+				// Validate email if present.
+				if (typeof window['validate_auto_update_checks_emails'] === 'function') {
+					if (!window['validate_auto_update_checks_emails']()) {
+						return false;
 					}
 				}
-				$all_themes         = wp_get_themes();
-				$themes_auto_update = array();
-				$auto_update_themes = get_site_option( 'auto_update_themes' );
-				foreach ( $all_themes as $theme_slug => $theme_obj ) {
-					if ( is_array( $auto_update_themes ) && in_array( $theme_slug, $auto_update_themes, true ) ) {
-						$themes_auto_update[ $theme_slug ] = $theme_obj;
-					}
-				}
-				$summary  = 'Core: ' . ( $core_auto_update_enabled ? 'Enabled' : 'Disabled' );
-				$summary .= ' | Plugins: ' . count( $plugins_auto_update );
-				$summary .= ' | Themes: ' . count( $themes_auto_update );
-				?>
-				<div class="accordion " style="margin-bottom: 20px; border: 1px solid #ddd;">
-					<div class="accordion-header" style="cursor:pointer; padding:10px;">
-						<span class="accordion-icon dashicons dashicons-arrow-right-alt2"></span> Currently enabled auto-updates: <?php echo esc_html( $summary ); ?>
-					</div>
-					<div class="accordion-content" style="display:none; border:1px solid #ddd; padding:10px;">
-						<h4>WordPress Core</h4>
-						<p><?php echo $core_auto_update_enabled ? 'Core auto-update is enabled.' : 'Core auto-update is disabled.'; ?></p>
-						<h4>Plugins</h4>
-						<?php if ( ! empty( $plugins_auto_update ) ) : ?>
-							<ul>
-								<?php foreach ( $plugins_auto_update as $plugin_file => $plugin_data ) : ?>
-									<li><?php echo esc_html( $plugin_data['Name'] ); ?> (<?php echo esc_html( $plugin_data['Version'] ); ?>).</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php else : ?>
-							<p>No plugins with auto-update enabled.</p>
-						<?php endif; ?>
-						<h4>Themes</h4>
-						<?php if ( ! empty( $themes_auto_update ) ) : ?>
-							<ul>
-								<?php foreach ( $themes_auto_update as $theme_slug => $theme_obj ) : ?>
-									<li><?php echo esc_html( $theme_obj->get( 'Name' ) ); ?>.</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php else : ?>
-							<p>No themes with auto-update enabled.</p>
-						<?php endif; ?>
-					</div>
-				</div>
-				<script>
-				jQuery(document).ready(function($){
-					$('.accordion-header').on('click', function(){
-						$(this).next('.accordion-content').slideToggle('fast');
-						$(this).find('.accordion-icon').toggleClass('dashicons-arrow-right-alt2 dashicons-arrow-down-alt2');
-					});
-				});
-				</script>
-
-				<div class="setting-row toggle">
-					<label for="auto_update_checks_from" >Auto update times from </label>
-					<input id="auto_update_checks_from" name="auto_update_checks_from" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_from'] ); ?>" type="time" class="auto_update_checks_from">
-					<label for="auto_update_checks_to" style="min-width: inherit"> to </label>
-					<input id="auto_update_checks_to" name="auto_update_checks_to" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_to'] ); ?>" type="time" class="auto_update_checks_to">
-					<small>Set the time frame in which you want to allow WP auto updates.</small>
-				</div>
-
-				<div class="setting-row toggle">
-					<label for="auto_update_checks_weekdays" style="vertical-align:top;">On days</label>
-					<div id="auto_update_checks_weekday_container" style="display: inline-block">
-
-						<input name="auto_update_checks_monday" value="0" type="hidden">
-						<input name="auto_update_checks_monday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_monday'] ); ?> class="auto_update_checks_monday">
-						<label for="auto_update_checks_monday" style="min-width: inherit">Monday </label><br>
-
-						<input name="auto_update_checks_tuesday" value="0" type="hidden">
-						<input name="auto_update_checks_tuesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_tuesday'] ); ?> class="auto_update_checks_tuesday">
-						<label for="auto_update_checks_tuesday" style="min-width: inherit">Tuesday </label><br>
-
-						<input name="auto_update_checks_wednesday" value="0" type="hidden">
-						<input name="auto_update_checks_wednesday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_wednesday'] ); ?> class="auto_update_checks_wednesday">
-						<label for="auto_update_checks_wednesday" style="min-width: inherit">Wednesday </label><br>
-
-						<input name="auto_update_checks_thursday" value="0" type="hidden">
-						<input name="auto_update_checks_thursday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_thursday'] ); ?> class="auto_update_checks_thursday">
-						<label for="auto_update_checks_thursday" style="min-width: inherit">Thursday </label><br>
-
-						<input name="auto_update_checks_friday" value="0" type="hidden">
-						<input name="auto_update_checks_friday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_friday'] ); ?> class="auto_update_checks_friday">
-						<label for="auto_update_checks_friday" style="min-width: inherit">Friday </label><br>
-
-						<input name="auto_update_checks_saturday" value="0" type="hidden">
-						<input name="auto_update_checks_saturday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_saturday'] ); ?> class="auto_update_checks_saturday">
-						<label for="auto_update_checks_saturday" style="min-width: inherit">Saturday </label><br>
-
-						<input name="auto_update_checks_sunday" value="0" type="hidden">
-						<input name="auto_update_checks_sunday" value="1" type="checkbox" <?php echo esc_html( $auto_update_settings['auto_update_checks_sunday'] ); ?> class="auto_update_checks_sunday">
-						<label for="auto_update_checks_sunday" style="min-width: inherit">Sunday </label><br>
-					</div>
-					<small>Set the weekdays in which you want to allow WP auto updates.</small>
-					<span class="notice notice-error" id="error-on-days-validation" style="display: none;">
-						<span style="padding: 10px; display: block;" class="default-bg">At least one weekday has to be selected.</span>
-					</span>
-				</div>
-				<div class="setting-row toggle">
-					<label for="auto_update_checks_emails" >Notification email to (comma separated)</label>
-					<input name="auto_update_checks_emails" style="width: 100%" type="text" value="<?php echo esc_html( $auto_update_settings['auto_update_checks_emails'] ); ?>" class="auto_update_checks_emails">
-					<small>Enter the email address(es) which should get notified on about auto update checks.</small>
-				</div>
-			</div>
-			<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ); ?>">
-		</div>
-		<script>
-			function show_auto_update_settings() {
-				if(jQuery("#auto_update_checks_enabled:checked").length) {
-					jQuery("#auto_update_checks_settings").slideDown();
-				} else {
-					jQuery("#auto_update_checks_settings").slideUp();
-				}
-				return true;
 			}
-			jQuery("#auto_update_checks_enabled").on( "click", show_auto_update_settings);
-			show_auto_update_settings();
-		</script>
-		<div class="setting-container-column last">
-			<?php require 'css-settings.php'; ?>
-		</div>
-		<div class="clear"></div>
 
-		<button
-				class="button button-primary"
-				type="submit"
-				onclick="return wcdValidateFormManualSettings()"
-				style="margin-top: 20px;"
-		>
-			Save
-		</button>
-	</form>
+			return true;
+		}
+	</script>
 	<?php
 }
+?>

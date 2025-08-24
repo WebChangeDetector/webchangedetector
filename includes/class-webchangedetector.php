@@ -12,6 +12,8 @@
  * @subpackage WebChangeDetector/includes
  */
 
+namespace WebChangeDetector;
+
 /**
  * The core plugin class.
  *
@@ -111,9 +113,94 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-webchangedetector-i18n.php';
 
 		/**
+		 * The utility class for admin functions following WordPress standards.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-utils.php';
+
+		/**
+		 * The settings management class for all WebChangeDetector configuration.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-settings.php';
+
+		/**
+		 * The AJAX coordinator class for initializing all AJAX handlers.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-ajax-coordinator.php';
+
+		/**
+		 * The dashboard and views management class for all WebChangeDetector display functionality.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-dashboard.php';
+
+		/**
+		 * The screenshots and comparisons management class for all WebChangeDetector screenshot functionality.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-screenshots.php';
+
+		/**
+		 * The account and API management class for all WebChangeDetector account functionality.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-account.php';
+
+		/**
+		 * The WordPress integration class for all WebChangeDetector WordPress functionality.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-wordpress.php';
+
+		/**
+		 * The focused AJAX handler classes for better organization and maintainability.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-ajax-handler-base.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-screenshots-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-settings-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-wordpress-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-account-ajax-handler.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin.php';
+
+		/**
+		 * Controller classes for request handling and routing.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-admin-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-dashboard-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-settings-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-monitoring-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-manual-checks-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-change-detections-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-logs-controller.php';
+
+		/**
+		 * Action handler classes for business logic separation.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-screenshot-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-settings-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-account-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-wordpress-action-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/actions/class-webchangedetector-comparison-action-handler.php';
+
+		/**
+		 * View renderer classes for presentation layer.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-view-renderer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-notification-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-form-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-card-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-modal-view.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-template-view.php';
+
+		/**
+		 * Component manager for reusable UI components.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/partials/class-webchangedetector-component-manager.php';
+
+		/**
+		 * Simplified error handling and admin notices.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-error-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-notices.php';
 
 		/**
 		 * The class responsible API calls.
@@ -124,6 +211,11 @@ class WebChangeDetector {
 		 * The class responsible for auto-update-checks
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';
+
+		/**
+		 * The database logger class for structured logging.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-database-logger.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
@@ -157,25 +249,27 @@ class WebChangeDetector {
 	 * @access   private
 	 */
 	private function define_admin_hooks() {
-		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name() );
+		$plugin_admin     = new WebChangeDetector_Admin( $this->get_plugin_name() );
+		// Initialize AJAX coordinator which will register all the focused handlers.
+		// The AJAX handlers are now self-registering through their respective handler classes.
+		new WebChangeDetector_Ajax_Coordinator( $plugin_admin );
+		$plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-		$this->loader->add_action( 'admin_menu', $plugin_admin, 'wcd_plugin_setup_menu' );
-		$this->loader->add_action( 'wp_ajax_get_processing_queue', $plugin_admin, 'ajax_get_processing_queue' );
-		$this->loader->add_action( 'wp_ajax_post_url', $plugin_admin, 'ajax_post_url' );
-		$this->loader->add_action( 'wp_ajax_update_comparison_status', $plugin_admin, 'ajax_update_comparison_status' );
-		$this->loader->add_action( 'wp_ajax_sync_urls', $plugin_admin, 'ajax_sync_urls' );
-		$this->loader->add_action( 'wp_ajax_wcd_disable_wizard', $plugin_admin, 'ajax_disable_wizard' );
-		$this->loader->add_action( 'post_updated', $plugin_admin, 'update_post', 9999, 3 );
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_styles' );
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
+
+		$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
+		$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
+
+		// Add async sync cron handlers.
+		$this->loader->add_action( 'wcd_async_single_post_sync', $plugin_wordpress, 'async_single_post_sync_handler', 10, 1 );
+		$this->loader->add_action( 'wcd_async_full_sync', $plugin_wordpress, 'async_full_sync_handler', 10, 1 );
 
 		// Add hook for admin bar menu rendering.
-		$this->loader->add_action( 'admin_bar_menu', $plugin_admin, 'wcd_admin_bar_menu', 999 );
+		$this->loader->add_action( 'admin_bar_menu', $plugin_wordpress, 'wcd_admin_bar_menu', 999 );
 		// Add hook for frontend admin bar script enqueueing.
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_admin, 'enqueue_admin_bar_scripts' );
-
-		// TODO Sync all pages and posts when there is a new page or post published.
-		// Maybe with action hook save_post and the function wcd_sync_post_after_save.
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_wordpress, 'enqueue_admin_bar_scripts' );
 	}
 
 	/**
@@ -210,6 +304,7 @@ class WebChangeDetector {
 
 		// Add hook for frontend styles (including admin bar slider styles).
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 	}
 	/**
 	 * Retrieve the version number of the plugin.

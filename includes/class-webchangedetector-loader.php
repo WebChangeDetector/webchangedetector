@@ -9,6 +9,8 @@
  * @subpackage WebChangeDetector/includes
  */
 
+namespace WebChangeDetector;
+
 /**
  * Register all actions and filters for the plugin.
  *

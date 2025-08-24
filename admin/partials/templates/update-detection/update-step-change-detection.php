@@ -24,16 +24,9 @@ require 'update-step-tiles.php';
 </form>
 
 <?php
-	$batches     = WebChangeDetector_API_V2::get_batches();
-	$batch       = array_slice( $batches['data'], 0, 1 );
-	$comparisons = array();
+	$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2();
+	$batch   = array_slice( $batches['data'], 0, 1 );
 
-	// TODO Limit to X batches.
-
-	$filters     = array(
-		'batches'  => $batch[0]['id'],
-		'per_page' => 999999,
-	);
-	$comparisons = WebChangeDetector_API_V2::get_comparisons_v2( $filters )['data'];
-	$wcd->compare_view_v2( $comparisons );
-	?>
+	// Pass only batch data to create accordion containers, content will be loaded via AJAX.
+	$wcd->dashboard_handler->compare_view_v2( $batch );
+?>
