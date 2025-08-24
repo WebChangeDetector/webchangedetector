@@ -117,10 +117,7 @@ class WebChangeDetector_Database_Logger {
 			)
 		);
 
-		// Cleanup old logs periodically.
-		if ( 0 === wp_rand( 1, 100 ) ) { // 1% chance.
-			$this->cleanup_old_logs();
-		}
+
 
 		return false !== $result;
 	}

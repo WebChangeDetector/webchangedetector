@@ -498,7 +498,15 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function daily_sync_posts_cron_job() {
+		// Sync posts.
 		$this->sync_posts( true );
+		
+		// Cleanup old logs daily instead of randomly.
+		$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+		$deleted = $logger->cleanup_old_logs();
+		if ( $deleted > 0 ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Daily log cleanup: deleted {$deleted} old log entries", 'daily_sync_posts_cron_job', 'info' );
+		}
 	}
 
 	/**
