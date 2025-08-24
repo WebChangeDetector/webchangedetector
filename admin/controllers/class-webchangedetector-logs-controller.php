@@ -58,7 +58,7 @@ class WebChangeDetector_Logs_Controller {
 	private function render_logs_page() {
 		// Check if we're viewing a specific tab.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for tab navigation only.
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'debug-logs';
+		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'queue';
 
 		// Display tabs.
 		?>
