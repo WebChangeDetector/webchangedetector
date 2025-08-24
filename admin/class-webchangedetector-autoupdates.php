@@ -1073,10 +1073,10 @@ class WebChangeDetector_Autoupdates {
 			foreach ( $comparisons['data'] as $comparison ) {
 				$row =
 					'<tr>
-						<td>' . $comparison['url'] . '</td>
-						<td>' . $comparison['device'] . '</td>
-						<td>' . $comparison['difference_percent'] . ' %</td>
-		                <td><a href="' . $comparison['public_link'] . '">See changes</a></td>
+						<td>' . esc_html( $comparison['url'] ) . '</td>
+						<td>' . esc_html( $comparison['device'] ) . '</td>
+						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
+		                <td><a href="' . esc_html( $comparison['public_link'] ) . '">See changes</a></td>
 					</tr>';
 				if ( ! $comparison['difference_percent'] ) {
 					$no_difference_rows .= $row;
