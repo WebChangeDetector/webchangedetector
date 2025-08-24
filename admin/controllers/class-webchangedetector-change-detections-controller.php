@@ -195,7 +195,7 @@ class WebChangeDetector_Change_Detections_Controller {
 				}
 				$filters_comparisons = array(
 					'batches'  => implode( ',', $filter_batches_in_comparisons ),
-					'per_page' => 999999,
+					'per_page' => 20,
 				);
 
 				$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array_merge( $filters_comparisons, $extra_filters ) );
