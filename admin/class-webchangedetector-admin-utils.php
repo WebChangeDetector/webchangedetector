@@ -177,6 +177,11 @@ class WebChangeDetector_Admin_Utils {
 
 		$domain = $parsed_url['host'];
 
+		// Include port if it exists (important for localhost development).
+		if ( isset( $parsed_url['port'] ) ) {
+			$domain .= ':' . $parsed_url['port'];
+		}
+
 		return $domain;
 	}
 
