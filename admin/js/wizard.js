@@ -306,7 +306,16 @@
         getUrlSelectionSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-settings-card',
+                    element: '.webchangedetector .wcd-monitoring-status-card',
+                    popover: {
+                        title: this.getTranslation('autoUpdateStatusTitle', 'Auto Update Checks Status'),
+                        description: this.getTranslation('autoUpdateStatusDesc', 'This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues.'),
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.webchangedetector .wcd-manual-checks-card',
                     popover: {
                         title: this.getTranslation('manualChecksTitle', 'WP Auto Update & Manual Checks Settings'),
                         description: this.getTranslation('manualChecksDesc', 'Configure settings for both WordPress auto-update checks and manual checks. Let\'s walk through each important setting.'),
@@ -561,7 +570,12 @@
                         title: this.getTranslation('activityLogsTitle', 'Activity Logs'),
                         description: this.getTranslation('activityLogsDesc', 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.'),
                         side: 'bottom',
-                        align: 'start'
+                        align: 'start',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
+                        onNextClick: () => {
+                            // Navigate to logs page with wizard parameter
+                            this.navigateToPage('webchangedetector-settings');
+                        }
                     }
                 },
             ];

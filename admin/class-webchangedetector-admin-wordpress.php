@@ -188,6 +188,8 @@ class WebChangeDetector_Admin_WordPress {
 						'recentChangesDesc'           => __( 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector' ),
 
 						// URL selection steps.
+						'autoUpdateStatusTitle'       => __( 'Auto Update Checks Status', 'webchangedetector' ),
+						'autoUpdateStatusDesc'        => __( 'This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues.', 'webchangedetector' ),
 						'manualChecksTitle'           => __( 'Manual Checks & Auto Update Settings', 'webchangedetector' ),
 						'manualChecksDesc'            => __( 'You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),

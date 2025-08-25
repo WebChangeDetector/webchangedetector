@@ -286,7 +286,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_update_sync_types_with_local_labels',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {
@@ -315,7 +315,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_sync_posts',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {
@@ -341,7 +341,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_complete_initial_setup',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {
