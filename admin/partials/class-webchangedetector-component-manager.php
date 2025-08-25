@@ -34,7 +34,7 @@ class WebChangeDetector_Component_Manager {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->components_path = plugin_dir_path( __FILE__ ) . 'components';
+		$this->components_path = WCD_PLUGIN_DIR . 'admin/partials/components';
 	}
 
 	/**

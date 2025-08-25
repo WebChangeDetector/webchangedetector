@@ -53,6 +53,26 @@ if ( ! defined( 'WEBCHANGEDETECTOR_VERSION' ) ) {
 }
 
 /**
+ * Define plugin path constants for consistent file inclusion.
+ * These constants provide a secure and reliable way to reference plugin files.
+ */
+if ( ! defined( 'WCD_PLUGIN_FILE' ) ) {
+	define( 'WCD_PLUGIN_FILE', __FILE__ );
+}
+
+if ( ! defined( 'WCD_PLUGIN_DIR' ) ) {
+	define( 'WCD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+
+if ( ! defined( 'WCD_PLUGIN_URL' ) ) {
+	define( 'WCD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+
+if ( ! defined( 'WCD_PLUGIN_BASENAME' ) ) {
+	define( 'WCD_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+}
+
+/**
  * Set default branch preference for beta updates.
  * Only enabled if Git Updater plugin is active.
  * Can be overridden in wp-config.php by defining WCD_USE_DEV_BRANCH.
@@ -122,7 +142,7 @@ add_action( 'admin_notices', __NAMESPACE__ . '\wcd_update_mode_admin_notice' );
  * This action is documented in includes/class-webchangedetector-activator.php
  */
 function activate_webchangedetector() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-activator.php';
+	require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-activator.php';
 	WebChangeDetector_Activator::activate();
 }
 
@@ -131,7 +151,7 @@ function activate_webchangedetector() {
  * This action is documented in includes/class-webchangedetector-deactivator.php
  */
 function deactivate_webchangedetector() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector-deactivator.php';
+	require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-deactivator.php';
 	WebChangeDetector_Deactivator::deactivate();
 }
 
@@ -142,7 +162,7 @@ register_deactivation_hook( __FILE__, __NAMESPACE__ . '\deactivate_webchangedete
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-webchangedetector.php';
+require WCD_PLUGIN_DIR . 'includes/class-webchangedetector.php';
 
 /**
  * Begins execution of the plugin.
@@ -167,7 +187,7 @@ function run_webchangedetector() {
  * @return string The plugin directory path.
  */
 function wcd_get_plugin_dir() {
-	return plugin_dir_path( __FILE__ );
+	return WCD_PLUGIN_DIR;
 }
 
 run_webchangedetector();

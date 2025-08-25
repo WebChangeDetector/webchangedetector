@@ -49,7 +49,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$content            = ''; // Empty content for the toggle.
 
 					// Include Toggle Section Component.
-					include plugin_dir_path( __FILE__ ) . '../components/ui-elements/toggle-section.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/ui-elements/toggle-section.php';
 					?>
 				</div>
 				<!-- Auto Update Information Accordion - Always visible underneath the toggle -->
@@ -57,7 +57,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<div class="wcd-form-control" style="grid-column: 1 / -1;">
 						<?php
 						// Auto Update Information Component.
-						include plugin_dir_path( __FILE__ ) . '../components/settings/auto-update-info.php';
+						include WCD_PLUGIN_DIR . 'admin/partials/components/settings/auto-update-info.php';
 						?>
 					</div>
 				</div>
@@ -72,7 +72,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<?php
 					// Time Range Selector Component.
 					// Convert UTC times from API to site timezone for display.
-					require_once plugin_dir_path( __FILE__ ) . '../../class-webchangedetector-timezone-helper.php';
+					require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 					$utc_from_time    = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
 					$utc_to_time      = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
 					$from_time        = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
@@ -84,7 +84,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$current_time     = current_time( 'H:i' );
 					// translators: %1$s is the timezone display string, %2$s is the current website time.
 					$description = sprintf( __( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ), $timezone_display, $current_time );
-					include plugin_dir_path( __FILE__ ) . '../components/forms/time-range-selector.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>
 			</div>
@@ -102,7 +102,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$label           = '';
 					$description     = '';
 					$show_validation = true;
-					include plugin_dir_path( __FILE__ ) . '../components/forms/weekday-selector.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/weekday-selector.php';
 					?>
 				</div>
 			</div>
@@ -134,7 +134,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$description     = '';
 					$multiple        = true;
 					$show_validation = true;
-					include plugin_dir_path( __FILE__ ) . '../components/forms/email-input.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/email-input.php';
 					?>
 					
 				</div>
@@ -151,7 +151,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$label       = '';
 					$description = '';
 					$threshold   = $group_and_urls['threshold'] ?? 0.0;
-					include plugin_dir_path( __FILE__ ) . '../components/forms/threshold-setting.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/threshold-setting.php';
 					?>
 				</div>
 			</div>

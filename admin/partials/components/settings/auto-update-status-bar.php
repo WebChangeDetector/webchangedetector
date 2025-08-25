@@ -34,7 +34,7 @@ foreach ( $weekdays as $weekday ) {
 }
 
 // Get timeframe settings (these are in UTC from API).
-require_once plugin_dir_path( __FILE__ ) . '../../../class-webchangedetector-timezone-helper.php';
+require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 $utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 $utc_to_time   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 
