@@ -264,17 +264,17 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 
 		try {
-			// Get current sync types or use default ones if not set
+			// Get current sync types or use default ones if not set.
 			$current_sync_types = get_option( 'wcd_sync_url_types', array() );
 
-			// If no sync types are currently set, use default ones
-			if(empty($current_sync_types)) {
-				$settings_handler = new \WebChangeDetector\WebChangeDetector_Admin_Settings( $this->admin );
-				$website_details = $settings_handler->get_website_details();
+			// If no sync types are currently set, use default ones.
+			if ( empty( $current_sync_types ) ) {
+				$settings_handler   = new \WebChangeDetector\WebChangeDetector_Admin_Settings( $this->admin );
+				$website_details    = $settings_handler->get_website_details();
 				$current_sync_types = $website_details['sync_url_types'];
 			}
 
-			// Save the sync types
+			// Save the sync types.
 			update_option( 'wcd_sync_url_types', $current_sync_types );
 
 			$this->send_success_response(
@@ -303,19 +303,19 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 
 		try {
-			// Clear the initial setup needed flag
+			// Clear the initial setup needed flag.
 			delete_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED );
-			
-			// Mark setup as completed
+
+			// Mark setup as completed.
 			update_option( 'wcd_initial_setup_completed', true );
-			
-			// Enable wizard for first-time users
+
+			// Enable wizard for first-time users.
 			update_option( 'wcd_wizard', 'true' );
 
 			$this->send_success_response(
 				array(
 					'setup_completed' => true,
-					'wizard_enabled' => true,
+					'wizard_enabled'  => true,
 				),
 				__( 'Initial setup completed successfully.', 'webchangedetector' )
 			);
@@ -345,17 +345,17 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		try {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in security_check.
 			$force = isset( $_POST['force'] ) ? intval( $_POST['force'] ) : 0;
-			
+
 			// Get the admin WordPress instance which has the sync_posts method.
-			$admin_wordpress = new \WebChangeDetector\WebChangeDetector_Admin_WordPress( 
-				'webchangedetector', 
+			$admin_wordpress = new \WebChangeDetector\WebChangeDetector_Admin_WordPress(
+				'webchangedetector',
 				WEBCHANGEDETECTOR_VERSION,
 				$this->admin
 			);
-			
+
 			// Call the existing sync_posts method with force parameter.
 			$result = $admin_wordpress->sync_posts( (bool) $force );
-			
+
 			if ( $result ) {
 				// The sync_posts method returns the formatted date on success or when skipped.
 				if ( is_string( $result ) ) {
@@ -369,15 +369,15 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 				// Sync failed.
 				echo esc_html__( 'Sync failed', 'webchangedetector' );
 			}
-			
+
 			wp_die();
-			
+
 		} catch ( \Exception $e ) {
 			// Log error if possible.
 			if ( $this->admin && method_exists( $this->admin, 'log_error' ) ) {
 				$this->admin->log_error( 'URL sync failed: ' . $e->getMessage() );
 			}
-			
+
 			// Return error message as plain text.
 			echo esc_html__( 'Sync failed', 'webchangedetector' );
 			wp_die();

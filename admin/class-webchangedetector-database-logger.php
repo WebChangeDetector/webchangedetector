@@ -117,8 +117,6 @@ class WebChangeDetector_Database_Logger {
 			)
 		);
 
-
-
 		return false !== $result;
 	}
 
