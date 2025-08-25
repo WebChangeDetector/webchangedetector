@@ -308,8 +308,8 @@
                 {
                     element: '.webchangedetector .wcd-settings-card',
                     popover: {
-                        title: this.getTranslation('manualChecksTitle', 'Manual Checks & Auto Update Settings'),
-                        description: this.getTranslation('manualChecksDesc', 'You can start the Manual Checks here. But first, let\'s walk through each important setting.'),
+                        title: this.getTranslation('manualChecksTitle', 'WP Auto Update & Manual Checks Settings'),
+                        description: this.getTranslation('manualChecksDesc', 'Configure settings for both WordPress auto-update checks and manual checks. Let\'s walk through each important setting.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -395,7 +395,7 @@
                     }
                 },
                 {
-                    element: '.webchangedetector input[type="submit"][value="Save Settings"]',
+                    element: '.webchangedetector input[type="submit"][name="submit"]',
                     popover: {
                         title: this.getTranslation('saveSettingsTitle', 'Save Your Settings'),
                         description: this.getTranslation('saveSettingsDesc', 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.'),
@@ -494,7 +494,7 @@
                     }
                 },
                 {
-                    element: '.webchangedetector input[type="submit"][value="Save Settings"]',
+                    element: '.webchangedetector input[type="submit"].wizard-save-auto-settings',
                     popover: {
                         title: this.getTranslation('saveMonitoringTitle', 'Save Monitoring Settings'),
                         description: this.getTranslation('saveMonitoringDesc', 'Save your configuration to activate monitoring. Changes take effect immediately.'),
@@ -573,9 +573,9 @@
         getSettingsSteps() {
             return [
                 {
-                    element: '.webchangedetector .wcd-settings-card',
+                    element: '.webchangedetector .wcd-settings-section:first-child .wcd-settings-card',
                     popover: {
-                        title: this.getTranslation('urlManagementTitle', 'URL Management'),
+                        title: this.getTranslation('urlManagementTitle', 'URL Synchronization Settings'),
                         description: this.getTranslation('urlManagementDesc', 'Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring.'),
                         side: 'bottom',
                         align: 'start'
@@ -584,23 +584,23 @@
                 {
                     element: '.wcd-form-row:has(button[onclick*="sync_urls"])',
                     popover: {
-                        title: this.getTranslation('urlSyncTitle', 'URL Synchronization'),
-                        description: this.getTranslation('urlSyncDesc', 'WebChange Detector syncs your site\'s URLs automatically. Use "Sync Now" after adding new content or if URLs are missing.'),
+                        title: this.getTranslation('urlSyncTitle', 'URL Sync Status'),
+                        description: this.getTranslation('urlSyncDesc', 'WebChange Detector syncs your site\'s URLs automatically. Use "Sync URLs Now" after adding new content or if URLs are missing.'),
                         side: 'left',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.wcd-settings-card:has(input[name="wcd_disable_admin_bar_menu"])',
+                    element: '.wcd-settings-section:has(input[name="wcd_disable_admin_bar_menu"]) .wcd-settings-card',
                     popover: {
-                        title: this.getTranslation('quickAccessTitle', 'Quick Access'),
+                        title: this.getTranslation('quickAccessTitle', 'Admin Bar Menu'),
                         description: this.getTranslation('quickAccessDesc', 'The admin bar menu provides quick access to WebChange Detector from your site\'s frontend. Disable if you prefer a cleaner toolbar.'),
                         side: 'top',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.wcd-settings-section-api-token',
+                    element: '.wcd-settings-section.wcd-settings-section-api-token',
                     popover: {
                         title: this.getTranslation('apiConnectionTitle', 'API Connection'),
                         description: this.getTranslation('apiConnectionDesc', 'Your API token connects this site to WebChange Detector\'s screenshot service. Keep it secret and secure!'),

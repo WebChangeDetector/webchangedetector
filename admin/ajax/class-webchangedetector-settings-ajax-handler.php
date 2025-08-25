@@ -264,31 +264,21 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 
 		try {
-			$post_data = $this->validate_post_data( array( 'sync_types' ) );
+			// Get current sync types or use default ones if not set
+			$current_sync_types = get_option( 'wcd_sync_url_types', array() );
 
-			if ( false === $post_data ) {
-				$this->send_error_response(
-					__( 'Missing sync types data.', 'webchangedetector' ),
-					'Missing sync_types'
-				);
-				return;
+			// If no sync types are currently set, use default ones
+			if(empty($current_sync_types)) {
+				$settings_handler = new \WebChangeDetector\WebChangeDetector_Admin_Settings( $this->admin );
+				$website_details = $settings_handler->get_website_details();
+				$current_sync_types = $website_details['sync_url_types'];
 			}
 
-			$sync_types      = $post_data['sync_types'];
-			$available_types = $this->settings_handler->get_available_sync_types();
-
-			// Validate and update sync types.
-			$updated_sync_types = array();
-			foreach ( $sync_types as $type ) {
-				if ( isset( $available_types[ $type ] ) ) {
-					$updated_sync_types[] = $type;
-				}
-			}
-
-			update_option( 'wcd_sync_url_types', $updated_sync_types );
+			// Save the sync types
+			update_option( 'wcd_sync_url_types', $current_sync_types );
 
 			$this->send_success_response(
-				array( 'sync_url_types' => $updated_sync_types ),
+				array( 'sync_url_types' => $current_sync_types ),
 				__( 'Sync types updated successfully.', 'webchangedetector' )
 			);
 
@@ -313,14 +303,19 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		}
 
 		try {
-			// Mark setup as completed.
+			// Clear the initial setup needed flag
+			delete_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED );
+			
+			// Mark setup as completed
 			update_option( 'wcd_initial_setup_completed', true );
-			update_option( 'wcd_wizard_disabled', true );
+			
+			// Enable wizard for first-time users
+			update_option( 'wcd_wizard', 'true' );
 
 			$this->send_success_response(
 				array(
 					'setup_completed' => true,
-					'wizard_disabled' => true,
+					'wizard_enabled' => true,
 				),
 				__( 'Initial setup completed successfully.', 'webchangedetector' )
 			);

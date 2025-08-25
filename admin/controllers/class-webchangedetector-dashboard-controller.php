@@ -235,6 +235,12 @@ class WebChangeDetector_Dashboard_Controller {
 			exit;
 		}
 
+		// Get website details and update sync_url_types.
+		$website_details = $this->admin->settings_handler->get_website_details();
+		if ( !empty( $website_details['sync_url_types'] ) ) {
+			update_option( 'wcd_sync_url_types', $website_details['sync_url_types'] );
+		}
+
 		// Account is activated, proceed with setup.
 		$this->render_initial_setup_overlay();
 	}

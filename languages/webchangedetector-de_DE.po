@@ -1089,16 +1089,16 @@ msgstr ""
 "Vergleiche, die hervorheben, was sich auf deiner Website geändert hat."
 
 #: admin/class-webchangedetector-admin-wordpress.php:187
-msgid "Manual Checks & Auto Update Settings"
-msgstr "Manuelle Checks & Auto-Update-Einstellungen"
+msgid "WP Auto Update & Manual Checks Settings"
+msgstr "WP Auto-Update & Manuelle Checks Einstellungen"
 
 #: admin/class-webchangedetector-admin-wordpress.php:188
 msgid ""
-"You can start the Manual Checks here. But first, let's walk through each "
-"important setting."
+"Configure settings for both WordPress auto-update checks and manual checks. "
+"Let's walk through each important setting."
 msgstr ""
-"Du kannst hier die manuellen Checks starten. Aber lass uns zuerst jede "
-"wichtige Einstellung durchgehen."
+"Konfiguriere Einstellungen für WordPress Auto-Update-Checks und manuelle Checks. "
+"Lass uns jede wichtige Einstellung durchgehen."
 
 #: admin/class-webchangedetector-admin-wordpress.php:189
 msgid "Enable Auto Update Checks"
@@ -2382,10 +2382,6 @@ msgstr "Change Detection"
 #: admin/partials/templates/update-detection/update-step-pre-sc.php:28
 msgid "URLs selected for checking"
 msgstr "URLs für die Check ausgewählt"
-
-#: admin/partials/templates/update-settings.php:29
-msgid "WP Auto Update & Manual Checks Settings"
-msgstr "WP Auto-Update & Manuelle Checks Einstellungen"
 
 #: admin/partials/templates/update-settings.php:39
 msgid ""
