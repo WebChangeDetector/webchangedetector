@@ -54,7 +54,7 @@ class WebChangeDetector_Template_View {
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_include_once_file_path
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/auto-settings.php';
+		include plugin_dir_path( __FILE__ ) . '../partials/templates/auto-settings.php';
 	}
 
 	/**
@@ -69,7 +69,7 @@ class WebChangeDetector_Template_View {
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/update-settings.php';
+		include plugin_dir_path( __FILE__ ) . '../partials/templates/update-settings.php';
 	}
 
 	/**
@@ -85,7 +85,7 @@ class WebChangeDetector_Template_View {
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/show-change-detection.php';
+		include plugin_dir_path( __FILE__ ) . '../partials/templates/show-change-detection.php';
 	}
 
 
@@ -146,7 +146,7 @@ class WebChangeDetector_Template_View {
 		);
 
 		if ( isset( $template_map[ $step ] ) ) {
-			$template_file = WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/update-detection/' . $template_map[ $step ];
+			$template_file = plugin_dir_path( __FILE__ ) . '../partials/templates/update-detection/' . $template_map[ $step ];
 			if ( file_exists( $template_file ) ) {
 				include $template_file;
 			} else {

@@ -34,7 +34,7 @@ class WebChangeDetector_Component_Manager {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->components_path = WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components';
+		$this->components_path = plugin_dir_path( __FILE__ ) . 'components';
 	}
 
 	/**

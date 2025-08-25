@@ -43,7 +43,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$content            = ''; // Empty content for the toggle.
 
 					// Include Toggle Section Component.
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/ui-elements/toggle-section.php';
+					include plugin_dir_path( __FILE__ ) . '../components/ui-elements/toggle-section.php';
 					?>
 				</div>
 			</div>
@@ -65,7 +65,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$field_name  = 'interval_in_h';
 					$label       = ''; // Empty label since it's already in the form structure.
 					$description = ''; // Empty description since it's already in the form structure.
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/monitoring/interval-selector.php';
+					include plugin_dir_path( __FILE__ ) . '../components/monitoring/interval-selector.php';
 					?>
 				</div>
 			</div>
@@ -82,7 +82,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$field_name   = 'hour_of_day';
 					$label        = ''; // Empty label since it's already in the form structure.
 					$description  = ''; // Empty description since it's already in the form structure.
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/monitoring/hour-selector.php';
+					include plugin_dir_path( __FILE__ ) . '../components/monitoring/hour-selector.php';
 					?>
 				</div>
 			</div>
@@ -98,7 +98,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$threshold   = $group_and_urls['threshold'] ?? 0.0;
 					$label       = ''; // Empty label since it's already in the form structure.
 					$description = ''; // Empty description since it's already in the form structure.
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/threshold-setting.php';
+					include plugin_dir_path( __FILE__ ) . '../components/forms/threshold-setting.php';
 					?>
 				</div>
 			</div>
@@ -130,7 +130,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$description     = ''; // Empty description since it's already in the form structure.
 					$multiple        = true;
 					$show_validation = true;
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/forms/email-input.php';
+					include plugin_dir_path( __FILE__ ) . '../components/forms/email-input.php';
 					?>
 				</div>
 			</div>
