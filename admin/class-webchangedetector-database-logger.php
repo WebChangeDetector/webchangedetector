@@ -83,7 +83,7 @@ class WebChangeDetector_Database_Logger {
 	 */
 	public function log( $message, $context = 'general', $level = self::LEVEL_INFO, $additional_data = null ) {
 		// Check if debug logging is enabled (always log errors and critical).
-		if ( ! $this->debug_enabled && ! in_array( $level, array( self::LEVEL_ERROR, self::LEVEL_CRITICAL ), true ) ) {
+		if ( ! $this->debug_enabled ) {
 			return false;
 		}
 
