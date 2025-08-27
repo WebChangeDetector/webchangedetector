@@ -78,11 +78,11 @@ class WebChangeDetector_Admin_WordPress {
 	 */
 	public function enqueue_styles() {
 		wp_enqueue_style( 'jquery-ui-accordion' );
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/webchangedetector-admin.css', array(), $this->version, 'all' );
-		wp_enqueue_style( 'twentytwenty-css', plugin_dir_url( __FILE__ ) . 'css/twentytwenty.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name, WCD_PLUGIN_URL . 'admin/css/webchangedetector-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'twentytwenty-css', WCD_PLUGIN_URL . 'admin/css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
-		wp_enqueue_style( 'codemirror-darcula', plugin_dir_url( __FILE__ ) . 'css/darcula.css', array(), $this->version, 'all' );
-		wp_enqueue_style( 'driver-css', plugin_dir_url( __FILE__ ) . 'css/driver.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'codemirror-darcula', WCD_PLUGIN_URL . 'admin/css/darcula.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'driver-css', WCD_PLUGIN_URL . 'admin/css/driver.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class WebChangeDetector_Admin_WordPress {
 	 */
 	public function enqueue_scripts( $hook_suffix ) {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
-			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( $this->plugin_name, WCD_PLUGIN_URL . 'admin/js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
 
 			// Localize script for translations.
 			wp_localize_script(
@@ -135,10 +135,10 @@ class WebChangeDetector_Admin_WordPress {
 			);
 
 			wp_enqueue_script( 'jquery-ui-accordion' );
-			wp_enqueue_script( 'twentytwenty-js', plugin_dir_url( __FILE__ ) . 'js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
-			wp_enqueue_script( 'twentytwenty-move-js', plugin_dir_url( __FILE__ ) . 'js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
-			wp_enqueue_script( 'driver-js', plugin_dir_url( __FILE__ ) . 'js/driver.js.iife.js', array(), $this->version, false );
-			wp_enqueue_script( 'wcd-wizard', plugin_dir_url( __FILE__ ) . 'js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
+			wp_enqueue_script( 'twentytwenty-js', WCD_PLUGIN_URL . 'admin/js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'twentytwenty-move-js', WCD_PLUGIN_URL . 'admin/js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( 'driver-js', WCD_PLUGIN_URL . 'admin/js/driver.js.iife.js', array(), $this->version, false );
+			wp_enqueue_script( 'wcd-wizard', WCD_PLUGIN_URL . 'admin/js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
 			// CodeMirror settings for CSS.
 			$css_settings              = array(
 				'type'       => 'text/css',
@@ -188,6 +188,8 @@ class WebChangeDetector_Admin_WordPress {
 						'recentChangesDesc'           => __( 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector' ),
 
 						// URL selection steps.
+						'autoUpdateStatusTitle'       => __( 'Auto Update Checks Status', 'webchangedetector' ),
+						'autoUpdateStatusDesc'        => __( 'This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues.', 'webchangedetector' ),
 						'manualChecksTitle'           => __( 'Manual Checks & Auto Update Settings', 'webchangedetector' ),
 						'manualChecksDesc'            => __( 'You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
@@ -279,7 +281,7 @@ class WebChangeDetector_Admin_WordPress {
 					'nonce'                     => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
 					'take_screenshots_nonce'    => wp_create_nonce( 'take_screenshots' ),
 					'start_manual_checks_nonce' => wp_create_nonce( 'start_manual_checks' ),
-					'plugin_url'                => plugin_dir_url( __FILE__ ),
+					'plugin_url'                => WCD_PLUGIN_URL . 'admin/',
 				)
 			);
 		}
@@ -300,7 +302,7 @@ class WebChangeDetector_Admin_WordPress {
 			$admin_bar_script_handle = 'webchangedetector-admin-bar';
 
 			// Enqueue JavaScript.
-			wp_enqueue_script( $admin_bar_script_handle, plugin_dir_url( __FILE__ ) . 'js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true );
+			wp_enqueue_script( $admin_bar_script_handle, WCD_PLUGIN_URL . 'admin/js/webchangedetector-admin-bar.js', array( 'jquery' ), $this->version, true );
 
 			wp_localize_script(
 				$admin_bar_script_handle,
@@ -337,7 +339,7 @@ class WebChangeDetector_Admin_WordPress {
 		require_once 'partials/webchangedetector-admin-display.php';
 		$allowances = get_option( WCD_ALLOWANCES );
 
-		add_menu_page( __( 'WebChange Detector', 'webchangedetector' ), __( 'WebChange Detector', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init', plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg' );
+		add_menu_page( __( 'WebChange Detector', 'webchangedetector' ), __( 'WebChange Detector', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init', WCD_PLUGIN_URL . 'admin/img/icon-wp-backend.svg' );
 		add_submenu_page( 'webchangedetector', __( 'Dashboard', 'webchangedetector' ), __( 'Dashboard', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init' );
 
 		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
@@ -370,7 +372,7 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   string    The plugin URL.
 	 */
 	public static function get_wcd_plugin_url() {
-		return dirname( plugin_dir_url( __FILE__ ) ) . '/';
+		return WCD_PLUGIN_URL;
 	}
 
 	/**
@@ -500,9 +502,9 @@ class WebChangeDetector_Admin_WordPress {
 	public function daily_sync_posts_cron_job() {
 		// Sync posts.
 		$this->sync_posts( true );
-		
+
 		// Cleanup old logs daily instead of randomly.
-		$logger = new \WebChangeDetector\WebChangeDetector_Database_Logger();
+		$logger  = new \WebChangeDetector\WebChangeDetector_Database_Logger();
 		$deleted = $logger->cleanup_old_logs();
 		if ( $deleted > 0 ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Daily log cleanup: deleted {$deleted} old log entries", 'daily_sync_posts_cron_job', 'info' );
@@ -592,7 +594,7 @@ class WebChangeDetector_Admin_WordPress {
 		}
 
 		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
-			$icon_url  = plugin_dir_url( __FILE__ ) . 'img/icon-wp-backend.svg';
+			$icon_url  = WCD_PLUGIN_URL . 'admin/img/icon-wp-backend.svg';
 			$wcd_title = sprintf( '<span style="float:left; margin-right: 5px;"><img src="%s" style="width: 20px; height: 20px; vertical-align: middle;" /></span>%s', esc_url( $icon_url ), esc_html__( 'WebChange Detector', 'webchangedetector' ) );
 
 			$wp_admin_bar->add_menu(

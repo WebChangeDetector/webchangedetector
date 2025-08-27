@@ -131,7 +131,7 @@ class WebChangeDetector_Admin_Settings {
 	public function update_manual_check_group_settings( $postdata ) {
 
 		// Load timezone helper for time conversion.
-		require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 
 		// Saving auto update settings.
 		$auto_update_settings = array();
@@ -284,7 +284,7 @@ class WebChangeDetector_Admin_Settings {
 				<div class="wcd-status-cards-container">
 					<?php
 					// Add Auto-Update Status Bar.
-					include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/components/settings/auto-update-status-bar.php';
+					include WCD_PLUGIN_DIR . 'admin/partials/components/settings/auto-update-status-bar.php';
 
 					// Manual Checks Workflow Card.
 					$manual_checks_status  = 'ready';

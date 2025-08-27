@@ -410,8 +410,8 @@ class WebChangeDetector_Admin {
 							'post_type_name' => 'Pages',
 						),
 						array(
-							'url_type_slug' => 'taxonomies',
-							'url_type_name' => 'Taxonomies',
+							'url_type_slug'  => 'taxonomies',
+							'url_type_name'  => 'Taxonomies',
 							'post_type_slug' => 'category',
 							'post_type_name' => 'Category',
 						),

@@ -472,7 +472,7 @@ class WebChangeDetector_Autoupdates {
 	 */
 	private function is_within_time_window( $auto_update_settings ) {
 		// Load timezone helper.
-		require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 
 		// Convert UTC times from API to site timezone.
 		$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
@@ -864,7 +864,7 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Log for debugging.
-		require_once WP_PLUGIN_DIR . '/webchangedetector/admin/class-webchangedetector-timezone-helper.php';
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 		$site_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $auto_update_checks_from_utc );
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
@@ -1073,10 +1073,10 @@ class WebChangeDetector_Autoupdates {
 			foreach ( $comparisons['data'] as $comparison ) {
 				$row =
 					'<tr>
-						<td>' . $comparison['url'] . '</td>
-						<td>' . $comparison['device'] . '</td>
-						<td>' . $comparison['difference_percent'] . ' %</td>
-		                <td><a href="' . $comparison['public_link'] . '">See changes</a></td>
+						<td>' . esc_html( $comparison['url'] ) . '</td>
+						<td>' . esc_html( $comparison['device'] ) . '</td>
+						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
+		                <td><a href="' . esc_html( $comparison['public_link'] ) . '">See changes</a></td>
 					</tr>';
 				if ( ! $comparison['difference_percent'] ) {
 					$no_difference_rows .= $row;

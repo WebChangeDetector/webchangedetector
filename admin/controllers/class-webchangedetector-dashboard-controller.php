@@ -235,6 +235,12 @@ class WebChangeDetector_Dashboard_Controller {
 			exit;
 		}
 
+		// Get website details and update sync_url_types.
+		$website_details = $this->admin->settings_handler->get_website_details();
+		if ( ! empty( $website_details['sync_url_types'] ) ) {
+			update_option( 'wcd_sync_url_types', $website_details['sync_url_types'] );
+		}
+
 		// Account is activated, proceed with setup.
 		$this->render_initial_setup_overlay();
 	}
@@ -280,7 +286,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_update_sync_types_with_local_labels',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {
@@ -309,7 +315,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_sync_posts',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {
@@ -335,7 +341,7 @@ class WebChangeDetector_Dashboard_Controller {
 						type: 'POST',
 						data: {
 							action: 'wcd_complete_initial_setup',
-							nonce: '<?php echo esc_js( wp_create_nonce( 'wcd_ajax_nonce' ) ); ?>'
+							nonce: '<?php echo esc_js( wp_create_nonce( 'webchangedetector_ajax-nonce' ) ); ?>'
 						},
 						dataType: 'json',
 						success: function(response) {

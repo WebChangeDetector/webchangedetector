@@ -47,14 +47,14 @@ class WebChangeDetector_Template_View {
 	 * @param array  $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
-	public function render_auto_settings( $group_and_urls, $group_id ) {
+	public function render_auto_settings( $group_and_urls, $group_id ) { // Used in template.
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_include_once_file_path
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/auto-settings.php';
+		include WCD_PLUGIN_DIR . 'admin/partials/templates/auto-settings.php';
 	}
 
 	/**
@@ -63,13 +63,13 @@ class WebChangeDetector_Template_View {
 	 * @param array  $group_and_urls The group and URLs data.
 	 * @param string $group_id The group ID.
 	 */
-	public function render_update_settings( $group_and_urls, $group_id ) {
+	public function render_update_settings( $group_and_urls, $group_id ) { // Used in template.
 		// Set up template variables that the template expects.
 		// The template expects $this->admin and $this->account_handler to be available.
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/update-settings.php';
+		include WCD_PLUGIN_DIR . 'admin/partials/templates/update-settings.php';
 	}
 
 	/**
@@ -85,7 +85,7 @@ class WebChangeDetector_Template_View {
 
 		// Temporarily include the existing template file.
 		// This will be the bridge during migration.
-		include WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/show-change-detection.php';
+		include WCD_PLUGIN_DIR . 'admin/partials/templates/show-change-detection.php';
 	}
 
 
@@ -146,7 +146,7 @@ class WebChangeDetector_Template_View {
 		);
 
 		if ( isset( $template_map[ $step ] ) ) {
-			$template_file = WP_PLUGIN_DIR . '/webchangedetector/admin/partials/templates/update-detection/' . $template_map[ $step ];
+			$template_file = WCD_PLUGIN_DIR . 'admin/partials/templates/update-detection/' . $template_map[ $step ];
 			if ( file_exists( $template_file ) ) {
 				include $template_file;
 			} else {
