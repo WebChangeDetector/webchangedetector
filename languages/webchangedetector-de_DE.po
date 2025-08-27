@@ -72,8 +72,7 @@ msgstr "Fehler beim Abrufen der Dashboard-Nutzungsstatistiken."
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 "Sicherheitsprüfung fehlgeschlagen. Bitte lade die Seite neu und versuche es "
-"erneut.Sicherheitsprüfung fehlgeschlagen. Bitte lade die Seite neu und "
-"versuche es erneut."
+"erneut."
 
 #: admin/ajax/class-webchangedetector-ajax-handler-base.php:214
 msgid "You do not have permission to perform this action."

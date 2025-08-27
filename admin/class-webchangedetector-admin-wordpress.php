@@ -681,14 +681,18 @@ class WebChangeDetector_Admin_WordPress {
 			return false;
 		}
 
+		// Normalize URL - remove trailing slash for comparison
+		$normalized_url = rtrim( $url, '/' );
+		
 		// Create URL filter to search for this specific URL.
+		// For frontpage, try searching without trailing slash
 		$url_filter = array(
-			'url' => $url,
+			'url' => $normalized_url,
 		);
 
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Searching for URL: ' . $url, 'get_url_monitoring_status', 'debug' );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Searching for URL: ' . $normalized_url . ' (original: ' . $url . ')', 'get_url_monitoring_status', 'debug' );
 
-		// Search in both groups for the URL.
+		// Search in both groups for the URL - use normalized URL for search
 		$manual_group_urls     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
 		$monitoring_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
 
@@ -696,8 +700,23 @@ class WebChangeDetector_Admin_WordPress {
 		$manual_urls     = $manual_group_urls['data'] ?? array();
 		$monitoring_urls = $monitoring_group_urls['data'] ?? array();
 
+		// If no results found with normalized URL and this might be the frontpage, try with just the domain
+		if ( empty( $manual_urls ) && empty( $monitoring_urls ) && $normalized_url !== $url ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying original: ' . $url, 'get_url_monitoring_status', 'debug' );
+			
+			// Try again with the original URL (with trailing slash)
+			$url_filter = array(
+				'url' => $url,
+			);
+			$manual_group_urls     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
+			$monitoring_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
+			
+			$manual_urls     = $manual_group_urls['data'] ?? array();
+			$monitoring_urls = $monitoring_group_urls['data'] ?? array();
+		}
+
 		if ( empty( $manual_urls ) && empty( $monitoring_urls ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] URL not found in any group: ' . $url, 'get_url_monitoring_status', 'error' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] URL not found in any group: ' . $url . ' (normalized: ' . $normalized_url . ')', 'get_url_monitoring_status', 'error' );
 			return false;
 		}
 
@@ -707,23 +726,30 @@ class WebChangeDetector_Admin_WordPress {
 		$wcd_url_id          = null;
 
 		// First, try to find exact URL matches.
+		// Normalize both URLs by removing trailing slashes for comparison
 		foreach ( $manual_urls as $url_data ) {
-			if ( isset( $url_data['url'] ) && \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ) === $url ) {
-				$manual_url_data = $url_data;
-				if ( isset( $url_data['id'] ) ) {
-					$wcd_url_id = $url_data['id'];
+			if ( isset( $url_data['url'] ) ) {
+				$stored_url = rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ), '/' );
+				if ( $stored_url === $normalized_url ) {
+					$manual_url_data = $url_data;
+					if ( isset( $url_data['id'] ) ) {
+						$wcd_url_id = $url_data['id'];
+					}
+					break;
 				}
-				break;
 			}
 		}
 
 		foreach ( $monitoring_urls as $url_data ) {
-			if ( isset( $url_data['url'] ) && \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ) === $url ) {
-				$monitoring_url_data = $url_data;
-				if ( ! $wcd_url_id && isset( $url_data['id'] ) ) {
-					$wcd_url_id = $url_data['id'];
+			if ( isset( $url_data['url'] ) ) {
+				$stored_url = rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ), '/' );
+				if ( $stored_url === $normalized_url ) {
+					$monitoring_url_data = $url_data;
+					if ( ! $wcd_url_id && isset( $url_data['id'] ) ) {
+						$wcd_url_id = $url_data['id'];
+					}
+					break;
 				}
-				break;
 			}
 		}
 
