@@ -595,14 +595,14 @@ class WebChangeDetector_Admin_WordPress {
 
 		if ( ! is_admin() && is_admin_bar_showing() && current_user_can( 'manage_options' ) ) {
 			$icon_url  = WCD_PLUGIN_URL . 'admin/img/icon-wp-backend.svg';
-			$wcd_title = sprintf( '<span style="float:left; margin-right: 5px;"><img src="%s" style="width: 20px; height: 20px; vertical-align: middle;" /></span>%s', esc_url( $icon_url ), esc_html__( 'WebChange Detector', 'webchangedetector' ) );
+			$wcd_title = sprintf( '<span style="float:left; margin-right: 5px;"><img src="%s" style="width: 20px; height: 20px; vertical-align: middle;" /></span>%s', esc_url( $icon_url ), esc_html__( 'WCD', 'webchangedetector' ) );
 
 			$wp_admin_bar->add_menu(
 				array(
 					'id'    => 'wcd-admin-bar',
 					'title' => $wcd_title,
 					'href'  => admin_url( 'admin.php?page=webchangedetector' ),
-					'meta'  => array( 'title' => __( 'WebChange Detector Dashboard', 'webchangedetector' ) ),
+					'meta'  => array( 'title' => __( 'WCD Dashboard', 'webchangedetector' ) ),
 				)
 			);
 
@@ -622,7 +622,7 @@ class WebChangeDetector_Admin_WordPress {
 					'id'     => 'wcd-dashboard',
 					'title'  => esc_html__( 'Dashboard', 'webchangedetector' ),
 					'href'   => admin_url( 'admin.php?page=webchangedetector' ),
-					'meta'   => array( 'title' => __( 'Go to WebChange Detector Dashboard', 'webchangedetector' ) ),
+					'meta'   => array( 'title' => __( 'Go to WCD Dashboard', 'webchangedetector' ) ),
 				)
 			);
 		}

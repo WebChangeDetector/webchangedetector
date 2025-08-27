@@ -148,38 +148,18 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 	 * Handle get admin bar status AJAX request.
 	 *
 	 * Retrieves the current status for the WordPress admin bar integration.
+	 * Delegates to the WordPress handler which has the correct implementation.
 	 *
 	 * @since    4.0.0
 	 */
 	public function ajax_get_wcd_admin_bar_status() {
-		if ( ! $this->security_check() ) {
-			return;
-		}
-
-		try {
-			$website_details = $this->admin->website_details;
-
-			if ( empty( $website_details ) ) {
-				$this->send_error_response(
-					__( 'Website details not available.', 'webchangedetector' ),
-					'Website details missing'
-				);
-				return;
-			}
-
-			// Get admin bar status information.
-			$admin_bar_status = array(
-				'enabled'      => get_option( 'wcd_admin_bar_enabled', true ),
-				'website_uuid' => $website_details['uuid'] ?? '',
-				'last_update'  => get_option( 'wcd_last_admin_bar_update', 0 ),
-			);
-
-			$this->send_success_response( $admin_bar_status );
-
-		} catch ( \Exception $e ) {
+		// Delegate to the WordPress handler which has the correct implementation
+		if ( $this->wordpress_handler && method_exists( $this->wordpress_handler, 'ajax_get_wcd_admin_bar_status' ) ) {
+			$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
+		} else {
 			$this->send_error_response(
-				__( 'An error occurred while getting admin bar status.', 'webchangedetector' ),
-				'Exception: ' . $e->getMessage()
+				__( 'Admin bar status handler not available.', 'webchangedetector' ),
+				'Handler method missing'
 			);
 		}
 	}
@@ -197,29 +177,14 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 		}
 
 		try {
-			$post_data = $this->validate_post_data();
-
-			// Get sync method (optional).
-			$sync_method = isset( $post_data['sync_method'] ) ? $post_data['sync_method'] : 'default';
-
-			// Get available sync methods.
-			$available_methods = $this->wordpress_handler->get_available_sync_methods();
-
-			if ( ! isset( $available_methods[ $sync_method ] ) ) {
-				$this->send_error_response(
-					__( 'Sync method not available.', 'webchangedetector' ),
-					'Invalid sync method: ' . $sync_method
-				);
-				return;
-			}
 
 			// Perform post synchronization.
-			$sync_result = $this->wordpress_handler->sync_posts( $sync_method );
+			$sync_result = $this->wordpress_handler->sync_posts();
 
 			if ( is_wp_error( $sync_result ) ) {
 				$this->send_error_response(
 					__( 'Failed to synchronize posts.', 'webchangedetector' ),
-					'Sync error: ' . $sync_result->get_error_message()
+					'Sync error'
 				);
 				return;
 			}
@@ -227,7 +192,6 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 			$this->send_success_response(
 				array(
 					'synced_posts' => $sync_result,
-					'sync_method'  => $sync_method,
 				),
 				__( 'Posts synchronized successfully.', 'webchangedetector' )
 			);
