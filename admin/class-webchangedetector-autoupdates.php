@@ -582,10 +582,14 @@ class WebChangeDetector_Autoupdates {
 				throw new \Exception( 'Invalid API response: missing batch ID' );
 			}
 
+			// Capture current plugin and theme versions before updates.
+			$current_versions = $this->capture_current_versions();
+			
 			$option_data = array(
 				'status'    => 'processing',
 				'batch_id'  => esc_html( $sc_response['batch'] ),
 				'timestamp' => time(),
+				'versions'  => $current_versions,
 			);
 
 			// Save state.
@@ -609,6 +613,47 @@ class WebChangeDetector_Autoupdates {
 			delete_option( WCD_AUTO_UPDATES_RUNNING );
 			return false;
 		}
+	}
+
+	/**
+	 * Capture current versions of all plugins and themes before updates.
+	 *
+	 * @return array Array containing current plugin and theme versions.
+	 */
+	private function capture_current_versions() {
+		$versions = array(
+			'plugins' => array(),
+			'themes'  => array(),
+		);
+
+		// Ensure get_plugins function is available.
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		// Capture all plugin versions.
+		if ( function_exists( 'get_plugins' ) ) {
+			$all_plugins = get_plugins();
+			foreach ( $all_plugins as $plugin_file => $plugin_data ) {
+				if ( isset( $plugin_data['Version'] ) ) {
+					$versions['plugins'][ $plugin_file ] = $plugin_data['Version'];
+				}
+			}
+		}
+
+		// Capture all theme versions.
+		$all_themes = wp_get_themes();
+		foreach ( $all_themes as $theme_slug => $theme ) {
+			$versions['themes'][ $theme_slug ] = $theme->get( 'Version' );
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Captured ' . count( $versions['plugins'] ) . ' plugin versions and ' . count( $versions['themes'] ) . ' theme versions before updates',
+			'capture_current_versions',
+			'debug'
+		);
+
+		return $versions;
 	}
 
 	/**
@@ -947,12 +992,12 @@ class WebChangeDetector_Autoupdates {
 
 			// Check if pre-update screenshots are ready.
 			if ( $is_ready ) {
-				// Update status to done.
-				$pre_update_data['status'] = 'done';
-				if ( ! isset( $pre_update_data['timestamp'] ) ) {
-					$pre_update_data['timestamp'] = time();
+				// Update status to done, preserving all existing data including versions.
+				$wcd_pre_update_data['status'] = 'done';
+				if ( ! isset( $wcd_pre_update_data['timestamp'] ) ) {
+					$wcd_pre_update_data['timestamp'] = time();
 				}
-				update_option( WCD_PRE_AUTO_UPDATE, $pre_update_data, false );
+				update_option( WCD_PRE_AUTO_UPDATE, $wcd_pre_update_data, false );
 
 				// Screenshots are ready, trigger WordPress updates (which also removes the lock).
 				$this->trigger_wordpress_updates();
@@ -2041,15 +2086,18 @@ class WebChangeDetector_Autoupdates {
 								$plugin_data['to_version'] = $plugin_update->item->new_version;
 							}
 
-							// Try to get current version from plugin file.
-							if ( property_exists( $plugin_update->item, 'plugin' ) ) {
-								$plugin_file = WP_PLUGIN_DIR . '/' . $plugin_update->item->plugin;
-								if ( file_exists( $plugin_file ) && function_exists( 'get_plugin_data' ) ) {
-									$plugin_info = get_plugin_data( $plugin_file, false );
-									if ( isset( $plugin_info['Version'] ) ) {
-										$plugin_data['from_version'] = $plugin_info['Version'];
-									}
+							// Try to get the pre-update version from stored data.
+							$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+							
+							if ( $pre_update_data && isset( $pre_update_data['versions']['plugins'] ) && property_exists( $plugin_update->item, 'plugin' ) ) {
+								$plugin_key = $plugin_update->item->plugin;
+								if ( isset( $pre_update_data['versions']['plugins'][ $plugin_key ] ) ) {
+									$plugin_data['from_version'] = $pre_update_data['versions']['plugins'][ $plugin_key ];
+								} else {
+									$plugin_data['from_version'] = 'n/a';
 								}
+							} else {
+								$plugin_data['from_version'] = 'n/a';
 							}
 						}
 
@@ -2106,10 +2154,18 @@ class WebChangeDetector_Autoupdates {
 							if ( property_exists( $theme_update->item, 'theme' ) ) {
 								$theme_data['slug'] = $theme_update->item->theme;
 
-								// Try to get current version from theme.
-								$theme = wp_get_theme( $theme_update->item->theme );
-								if ( $theme->exists() ) {
-									$theme_data['from_version'] = $theme->get( 'Version' );
+								// Try to get the pre-update version from stored data.
+								$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+								
+								if ( $pre_update_data && isset( $pre_update_data['versions']['themes'] ) ) {
+									$theme_key = $theme_update->item->theme;
+									if ( isset( $pre_update_data['versions']['themes'][ $theme_key ] ) ) {
+										$theme_data['from_version'] = $pre_update_data['versions']['themes'][ $theme_key ];
+									} else {
+										$theme_data['from_version'] = 'n/a';
+									}
+								} else {
+									$theme_data['from_version'] = 'n/a';
 								}
 							}
 							if ( property_exists( $theme_update->item, 'new_version' ) ) {
