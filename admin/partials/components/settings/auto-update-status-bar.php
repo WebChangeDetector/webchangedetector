@@ -21,8 +21,9 @@ $auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks
 // Check if there are selected URLs.
 $selected_urls_count = $group_and_urls['selected_urls_count'] ?? 0;
 
-// Get the next scheduled auto-update time.
-$next_auto_update = wp_next_scheduled( 'wp_version_check' );
+// Get the next scheduled auto-update time considering weekday settings.
+// This will only return a time when auto-updates will actually run based on enabled weekdays.
+$next_auto_update = \WebChangeDetector\WebChangeDetector_AutoUpdates::get_next_auto_update_time();
 
 // Check enabled weekdays.
 $enabled_weekdays = array();
@@ -75,12 +76,22 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		$next_check_time = $time_until;
 		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
 	} else {
-		// No auto-updates scheduled.
-		$status_class    = 'wcd-status-inactive';
-		$status_icon     = 'warning';
-		$status_title    = __( 'Auto-Update Checks', 'webchangedetector' );
-		$status_message  = __( 'Not scheduled', 'webchangedetector' );
-		$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
+		// No auto-updates scheduled - either because wp_version_check is not scheduled
+		// or because no enabled weekdays match upcoming checks.
+		$status_class   = 'wcd-status-inactive';
+		$status_icon    = 'warning';
+		$status_title   = __( 'Auto-Update Checks', 'webchangedetector' );
+		$status_message = __( 'Not scheduled', 'webchangedetector' );
+		
+		// Check if wp_version_check is scheduled at all.
+		$wp_check = wp_next_scheduled( 'wp_version_check' );
+		if ( ! $wp_check ) {
+			$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
+		} elseif ( empty( $enabled_weekdays ) ) {
+			$next_check_time = __( 'No weekdays enabled', 'webchangedetector' );
+		} else {
+			$next_check_time = __( 'No checks match enabled days/times', 'webchangedetector' );
+		}
 	}
 } elseif ( ! $auto_update_checks_enabled ) {
 	// Auto-update checks disabled.

@@ -411,6 +411,119 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
+	 * Calculate the next time auto-updates will actually run based on weekday settings.
+	 *
+	 * @return int|false Unix timestamp of next auto-update run, or false if not scheduled.
+	 */
+	public static function get_next_auto_update_time() {
+		$auto_update_settings = self::get_auto_update_settings();
+		
+		if ( ! $auto_update_settings || 
+			! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
+			empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			return false;
+		}
+		
+		// Get the next scheduled wp_version_check.
+		$next_wp_check = wp_next_scheduled( 'wp_version_check' );
+		if ( ! $next_wp_check ) {
+			return false;
+		}
+		
+		// Get enabled weekdays.
+		$enabled_weekdays = array();
+		$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
+		foreach ( $weekdays as $weekday ) {
+			$key = 'auto_update_checks_' . $weekday;
+			if ( array_key_exists( $key, $auto_update_settings ) && ! empty( $auto_update_settings[ $key ] ) ) {
+				$enabled_weekdays[] = $weekday;
+			}
+		}
+		
+		// If no weekdays are enabled, auto-updates won't run.
+		if ( empty( $enabled_weekdays ) ) {
+			return false;
+		}
+		
+		// Load timezone helper.
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
+		
+		// Get the time window settings (in UTC from API).
+		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
+		$to_time_utc = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
+		
+		// Starting from the next wp_version_check time, find the next valid auto-update time.
+		$check_time = $next_wp_check;
+		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
+		
+		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
+			// Get the weekday for this check time.
+			$weekday_name = strtolower( gmdate( 'l', $check_time ) );
+			
+			// Check if this weekday is enabled.
+			if ( in_array( $weekday_name, $enabled_weekdays, true ) ) {
+				// Check if the time is within the allowed window.
+				// We need to check if the wp_version_check time falls within our time window.
+				
+				// Convert check time to site timezone for comparison.
+				$wp_timezone = wp_timezone();
+				$check_datetime = new \DateTime( '@' . $check_time );
+				$check_datetime->setTimezone( $wp_timezone );
+				
+				// Get the from and to times for this date in site timezone.
+				$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $from_time_utc );
+				$to_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $to_time_utc );
+				
+				// Create DateTime objects for the time window on the check date.
+				$date_string = $check_datetime->format( 'Y-m-d' );
+				$from_datetime = new \DateTime( $date_string . ' ' . $from_time_site . ':00', $wp_timezone );
+				$to_datetime = new \DateTime( $date_string . ' ' . $to_time_site . ':59', $wp_timezone );
+				
+				// Handle case where time window spans midnight.
+				if ( $to_datetime <= $from_datetime ) {
+					$to_datetime->modify( '+1 day' );
+				}
+				
+				// Check if the scheduled time falls within the window.
+				if ( $check_datetime >= $from_datetime && $check_datetime <= $to_datetime ) {
+					// This is a valid auto-update time!
+					return $check_time;
+				}
+			}
+			
+			// Move to the next day's scheduled time.
+			// WordPress typically schedules wp_version_check twice daily.
+			// We need to find the next scheduled occurrence.
+			$check_time = $check_time + DAY_IN_SECONDS;
+			
+			// Get the actual next scheduled time after this point.
+			$crons = _get_cron_array();
+			$next_found = false;
+			foreach ( $crons as $timestamp => $cron ) {
+				if ( $timestamp > $check_time - HOUR_IN_SECONDS && $timestamp < $check_time + HOUR_IN_SECONDS ) {
+					if ( isset( $cron['wp_version_check'] ) ) {
+						$check_time = $timestamp;
+						$next_found = true;
+						break;
+					}
+				}
+			}
+			
+			// If we couldn't find a scheduled check around this time, estimate it.
+			if ( ! $next_found ) {
+				// WordPress usually schedules at the same time each day.
+				// Use the original time of day.
+				$original_hour = gmdate( 'H:i:s', $next_wp_check );
+				$next_date = gmdate( 'Y-m-d', $check_time );
+				$check_time = strtotime( $next_date . ' ' . $original_hour . ' GMT' );
+			}
+		}
+		
+		// If we couldn't find a valid time in the next week, return false.
+		return false;
+	}
+
+	/**
 	 * Check if WCD auto-update checks are properly configured and enabled.
 	 *
 	 * @return array|false Auto-update settings or false if not configured.

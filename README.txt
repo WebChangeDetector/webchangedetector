@@ -57,6 +57,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 = 4.0.1 =
 * Fix: Select URLs with frontend bar
 * Fix: Before-update versions in logs
+* Improvement: Countdown to next auto updates considering weekday settings
 
 = 4.0.0 =
 * Improvement: New design & code refactoring
