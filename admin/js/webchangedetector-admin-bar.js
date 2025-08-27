@@ -77,7 +77,7 @@
                 const monitoringMobileHtml = generateSliderHtml('monitoring', 'mobile', data.monitoring_status.mobile, data.current_url, data.wcd_url_id, data.monitoring_group_uuid);
 
                 // Structure needs to be <li> elements for the submenu
-                menuItemsHtml = `<hr>
+                menuItemsHtml = `
                      <li id="wp-admin-bar-wcd-manual-checks-title" class="wcd-admin-bar-subitem wcd-admin-bar-title">
                          <div class="ab-item ab-empty-item" aria-hidden="true">${wcdAdminBarData.manual_label}</div>
                      </li>
@@ -97,6 +97,7 @@
                       <li id="wp-admin-bar-wcd-monitoring-mobile" class="wcd-admin-bar-subitem wcd-slider-node">
                          <div class="ab-item ab-empty-item" aria-hidden="true">${monitoringMobileHtml}</div>
                      </li>
+                     <hr>
                 `;
             }
             // Return only the list items, they will be wrapped later
