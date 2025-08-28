@@ -44,31 +44,46 @@ class WebChangeDetector_Autoupdates {
 
 		$this->set_defines();
 
-		// Register the complete hook in constructor to ensure it's always registered.
-		add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
-
-		// Fallback for when no updates are available.
-		add_action( 'wcd_check_update_completion', array( $this, 'check_update_completion' ) );
-
-		// Post updates.
-		add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
-
-		// Saving settings.
-		add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
-
-		// Backup cron job for checking for updates.
-		add_action( 'wcd_wp_version_check', array( $this, 'wcd_wp_version_check' ) );
-
-		// Hooking into the update process.
-		add_action( 'wp_maybe_auto_update', array( $this, 'wp_maybe_auto_update' ), 5 );
-
-		// Add webhook endpoint for triggering cron jobs.
+		// Add webhook endpoint for triggering cron jobs (always available for manual triggers).
 		add_action( 'init', array( $this, 'handle_webhook_trigger' ), 5 );
 
-		// Add hourly sync check for auto-update settings from API.
-		add_action( 'wcd_sync_auto_update_schedule', array( $this, 'sync_auto_update_schedule_from_api' ) );
-		if ( ! wp_next_scheduled( 'wcd_sync_auto_update_schedule' ) ) {
-			wp_schedule_event( time(), 'hourly', 'wcd_sync_auto_update_schedule' );
+		// Only register API-dependent hooks if we have an API token.
+		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		if ( ! empty( $api_token ) ) {
+			// Register the complete hook in constructor to ensure it's always registered.
+			add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
+
+			// Fallback for when no updates are available.
+			add_action( 'wcd_check_update_completion', array( $this, 'check_update_completion' ) );
+
+			// Post updates.
+			add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
+
+			// Saving settings.
+			add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
+
+			// Backup cron job for checking for updates.
+			add_action( 'wcd_wp_version_check', array( $this, 'wcd_wp_version_check' ) );
+
+			// Hooking into the update process.
+			add_action( 'wp_maybe_auto_update', array( $this, 'wp_maybe_auto_update' ), 5 );
+
+			// Add hourly sync check for auto-update settings from API.
+			add_action( 'wcd_sync_auto_update_schedule', array( $this, 'sync_auto_update_schedule_from_api' ) );
+			if ( ! wp_next_scheduled( 'wcd_sync_auto_update_schedule' ) ) {
+				wp_schedule_event( time(), 'hourly', 'wcd_sync_auto_update_schedule' );
+			}
+		} else {
+			// Clear any existing scheduled events if no API token.
+			if ( wp_next_scheduled( 'wcd_sync_auto_update_schedule' ) ) {
+				wp_clear_scheduled_hook( 'wcd_sync_auto_update_schedule' );
+			}
+			if ( wp_next_scheduled( 'wcd_check_update_completion' ) ) {
+				wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+			}
+			if ( wp_next_scheduled( 'wcd_wp_version_check' ) ) {
+				wp_clear_scheduled_hook( 'wcd_wp_version_check' );
+			}
 		}
 
 		$wcd_groups = get_option( WCD_WEBSITE_GROUPS );

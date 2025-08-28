@@ -385,55 +385,77 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function update_post( $post_id, $post_after, $post_before ) {
-		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) || 'publish' !== $post_after->post_status ) {
-			return;
-		}
-
-		$post_after_title      = get_the_title( $post_after );
-		$post_before_title     = get_the_title( $post_before );
-		$post_after_permalink  = get_permalink( $post_after );
-		$post_before_permalink = get_permalink( $post_before );
-
-		if ( $post_after_title === $post_before_title && $post_after_permalink === $post_before_permalink ) {
-			return;
-		}
-
-		$post_type       = get_post_type_object( $post_after->post_type );
-		$post_category   = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ) );
-		$post_title      = get_the_title( $post_id );
-		$post_before_url = get_permalink( $post_before );
-		$post_after_url  = get_permalink( $post_after );
-
-		$website_details = $this->admin->settings_handler->get_website_details();
-		$to_sync         = false;
-
-		// Get the post type slug for comparison.
-		$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
-
-		// Ensure sync_url_types is an array before iterating.
-		if ( ! isset( $website_details['sync_url_types'] ) || ! is_array( $website_details['sync_url_types'] ) ) {
-			return;
-		}
-
-		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
-			if ( $post_type_slug === $sync_url_type['post_type_slug'] ) {
-				$to_sync = true;
-				break;
+		try {
+			if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) || 'publish' !== $post_after->post_status ) {
+				return;
 			}
-		}
 
-		if ( ! $to_sync ) {
+			$post_after_title      = get_the_title( $post_after );
+			$post_before_title     = get_the_title( $post_before );
+			$post_after_permalink  = get_permalink( $post_after );
+			$post_before_permalink = get_permalink( $post_before );
+
+			if ( $post_after_title === $post_before_title && $post_after_permalink === $post_before_permalink ) {
+				return;
+			}
+
+			$post_type = get_post_type_object( $post_after->post_type );
+			if ( ! $post_type ) {
+				return;
+			}
+
+			$post_category   = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_name( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ) );
+			$post_title      = get_the_title( $post_id );
+			$post_before_url = get_permalink( $post_before );
+			$post_after_url  = get_permalink( $post_after );
+
+			$website_details = $this->admin->settings_handler->get_website_details();
+			
+			// Check if website_details is valid.
+			if ( ! is_array( $website_details ) ) {
+				return;
+			}
+
+			$to_sync = false;
+
+			// Get the post type slug for comparison.
+			$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
+
+			// Ensure sync_url_types is an array before iterating.
+			if ( ! isset( $website_details['sync_url_types'] ) || ! is_array( $website_details['sync_url_types'] ) ) {
+				return;
+			}
+
+			foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
+				if ( ! is_array( $sync_url_type ) || ! isset( $sync_url_type['post_type_slug'] ) ) {
+					continue;
+				}
+				if ( $post_type_slug === $sync_url_type['post_type_slug'] ) {
+					$to_sync = true;
+					break;
+				}
+			}
+
+			if ( ! $to_sync ) {
+				return;
+			}
+
+			$data[][ 'types%%' . $post_category ][] = array(
+				'html_title' => $post_title,
+				'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $post_before_url ),
+				'new_url'    => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $post_after_url ),
+			);
+
+			// Schedule async single post sync instead of blocking sync.
+			$this->schedule_async_single_post_sync( $data );
+		} catch ( \Exception $e ) {
+			// Log the error if WP_DEBUG is enabled.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'WebChangeDetector update_post error: ' . $e->getMessage() );
+			}
+			// Silently fail to prevent breaking the post save process.
 			return;
 		}
-
-		$data[][ 'types%%' . $post_category ][] = array(
-			'html_title' => $post_title,
-			'url'        => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $post_before_url ),
-			'new_url'    => \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $post_after_url ),
-		);
-
-		// Schedule async single post sync instead of blocking sync.
-		$this->schedule_async_single_post_sync( $data );
 	}
 
 	/**

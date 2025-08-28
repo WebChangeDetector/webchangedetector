@@ -250,26 +250,46 @@ class WebChangeDetector {
 	 */
 	private function define_admin_hooks() {
 		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name() );
-		// Initialize AJAX coordinator which will register all the focused handlers.
-		// The AJAX handlers are now self-registering through their respective handler classes.
-		new WebChangeDetector_Ajax_Coordinator( $plugin_admin );
 		$plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
 
+		// Initialize AJAX coordinator which will register handlers.
+		// The coordinator handles conditional registration based on API token internally.
+		new WebChangeDetector_Ajax_Coordinator( $plugin_admin );
+
+		// Always register core admin hooks.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
 
-		$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
-		$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
+		// Only register API-dependent hooks if we have an API token.
+		if ( $this->has_api_token() ) {
+			// Post sync hooks.
+			$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
+			$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
 
-		// Add async sync cron handlers.
-		$this->loader->add_action( 'wcd_async_single_post_sync', $plugin_wordpress, 'async_single_post_sync_handler', 10, 1 );
-		$this->loader->add_action( 'wcd_async_full_sync', $plugin_wordpress, 'async_full_sync_handler', 10, 1 );
+			// Add async sync cron handlers.
+			$this->loader->add_action( 'wcd_async_single_post_sync', $plugin_wordpress, 'async_single_post_sync_handler', 10, 1 );
+			$this->loader->add_action( 'wcd_async_full_sync', $plugin_wordpress, 'async_full_sync_handler', 10, 1 );
 
-		// Add hook for admin bar menu rendering.
-		$this->loader->add_action( 'admin_bar_menu', $plugin_wordpress, 'wcd_admin_bar_menu', 999 );
-		// Add hook for frontend admin bar script enqueueing.
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_wordpress, 'enqueue_admin_bar_scripts' );
+			// Add hook for admin bar menu rendering.
+			$this->loader->add_action( 'admin_bar_menu', $plugin_wordpress, 'wcd_admin_bar_menu', 999 );
+			// Add hook for frontend admin bar script enqueueing.
+			$this->loader->add_action( 'wp_enqueue_scripts', $plugin_wordpress, 'enqueue_admin_bar_scripts' );
+		}
+	}
+
+	/**
+	 * Check if API token exists.
+	 *
+	 * @since    1.0.0
+	 * @return   bool    True if API token exists, false otherwise.
+	 */
+	private function has_api_token() {
+		// Define the constant if it's not already defined.
+		if ( ! defined( 'WCD_WP_OPTION_KEY_API_TOKEN' ) ) {
+			define( 'WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token' );
+		}
+		return ! empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
 	}
 
 	/**

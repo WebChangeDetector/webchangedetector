@@ -289,10 +289,17 @@ class WebChangeDetector_Admin {
 		$this->error_handler = new \WebChangeDetector_Error_Handler();
 		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
-		// Add cron job for daily sync (after WordPress handler is initialized).
-		add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
-		if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
-			wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		// Only register cron job for daily sync if we have an API token.
+		if ( ! empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) ) {
+			add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
+			if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+				wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+			}
+		} else {
+			// Clear any existing scheduled event if no API token.
+			if ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+				wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
+			}
 		}
 	}
 
