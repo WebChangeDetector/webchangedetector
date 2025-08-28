@@ -681,8 +681,13 @@ class WebChangeDetector_Admin_Settings {
 
 					// Verify the domain still matches our site.
 					if ( strpos( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) === 0 ) {
-						$website_details                   = $website;
-						$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
+						$website_details = $website;
+						if ( is_string( $website['sync_url_types'] ) ) {
+							$decoded = json_decode( $website['sync_url_types'], true );
+							$website_details['sync_url_types'] = is_array( $decoded ) ? $decoded : array();
+						} else {
+							$website_details['sync_url_types'] = is_array( $website['sync_url_types'] ) ? $website['sync_url_types'] : array();
+						}
 						$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
 					} else {
 						// Domain doesn't match, delete the saved ID.
@@ -711,8 +716,13 @@ class WebChangeDetector_Admin_Settings {
 
 					foreach ( $websites['data'] as $website ) {
 						if ( strpos( rtrim( $website['domain'], '/' ), $our_domain ) === 0 ) {
-							$website_details                   = $website;
-							$website_details['sync_url_types'] = is_string( $website['sync_url_types'] ) ? json_decode( $website['sync_url_types'], true ) : $website['sync_url_types'] ?? array();
+							$website_details = $website;
+							if ( is_string( $website['sync_url_types'] ) ) {
+								$decoded = json_decode( $website['sync_url_types'], true );
+								$website_details['sync_url_types'] = is_array( $decoded ) ? $decoded : array();
+							} else {
+								$website_details['sync_url_types'] = is_array( $website['sync_url_types'] ) ? $website['sync_url_types'] : array();
+							}
 							$website_details['sync_url_types'] = $this->update_sync_url_types_with_local_names( $website_details['sync_url_types'] );
 
 							// Save the website ID for future use.

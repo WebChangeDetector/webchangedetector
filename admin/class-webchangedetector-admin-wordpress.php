@@ -410,6 +410,11 @@ class WebChangeDetector_Admin_WordPress {
 		// Get the post type slug for comparison.
 		$post_type_slug = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type );
 
+		// Ensure sync_url_types is an array before iterating.
+		if ( ! isset( $website_details['sync_url_types'] ) || ! is_array( $website_details['sync_url_types'] ) ) {
+			return;
+		}
+
 		foreach ( $website_details['sync_url_types'] as $sync_url_type ) {
 			if ( $post_type_slug === $sync_url_type['post_type_slug'] ) {
 				$to_sync = true;
