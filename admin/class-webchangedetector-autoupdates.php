@@ -333,10 +333,6 @@ class WebChangeDetector_Autoupdates {
 	 * @return bool True if should skip due to cooldown, false otherwise.
 	 */
 	private function is_within_cooldown_period() {
-		// Skip cooldown check if debug logging is enabled.
-		if ( get_option( WCD_WP_OPTION_KEY_DEBUG_LOGGING ) ) {
-			return false;
-		}
 
 		$last_check_time = get_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME );
 		if ( $last_check_time && $last_check_time + 12 * HOUR_IN_SECONDS > time() ) {
@@ -354,6 +350,7 @@ class WebChangeDetector_Autoupdates {
 			);
 			return true;
 		}
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cooldown period found or it has passed', 'wp_maybe_auto_update', 'debug' );
 		return false;
 	}
 
