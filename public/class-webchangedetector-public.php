@@ -39,9 +39,17 @@ class WebChangeDetector_Public {
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
 	 *
+	 * Only loads CSS when admin bar is showing, as the styles are only needed
+	 * for admin bar integration when a user is logged in.
+	 *
 	 * @since    3.1.7
 	 */
 	public function enqueue_styles() {
+		// Only load CSS if admin bar is showing (user is logged in and bar is enabled).
+		if ( ! is_admin_bar_showing() ) {
+			return;
+		}
+
 		// Load the new design CSS files.
 		wp_enqueue_style( 'webchangedetector-public', WCD_PLUGIN_URL . 'public/css/webchangedetector-public.css', array(), WEBCHANGEDETECTOR_VERSION, 'all' );
 	}
@@ -49,17 +57,15 @@ class WebChangeDetector_Public {
 	/**
 	 * Register the JavaScript for the public-facing side of the site.
 	 *
+	 * Note: CodeMirror is NOT needed on the frontend. All code editing happens
+	 * in the admin area (wp-admin). This function is kept for potential future
+	 * frontend scripts, but currently does nothing.
+	 *
 	 * @since    1.0.0
 	 */
 	public function enqueue_scripts() {
-
-		// Load WP codemirror.
-		$css_settings              = array(
-			'codemirror' => array( 'theme' => 'darcula' ),
-		);
-		$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
-		wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
-		wp_enqueue_script( 'wp-theme-plugin-editor' );
+		// No scripts needed on frontend currently.
+		// CodeMirror is loaded in admin area only via class-webchangedetector-admin-wordpress.php.
 	}
 
 	/** Verify the website if we do.
