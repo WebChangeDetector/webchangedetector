@@ -326,6 +326,10 @@ class WebChangeDetector_Autoupdates {
 	/**
 	 * Check if auto-updates were already run recently.
 	 *
+	 * Uses WCD_LAST_AUTO_UPDATE_CHECK_TIME to prevent repeated workflow starts within 12 hours,
+	 * regardless of whether the previous attempt succeeded or failed. This prevents infinite
+	 * retry loops when updates fail due to plugin incompatibilities or other issues.
+	 *
 	 * @return bool True if should skip due to cooldown, false otherwise.
 	 */
 	private function is_within_cooldown_period() {
@@ -334,11 +338,17 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		$last_successful = get_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES );
-		if ( $last_successful && $last_successful + 12 * HOUR_IN_SECONDS > time() ) {
+		$last_check_time = get_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME );
+		if ( $last_check_time && $last_check_time + 12 * HOUR_IN_SECONDS > time() ) {
+			$next_allowed = $last_check_time + 12 * HOUR_IN_SECONDS;
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Auto updates already done at ' . gmdate( 'Y-m-d H:i:s', $last_successful ) .
-				'. We only do them once per day. Skipping auto updates.',
+				sprintf(
+					'Auto update workflow already started at %s (%s ago). Next check allowed at %s (%s from now). Skipping to prevent retry loop.',
+					gmdate( 'Y-m-d H:i:s', $last_check_time ),
+					human_time_diff( $last_check_time, time() ),
+					gmdate( 'Y-m-d H:i:s', $next_allowed ),
+					human_time_diff( time(), $next_allowed )
+				),
 				'wp_maybe_auto_update',
 				'debug'
 			);
@@ -1169,6 +1179,15 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Set the check timestamp immediately after cooldown passes to prevent retry loops.
+		// This timestamp tracks when we START the workflow, regardless of success/failure.
+		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Set auto-update check timestamp to prevent retries within 12 hours',
+			'wp_maybe_auto_update',
+			'debug'
+		);
+
 		// Step 4: Validate WCD configuration and check if auto-update checks are enabled.
 		$auto_update_settings = $this->validate_wcd_configuration();
 		if ( ! $auto_update_settings ) {
@@ -1688,6 +1707,9 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES' ) ) {
 			define( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES', 'wcd_last_successfull_auto_updates' );
+		}
+		if ( ! defined( 'WCD_LAST_AUTO_UPDATE_CHECK_TIME' ) ) {
+			define( 'WCD_LAST_AUTO_UPDATE_CHECK_TIME', 'wcd_last_auto_update_check_time' );
 		}
 		if ( ! defined( 'WCD_PRE_AUTO_UPDATE' ) ) {
 			define( 'WCD_PRE_AUTO_UPDATE', 'wcd_pre_auto_update' );
