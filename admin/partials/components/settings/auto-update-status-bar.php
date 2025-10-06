@@ -85,7 +85,8 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		
 		// Check if wp_version_check is scheduled at all.
 		$wp_check = wp_next_scheduled( 'wp_version_check' );
-		if ( ! $wp_check ) {
+		$wcd_check = wp_next_scheduled( 'wcd_wp_version_check' );
+		if ( ! $wp_check && ! $wcd_check ) {
 			$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
 		} elseif ( empty( $enabled_weekdays ) ) {
 			$next_check_time = __( 'No weekdays enabled', 'webchangedetector' );

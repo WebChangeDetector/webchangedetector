@@ -441,6 +441,13 @@ class WebChangeDetector_Autoupdates {
 		
 		// Get the next scheduled wp_version_check.
 		$next_wp_check = wp_next_scheduled( 'wp_version_check' );
+
+		// Check for our fallback cron.
+		if(!$next_wp_check){
+			$next_wp_check = wp_next_scheduled( 'wcd_wp_version_check' );
+		}
+
+		// Skip if no wp_version_check is scheduled.
 		if ( ! $next_wp_check ) {
 			return false;
 		}
