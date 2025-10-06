@@ -1060,13 +1060,31 @@ class WebChangeDetector_Autoupdates {
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduling wp_version_check for ' . gmdate( 'Y-m-d H:i:s', $should_next_run_gmt ), 'wcd_save_update_group_settings', 'debug' );
 
-		// Clear and reschedule the WordPress update check crons.
-		wp_clear_scheduled_hook( 'wp_version_check' );
-		wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
+		// Get currently scheduled times.
+		$current_wp_version_check     = wp_next_scheduled( 'wp_version_check' );
+		$current_wcd_wp_version_check = wp_next_scheduled( 'wcd_wp_version_check' );
 
-		// Backup cron in case something else changes the wp_version_check cron. We add 1 second to let it run 2nd.
-		wp_clear_scheduled_hook( 'wcd_wp_version_check' );
-		wp_schedule_event( $should_next_run_gmt + 1, 'daily', 'wcd_wp_version_check' );
+		// Only reschedule if the time is different (allow 60 second tolerance to avoid constant rescheduling).
+		$wp_version_check_needs_reschedule     = ! $current_wp_version_check || abs( $current_wp_version_check - $should_next_run_gmt ) > 60;
+		$wcd_wp_version_check_needs_reschedule = ! $current_wcd_wp_version_check || abs( $current_wcd_wp_version_check - ( $should_next_run_gmt + 1 ) ) > 60;
+
+		if ( $wp_version_check_needs_reschedule ) {
+			// Clear and reschedule the WordPress update check crons.
+			wp_clear_scheduled_hook( 'wp_version_check' );
+			wp_schedule_event( $should_next_run_gmt, 'twicedaily', 'wp_version_check' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Rescheduled wp_version_check', 'wcd_save_update_group_settings', 'debug' );
+		} else {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Skipped rescheduling wp_version_check - already scheduled for correct time', 'wcd_save_update_group_settings', 'debug' );
+		}
+
+		if ( $wcd_wp_version_check_needs_reschedule ) {
+			// Backup cron in case something else changes the wp_version_check cron. We add 1 second to let it run 2nd.
+			wp_clear_scheduled_hook( 'wcd_wp_version_check' );
+			wp_schedule_event( $should_next_run_gmt + 1, 'daily', 'wcd_wp_version_check' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Rescheduled wcd_wp_version_check', 'wcd_save_update_group_settings', 'debug' );
+		} else {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Skipped rescheduling wcd_wp_version_check - already scheduled for correct time', 'wcd_save_update_group_settings', 'debug' );
+		}
 
 		// Create our external webhook url for checking for updates daily.
 		$webhook_url = add_query_arg(
