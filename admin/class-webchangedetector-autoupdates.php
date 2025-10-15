@@ -1018,21 +1018,17 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function wcd_save_update_group_settings( $group_settings ) {
-		
+		$auto_update_settings = self::get_auto_update_settings();
 		// We only need to setup the webhook if auto update checks are enabled.
 		if ( empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			return;
 		}
 		
 		// Get the time in UTC from API.
-		if ( isset( $group_settings['auto_update_checks_from'] ) ) {
-			$auto_update_checks_from_utc = $group_settings['auto_update_checks_from'];
+		if ( !empty( $group_settings['auto_update_checks_from'] ) ) {
+			$auto_update_checks_from_utc = $group_settings['auto_update_checks_from'] ?? '00:00';
 		} else {
-			$auto_update_settings = self::get_auto_update_settings();
-			if ( ! $auto_update_settings ) {
-				return;
-			}
-			$auto_update_checks_from_utc = $auto_update_settings['auto_update_checks_from'];
+			$auto_update_checks_from_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 		}
 
 		// IMPORTANT: The time from API is in UTC and represents when the user wants.
