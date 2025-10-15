@@ -1018,6 +1018,12 @@ class WebChangeDetector_Autoupdates {
 	 * @return void
 	 */
 	public function wcd_save_update_group_settings( $group_settings ) {
+		
+		// We only need to setup the webhook if auto update checks are enabled.
+		if ( empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+			return;
+		}
+		
 		// Get the time in UTC from API.
 		if ( isset( $group_settings['auto_update_checks_from'] ) ) {
 			$auto_update_checks_from_utc = $group_settings['auto_update_checks_from'];
@@ -1064,8 +1070,6 @@ class WebChangeDetector_Autoupdates {
 			'wcd_save_update_group_settings',
 			'debug'
 		);
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Scheduling wp_version_check for ' . gmdate( 'Y-m-d H:i:s', $should_next_run_gmt ), 'wcd_save_update_group_settings', 'debug' );
 
 		// Get currently scheduled times.
 		$current_wp_version_check     = wp_next_scheduled( 'wp_version_check' );
