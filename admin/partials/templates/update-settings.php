@@ -83,7 +83,11 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
 					$current_time     = current_time( 'H:i' );
 					// translators: %1$s is the timezone display string, %2$s is the current website time.
-					$description = sprintf( __( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ), $timezone_display, $current_time );
+					$description = sprintf(
+						__( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s<br><strong>Note:</strong> After daylight saving time changes, please review and re-save these settings to ensure correct timing.', 'webchangedetector' ),
+						$timezone_display,
+						$current_time
+					);
 					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>

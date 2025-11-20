@@ -683,7 +683,7 @@ class WebChangeDetector_Admin_Settings {
 					if ( strpos( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) === 0 ) {
 						$website_details = $website;
 						if ( is_string( $website['sync_url_types'] ) ) {
-							$decoded = json_decode( $website['sync_url_types'], true );
+							$decoded                           = json_decode( $website['sync_url_types'], true );
 							$website_details['sync_url_types'] = is_array( $decoded ) ? $decoded : array();
 						} else {
 							$website_details['sync_url_types'] = is_array( $website['sync_url_types'] ) ? $website['sync_url_types'] : array();
@@ -718,7 +718,7 @@ class WebChangeDetector_Admin_Settings {
 						if ( strpos( rtrim( $website['domain'], '/' ), $our_domain ) === 0 ) {
 							$website_details = $website;
 							if ( is_string( $website['sync_url_types'] ) ) {
-								$decoded = json_decode( $website['sync_url_types'], true );
+								$decoded                           = json_decode( $website['sync_url_types'], true );
 								$website_details['sync_url_types'] = is_array( $decoded ) ? $decoded : array();
 							} else {
 								$website_details['sync_url_types'] = is_array( $website['sync_url_types'] ) ? $website['sync_url_types'] : array();

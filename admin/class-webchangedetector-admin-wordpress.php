@@ -410,7 +410,7 @@ class WebChangeDetector_Admin_WordPress {
 			$post_after_url  = get_permalink( $post_after );
 
 			$website_details = $this->admin->settings_handler->get_website_details();
-			
+
 			// Check if website_details is valid.
 			if ( ! is_array( $website_details ) ) {
 				return;
@@ -710,7 +710,7 @@ class WebChangeDetector_Admin_WordPress {
 
 		// Normalize URL - remove trailing slash for comparison
 		$normalized_url = rtrim( $url, '/' );
-		
+
 		// Create URL filter to search for this specific URL.
 		// For frontpage, try searching without trailing slash
 		$url_filter = array(
@@ -730,14 +730,14 @@ class WebChangeDetector_Admin_WordPress {
 		// If no results found with normalized URL and this might be the frontpage, try with just the domain
 		if ( empty( $manual_urls ) && empty( $monitoring_urls ) && $normalized_url !== $url ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying original: ' . $url, 'get_url_monitoring_status', 'debug' );
-			
+
 			// Try again with the original URL (with trailing slash)
-			$url_filter = array(
+			$url_filter            = array(
 				'url' => $url,
 			);
 			$manual_group_urls     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
 			$monitoring_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
-			
+
 			$manual_urls     = $manual_group_urls['data'] ?? array();
 			$monitoring_urls = $monitoring_group_urls['data'] ?? array();
 		}

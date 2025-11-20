@@ -14,6 +14,7 @@
  *
  * @wordpress-plugin
  * Plugin Name:       Web Change Detector
+ * Text Domain:       webchangedetector
  * Plugin URI:        https://www.webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
  * Version:           4.0.5

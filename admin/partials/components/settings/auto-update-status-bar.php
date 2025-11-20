@@ -76,22 +76,42 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		$next_check_time = $time_until;
 		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
 	} else {
-		// No auto-updates scheduled - either because wp_version_check is not scheduled
-		// or because no enabled weekdays match upcoming checks.
-		$status_class   = 'wcd-status-inactive';
-		$status_icon    = 'warning';
-		$status_title   = __( 'Auto-Update Checks', 'webchangedetector' );
-		$status_message = __( 'Not scheduled', 'webchangedetector' );
-		
-		// Check if wp_version_check is scheduled at all.
-		$wp_check = wp_next_scheduled( 'wp_version_check' );
-		$wcd_check = wp_next_scheduled( 'wcd_wp_version_check' );
-		if ( ! $wp_check && ! $wcd_check ) {
-			$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
-		} elseif ( empty( $enabled_weekdays ) ) {
-			$next_check_time = __( 'No weekdays enabled', 'webchangedetector' );
+		// Check if auto-updates were checked recently (within last 24 hours).
+		$last_check_time = get_option( 'wcd_last_auto_update_check_time' );
+
+		if ( $last_check_time && $last_check_time > ( time() - 24 * HOUR_IN_SECONDS ) ) {
+			// Auto-updates were checked recently - all up to date.
+			$status_class   = 'wcd-status-complete';
+			$status_icon    = 'yes-alt';
+			$status_title   = __( 'Auto-Update Checks', 'webchangedetector' );
+			$status_message = __( 'Last check', 'webchangedetector' );
+
+			// Show when last check was.
+			$time_since      = human_time_diff( $last_check_time, time() );
+			$next_check_time = sprintf(
+				/* translators: %s: time since last check (e.g., "2 hours ago") */
+				__( '%s ago - All up to date', 'webchangedetector' ),
+				$time_since
+			);
+			$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_check_time );
 		} else {
-			$next_check_time = __( 'No checks match enabled days/times', 'webchangedetector' );
+			// No auto-updates scheduled - either because wp_version_check is not scheduled
+			// or because no enabled weekdays match upcoming checks.
+			$status_class   = 'wcd-status-inactive';
+			$status_icon    = 'warning';
+			$status_title   = __( 'Auto-Update Checks', 'webchangedetector' );
+			$status_message = __( 'Not scheduled', 'webchangedetector' );
+
+			// Check if wp_version_check is scheduled at all.
+			$wp_check  = wp_next_scheduled( 'wp_version_check' );
+			$wcd_check = wp_next_scheduled( 'wcd_wp_version_check' );
+			if ( ! $wp_check && ! $wcd_check ) {
+				$next_check_time = __( 'WordPress auto-updates disabled', 'webchangedetector' );
+			} elseif ( empty( $enabled_weekdays ) ) {
+				$next_check_time = __( 'No weekdays enabled', 'webchangedetector' );
+			} else {
+				$next_check_time = __( 'No checks match enabled days/times', 'webchangedetector' );
+			}
 		}
 	}
 } elseif ( ! $auto_update_checks_enabled ) {

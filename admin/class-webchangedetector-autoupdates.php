@@ -439,18 +439,18 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public static function get_next_auto_update_time() {
 		$auto_update_settings = self::get_auto_update_settings();
-		
-		if ( ! $auto_update_settings || 
+
+		if ( ! $auto_update_settings ||
 			! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
 			empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			return false;
 		}
-		
+
 		// Get the next scheduled wp_version_check.
 		$next_wp_check = wp_next_scheduled( 'wp_version_check' );
 
 		// Check for our fallback cron.
-		if(!$next_wp_check){
+		if ( ! $next_wp_check ) {
 			$next_wp_check = wp_next_scheduled( 'wcd_wp_version_check' );
 		}
 
@@ -458,17 +458,17 @@ class WebChangeDetector_Autoupdates {
 		if ( ! $next_wp_check ) {
 			return false;
 		}
-		
+
 		// Get enabled weekdays.
 		$enabled_weekdays = array();
-		$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
+		$weekdays         = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
 		foreach ( $weekdays as $weekday ) {
 			$key = 'auto_update_checks_' . $weekday;
 			if ( array_key_exists( $key, $auto_update_settings ) && ! empty( $auto_update_settings[ $key ] ) ) {
 				$enabled_weekdays[] = $weekday;
 			}
 		}
-		
+
 		// If no weekdays are enabled, auto-updates won't run.
 		if ( empty( $enabled_weekdays ) ) {
 			return false;
@@ -477,16 +477,16 @@ class WebChangeDetector_Autoupdates {
 		// Get the time window settings in UTC from API.
 		// All times are handled in UTC to avoid timezone conversion issues and DST bugs.
 		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
-		$to_time_utc = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
-		
+		$to_time_utc   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
+
 		// Starting from the next wp_version_check time, find the next valid auto-update time.
-		$check_time = $next_wp_check;
+		$check_time        = $next_wp_check;
 		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
-		
+
 		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
 			// Get the weekday for this check time in UTC.
 			$weekday_name = strtolower( gmdate( 'l', $check_time ) );
-			
+
 			// Check if this weekday is enabled.
 			if ( in_array( $weekday_name, $enabled_weekdays, true ) ) {
 				// Get the current time in UTC (H:i format) for comparison.
@@ -510,14 +510,14 @@ class WebChangeDetector_Autoupdates {
 					return $check_time;
 				}
 			}
-			
+
 			// Move to the next day's scheduled time.
 			// WordPress typically schedules wp_version_check twice daily.
 			// We need to find the next scheduled occurrence.
 			$check_time = $check_time + DAY_IN_SECONDS;
-			
+
 			// Get the actual next scheduled time after this point.
-			$crons = _get_cron_array();
+			$crons      = _get_cron_array();
 			$next_found = false;
 			foreach ( $crons as $timestamp => $cron ) {
 				if ( $timestamp > $check_time - HOUR_IN_SECONDS && $timestamp < $check_time + HOUR_IN_SECONDS ) {
@@ -528,17 +528,17 @@ class WebChangeDetector_Autoupdates {
 					}
 				}
 			}
-			
+
 			// If we couldn't find a scheduled check around this time, estimate it.
 			if ( ! $next_found ) {
 				// WordPress usually schedules at the same time each day.
 				// Use the original time of day.
 				$original_hour = gmdate( 'H:i:s', $next_wp_check );
-				$next_date = gmdate( 'Y-m-d', $check_time );
-				$check_time = strtotime( $next_date . ' ' . $original_hour . ' GMT' );
+				$next_date     = gmdate( 'Y-m-d', $check_time );
+				$check_time    = strtotime( $next_date . ' ' . $original_hour . ' GMT' );
 			}
 		}
-		
+
 		// If we couldn't find a valid time in the next week, return false.
 		return false;
 	}
@@ -703,7 +703,7 @@ class WebChangeDetector_Autoupdates {
 
 			// Capture current plugin and theme versions before updates.
 			$current_versions = $this->capture_current_versions();
-			
+
 			$option_data = array(
 				'status'    => 'processing',
 				'batch_id'  => esc_html( $sc_response['batch'] ),
@@ -1000,7 +1000,7 @@ class WebChangeDetector_Autoupdates {
 		if ( empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
 			return;
 		}
-		
+
 		// Get the time in UTC from API.
 		if ( ! empty( $group_settings['auto_update_checks_from'] ) ) {
 			$auto_update_checks_from_utc = $group_settings['auto_update_checks_from'] ?? '00:00';
@@ -2237,7 +2237,7 @@ class WebChangeDetector_Autoupdates {
 
 							// Try to get the pre-update version from stored data.
 							$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-							
+
 							if ( $pre_update_data && isset( $pre_update_data['versions']['plugins'] ) && property_exists( $plugin_update->item, 'plugin' ) ) {
 								$plugin_key = $plugin_update->item->plugin;
 								if ( isset( $pre_update_data['versions']['plugins'][ $plugin_key ] ) ) {
@@ -2305,7 +2305,7 @@ class WebChangeDetector_Autoupdates {
 
 								// Try to get the pre-update version from stored data.
 								$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-								
+
 								if ( $pre_update_data && isset( $pre_update_data['versions']['themes'] ) ) {
 									$theme_key = $theme_update->item->theme;
 									if ( isset( $pre_update_data['versions']['themes'][ $theme_key ] ) ) {

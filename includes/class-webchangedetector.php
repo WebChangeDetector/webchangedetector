@@ -249,7 +249,7 @@ class WebChangeDetector {
 	 * @access   private
 	 */
 	private function define_admin_hooks() {
-		$plugin_admin = new WebChangeDetector_Admin( $this->get_plugin_name() );
+		$plugin_admin     = new WebChangeDetector_Admin( $this->get_plugin_name() );
 		$plugin_wordpress = new WebChangeDetector_Admin_WordPress( $this->get_plugin_name(), $this->get_version(), $plugin_admin );
 
 		// Initialize AJAX coordinator which will register handlers.
