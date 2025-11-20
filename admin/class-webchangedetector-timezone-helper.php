@@ -19,10 +19,13 @@ class WebChangeDetector_Timezone_Helper {
 	/**
 	 * Convert UTC time to WordPress site timezone.
 	 *
+	 * Uses current date for accurate DST offset calculation.
+	 *
 	 * @param string $utc_time Time in UTC format (H:i).
+	 * @param string $date Optional date in Y-m-d format. Defaults to today.
 	 * @return string Time in site timezone format (H:i).
 	 */
-	public static function utc_to_site_time( $utc_time ) {
+	public static function utc_to_site_time( $utc_time, $date = null ) {
 		if ( empty( $utc_time ) ) {
 			return $utc_time;
 		}
@@ -33,8 +36,13 @@ class WebChangeDetector_Timezone_Helper {
 			$site_timezone   = new \DateTimeZone( $timezone_string );
 			$utc_timezone    = new \DateTimeZone( 'UTC' );
 
-			// Create DateTime object with UTC time.
-			$datetime = \DateTime::createFromFormat( 'H:i', $utc_time, $utc_timezone );
+			// Use provided date or current date for accurate DST calculation.
+			if ( null === $date ) {
+				$date = gmdate( 'Y-m-d' );
+			}
+
+			// Create DateTime object with full date and time in UTC.
+			$datetime = \DateTime::createFromFormat( 'Y-m-d H:i', $date . ' ' . $utc_time, $utc_timezone );
 			if ( ! $datetime ) {
 				// If format doesn't match, return original.
 				return $utc_time;
@@ -54,10 +62,13 @@ class WebChangeDetector_Timezone_Helper {
 	/**
 	 * Convert WordPress site timezone time to UTC.
 	 *
+	 * Uses current date for accurate DST offset calculation.
+	 *
 	 * @param string $site_time Time in site timezone format (H:i).
+	 * @param string $date Optional date in Y-m-d format. Defaults to today.
 	 * @return string Time in UTC format (H:i).
 	 */
-	public static function site_time_to_utc( $site_time ) {
+	public static function site_time_to_utc( $site_time, $date = null ) {
 		if ( empty( $site_time ) ) {
 			return $site_time;
 		}
@@ -68,8 +79,13 @@ class WebChangeDetector_Timezone_Helper {
 			$site_timezone   = new \DateTimeZone( $timezone_string );
 			$utc_timezone    = new \DateTimeZone( 'UTC' );
 
-			// Create DateTime object with site timezone time.
-			$datetime = \DateTime::createFromFormat( 'H:i', $site_time, $site_timezone );
+			// Use provided date or current date for accurate DST calculation.
+			if ( null === $date ) {
+				$date = gmdate( 'Y-m-d' );
+			}
+
+			// Create DateTime object with full date and time in site timezone.
+			$datetime = \DateTime::createFromFormat( 'Y-m-d H:i', $date . ' ' . $site_time, $site_timezone );
 			if ( ! $datetime ) {
 				// If format doesn't match, return original.
 				return $site_time;

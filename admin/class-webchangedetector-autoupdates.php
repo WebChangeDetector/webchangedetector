@@ -473,11 +473,9 @@ class WebChangeDetector_Autoupdates {
 		if ( empty( $enabled_weekdays ) ) {
 			return false;
 		}
-		
-		// Load timezone helper.
-		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
-		
-		// Get the time window settings (in UTC from API).
+
+		// Get the time window settings in UTC from API.
+		// All times are handled in UTC to avoid timezone conversion issues and DST bugs.
 		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 		$to_time_utc = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 		
@@ -486,36 +484,29 @@ class WebChangeDetector_Autoupdates {
 		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
 		
 		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
-			// Get the weekday for this check time.
+			// Get the weekday for this check time in UTC.
 			$weekday_name = strtolower( gmdate( 'l', $check_time ) );
 			
 			// Check if this weekday is enabled.
 			if ( in_array( $weekday_name, $enabled_weekdays, true ) ) {
+				// Get the current time in UTC (H:i format) for comparison.
+				$check_time_hm = gmdate( 'H:i', $check_time );
+
 				// Check if the time is within the allowed window.
-				// We need to check if the wp_version_check time falls within our time window.
+				// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
+				$is_in_window = false;
 				
-				// Convert check time to site timezone for comparison.
-				$wp_timezone = wp_timezone();
-				$check_datetime = new \DateTime( '@' . $check_time );
-				$check_datetime->setTimezone( $wp_timezone );
-				
-				// Get the from and to times for this date in site timezone.
-				$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $from_time_utc );
-				$to_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $to_time_utc );
-				
-				// Create DateTime objects for the time window on the check date.
-				$date_string = $check_datetime->format( 'Y-m-d' );
-				$from_datetime = new \DateTime( $date_string . ' ' . $from_time_site . ':00', $wp_timezone );
-				$to_datetime = new \DateTime( $date_string . ' ' . $to_time_site . ':59', $wp_timezone );
-				
-				// Handle case where time window spans midnight.
-				if ( $to_datetime <= $from_datetime ) {
-					$to_datetime->modify( '+1 day' );
+				if ( $from_time_utc <= $to_time_utc ) {
+					// Normal case: e.g., 09:00 to 17:00.
+					$is_in_window = ( $check_time_hm >= $from_time_utc && $check_time_hm <= $to_time_utc );
+				} else {
+					// Midnight wraparound case: e.g., 22:00 to 06:00.
+					$is_in_window = ( $check_time_hm >= $from_time_utc || $check_time_hm <= $to_time_utc );
 				}
-				
-				// Check if the scheduled time falls within the window.
-				if ( $check_datetime >= $from_datetime && $check_datetime <= $to_datetime ) {
+
+				if ( $is_in_window ) {
 					// This is a valid auto-update time!
+					
 					return $check_time;
 				}
 			}
@@ -591,13 +582,14 @@ class WebChangeDetector_Autoupdates {
 	 * @return bool True if allowed today, false otherwise.
 	 */
 	private function is_allowed_today( $auto_update_settings ) {
-		$todays_weekday = strtolower( current_time( 'l' ) );
+		// Use UTC for weekday check to match time window logic (which also uses UTC).
+		$todays_weekday = strtolower( gmdate( 'l' ) );
 		$weekday_key    = 'auto_update_checks_' . $todays_weekday;
 
 		if ( ! array_key_exists( $weekday_key, $auto_update_settings ) ||
 			empty( $auto_update_settings[ $weekday_key ] ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Canceling auto updates: ' . $todays_weekday . ' is disabled.',
+				'Canceling auto updates: ' . $todays_weekday . ' UTC is disabled.',
 				'wp_maybe_auto_update',
 				'debug'
 			);
@@ -613,64 +605,49 @@ class WebChangeDetector_Autoupdates {
 	 * @return bool True if within time window, false otherwise.
 	 */
 	private function is_within_time_window( $auto_update_settings ) {
-		// Load timezone helper.
-		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
+		// Get the time window settings in UTC from API.
+		// All times are handled in UTC to avoid timezone conversion issues and DST bugs.
+		$from_time_utc = $auto_update_settings['auto_update_checks_from'];
+		$to_time_utc   = $auto_update_settings['auto_update_checks_to'];
 
-		// Convert UTC times from API to site timezone.
-		$from_time_site = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
-			$auto_update_settings['auto_update_checks_from']
-		);
-		$to_time_site   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time(
-			$auto_update_settings['auto_update_checks_to']
-		);
+		// Get current time in UTC (H:i format) for comparison.
+		$current_time_utc = gmdate( 'H:i' );
 
-		// Use WordPress timezone-aware datetime for accurate comparison.
-		$wp_timezone = wp_timezone();
-		$now_wp      = new \DateTime( 'now', $wp_timezone );
+		// Check if current time is within the allowed window.
+		// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
+		$is_in_window = false;
 
-		// Create DateTime objects for from and to times.
-		$from_datetime = new \DateTime( $now_wp->format( 'Y-m-d' ) . ' ' . $from_time_site, $wp_timezone );
-		$to_datetime   = new \DateTime( $now_wp->format( 'Y-m-d' ) . ' ' . $to_time_site, $wp_timezone );
-
-		// Get timestamps for comparison.
-		$from_timestamp    = $from_datetime->getTimestamp();
-		$to_timestamp      = $to_datetime->getTimestamp();
-		$current_timestamp = $now_wp->getTimestamp();
-
-		// Check if current time is between from_time and to_time.
-		if ( $from_timestamp < $to_timestamp ) {
-			// Case 1: Time range is on the same day.
-			if ( $current_timestamp < $from_timestamp || $current_timestamp > $to_timestamp ) {
-				$this->log_time_window_violation( $from_time_site, $to_time_site, false );
-				return false;
+		if ( $from_time_utc <= $to_time_utc ) {
+			// Normal case: e.g., 09:00 to 17:00.
+			$is_in_window = ( $current_time_utc >= $from_time_utc && $current_time_utc <= $to_time_utc );
+			if ( ! $is_in_window ) {
+				$this->log_time_window_violation( $from_time_utc, $to_time_utc, false );
 			}
 		} else {
-			// Case 2: Time range spans midnight.
-			$to_datetime->modify( '+1 day' );
-			$to_timestamp = $to_datetime->getTimestamp();
-			if ( ! ( $current_timestamp >= $from_timestamp || $current_timestamp <= $to_timestamp ) ) {
-				$this->log_time_window_violation( $from_time_site, $to_time_site, true );
-				return false;
+			// Midnight wraparound case: e.g., 22:00 to 06:00.
+			$is_in_window = ( $current_time_utc >= $from_time_utc || $current_time_utc <= $to_time_utc );
+			if ( ! $is_in_window ) {
+				$this->log_time_window_violation( $from_time_utc, $to_time_utc, true );
 			}
 		}
 
-		return true;
+		return $is_in_window;
 	}
 
 	/**
 	 * Log time window violation.
 	 *
-	 * @param string $from_time From time in site timezone.
-	 * @param string $to_time To time in site timezone.
+	 * @param string $from_time From time in UTC.
+	 * @param string $to_time To time in UTC.
 	 * @param bool   $spans_midnight Whether the time range spans midnight.
 	 */
 	private function log_time_window_violation( $from_time, $to_time, $spans_midnight ) {
 		$message = sprintf(
-			'Canceling auto updates: %s is not between %s and %s (site timezone%s)',
-			current_time( 'H:i' ),
+			'Canceling auto updates: %s UTC is not between %s and %s UTC%s',
+			gmdate( 'H:i' ),
 			$from_time,
 			$to_time,
-			$spans_midnight ? ', spans midnight' : ''
+			$spans_midnight ? ' (spans midnight)' : ''
 		);
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 			$message,
@@ -1025,7 +1002,7 @@ class WebChangeDetector_Autoupdates {
 		}
 		
 		// Get the time in UTC from API.
-		if ( !empty( $group_settings['auto_update_checks_from'] ) ) {
+		if ( ! empty( $group_settings['auto_update_checks_from'] ) ) {
 			$auto_update_checks_from_utc = $group_settings['auto_update_checks_from'] ?? '00:00';
 		} else {
 			$auto_update_checks_from_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
