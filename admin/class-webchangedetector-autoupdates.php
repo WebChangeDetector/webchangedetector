@@ -180,6 +180,16 @@ class WebChangeDetector_Autoupdates {
 				'automatic_updates_complete',
 				'error'
 			);
+
+			// Log error for user visibility.
+			$this->log_auto_update_error(
+				'skip_error',
+				array(
+					'phase' => 'post_update_screenshots',
+					'error' => $e->getMessage(),
+				)
+			);
+
 			// Clean up pre-update data since we can't complete the comparison.
 			delete_option( WCD_PRE_AUTO_UPDATE );
 			return;
@@ -348,6 +358,17 @@ class WebChangeDetector_Autoupdates {
 				'wp_maybe_auto_update',
 				'debug'
 			);
+
+			// Log error for user visibility.
+			$this->log_auto_update_error(
+				'skip_cooldown',
+				array(
+					'last_check'    => gmdate( 'Y-m-d H:i:s', $last_check_time ),
+					'next_allowed'  => gmdate( 'Y-m-d H:i:s', $next_allowed ),
+					'hours_remaining' => round( ( $next_allowed - time() ) / HOUR_IN_SECONDS, 1 ),
+				)
+			);
+
 			return true;
 		}
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cooldown period found or it has passed', 'wp_maybe_auto_update', 'debug' );
@@ -729,6 +750,16 @@ class WebChangeDetector_Autoupdates {
 				'wp_maybe_auto_update',
 				'error'
 			);
+
+			// Log error for user visibility.
+			$this->log_auto_update_error(
+				'skip_error',
+				array(
+					'phase' => 'pre_update_screenshots',
+					'error' => $e->getMessage(),
+				)
+			);
+
 			delete_option( WCD_AUTO_UPDATES_RUNNING );
 			return false;
 		}
@@ -829,6 +860,16 @@ class WebChangeDetector_Autoupdates {
 				'wp_maybe_auto_update',
 				'warning'
 			);
+
+			// Log error for user visibility.
+			$this->log_auto_update_error(
+				'skip_error',
+				array(
+					'phase' => 'queue_status_check',
+					'error' => $e->getMessage(),
+				)
+			);
+
 			$this->reschedule( 'wp_maybe_auto_update' );
 			$this->set_lock();
 			return false;
@@ -2133,6 +2174,58 @@ class WebChangeDetector_Autoupdates {
 				'error'
 			);
 		}
+	}
+
+	/**
+	 * Log auto-update error for user visibility.
+	 *
+	 * Only logs actionable errors that prevent auto-updates from running
+	 * when they should be running. This helps users understand why their
+	 * configured auto-updates didn't execute.
+	 *
+	 * @since 4.0.2
+	 * @param string $error_type Error type: 'skip_cooldown' or 'skip_error'.
+	 * @param array  $details    Error details (context-specific information).
+	 * @return void
+	 */
+	private function log_auto_update_error( $error_type, $details ) {
+		// Get existing history.
+		$history = get_option( 'wcd_auto_update_history', array() );
+		if ( ! is_array( $history ) ) {
+			$history = array();
+		}
+
+		// Create error entry.
+		$error_entry = array(
+			'timestamp' => time(),
+			'batch_id'  => null,
+			'updates'   => array(),
+			'summary'   => array(
+				'status'          => 'error',
+				'total_attempted' => 0,
+				'successful'      => 0,
+			),
+			'error'     => array(
+				'type'    => sanitize_text_field( $error_type ),
+				'details' => $details,
+			),
+		);
+
+		// Add to beginning of history.
+		array_unshift( $history, $error_entry );
+
+		// Keep only last 30 entries to prevent option bloat.
+		$history = array_slice( $history, 0, 30 );
+
+		// Save updated history.
+		update_option( 'wcd_auto_update_history', $history, false );
+
+		// Also log to debug logs for troubleshooting.
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Auto-update error logged: ' . $error_type . ' - ' . wp_json_encode( $details ),
+			'log_auto_update_error',
+			'warning'
+		);
 	}
 
 	/**

@@ -529,16 +529,25 @@ class WebChangeDetector_Logs_Controller {
 										<div style="display: inline-block;">
 											<div class="accordion-batch-title-tile accordion-batch-title-tile-status">
 												<?php
+												// Check if this is an error entry.
+												$is_error     = isset( $entry['error'] ) && ! empty( $entry['error'] );
 												$status_class = 'status-' . str_replace( '_', '', $entry['summary']['status'] );
-												$status_text  = 'completed' === $entry['summary']['status'] ? __( 'Completed', 'webchangedetector' ) :
-													( 'completed_with_errors' === $entry['summary']['status'] ? __( 'Completed with Errors', 'webchangedetector' ) :
-													__( 'Failed', 'webchangedetector' ) );
 
-												$status_icon = 'completed' === $entry['summary']['status'] ? '✓' :
-													( 'completed_with_errors' === $entry['summary']['status'] ? '⚠' : '✗' );
+												if ( $is_error ) {
+													$status_text  = __( 'Error', 'webchangedetector' );
+													$status_icon  = '✗';
+													$status_color = '#dc3232';
+												} else {
+													$status_text = 'completed' === $entry['summary']['status'] ? __( 'Completed', 'webchangedetector' ) :
+														( 'completed_with_errors' === $entry['summary']['status'] ? __( 'Completed with Errors', 'webchangedetector' ) :
+														__( 'Failed', 'webchangedetector' ) );
 
-												$status_color = 'completed' === $entry['summary']['status'] ? '#46b450' :
-													( 'completed_with_errors' === $entry['summary']['status'] ? '#ffb900' : '#dc3232' );
+													$status_icon = 'completed' === $entry['summary']['status'] ? '✓' :
+														( 'completed_with_errors' === $entry['summary']['status'] ? '⚠' : '✗' );
+
+													$status_color = 'completed' === $entry['summary']['status'] ? '#46b450' :
+														( 'completed_with_errors' === $entry['summary']['status'] ? '#ffb900' : '#dc3232' );
+												}
 												?>
 												<span style="color: <?php echo esc_attr( $status_color ); ?>; font-weight: bold;">
 													<?php echo esc_html( $status_icon . ' ' . $status_text ); ?>
@@ -549,14 +558,23 @@ class WebChangeDetector_Logs_Controller {
 											</div>
 											<div class="accordion-batch-title-tile">
 												<?php
-												echo esc_html(
-													sprintf(
-														/* translators: 1: number of successful updates, 2: total attempted updates */
-														esc_html__( '%1$d of %2$d updates successful', 'webchangedetector' ),
-														$entry['summary']['successful'],
-														$entry['summary']['total_attempted']
-													)
-												);
+												if ( $is_error ) {
+													// Display error type for error entries.
+													if ( 'skip_cooldown' === $entry['error']['type'] ) {
+														esc_html_e( 'Auto-Update Cooldown Active', 'webchangedetector' );
+													} else {
+														esc_html_e( 'Technical Error Occurred', 'webchangedetector' );
+													}
+												} else {
+													echo esc_html(
+														sprintf(
+															/* translators: 1: number of successful updates, 2: total attempted updates */
+															esc_html__( '%1$d of %2$d updates successful', 'webchangedetector' ),
+															$entry['summary']['successful'],
+															$entry['summary']['total_attempted']
+														)
+													);
+												}
 												?>
 											</div>
 											
@@ -581,10 +599,88 @@ class WebChangeDetector_Logs_Controller {
 											}
 										</style>
 										<?php
+										// Check if this is an error entry.
+										$is_error = isset( $entry['error'] ) && ! empty( $entry['error'] );
+
+										if ( $is_error ) :
+											?>
+											<!-- Error Display Section -->
+											<div style="background: #fef2f2; border-left: 4px solid #dc3232; padding: 15px; margin: 10px 0; border-radius: 3px;">
+												<h4 style="color: #dc3232; margin: 0 0 10px 0; font-size: 15px;">
+													<?php
+													if ( 'skip_cooldown' === $entry['error']['type'] ) {
+														esc_html_e( 'Auto-Update Cooldown Active', 'webchangedetector' );
+													} else {
+														esc_html_e( 'Technical Error', 'webchangedetector' );
+													}
+													?>
+												</h4>
+												<div style="color: #333; line-height: 1.6;">
+													<?php
+													if ( 'skip_cooldown' === $entry['error']['type'] ) {
+														// Display cooldown details.
+														echo '<p>';
+														echo esc_html(
+															sprintf(
+																/* translators: %s: time when next check is allowed */
+																__( 'The auto-update cooldown period is still active. Auto-updates were last checked at %1$s. Next check will be allowed at %2$s.', 'webchangedetector' ),
+																isset( $entry['error']['details']['last_check'] ) ? esc_html( $entry['error']['details']['last_check'] ) : __( 'unknown time', 'webchangedetector' ),
+																isset( $entry['error']['details']['next_allowed'] ) ? esc_html( $entry['error']['details']['next_allowed'] ) : __( 'unknown time', 'webchangedetector' )
+															)
+														);
+														echo '</p>';
+														if ( isset( $entry['error']['details']['hours_remaining'] ) ) {
+															echo '<p style="margin: 10px 0 0 0; font-weight: 600;">';
+															echo esc_html(
+																sprintf(
+																	/* translators: %s: hours remaining */
+																	__( 'Time remaining: %s hours', 'webchangedetector' ),
+																	$entry['error']['details']['hours_remaining']
+																)
+															);
+															echo '</p>';
+														}
+													} else {
+														// Display technical error details.
+														echo '<p><strong>' . esc_html__( 'Phase:', 'webchangedetector' ) . '</strong> ';
+														if ( isset( $entry['error']['details']['phase'] ) ) {
+															switch ( $entry['error']['details']['phase'] ) {
+																case 'pre_update_screenshots':
+																	esc_html_e( 'Taking screenshots before updates', 'webchangedetector' );
+																	break;
+																case 'post_update_screenshots':
+																	esc_html_e( 'Taking screenshots after updates', 'webchangedetector' );
+																	break;
+																case 'queue_status_check':
+																	esc_html_e( 'Checking screenshot processing status', 'webchangedetector' );
+																	break;
+																default:
+																	echo esc_html( $entry['error']['details']['phase'] );
+															}
+														}
+														echo '</p>';
+
+														if ( isset( $entry['error']['details']['error'] ) ) {
+															echo '<p style="margin-top: 10px;"><strong>' . esc_html__( 'Error Message:', 'webchangedetector' ) . '</strong><br>';
+															echo '<code style="background: #fff; padding: 5px 8px; border-radius: 3px; display: inline-block; margin-top: 5px;">';
+															echo esc_html( $entry['error']['details']['error'] );
+															echo '</code></p>';
+														}
+
+														echo '<p style="margin-top: 15px; color: #666; font-size: 13px;">';
+														esc_html_e( 'This error prevented the auto-update process from completing. Please check your API connection and try again.', 'webchangedetector' );
+														echo '</p>';
+													}
+													?>
+												</div>
+											</div>
+											<?php
+										else :
+											// Display normal update results.
 											// Use post-update batch_id for comparisons (the main batch_id field).
 											// This will be the post-update batch_id once it's available.
-										if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) :
-											?>
+											if ( isset( $entry['batch_id'] ) && $entry['batch_id'] ) :
+												?>
 												<p>
 													<a href="?page=webchangedetector-change-detections&batch_id=<?php echo esc_attr( $entry['batch_id'] ); ?>" class="button button-small">
 													<?php esc_html_e( 'View Visual Comparisons', 'webchangedetector' ); ?> →
@@ -674,6 +770,7 @@ class WebChangeDetector_Logs_Controller {
 												<?php endforeach; ?>
 											</div>
 										<?php endif; ?>
+										<?php endif; // Close if ( $is_error ) ?>
 									</div>
 								</div>
 							</div>
