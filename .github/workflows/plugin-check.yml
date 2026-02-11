@@ -48,7 +48,7 @@ jobs:
       - name: Set up wp-config
         working-directory: wordpress
         run: |
-          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=mysql --allow-root
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=127.0.0.1 --allow-root
 
       - name: Install WordPress
         working-directory: wordpress
