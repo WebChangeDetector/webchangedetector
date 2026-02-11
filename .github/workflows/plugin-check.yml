@@ -72,12 +72,11 @@ jobs:
           wp plugin status webchangedetector --allow-root
 
       - name: Composer install phpcs
-        working-directory: wordpress
+        working-directory: wordpress/wp-content/plugins/webchangedetector
         run: |
-          cd ..
           composer install
 
       - name: Run PHPCS on plugin
-        working-directory: wordpress
+        working-directory: wordpress/wp-content/plugins/webchangedetector
         run: |
-          ./vendor/bin/phpcs --standard=WordPress wordpress/wp-content/plugins/webchangedetector
+          ./vendor/bin/phpcs --standard=WordPress .
