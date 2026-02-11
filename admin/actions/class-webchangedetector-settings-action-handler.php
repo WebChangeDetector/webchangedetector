@@ -259,7 +259,7 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Validate interval.
 		if ( ! empty( $data['interval_in_h'] ) ) {
 			$interval        = floatval( $data['interval_in_h'] );
-			$valid_intervals = array( 0.25, 0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0, 24.0 );
+			$valid_intervals = array( 0.25, 0.5, 1.0, 3.0, 6.0, 12.0, 24.0 );
 
 			if ( ! in_array( $interval, $valid_intervals, true ) ) {
 				$errors[] = 'Invalid monitoring interval selected.';

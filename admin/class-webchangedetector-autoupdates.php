@@ -1355,7 +1355,8 @@ class WebChangeDetector_Autoupdates {
 		$auto_update_settings = self::get_auto_update_settings();
 		$to                   = get_bloginfo( 'admin_email' );
 		if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
-			$to = $auto_update_settings['auto_update_checks_emails'];
+			$emails = $auto_update_settings['auto_update_checks_emails'];
+			$to     = is_array( $emails ) ? implode( ',', $emails ) : $emails;
 		}
 		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );

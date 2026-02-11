@@ -92,7 +92,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Threshold Setting Component.
 					$threshold   = $group_and_urls['threshold'] ?? 0.0;
@@ -134,6 +134,14 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					?>
 				</div>
 			</div>
+
+			<?php
+			$advanced_settings_class = 'monitoring-setting';
+			$advanced_settings_style = $enabled ? '' : 'display: none;';
+			include WCD_PLUGIN_DIR . 'admin/partials/components/settings/advanced-screenshot-settings.php';
+			$advanced_settings_class = '';
+			$advanced_settings_style = '';
+			?>
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-css" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">

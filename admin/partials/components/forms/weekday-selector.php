@@ -42,41 +42,39 @@ $weekdays = array(
 );
 ?>
 
-<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
-	<label for="<?php echo esc_attr( $name_prefix ); ?>weekdays" style="vertical-align:top;">
-		<?php echo esc_html( $label ); ?>
-	</label>
-	<div id="<?php echo esc_attr( $name_prefix ); ?>weekday_container" style="display: inline-block">
-		<?php foreach ( $weekdays as $day_key => $day_name ) : ?>
-			<?php
-			$field_name = $name_prefix . $day_key;
-			$is_checked = isset( $selected_days[ $day_key ] ) && $selected_days[ $day_key ];
-			?>
-			<input name="<?php echo esc_attr( $field_name ); ?>" value="0" type="hidden">
-			<input
-				name="<?php echo esc_attr( $field_name ); ?>"
-				value="1"
-				type="checkbox"
-				<?php checked( $is_checked ); ?>
-				class="<?php echo esc_attr( $field_name ); ?>"
-				id="<?php echo esc_attr( $field_name ); ?>">
-			<label for="<?php echo esc_attr( $field_name ); ?>" style="min-width: inherit">
-				<?php echo esc_html( $day_name ); ?>
-			</label><br>
-		<?php endforeach; ?>
-	</div>
-	<?php if ( $description ) : ?>
-		<br><small><?php echo esc_html( $description ); ?></small>
-	<?php endif; ?>
-
-	<?php if ( $show_validation ) : ?>
-		<span class="notice notice-error" id="error-on-days-validation" style="display: none;">
-			<span style="padding: 10px; display: block;" class="default-bg">
-				<?php esc_html_e( 'At least one weekday has to be selected.', 'webchangedetector' ); ?>
-			</span>
-		</span>
-	<?php endif; ?>
+<label for="<?php echo esc_attr( $name_prefix ); ?>weekdays" style="vertical-align:top;">
+	<?php echo esc_html( $label ); ?>
+</label>
+<div id="<?php echo esc_attr( $name_prefix ); ?>weekday_container" style="display: inline-block">
+	<?php foreach ( $weekdays as $day_key => $day_name ) : ?>
+		<?php
+		$field_name = $name_prefix . $day_key;
+		$is_checked = isset( $selected_days[ $day_key ] ) && $selected_days[ $day_key ];
+		?>
+		<input name="<?php echo esc_attr( $field_name ); ?>" value="0" type="hidden">
+		<input
+			name="<?php echo esc_attr( $field_name ); ?>"
+			value="1"
+			type="checkbox"
+			<?php checked( $is_checked ); ?>
+			class="<?php echo esc_attr( $field_name ); ?>"
+			id="<?php echo esc_attr( $field_name ); ?>">
+		<label for="<?php echo esc_attr( $field_name ); ?>" style="min-width: inherit">
+			<?php echo esc_html( $day_name ); ?>
+		</label><br>
+	<?php endforeach; ?>
 </div>
+<?php if ( $description ) : ?>
+	<small><?php echo esc_html( $description ); ?></small>
+<?php endif; ?>
+
+<?php if ( $show_validation ) : ?>
+	<span class="notice notice-error" id="error-on-days-validation" style="display: none;">
+		<span style="padding: 10px; display: block;" class="default-bg">
+			<?php esc_html_e( 'At least one weekday has to be selected.', 'webchangedetector' ); ?>
+		</span>
+	</span>
+<?php endif; ?>
 
 <?php if ( $show_validation ) : ?>
 	<script type="text/javascript">

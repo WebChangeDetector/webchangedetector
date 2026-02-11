@@ -68,7 +68,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Timeframe', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the time frame in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Time Range Selector Component.
 					// Convert UTC times from API to site timezone for display.
@@ -132,7 +132,8 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="wcd-form-control">
 					<?php
 					// Email Input Component.
-					$email_value     = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
+					$emails_raw      = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
+					$email_value     = is_array( $emails_raw ) ? implode( ', ', $emails_raw ) : $emails_raw;
 					$field_name      = 'auto_update_checks_emails';
 					$label           = __( 'Notification email to', 'webchangedetector' );
 					$description     = '';
@@ -149,7 +150,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Threshold Setting Component.
 					$label       = '';
@@ -159,6 +160,8 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					?>
 				</div>
 			</div>
+
+			<?php include WCD_PLUGIN_DIR . 'admin/partials/components/settings/advanced-screenshot-settings.php'; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-css">
 				<div class="wcd-form-label-wrapper">

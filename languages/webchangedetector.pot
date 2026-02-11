@@ -318,6 +318,7 @@ msgid "Email"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-account.php:373
+#: admin/partials/components/settings/advanced-screenshot-settings.php
 msgid "Password"
 msgstr ""
 
@@ -2134,6 +2135,66 @@ msgstr ""
 
 #: admin/partials/templates/update-settings.php:133
 msgid "Notification email to"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Basic Authentication"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Provide credentials for password-protected pages that require authentication."
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Username"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Show/Hide password"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Clear the field to delete the password, or enter a new password to update it."
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Enter a password to enable Basic Authentication."
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Static IP Proxy"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Route screenshot requests through a static IP address for servers that require IP whitelisting."
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Enable Static IP Proxy"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Static IP:"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Copy IP address"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Screenshot Delay"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Adjust the delay between screenshot starts to reduce server load."
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "7 (default)"
+msgstr ""
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Minimum 7 seconds, maximum 60 seconds. Leave empty for default (7 seconds)."
 msgstr ""
 
 #: admin/views/class-webchangedetector-view-renderer.php:212

@@ -2,7 +2,7 @@
 Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 4.0.6
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -54,9 +54,11 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 
-= 4.0.7 =
+= 4.1.0 =
 * Fix: Cooldown was set too early
-
+* Feature: Basic auth for checks behind authentication
+* Feature: Optional static IP proxy for whitelisting in firewalls
+* Feature: Individual delays between screenshots to prevent server overloading
 
 = 4.0.6 =
 * Fix: Consider summer/winter-time for auto update checks

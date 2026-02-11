@@ -131,6 +131,7 @@ class WebChangeDetector_Admin_WordPress {
 					'hours'                    => __( 'Hours', 'webchangedetector' ),
 					'minute'                   => __( 'Minute', 'webchangedetector' ),
 					'minutes'                  => __( 'Minutes', 'webchangedetector' ),
+					'everyHour'                => __( 'Every hour', 'webchangedetector' ),
 				)
 			);
 

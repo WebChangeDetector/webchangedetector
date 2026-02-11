@@ -302,7 +302,7 @@ function currentlyProcessing() {
         var localDate = new Date();
         var timeDiff = localDate.getTimezoneOffset() / 60;
 
-        $(".select-time").each(function (i, e) {
+        $(".select-time").not("select[name='hour_of_day'] .select-time").each(function (i, e) {
             let utcHour = parseInt($(this).val());
             let newDate = localDate.setHours(utcHour - timeDiff, 0);
             let localHour = new Date(newDate);
@@ -313,7 +313,88 @@ function currentlyProcessing() {
             $(this).html(localHour.toLocaleString(navigator.language, options));
         });
 
-        
+        // Convert a UTC hour (0-23) to a local time string like "14:00".
+        function utcHourToLocalString(utcHour) {
+            var d = new Date();
+            var offsetHours = d.getTimezoneOffset() / 60;
+            d.setHours(utcHour - offsetHours, 0, 0, 0);
+            return d.toLocaleString(navigator.language, { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Update hour_of_day dropdown based on the selected interval.
+        // Shows combined time slots (e.g. "8:00, 20:00" for 12h interval).
+        function updateHourOfDayDropdown() {
+            var intervalSelect = $("select[name='interval_in_h']");
+            var hourSelect = $("select[name='hour_of_day']");
+            var hourRow = $(".wcd-monitoring-hour-of-day");
+
+            if (!intervalSelect.length || !hourSelect.length) {
+                return;
+            }
+
+            var interval = parseFloat(intervalSelect.val());
+            var monitoringEnabled = $("input[name='enabled']").is(":checked");
+
+            // For intervals <= 1h, show the interval text instead of the dropdown.
+            if (interval <= 1) {
+                hourSelect.hide();
+                var intervalLabel = intervalSelect.find("option:selected").text().trim();
+                if (!hourRow.find(".wcd-interval-label").length) {
+                    hourSelect.after('<strong class="wcd-interval-label"></strong>');
+                }
+                hourRow.find(".wcd-interval-label").text(intervalLabel).show();
+                if (monitoringEnabled) {
+                    hourRow.show();
+                }
+                return;
+            }
+
+            // Only show the hour row if monitoring is enabled.
+            if (monitoringEnabled) {
+                hourRow.show();
+            }
+
+            // Remove interval label and show dropdown for intervals > 1h.
+            hourRow.find(".wcd-interval-label").hide();
+            hourSelect.show();
+
+            var currentVal = parseInt(hourSelect.val()) || 0;
+            var intInterval = Math.round(interval);
+            var numOptions = intInterval;
+
+            // Map existing hour value to valid dropdown value via modulo.
+            var mappedValue = currentVal % intInterval;
+
+            hourSelect.empty();
+
+            for (var i = 0; i < numOptions; i++) {
+                var times = [];
+                for (var h = i; h < 24; h += intInterval) {
+                    times.push(utcHourToLocalString(h));
+                }
+                var label = times.join(", ");
+                var option = $("<option>").val(i).text(label);
+                if (i === mappedValue) {
+                    option.prop("selected", true);
+                }
+                hourSelect.append(option);
+            }
+        }
+
+        // Initialize hour_of_day dropdown on page load.
+        updateHourOfDayDropdown();
+
+        // Update hour_of_day dropdown when interval changes.
+        $(document).on("change", "select[name='interval_in_h']", function () {
+            updateHourOfDayDropdown();
+        });
+
+        // Re-evaluate hour dropdown when monitoring toggle changes.
+        $(document).on("change", "input[name='enabled']", function () {
+            setTimeout(updateHourOfDayDropdown, 50);
+        });
+
+
 
         // Set time until next screenshots
         let autoEnabled = false;
@@ -1000,4 +1081,82 @@ function startManualChecks(groupId) {
     document.body.appendChild(form);
     form.submit();
 }
+
+/**
+ * Advanced Screenshot Settings: Password toggle, Copy IP, Password action tracking.
+ */
+jQuery(document).ready(function($) {
+
+    // Toggle password field visibility.
+    $(document).on('click', '.wcd-toggle-password-btn', function() {
+        var targetId = $(this).data('target');
+        var input = document.getElementById(targetId);
+        var icon = $(this).find('.dashicons');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.removeClass('dashicons-visibility').addClass('dashicons-hidden');
+        } else {
+            input.type = 'password';
+            icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
+        }
+    });
+
+    // Track password field changes for delete logic.
+    $(document).on('input', '.wcd-password-field', function() {
+        var $input = $(this);
+        var actionField = document.getElementById('basic_auth_password_action');
+        if (!actionField) {
+            return;
+        }
+
+        var hasPassword = $input.data('has-password') === 1 || $input.data('has-password') === '1';
+        var originalValue = $input.data('original-value');
+
+        if (hasPassword && $input.val() === '') {
+            actionField.value = 'delete';
+        } else if ($input.val() !== originalValue) {
+            actionField.value = '';
+        }
+    });
+
+    // Copy proxy IP address to clipboard.
+    $(document).on('click', '.wcd-copy-ip-btn', function() {
+        var ip = $(this).data('ip');
+        var $button = $(this);
+
+        if (!navigator.clipboard) {
+            var textarea = document.createElement('textarea');
+            textarea.value = ip;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                wcdShowCopyFeedback($button);
+            } catch (err) {
+                // Silently fail.
+            }
+            document.body.removeChild(textarea);
+            return;
+        }
+
+        navigator.clipboard.writeText(ip).then(function() {
+            wcdShowCopyFeedback($button);
+        });
+    });
+
+    // Show copy success feedback on the button.
+    function wcdShowCopyFeedback($button) {
+        var $icon = $button.find('.dashicons');
+        $icon.removeClass('dashicons-admin-page').addClass('dashicons-yes');
+        $button.css('color', '#10b981');
+
+        setTimeout(function() {
+            $icon.removeClass('dashicons-yes').addClass('dashicons-admin-page');
+            $button.css('color', '#0073aa');
+        }, 2000);
+    }
+});
 
