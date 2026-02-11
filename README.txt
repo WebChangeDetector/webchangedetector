@@ -54,6 +54,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 
+= 4.0.7 =
+* Fix: Cooldown was set too early
+
+
 = 4.0.6 =
 * Fix: Consider summer/winter-time for auto update checks
 * Impromenent: Logging for skipped auto-update checks

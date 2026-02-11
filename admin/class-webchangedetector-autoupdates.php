@@ -1194,15 +1194,6 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Set the check timestamp immediately after cooldown passes to prevent retry loops.
-		// This timestamp tracks when we START the workflow, regardless of success/failure.
-		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-			'Set auto-update check timestamp to prevent retries within 12 hours',
-			'wp_maybe_auto_update',
-			'debug'
-		);
-
 		// Step 4: Validate WCD configuration and check if auto-update checks are enabled.
 		$auto_update_settings = $this->validate_wcd_configuration();
 		if ( ! $auto_update_settings ) {
@@ -1220,6 +1211,16 @@ class WebChangeDetector_Autoupdates {
 			$this->set_lock();
 			return;
 		}
+
+		// Set the check timestamp after all validations pass to prevent retry loops.
+		// Must be AFTER time window/weekday checks so that triggers outside the window
+		// do not block the next valid trigger inside the window.
+		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Set auto-update check timestamp to prevent retries within 12 hours',
+			'wp_maybe_auto_update',
+			'debug'
+		);
 
 		// Step 7: Log filter context (informational only).
 		$this->log_filter_context();
