@@ -58,7 +58,6 @@ $section_id         = $section_id ?? 'toggle-section-' . wp_rand( 1000, 9999 );
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is pre-escaped by the calling function.
 	echo $content;
 	?>
-	.
 </div>
 
 <script type="text/javascript">

@@ -738,13 +738,14 @@ class WebChangeDetector_Admin_WordPress {
 		$manual_urls     = $manual_group_urls['data'] ?? array();
 		$monitoring_urls = $monitoring_group_urls['data'] ?? array();
 
-		// If no results found with normalized URL and this might be the frontpage, try with just the domain.
-		if ( empty( $manual_urls ) && empty( $monitoring_urls ) && $normalized_url !== $url ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying original: ' . $url, 'get_url_monitoring_status', 'debug' );
+		// If no results found, try the alternate trailing-slash form.
+		if ( empty( $manual_urls ) && empty( $monitoring_urls ) ) {
+			$alt_url = ( '/' === substr( $url, -1 ) ) ? rtrim( $url, '/' ) : $url . '/';
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying alternate: ' . $alt_url, 'get_url_monitoring_status', 'debug' );
 
-			// Try again with the original URL (with trailing slash).
+			// Try again with the alternate trailing-slash form.
 			$url_filter            = array(
-				'url' => $url,
+				'url' => $alt_url,
 			);
 			$manual_group_urls     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
 			$monitoring_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
