@@ -92,7 +92,7 @@ class WebChangeDetector_Admin_Settings {
 		// Proxy Type.
 		if ( isset( $postdata['proxy_type'] ) ) {
 			$proxy_type         = sanitize_text_field( $postdata['proxy_type'] );
-			$args['proxy_type'] = empty( $proxy_type ) ? null : $proxy_type;
+			$args['proxy_type'] = empty( $proxy_type ) ? 'none' : $proxy_type;
 		}
 
 		// Screenshot Delay.
