@@ -558,7 +558,8 @@ class WebChangeDetector_Admin {
 			|| ( null !== $quiet_start && null !== $quiet_end );
 
 		if ( $needs_filtering && $date_next_sc ) {
-			$candidate = $date_next_sc;
+			$candidate    = $date_next_sc;
+			$filter_found = false;
 
 			for ( $fi = 0; $fi < 32; $fi++ ) {
 				// Check if this day is allowed by schedule_type.
@@ -601,7 +602,12 @@ class WebChangeDetector_Admin {
 				}
 
 				$date_next_sc = $candidate;
+				$filter_found = true;
 				break;
+			}
+
+			if ( ! $filter_found ) {
+				$date_next_sc = false;
 			}
 		}
 
