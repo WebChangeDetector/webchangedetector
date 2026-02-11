@@ -417,14 +417,23 @@ function currentlyProcessing() {
         $("#next_sc_date").html("");
 
         if (nextScDate && autoEnabled && amountSelectedTotal > 0) {
-            let now = new Date($.now()); // summer/winter - time
-            nextScIn = new Date(nextScDate * 1000); // format time
-            nextScIn = new Date(nextScIn - now); // normal time
-            nextScIn.setHours(nextScIn.getHours() + (nextScIn.getTimezoneOffset() / 60)); // add timezone offset to normal time
-            var minutes = nextScIn.getMinutes() == 1 ? " " + wcdL10n.minute + " " : " " + wcdL10n.minutes + " ";
-            var hours = nextScIn.getHours() == 1 ? " " + wcdL10n.hour + " " : " " + wcdL10n.hours + " ";
-            txtNextScIn = nextScIn.getHours() + hours + nextScIn.getMinutes() + minutes;
-            $("#next_sc_date").html(getLocalDateTime(nextScDate));
+            var diffMs = (nextScDate * 1000) - Date.now();
+            var totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
+            var d = Math.floor(totalMinutes / 1440);
+            var h = Math.floor((totalMinutes % 1440) / 60);
+            var m = totalMinutes % 60;
+
+            var dayLabel = d === 1 ? " " + wcdL10n.day + " " : " " + wcdL10n.days + " ";
+            var hourLabel = h === 1 ? " " + wcdL10n.hour + " " : " " + wcdL10n.hours + " ";
+            var minuteLabel = m === 1 ? " " + wcdL10n.minute + " " : " " + wcdL10n.minutes + " ";
+
+            txtNextScIn = "";
+            if (d > 0) {
+                txtNextScIn += d + dayLabel;
+            }
+            txtNextScIn += h + hourLabel + m + minuteLabel;
+
+            $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + timezone + " " + utcLabel + ")");
             $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
         }
         $("#next_sc_in").html(txtNextScIn);

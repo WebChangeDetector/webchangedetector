@@ -477,6 +477,10 @@ class WebChangeDetector_Admin {
 				'interval_in_h'       => 24,
 				'hour_of_day'         => 0,
 				'selected_urls_count' => 0,
+				'schedule_type'       => 'interval',
+				'schedule_days'       => array(),
+				'quiet_hours_start'   => null,
+				'quiet_hours_end'     => null,
 			),
 			$group ?? array()
 		);
@@ -540,6 +544,69 @@ class WebChangeDetector_Admin {
 			}
 		}
 
+		// Apply schedule_type and quiet hours filtering.
+		$schedule_type = $group['schedule_type'];
+		$schedule_days = $group['schedule_days'];
+		if ( is_string( $schedule_days ) ) {
+			$schedule_days = json_decode( $schedule_days, true );
+		}
+		if ( ! is_array( $schedule_days ) ) {
+			$schedule_days = array();
+		}
+		$quiet_start = $group['quiet_hours_start'];
+		$quiet_end   = $group['quiet_hours_end'];
+
+		$needs_filtering = ( 'interval' !== $schedule_type && ! empty( $schedule_days ) )
+			|| ( null !== $quiet_start && null !== $quiet_end );
+
+		if ( $needs_filtering && $date_next_sc ) {
+			$candidate = $date_next_sc;
+
+			for ( $fi = 0; $fi < 32; $fi++ ) {
+				// Check if this day is allowed by schedule_type.
+				if ( 'interval' !== $schedule_type
+					&& ! empty( $schedule_days )
+					&& ! $this->is_monitoring_day_allowed( $candidate, $schedule_type, $schedule_days ) ) {
+					$candidate = gmmktime(
+						(int) $group['hour_of_day'],
+						0,
+						0,
+						(int) gmdate( 'm', $candidate ),
+						(int) gmdate( 'd', $candidate ) + 1,
+						(int) gmdate( 'Y', $candidate )
+					);
+					continue;
+				}
+
+				// Check quiet hours.
+				if ( null !== $quiet_start && null !== $quiet_end && $quiet_start !== $quiet_end ) {
+					$hour     = (int) gmdate( 'G', $candidate );
+					$in_quiet = ( $quiet_start < $quiet_end )
+						? ( $hour >= $quiet_start && $hour < $quiet_end )
+						: ( $hour >= $quiet_start || $hour < $quiet_end );
+
+					if ( $in_quiet ) {
+						$candidate = gmmktime(
+							(int) $quiet_end,
+							0,
+							0,
+							(int) gmdate( 'm', $candidate ),
+							(int) gmdate( 'd', $candidate ),
+							(int) gmdate( 'Y', $candidate )
+						);
+						// Wrap-around case (e.g. 22-6): advance to next day.
+						if ( $quiet_start > $quiet_end && $hour >= $quiet_start ) {
+							$candidate += DAY_IN_SECONDS;
+						}
+						continue;
+					}
+				}
+
+				$date_next_sc = $candidate;
+				break;
+			}
+		}
+
 		// Calculate screenshots until renewal.
 		$days_until_renewal = gmdate( 'd', gmdate( 'U', strtotime( $this->account_handler->get_account()['renewal_at'] ) ) - gmdate( 'U' ) );
 
@@ -570,7 +637,7 @@ class WebChangeDetector_Admin {
 				<div class="wcd-next-check-container">
 					<div id="txt_next_sc_in" class="wcd-status-label"><?php esc_html_e( 'Next monitoring checks in ', 'webchangedetector' ); ?></div>
 					<div id="next_sc_in" class="wcd-status-value"></div>
-					<div id="next_sc_date" class="wcd-status-date local-time" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
+					<div id="next_sc_date" class="wcd-status-date" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">
@@ -590,6 +657,29 @@ class WebChangeDetector_Admin {
 		<?php
 	}
 
+	/**
+	 * Check if a given timestamp falls on an allowed monitoring day.
+	 *
+	 * @param int    $timestamp     Unix timestamp to check.
+	 * @param string $schedule_type 'weekly' or 'monthly'.
+	 * @param array  $schedule_days Array of allowed day numbers.
+	 * @return bool
+	 */
+	private function is_monitoring_day_allowed( $timestamp, $schedule_type, $schedule_days ) {
+		if ( 'weekly' === $schedule_type ) {
+			$day_of_week = (int) gmdate( 'N', $timestamp );
+			return in_array( $day_of_week, $schedule_days, false );
+		}
+
+		if ( 'monthly' === $schedule_type ) {
+			$day_of_month = (int) gmdate( 'j', $timestamp );
+			$last_day     = (int) gmdate( 't', $timestamp );
+			return in_array( $day_of_month, $schedule_days, false )
+				|| ( $day_of_month === $last_day && in_array( 'last', $schedule_days, true ) );
+		}
+
+		return true;
+	}
 
 	/** Save url settings.
 	 *

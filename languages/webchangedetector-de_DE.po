@@ -1010,18 +1010,26 @@ msgstr ""
 "rückgängig gemacht werden."
 
 #: admin/class-webchangedetector-admin-wordpress.php:130
+msgid "Day"
+msgstr "Tag"
+
+#: admin/class-webchangedetector-admin-wordpress.php:131
+msgid "Days"
+msgstr "Tage"
+
+#: admin/class-webchangedetector-admin-wordpress.php:132
 msgid "Hour"
 msgstr "Stunde"
 
-#: admin/class-webchangedetector-admin-wordpress.php:131
+#: admin/class-webchangedetector-admin-wordpress.php:133
 msgid "Hours"
 msgstr "Stunden"
 
-#: admin/class-webchangedetector-admin-wordpress.php:132
+#: admin/class-webchangedetector-admin-wordpress.php:134
 msgid "Minute"
 msgstr "Minute"
 
-#: admin/class-webchangedetector-admin-wordpress.php:133
+#: admin/class-webchangedetector-admin-wordpress.php:135
 msgid "Minutes"
 msgstr "Minuten"
 
