@@ -14,8 +14,6 @@ function updateProcessingStep() {
 
         $.post(wcdAjaxData.ajax_url, data, function (response) {
 
-            response = JSON.parse(response);
-
             // Calculate all
 
             let currentlyInQueueAmount = response.meta.total ?? 0;
@@ -76,7 +74,7 @@ function updateProcessingStep() {
                 // Stop the interval when everything is done.
                 //clearInterval(processingInterval);
             }
-        });
+        }, 'json');
     })(jQuery);
 }
 function currentlyProcessing() {

@@ -59,7 +59,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 * Feature: Optional static IP proxy for whitelisting in firewalls
 * Feature: Individual delays between screenshots to prevent server overloading
 * Feature: Advanced monitoring settings for longer intervals than 24h
-* Fix: Cooldown lock was set without actual running updates in some cases
+* Fix: Auto update cooldown lock was set without actual running updates in some cases
 
 = 4.0.6 =
 * Fix: Consider summer/winter-time for auto update checks
