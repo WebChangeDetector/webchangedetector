@@ -89,10 +89,10 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 				$update_group          = isset( $update_group_response['data'] ) ? $update_group_response['data'] : array();
 			}
 
-			// Calculate auto detection amount.
+			// Get estimated monthly checks (calculated by API, accounts for schedule type, schedule days, and quiet hours).
 			$amount_auto_detection = 0;
-			if ( ! empty( $auto_group['enabled'] ) && ! empty( $auto_group['interval_in_h'] ) && ! empty( $auto_group['selected_urls_count'] ) ) {
-				$amount_auto_detection = ( WCD_HOURS_IN_DAY / $auto_group['interval_in_h'] ) * $auto_group['selected_urls_count'] * WCD_DAYS_PER_MONTH;
+			if ( ! empty( $auto_group['enabled'] ) && isset( $auto_group['estimated_monthly_checks'] ) ) {
+				$amount_auto_detection = (int) $auto_group['estimated_monthly_checks'];
 			}
 
 			// Get auto update settings.
