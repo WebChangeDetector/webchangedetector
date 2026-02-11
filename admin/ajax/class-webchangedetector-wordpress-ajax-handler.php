@@ -153,7 +153,7 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 	 * @since    4.0.0
 	 */
 	public function ajax_get_wcd_admin_bar_status() {
-		// Delegate to the WordPress handler which has the correct implementation
+		// Delegate to the WordPress handler which has the correct implementation.
 		if ( $this->wordpress_handler && method_exists( $this->wordpress_handler, 'ajax_get_wcd_admin_bar_status' ) ) {
 			$this->wordpress_handler->ajax_get_wcd_admin_bar_status();
 		} else {

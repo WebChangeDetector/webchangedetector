@@ -20,14 +20,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$has_basic_auth            = ! empty( $group_and_urls['has_basic_auth'] );
-$advanced_settings_class   = $advanced_settings_class ?? '';
-$advanced_settings_style   = $advanced_settings_style ?? '';
+$has_basic_auth               = ! empty( $group_and_urls['has_basic_auth'] );
+$advanced_settings_class      = $advanced_settings_class ?? '';
+$advanced_settings_style      = $advanced_settings_style ?? '';
 $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr( $advanced_settings_style ) . '"' : '';
 ?>
 
 <!-- Basic Authentication -->
-<div class="wcd-form-row wcd-setting-basic-auth <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; ?>>
+<div class="wcd-form-row wcd-setting-basic-auth <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped on assignment. ?>>
 	<div class="wcd-form-label-wrapper">
 		<label class="wcd-form-label"><?php esc_html_e( 'Basic Authentication', 'webchangedetector' ); ?></label>
 		<div class="wcd-description"><?php esc_html_e( 'Provide credentials for password-protected pages that require authentication.', 'webchangedetector' ); ?></div>
@@ -80,7 +80,7 @@ $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr
 </div>
 
 <!-- Static IP Proxy -->
-<div class="wcd-form-row wcd-setting-proxy <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; ?>>
+<div class="wcd-form-row wcd-setting-proxy <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped on assignment. ?>>
 	<div class="wcd-form-label-wrapper">
 		<label class="wcd-form-label"><?php esc_html_e( 'Static IP Proxy', 'webchangedetector' ); ?></label>
 		<div class="wcd-description"><?php esc_html_e( 'Route screenshot requests through a static IP address for servers that require IP whitelisting.', 'webchangedetector' ); ?></div>
@@ -113,7 +113,7 @@ $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr
 </div>
 
 <!-- Screenshot Delay -->
-<div class="wcd-form-row wcd-setting-screenshot-delay <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; ?>>
+<div class="wcd-form-row wcd-setting-screenshot-delay <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped on assignment. ?>>
 	<div class="wcd-form-label-wrapper">
 		<label class="wcd-form-label"><?php esc_html_e( 'Screenshot Delay', 'webchangedetector' ); ?></label>
 		<div class="wcd-description"><?php esc_html_e( 'Adjust the delay between screenshot starts to reduce server load.', 'webchangedetector' ); ?></div>

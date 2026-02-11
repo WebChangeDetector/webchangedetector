@@ -461,6 +461,7 @@ class WebChangeDetector_Admin_WordPress {
 		} catch ( \Exception $e ) {
 			// Log the error if WP_DEBUG is enabled.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging only when WP_DEBUG is enabled.
 				error_log( 'WebChangeDetector update_post error: ' . $e->getMessage() );
 			}
 			// Silently fail to prevent breaking the post save process.
@@ -718,18 +719,18 @@ class WebChangeDetector_Admin_WordPress {
 			return false;
 		}
 
-		// Normalize URL - remove trailing slash for comparison
+		// Normalize URL: remove trailing slash for comparison.
 		$normalized_url = rtrim( $url, '/' );
 
 		// Create URL filter to search for this specific URL.
-		// For frontpage, try searching without trailing slash
+		// For frontpage, try searching without trailing slash.
 		$url_filter = array(
 			'url' => $normalized_url,
 		);
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] Searching for URL: ' . $normalized_url . ' (original: ' . $url . ')', 'get_url_monitoring_status', 'debug' );
 
-		// Search in both groups for the URL - use normalized URL for search
+		// Search in both groups for the URL, use normalized URL for search.
 		$manual_group_urls     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $manual_group_uuid, $url_filter );
 		$monitoring_group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $monitoring_group_uuid, $url_filter );
 
@@ -737,11 +738,11 @@ class WebChangeDetector_Admin_WordPress {
 		$manual_urls     = $manual_group_urls['data'] ?? array();
 		$monitoring_urls = $monitoring_group_urls['data'] ?? array();
 
-		// If no results found with normalized URL and this might be the frontpage, try with just the domain
+		// If no results found with normalized URL and this might be the frontpage, try with just the domain.
 		if ( empty( $manual_urls ) && empty( $monitoring_urls ) && $normalized_url !== $url ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying original: ' . $url, 'get_url_monitoring_status', 'debug' );
 
-			// Try again with the original URL (with trailing slash)
+			// Try again with the original URL (with trailing slash).
 			$url_filter            = array(
 				'url' => $url,
 			);
@@ -763,7 +764,7 @@ class WebChangeDetector_Admin_WordPress {
 		$wcd_url_id          = null;
 
 		// First, try to find exact URL matches.
-		// Normalize both URLs by removing trailing slashes for comparison
+		// Normalize both URLs by removing trailing slashes for comparison.
 		foreach ( $manual_urls as $url_data ) {
 			if ( isset( $url_data['url'] ) ) {
 				$stored_url = rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::remove_url_protocol( $url_data['url'] ), '/' );

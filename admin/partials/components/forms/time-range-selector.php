@@ -52,4 +52,4 @@ $css_class   = $css_class ?? '';
 >
 <?php if ( $description ) : ?>
 	<small><?php echo esc_html( $description ); ?></small>
-<?php endif; ?> 
+<?php endif; ?>

@@ -47,13 +47,13 @@ $auto_updates_running = get_option( 'wcd_auto_updates_running' );
 $pre_update_data      = get_option( 'wcd_pre_auto_update' );
 
 // Determine status.
-$status_class          = '';
-$status_icon           = '';
-$status_title          = '';
-$status_message        = '';
-$next_check_time       = '';
-$next_check_date       = '';
-$next_check_timestamp  = 0;
+$status_class         = '';
+$status_icon          = '';
+$status_title         = '';
+$status_message       = '';
+$next_check_time      = '';
+$next_check_date      = '';
+$next_check_timestamp = 0;
 
 if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 	if ( $auto_updates_running || $pre_update_data ) {

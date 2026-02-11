@@ -295,11 +295,9 @@ class WebChangeDetector_Admin {
 			if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 				wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
 			}
-		} else {
+		} elseif ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 			// Clear any existing scheduled event if no API token.
-			if ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
-				wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
-			}
+			wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
 		}
 	}
 
@@ -668,13 +666,13 @@ class WebChangeDetector_Admin {
 	private function is_monitoring_day_allowed( $timestamp, $schedule_type, $schedule_days ) {
 		if ( 'weekly' === $schedule_type ) {
 			$day_of_week = (int) gmdate( 'N', $timestamp );
-			return in_array( $day_of_week, $schedule_days, false );
+			return in_array( $day_of_week, array_map( 'intval', $schedule_days ), true );
 		}
 
 		if ( 'monthly' === $schedule_type ) {
 			$day_of_month = (int) gmdate( 'j', $timestamp );
 			$last_day     = (int) gmdate( 't', $timestamp );
-			return in_array( $day_of_month, $schedule_days, false )
+			return in_array( $day_of_month, array_map( 'intval', $schedule_days ), true )
 				|| ( $day_of_month === $last_day && in_array( 'last', $schedule_days, true ) );
 		}
 

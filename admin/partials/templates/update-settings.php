@@ -73,14 +73,14 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					// Time Range Selector Component.
 					// Convert UTC times from API to site timezone for display.
 					require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
-					$utc_from_time    = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
-					$utc_to_time      = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
-					$from_time        = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
-					$to_time          = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
-					$from_name        = 'auto_update_checks_from';
-					$to_name          = 'auto_update_checks_to';
-					$label       = __( 'Only', 'webchangedetector' );
-					$description = '';
+					$utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
+					$utc_to_time   = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
+					$from_time     = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
+					$to_time       = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
+					$from_name     = 'auto_update_checks_from';
+					$to_name       = 'auto_update_checks_to';
+					$label         = __( 'Only', 'webchangedetector' );
+					$description   = '';
 					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>

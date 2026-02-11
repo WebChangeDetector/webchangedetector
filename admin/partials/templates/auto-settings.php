@@ -140,9 +140,9 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 							7 => __( 'Sun', 'webchangedetector' ),
 						);
 						foreach ( $weekdays as $day_num => $day_name ) {
-							$checked = ( 'weekly' === $current_schedule_type && in_array( $day_num, $current_schedule_days, false ) ) ? 'checked' : '';
+							$checked = ( 'weekly' === $current_schedule_type && in_array( $day_num, $current_schedule_days, true ) ) ? 'checked' : '';
 							echo '<label class="wcd-day-checkbox">';
-							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $day_num ) . '" ' . $checked . '>';
+							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $day_num ) . '" ' . esc_attr( $checked ) . '>';
 							echo esc_html( $day_name );
 							echo '</label>';
 						}
@@ -159,15 +159,15 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					<div class="wcd-day-checkboxes wcd-monthly-days">
 						<?php
 						for ( $d = 1; $d <= 30; $d++ ) {
-							$checked = ( 'monthly' === $current_schedule_type && in_array( $d, $current_schedule_days, false ) ) ? 'checked' : '';
+							$checked = ( 'monthly' === $current_schedule_type && in_array( $d, $current_schedule_days, true ) ) ? 'checked' : '';
 							echo '<label class="wcd-day-checkbox">';
-							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $d ) . '" ' . $checked . '>';
+							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $d ) . '" ' . esc_attr( $checked ) . '>';
 							echo esc_html( $d );
 							echo '</label>';
 						}
 						$checked_last = ( 'monthly' === $current_schedule_type && in_array( 'last', $current_schedule_days, true ) ) ? 'checked' : '';
 						echo '<label class="wcd-day-checkbox wcd-day-last">';
-						echo '<input type="checkbox" name="schedule_days[]" value="last" ' . $checked_last . '>';
+						echo '<input type="checkbox" name="schedule_days[]" value="last" ' . esc_attr( $checked_last ) . '>';
 						esc_html_e( 'Last day', 'webchangedetector' );
 						echo '</label>';
 						?>
@@ -187,7 +187,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 							<?php
 							for ( $i = 0; $i < 24; $i++ ) {
 								$selected = isset( $group_and_urls['quiet_hours_start'] ) && '' !== $group_and_urls['quiet_hours_start'] && (int) $group_and_urls['quiet_hours_start'] === $i ? 'selected' : '';
-								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . $selected . '></option>';
+								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . esc_attr( $selected ) . '></option>';
 							}
 							?>
 						</select>
@@ -197,7 +197,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 							<?php
 							for ( $i = 0; $i < 24; $i++ ) {
 								$selected = isset( $group_and_urls['quiet_hours_end'] ) && '' !== $group_and_urls['quiet_hours_end'] && (int) $group_and_urls['quiet_hours_end'] === $i ? 'selected' : '';
-								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . $selected . '></option>';
+								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . esc_attr( $selected ) . '></option>';
 							}
 							?>
 						</select>

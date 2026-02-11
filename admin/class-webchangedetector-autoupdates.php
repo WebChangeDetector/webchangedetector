@@ -363,8 +363,8 @@ class WebChangeDetector_Autoupdates {
 			$this->log_auto_update_error(
 				'skip_cooldown',
 				array(
-					'last_check'    => gmdate( 'Y-m-d H:i:s', $last_check_time ),
-					'next_allowed'  => gmdate( 'Y-m-d H:i:s', $next_allowed ),
+					'last_check'      => gmdate( 'Y-m-d H:i:s', $last_check_time ),
+					'next_allowed'    => gmdate( 'Y-m-d H:i:s', $next_allowed ),
 					'hours_remaining' => round( ( $next_allowed - time() ) / HOUR_IN_SECONDS, 1 ),
 				)
 			);
@@ -516,7 +516,7 @@ class WebChangeDetector_Autoupdates {
 				// Check if the time is within the allowed window.
 				// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
 				$is_in_window = false;
-				
+
 				if ( $from_time_utc <= $to_time_utc ) {
 					// Normal case: e.g., 09:00 to 17:00.
 					$is_in_window = ( $check_time_hm >= $from_time_utc && $check_time_hm <= $to_time_utc );
@@ -527,7 +527,7 @@ class WebChangeDetector_Autoupdates {
 
 				if ( $is_in_window ) {
 					// This is a valid auto-update time!
-					
+
 					return $check_time;
 				}
 			}

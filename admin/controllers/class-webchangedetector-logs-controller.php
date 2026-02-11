@@ -687,7 +687,7 @@ class WebChangeDetector_Logs_Controller {
 													</a>
 												</p>
 											<?php endif; ?>
-										<?php if ( isset( $entry['updates']['core'] ) && $entry['updates']['core'] ) : ?>
+											<?php if ( isset( $entry['updates']['core'] ) && $entry['updates']['core'] ) : ?>
 											<div class="update-section">
 												<h4><?php esc_html_e( 'WordPress Core', 'webchangedetector' ); ?></h4>
 												<div class="update-item">
@@ -713,7 +713,7 @@ class WebChangeDetector_Logs_Controller {
 											</div>
 										<?php endif; ?>
 
-										<?php if ( isset( $entry['updates']['plugins'] ) && ! empty( $entry['updates']['plugins'] ) ) : ?>
+											<?php if ( isset( $entry['updates']['plugins'] ) && ! empty( $entry['updates']['plugins'] ) ) : ?>
 											<div class="update-section">
 												<h4><?php esc_html_e( 'Plugins', 'webchangedetector' ); ?></h4>
 												<?php foreach ( $entry['updates']['plugins'] as $plugin ) : ?>
@@ -742,7 +742,7 @@ class WebChangeDetector_Logs_Controller {
 											</div>
 										<?php endif; ?>
 
-										<?php if ( isset( $entry['updates']['themes'] ) && ! empty( $entry['updates']['themes'] ) ) : ?>
+											<?php if ( isset( $entry['updates']['themes'] ) && ! empty( $entry['updates']['themes'] ) ) : ?>
 											<div class="update-section">
 												<h4><?php esc_html_e( 'Themes', 'webchangedetector' ); ?></h4>
 												<?php foreach ( $entry['updates']['themes'] as $theme ) : ?>
@@ -770,7 +770,7 @@ class WebChangeDetector_Logs_Controller {
 												<?php endforeach; ?>
 											</div>
 										<?php endif; ?>
-										<?php endif; // Close if ( $is_error ) ?>
+										<?php endif; // Close if ( $is_error ). ?>
 									</div>
 								</div>
 							</div>

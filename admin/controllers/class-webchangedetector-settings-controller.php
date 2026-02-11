@@ -43,6 +43,7 @@ class WebChangeDetector_Settings_Controller {
 		}
 
 		// Redirect old log file viewers to the new debug logs page.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect, no data processing.
 		if ( isset( $_GET['view_log'] ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=webchangedetector-logs&tab=debug-logs' ) );
 			exit;
