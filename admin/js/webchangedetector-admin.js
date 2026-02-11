@@ -132,23 +132,29 @@ function currentlyProcessing() {
      */
 
     function getLocalDateTime(date) {
+        var wpOffsetMs = (wcdL10n.wpUtcOffsetSeconds || 0) * 1000;
+        var wpDate = new Date((date * 1000) + wpOffsetMs);
         let options = {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: 'UTC'
         };
-        return new Date(date * 1000).toLocaleString(navigator.language, options);
+        return wpDate.toLocaleString(navigator.language, options);
     }
 
     function getLocalDate(date) {
+        var wpOffsetMs = (wcdL10n.wpUtcOffsetSeconds || 0) * 1000;
+        var wpDate = new Date((date * 1000) + wpOffsetMs);
         let options = {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
+            timeZone: 'UTC'
         };
-        return new Date(date * 1000).toLocaleString(navigator.language, options);
+        return wpDate.toLocaleString(navigator.language, options);
     }
 
     function getDifferenceBgColor(percent) {
@@ -298,34 +304,31 @@ function currentlyProcessing() {
             $("#selected-mobile-" + postType).html(selectedMobile);
         });
 
-        // Show local time in dropdowns
-        var localDate = new Date();
-        var timeDiff = localDate.getTimezoneOffset() / 60;
-
+        // Show WordPress timezone time in dropdowns.
         $(".select-time").not("select[name='hour_of_day'] .select-time").each(function (i, e) {
             let utcHour = parseInt($(this).val());
-            let newDate = localDate.setHours(utcHour - timeDiff, 0);
-            let localHour = new Date(newDate);
-            let options = {
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            $(this).html(localHour.toLocaleString(navigator.language, options));
+            $(this).html(utcHourToWpString(utcHour));
         });
 
-        // Show local timezone name with UTC offset.
-        var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        var offsetMinutes = new Date().getTimezoneOffset();
-        var offsetHours = -offsetMinutes / 60;
-        var utcLabel = "UTC" + (offsetHours >= 0 ? "+" : "") + offsetHours;
-        $(".local-timezone").text("Timezone: " + timezone + " " + utcLabel);
+        // Show WordPress timezone name with UTC offset.
+        var wpTimezone = wcdL10n.wpTimezone || "UTC";
+        var wpUtcLabel = wcdL10n.wpUtcLabel || "UTC+0";
+        var wpTzDisplay = /^[+-]/.test(wpTimezone) ? wpUtcLabel : wpTimezone + " " + wpUtcLabel;
+        $(".local-timezone").text("Timezone: " + wpTzDisplay);
 
-        // Convert a UTC hour (0-23) to a local time string like "14:00".
-        function utcHourToLocalString(utcHour) {
-            var d = new Date();
-            var offsetHours = d.getTimezoneOffset() / 60;
-            d.setHours(utcHour - offsetHours, 0, 0, 0);
-            return d.toLocaleString(navigator.language, { hour: '2-digit', minute: '2-digit' });
+        // Format all .wcd-local-date elements with WP timezone date/time.
+        $(".wcd-local-date").each(function () {
+            var ts = $(this).data("date");
+            if (ts) {
+                $(this).text(getLocalDateTime(ts) + " (" + wpTzDisplay + ")");
+            }
+        });
+
+        // Convert a UTC hour (0-23) to a WP timezone time string like "14:00".
+        function utcHourToWpString(utcHour) {
+            var wpOffsetMs = (wcdL10n.wpUtcOffsetSeconds || 0) * 1000;
+            var d = new Date(Date.UTC(2000, 0, 1, utcHour, 0, 0, 0) + wpOffsetMs);
+            return d.toLocaleString(navigator.language, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
         }
 
         // Update hour_of_day dropdown based on the selected interval.
@@ -377,7 +380,7 @@ function currentlyProcessing() {
             for (var i = 0; i < numOptions; i++) {
                 var times = [];
                 for (var h = i; h < 24; h += intInterval) {
-                    times.push(utcHourToLocalString(h));
+                    times.push(utcHourToWpString(h));
                 }
                 var label = times.join(", ");
                 var option = $("<option>").val(i).text(label);
@@ -433,7 +436,7 @@ function currentlyProcessing() {
             }
             txtNextScIn += h + hourLabel + m + minuteLabel;
 
-            $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + timezone + " " + utcLabel + ")");
+            $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + wpTzDisplay + ")");
             $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
         }
         $("#next_sc_in").html(txtNextScIn);

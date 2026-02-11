@@ -96,6 +96,10 @@ class WebChangeDetector_Admin_WordPress {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, WCD_PLUGIN_URL . 'admin/js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
 
+			// WordPress timezone data for JavaScript.
+			$wp_tz_offset    = wp_timezone()->getOffset( new \DateTime( 'now', new \DateTimeZone( 'UTC' ) ) );
+			$wp_offset_hours = $wp_tz_offset / 3600;
+
 			// Localize script for translations.
 			wp_localize_script(
 				$this->plugin_name,
@@ -134,6 +138,9 @@ class WebChangeDetector_Admin_WordPress {
 					'minute'                   => __( 'Minute', 'webchangedetector' ),
 					'minutes'                  => __( 'Minutes', 'webchangedetector' ),
 					'everyHour'                => __( 'Every hour', 'webchangedetector' ),
+					'wpTimezone'               => wp_timezone_string(),
+					'wpUtcOffsetSeconds'       => $wp_tz_offset,
+					'wpUtcLabel'               => 'UTC' . ( $wp_offset_hours >= 0 ? '+' : '' ) . $wp_offset_hours,
 				)
 			);
 

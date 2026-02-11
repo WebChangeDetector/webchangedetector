@@ -79,18 +79,12 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					$to_time          = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
 					$from_name        = 'auto_update_checks_from';
 					$to_name          = 'auto_update_checks_to';
-					$label            = __( 'Only', 'webchangedetector' );
-					$timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
-					$current_time     = current_time( 'H:i' );
-					// translators: %1$s is the timezone display string, %2$s is the current website time.
-					$description = sprintf(
-						__( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ),
-						$timezone_display,
-						$current_time
-					);
+					$label       = __( 'Only', 'webchangedetector' );
+					$description = '';
 					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>
+				<div class="local-timezone"></div>
 			</div>
 
 			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">

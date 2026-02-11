@@ -34,12 +34,11 @@ foreach ( $weekdays as $weekday ) {
 	}
 }
 
-// Get timeframe settings (these are in UTC from API).
-require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
+// Get timeframe settings (these are in UTC from API) and convert to WP site timezone.
 $utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 $utc_to_time   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 
-// Convert to site timezone for display.
+require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
 $site_from_time = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
 $site_to_time   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
 
@@ -48,12 +47,13 @@ $auto_updates_running = get_option( 'wcd_auto_updates_running' );
 $pre_update_data      = get_option( 'wcd_pre_auto_update' );
 
 // Determine status.
-$status_class    = '';
-$status_icon     = '';
-$status_title    = '';
-$status_message  = '';
-$next_check_time = '';
-$next_check_date = '';
+$status_class          = '';
+$status_icon           = '';
+$status_title          = '';
+$status_message        = '';
+$next_check_time       = '';
+$next_check_date       = '';
+$next_check_timestamp  = 0;
 
 if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 	if ( $auto_updates_running || $pre_update_data ) {
@@ -72,9 +72,9 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 
 		// Calculate time until next run.
 		// Use time() instead of current_time('timestamp') to avoid discouraged usage and get the current Unix timestamp.
-		$time_until      = human_time_diff( time(), $next_auto_update );
-		$next_check_time = $time_until;
-		$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next_auto_update );
+		$time_until           = human_time_diff( time(), $next_auto_update );
+		$next_check_time      = $time_until;
+		$next_check_timestamp = $next_auto_update;
 	} else {
 		// Check if auto-updates were checked recently (within last 24 hours).
 		$last_check_time = get_option( 'wcd_last_auto_update_check_time' );
@@ -93,7 +93,7 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 				__( '%s ago - All up to date', 'webchangedetector' ),
 				$time_since
 			);
-			$next_check_date = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_check_time );
+			$next_check_timestamp = $last_check_time;
 		} else {
 			// No auto-updates scheduled - either because wp_version_check is not scheduled
 			// or because no enabled weekdays match upcoming checks.
@@ -139,8 +139,8 @@ if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) {
 		<div class="wcd-next-check-container">
 			<div class="wcd-status-label"><?php echo esc_html( $status_message ); ?></div>
 			<div class="wcd-status-value"><?php echo esc_html( $next_check_time ); ?></div>
-			<?php if ( $next_check_date ) : ?>
-				<div class="wcd-status-date"><?php echo esc_html( $next_check_date ); ?></div>
+			<?php if ( $next_check_timestamp ) : ?>
+				<div class="wcd-status-date wcd-local-date" data-date="<?php echo esc_attr( $next_check_timestamp ); ?>"></div>
 			<?php endif; ?>
 		</div>
 		<?php if ( $auto_update_checks_enabled && $selected_urls_count > 0 ) : ?>
