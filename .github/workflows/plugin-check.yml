@@ -79,4 +79,4 @@ jobs:
       - name: Run PHPCS on plugin
         working-directory: wordpress/wp-content/plugins/webchangedetector
         run: |
-          ./vendor/bin/phpcs --standard=WordPress .
+          ./vendor/bin/phpcs --standard=WordPress --ignore=vendor .
