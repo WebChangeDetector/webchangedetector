@@ -234,10 +234,10 @@ class WebChangeDetector_Admin_Dashboard {
 	 *
 	 * @since    1.0.0
 	 * @param    array $batches       The batches data from API.
-	 * @param    mixed $failed_queues The failed queues data (optional, deprecated - use batch data instead).
+	 * @param    mixed $failed_queues Deprecated. Kept for backwards compatibility.
 	 * @return   void
 	 */
-	public function compare_view_v2( $batches, $failed_queues = false ) {
+	public function compare_view_v2( $batches, $failed_queues = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Kept for backwards compatibility.
 		if ( empty( $batches ) ) {
 			?>
 			<table style="width: 100%">
@@ -412,7 +412,7 @@ class WebChangeDetector_Admin_Dashboard {
 	 * @param    int    $console_changes_count  The console changes count for the batch (added + mixed).
 	 * @return   void
 	 */
-	public function load_comparisons_view( $batch_id, $comparisons, $filters, $console_changes_count = 0 ) {
+	public function load_comparisons_view( $batch_id, $comparisons, $filters, $console_changes_count = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Reserved for future use.
 		// Check if this batch is from an auto-update and display details if so.
 		$auto_update_data = $this->get_auto_update_for_batch( $batch_id );
 		if ( $auto_update_data ) {

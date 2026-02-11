@@ -68,29 +68,23 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Timeframe', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the time frame in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Time Range Selector Component.
 					// Convert UTC times from API to site timezone for display.
 					require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
-					$utc_from_time    = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
-					$utc_to_time      = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
-					$from_time        = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
-					$to_time          = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
-					$from_name        = 'auto_update_checks_from';
-					$to_name          = 'auto_update_checks_to';
-					$label            = __( 'Only', 'webchangedetector' );
-					$timezone_display = \WebChangeDetector\WebChangeDetector_Timezone_Helper::get_timezone_display_string();
-					$current_time     = current_time( 'H:i' );
-					// translators: %1$s is the timezone display string, %2$s is the current website time.
-					$description = sprintf(
-						__( 'Times are displayed in your website timezone: %1$s | Current website time: %2$s', 'webchangedetector' ),
-						$timezone_display,
-						$current_time
-					);
+					$utc_from_time = $auto_update_settings['auto_update_checks_from'] ?? gmdate( 'H:i' );
+					$utc_to_time   = $auto_update_settings['auto_update_checks_to'] ?? gmdate( 'H:i', strtotime( '+2 hours' ) );
+					$from_time     = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_from_time );
+					$to_time       = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $utc_to_time );
+					$from_name     = 'auto_update_checks_from';
+					$to_name       = 'auto_update_checks_to';
+					$label         = __( 'Only', 'webchangedetector' );
+					$description   = '';
 					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/time-range-selector.php';
 					?>
 				</div>
+				<div class="local-timezone"></div>
 			</div>
 
 			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
@@ -132,7 +126,8 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="wcd-form-control">
 					<?php
 					// Email Input Component.
-					$email_value     = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
+					$emails_raw      = $auto_update_settings['auto_update_checks_emails'] ?? '';
+					$email_value     = is_array( $emails_raw ) ? implode( ', ', $emails_raw ) : $emails_raw;
 					$field_name      = 'auto_update_checks_emails';
 					$label           = __( 'Notification email to', 'webchangedetector' );
 					$description     = '';
@@ -149,7 +144,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Threshold Setting Component.
 					$label       = '';
@@ -159,6 +154,8 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					?>
 				</div>
 			</div>
+
+			<?php include WCD_PLUGIN_DIR . 'admin/partials/components/settings/advanced-screenshot-settings.php'; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-css">
 				<div class="wcd-form-label-wrapper">

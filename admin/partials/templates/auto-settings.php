@@ -84,6 +84,125 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					$description  = ''; // Empty description since it's already in the form structure.
 					include WCD_PLUGIN_DIR . 'admin/partials/components/monitoring/hour-selector.php';
 					?>
+					<div class="local-timezone"></div>
+				</div>
+			</div>
+
+			<?php
+			// Prepare schedule data.
+			$current_schedule_type = $group_and_urls['schedule_type'] ?? 'interval';
+			$current_schedule_days = $group_and_urls['schedule_days'] ?? array();
+			if ( is_string( $current_schedule_days ) ) {
+				$current_schedule_days = json_decode( $current_schedule_days, true ) ?? array();
+			}
+			if ( ! is_array( $current_schedule_days ) ) {
+				$current_schedule_days = array();
+			}
+			?>
+
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-schedule-type" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Run on', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Choose when monitoring checks should run.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-schedule-type-radios">
+						<label class="wcd-schedule-type-option">
+							<input type="radio" name="schedule_type" value="interval" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'interval' ); ?>>
+							<?php esc_html_e( 'Every day', 'webchangedetector' ); ?>
+						</label>
+						<label class="wcd-schedule-type-option">
+							<input type="radio" name="schedule_type" value="weekly" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'weekly' ); ?>>
+							<?php esc_html_e( 'Specific weekdays', 'webchangedetector' ); ?>
+						</label>
+						<label class="wcd-schedule-type-option">
+							<input type="radio" name="schedule_type" value="monthly" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'monthly' ); ?>>
+							<?php esc_html_e( 'Specific days in month', 'webchangedetector' ); ?>
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="wcd-form-row monitoring-setting wcd-schedule-weekly-fields" style="<?php echo ( $enabled && 'weekly' === $current_schedule_type ) ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Select Days', 'webchangedetector' ); ?></label>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-day-checkboxes">
+						<?php
+						$weekdays = array(
+							1 => __( 'Mon', 'webchangedetector' ),
+							2 => __( 'Tue', 'webchangedetector' ),
+							3 => __( 'Wed', 'webchangedetector' ),
+							4 => __( 'Thu', 'webchangedetector' ),
+							5 => __( 'Fri', 'webchangedetector' ),
+							6 => __( 'Sat', 'webchangedetector' ),
+							7 => __( 'Sun', 'webchangedetector' ),
+						);
+						foreach ( $weekdays as $day_num => $day_name ) {
+							$checked = ( 'weekly' === $current_schedule_type && in_array( $day_num, $current_schedule_days, true ) ) ? 'checked' : '';
+							echo '<label class="wcd-day-checkbox">';
+							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $day_num ) . '" ' . esc_attr( $checked ) . '>';
+							echo esc_html( $day_name );
+							echo '</label>';
+						}
+						?>
+					</div>
+				</div>
+			</div>
+
+			<div class="wcd-form-row monitoring-setting wcd-schedule-monthly-fields" style="<?php echo ( $enabled && 'monthly' === $current_schedule_type ) ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Select Days of Month', 'webchangedetector' ); ?></label>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-day-checkboxes wcd-monthly-days">
+						<?php
+						for ( $d = 1; $d <= 30; $d++ ) {
+							$checked = ( 'monthly' === $current_schedule_type && in_array( $d, $current_schedule_days, true ) ) ? 'checked' : '';
+							echo '<label class="wcd-day-checkbox">';
+							echo '<input type="checkbox" name="schedule_days[]" value="' . esc_attr( $d ) . '" ' . esc_attr( $checked ) . '>';
+							echo esc_html( $d );
+							echo '</label>';
+						}
+						$checked_last = ( 'monthly' === $current_schedule_type && in_array( 'last', $current_schedule_days, true ) ) ? 'checked' : '';
+						echo '<label class="wcd-day-checkbox wcd-day-last">';
+						echo '<input type="checkbox" name="schedule_days[]" value="last" ' . esc_attr( $checked_last ) . '>';
+						esc_html_e( 'Last day', 'webchangedetector' );
+						echo '</label>';
+						?>
+					</div>
+				</div>
+			</div>
+
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-quiet-hours" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Quiet Hours', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'No checks will be performed during this time.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-quiet-hours">
+						<select name="quiet_hours_start">
+							<option value=""><?php esc_html_e( 'None', 'webchangedetector' ); ?></option>
+							<?php
+							for ( $i = 0; $i < 24; $i++ ) {
+								$selected = isset( $group_and_urls['quiet_hours_start'] ) && '' !== $group_and_urls['quiet_hours_start'] && (int) $group_and_urls['quiet_hours_start'] === $i ? 'selected' : '';
+								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . esc_attr( $selected ) . '></option>';
+							}
+							?>
+						</select>
+						<?php esc_html_e( 'to', 'webchangedetector' ); ?>
+						<select name="quiet_hours_end">
+							<option value=""><?php esc_html_e( 'None', 'webchangedetector' ); ?></option>
+							<?php
+							for ( $i = 0; $i < 24; $i++ ) {
+								$selected = isset( $group_and_urls['quiet_hours_end'] ) && '' !== $group_and_urls['quiet_hours_end'] && (int) $group_and_urls['quiet_hours_end'] === $i ? 'selected' : '';
+								echo '<option class="select-time" value="' . esc_attr( $i ) . '" ' . esc_attr( $selected ) . '></option>';
+							}
+							?>
+						</select>
+					</div>
+					<div class="local-timezone"></div>
 				</div>
 			</div>
 
@@ -92,7 +211,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
 				</div>
-				<div class="wcd-form-control">
+				<div class="wcd-form-control wcd-inline">
 					<?php
 					// Threshold Setting Component.
 					$threshold   = $group_and_urls['threshold'] ?? 0.0;
@@ -119,7 +238,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 							)
 						);
 						?>
-											</div>
+					</div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -134,6 +253,14 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					?>
 				</div>
 			</div>
+
+			<?php
+			$advanced_settings_class = 'monitoring-setting';
+			$advanced_settings_style = $enabled ? '' : 'display: none;';
+			include WCD_PLUGIN_DIR . 'admin/partials/components/settings/advanced-screenshot-settings.php';
+			$advanced_settings_class = '';
+			$advanced_settings_style = '';
+			?>
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-css" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
@@ -181,7 +308,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 									editorSettings = cm_settings.codeEditor;
 								}
 								var editor = wp.codeEditor.initialize(cssTextarea, editorSettings);
-								
+
 								// Refresh the editor after initialization to fix line numbers.
 								if (editor && editor.codemirror) {
 									setTimeout(function() {
@@ -191,9 +318,36 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 							}
 						}
 					});
+
+					// Respect schedule type visibility when enabling monitoring.
+					var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
+					$('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
+					$('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
+					// Disable hidden checkboxes so they don't submit.
+					$('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
+					$('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
 				} else {
 					$('.monitoring-setting').slideUp();
 				}
+			});
+
+			// Schedule type toggle.
+			function toggleScheduleFields(radioEl) {
+				var type = $(radioEl).val();
+				$('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
+				$('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
+				// Disable hidden checkboxes so they don't submit duplicate schedule_days[].
+				$('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
+				$('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
+			}
+
+			$(document).on('change', '.wcd-schedule-type', function() {
+				toggleScheduleFields(this);
+			});
+
+			// On page load, apply to checked radio button.
+			$('.wcd-schedule-type:checked').each(function() {
+				toggleScheduleFields(this);
 			});
 		});
 

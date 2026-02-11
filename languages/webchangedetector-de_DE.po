@@ -347,6 +347,7 @@ msgid "Email"
 msgstr "E-Mail"
 
 #: admin/class-webchangedetector-admin-account.php:373
+#: admin/partials/components/settings/advanced-screenshot-settings.php
 msgid "Password"
 msgstr "Passwort"
 
@@ -1009,18 +1010,26 @@ msgstr ""
 "rückgängig gemacht werden."
 
 #: admin/class-webchangedetector-admin-wordpress.php:130
+msgid "Day"
+msgstr "Tag"
+
+#: admin/class-webchangedetector-admin-wordpress.php:131
+msgid "Days"
+msgstr "Tage"
+
+#: admin/class-webchangedetector-admin-wordpress.php:132
 msgid "Hour"
 msgstr "Stunde"
 
-#: admin/class-webchangedetector-admin-wordpress.php:131
+#: admin/class-webchangedetector-admin-wordpress.php:133
 msgid "Hours"
 msgstr "Stunden"
 
-#: admin/class-webchangedetector-admin-wordpress.php:132
+#: admin/class-webchangedetector-admin-wordpress.php:134
 msgid "Minute"
 msgstr "Minute"
 
-#: admin/class-webchangedetector-admin-wordpress.php:133
+#: admin/class-webchangedetector-admin-wordpress.php:135
 msgid "Minutes"
 msgstr "Minuten"
 
@@ -2482,6 +2491,66 @@ msgstr ""
 msgid "Notification email to"
 msgstr "Benachrichtigungs-E-Mail an"
 
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Basic Authentication"
+msgstr "Basic Authentication"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Provide credentials for password-protected pages that require authentication."
+msgstr "Zugangsdaten für passwortgeschützte Seiten angeben, die eine Authentifizierung erfordern."
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Username"
+msgstr "Benutzername"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Show/Hide password"
+msgstr "Passwort anzeigen/verbergen"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Clear the field to delete the password, or enter a new password to update it."
+msgstr "Feld leeren um das Passwort zu löschen, oder ein neues Passwort eingeben um es zu aktualisieren."
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Enter a password to enable Basic Authentication."
+msgstr "Passwort eingeben um Basic Authentication zu aktivieren."
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Static IP Proxy"
+msgstr "Statische IP Proxy"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Route screenshot requests through a static IP address for servers that require IP whitelisting."
+msgstr "Screenshot-Anfragen über eine statische IP-Adresse leiten, für Server die IP-Whitelisting erfordern."
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Enable Static IP Proxy"
+msgstr "Statische IP Proxy aktivieren"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Static IP:"
+msgstr "Statische IP:"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Copy IP address"
+msgstr "IP-Adresse kopieren"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Screenshot Delay"
+msgstr "Screenshot Verzögerung"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Adjust the delay between screenshot starts to reduce server load."
+msgstr "Verzögerung zwischen Screenshot-Starts anpassen, um die Serverlast zu reduzieren."
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "7 (default)"
+msgstr "7 (Standard)"
+
+#: admin/partials/components/settings/advanced-screenshot-settings.php
+msgid "Minimum 7 seconds, maximum 60 seconds. Leave empty for default (7 seconds)."
+msgstr "Minimum 7 Sekunden, Maximum 60 Sekunden. Leer lassen für Standard (7 Sekunden)."
+
 #: admin/views/class-webchangedetector-view-renderer.php:212
 msgid "Upgrade Account"
 msgstr "Account upgraden"
@@ -2598,3 +2667,75 @@ msgstr "Account upgraden"
 
 #~ msgid "Download Log File"
 #~ msgstr "Log-Datei herunterladen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Run on"
+msgstr "Ausführen an"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Choose when monitoring checks should run."
+msgstr "Wähle, wann Monitoring-Checks ausgeführt werden sollen."
+
+#: admin/partials/templates/auto-settings.php
+msgid "Every day"
+msgstr "Jeden Tag"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific weekdays"
+msgstr "Bestimmte Wochentage"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific days in month"
+msgstr "Bestimmte Tage im Monat"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days"
+msgstr "Tage auswählen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Mon"
+msgstr "Mo"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Tue"
+msgstr "Di"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Wed"
+msgstr "Mi"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Thu"
+msgstr "Do"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Fri"
+msgstr "Fr"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sat"
+msgstr "Sa"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sun"
+msgstr "So"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days of Month"
+msgstr "Tage im Monat auswählen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Last day"
+msgstr "Letzter Tag"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Quiet Hours"
+msgstr "Ruhezeiten"
+
+#: admin/partials/templates/auto-settings.php
+msgid "No checks will be performed during this time."
+msgstr "Während dieser Zeit werden keine Checks durchgeführt."
+
+#: admin/partials/templates/auto-settings.php
+msgid "None"
+msgstr "Keine"

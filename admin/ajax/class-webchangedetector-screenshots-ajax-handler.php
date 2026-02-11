@@ -86,19 +86,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 		}
 
 		try {
-			// Get website details for processing queue.
-			$website_details = $this->admin->website_details;
-
-			if ( empty( $website_details ) || ! isset( $website_details['uuid'] ) ) {
-				$this->send_error_response(
-					__( 'Website details not available.', 'webchangedetector' ),
-					'Website details missing'
-				);
-				return;
-			}
-
-			$uuid       = $website_details['uuid'];
-			$queue_data = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $uuid, 'processing,open', false, array( 'per_page' => 30 ) );
+			$queue_data = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( false, 'processing,open', false, array( 'per_page' => 30 ) );
 
 			if ( is_wp_error( $queue_data ) ) {
 				$this->send_error_response(
@@ -108,7 +96,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				return;
 			}
 
-			$this->send_success_response( $queue_data );
+			wp_send_json( $queue_data );
 
 		} catch ( \Exception $e ) {
 			$this->send_error_response(

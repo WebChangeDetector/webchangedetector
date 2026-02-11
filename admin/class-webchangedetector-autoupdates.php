@@ -363,8 +363,8 @@ class WebChangeDetector_Autoupdates {
 			$this->log_auto_update_error(
 				'skip_cooldown',
 				array(
-					'last_check'    => gmdate( 'Y-m-d H:i:s', $last_check_time ),
-					'next_allowed'  => gmdate( 'Y-m-d H:i:s', $next_allowed ),
+					'last_check'      => gmdate( 'Y-m-d H:i:s', $last_check_time ),
+					'next_allowed'    => gmdate( 'Y-m-d H:i:s', $next_allowed ),
 					'hours_remaining' => round( ( $next_allowed - time() ) / HOUR_IN_SECONDS, 1 ),
 				)
 			);
@@ -516,7 +516,7 @@ class WebChangeDetector_Autoupdates {
 				// Check if the time is within the allowed window.
 				// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
 				$is_in_window = false;
-				
+
 				if ( $from_time_utc <= $to_time_utc ) {
 					// Normal case: e.g., 09:00 to 17:00.
 					$is_in_window = ( $check_time_hm >= $from_time_utc && $check_time_hm <= $to_time_utc );
@@ -527,7 +527,7 @@ class WebChangeDetector_Autoupdates {
 
 				if ( $is_in_window ) {
 					// This is a valid auto-update time!
-					
+
 					return $check_time;
 				}
 			}
@@ -1194,15 +1194,6 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Set the check timestamp immediately after cooldown passes to prevent retry loops.
-		// This timestamp tracks when we START the workflow, regardless of success/failure.
-		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-			'Set auto-update check timestamp to prevent retries within 12 hours',
-			'wp_maybe_auto_update',
-			'debug'
-		);
-
 		// Step 4: Validate WCD configuration and check if auto-update checks are enabled.
 		$auto_update_settings = $this->validate_wcd_configuration();
 		if ( ! $auto_update_settings ) {
@@ -1220,6 +1211,16 @@ class WebChangeDetector_Autoupdates {
 			$this->set_lock();
 			return;
 		}
+
+		// Set the check timestamp after all validations pass to prevent retry loops.
+		// Must be AFTER time window/weekday checks so that triggers outside the window
+		// do not block the next valid trigger inside the window.
+		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Set auto-update check timestamp to prevent retries within 12 hours',
+			'wp_maybe_auto_update',
+			'debug'
+		);
 
 		// Step 7: Log filter context (informational only).
 		$this->log_filter_context();
@@ -1352,10 +1353,17 @@ class WebChangeDetector_Autoupdates {
 								Your WebChange Detector team</div>';
 
 		$auto_update_settings = self::get_auto_update_settings();
-		$to                   = get_bloginfo( 'admin_email' );
-		if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
-			$to = $auto_update_settings['auto_update_checks_emails'];
+		$to                   = '';
+		if ( ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
+			$emails = $auto_update_settings['auto_update_checks_emails'];
+			$to     = is_array( $emails ) ? implode( ',', $emails ) : $emails;
 		}
+
+		if ( empty( $to ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No notification emails configured, skipping mail', 'send_change_detection_mail', 'debug' );
+			return;
+		}
+
 		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sending Mail with differences', 'send_change_detection_mail', 'debug' );

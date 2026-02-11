@@ -48,7 +48,7 @@ jobs:
       - name: Set up wp-config
         working-directory: wordpress
         run: |
-          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=mysql --allow-root
+          wp config create --dbname=wordpress --dbuser=wp --dbpass=password --dbhost=127.0.0.1 --allow-root
 
       - name: Install WordPress
         working-directory: wordpress
@@ -72,12 +72,11 @@ jobs:
           wp plugin status webchangedetector --allow-root
 
       - name: Composer install phpcs
-        working-directory: wordpress
+        working-directory: wordpress/wp-content/plugins/webchangedetector
         run: |
-          cd ..
           composer install
 
       - name: Run PHPCS on plugin
-        working-directory: wordpress
+        working-directory: wordpress/wp-content/plugins/webchangedetector
         run: |
-          ./vendor/bin/phpcs --standard=WordPress wordpress/wp-content/plugins/webchangedetector
+          ./vendor/bin/phpcs --standard=WordPress --ignore=vendor --extensions=php .

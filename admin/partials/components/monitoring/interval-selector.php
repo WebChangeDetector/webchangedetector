@@ -70,27 +70,25 @@ $intervals = array(
 );
 ?>
 
-<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
-	<label for="<?php echo esc_attr( $field_name ); ?>"><?php echo esc_html( $label ); ?></label>
-	<select name="<?php echo esc_attr( $field_name ); ?>" id="<?php echo esc_attr( $field_name ); ?>" class="auto-setting">
-		<?php foreach ( $intervals as $interval ) : ?>
-			<?php
-			$is_disabled = $interval['requires_premium'] && ! $show_minute_intervals;
-			$is_selected = ( (string) $current_interval === $interval['value'] );
-			?>
-			<option 
-				value="<?php echo esc_attr( $interval['value'] ); ?>"
-				<?php echo $is_disabled ? 'disabled ' : ''; ?>
-				<?php selected( $is_selected ); ?>
-			>
-				<?php echo esc_html( $interval['label'] ); ?>
-				<?php if ( $is_disabled ) : ?>
-					<?php esc_html_e( '("Freelancer" plan or higher)', 'webchangedetector' ); ?>
-				<?php endif; ?>
-			</option>
-		<?php endforeach; ?>
-	</select>
-	<?php if ( $description ) : ?>
-		<br><small><?php echo esc_html( $description ); ?></small>
-	<?php endif; ?>
-</div> 
+<label for="<?php echo esc_attr( $field_name ); ?>"><?php echo esc_html( $label ); ?></label>
+<select name="<?php echo esc_attr( $field_name ); ?>" id="<?php echo esc_attr( $field_name ); ?>" class="auto-setting">
+	<?php foreach ( $intervals as $interval ) : ?>
+		<?php
+		$is_disabled = $interval['requires_premium'] && ! $show_minute_intervals;
+		$is_selected = ( (string) $current_interval === $interval['value'] );
+		?>
+		<option
+			value="<?php echo esc_attr( $interval['value'] ); ?>"
+			<?php echo $is_disabled ? 'disabled ' : ''; ?>
+			<?php selected( $is_selected ); ?>
+		>
+			<?php echo esc_html( $interval['label'] ); ?>
+			<?php if ( $is_disabled ) : ?>
+				<?php esc_html_e( '("Freelancer" plan or higher)', 'webchangedetector' ); ?>
+			<?php endif; ?>
+		</option>
+	<?php endforeach; ?>
+</select>
+<?php if ( $description ) : ?>
+	<small><?php echo esc_html( $description ); ?></small>
+<?php endif; ?>

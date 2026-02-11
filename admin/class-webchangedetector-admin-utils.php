@@ -99,22 +99,6 @@ class WebChangeDetector_Admin_Utils {
 	}
 
 	/**
-	 * Get allowed HTML for device icon.
-	 *
-	 * Returns an array of allowed HTML for the device icon.
-	 *
-	 * @since 1.0.0
-	 * @return array Allowed HTML for device icon.
-	 */
-	public static function get_device_icon_allowed_html() {
-		return array(
-			'span' => array(
-				'class' => array(),
-			),
-		);
-	}
-
-	/**
 	 * Get user-friendly comparison status name.
 	 *
 	 * Converts internal comparison status codes to user-readable names
@@ -366,36 +350,6 @@ class WebChangeDetector_Admin_Utils {
 		// For taxonomies, the slug is typically the same as the name,.
 		// so we don't need complex reverse lookup like with post types.
 		return ucfirst( $taxonomy_slug );
-	}
-
-	/**
-	 * Sanitize and validate comparison status.
-	 *
-	 * Ensures comparison status is valid and safe to use.
-	 *
-	 * @since 1.0.0
-	 * @param string $status The status to validate.
-	 * @return string Valid status or empty string if invalid.
-	 */
-	public static function sanitize_comparison_status( $status ) {
-		$valid_statuses = array( 'new', 'ok', 'to_fix', 'false_positive' );
-
-		$status = sanitize_text_field( $status );
-
-		return in_array( $status, $valid_statuses, true ) ? $status : '';
-	}
-
-	/**
-	 * Check if current user has required capabilities.
-	 *
-	 * Validates user permissions for WebChangeDetector operations.
-	 *
-	 * @since 1.0.0
-	 * @param string $capability Required capability.
-	 * @return bool True if user has capability, false otherwise.
-	 */
-	public static function current_user_can_manage_webchangedetector( $capability = 'manage_options' ) {
-		return current_user_can( $capability );
 	}
 
 	/**

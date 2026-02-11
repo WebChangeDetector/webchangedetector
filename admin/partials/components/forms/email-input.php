@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $placeholder      Placeholder text
  */
 
-$email_value     = $email_value ?? get_option( 'admin_email' );
+$email_value     = $email_value ?? '';
 $field_name      = $field_name ?? 'email';
 $label           = $label ?? __( 'Email address', 'webchangedetector' );
 $description     = $description ?? __( 'Enter the email address for notifications.', 'webchangedetector' );
@@ -38,36 +38,34 @@ $placeholder     = $placeholder ?? ( $multiple ? __( 'email1@example.com, email2
 $validation_id = 'error-' . sanitize_title( $field_name ) . '-validation';
 ?>
 
-<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
-	<label for="<?php echo esc_attr( $field_name ); ?>">
-		<?php echo esc_html( $label ); ?>
-		<?php if ( $multiple ) : ?>
-			<?php esc_html_e( 'Alert email addresses (comma separated)', 'webchangedetector' ); ?>
-		<?php endif; ?>
-	</label>
-	<input
-		name="<?php echo esc_attr( $field_name ); ?>"
-		id="<?php echo esc_attr( $field_name ); ?>"
-		style="width: 100%"
-		type="<?php echo $multiple ? 'text' : 'email'; ?>"
-		value="<?php echo esc_attr( $email_value ); ?>"
-		class="<?php echo esc_attr( $field_name ); ?>"
-		placeholder="<?php echo esc_attr( $placeholder ); ?>"
-		<?php if ( $multiple ) : ?>
-		data-multiple="true"
-		<?php endif; ?>>
-	<?php if ( $description ) : ?>
-		<br><small><?php echo esc_html( $description ); ?></small>
+<label for="<?php echo esc_attr( $field_name ); ?>">
+	<?php echo esc_html( $label ); ?>
+	<?php if ( $multiple ) : ?>
+		<?php esc_html_e( 'Alert email addresses (comma separated)', 'webchangedetector' ); ?>
 	<?php endif; ?>
+</label>
+<input
+	name="<?php echo esc_attr( $field_name ); ?>"
+	id="<?php echo esc_attr( $field_name ); ?>"
+	style="width: 100%"
+	type="<?php echo $multiple ? 'text' : 'email'; ?>"
+	value="<?php echo esc_attr( $email_value ); ?>"
+	class="<?php echo esc_attr( $field_name ); ?>"
+	placeholder="<?php echo esc_attr( $placeholder ); ?>"
+	<?php if ( $multiple ) : ?>
+	data-multiple="true"
+	<?php endif; ?>>
+<?php if ( $description ) : ?>
+	<small><?php echo esc_html( $description ); ?></small>
+<?php endif; ?>
 
-	<?php if ( $show_validation ) : ?>
-		<span class="notice notice-error" id="<?php echo esc_attr( $validation_id ); ?>" style="display: none;">
-			<span style="padding: 10px; display: block;" class="default-bg">
-				<?php esc_html_e( 'Please check your email address', 'webchangedetector' ); ?><?php echo $multiple ? esc_html__( '(es)', 'webchangedetector' ) : ''; ?>.
-			</span>
+<?php if ( $show_validation ) : ?>
+	<span class="notice notice-error" id="<?php echo esc_attr( $validation_id ); ?>" style="display: none;">
+		<span style="padding: 10px; display: block;" class="default-bg">
+			<?php esc_html_e( 'Please check your email address', 'webchangedetector' ); ?><?php echo $multiple ? esc_html__( '(es)', 'webchangedetector' ) : ''; ?>.
 		</span>
-	<?php endif; ?>
-</div>
+	</span>
+<?php endif; ?>
 
 <?php if ( $show_validation ) : ?>
 	<script type="text/javascript">

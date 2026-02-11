@@ -60,6 +60,78 @@ class WebChangeDetector_Admin_Settings {
 	}
 
 	/**
+	 * Extract advanced screenshot settings from POST data.
+	 *
+	 * Handles basic auth, proxy, and screenshot delay fields.
+	 *
+	 * @since    4.1.0
+	 * @param    array $postdata    The POST data.
+	 * @return   array    The extracted settings ready for the API.
+	 */
+	private function extract_advanced_settings( $postdata ) {
+		$args = array();
+
+		// Basic Auth User.
+		if ( isset( $postdata['basic_auth_user'] ) ) {
+			$args['basic_auth_user'] = sanitize_text_field( $postdata['basic_auth_user'] );
+		}
+
+		// Basic Auth Password with delete action logic.
+		$password_action = isset( $postdata['basic_auth_password_action'] )
+			? sanitize_text_field( $postdata['basic_auth_password_action'] )
+			: '';
+
+		if ( 'delete' === $password_action ) {
+			$args['basic_auth_password'] = '';
+			$args['basic_auth_user']     = '';
+		} elseif ( ! empty( $postdata['basic_auth_password'] )
+			&& '••••••••' !== $postdata['basic_auth_password'] ) {
+			$args['basic_auth_password'] = $postdata['basic_auth_password'];
+		}
+
+		// Proxy Type.
+		if ( isset( $postdata['proxy_type'] ) ) {
+			$proxy_type         = sanitize_text_field( $postdata['proxy_type'] );
+			$args['proxy_type'] = empty( $proxy_type ) ? 'none' : $proxy_type;
+		}
+
+		// Screenshot Delay.
+		if ( isset( $postdata['screenshot_delay'] ) ) {
+			$delay                    = $postdata['screenshot_delay'];
+			$args['screenshot_delay'] = '' === $delay ? null : intval( $delay );
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Sync advanced settings to the sibling group.
+	 *
+	 * When settings are saved on the monitoring group, they get synced
+	 * to the manual check group and vice versa.
+	 *
+	 * @since    4.1.0
+	 * @param    array  $settings            The settings to sync.
+	 * @param    string $current_group_uuid   The UUID of the group being saved.
+	 */
+	private function sync_to_sibling_group( $settings, $current_group_uuid ) {
+		if ( empty( $settings ) ) {
+			return;
+		}
+
+		$sibling_uuid = null;
+		if ( $current_group_uuid === $this->admin->monitoring_group_uuid ) {
+			$sibling_uuid = $this->admin->manual_group_uuid;
+		} elseif ( $current_group_uuid === $this->admin->manual_group_uuid ) {
+			$sibling_uuid = $this->admin->monitoring_group_uuid;
+		}
+
+		if ( $sibling_uuid ) {
+			\WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $sibling_uuid, $settings );
+		}
+	}
+
+	/**
 	 * Update monitoring settings for a group.
 	 *
 	 * @since    1.0.0
@@ -85,6 +157,38 @@ class WebChangeDetector_Admin_Settings {
 			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
 		);
 
+		// Schedule type.
+		if ( isset( $group_data['schedule_type'] ) ) {
+			$args['schedule_type'] = sanitize_text_field( $group_data['schedule_type'] );
+		}
+
+		// Schedule days.
+		if ( isset( $group_data['schedule_days'] ) && is_array( $group_data['schedule_days'] ) ) {
+			$args['schedule_days'] = array_map(
+				function ( $day ) {
+					$day = sanitize_text_field( $day );
+					return 'last' === $day ? $day : intval( $day );
+				},
+				$group_data['schedule_days']
+			);
+		}
+
+		// Quiet hours.
+		if ( isset( $group_data['quiet_hours_start'] ) && '' !== $group_data['quiet_hours_start'] ) {
+			$args['quiet_hours_start'] = intval( $group_data['quiet_hours_start'] );
+		} else {
+			$args['quiet_hours_start'] = null;
+		}
+		if ( isset( $group_data['quiet_hours_end'] ) && '' !== $group_data['quiet_hours_end'] ) {
+			$args['quiet_hours_end'] = intval( $group_data['quiet_hours_end'] );
+		} else {
+			$args['quiet_hours_end'] = null;
+		}
+
+		// Merge advanced settings (basic auth, proxy, screenshot delay).
+		$advanced_settings = $this->extract_advanced_settings( $group_data );
+		$args              = array_merge( $args, $advanced_settings );
+
 		// Debug: Log what we're sending to the API.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . wp_json_encode( $args ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug' );
@@ -101,6 +205,11 @@ class WebChangeDetector_Admin_Settings {
 
 		// Debug: Log the API response.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . wp_json_encode( $result ), 'monitoring_settings', 'debug' );
+
+		// Sync advanced settings to the sibling (manual) group.
+		if ( $result && ! is_string( $result ) ) {
+			$this->sync_to_sibling_group( $advanced_settings, $this->admin->monitoring_group_uuid );
+		}
 
 		// Return standardized response format.
 		if ( $result && ! is_string( $result ) ) {
@@ -159,8 +268,11 @@ class WebChangeDetector_Admin_Settings {
 				} elseif ( 'auto_update_checks_from' === $key || 'auto_update_checks_to' === $key ) {
 					// Convert time from site timezone to UTC before saving.
 					$auto_update_settings[ $key ] = \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( $value );
+				} elseif ( 'auto_update_checks_emails' === $key ) {
+					// Convert comma-separated emails to array (matching monitoring alert_emails pattern).
+					$auto_update_settings[ $key ] = array_values( array_filter( array_map( 'trim', explode( ',', sanitize_textarea_field( $value ) ) ) ) );
 				} else {
-					// Handle other auto update settings (emails, etc.).
+					// Handle other auto update settings.
 					$auto_update_settings[ $key ] = $value;
 				}
 			}
@@ -192,7 +304,18 @@ class WebChangeDetector_Admin_Settings {
 			$args['css'] = sanitize_textarea_field( $postdata['css'] );
 		}
 
-		return ( \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->manual_group_uuid, $args ) );
+		// Merge advanced settings (basic auth, proxy, screenshot delay).
+		$advanced_settings = $this->extract_advanced_settings( $postdata );
+		$args              = array_merge( $args, $advanced_settings );
+
+		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->manual_group_uuid, $args );
+
+		// Sync advanced settings to the sibling (monitoring) group.
+		if ( $result && ! is_string( $result ) ) {
+			$this->sync_to_sibling_group( $advanced_settings, $this->admin->manual_group_uuid );
+		}
+
+		return $result;
 	}
 
 	/**

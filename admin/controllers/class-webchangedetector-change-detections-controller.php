@@ -49,7 +49,8 @@ class WebChangeDetector_Change_Detections_Controller {
 	 * Render change detections page.
 	 */
 	private function render_change_detections_page() {
-		// Get filter parameters.
+		// Get filter parameters from URL (read-only GET parameters for filtering).
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET parameters for read-only filtering.
 		$from = gmdate( 'Y-m-d', strtotime( '- 7 days' ) );
 		if ( isset( $_GET['from'] ) ) {
 			$from = sanitize_text_field( wp_unslash( $_GET['from'] ) );
@@ -85,6 +86,7 @@ class WebChangeDetector_Change_Detections_Controller {
 				return false;
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$difference_only = false;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET parameter for filtering only.

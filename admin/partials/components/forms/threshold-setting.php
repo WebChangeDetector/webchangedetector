@@ -28,19 +28,17 @@ $description = $description ?? __( 'Only flag changes above this threshold perce
 $css_class   = $css_class ?? '';
 ?>
 
-<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
-	<label for="threshold"><?php echo esc_html( $label ); ?></label>
-	<input 
-		name="threshold" 
-		class="threshold" 
-		type="number" 
-		step="0.01" 
-		min="0" 
-		max="100" 
-		value="<?php echo esc_attr( $threshold ); ?>"
-		id="threshold"
-	> %
-	<?php if ( $description ) : ?>
-		<br><small><?php echo esc_html( $description ); ?></small>
-	<?php endif; ?>
-</div> 
+<label for="threshold"><?php echo esc_html( $label ); ?></label>
+<input
+	name="threshold"
+	class="threshold"
+	type="number"
+	step="0.01"
+	min="0"
+	max="100"
+	value="<?php echo esc_attr( $threshold ); ?>"
+	id="threshold"
+> %
+<?php if ( $description ) : ?>
+	<small><?php echo esc_html( $description ); ?></small>
+<?php endif; ?>

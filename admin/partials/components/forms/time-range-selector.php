@@ -34,24 +34,22 @@ $description = $description ?? __( 'Set the timeframe in which you want to allow
 $css_class   = $css_class ?? '';
 ?>
 
-<div class="setting-row <?php echo esc_attr( $css_class ); ?>">
-	<label for="<?php echo esc_attr( $from_name ); ?>"><?php echo esc_html( $label ); ?> <?php esc_html_e( 'from', 'webchangedetector' ); ?></label>
-	<input 
-		id="<?php echo esc_attr( $from_name ); ?>" 
-		name="<?php echo esc_attr( $from_name ); ?>" 
-		value="<?php echo esc_attr( $from_time ); ?>" 
-		type="time" 
-		class="<?php echo esc_attr( $from_name ); ?>"
-	>
-	<label for="<?php echo esc_attr( $to_name ); ?>" style="min-width: inherit"> <?php esc_html_e( 'to', 'webchangedetector' ); ?> </label>
-	<input 
-		id="<?php echo esc_attr( $to_name ); ?>" 
-		name="<?php echo esc_attr( $to_name ); ?>" 
-		value="<?php echo esc_attr( $to_time ); ?>" 
-		type="time" 
-		class="<?php echo esc_attr( $to_name ); ?>"
-	>
-	<?php if ( $description ) : ?>
-		<br><small><?php echo esc_html( $description ); ?></small>
-	<?php endif; ?>
-</div> 
+<label for="<?php echo esc_attr( $from_name ); ?>"><?php echo esc_html( $label ); ?> <?php esc_html_e( 'from', 'webchangedetector' ); ?></label>
+<input
+	id="<?php echo esc_attr( $from_name ); ?>"
+	name="<?php echo esc_attr( $from_name ); ?>"
+	value="<?php echo esc_attr( $from_time ); ?>"
+	type="time"
+	class="<?php echo esc_attr( $from_name ); ?>"
+>
+<label for="<?php echo esc_attr( $to_name ); ?>" style="min-width: inherit"> <?php esc_html_e( 'to', 'webchangedetector' ); ?> </label>
+<input
+	id="<?php echo esc_attr( $to_name ); ?>"
+	name="<?php echo esc_attr( $to_name ); ?>"
+	value="<?php echo esc_attr( $to_time ); ?>"
+	type="time"
+	class="<?php echo esc_attr( $to_name ); ?>"
+>
+<?php if ( $description ) : ?>
+	<small><?php echo esc_html( $description ); ?></small>
+<?php endif; ?>
