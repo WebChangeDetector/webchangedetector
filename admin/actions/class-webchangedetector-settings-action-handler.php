@@ -274,6 +274,51 @@ class WebChangeDetector_Settings_Action_Handler {
 			}
 		}
 
+		// Validate schedule type.
+		if ( ! empty( $data['schedule_type'] ) ) {
+			$valid_types = array( 'interval', 'weekly', 'monthly' );
+			if ( ! in_array( $data['schedule_type'], $valid_types, true ) ) {
+				$errors[] = 'Invalid schedule type.';
+			}
+		}
+
+		// Validate schedule days.
+		if ( ! empty( $data['schedule_days'] ) && is_array( $data['schedule_days'] ) ) {
+			$schedule_type = $data['schedule_type'] ?? 'interval';
+			foreach ( $data['schedule_days'] as $day ) {
+				if ( 'weekly' === $schedule_type ) {
+					if ( 'last' !== $day && ( intval( $day ) < 1 || intval( $day ) > 7 ) ) {
+						$errors[] = 'Weekly schedule days must be between 1 and 7.';
+						break;
+					}
+				} elseif ( 'monthly' === $schedule_type ) {
+					if ( 'last' !== $day && ( intval( $day ) < 1 || intval( $day ) > 30 ) ) {
+						$errors[] = 'Monthly schedule days must be between 1 and 30 or "last".';
+						break;
+					}
+				}
+			}
+		}
+
+		// Validate quiet hours.
+		$has_start = isset( $data['quiet_hours_start'] ) && '' !== $data['quiet_hours_start'];
+		$has_end   = isset( $data['quiet_hours_end'] ) && '' !== $data['quiet_hours_end'];
+		if ( $has_start !== $has_end ) {
+			$errors[] = 'Both quiet hours start and end must be set together, or both must be empty.';
+		}
+		if ( $has_start ) {
+			$start = intval( $data['quiet_hours_start'] );
+			if ( $start < 0 || $start > 23 ) {
+				$errors[] = 'Quiet hours start must be between 0 and 23.';
+			}
+		}
+		if ( $has_end ) {
+			$end = intval( $data['quiet_hours_end'] );
+			if ( $end < 0 || $end > 23 ) {
+				$errors[] = 'Quiet hours end must be between 0 and 23.';
+			}
+		}
+
 		return array(
 			'success' => empty( $errors ),
 			'errors'  => $errors,

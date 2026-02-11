@@ -313,6 +313,13 @@ function currentlyProcessing() {
             $(this).html(localHour.toLocaleString(navigator.language, options));
         });
 
+        // Show local timezone name with UTC offset.
+        var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        var offsetMinutes = new Date().getTimezoneOffset();
+        var offsetHours = -offsetMinutes / 60;
+        var utcLabel = "UTC" + (offsetHours >= 0 ? "+" : "") + offsetHours;
+        $(".local-timezone").text("Timezone: " + timezone + " " + utcLabel);
+
         // Convert a UTC hour (0-23) to a local time string like "14:00".
         function utcHourToLocalString(utcHour) {
             var d = new Date();

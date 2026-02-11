@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $placeholder      Placeholder text
  */
 
-$email_value     = $email_value ?? get_option( 'admin_email' );
+$email_value     = $email_value ?? '';
 $field_name      = $field_name ?? 'email';
 $label           = $label ?? __( 'Email address', 'webchangedetector' );
 $description     = $description ?? __( 'Enter the email address for notifications.', 'webchangedetector' );

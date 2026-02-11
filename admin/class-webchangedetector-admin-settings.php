@@ -157,6 +157,34 @@ class WebChangeDetector_Admin_Settings {
 			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
 		);
 
+		// Schedule type.
+		if ( isset( $group_data['schedule_type'] ) ) {
+			$args['schedule_type'] = sanitize_text_field( $group_data['schedule_type'] );
+		}
+
+		// Schedule days.
+		if ( isset( $group_data['schedule_days'] ) && is_array( $group_data['schedule_days'] ) ) {
+			$args['schedule_days'] = array_map(
+				function ( $day ) {
+					$day = sanitize_text_field( $day );
+					return 'last' === $day ? $day : intval( $day );
+				},
+				$group_data['schedule_days']
+			);
+		}
+
+		// Quiet hours.
+		if ( isset( $group_data['quiet_hours_start'] ) && '' !== $group_data['quiet_hours_start'] ) {
+			$args['quiet_hours_start'] = intval( $group_data['quiet_hours_start'] );
+		} else {
+			$args['quiet_hours_start'] = null;
+		}
+		if ( isset( $group_data['quiet_hours_end'] ) && '' !== $group_data['quiet_hours_end'] ) {
+			$args['quiet_hours_end'] = intval( $group_data['quiet_hours_end'] );
+		} else {
+			$args['quiet_hours_end'] = null;
+		}
+
 		// Merge advanced settings (basic auth, proxy, screenshot delay).
 		$advanced_settings = $this->extract_advanced_settings( $group_data );
 		$args              = array_merge( $args, $advanced_settings );

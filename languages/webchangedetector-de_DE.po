@@ -2659,3 +2659,75 @@ msgstr "Account upgraden"
 
 #~ msgid "Download Log File"
 #~ msgstr "Log-Datei herunterladen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Run on"
+msgstr "Ausführen an"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Choose when monitoring checks should run."
+msgstr "Wähle, wann Monitoring-Checks ausgeführt werden sollen."
+
+#: admin/partials/templates/auto-settings.php
+msgid "Every day"
+msgstr "Jeden Tag"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific weekdays"
+msgstr "Bestimmte Wochentage"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific days in month"
+msgstr "Bestimmte Tage im Monat"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days"
+msgstr "Tage auswählen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Mon"
+msgstr "Mo"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Tue"
+msgstr "Di"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Wed"
+msgstr "Mi"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Thu"
+msgstr "Do"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Fri"
+msgstr "Fr"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sat"
+msgstr "Sa"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sun"
+msgstr "So"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days of Month"
+msgstr "Tage im Monat auswählen"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Last day"
+msgstr "Letzter Tag"
+
+#: admin/partials/templates/auto-settings.php
+msgid "Quiet Hours"
+msgstr "Ruhezeiten"
+
+#: admin/partials/templates/auto-settings.php
+msgid "No checks will be performed during this time."
+msgstr "Während dieser Zeit werden keine Checks durchgeführt."
+
+#: admin/partials/templates/auto-settings.php
+msgid "None"
+msgstr "Keine"

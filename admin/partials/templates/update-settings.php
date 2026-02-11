@@ -132,7 +132,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="wcd-form-control">
 					<?php
 					// Email Input Component.
-					$emails_raw      = $auto_update_settings['auto_update_checks_emails'] ?? get_option( 'admin_email' );
+					$emails_raw      = $auto_update_settings['auto_update_checks_emails'] ?? '';
 					$email_value     = is_array( $emails_raw ) ? implode( ', ', $emails_raw ) : $emails_raw;
 					$field_name      = 'auto_update_checks_emails';
 					$label           = __( 'Notification email to', 'webchangedetector' );

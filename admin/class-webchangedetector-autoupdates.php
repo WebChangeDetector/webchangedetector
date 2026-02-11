@@ -1353,11 +1353,17 @@ class WebChangeDetector_Autoupdates {
 								Your WebChange Detector team</div>';
 
 		$auto_update_settings = self::get_auto_update_settings();
-		$to                   = get_bloginfo( 'admin_email' );
-		if ( array_key_exists( 'auto_update_checks_emails', $auto_update_settings ) || ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
+		$to                   = '';
+		if ( ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
 			$emails = $auto_update_settings['auto_update_checks_emails'];
 			$to     = is_array( $emails ) ? implode( ',', $emails ) : $emails;
 		}
+
+		if ( empty( $to ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No notification emails configured, skipping mail', 'send_change_detection_mail', 'debug' );
+			return;
+		}
+
 		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sending Mail with differences', 'send_change_detection_mail', 'debug' );

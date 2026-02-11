@@ -1779,6 +1779,7 @@ msgid "from"
 msgstr ""
 
 #: admin/partials/components/forms/time-range-selector.php:46
+#: admin/partials/templates/auto-settings.php
 msgid "to"
 msgstr ""
 
@@ -2199,4 +2200,76 @@ msgstr ""
 
 #: admin/views/class-webchangedetector-view-renderer.php:212
 msgid "Upgrade Account"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Run on"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Choose when monitoring checks should run."
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Every day"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific weekdays"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Specific days in month"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Mon"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Tue"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Wed"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Thu"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Fri"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sat"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Sun"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Select Days of Month"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Last day"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "Quiet Hours"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "No checks will be performed during this time."
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php
+msgid "None"
 msgstr ""

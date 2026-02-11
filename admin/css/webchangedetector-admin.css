@@ -4143,3 +4143,75 @@ Settings
 .webchangedetector .wcd-setting-screenshot-delay input[type="number"] {
     width: 200px;
 }
+
+/* Schedule Type - Radio Buttons */
+.webchangedetector .wcd-schedule-type-radios {
+    display: flex;
+    gap: 16px;
+    margin-top: 5px;
+}
+
+.webchangedetector .wcd-schedule-type-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.webchangedetector .wcd-schedule-type-option input[type="radio"] {
+    margin: 0;
+}
+
+/* Schedule Type - Day Checkboxes */
+.webchangedetector .wcd-day-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.webchangedetector .wcd-day-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.webchangedetector .wcd-day-checkbox:hover {
+    background-color: #f0f0f0;
+}
+
+.webchangedetector .wcd-day-checkbox input[type="checkbox"] {
+    margin: 0;
+    margin-right: 10px;
+}
+
+.webchangedetector .wcd-monthly-days {
+    max-width: 100%;
+}
+
+.webchangedetector .wcd-day-last {
+    font-weight: bold;
+}
+
+/* Quiet Hours */
+.webchangedetector .wcd-quiet-hours {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.webchangedetector .wcd-quiet-hours select {
+    width: auto;
+}
+
+.webchangedetector .local-timezone {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
