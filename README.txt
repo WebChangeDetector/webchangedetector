@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.9
-Stable tag: 4.1.0
+Stable tag: 4.1.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -53,6 +53,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 5. Now you can start your visual regression tests
 
 == Changelog ==
+
+= 4.1.1 =
+* Improvement: Move cooldown messages to debug logs
+* Fix: Checks were made without updates in some cases
 
 = 4.1.0 =
 * Feature: Basic auth for checks behind authentication

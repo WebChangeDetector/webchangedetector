@@ -740,7 +740,7 @@ class WebChangeDetector_Admin_WordPress {
 
 		// If no results found, try the alternate trailing-slash form.
 		if ( empty( $manual_urls ) && empty( $monitoring_urls ) ) {
-			$alt_url = ( '/' === substr( $url, -1 ) ) ? rtrim( $url, '/' ) : $url . '/';
+			$alt_url = $normalized_url . '/';
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( '[WCD Admin Bar] No results with normalized URL, trying alternate: ' . $alt_url, 'get_url_monitoring_status', 'debug' );
 
 			// Try again with the alternate trailing-slash form.
