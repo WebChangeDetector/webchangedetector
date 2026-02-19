@@ -359,16 +359,6 @@ class WebChangeDetector_Autoupdates {
 				'debug'
 			);
 
-			// Log error for user visibility.
-			$this->log_auto_update_error(
-				'skip_cooldown',
-				array(
-					'last_check'      => gmdate( 'Y-m-d H:i:s', $last_check_time ),
-					'next_allowed'    => gmdate( 'Y-m-d H:i:s', $next_allowed ),
-					'hours_remaining' => round( ( $next_allowed - time() ) / HOUR_IN_SECONDS, 1 ),
-				)
-			);
-
 			return true;
 		}
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cooldown period found or it has passed', 'wp_maybe_auto_update', 'debug' );
@@ -410,40 +400,51 @@ class WebChangeDetector_Autoupdates {
 			}
 		}
 
-		// Check for plugin updates.
-		$plugin_updates = get_site_transient( 'update_plugins' );
-		if ( $plugin_updates && ! empty( $plugin_updates->response ) ) {
-			$update_count = count( $plugin_updates->response );
-			if ( $update_count > 0 ) {
+		// Check for plugin updates (only those with auto-updates enabled).
+		$plugin_updates      = get_site_transient( 'update_plugins' );
+		$auto_update_plugins = get_site_option( 'auto_update_plugins' );
+		if ( $plugin_updates && ! empty( $plugin_updates->response ) && is_array( $auto_update_plugins ) ) {
+			$auto_updatable_count = 0;
+			foreach ( array_keys( $plugin_updates->response ) as $plugin_file ) {
+				if ( in_array( $plugin_file, $auto_update_plugins, true ) ) {
+					++$auto_updatable_count;
+				}
+			}
+			if ( $auto_updatable_count > 0 ) {
 				$has_updates['plugins'] = true;
-				$has_updates['total']  += $update_count;
+				$has_updates['total']  += $auto_updatable_count;
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-					'Plugin updates available: ' . $update_count,
+					'Plugin updates with auto-update enabled: ' . $auto_updatable_count . ' of ' . count( $plugin_updates->response ) . ' available',
 					'check_for_available_updates',
 					'debug'
 				);
 			}
 		}
 
-		// Check for theme updates.
-		$theme_updates = get_site_transient( 'update_themes' );
-		if ( $theme_updates && ! empty( $theme_updates->response ) ) {
-			$update_count = count( $theme_updates->response );
-			if ( $update_count > 0 ) {
+		// Check for theme updates (only those with auto-updates enabled).
+		$theme_updates      = get_site_transient( 'update_themes' );
+		$auto_update_themes = get_site_option( 'auto_update_themes' );
+		if ( $theme_updates && ! empty( $theme_updates->response ) && is_array( $auto_update_themes ) ) {
+			$auto_updatable_count = 0;
+			foreach ( array_keys( $theme_updates->response ) as $theme_slug ) {
+				if ( in_array( $theme_slug, $auto_update_themes, true ) ) {
+					++$auto_updatable_count;
+				}
+			}
+			if ( $auto_updatable_count > 0 ) {
 				$has_updates['themes'] = true;
-				$has_updates['total'] += $update_count;
+				$has_updates['total'] += $auto_updatable_count;
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-					'Theme updates available: ' . $update_count,
+					'Theme updates with auto-update enabled: ' . $auto_updatable_count . ' of ' . count( $theme_updates->response ) . ' available',
 					'check_for_available_updates',
 					'debug'
 				);
 			}
 		}
 
-		// Also check if auto-updates are enabled for any of these.
 		if ( $has_updates['total'] > 0 ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Total updates available: ' . $has_updates['total'],
+				'Total auto-updatable items: ' . $has_updates['total'],
 				'check_for_available_updates',
 				'info'
 			);
