@@ -556,6 +556,91 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/** Create an AI feedback rule.
+	 *
+	 * @param array $data Rule data (comparison_id, region_id, scope).
+	 * @return mixed|string
+	 */
+	public static function create_ai_feedback_rule( $data ) {
+		$args = array(
+			'action'        => 'ai-feedback-rules',
+			'comparison_id' => $data['comparison_id'] ?? '',
+			'region_id'     => $data['region_id'] ?? 0,
+			'scope'         => $data['scope'] ?? 'url',
+		);
+
+		return self::api_v2( $args, 'POST' );
+	}
+
+	/** Get AI feedback rules.
+	 *
+	 * @param array $params Optional filters (scope, is_active).
+	 * @return mixed|string
+	 */
+	public static function get_ai_feedback_rules( $params = array() ) {
+		$args = array(
+			'action' => 'ai-feedback-rules',
+		);
+		$args = array_merge( $args, $params );
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Delete an AI feedback rule.
+	 *
+	 * @param string $uuid The rule UUID.
+	 * @return mixed|string
+	 */
+	public static function delete_ai_feedback_rule( $uuid ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'ai-feedback-rules/' . $uuid,
+		);
+
+		return self::api_v2( $args, 'DELETE' );
+	}
+
+	/** Toggle an AI feedback rule active/inactive.
+	 *
+	 * @param string $uuid The rule UUID.
+	 * @param bool   $active Whether the rule should be active.
+	 * @return mixed|string
+	 */
+	public static function toggle_ai_feedback_rule( $uuid, $active ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action'    => 'ai-feedback-rules/' . $uuid,
+			'is_active' => $active ? 1 : 0,
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
+	/** Update the scope of an AI feedback rule.
+	 *
+	 * @param string $uuid  The rule UUID.
+	 * @param string $scope The new scope: 'url', 'group', or 'website'.
+	 * @return mixed|string
+	 */
+	public static function update_ai_feedback_rule_scope( $uuid, $scope ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'ai-feedback-rules/' . $uuid,
+			'scope'  => $scope,
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
 	/** Call the WCD api.
 	 *
 	 * @param array  $post All params for the request.

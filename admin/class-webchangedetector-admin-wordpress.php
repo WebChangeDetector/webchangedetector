@@ -367,6 +367,23 @@ class WebChangeDetector_Admin_WordPress {
 		if ( is_array( $allowances ) && $allowances['settings_view'] ) {
 			add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init' );
 		}
+		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
+			add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), 'manage_options', 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
+		}
+
+		// Upgrade Account link (external URL, always last in sidebar).
+		if ( is_array( $allowances ) && ! empty( $allowances['upgrade_account'] ) ) {
+			$upgrade_url = $this->admin->account_handler->get_upgrade_url();
+			if ( $upgrade_url ) {
+				global $submenu;
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Adding external link to submenu.
+				$submenu['webchangedetector'][] = array(
+					__( 'Upgrade Account', 'webchangedetector' ),
+					'manage_options',
+					$upgrade_url,
+				);
+			}
+		}
 
 		// Hidden submenu pages (not visible in menu but accessible via URL).
 		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {

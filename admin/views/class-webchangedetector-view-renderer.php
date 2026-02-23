@@ -191,7 +191,14 @@ class WebChangeDetector_View_Renderer {
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
-				
+
+				<?php if ( $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) : ?>
+				<a href="?page=webchangedetector-ai-rules"
+					class="nav-tab <?php echo 'webchangedetector-ai-rules' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<?php echo esc_html__( 'AI Rules', 'webchangedetector' ); ?>
+				</a>
+				<?php endif; ?>
+
 				<?php if ( $this->admin->settings_handler->is_allowed( 'logs_view' ) ) : ?>
 				<a href="?page=webchangedetector-logs"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">

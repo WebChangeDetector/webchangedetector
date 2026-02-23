@@ -1177,3 +1177,400 @@ jQuery(document).ready(function($) {
     }
 });
 
+/**
+ * AI Change Analysis: view toggle, overlay positioning, feedback modal, rules page.
+ *
+ * @since 4.1.0
+ */
+(function ($) {
+    'use strict';
+
+    var DEVICE_SCALE_FACTOR = 2;
+
+    /**
+     * Swap the right-hand image in the TwentyTwenty slider.
+     *
+     * @param {string} mode 'diff' for Change Detection image, 'after' for the After screenshot.
+     */
+    function wcdSwapSliderImage(mode) {
+        var $container = $('#diff-container');
+        var $afterImg = $container.find('.twentytwenty-after');
+        var $overlayLayer = $('#wcd_ai_overlay_layer');
+
+        if (!$afterImg.length) {
+            return;
+        }
+
+        if (mode === 'diff') {
+            $afterImg.attr('src', $container.attr('data-diff-src'));
+            $afterImg[0].onerror = function () {
+                loadFallbackImg(this, $container.attr('data-diff-fallback'));
+            };
+            $overlayLayer.addClass('wcd-ai-overlays-visible');
+            wcdPositionAiOverlays();
+        } else {
+            $afterImg.attr('src', $container.attr('data-after-src'));
+            $afterImg[0].onerror = function () {
+                loadFallbackImg(this, $container.attr('data-after-fallback'));
+            };
+            $overlayLayer.removeClass('wcd-ai-overlays-visible');
+        }
+    }
+
+    /**
+     * Create and position AI overlay boxes based on region bounding-box data.
+     *
+     * Reads data-ai-regions JSON from the overlay layer, scales coordinates from
+     * the original 2x-resolution screenshot to the displayed image size, then
+     * renders absolutely-positioned coloured boxes.
+     */
+    function wcdPositionAiOverlays() {
+        var $container = $('#wcd_ai_overlay_layer');
+        var regionsJson = $container.attr('data-ai-regions');
+
+        if (!regionsJson) {
+            return;
+        }
+
+        var regions;
+        try {
+            regions = JSON.parse(regionsJson);
+        } catch (e) {
+            return;
+        }
+
+        if (!regions || !regions.length) {
+            return;
+        }
+
+        var $img = $('#diff-container img.comp-img');
+        var imgElement = $img[0];
+        if (!imgElement || !imgElement.naturalWidth) {
+            return;
+        }
+
+        var displayWidth = imgElement.clientWidth;
+        var displayHeight = imgElement.clientHeight;
+        var naturalWidth = imgElement.naturalWidth;
+        var naturalHeight = imgElement.naturalHeight;
+
+        var scaleX = displayWidth / (naturalWidth * DEVICE_SCALE_FACTOR);
+        var scaleY = displayHeight / (naturalHeight * DEVICE_SCALE_FACTOR);
+
+        $container.find('.wcd-ai-overlay').remove();
+
+        for (var i = 0; i < regions.length; i++) {
+            var region = regions[i];
+            var bbox = region.bbox;
+            if (!bbox) {
+                continue;
+            }
+
+            var regionId = region.id !== undefined ? region.id : i;
+            var pad = 10;
+            var left = Math.round(bbox.x * scaleX) - pad;
+            var top = Math.round(bbox.y * scaleY) - pad;
+            var width = Math.round(bbox.w * scaleX) + (pad * 2);
+            var height = Math.round(bbox.h * scaleY) + (pad * 2);
+
+            if (left < 0) { left = 0; }
+            if (top < 0) { top = 0; }
+            if (left + width > displayWidth) { width = displayWidth - left; }
+            if (top + height > displayHeight) { height = displayHeight - top; }
+
+            var category = 'not_sure';
+            var $card = $('.wcd-ai-region-card[data-region-id="' + regionId + '"]');
+            if ($card.hasClass('wcd-ai-category-all_good')) {
+                category = 'all_good';
+            } else if ($card.hasClass('wcd-ai-category-alert')) {
+                category = 'alert';
+            }
+
+            var $overlay = $('<div>')
+                .addClass('wcd-ai-overlay wcd-ai-overlay-' + category)
+                .attr('data-region-id', regionId)
+                .css({
+                    left: left + 'px',
+                    top: top + 'px',
+                    width: width + 'px',
+                    height: height + 'px'
+                });
+
+            var $badge = $('<span>')
+                .addClass('wcd-ai-overlay-label')
+                .text(i + 1);
+
+            $overlay.append($badge);
+            $container.append($overlay);
+        }
+    }
+
+    /**
+     * Initialise AI overlay interactions: create overlays, bind resize/hover/click.
+     */
+    function wcdInitAiOverlays() {
+        var $container = $('#wcd_ai_overlay_layer');
+        if (!$container.length || !$container.attr('data-ai-regions')) {
+            return;
+        }
+
+        var $img = $('#diff-container img.comp-img');
+        if ($img[0] && $img[0].naturalWidth) {
+            wcdPositionAiOverlays();
+        } else {
+            $img.on('load', function () {
+                wcdPositionAiOverlays();
+            });
+        }
+
+        $(window).on('resize.wcdAiOverlays', function () {
+            wcdPositionAiOverlays();
+        });
+
+        // Hover region card: highlight overlay.
+        $(document).on('mouseenter.wcdAiOverlays', '.wcd-ai-region-card', function () {
+            var regionId = $(this).data('region-id');
+            $('.wcd-ai-overlay[data-region-id="' + regionId + '"]').addClass('wcd-ai-overlay-active');
+        });
+        $(document).on('mouseleave.wcdAiOverlays', '.wcd-ai-region-card', function () {
+            var regionId = $(this).data('region-id');
+            $('.wcd-ai-overlay[data-region-id="' + regionId + '"]').removeClass('wcd-ai-overlay-active');
+        });
+
+        // Click region card: switch to diff view, scroll to overlay, pulse.
+        $(document).on('click.wcdAiOverlays', '.wcd-ai-region-card', function () {
+            var regionId = $(this).data('region-id');
+            var $overlay = $('.wcd-ai-overlay[data-region-id="' + regionId + '"]');
+            if (!$overlay.length) {
+                return;
+            }
+
+            if (!$('.wcd-view-diff').hasClass('active')) {
+                $('.wcd-view-diff').trigger('click');
+            }
+
+            var headerOffset = 120;
+            var overlayTop = $overlay.offset().top - headerOffset;
+            $('html, body').animate({ scrollTop: overlayTop }, 400);
+
+            $overlay.addClass('wcd-ai-overlay-pulse');
+            setTimeout(function () {
+                $overlay.removeClass('wcd-ai-overlay-pulse');
+            }, 1500);
+        });
+    }
+
+    $(document).ready(function () {
+
+        // --- View Toggle ---
+
+        $(document).on('click', '.wcd-view-diff', function () {
+            if ($(this).hasClass('active')) {
+                return;
+            }
+            $('.wcd-view-btn').removeClass('active');
+            $(this).addClass('active');
+            wcdSwapSliderImage('diff');
+        });
+
+        $(document).on('click', '.wcd-view-after', function () {
+            if ($(this).hasClass('active')) {
+                return;
+            }
+            $('.wcd-view-btn').removeClass('active');
+            $(this).addClass('active');
+            wcdSwapSliderImage('after');
+        });
+
+        // --- AI Overlays ---
+
+        wcdInitAiOverlays();
+
+        // --- AI Feedback Modal ---
+
+        $(document).on('click', '.wcd-ai-feedback-btn', function (e) {
+            e.stopPropagation();
+            var comparisonId = $(this).data('comparison-id');
+            var regionId = $(this).data('region-id');
+            $('#wcd-ai-feedback-comparison-id').val(comparisonId);
+            $('#wcd-ai-feedback-region-id').val(regionId);
+            $("input[name='wcd_ai_feedback_scope'][value='url']").prop('checked', true);
+            $('#wcd-ai-feedback-modal').fadeIn(200);
+        });
+
+        $(document).on('click', '.wcd-ai-feedback-cancel', function () {
+            $('#wcd-ai-feedback-modal').fadeOut(200);
+        });
+
+        $(document).on('click', '#wcd-ai-feedback-modal', function (e) {
+            if ($(e.target).is('#wcd-ai-feedback-modal')) {
+                $('#wcd-ai-feedback-modal').fadeOut(200);
+            }
+        });
+
+        $(document).on('click', '.wcd-ai-feedback-submit', function () {
+            var $btn = $(this);
+            var comparisonId = $('#wcd-ai-feedback-comparison-id').val();
+            var regionId = $('#wcd-ai-feedback-region-id').val();
+            var scope = $("input[name='wcd_ai_feedback_scope']:checked").val();
+
+            $btn.prop('disabled', true).text(wcdL10n.creatingRule || 'Creating rule...');
+
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcd_create_ai_feedback_rule',
+                    nonce: wcdAjaxData.nonce,
+                    comparison_id: comparisonId,
+                    region_id: regionId,
+                    scope: scope
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#wcd-ai-feedback-modal').fadeOut(200);
+                        var $originBtn = $('.wcd-ai-feedback-btn[data-comparison-id="' + comparisonId + '"][data-region-id="' + regionId + '"]');
+                        $originBtn
+                            .text(wcdL10n.ruleCreated || 'Rule created')
+                            .prop('disabled', true)
+                            .addClass('wcd-ai-feedback-btn-done');
+                    } else {
+                        alert(response.data && response.data.message ? response.data.message : 'Failed to create rule.');
+                    }
+                },
+                error: function () {
+                    alert('Something went wrong. Please try again.');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).text(wcdL10n.confirm || 'Confirm');
+                }
+            });
+        });
+
+        // --- AI Rules Page ---
+
+        // Toggle rule active/inactive.
+        $(document).on('change', '.wcd-ai-rules-toggle-input', function () {
+            var $input = $(this);
+            var ruleId = $input.data('rule-id');
+            var newActive = $input.is(':checked') ? 1 : 0;
+
+            $input.prop('disabled', true);
+
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcd_toggle_ai_feedback_rule',
+                    nonce: wcdAjaxData.nonce,
+                    rule_id: ruleId,
+                    active: newActive
+                },
+                success: function (response) {
+                    if (!response.success) {
+                        $input.prop('checked', !newActive);
+                        alert(response.data && response.data.message ? response.data.message : 'Failed to update rule.');
+                    }
+                },
+                error: function () {
+                    $input.prop('checked', !newActive);
+                    alert('Something went wrong. Please try again.');
+                },
+                complete: function () {
+                    $input.prop('disabled', false);
+                }
+            });
+        });
+
+        // Delete rule.
+        $(document).on('click', '.wcd-ai-rules-delete-btn', function () {
+            var $btn = $(this);
+            var ruleId = $btn.data('rule-id');
+            var $row = $btn.closest('.wcd-ai-rules-row');
+
+            if (!confirm('Are you sure you want to delete this rule? This cannot be undone.')) {
+                return;
+            }
+
+            $btn.prop('disabled', true);
+            $row.css('opacity', '0.5');
+
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcd_delete_ai_feedback_rule',
+                    nonce: wcdAjaxData.nonce,
+                    rule_id: ruleId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $row.fadeOut(300, function () {
+                            $(this).remove();
+                            if ($('.wcd-ai-rules-row').length === 0) {
+                                $('.wcd-ai-rules-table-wrap').replaceWith(
+                                    '<div class="wcd-ai-rules-empty">' +
+                                    '<span class="dashicons dashicons-shield"></span>' +
+                                    '<h3>No rules yet</h3>' +
+                                    '<p>Rules help the AI learn which changes are safe to ignore on future comparisons.</p>' +
+                                    '</div>'
+                                );
+                            }
+                        });
+                    } else {
+                        $row.css('opacity', '1');
+                        alert(response.data && response.data.message ? response.data.message : 'Failed to delete rule.');
+                    }
+                },
+                error: function () {
+                    $row.css('opacity', '1');
+                    alert('Something went wrong. Please try again.');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+
+        // Change rule scope (segmented control).
+        $(document).on('click', '.wcd-ai-rules-scope-option', function () {
+            var $btn = $(this);
+            var $toggle = $btn.closest('.wcd-ai-rules-scope-toggle');
+            var ruleId = $toggle.data('rule-id');
+            var newScope = $btn.data('scope');
+            var previousScope = $toggle.data('current-scope');
+
+            if (newScope === previousScope) {
+                return;
+            }
+
+            $toggle.find('.wcd-ai-rules-scope-option').prop('disabled', true);
+
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcd_update_ai_feedback_rule_scope',
+                    nonce: wcdAjaxData.nonce,
+                    rule_id: ruleId,
+                    scope: newScope
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $toggle.data('current-scope', newScope);
+                        $toggle.find('.wcd-ai-rules-scope-option').removeClass('is-selected');
+                        $btn.addClass('is-selected');
+                    } else {
+                        alert(response.data && response.data.message ? response.data.message : 'Failed to update scope.');
+                    }
+                },
+                error: function () {
+                    alert('Something went wrong. Please try again.');
+                },
+                complete: function () {
+                    $toggle.find('.wcd-ai-rules-scope-option').prop('disabled', false);
+                }
+            });
+        });
+    });
+})(jQuery);
