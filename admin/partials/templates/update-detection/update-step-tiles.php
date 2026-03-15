@@ -7,6 +7,23 @@
 
 ?>
 <div class="wcd-workflow-steps">
+	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_setting ); ?>">
+		<div class="wcd-step-icon">
+			<?php if ( 'done' === $progress_setting ) : ?>
+				<span class="dashicons dashicons-yes-alt"></span>
+			<?php elseif ( 'active' === $progress_setting ) : ?>
+				<span class="dashicons dashicons-controls-play"></span>
+			<?php else : ?>
+				<span class="wcd-step-number">1</span>
+			<?php endif; ?>
+		</div>
+		<div class="wcd-step-content">
+			<h3>Settings</h3>
+		</div>
+	</div>
+
+	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( 'done' === $progress_setting ? 'active' : 'inactive' ); ?>"></div>
+
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_pre ); ?>">
 		<div class="wcd-step-icon">
 			<?php if ( 'done' === $progress_pre ) : ?>
@@ -14,17 +31,16 @@
 			<?php elseif ( 'active' === $progress_pre ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
-				<span class="wcd-step-number">1</span>
+				<span class="wcd-step-number">2</span>
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Pre-Update Screenshots</h3>
-			<p>Take screenshots before making changes</p>
+			<h3>Pre-Update</h3>
 		</div>
 	</div>
-	
+
 	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( 'done' === $progress_pre ? 'active' : 'inactive' ); ?>"></div>
-	
+
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_post ); ?>">
 		<div class="wcd-step-icon">
 			<?php if ( 'done' === $progress_post ) : ?>
@@ -32,17 +48,16 @@
 			<?php elseif ( 'active' === $progress_post ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
-				<span class="wcd-step-number">2</span>
+				<span class="wcd-step-number">3</span>
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Post-Update Screenshots</h3>
-			<p>Take screenshots after making changes</p>
+			<h3>Post-Update</h3>
 		</div>
 	</div>
-	
+
 	<div class="wcd-step-connector wcd-connector-<?php echo esc_attr( 'done' === $progress_post ? 'active' : 'inactive' ); ?>"></div>
-	
+
 	<div class="wcd-step-item wcd-step-<?php echo esc_attr( $progress_change_detection ); ?>">
 		<div class="wcd-step-icon">
 			<?php if ( 'done' === $progress_change_detection ) : ?>
@@ -50,12 +65,11 @@
 			<?php elseif ( 'active' === $progress_change_detection ) : ?>
 				<span class="dashicons dashicons-controls-play"></span>
 			<?php else : ?>
-				<span class="wcd-step-number">3</span>
+				<span class="wcd-step-number">4</span>
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Change Detections</h3>
-			<p>Review detected changes and differences</p>
+			<h3>Checks</h3>
 		</div>
 	</div>
 </div>

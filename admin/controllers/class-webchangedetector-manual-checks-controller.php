@@ -131,8 +131,8 @@ class WebChangeDetector_Manual_Checks_Controller {
 					$progress_setting          = 'done';
 					$progress_pre              = 'done';
 					$progress_make_update      = 'done';
-					$progress_post             = 'active';
-					$progress_change_detection = 'disabled';
+					$progress_post             = 'done';
+					$progress_change_detection = 'active';
 					$sc_processing             = $this->admin->get_processing_queue_v2(); // used in template.
 					$this->admin->view_renderer->get_component( 'templates' )->render_update_detection_step(
 						'post_started',

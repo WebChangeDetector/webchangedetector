@@ -158,6 +158,10 @@ class WebChangeDetector_WordPress_Action_Handler {
 
 			// Clear any existing batch tracking when starting fresh.
 			delete_option( 'wcd_manual_checks_batch' );
+			delete_option( 'wcd_manual_checks_pre_batch' );
+			delete_option( 'wcd_manual_checks_post_batch' );
+			delete_option( 'wcd_manual_checks_status' );
+			delete_option( 'wcd_manual_checks_started_at' );
 
 			return array(
 				'success'      => true,

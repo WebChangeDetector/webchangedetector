@@ -141,7 +141,6 @@ class WebChangeDetector_Template_View {
 			'post'             => 'update-step-post-sc.php',
 			'post_started'     => 'update-step-post-sc-started.php',
 			'change_detection' => 'update-step-change-detection.php',
-			'processing'       => 'update-step-processing-sc.php',
 			'settings'         => 'update-step-settings.php',
 			'cancel'           => 'update-step-cancel.php',
 			'tiles'            => 'update-step-tiles.php',

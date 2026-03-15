@@ -14,6 +14,9 @@
 $has_ai_data = ! empty( $compare['ai_verification_status'] )
 	&& 'skipped' !== $compare['ai_verification_status'];
 
+$ai_skipped_no_diff = ( empty( $compare['ai_verification_status'] ) || 'skipped' === $compare['ai_verification_status'] )
+	&& ! $compare['difference_percent'];
+
 if ( $has_ai_data ) {
 	$ai_status  = $compare['ai_verification_status'];
 	$ai_result  = $compare['ai_verification_result'] ?? array();
@@ -32,7 +35,8 @@ $has_browser_console_data = ! empty( $browser_console_added ) ||
 // Check user plan access for browser console feature.
 $user_account               = null;
 $user_plan                  = 'free';
-$can_access_browser_console = false;
+$can_access_browser_console  = false;
+$can_access_ai_verification  = false;
 
 try {
 	if ( isset( $this->account_handler ) && method_exists( $this->account_handler, 'get_account' ) ) {
@@ -42,10 +46,12 @@ try {
 
 	if ( isset( $this->admin ) && method_exists( $this->admin, 'can_access_feature' ) ) {
 		$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
+		$can_access_ai_verification = $this->admin->can_access_feature( 'ai_verification', $user_plan );
 	}
 } catch ( Exception $e ) {
-	\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Console feature access check failed: ' . $e->getMessage(), 'template_error', 'error' );
+	\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Feature access check failed: ' . $e->getMessage(), 'template_error', 'error' );
 	$can_access_browser_console = false;
+	$can_access_ai_verification = false;
 }
 
 // Helper function to safely extract console message content.
@@ -197,7 +203,7 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 	<div class="wcd-popup-sidebar">
 		<div class="wcd-popup-sidebar-inner">
 
-			<?php if ( $has_ai_data ) { ?>
+			<?php if ( $has_ai_data && $can_access_ai_verification ) { ?>
 			<!-- AI Change Analysis Section -->
 			<div class="wcd-ai-analysis-section">
 				<h3 class="wcd-section-headline">
@@ -322,6 +328,46 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 					</div>
 				<?php } ?>
 			</div>
+			<?php } elseif ( $ai_skipped_no_diff && $can_access_ai_verification ) { ?>
+			<!-- AI Change Analysis Section (skipped) -->
+			<div class="wcd-ai-analysis-section">
+				<h3 class="wcd-section-headline"><?php esc_html_e( 'AI Change Analysis', 'webchangedetector' ); ?></h3>
+				<div class="wcd-ai-skipped-info">
+					<?php esc_html_e( 'AI analysis skipped: No visual difference detected.', 'webchangedetector' ); ?>
+				</div>
+			</div>
+			<?php } elseif ( ! $can_access_ai_verification ) { ?>
+			<!-- AI Change Analysis Section (restricted) -->
+			<div class="wcd-ai-analysis-section">
+				<h3 class="wcd-section-headline"><?php esc_html_e( 'AI Change Analysis', 'webchangedetector' ); ?></h3>
+				<div class="wcd-ai-display wcd-ai-restricted">
+					<div class="wcd-ai-overall wcd-ai-overall-alert">
+						<span class="wcd-ai-overall-badge wcd-ai-cat-alert"><?php esc_html_e( 'Alert', 'webchangedetector' ); ?></span>
+						<p class="wcd-ai-summary-text"><?php esc_html_e( 'Navigation menu item changed from "Services" to "Solutions"', 'webchangedetector' ); ?></p>
+					</div>
+					<div class="wcd-ai-regions-list">
+						<div class="wcd-ai-region-card wcd-ai-category-alert">
+							<span class="wcd-ai-region-number">1</span>
+							<span class="wcd-ai-region-category-badge wcd-ai-cat-alert"><?php esc_html_e( 'Alert', 'webchangedetector' ); ?></span>
+							<span class="wcd-ai-region-description"><?php esc_html_e( 'Header text changed', 'webchangedetector' ); ?></span>
+						</div>
+						<div class="wcd-ai-region-card wcd-ai-category-all_good">
+							<span class="wcd-ai-region-number">2</span>
+							<span class="wcd-ai-region-category-badge wcd-ai-cat-all_good"><?php esc_html_e( 'OK', 'webchangedetector' ); ?></span>
+							<span class="wcd-ai-region-description"><?php esc_html_e( 'Ad banner rotation', 'webchangedetector' ); ?></span>
+						</div>
+					</div>
+					<div class="wcd-ai-upgrade-overlay">
+						<p class="wcd-restricted-lock"><?php esc_html_e( 'AI Change Analysis', 'webchangedetector' ); ?></p>
+						<p class="wcd-restricted-description">
+							<?php echo wp_kses( __( 'Available on <strong>Solo+</strong> plans', 'webchangedetector' ), array( 'strong' => array() ) ); ?>
+						</p>
+						<a href="<?php echo esc_url( $this->account_handler->get_upgrade_url() ?? 'https://www.webchangedetector.com/pricing/' ); ?>" target="_blank" class="wcd-upgrade-button">
+							<?php esc_html_e( 'Upgrade Plan', 'webchangedetector' ); ?>
+						</a>
+					</div>
+				</div>
+			</div>
 			<?php } ?>
 
 			<!-- Visual Changes Section -->
@@ -359,7 +405,7 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 							$has_removed   = ! empty( $browser_console_removed );
 							$change_status = $browser_console_change ?? 'unchanged';
 							?>
-							<div class="wcd-console-indicator wcd-console-changed">
+							<div class="wcd-console-indicator <?php echo esc_attr( $change_status ); ?>">
 								<span class="wcd-console-status">
 								<?php
 								if ( 'mixed' === $change_status ) {
@@ -380,10 +426,20 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 								if ( $has_added && is_array( $browser_console_added ) ) {
 									foreach ( array_slice( $browser_console_added, 0, 3 ) as $log ) {
 										$text_content = safe_extract_console_message( $log );
+										$decoded_log  = is_array( $log ) ? $log : ( is_string( $log ) ? json_decode( $log, true ) : array() );
+										$source_url   = is_array( $decoded_log ) ? ( $decoded_log['source'] ?? null ) : null;
+										$severity     = is_array( $decoded_log ) ? ( $decoded_log['severity'] ?? 'warning' ) : 'warning';
 										?>
 										<div class="wcd-console-entry wcd-console-added">
 											<span class="wcd-console-prefix">+</span>
+											<span class="wcd-console-severity wcd-severity-<?php echo esc_attr( $severity ); ?>"><?php echo esc_html( $severity ); ?></span>
 											<span class="wcd-console-message"><?php echo esc_html( $text_content ); ?></span>
+											<?php if ( $can_access_browser_console && ! empty( $compare['id'] ) ) { ?>
+												<button class="wcd-console-ignore-btn" data-comparison-id="<?php echo esc_attr( $compare['id'] ); ?>" data-console-entry="<?php echo esc_attr( is_string( $text_content ) ? $text_content : '' ); ?>" data-console-source="<?php echo esc_attr( $source_url ?? '' ); ?>"><?php esc_html_e( 'Ignore', 'webchangedetector' ); ?></button>
+											<?php } ?>
+											<?php if ( $source_url ) { ?>
+												<span class="wcd-console-source"><?php echo esc_html( $source_url ); ?></span>
+											<?php } ?>
 										</div>
 										<?php
 									}
@@ -402,10 +458,15 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 								if ( $has_removed && is_array( $browser_console_removed ) ) {
 									foreach ( array_slice( $browser_console_removed, 0, 2 ) as $log ) {
 										$text_content = safe_extract_console_message( $log );
+										$decoded_log  = is_array( $log ) ? $log : ( is_string( $log ) ? json_decode( $log, true ) : array() );
+										$source_url   = is_array( $decoded_log ) ? ( $decoded_log['source'] ?? null ) : null;
 										?>
 										<div class="wcd-console-entry wcd-console-removed">
 											<span class="wcd-console-prefix">-</span>
 											<span class="wcd-console-message"><?php echo esc_html( $text_content ); ?></span>
+											<?php if ( $source_url ) { ?>
+												<span class="wcd-console-source"><?php echo esc_html( $source_url ); ?></span>
+											<?php } ?>
 										</div>
 										<?php
 									}
@@ -492,6 +553,33 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 		<div class="wcd-ai-feedback-modal-actions">
 			<button type="button" class="button button-primary wcd-ai-feedback-submit"><?php esc_html_e( 'Confirm', 'webchangedetector' ); ?></button>
 			<button type="button" class="button wcd-ai-feedback-cancel"><?php esc_html_e( 'Cancel', 'webchangedetector' ); ?></button>
+		</div>
+	</div>
+</div>
+<?php } ?>
+
+<?php if ( $can_access_browser_console ) { ?>
+<!-- Console Ignore Rule: Scope Selection Modal -->
+<div id="wcd-console-feedback-modal" class="wcd-ai-feedback-modal">
+	<div class="wcd-ai-feedback-modal-content">
+		<h3><?php esc_html_e( 'Ignore this console error in future?', 'webchangedetector' ); ?></h3>
+		<p><?php esc_html_e( 'Choose where this rule should apply:', 'webchangedetector' ); ?></p>
+		<div class="wcd-ai-feedback-modal-options">
+			<label class="wcd-ai-feedback-modal-option">
+				<input type="radio" name="wcd_console_feedback_scope" value="url" checked>
+				<span><?php esc_html_e( 'Only this URL', 'webchangedetector' ); ?></span>
+			</label>
+			<label class="wcd-ai-feedback-modal-option">
+				<input type="radio" name="wcd_console_feedback_scope" value="group_or_website">
+				<span><?php printf( esc_html__( 'All URLs in %s', 'webchangedetector' ), esc_html( $compare['group_name'] ?? __( 'this group', 'webchangedetector' ) ) ); ?></span>
+			</label>
+		</div>
+		<input type="hidden" id="wcd-console-feedback-comparison-id" value="">
+		<input type="hidden" id="wcd-console-feedback-entry" value="">
+		<input type="hidden" id="wcd-console-feedback-source" value="">
+		<div class="wcd-ai-feedback-modal-actions">
+			<button type="button" class="button button-primary wcd-console-feedback-submit"><?php esc_html_e( 'Confirm', 'webchangedetector' ); ?></button>
+			<button type="button" class="button wcd-console-feedback-cancel"><?php esc_html_e( 'Cancel', 'webchangedetector' ); ?></button>
 		</div>
 	</div>
 </div>

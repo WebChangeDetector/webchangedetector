@@ -48,6 +48,10 @@ $options_to_delete = array(
 	'wcd_upgrade_url',
 	'wcd_auto_update_history',
 	'wcd_manual_checks_batch',
+	'wcd_manual_checks_pre_batch',
+	'wcd_manual_checks_post_batch',
+	'wcd_manual_checks_status',
+	'wcd_manual_checks_started_at',
 	'webchangedetector_update_detection_step',
 );
 

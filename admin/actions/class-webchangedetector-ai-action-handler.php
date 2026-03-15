@@ -25,16 +25,16 @@ class WebChangeDetector_AI_Action_Handler {
 	const VALID_SCOPES = array( 'url', 'group_or_website' );
 
 	/**
-	 * Create an AI feedback rule.
+	 * Create an AI feedback rule (visual or console).
 	 *
-	 * @param array $data Rule data (comparison_id, region_id, scope).
+	 * @param array $data Rule data (comparison_id, scope, type, region_id or console_entry).
 	 * @return array Result with success status and data.
 	 */
 	public function create_feedback_rule( $data ) {
 		try {
 			$comparison_id = sanitize_text_field( $data['comparison_id'] ?? '' );
-			$region_id     = intval( $data['region_id'] ?? 0 );
 			$scope         = sanitize_text_field( $data['scope'] ?? 'url' );
+			$type          = sanitize_text_field( $data['type'] ?? 'visual' );
 
 			if ( empty( $comparison_id ) ) {
 				return array(
@@ -50,13 +50,20 @@ class WebChangeDetector_AI_Action_Handler {
 				);
 			}
 
-			$result = WebChangeDetector_API_V2::create_ai_feedback_rule(
-				array(
-					'comparison_id' => $comparison_id,
-					'region_id'     => $region_id,
-					'scope'         => $scope,
-				)
+			$rule_data = array(
+				'comparison_id' => $comparison_id,
+				'scope'         => $scope,
+				'type'          => $type,
 			);
+
+			if ( 'console' === $type ) {
+				$rule_data['console_entry']  = sanitize_text_field( $data['console_entry'] ?? '' );
+				$rule_data['console_source'] = esc_url_raw( $data['console_source'] ?? '' );
+			} else {
+				$rule_data['region_id'] = intval( $data['region_id'] ?? 0 );
+			}
+
+			$result = WebChangeDetector_API_V2::create_ai_feedback_rule( $rule_data );
 
 			if ( ! empty( $result['data'] ) ) {
 				return array(

@@ -492,6 +492,22 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'DELETE' );
 	}
 
+	/**
+	 * Get groups from API v2.
+	 *
+	 * @param array $filters Optional filters.
+	 * @return mixed|string
+	 */
+	public static function get_groups_v2( $filters = array() ) {
+		if ( empty( $filters['per_page'] ) ) {
+			$filters['per_page'] = 50;
+		}
+		$args = array(
+			'action' => 'groups?' . build_query( $filters ),
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
 	/** Get batches.
 	 *
 	 * @param array $filter Filters for the batches.
@@ -556,18 +572,25 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
-	/** Create an AI feedback rule.
+	/** Create an AI feedback rule (visual or console).
 	 *
-	 * @param array $data Rule data (comparison_id, region_id, scope).
+	 * @param array $data Rule data (comparison_id, scope, type, region_id or console_entry).
 	 * @return mixed|string
 	 */
 	public static function create_ai_feedback_rule( $data ) {
 		$args = array(
 			'action'        => 'ai-feedback-rules',
 			'comparison_id' => $data['comparison_id'] ?? '',
-			'region_id'     => $data['region_id'] ?? 0,
 			'scope'         => $data['scope'] ?? 'url',
+			'type'          => $data['type'] ?? 'visual',
 		);
+
+		if ( 'console' === ( $data['type'] ?? 'visual' ) ) {
+			$args['console_entry']  = $data['console_entry'] ?? '';
+			$args['console_source'] = $data['console_source'] ?? '';
+		} else {
+			$args['region_id'] = $data['region_id'] ?? 0;
+		}
 
 		return self::api_v2( $args, 'POST' );
 	}

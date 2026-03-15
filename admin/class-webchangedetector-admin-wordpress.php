@@ -83,6 +83,7 @@ class WebChangeDetector_Admin_WordPress {
 		wp_enqueue_style( 'wp-codemirror' );
 		wp_enqueue_style( 'codemirror-darcula', WCD_PLUGIN_URL . 'admin/css/darcula.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'driver-css', WCD_PLUGIN_URL . 'admin/css/driver.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'flatpickr-css', WCD_PLUGIN_URL . 'admin/vendor/flatpickr/flatpickr.min.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -148,6 +149,7 @@ class WebChangeDetector_Admin_WordPress {
 			wp_enqueue_script( 'twentytwenty-js', WCD_PLUGIN_URL . 'admin/js/jquery.twentytwenty.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'twentytwenty-move-js', WCD_PLUGIN_URL . 'admin/js/jquery.event.move.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( 'driver-js', WCD_PLUGIN_URL . 'admin/js/driver.js.iife.js', array(), $this->version, false );
+			wp_enqueue_script( 'flatpickr-js', WCD_PLUGIN_URL . 'admin/vendor/flatpickr/flatpickr.min.js', array(), $this->version, false );
 			wp_enqueue_script( 'wcd-wizard', WCD_PLUGIN_URL . 'admin/js/wizard.js', array( 'jquery', 'driver-js' ), $this->version, false );
 			// CodeMirror settings for CSS.
 			$css_settings              = array(
@@ -291,6 +293,8 @@ class WebChangeDetector_Admin_WordPress {
 					'nonce'                     => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
 					'take_screenshots_nonce'    => wp_create_nonce( 'take_screenshots' ),
 					'start_manual_checks_nonce' => wp_create_nonce( 'start_manual_checks' ),
+					'show_detection_nonce'      => wp_create_nonce( 'show_change_detection' ),
+					'show_detection_url'        => admin_url( 'admin.php?page=webchangedetector-show-detection' ),
 					'plugin_url'                => WCD_PLUGIN_URL . 'admin/',
 				)
 			);

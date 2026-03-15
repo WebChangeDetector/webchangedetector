@@ -74,13 +74,22 @@ class WebChangeDetector_AI_Ajax_Handler extends WebChangeDetector_Ajax_Handler_B
 			return;
 		}
 
-		$result = $this->ai_handler->create_feedback_rule(
-			array(
-				'comparison_id' => $post_data['comparison_id'],
-				'region_id'     => $post_data['region_id'] ?? 0,
-				'scope'         => $post_data['scope'] ?? 'url',
-			)
+		$type = sanitize_text_field( $post_data['type'] ?? 'visual' );
+
+		$rule_data = array(
+			'comparison_id' => $post_data['comparison_id'],
+			'scope'         => $post_data['scope'] ?? 'url',
+			'type'          => $type,
 		);
+
+		if ( 'console' === $type ) {
+			$rule_data['console_entry']  = sanitize_text_field( $post_data['console_entry'] ?? '' );
+			$rule_data['console_source'] = esc_url_raw( $post_data['console_source'] ?? '' );
+		} else {
+			$rule_data['region_id'] = $post_data['region_id'] ?? 0;
+		}
+
+		$result = $this->ai_handler->create_feedback_rule( $rule_data );
 
 		if ( $result['success'] ) {
 			$this->send_success_response( $result['data'] ?? null );
