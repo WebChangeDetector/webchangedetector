@@ -182,7 +182,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		}
 
 		if ( ! empty( $filters['group_id'] ) ) {
-			$api_filters['group_ids'] = $filters['group_id'];
+			$api_filters['groups'] = $filters['group_id'];
 		}
 
 		if ( ! empty( $filters['urls'] ) ) {
@@ -455,7 +455,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		);
 
 		// Copy relevant filters.
-		foreach ( array( 'queue_type', 'status', 'above_threshold', 'group_ids' ) as $key ) {
+		foreach ( array( 'queue_type', 'status', 'above_threshold', 'groups' ) as $key ) {
 			if ( isset( $api_filters[ $key ] ) ) {
 				$flat_filters[ $key ] = $api_filters[ $key ];
 			}
