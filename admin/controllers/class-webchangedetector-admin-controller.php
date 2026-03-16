@@ -598,7 +598,7 @@ class WebChangeDetector_Admin_Controller {
 
 			case 'webchangedetector-ai-rules':
 				// Check permissions.
-				if ( ! $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) {
+				if ( ! $this->admin->settings_handler->is_allowed( 'ai_rules_view' ) ) {
 					return;
 				}
 				include plugin_dir_path( __DIR__ ) . 'partials/templates/ai-feedback-rules.php';

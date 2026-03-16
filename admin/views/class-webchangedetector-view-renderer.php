@@ -192,7 +192,7 @@ class WebChangeDetector_View_Renderer {
 				</a>
 				<?php endif; ?>
 
-				<?php if ( $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) : ?>
+				<?php if ( $this->admin->settings_handler->is_allowed( 'ai_rules_view' ) ) : ?>
 				<a href="?page=webchangedetector-ai-rules"
 					class="nav-tab <?php echo 'webchangedetector-ai-rules' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php echo esc_html__( 'AI Rules', 'webchangedetector' ); ?>

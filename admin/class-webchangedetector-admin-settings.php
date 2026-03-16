@@ -948,6 +948,7 @@ class WebChangeDetector_Admin_Settings {
 		if ( empty( $allowances ) ) {
 			$allowances = array(
 				'change_detections_view'     => true,
+				'ai_rules_view'              => true,
 				'manual_checks_view'         => true,
 				'manual_checks_start'        => true,
 				'manual_checks_settings'     => true,

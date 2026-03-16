@@ -13,7 +13,10 @@ namespace WebChangeDetector;
 
 defined( 'ABSPATH' ) || exit;
 
-$rules_response = WebChangeDetector_API_V2::get_ai_feedback_rules();
+$website_id     = get_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
+$rules_response = WebChangeDetector_API_V2::get_ai_feedback_rules(
+	$website_id ? array( 'website_id' => $website_id ) : array()
+);
 $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : array();
 ?>
 

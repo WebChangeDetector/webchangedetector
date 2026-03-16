@@ -371,7 +371,7 @@ class WebChangeDetector_Admin_WordPress {
 		if ( is_array( $allowances ) && $allowances['settings_view'] ) {
 			add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
+		if ( is_array( $allowances ) && ( $allowances['ai_rules_view'] ?? true ) ) {
 			add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), 'manage_options', 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
 		}
 
