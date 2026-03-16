@@ -70,6 +70,10 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 		add_action( 'wp_ajax_update_comparison_status', array( $this, 'ajax_update_comparison_status' ) );
 		add_action( 'wp_ajax_get_batch_comparisons_view', array( $this, 'ajax_get_batch_comparisons_view' ) );
 		add_action( 'wp_ajax_load_failed_queues', array( $this, 'ajax_load_failed_queues' ) );
+		add_action( 'wp_ajax_get_batch_processing_status', array( $this, 'ajax_get_batch_processing_status' ) );
+		add_action( 'wp_ajax_get_new_change_detections', array( $this, 'ajax_get_new_change_detections' ) );
+		add_action( 'wp_ajax_get_completed_pre_screenshots', array( $this, 'ajax_get_completed_pre_screenshots' ) );
+		add_action( 'wp_ajax_get_failed_queues_json', array( $this, 'ajax_get_failed_queues_json' ) );
 	}
 
 	/**
@@ -322,6 +326,260 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 		} catch ( \Exception $e ) {
 			$this->send_error_response(
 				__( 'An error occurred while loading failed queues.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle get batch processing status AJAX request.
+	 *
+	 * Retrieves processing status counts for a batch, including breakdowns
+	 * by queue status (open, processing, done, failed) and optionally by type.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_get_batch_processing_status() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			$post_data = $this->validate_post_data( array( 'batch_id' ) );
+
+			if ( false === $post_data ) {
+				wp_send_json( array( 'error' => 'Missing batch_id' ) );
+				return;
+			}
+
+			$batch_id = sanitize_text_field( $post_data['batch_id'] );
+
+			// Single API call to get queue data with status counts.
+			$queue_response = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, false, false, array( 'per_page' => 1 ) );
+
+			// Extract status counts from meta field.
+			$status_counts         = $queue_response['meta']['status_counts'] ?? null;
+			$status_counts_by_type = $queue_response['meta']['status_counts_by_type'] ?? null;
+			$by_type               = null;
+
+			if ( $status_counts ) {
+				$open_count       = $status_counts['open'] ?? 0;
+				$processing_count = $status_counts['processing'] ?? 0;
+				$done_count       = $status_counts['done'] ?? 0;
+				$failed_count     = $status_counts['failed'] ?? 0;
+				$by_type          = $status_counts['by_type'] ?? null;
+			} else {
+				// Fallback for backward compatibility.
+				$queue_open       = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'open', false, array( 'per_page' => 1 ) );
+				$queue_processing = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'processing', false, array( 'per_page' => 1 ) );
+				$queue_done       = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'done', false, array( 'per_page' => 1 ) );
+				$queue_failed     = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', false, array( 'per_page' => 1 ) );
+
+				$open_count       = $queue_open['meta']['total'] ?? 0;
+				$processing_count = $queue_processing['meta']['total'] ?? 0;
+				$done_count       = $queue_done['meta']['total'] ?? 0;
+				$failed_count     = $queue_failed['meta']['total'] ?? 0;
+			}
+
+			$response = array(
+				'open'            => $open_count,
+				'processing'      => $processing_count,
+				'done'            => $done_count,
+				'failed'          => $failed_count,
+				'total'           => $open_count + $processing_count + $done_count + $failed_count,
+				'open_processing' => $open_count + $processing_count,
+				'processed'       => $done_count + $failed_count,
+				'by_type'         => $by_type,
+			);
+
+			// Include by_type counts from status_counts_by_type if available.
+			if ( $status_counts_by_type ) {
+				$response['by_type'] = $status_counts_by_type;
+			}
+
+			wp_send_json( $response );
+
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while getting batch processing status.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle get new change detections AJAX request.
+	 *
+	 * Retrieves comparisons for a batch, optionally filtered to only those
+	 * above the change detection threshold.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_get_new_change_detections() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			$post_data = $this->validate_post_data( array( 'batch_id' ) );
+
+			if ( false === $post_data ) {
+				wp_send_json(
+					array(
+						'comparisons' => array(),
+						'total_count' => 0,
+					)
+				);
+				return;
+			}
+
+			$batch_id = sanitize_text_field( $post_data['batch_id'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in security_check().
+			$above_threshold = isset( $_POST['above_threshold'] ) ? filter_var( wp_unslash( $_POST['above_threshold'] ), FILTER_VALIDATE_BOOLEAN ) : false;
+
+			$filter_options = array(
+				'batches'         => $batch_id,
+				'above_threshold' => $above_threshold ? 1 : 0,
+				'per_page'        => 20,
+				'page'            => 1,
+			);
+
+			$response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filter_options );
+
+			wp_send_json(
+				array(
+					'comparisons' => $response['data'] ?? array(),
+					'total_count' => $response['meta']['total'] ?? 0,
+				)
+			);
+
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while getting change detections.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle get completed pre-screenshots AJAX request.
+	 *
+	 * Retrieves completed (done) queue items for a batch, returning
+	 * a simplified JSON structure with screenshot details.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_get_completed_pre_screenshots() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			$post_data = $this->validate_post_data( array( 'batch_id' ) );
+
+			if ( false === $post_data ) {
+				wp_send_json(
+					array(
+						'queues'     => array(),
+						'total_done' => 0,
+					)
+				);
+				return;
+			}
+
+			$batch_id = sanitize_text_field( $post_data['batch_id'] );
+
+			$completed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2(
+				array( $batch_id ),
+				'done',
+				false,
+				array( 'per_page' => 20 )
+			);
+
+			$queues = array();
+			if ( ! empty( $completed_queues['data'] ) ) {
+				foreach ( $completed_queues['data'] as $queue ) {
+					if ( ( $queue['batch'] ?? '' ) !== $batch_id ) {
+						continue;
+					}
+					$queues[] = array(
+						'id'         => $queue['id'],
+						'url_link'   => $queue['url_link'] ?? '',
+						'html_title' => $queue['html_title'] ?? '',
+						'device'     => $queue['device'] ?? 'desktop',
+						'image_link' => $queue['image_link'] ?? '',
+					);
+				}
+			}
+
+			wp_send_json(
+				array(
+					'queues'     => $queues,
+					'total_done' => count( $queues ),
+				)
+			);
+
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while getting completed pre-screenshots.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle get failed queues as JSON AJAX request.
+	 *
+	 * Returns failed queue items as structured JSON data, as opposed to
+	 * ajax_load_failed_queues() which returns rendered HTML.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_get_failed_queues_json() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			$post_data = $this->validate_post_data( array( 'batch_id' ) );
+
+			if ( false === $post_data ) {
+				wp_send_json(
+					array(
+						'queues'       => array(),
+						'total_failed' => 0,
+					)
+				);
+				return;
+			}
+
+			$batch_id = sanitize_text_field( $post_data['batch_id'] );
+
+			$failed_queues = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $batch_id, 'failed', false, array() );
+
+			$queues = array();
+			if ( ! empty( $failed_queues['data'] ) ) {
+				foreach ( $failed_queues['data'] as $queue ) {
+					$queues[] = array(
+						'id'         => $queue['id'],
+						'url_link'   => $queue['url_link'] ?? '',
+						'html_title' => $queue['html_title'] ?? '',
+						'device'     => $queue['device'] ?? 'desktop',
+						'error_msg'  => $queue['error_msg'] ?? '',
+					);
+				}
+			}
+
+			wp_send_json(
+				array(
+					'queues'       => $queues,
+					'total_failed' => count( $queues ),
+				)
+			);
+
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while getting failed queues.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
 		}

@@ -238,9 +238,10 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param array  $group_ids Array with group_ids.
 	 * @param string $sc_type screenshot type 'pre' or 'post'.
+	 * @param string $source Batch source: 'manual', 'monitoring', or 'auto_update'.
 	 * @return mixed|string
 	 */
-	public static function take_screenshot_v2( $group_ids, $sc_type ) {
+	public static function take_screenshot_v2( $group_ids, $sc_type, $source = 'manual' ) {
 		if ( ! is_array( $group_ids ) ) {
 			$group_ids = array( $group_ids );
 		}
@@ -248,6 +249,7 @@ class WebChangeDetector_API_V2 {
 			'action'    => 'screenshots/take',
 			'sc_type'   => $sc_type,
 			'group_ids' => $group_ids,
+			'source'    => $source,
 		);
 		return self::api_v2( $args );
 	}
@@ -492,6 +494,22 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'DELETE' );
 	}
 
+	/**
+	 * Get groups from API v2.
+	 *
+	 * @param array $filters Optional filters.
+	 * @return mixed|string
+	 */
+	public static function get_groups_v2( $filters = array() ) {
+		if ( empty( $filters['per_page'] ) ) {
+			$filters['per_page'] = 50;
+		}
+		$args = array(
+			'action' => 'groups?' . build_query( $filters ),
+		);
+		return self::api_v2( $args, 'GET' );
+	}
+
 	/** Get batches.
 	 *
 	 * @param array $filter Filters for the batches.
@@ -551,6 +569,98 @@ class WebChangeDetector_API_V2 {
 		$args = array(
 			'action' => 'comparisons/' . ( $id ),
 			'status' => ( $status ),
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
+	/** Create an AI feedback rule (visual or console).
+	 *
+	 * @param array $data Rule data (comparison_id, scope, type, region_id or console_entry).
+	 * @return mixed|string
+	 */
+	public static function create_ai_feedback_rule( $data ) {
+		$args = array(
+			'action'        => 'ai-feedback-rules',
+			'comparison_id' => $data['comparison_id'] ?? '',
+			'scope'         => $data['scope'] ?? 'url',
+			'type'          => $data['type'] ?? 'visual',
+		);
+
+		if ( 'console' === ( $data['type'] ?? 'visual' ) ) {
+			$args['console_entry']  = $data['console_entry'] ?? '';
+			$args['console_source'] = $data['console_source'] ?? '';
+		} else {
+			$args['region_id'] = $data['region_id'] ?? 0;
+		}
+
+		return self::api_v2( $args, 'POST' );
+	}
+
+	/** Get AI feedback rules.
+	 *
+	 * @param array $params Optional filters (scope, is_active).
+	 * @return mixed|string
+	 */
+	public static function get_ai_feedback_rules( $params = array() ) {
+		$args = array(
+			'action' => 'ai-feedback-rules',
+		);
+		$args = array_merge( $args, $params );
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Delete an AI feedback rule.
+	 *
+	 * @param string $uuid The rule UUID.
+	 * @return mixed|string
+	 */
+	public static function delete_ai_feedback_rule( $uuid ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'ai-feedback-rules/' . $uuid,
+		);
+
+		return self::api_v2( $args, 'DELETE' );
+	}
+
+	/** Toggle an AI feedback rule active/inactive.
+	 *
+	 * @param string $uuid The rule UUID.
+	 * @param bool   $active Whether the rule should be active.
+	 * @return mixed|string
+	 */
+	public static function toggle_ai_feedback_rule( $uuid, $active ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action'    => 'ai-feedback-rules/' . $uuid,
+			'is_active' => $active ? 1 : 0,
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
+	/** Update the scope of an AI feedback rule.
+	 *
+	 * @param string $uuid  The rule UUID.
+	 * @param string $scope The new scope: 'url', 'group', or 'website'.
+	 * @return mixed|string
+	 */
+	public static function update_ai_feedback_rule_scope( $uuid, $scope ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'ai-feedback-rules/' . $uuid,
+			'scope'  => $scope,
 		);
 
 		return self::api_v2( $args, 'PUT' );

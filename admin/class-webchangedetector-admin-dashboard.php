@@ -141,8 +141,7 @@ class WebChangeDetector_Admin_Dashboard {
 				<?php
 
 				$filter_batches = array(
-					'queue_type' => 'post,auto',
-					'per_page'   => 5,
+					'per_page' => 5,
 				);
 
 				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2( $filter_batches );
@@ -372,6 +371,26 @@ class WebChangeDetector_Admin_Dashboard {
 										?>
 									</small>
 								</div>
+								<?php
+								if ( ! empty( $batch_finished_at ) && 'processing...' !== $batch_finished_at ) {
+									$ai_summary_text = $batch['ai_summary']['summary'] ?? '';
+									?>
+									<div class="accordion-batch-title-tile accordion-batch-title-tile-ai-summary">
+										<span class="dashicons dashicons-superhero-alt"></span>
+										<?php echo esc_html__( 'AI Summary', 'webchangedetector' ); ?>
+										<br>
+										<small class="wcd-ai-batch-summary-text">
+											<?php
+											if ( ! empty( $ai_summary_text ) ) {
+												$truncated = mb_strlen( $ai_summary_text ) > 100;
+												echo esc_html( $truncated ? mb_substr( $ai_summary_text, 0, 100 ) . '...' : $ai_summary_text );
+											} else {
+												echo '<span class="wcd-ai-summary-muted">' . esc_html__( 'AI summary skipped', 'webchangedetector' ) . '</span>';
+											}
+											?>
+										</small>
+									</div>
+								<?php } ?>
 								<div class="clear"></div>
 							</div>
 						</h3>
@@ -764,6 +783,51 @@ class WebChangeDetector_Admin_Dashboard {
 						echo esc_url( $compare['url'] ) . '<br>';
 						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $compare['device'] );
 						echo esc_html( ucfirst( $compare['device'] ) );
+
+						// AI Summary in overview.
+						$ai_status_overview = $compare['ai_verification_status'] ?? '';
+						$ai_result_overview = $compare['ai_verification_result'] ?? array();
+
+						if ( ! $compare['difference_percent'] ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-skipped">
+								<?php esc_html_e( 'AI analysis skipped: No visual difference detected', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						} elseif ( 'verified' === $ai_status_overview && ! empty( $ai_result_overview['summary'] ) ) {
+							$console_cat_ov  = $ai_result_overview['console_analysis']['category'] ?? null;
+							$has_alert_ov    = ! empty( $ai_result_overview['alerts'] ) || 'alert' === $console_cat_ov;
+							$has_unsure_ov   = ! empty( $ai_result_overview['not_sure'] ) || 'not_sure' === $console_cat_ov;
+							$overall_ov      = $has_alert_ov ? 'alert' : ( $has_unsure_ov ? 'not_sure' : 'all_good' );
+							$badge_labels_ov = array(
+								'alert'    => 'Alert',
+								'not_sure' => 'Unsure',
+								'all_good' => 'OK',
+							);
+							$summary_raw     = $ai_result_overview['summary'];
+							$truncated       = mb_strlen( $summary_raw ) > 120;
+							if ( $truncated ) {
+								$summary_raw = mb_substr( $summary_raw, 0, 120 );
+							}
+							?>
+							<div class="wcd-ai-summary-row">
+								<span class="wcd-ai-row-badge wcd-ai-cat-<?php echo esc_attr( $overall_ov ); ?>"><?php echo esc_html( $badge_labels_ov[ $overall_ov ] ); ?></span>
+								<span class="wcd-ai-row-text"><?php echo esc_html( $summary_raw ); ?><?php echo $truncated ? '&hellip;' : ''; ?></span>
+							</div>
+							<?php
+						} elseif ( 'pending' === $ai_status_overview ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-pending">
+								<?php esc_html_e( 'AI analysis in progress...', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						} elseif ( 'failed' === $ai_status_overview ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-failed">
+								<?php esc_html_e( 'AI analysis failed', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						}
 						?>
 					</td>
 					<td>
@@ -821,6 +885,192 @@ class WebChangeDetector_Admin_Dashboard {
 			</div>
 			<?php
 		}
+	}
+
+	/**
+	 * Render flat (non-batched) comparisons list view.
+	 *
+	 * @param array $comparisons API response with 'data' and 'meta'.
+	 * @return void
+	 */
+	public function load_flat_comparisons_view( $comparisons ) {
+		if ( empty( $comparisons['data'] ) ) {
+			?>
+			<div class="wcd-empty-state">
+				<strong><?php esc_html_e( 'No Change Detections (yet)', 'webchangedetector' ); ?></strong>
+				<p><?php esc_html_e( 'Start monitoring webpages or start Manual Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
+			</div>
+			<?php
+			return;
+		}
+
+		$compares   = $comparisons['data'];
+		$all_tokens = array();
+		foreach ( $compares as $compare ) {
+			$all_tokens[] = $compare['id'];
+		}
+
+		?>
+		<table class="wcd-comparison-table toggle" style="width: 100%">
+			<tr>
+				<th style="min-width: 140px; text-align: center;"><?php esc_html_e( 'Status', 'webchangedetector' ); ?></th>
+				<th style="width: 100%"><?php esc_html_e( 'URL', 'webchangedetector' ); ?></th>
+				<th style="min-width: 200px"><?php esc_html_e( 'Compared Screenshots', 'webchangedetector' ); ?></th>
+				<th style="min-width: 50px"><?php esc_html_e( 'Difference', 'webchangedetector' ); ?></th>
+			</tr>
+
+			<?php
+			foreach ( $compares as $compare ) {
+				if ( empty( $compare['status'] ) ) {
+					$compare['status'] = 'new';
+				}
+
+				$class = 'no-difference';
+				if ( $compare['difference_percent'] ) {
+					$class = 'is-difference';
+				}
+
+				?>
+				<tr id="comparison-<?php echo esc_attr( $compare['id'] ); ?>">
+					<td>
+						<div class="comparison_status_container">
+							<span class="current_comparison_status comparison_status comparison_status_<?php echo esc_attr( $compare['status'] ); ?>">
+								<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_comparison_status_name( $compare['status'] ) ); ?>
+							</span>
+
+							<div class="change_status" style="display: none; position: absolute; background: #fff; padding: 20px; box-shadow: 0 0 5px #aaa;">
+								<strong><?php esc_html_e( 'Change Status to:', 'webchangedetector' ); ?></strong><br>
+								<?php $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ); ?>
+								<button name="status"
+									data-id="<?php echo esc_attr( $compare['id'] ); ?>"
+									data-status="ok"
+									data-nonce="<?php echo esc_attr( $nonce ); ?>"
+									value="ok"
+									class="ajax_update_comparison_status comparison_status comparison_status_ok"
+									onclick="return false;"><?php esc_html_e( 'Ok', 'webchangedetector' ); ?></button>
+								<button name="status"
+									data-id="<?php echo esc_attr( $compare['id'] ); ?>"
+									data-status="to_fix"
+									data-nonce="<?php echo esc_attr( $nonce ); ?>"
+									value="to_fix"
+									class="ajax_update_comparison_status comparison_status comparison_status_to_fix"
+									onclick="return false;"><?php esc_html_e( 'To Fix', 'webchangedetector' ); ?></button>
+								<button name="status"
+									data-id="<?php echo esc_attr( $compare['id'] ); ?>"
+									data-status="false_positive"
+									data-nonce="<?php echo esc_attr( $nonce ); ?>"
+									value="false_positive"
+									class="ajax_update_comparison_status comparison_status comparison_status_false_positive"
+									onclick="return false;"><?php esc_html_e( 'False Positive', 'webchangedetector' ); ?></button>
+							</div>
+							<?php
+							// Console changes badge.
+							$user_account               = $this->admin->account_handler->get_account();
+							$user_plan                  = $user_account['plan'] ?? 'free';
+							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
+
+							if ( $can_access_browser_console && ! empty( $compare['browser_console_change'] ) && 'unchanged' !== $compare['browser_console_change'] ) {
+								$console_added   = count( $compare['browser_console_added'] ?? array() );
+								$console_removed = count( $compare['browser_console_removed'] ?? array() );
+								$console_total   = $console_added + $console_removed;
+
+								if ( $console_total > 0 ) {
+									echo '<div class="wcd-console-badge-comparison">';
+									echo '<span class="dashicons dashicons-editor-code"></span>';
+									echo '<span class="wcd-console-count">' . esc_html( $console_total ) . '</span>';
+									echo '<span class="wcd-console-text">Console Change' . ( $console_total > 1 ? 's' : '' ) . '</span>';
+									echo '</div>';
+								}
+							}
+							?>
+						</div>
+					</td>
+					<td>
+						<strong>
+							<?php
+							if ( ! empty( $compare['html_title'] ) ) {
+								echo esc_html( $compare['html_title'] ) . '<br>';
+							}
+							?>
+						</strong>
+						<?php
+						echo esc_url( $compare['url'] ) . '<br>';
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $compare['device'] );
+						echo esc_html( ucfirst( $compare['device'] ) );
+
+						// AI Summary.
+						$ai_status_overview = $compare['ai_verification_status'] ?? '';
+						$ai_result_overview = $compare['ai_verification_result'] ?? array();
+
+						if ( ! $compare['difference_percent'] ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-skipped">
+								<?php esc_html_e( 'AI analysis skipped: No visual difference detected', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						} elseif ( 'verified' === $ai_status_overview && ! empty( $ai_result_overview['summary'] ) ) {
+							$console_cat_ov  = $ai_result_overview['console_analysis']['category'] ?? null;
+							$has_alert_ov    = ! empty( $ai_result_overview['alerts'] ) || 'alert' === $console_cat_ov;
+							$has_unsure_ov   = ! empty( $ai_result_overview['not_sure'] ) || 'not_sure' === $console_cat_ov;
+							$overall_ov      = $has_alert_ov ? 'alert' : ( $has_unsure_ov ? 'not_sure' : 'all_good' );
+							$badge_labels_ov = array(
+								'alert'    => 'Alert',
+								'not_sure' => 'Unsure',
+								'all_good' => 'OK',
+							);
+							$summary_raw     = $ai_result_overview['summary'];
+							$truncated       = mb_strlen( $summary_raw ) > 120;
+							if ( $truncated ) {
+								$summary_raw = mb_substr( $summary_raw, 0, 120 );
+							}
+							?>
+							<div class="wcd-ai-summary-row">
+								<span class="wcd-ai-row-badge wcd-ai-cat-<?php echo esc_attr( $overall_ov ); ?>"><?php echo esc_html( $badge_labels_ov[ $overall_ov ] ); ?></span>
+								<span class="wcd-ai-row-text"><?php echo esc_html( $summary_raw ); ?><?php echo $truncated ? '&hellip;' : ''; ?></span>
+							</div>
+							<?php
+						} elseif ( 'pending' === $ai_status_overview ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-pending">
+								<?php esc_html_e( 'AI analysis in progress...', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						} elseif ( 'failed' === $ai_status_overview ) {
+							?>
+							<div class="wcd-ai-summary-row wcd-ai-summary-failed">
+								<?php esc_html_e( 'AI analysis failed', 'webchangedetector' ); ?>
+							</div>
+							<?php
+						}
+						?>
+					</td>
+					<td>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_1_created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></div>
+						<div><?php echo esc_html( get_date_from_gmt( $compare['screenshot_2_created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></div>
+					</td>
+					<td class="<?php echo esc_attr( $class ); ?> diff-tile"
+						data-diff_percent="<?php echo esc_attr( $compare['difference_percent'] ); ?>">
+						<?php echo esc_html( \WebChangeDetector\WebChangeDetector_Admin_Utils::format_difference_percent( $compare['difference_percent'] ) ); ?>%
+					</td>
+					<td data-comparison_id="<?php echo esc_attr( $compare['id'] ); ?>" style="display: none;">
+						<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . esc_attr( $compare['id'] ) ) ); ?>" method="post">
+							<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
+							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+							<input type="submit" value="<?php echo esc_attr__( 'Show', 'webchangedetector' ); ?>" class="button">
+						</form>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+		<script>
+			jQuery(".wcd-comparison-table tr").click(function(e) {
+				if (jQuery(e.target).closest('.comparison_status_container, .current_comparison_status, .comparison_status, .ajax_update_comparison_status, .change_status').length > 0) {
+					return;
+				}
+				jQuery(this).find("td[data-comparison_id='" + jQuery(this).attr("id").replace("comparison-", "") + "']").find("form").submit();
+			});
+		</script>
+		<?php
 	}
 
 	/**

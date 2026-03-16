@@ -105,6 +105,7 @@ class WebChangeDetector_Admin_Account {
 			update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( wp_unslash( $postdata['email'] ) ), false );
 		}
 		update_option( WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field( $api_token ), false );
+		delete_transient( 'wcd_account_details' );
 
 		return true;
 	}
@@ -125,11 +126,22 @@ class WebChangeDetector_Admin_Account {
 			return $account_details;
 		}
 
+		// Transient cache (across requests).
+		$transient_key = 'wcd_account_details';
+		if ( ! $force ) {
+			$cached = get_transient( $transient_key );
+			if ( false !== $cached ) {
+				$account_details = $cached;
+				return $cached;
+			}
+		}
+
 		$account_details = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2();
 
 		if ( ! empty( $account_details['data'] ) ) {
 			$account_details                 = $account_details['data'];
 			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
+			set_transient( $transient_key, $account_details, 5 * MINUTE_IN_SECONDS );
 			return $account_details;
 		}
 		if ( ! empty( $account_details['message'] ) ) {
@@ -617,6 +629,16 @@ class WebChangeDetector_Admin_Account {
 			return $this->account_details;
 		}
 
+		// Transient cache (skip when custom token provided).
+		$transient_key = 'wcd_account_details';
+		if ( empty( $api_token ) ) {
+			$cached = get_transient( $transient_key );
+			if ( false !== $cached ) {
+				$this->account_details = $cached;
+				return $cached;
+			}
+		}
+
 		$account_details = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2( $api_token );
 
 		if ( ! empty( $account_details['data'] ) ) {
@@ -626,6 +648,7 @@ class WebChangeDetector_Admin_Account {
 			// Cache the account details if no specific token was used.
 			if ( empty( $api_token ) ) {
 				$this->account_details = $account_details;
+				set_transient( $transient_key, $account_details, 5 * MINUTE_IN_SECONDS );
 			}
 
 			return $account_details;

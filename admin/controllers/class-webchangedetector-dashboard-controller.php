@@ -51,7 +51,8 @@ class WebChangeDetector_Dashboard_Controller {
 		// Handle dashboard-specific actions.
 		$this->handle_dashboard_actions();
 
-		// Get account details for the dashboard.
+		// Fresh account data on dashboard, then cache for AJAX calls.
+		delete_transient( 'wcd_account_details' );
 		$account_details = $this->admin->account_handler->get_account();
 
 		// Error message if api didn't return account details.
@@ -156,6 +157,15 @@ class WebChangeDetector_Dashboard_Controller {
 		$results = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->admin->manual_group_uuid, $sc_type );
 		if ( isset( $results['batch'] ) ) {
 			update_option( 'wcd_manual_checks_batch', $results['batch'] );
+
+			// Store batch ID by screenshot type for phase-aware tracking.
+			$batch_type_key = ( 'pre' === $sc_type ) ? 'wcd_manual_checks_pre_batch' : 'wcd_manual_checks_post_batch';
+			update_option( $batch_type_key, $results['batch'] );
+
+			// Store workflow status and start time.
+			update_option( 'wcd_manual_checks_status', $sc_type );
+			update_option( 'wcd_manual_checks_started_at', time() );
+
 			if ( 'pre' === $sc_type ) {
 				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
 			} elseif ( 'post' === $sc_type ) {

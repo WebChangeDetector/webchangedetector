@@ -2089,7 +2089,7 @@ msgid "🔒 Browser Console monitoring"
 msgstr ""
 
 #: admin/partials/templates/show-change-detection.php:276
-msgid "Available on <strong>Personal Pro+</strong> plans"
+msgid "Available on <strong>Team+</strong> plans"
 msgstr ""
 
 #: admin/partials/templates/show-change-detection.php:278

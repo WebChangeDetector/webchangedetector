@@ -17,7 +17,7 @@
  * Text Domain:       webchangedetector
  * Plugin URI:        https://www.webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
- * Version:           4.1.1
+ * Version:           4.2.0
  * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
  * Primary Branch:    main
  * Author:            Mike Miler
@@ -80,12 +80,12 @@ if ( ! defined( 'WCD_PLUGIN_BASENAME' ) ) {
  */
 if ( ! defined( 'WCD_USE_DEV_BRANCH' ) ) {
 	// Check if Git Updater plugin is active.
-	$git_updater_active = false;
+	$wcd_git_updater_active = false;
 	if ( function_exists( 'is_plugin_active' ) ) {
-		$git_updater_active = is_plugin_active( 'git-updater/git-updater.php' );
+		$wcd_git_updater_active = is_plugin_active( 'git-updater/git-updater.php' );
 	}
 
-	define( 'WCD_USE_DEV_BRANCH', $git_updater_active );
+	define( 'WCD_USE_DEV_BRANCH', $wcd_git_updater_active );
 }
 
 /**
