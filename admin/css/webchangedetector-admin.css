@@ -2154,7 +2154,6 @@ Settings
 .webchangedetector .wcd-step-item {
     display: flex;
     align-items: center;
-    flex: 1;
     min-width: 0;
 }
 
@@ -2186,11 +2185,10 @@ Settings
 }
 
 .webchangedetector .wcd-step-connector {
-    width: 40px;
+    flex: 1;
     height: 4px;
     border-radius: 2px;
     margin: 0 10px;
-    flex-shrink: 0;
 }
 
 /* Step states */
@@ -2351,7 +2349,6 @@ Settings
     }
 
     .webchangedetector .wcd-step-connector {
-        width: 20px;
         margin: 0 5px;
     }
 }
@@ -4118,6 +4115,10 @@ Settings
     margin-top: 8px;
 }
 
+.wcd-manual-checks-card .wcd-mc-start-btn .dashicons {
+    vertical-align: middle;
+}
+
 /* Spinning animation for loading states */
 .wcd-status-card .dashicons.spin {
     animation: wcd-spin 2s linear infinite;
@@ -4990,7 +4991,7 @@ Settings
 
 .webchangedetector .wcd-ai-rules-info {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
     background: #f0f6fc;
     border: 1px solid #c8dff4;
@@ -5001,10 +5002,13 @@ Settings
     color: #50575e;
 }
 
+.webchangedetector .wcd-ai-rules-info p {
+    margin: 0;
+}
+
 .webchangedetector .wcd-ai-rules-info .dashicons {
     color: #2271b1;
     flex-shrink: 0;
-    margin-top: 1px;
 }
 
 .webchangedetector .wcd-ai-rules-empty {

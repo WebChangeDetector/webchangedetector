@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat,henkwhite
 Tags: vrt, visual regression test, visual check, auto-updates, monitoring
 Requires at least: 5.5
 Tested up to: 6.9
-Stable tag: 4.1.91
+Stable tag: 4.2.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html

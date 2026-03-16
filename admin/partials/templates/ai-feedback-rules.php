@@ -20,13 +20,6 @@ $rules_response = WebChangeDetector_API_V2::get_ai_feedback_rules(
 $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : array();
 ?>
 
-<h1>
-	<?php esc_html_e( 'AI Rules', 'webchangedetector' ); ?>
-	<small>
-		<?php esc_html_e( 'Rules that tell the AI to ignore specific types of changes in future comparisons.', 'webchangedetector' ); ?>
-	</small>
-</h1>
-
 <div class="wcd-ai-rules-info">
 	<span class="dashicons dashicons-info-outline"></span>
 	<p>
