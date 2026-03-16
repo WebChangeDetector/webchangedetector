@@ -54,6 +54,10 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 == Changelog ==
 
+= 4.2.1 =
+* Fix: Possible stuck manual checks in rare cases
+* Fix: Update translations
+
 = 4.2.0 =
 * Feature: AI analysis
 * Impromenent: New change detection view
