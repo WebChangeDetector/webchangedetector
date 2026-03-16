@@ -112,7 +112,7 @@ function currentlyProcessing() {
                         doneCount = compareStatus.done || 0;
                         failedCount = (postStatus.failed || 0) + (compareStatus.failed || 0);
                         openCount = postStatus.open || 0;
-                        processingCount = totalPostScreenshots - doneCount - failedCount - openCount;
+                        processingCount = Math.max(0, totalPostScreenshots - doneCount - failedCount - openCount);
                     }
                 } else if (phase === 'pre') {
                     $('#processing-title').text('Screenshots in progress');
@@ -229,6 +229,31 @@ function currentlyProcessing() {
                             window.wcdLastComparisonDone = currentComparisonDone;
                         }
                     }
+                }
+
+                // Use actual API values as authoritative completion signal.
+                // Derived counts can mismatch when post screenshots and comparisons
+                // have different failure counts (e.g., post succeeds but comparison is never created).
+                var apiOpen = statusData.open || 0;
+                var apiProcessing = statusData.processing || 0;
+                var apiAllDone = (apiOpen === 0 && apiProcessing === 0 && (statusData.done + statusData.failed) > 0);
+
+                if (apiAllDone && openAndProcessing > 0) {
+                    console.log('WCD: API reports all done, correcting derived counts', {
+                        derivedOpenAndProcessing: openAndProcessing,
+                        apiOpen: apiOpen,
+                        apiProcessing: apiProcessing
+                    });
+                    openAndProcessing = 0;
+                    processedItems = doneCount + failedCount;
+                    totalItems = processedItems;
+
+                    // Correct the UI to reflect actual state
+                    updateCurrentlyProcessing.html(0);
+                    $('#queue-open-count').text(0);
+                    $('#queue-processing-count').text(0);
+                    $('#wcd-progress-bar-fill').css('width', '100%');
+                    $('#wcd-progress-text').text(processedItems + ' / ' + processedItems);
                 }
 
                 // Processing complete check
