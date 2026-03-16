@@ -124,7 +124,7 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 		<div class="wcd-card-content">
 			<div id="pre-sc-completed-table">
 				<div id="pre-sc-empty-state" style="text-align: center; padding: 0 20px; color: #666;">
-					<span class="dashicons dashicons-clock" style="font-size: 48px; opacity: 0.3; margin-bottom: 15px; display: block;"></span>
+					<span class="dashicons dashicons-clock" style="font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin: 0 auto 15px; display: block;"></span>
 					<p style="font-size: 14px;"><?php esc_html_e( 'Screenshots will appear here as they complete.', 'webchangedetector' ); ?></p>
 				</div>
 			</div>

@@ -51,7 +51,8 @@ class WebChangeDetector_Dashboard_Controller {
 		// Handle dashboard-specific actions.
 		$this->handle_dashboard_actions();
 
-		// Get account details for the dashboard.
+		// Fresh account data on dashboard, then cache for AJAX calls.
+		delete_transient( 'wcd_account_details' );
 		$account_details = $this->admin->account_handler->get_account();
 
 		// Error message if api didn't return account details.

@@ -519,7 +519,7 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 						<div class="wcd-console-upgrade-overlay">
 							<p class="wcd-restricted-lock"><?php esc_html_e( 'Browser Console monitoring', 'webchangedetector' ); ?></p>
 							<p class="wcd-restricted-description">
-								<?php echo wp_kses( __( 'Available on <strong>Personal Pro+</strong> plans', 'webchangedetector' ), array( 'strong' => array() ) ); ?>
+								<?php echo wp_kses( __( 'Available on <strong>Team+</strong> plans', 'webchangedetector' ), array( 'strong' => array() ) ); ?>
 							</p>
 							<a href="<?php echo esc_url( $this->account_handler->get_upgrade_url() ?? 'https://www.webchangedetector.com/pricing/' ); ?>" target="_blank" class="wcd-upgrade-button">
 								<?php esc_html_e( 'Upgrade Plan', 'webchangedetector' ); ?>

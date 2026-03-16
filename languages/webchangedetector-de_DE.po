@@ -2421,8 +2421,8 @@ msgid "🔒 Browser Console monitoring"
 msgstr "🔒 Browser-Konsolen-Überwachung"
 
 #: admin/partials/templates/show-change-detection.php:276
-msgid "Available on <strong>Personal Pro+</strong> plans"
-msgstr "Verfügbar in <strong>Personal Pro+</strong> Tarifen"
+msgid "Available on <strong>Team+</strong> plans"
+msgstr "Verfügbar in <strong>Team+</strong> Tarifen"
 
 #: admin/partials/templates/show-change-detection.php:278
 msgid "Upgrade Plan"
