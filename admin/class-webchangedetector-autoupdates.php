@@ -161,7 +161,7 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting post-update screenshots and comparisons.', 'automatic_updates_complete', 'debug' );
 
 		try {
-			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post' );
+			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post', 'auto_update' );
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Post-Screenshot Response: ' . wp_json_encode( $response ), 'automatic_updates_complete', 'debug' );
 
 			// Validate response structure.
@@ -710,7 +710,8 @@ class WebChangeDetector_Autoupdates {
 		try {
 			$sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2(
 				$this->manual_group_id,
-				'pre'
+				'pre',
+				'auto_update'
 			);
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Pre update SC data: ' . wp_json_encode( $sc_response ),

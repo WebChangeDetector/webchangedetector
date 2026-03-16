@@ -8,7 +8,10 @@
  * @package    WebChangeDetector
  */
 
-$batch_id   = get_option( 'wcd_manual_checks_post_batch' ) ?: get_option( 'wcd_manual_checks_batch' );
+$batch_id = get_option( 'wcd_manual_checks_post_batch' );
+if ( ! $batch_id ) {
+	$batch_id = get_option( 'wcd_manual_checks_batch' );
+}
 $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 ?>
 

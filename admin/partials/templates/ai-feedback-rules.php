@@ -110,25 +110,25 @@ $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : a
 						$broad_label = __( 'All URLs of group', 'webchangedetector' );
 					}
 					?>
-				<tr class="wcd-ai-rules-row" data-rule-id="<?php echo $rule_id; ?>">
+				<tr class="wcd-ai-rules-row" data-rule-id="<?php echo esc_attr( $rule_id ); ?>">
 					<td class="wcd-ai-rules-cell-status">
 						<span class="wcd-toggle-switch">
 							<input
 								type="checkbox"
 								class="wcd-ai-rules-toggle-input"
-								data-rule-id="<?php echo $rule_id; ?>"
+								data-rule-id="<?php echo esc_attr( $rule_id ); ?>"
 								<?php checked( $is_active ); ?>
 							>
 							<span class="wcd-toggle-slider"></span>
 						</span>
 					</td>
 					<td class="wcd-ai-rules-cell-description">
-						<?php echo $description; ?>
+						<?php echo esc_html( $description ); ?>
 					</td>
 					<td class="wcd-ai-rules-cell-scope">
 						<div
 							class="wcd-ai-rules-scope-toggle"
-							data-rule-id="<?php echo $rule_id; ?>"
+							data-rule-id="<?php echo esc_attr( $rule_id ); ?>"
 							data-current-scope="<?php echo esc_attr( $is_broad_scope ? 'group_or_website' : 'url' ); ?>"
 						>
 							<button type="button" class="wcd-ai-rules-scope-option<?php echo ! $is_broad_scope ? ' is-selected' : ''; ?>" data-scope="url">
@@ -139,11 +139,11 @@ $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : a
 							</button>
 						</div>
 					</td>
-					<td class="wcd-ai-rules-cell-url" title="<?php echo $page_url; ?>">
-						<?php echo $page_url; ?>
+					<td class="wcd-ai-rules-cell-url" title="<?php echo esc_url( $page_url ); ?>">
+						<?php echo esc_url( $page_url ); ?>
 					</td>
-					<td class="wcd-ai-rules-cell-association" title="<?php echo $association_name; ?>">
-						<?php echo $association_name; ?>
+					<td class="wcd-ai-rules-cell-association" title="<?php echo esc_attr( $association_name ); ?>">
+						<?php echo esc_html( $association_name ); ?>
 					</td>
 					<td class="wcd-ai-rules-cell-created">
 						<?php echo esc_html( $created_display ); ?>
@@ -151,14 +151,19 @@ $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : a
 					<td class="wcd-ai-rules-cell-matches">
 						<span class="wcd-ai-rules-match-count"><?php echo esc_html( $match_count ); ?></span>
 						<?php if ( ! empty( $matched_display ) ) : ?>
-							<span class="wcd-ai-rules-match-date"><?php echo esc_html( sprintf( __( 'Last: %s', 'webchangedetector' ), $matched_display ) ); ?></span>
+							<span class="wcd-ai-rules-match-date">
+								<?php
+								/* translators: %s: date of last match */
+								echo esc_html( sprintf( __( 'Last: %s', 'webchangedetector' ), $matched_display ) );
+								?>
+							</span>
 						<?php endif; ?>
 					</td>
 					<td class="wcd-ai-rules-cell-actions">
 						<button
 							type="button"
 							class="wcd-ai-rules-delete-btn"
-							data-rule-id="<?php echo $rule_id; ?>"
+							data-rule-id="<?php echo esc_attr( $rule_id ); ?>"
 							title="<?php esc_attr_e( 'Delete rule', 'webchangedetector' ); ?>"
 						>
 							<span class="dashicons dashicons-trash"></span>

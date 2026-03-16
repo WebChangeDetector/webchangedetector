@@ -6,7 +6,8 @@
         "post-update-cmd": [
             "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra"
         ],
-        "phpcs": "phpcs --standard=WordPress"
+        "lint": "phpcs",
+        "lint:fix": "phpcbf"
     },
     "require-dev": {
         "wp-coding-standards/wpcs": "^3.1.0",

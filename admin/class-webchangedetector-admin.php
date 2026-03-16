@@ -789,8 +789,8 @@ class WebChangeDetector_Admin {
 		}
 
 		$feature_plans = array(
-			'browser_console'  => array( 'trial', 'personal_pro', 'freelancer', 'agency' ),
-			'ai_verification'  => array( 'trial', 'solo', 'personal_pro', 'freelancer', 'agency' ),
+			'browser_console' => array( 'trial', 'personal_pro', 'freelancer', 'agency' ),
+			'ai_verification' => array( 'trial', 'solo', 'personal_pro', 'freelancer', 'agency' ),
 		);
 
 		if ( ! isset( $feature_plans[ $feature ] ) ) {

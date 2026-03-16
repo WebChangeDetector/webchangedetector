@@ -141,8 +141,7 @@ class WebChangeDetector_Admin_Dashboard {
 				<?php
 
 				$filter_batches = array(
-					'queue_type' => 'post,auto',
-					'per_page'   => 5,
+					'per_page' => 5,
 				);
 
 				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2( $filter_batches );
@@ -372,7 +371,8 @@ class WebChangeDetector_Admin_Dashboard {
 										?>
 									</small>
 								</div>
-								<?php if ( ! empty( $batch_finished_at ) && 'processing...' !== $batch_finished_at ) {
+								<?php
+								if ( ! empty( $batch_finished_at ) && 'processing...' !== $batch_finished_at ) {
 									$ai_summary_text = $batch['ai_summary']['summary'] ?? '';
 									?>
 									<div class="accordion-batch-title-tile accordion-batch-title-tile-ai-summary">
@@ -799,7 +799,11 @@ class WebChangeDetector_Admin_Dashboard {
 							$has_alert_ov    = ! empty( $ai_result_overview['alerts'] ) || 'alert' === $console_cat_ov;
 							$has_unsure_ov   = ! empty( $ai_result_overview['not_sure'] ) || 'not_sure' === $console_cat_ov;
 							$overall_ov      = $has_alert_ov ? 'alert' : ( $has_unsure_ov ? 'not_sure' : 'all_good' );
-							$badge_labels_ov = array( 'alert' => 'Alert', 'not_sure' => 'Unsure', 'all_good' => 'OK' );
+							$badge_labels_ov = array(
+								'alert'    => 'Alert',
+								'not_sure' => 'Unsure',
+								'all_good' => 'OK',
+							);
 							$summary_raw     = $ai_result_overview['summary'];
 							$truncated       = mb_strlen( $summary_raw ) > 120;
 							if ( $truncated ) {
@@ -1009,7 +1013,11 @@ class WebChangeDetector_Admin_Dashboard {
 							$has_alert_ov    = ! empty( $ai_result_overview['alerts'] ) || 'alert' === $console_cat_ov;
 							$has_unsure_ov   = ! empty( $ai_result_overview['not_sure'] ) || 'not_sure' === $console_cat_ov;
 							$overall_ov      = $has_alert_ov ? 'alert' : ( $has_unsure_ov ? 'not_sure' : 'all_good' );
-							$badge_labels_ov = array( 'alert' => 'Alert', 'not_sure' => 'Unsure', 'all_good' => 'OK' );
+							$badge_labels_ov = array(
+								'alert'    => 'Alert',
+								'not_sure' => 'Unsure',
+								'all_good' => 'OK',
+							);
 							$summary_raw     = $ai_result_overview['summary'];
 							$truncated       = mb_strlen( $summary_raw ) > 120;
 							if ( $truncated ) {

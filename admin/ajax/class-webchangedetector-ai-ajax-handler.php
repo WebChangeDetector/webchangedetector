@@ -37,8 +37,8 @@ class WebChangeDetector_AI_Ajax_Handler extends WebChangeDetector_Ajax_Handler_B
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    4.1.0
-	 * @param    WebChangeDetector_Admin              $admin      The main admin class instance.
-	 * @param    WebChangeDetector_AI_Action_Handler  $ai_handler The AI action handler instance.
+	 * @param    WebChangeDetector_Admin             $admin      The main admin class instance.
+	 * @param    WebChangeDetector_AI_Action_Handler $ai_handler The AI action handler instance.
 	 */
 	public function __construct( $admin, $ai_handler ) {
 		parent::__construct( $admin );

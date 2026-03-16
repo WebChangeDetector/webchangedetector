@@ -238,9 +238,10 @@ class WebChangeDetector_API_V2 {
 	 *
 	 * @param array  $group_ids Array with group_ids.
 	 * @param string $sc_type screenshot type 'pre' or 'post'.
+	 * @param string $source Batch source: 'manual', 'monitoring', or 'auto_update'.
 	 * @return mixed|string
 	 */
-	public static function take_screenshot_v2( $group_ids, $sc_type ) {
+	public static function take_screenshot_v2( $group_ids, $sc_type, $source = 'manual' ) {
 		if ( ! is_array( $group_ids ) ) {
 			$group_ids = array( $group_ids );
 		}
@@ -248,6 +249,7 @@ class WebChangeDetector_API_V2 {
 			'action'    => 'screenshots/take',
 			'sc_type'   => $sc_type,
 			'group_ids' => $group_ids,
+			'source'    => $source,
 		);
 		return self::api_v2( $args );
 	}

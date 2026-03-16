@@ -65,12 +65,12 @@ class WebChangeDetector_Change_Detections_Controller {
 			$filters['to'] = sanitize_text_field( wp_unslash( $_GET['to'] ) );
 		}
 
-		// Group type.
-		$filters['group_type'] = '';
-		if ( isset( $_GET['group_type'] ) ) {
-			$filters['group_type'] = sanitize_text_field( wp_unslash( $_GET['group_type'] ) );
-			if ( ! empty( $filters['group_type'] ) && ! in_array( $filters['group_type'], WebChangeDetector_Admin::VALID_GROUP_TYPES, true ) ) {
-				echo '<div class="error notice"><p>' . esc_html__( 'Invalid group type.', 'webchangedetector' ) . '</p></div>';
+		// Source filter.
+		$filters['source'] = '';
+		if ( isset( $_GET['source'] ) ) {
+			$filters['source'] = sanitize_text_field( wp_unslash( $_GET['source'] ) );
+			if ( ! empty( $filters['source'] ) && ! in_array( $filters['source'], array( 'manual', 'monitoring', 'auto_update' ), true ) ) {
+				echo '<div class="error notice"><p>' . esc_html__( 'Invalid source filter.', 'webchangedetector' ) . '</p></div>';
 				return false;
 			}
 		}
@@ -165,10 +165,8 @@ class WebChangeDetector_Change_Detections_Controller {
 			$api_filters['to'] = gmdate( 'Y-m-d', strtotime( $filters['to'] ) );
 		}
 
-		if ( ! empty( $filters['group_type'] ) ) {
-			$api_filters['queue_type'] = $filters['group_type'];
-		} else {
-			$api_filters['queue_type'] = 'post,auto';
+		if ( ! empty( $filters['source'] ) ) {
+			$api_filters['source'] = $filters['source'];
 		}
 
 		if ( ! empty( $filters['status'] ) ) {
@@ -209,7 +207,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		if ( is_array( $plugin_group_ids ) ) {
 			foreach ( $plugin_group_ids as $group_key => $group_uuid ) {
 				if ( ! empty( $group_uuid ) ) {
-					$group_label = WCD_AUTO_DETECTION_GROUP === $group_key
+					$group_label   = WCD_AUTO_DETECTION_GROUP === $group_key
 						? __( 'Monitoring', 'webchangedetector' )
 						: __( 'Manual Checks', 'webchangedetector' );
 					$groups_data[] = array(
@@ -225,7 +223,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		$urls_data     = array();
 		$selected_urls = ! empty( $filters['urls'] ) ? explode( ',', $filters['urls'] ) : array();
 		if ( is_array( $plugin_group_ids ) && ! empty( $plugin_group_ids ) ) {
-			$url_filters = array(
+			$url_filters   = array(
 				'groups'   => implode( ',', array_values( $plugin_group_ids ) ),
 				'per_page' => 100,
 			);
@@ -240,14 +238,14 @@ class WebChangeDetector_Change_Detections_Controller {
 			'to_fix'         => __( 'To Fix', 'webchangedetector' ),
 			'false_positive' => __( 'False Positive', 'webchangedetector' ),
 		);
-		$selected_statuses = ! empty( $filters['status'] ) ? explode( ',', $filters['status'] ) : array();
+		$selected_statuses  = ! empty( $filters['status'] ) ? explode( ',', $filters['status'] ) : array();
 
 		// Build filter query for pagination and view mode links.
 		$filter_query_args = array(
 			'page'            => 'webchangedetector-change-detections',
 			'from'            => $filters['from'],
 			'to'              => $filters['to'],
-			'group_type'      => $filters['group_type'],
+			'source'          => $filters['source'],
 			'difference_only' => $filters['difference_only'],
 		);
 		if ( ! empty( $filters['status'] ) ) {
@@ -308,7 +306,8 @@ class WebChangeDetector_Change_Detections_Controller {
 											<span class="dashicons dashicons-arrow-down-alt2"></span>
 										</div>
 										<div class="wcd-checkbox-dropdown-list">
-											<?php foreach ( $urls_data as $url_item ) {
+											<?php
+											foreach ( $urls_data as $url_item ) {
 												$url_id  = $url_item['id'] ?? '';
 												$url_val = $url_item['url'] ?? $url_id;
 												$checked = in_array( $url_id, $selected_urls, true );
@@ -337,7 +336,8 @@ class WebChangeDetector_Change_Detections_Controller {
 											<span class="dashicons dashicons-arrow-down-alt2"></span>
 										</div>
 										<div class="wcd-checkbox-dropdown-list">
-											<?php foreach ( $available_statuses as $status_key => $status_label ) {
+											<?php
+											foreach ( $available_statuses as $status_key => $status_label ) {
 												$checked = in_array( $status_key, $selected_statuses, true );
 												?>
 												<label class="wcd-checkbox-dropdown-option">
@@ -366,10 +366,11 @@ class WebChangeDetector_Change_Detections_Controller {
 										<span class="dashicons dashicons-category"></span>
 										<?php esc_html_e( 'Type', 'webchangedetector' ); ?>
 									</div>
-									<select name="group_type" class="wcd-filter-select">
-										<option value="" <?php selected( $filters['group_type'], '' ); ?>><?php esc_html_e( 'All Checks', 'webchangedetector' ); ?></option>
-										<option value="post" <?php selected( $filters['group_type'], 'post' ); ?>><?php esc_html_e( 'Manual Checks', 'webchangedetector' ); ?></option>
-										<option value="auto" <?php selected( $filters['group_type'], 'auto' ); ?>><?php esc_html_e( 'Monitoring', 'webchangedetector' ); ?></option>
+									<select name="source" class="wcd-filter-select">
+										<option value="" <?php selected( $filters['source'], '' ); ?>><?php esc_html_e( 'All Checks', 'webchangedetector' ); ?></option>
+										<option value="manual" <?php selected( $filters['source'], 'manual' ); ?>><?php esc_html_e( 'Manual Checks', 'webchangedetector' ); ?></option>
+										<option value="monitoring" <?php selected( $filters['source'], 'monitoring' ); ?>><?php esc_html_e( 'Monitoring', 'webchangedetector' ); ?></option>
+										<option value="auto_update" <?php selected( $filters['source'], 'auto_update' ); ?>><?php esc_html_e( 'Auto-Update Checks', 'webchangedetector' ); ?></option>
 									</select>
 								</div>
 							</div>
@@ -455,7 +456,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		);
 
 		// Copy relevant filters.
-		foreach ( array( 'queue_type', 'status', 'above_threshold', 'groups' ) as $key ) {
+		foreach ( array( 'source', 'status', 'above_threshold', 'groups' ) as $key ) {
 			if ( isset( $api_filters[ $key ] ) ) {
 				$flat_filters[ $key ] = $api_filters[ $key ];
 			}

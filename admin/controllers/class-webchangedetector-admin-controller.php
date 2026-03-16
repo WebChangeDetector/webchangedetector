@@ -601,7 +601,7 @@ class WebChangeDetector_Admin_Controller {
 				if ( ! $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) {
 					return;
 				}
-				include plugin_dir_path( dirname( __FILE__ ) ) . 'partials/templates/ai-feedback-rules.php';
+				include plugin_dir_path( __DIR__ ) . 'partials/templates/ai-feedback-rules.php';
 				break;
 
 			case 'webchangedetector-show-detection':

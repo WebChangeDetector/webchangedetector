@@ -424,12 +424,18 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$post_data = $this->validate_post_data( array( 'batch_id' ) );
 
 			if ( false === $post_data ) {
-				wp_send_json( array( 'comparisons' => array(), 'total_count' => 0 ) );
+				wp_send_json(
+					array(
+						'comparisons' => array(),
+						'total_count' => 0,
+					)
+				);
 				return;
 			}
 
-			$batch_id        = sanitize_text_field( $post_data['batch_id'] );
-			$above_threshold = isset( $_POST['above_threshold'] ) ? filter_var( $_POST['above_threshold'], FILTER_VALIDATE_BOOLEAN ) : false;
+			$batch_id = sanitize_text_field( $post_data['batch_id'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in security_check().
+			$above_threshold = isset( $_POST['above_threshold'] ) ? filter_var( wp_unslash( $_POST['above_threshold'] ), FILTER_VALIDATE_BOOLEAN ) : false;
 
 			$filter_options = array(
 				'batches'         => $batch_id,
@@ -440,10 +446,12 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 
 			$response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( $filter_options );
 
-			wp_send_json( array(
-				'comparisons' => $response['data'] ?? array(),
-				'total_count' => $response['meta']['total'] ?? 0,
-			) );
+			wp_send_json(
+				array(
+					'comparisons' => $response['data'] ?? array(),
+					'total_count' => $response['meta']['total'] ?? 0,
+				)
+			);
 
 		} catch ( \Exception $e ) {
 			$this->send_error_response(
@@ -470,7 +478,12 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$post_data = $this->validate_post_data( array( 'batch_id' ) );
 
 			if ( false === $post_data ) {
-				wp_send_json( array( 'queues' => array(), 'total_done' => 0 ) );
+				wp_send_json(
+					array(
+						'queues'     => array(),
+						'total_done' => 0,
+					)
+				);
 				return;
 			}
 
@@ -486,7 +499,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$queues = array();
 			if ( ! empty( $completed_queues['data'] ) ) {
 				foreach ( $completed_queues['data'] as $queue ) {
-					if ( $batch_id !== ( $queue['batch'] ?? '' ) ) {
+					if ( ( $queue['batch'] ?? '' ) !== $batch_id ) {
 						continue;
 					}
 					$queues[] = array(
@@ -499,10 +512,12 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				}
 			}
 
-			wp_send_json( array(
-				'queues'     => $queues,
-				'total_done' => count( $queues ),
-			) );
+			wp_send_json(
+				array(
+					'queues'     => $queues,
+					'total_done' => count( $queues ),
+				)
+			);
 
 		} catch ( \Exception $e ) {
 			$this->send_error_response(
@@ -529,7 +544,12 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 			$post_data = $this->validate_post_data( array( 'batch_id' ) );
 
 			if ( false === $post_data ) {
-				wp_send_json( array( 'queues' => array(), 'total_failed' => 0 ) );
+				wp_send_json(
+					array(
+						'queues'       => array(),
+						'total_failed' => 0,
+					)
+				);
 				return;
 			}
 
@@ -550,10 +570,12 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				}
 			}
 
-			wp_send_json( array(
-				'queues'       => $queues,
-				'total_failed' => count( $queues ),
-			) );
+			wp_send_json(
+				array(
+					'queues'       => $queues,
+					'total_failed' => count( $queues ),
+				)
+			);
 
 		} catch ( \Exception $e ) {
 			$this->send_error_response(

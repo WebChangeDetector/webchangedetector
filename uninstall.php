@@ -36,7 +36,7 @@ require_once plugin_dir_path( __FILE__ ) . 'admin/class-webchangedetector-databa
 \WebChangeDetector\WebChangeDetector_Database_Logger::drop_table();
 
 // Clean up plugin options.
-$options_to_delete = array(
+$wcd_options_to_delete = array(
 	'webchangedetector_api_token',
 	'webchangedetector_account_email',
 	'webchangedetector_website_id',
@@ -55,8 +55,8 @@ $options_to_delete = array(
 	'webchangedetector_update_detection_step',
 );
 
-foreach ( $options_to_delete as $option ) {
-	delete_option( $option );
+foreach ( $wcd_options_to_delete as $wcd_option ) {
+	delete_option( $wcd_option );
 }
 
 // Clean up any remaining cron jobs.

@@ -35,8 +35,8 @@ $has_browser_console_data = ! empty( $browser_console_added ) ||
 // Check user plan access for browser console feature.
 $user_account               = null;
 $user_plan                  = 'free';
-$can_access_browser_console  = false;
-$can_access_ai_verification  = false;
+$can_access_browser_console = false;
+$can_access_ai_verification = false;
 
 try {
 	if ( isset( $this->account_handler ) && method_exists( $this->account_handler, 'get_account' ) ) {
@@ -55,14 +55,14 @@ try {
 }
 
 // Helper function to safely extract console message content.
-if ( ! function_exists( 'safe_extract_console_message' ) ) {
+if ( ! function_exists( 'wcd_safe_extract_console_message' ) ) {
 	/**
 	 * Safely extract console message content.
 	 *
 	 * @param mixed $log The console log data.
 	 * @return string The extracted console message content.
 	 */
-	function safe_extract_console_message( $log ) {
+	function wcd_safe_extract_console_message( $log ) {
 		$text_content = '';
 		if ( is_array( $log ) ) {
 			$text_content = $log['text'] ?? $log['message'] ?? $log['content'] ?? __( 'Unknown console message', 'webchangedetector' );
@@ -177,11 +177,11 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 		<div class="wcd-slider-wrapper">
 			<div id="comp-slider">
 				<div id="diff-container"
-					 data-token="<?php echo esc_attr( $token ); ?>"
-					 data-after-src="<?php echo esc_url( $sc_2_compressed ); ?>"
-					 data-after-fallback="<?php echo esc_url( $sc_2_raw ); ?>"
-					 data-diff-src="<?php echo esc_url( $sc_comparison_compressed ); ?>"
-					 data-diff-fallback="<?php echo esc_url( $sc_comparison_raw ); ?>">
+					data-token="<?php echo esc_attr( $token ); ?>"
+					data-after-src="<?php echo esc_url( $sc_2_compressed ); ?>"
+					data-after-fallback="<?php echo esc_url( $sc_2_raw ); ?>"
+					data-diff-src="<?php echo esc_url( $sc_comparison_compressed ); ?>"
+					data-diff-fallback="<?php echo esc_url( $sc_comparison_raw ); ?>">
 					<img class="comp-img" src="<?php echo esc_url( $sc_1_compressed ); ?>" onerror="loadFallbackImg(this, '<?php echo esc_url( $sc_1_raw ); ?>')">
 					<img src="<?php echo esc_url( $sc_comparison_compressed ); ?>" onerror="loadFallbackImg(this, '<?php echo esc_url( $sc_comparison_raw ); ?>')">
 				</div>
@@ -239,10 +239,11 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 					<?php } ?>
 				</h3>
 
-				<?php if ( 'verified' === $ai_status && ! empty( $ai_result ) ) {
-					$console_cat     = $ai_result['console_analysis']['category'] ?? null;
-					$has_alert       = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
-					$has_not_sure    = ! empty( $ai_result['not_sure'] ) || 'not_sure' === $console_cat;
+				<?php
+				if ( 'verified' === $ai_status && ! empty( $ai_result ) ) {
+					$console_cat      = $ai_result['console_analysis']['category'] ?? null;
+					$has_alert        = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
+					$has_not_sure     = ! empty( $ai_result['not_sure'] ) || 'not_sure' === $console_cat;
 					$overall_category = $has_alert ? 'alert' : ( $has_not_sure ? 'not_sure' : 'all_good' );
 					?>
 					<div class="wcd-ai-overall wcd-ai-overall-<?php echo esc_attr( $overall_category ); ?>">
@@ -276,18 +277,19 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 
 				<?php } elseif ( 'verified' === $ai_status && ! empty( $ai_result['regions'] ) ) { ?>
 					<div class="wcd-ai-regions-list">
-						<?php foreach ( $ai_result['regions'] as $index => $region ) {
-							$region_num  = $index + 1;
-							$category    = esc_attr( $region['category'] ?? 'not_sure' );
-							$description = esc_html( $region['description'] ?? '' );
-							$reason      = esc_html( $region['reason'] ?? '' );
-							$region_id   = isset( $region['region_id'] ) ? intval( $region['region_id'] ) : $index;
+						<?php
+						foreach ( $ai_result['regions'] as $index => $region ) {
+							$region_num   = $index + 1;
+							$category     = esc_attr( $region['category'] ?? 'not_sure' );
+							$description  = esc_html( $region['description'] ?? '' );
+							$reason       = esc_html( $region['reason'] ?? '' );
+							$region_id    = isset( $region['region_id'] ) ? intval( $region['region_id'] ) : $index;
 							$matched_rule = ! empty( $region['matched_feedback_rule'] ) ? $region['matched_feedback_rule'] : '';
 							?>
-							<div class="wcd-ai-region-card wcd-ai-category-<?php echo $category; ?>"
-								 data-region-id="<?php echo esc_attr( $region_id ); ?>">
+							<div class="wcd-ai-region-card wcd-ai-category-<?php echo esc_attr( $category ); ?>"
+								data-region-id="<?php echo esc_attr( $region_id ); ?>">
 								<span class="wcd-ai-region-number"><?php echo intval( $region_num ); ?></span>
-								<span class="wcd-ai-region-category-badge wcd-ai-cat-<?php echo $category; ?>">
+								<span class="wcd-ai-region-category-badge wcd-ai-cat-<?php echo esc_attr( $category ); ?>">
 									<?php
 									if ( 'all_good' === $category ) {
 										esc_html_e( 'OK', 'webchangedetector' );
@@ -301,9 +303,9 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 								<?php if ( $matched_rule ) { ?>
 									<span class="wcd-ai-feedback-matched"><?php esc_html_e( 'Auto-ignored by your rule', 'webchangedetector' ); ?></span>
 								<?php } ?>
-								<span class="wcd-ai-region-description"><?php echo $description; ?></span>
+								<span class="wcd-ai-region-description"><?php echo esc_html( $description ); ?></span>
 								<?php if ( $reason ) { ?>
-									<div class="wcd-ai-region-reason"><?php echo $reason; ?></div>
+									<div class="wcd-ai-region-reason"><?php echo esc_html( $reason ); ?></div>
 								<?php } ?>
 								<?php if ( in_array( $category, array( 'alert', 'not_sure' ), true ) && empty( $matched_rule ) ) { ?>
 									<button type="button"
@@ -425,7 +427,7 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 								<?php
 								if ( $has_added && is_array( $browser_console_added ) ) {
 									foreach ( array_slice( $browser_console_added, 0, 3 ) as $log ) {
-										$text_content = safe_extract_console_message( $log );
+										$text_content = wcd_safe_extract_console_message( $log );
 										$decoded_log  = is_array( $log ) ? $log : ( is_string( $log ) ? json_decode( $log, true ) : array() );
 										$source_url   = is_array( $decoded_log ) ? ( $decoded_log['source'] ?? null ) : null;
 										$severity     = is_array( $decoded_log ) ? ( $decoded_log['severity'] ?? 'warning' ) : 'warning';
@@ -457,7 +459,7 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 
 								if ( $has_removed && is_array( $browser_console_removed ) ) {
 									foreach ( array_slice( $browser_console_removed, 0, 2 ) as $log ) {
-										$text_content = safe_extract_console_message( $log );
+										$text_content = wcd_safe_extract_console_message( $log );
 										$decoded_log  = is_array( $log ) ? $log : ( is_string( $log ) ? json_decode( $log, true ) : array() );
 										$source_url   = is_array( $decoded_log ) ? ( $decoded_log['source'] ?? null ) : null;
 										?>
@@ -545,7 +547,12 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 			</label>
 			<label class="wcd-ai-feedback-modal-option">
 				<input type="radio" name="wcd_ai_feedback_scope" value="group_or_website">
-				<span><?php printf( esc_html__( 'All URLs in %s', 'webchangedetector' ), esc_html( $compare['group_name'] ?? __( 'this group', 'webchangedetector' ) ) ); ?></span>
+				<span>
+				<?php
+				/* translators: %s: group or website name */
+				printf( esc_html__( 'All URLs in %s', 'webchangedetector' ), esc_html( $compare['group_name'] ?? __( 'this group', 'webchangedetector' ) ) );
+				?>
+			</span>
 			</label>
 		</div>
 		<input type="hidden" id="wcd-ai-feedback-comparison-id" value="">
@@ -571,7 +578,12 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 			</label>
 			<label class="wcd-ai-feedback-modal-option">
 				<input type="radio" name="wcd_console_feedback_scope" value="group_or_website">
-				<span><?php printf( esc_html__( 'All URLs in %s', 'webchangedetector' ), esc_html( $compare['group_name'] ?? __( 'this group', 'webchangedetector' ) ) ); ?></span>
+				<span>
+				<?php
+				/* translators: %s: group or website name */
+				printf( esc_html__( 'All URLs in %s', 'webchangedetector' ), esc_html( $compare['group_name'] ?? __( 'this group', 'webchangedetector' ) ) );
+				?>
+			</span>
 			</label>
 		</div>
 		<input type="hidden" id="wcd-console-feedback-comparison-id" value="">

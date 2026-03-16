@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<ruleset name="WebChangeDetector">
+	<description>WordPress Coding Standards for WebChangeDetector Plugin</description>
+
+	<!-- Scan PHP files only -->
+	<arg name="extensions" value="php"/>
+
+	<!-- Show sniff codes in reports -->
+	<arg value="ps"/>
+
+	<!-- Scan all files in this directory -->
+	<file>.</file>
+
+	<!-- Exclude vendor directory -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<!-- Use WordPress Coding Standards -->
+	<rule ref="WordPress"/>
+
+	<!-- Set minimum supported PHP version -->
+	<config name="minimum_wp_version" value="6.0"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<!-- Text domain -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="webchangedetector"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Prefixes: only check function/class/constant names, not hook names or variables in templates -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="webchangedetector"/>
+				<element value="wcd"/>
+				<element value="WebChangeDetector"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Allow calling third-party hooks (WPML, LiteSpeed, SiteGround, etc.) -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound">
+		<exclude-pattern>*/admin/class-webchangedetector-admin-wordpress.php</exclude-pattern>
+		<exclude-pattern>*/admin/class-webchangedetector-autoupdates.php</exclude-pattern>
+	</rule>
+
+	<!-- Template files use local-scope variables passed via include, not true globals -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>*/admin/partials/*</exclude-pattern>
+	</rule>
+</ruleset>

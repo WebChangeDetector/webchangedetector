@@ -11,4 +11,5 @@
 require 'update-step-tiles.php';
 ?>
 
-<?php require 'update-step-post-sc-processing.php'; ?>
+<?php
+require 'update-step-post-sc-processing.php';

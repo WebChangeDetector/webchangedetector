@@ -384,9 +384,9 @@ class WebChangeDetector_Admin_Settings {
 
 		// Show message if no urls are selected (manual checks only).
 		if ( ! $monitoring_group ) {
-			$notice_hidden = $group_and_urls['selected_urls_count'] > 0 ? ' style="display:none;"' : '';
+			$notice_hidden = $group_and_urls['selected_urls_count'] > 0;
 			?>
-			<div id="wcd-no-urls-notice" class="notice notice-warning"<?php echo $notice_hidden; ?>>
+			<div id="wcd-no-urls-notice" class="notice notice-warning" <?php echo $notice_hidden ? 'style="display:none;"' : ''; ?>>
 				<p><strong><?php echo esc_html__( 'WebChange Detector:', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'Select URLs for manual checks to get started.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
