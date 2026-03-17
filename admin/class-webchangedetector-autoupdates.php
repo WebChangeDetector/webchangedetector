@@ -217,7 +217,6 @@ class WebChangeDetector_Autoupdates {
 		}
 		$comparison_batches[] = $response['batch'];
 		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
-		\WebChangeDetector\WebChangeDetector_API_V2::update_batch_v2( $response['batch'], 'Auto Update Checks - ' . WebChangeDetector_Admin_Utils::get_domain_from_site_url() );
 
 		$this->wcd_cron_check_post_queues();
 	}
@@ -1280,8 +1279,9 @@ class WebChangeDetector_Autoupdates {
 	 */
 	public function send_change_detection_mail( $post_sc_option ) {
 		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
-		$mail_body   = '<style>
+		$comparisons      = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
+		$batch_ai_summary = $comparisons['data'][0]['batch']['ai_summary']['summary'] ?? '';
+		$mail_body        = '<style>
 								table {
 									border: 1px solid #ccc;
 									width: 100%;
@@ -1301,17 +1301,53 @@ class WebChangeDetector_Autoupdates {
 								<div style="width: 800px; margin: 0 auto;">';
 
 		$mail_body .= '<p>Howdy again, we checked your website for visual changes during the WP auto updates with WebChange Detector. Here are the results:</p>';
+
+		if ( ! empty( $batch_ai_summary ) ) {
+			$mail_body .= '<div style="background: #f0f4ff; border-left: 4px solid #4a6cf7; padding: 15px; margin: 15px 0;">
+								<strong>AI Summary:</strong><br>
+								' . esc_html( $batch_ai_summary ) . '
+							</div>';
+		}
+
 		if ( count( $comparisons['data'] ) ) {
 			$no_difference_rows   = '';
 			$with_difference_rows = '';
 
 			foreach ( $comparisons['data'] as $comparison ) {
+				$ai_status = $comparison['ai_verification_status'] ?? '';
+				$ai_result = $comparison['ai_verification_result'] ?? array();
+				$ai_cell   = '<td></td>';
+
+				if ( ! $comparison['difference_percent'] ) {
+					$ai_cell = '<td style="color: #888;">No difference</td>';
+				} elseif ( 'verified' === $ai_status && ! empty( $ai_result['summary'] ) ) {
+					$console_cat = $ai_result['console_analysis']['category'] ?? null;
+					$has_alert   = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
+					$has_unsure  = ! empty( $ai_result['not_sure'] ) || 'not_sure' === $console_cat;
+					$overall     = $has_alert ? 'alert' : ( $has_unsure ? 'not_sure' : 'all_good' );
+					$badge_map   = array(
+						'alert'    => array( 'label' => 'Alert', 'color' => '#c0392b' ),
+						'not_sure' => array( 'label' => 'Unsure', 'color' => '#e67e22' ),
+						'all_good' => array( 'label' => 'OK', 'color' => '#27ae60' ),
+					);
+					$badge       = $badge_map[ $overall ];
+					$summary_raw = $ai_result['summary'];
+					if ( mb_strlen( $summary_raw ) > 120 ) {
+						$summary_raw = mb_substr( $summary_raw, 0, 120 ) . '...';
+					}
+					$ai_cell = '<td>
+						<span style="background:' . esc_attr( $badge['color'] ) . '; color:#fff; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold;">' . esc_html( $badge['label'] ) . '</span>
+						<span style="font-size: 13px; margin-left: 6px;">' . esc_html( $summary_raw ) . '</span>
+					</td>';
+				}
+
 				$row =
 					'<tr>
 						<td>' . esc_html( $comparison['url'] ) . '</td>
 						<td>' . esc_html( $comparison['device'] ) . '</td>
 						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
-		                <td><a href="' . esc_html( $comparison['public_link'] ) . '">See changes</a></td>
+						<td><a href="' . esc_url( $comparison['public_link'] ) . '">See changes</a></td>
+						' . $ai_cell . '
 					</tr>';
 				if ( ! $comparison['difference_percent'] ) {
 					$no_difference_rows .= $row;
@@ -1330,20 +1366,20 @@ class WebChangeDetector_Autoupdates {
 			$mail_body .= '</div>';
 
 			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
 			if ( ! empty( $with_difference_rows ) ) {
 				$mail_body .= $with_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
 			}
 			$mail_body .= '</table>';
 
 			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th></tr>';
+			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
 			if ( ! empty( $no_difference_rows ) ) {
 				$mail_body .= $no_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="3" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
 			}
 			$mail_body .= '</table>';
 		} else {
