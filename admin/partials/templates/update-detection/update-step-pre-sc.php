@@ -34,7 +34,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 
 	<?php
 	$insufficient_screenshots = false;
-	if ( $group_urls['meta']['selected_urls_count'] > $account_details['checks_left'] ) {
+	if ( $group_urls['meta']['selected_checks_count'] > $account_details['checks_left'] ) {
 		$insufficient_screenshots = true;
 	}
 
@@ -48,7 +48,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 					<label class="wcd-form-label">
 						<span class="dashicons dashicons-camera"></span> Pre-Update Screenshots
 					</label>
-					<div class="wcd-description">Start the Manual Checks by taking screenshots before making updates or other changes on your website.</div>
+					<div class="wcd-description">Ready to take pre-update screenshots. This run will use <strong><?php echo esc_html( $group_urls['meta']['selected_checks_count'] ); ?></strong> checks.</div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-button">
 					<?php if ( $insufficient_screenshots ) { ?>

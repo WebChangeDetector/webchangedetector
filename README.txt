@@ -57,13 +57,15 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 = 4.2.2 =
 * Feature: Add AI analysis to auto update check emails
 * Fix: Filter in change detections
+* Fix: Calculation of available checks
 
 = 4.2.1 =
 * Fix: Possible stuck manual checks in rare cases
 * Fix: Update translations
 
 = 4.2.0 =
-* Feature: AI analysis
+* Feature: AI analysis for comparisons
+* Feature: AI rules for ignoring detected changes in future
 * Impromenent: New change detection view
 * Impromenent: More details during manual checks
 * Improvement: Better filters in change detections
