@@ -111,8 +111,8 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 				}
 
 				// Calculate max auto update checks.
-				$update_urls_count      = isset( $update_group['selected_urls_count'] ) ? $update_group['selected_urls_count'] : 0;
-				$max_auto_update_checks = $update_urls_count * $amount_auto_update_days * 4; // multiplied by weeks in a month.
+				$update_checks_count    = isset( $update_group['selected_checks_count'] ) ? $update_group['selected_checks_count'] : 0;
+				$max_auto_update_checks = $update_checks_count * $amount_auto_update_days * 4; // multiplied by weeks in a month.
 			}
 
 			// Get account data for renewal calculations.
@@ -155,8 +155,8 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 				'checks_until_renewal'   => $checks_until_renewal,
 				'auto_group_enabled'     => isset( $auto_group['enabled'] ) ? $auto_group['enabled'] : 'not set',
 				'auto_group_interval'    => isset( $auto_group['interval_in_h'] ) ? $auto_group['interval_in_h'] : 'not set',
-				'auto_group_urls'        => isset( $auto_group['selected_urls_count'] ) ? $auto_group['selected_urls_count'] : 'not set',
-				'update_group_urls'      => isset( $update_group['selected_urls_count'] ) ? $update_group['selected_urls_count'] : 'not set',
+				'auto_group_checks'      => isset( $auto_group['selected_checks_count'] ) ? $auto_group['selected_checks_count'] : 'not set',
+				'update_group_checks'    => isset( $update_group['selected_checks_count'] ) ? $update_group['selected_checks_count'] : 'not set',
 				'auto_update_settings'   => $auto_update_settings,
 			);
 

@@ -614,7 +614,7 @@ class WebChangeDetector_Admin {
 		// Calculate screenshots until renewal.
 		$days_until_renewal = gmdate( 'd', gmdate( 'U', strtotime( $this->account_handler->get_account()['renewal_at'] ) ) - gmdate( 'U' ) );
 
-		$amount_group_sc_per_day = $group['selected_urls_count'] * $amount_sc_per_day * $days_until_renewal;
+		$amount_group_sc_per_day = $group['selected_checks_count'] * $amount_sc_per_day * $days_until_renewal;
 
 		// Get first detection hour.
 		$first_hour_of_interval = $group['hour_of_day'];
@@ -630,7 +630,7 @@ class WebChangeDetector_Admin {
 		}
 
 		// Subtract screenshots already taken today.
-		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_urls_count'];
+		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_checks_count'];
 		?>
 
 		<div class="wcd-settings-card wcd-monitoring-status-card">
