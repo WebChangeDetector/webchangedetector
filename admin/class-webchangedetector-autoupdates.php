@@ -1326,9 +1326,18 @@ class WebChangeDetector_Autoupdates {
 					$has_unsure  = ! empty( $ai_result['not_sure'] ) || 'not_sure' === $console_cat;
 					$overall     = $has_alert ? 'alert' : ( $has_unsure ? 'not_sure' : 'all_good' );
 					$badge_map   = array(
-						'alert'    => array( 'label' => 'Alert', 'color' => '#c0392b' ),
-						'not_sure' => array( 'label' => 'Unsure', 'color' => '#e67e22' ),
-						'all_good' => array( 'label' => 'OK', 'color' => '#27ae60' ),
+						'alert'    => array(
+							'label' => 'Alert',
+							'color' => '#c0392b',
+						),
+						'not_sure' => array(
+							'label' => 'Unsure',
+							'color' => '#e67e22',
+						),
+						'all_good' => array(
+							'label' => 'OK',
+							'color' => '#27ae60',
+						),
 					);
 					$badge       = $badge_map[ $overall ];
 					$summary_raw = $ai_result['summary'];
