@@ -19,9 +19,9 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 			<div class="wcd-form-row">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label">
-						<span class="dashicons dashicons-yes-alt"></span> URLs Selected
+						<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'URLs Selected', 'webchangedetector' ); ?>
 					</label>
-					<div class="wcd-description">URLs have been successfully selected for manual checks.</div>
+					<div class="wcd-description"><?php esc_html_e( 'URLs have been successfully selected for manual checks.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-urls">
 					<div class="wcd-status-info">
@@ -46,17 +46,20 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 			<div class="wcd-form-row">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label">
-						<span class="dashicons dashicons-camera"></span> Pre-Update Screenshots
+						<span class="dashicons dashicons-camera"></span> <?php esc_html_e( 'Pre-Update Screenshots', 'webchangedetector' ); ?>
 					</label>
-					<div class="wcd-description">Ready to take pre-update screenshots. This run will use <strong><?php echo esc_html( $group_urls['meta']['selected_checks_count'] ); ?></strong> checks.</div>
+					<div class="wcd-description"><?php
+						/* translators: %s: Number of checks that will be used */
+						printf( esc_html__( 'Ready to take pre-update screenshots. This run will use %s checks.', 'webchangedetector' ), '<strong>' . esc_html( $group_urls['meta']['selected_checks_count'] ) . '</strong>' );
+					?></div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-button">
 					<?php if ( $insufficient_screenshots ) { ?>
 						<div class="wcd-error-message">
-							<p><strong>Insufficient Screenshots Available</strong></p>
-							<p>Sorry, you don't have enough screenshots available. Please upgrade your account or select fewer URLs.</p>
+							<p><strong><?php esc_html_e( 'Insufficient Screenshots Available', 'webchangedetector' ); ?></strong></p>
+							<p><?php esc_html_e( 'Sorry, you don\'t have enough screenshots available. Please upgrade your account or select fewer URLs.', 'webchangedetector' ); ?></p>
 							<?php if ( ! $account_details['is_subaccount'] ) { ?>
-								<a href="<?php echo esc_url( $wcd->account_handler->get_upgrade_url() ); ?>" class="button button-primary">Upgrade Account</a>
+								<a href="<?php echo esc_url( $wcd->account_handler->get_upgrade_url() ); ?>" class="button button-primary"><?php esc_html_e( 'Upgrade Account', 'webchangedetector' ); ?></a>
 							<?php } ?>
 						</div>
 					<?php } else { ?>
@@ -65,7 +68,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 							<?php wp_nonce_field( 'take_screenshots' ); ?>
 							<input type="hidden" name="sc_type" value="pre">
 							<button type="submit" class="button button-primary wcd-action-btn">
-								<span class="dashicons dashicons-camera"></span> Take Pre-Update Screenshots
+								<span class="dashicons dashicons-camera"></span> <?php esc_html_e( 'Take Pre-Update Screenshots', 'webchangedetector' ); ?>
 							</button>
 						</form>
 					<?php } ?>

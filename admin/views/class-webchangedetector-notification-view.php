@@ -81,12 +81,13 @@ class WebChangeDetector_Notification_View {
 
 		if ( $usage_percent >= 100 ) {
 			$this->render_notice(
-				'<strong>WebChange Detector:</strong> You ran out of checks. Please upgrade your account to continue.',
+				'<strong>WebChange Detector:</strong> ' . esc_html__( 'You ran out of checks. Please upgrade your account to continue.', 'webchangedetector' ),
 				'error'
 			);
 		} elseif ( $usage_percent > 70 ) {
 			$this->render_notice(
-				'<strong>WebChange Detector:</strong> You used ' . $usage_percent . '% of your checks.',
+				/* translators: %d: Percentage of checks used */
+				'<strong>WebChange Detector:</strong> ' . sprintf( esc_html__( 'You used %d%% of your checks.', 'webchangedetector' ), $usage_percent ),
 				'warning'
 			);
 		}
@@ -97,7 +98,11 @@ class WebChangeDetector_Notification_View {
 	 */
 	public function render_plugin_update_notice() {
 		$this->render_notice(
-			'There are major updates in our system which requires to update the plugin WebChangeDetector. Please install the update at <a href="/wp-admin/plugins.php">Plugins</a>.',
+			sprintf(
+				/* translators: %s: Link to plugins page */
+				__( 'There are major updates in our system which requires to update the plugin WebChangeDetector. Please install the update at %s.', 'webchangedetector' ),
+				'<a href="/wp-admin/plugins.php">' . esc_html__( 'Plugins', 'webchangedetector' ) . '</a>'
+			),
 			'error',
 			false
 		);
@@ -107,11 +112,11 @@ class WebChangeDetector_Notification_View {
 	 * Render API error notice.
 	 */
 	public function render_api_error_notice() {
-		$message  = 'Something went wrong. Maybe the API token is invalid?';
+		$message  = esc_html__( 'Something went wrong. Maybe the API token is invalid?', 'webchangedetector' );
 		$message .= '<form method="post" style="margin-top: 10px;">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
-		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
+		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';
 
 		$this->render_notice( $message, 'error', false );
@@ -123,13 +128,18 @@ class WebChangeDetector_Notification_View {
 	 * @param string $status The account status.
 	 */
 	public function render_inactive_account_notice( $status ) {
-		$message  = '<h3>Your account status is ' . esc_html( $status ) . '</h3>';
-		$message .= '<p>Please <a href="' . esc_url( $this->admin->account_handler->get_upgrade_url() ) . '">Upgrade</a> to re-activate your account.</p>';
-		$message .= '<p>To use a different account, please reset the API token.</p>';
+		/* translators: %s: Account status */
+		$message  = '<h3>' . sprintf( esc_html__( 'Your account status is %s', 'webchangedetector' ), esc_html( $status ) ) . '</h3>';
+		$message .= '<p>' . sprintf(
+			/* translators: %s: Upgrade link */
+			esc_html__( 'Please %s to re-activate your account.', 'webchangedetector' ),
+			'<a href="' . esc_url( $this->admin->account_handler->get_upgrade_url() ) . '">' . esc_html__( 'Upgrade', 'webchangedetector' ) . '</a>'
+		) . '</p>';
+		$message .= '<p>' . esc_html__( 'To use a different account, please reset the API token.', 'webchangedetector' ) . '</p>';
 		$message .= '<form method="post">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
-		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
+		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';
 
 		$this->render_notice( $message, 'error', false );
@@ -141,13 +151,14 @@ class WebChangeDetector_Notification_View {
 	public function render_website_details_error() {
 		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
 
-		$message  = 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.';
-		$message .= '<p>Your current API token is: <strong>' . esc_html( $api_token ) . '</strong>.</p>';
+		$message  = esc_html__( 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.', 'webchangedetector' );
+		/* translators: %s: The current API token */
+		$message .= '<p>' . sprintf( esc_html__( 'Your current API token is: %s.', 'webchangedetector' ), '<strong>' . esc_html( $api_token ) . '</strong>' ) . '</p>';
 		$message .= '<form method="post">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
 		$message .= '<input type="hidden" name="api_token" value="' . esc_attr( $api_token ) . '">';
-		$message .= '<input type="submit" value="Reset API token" class="button button-delete">';
+		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';
 
 		$this->render_notice( $message, 'error', false );
@@ -157,7 +168,7 @@ class WebChangeDetector_Notification_View {
 	 * Render success message for settings saved.
 	 */
 	public function render_settings_saved() {
-		$this->render_notice( 'Settings saved.', 'success' );
+		$this->render_notice( __( 'Settings saved.', 'webchangedetector' ), 'success' );
 	}
 
 	/**

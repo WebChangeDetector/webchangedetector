@@ -106,13 +106,13 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 			<input type="hidden" name="wcd_action" value="update_detection_step">
 			<?php wp_nonce_field( 'update_detection_step' ); ?>
 			<input type="hidden" name="step" value="settings">
-			<input class="button" type="submit" value="< Back to settings" disabled>
+			<input class="button" type="submit" value="<?php echo esc_attr__( '< Back to settings', 'webchangedetector' ); ?>" disabled>
 		</form>
 		<form method="post" style="display: inline;">
 			<input type="hidden" name="wcd_action" value="update_detection_step">
 			<?php wp_nonce_field( 'update_detection_step' ); ?>
 			<input type="hidden" name="step" value="post-update">
-			<input class="button button-primary" type="submit" value="Next >" disabled>
+			<input class="button button-primary" type="submit" value="<?php echo esc_attr__( 'Next >', 'webchangedetector' ); ?>" disabled>
 		</form>
 	</div>
 

@@ -43,37 +43,37 @@ class WebChangeDetector_Modal_View {
 			<div class="wcd-modal-content">
 				<div class="wcd-modal-header">
 					<span class="wcd-modal-close">&times;</span>
-					<h3>Comparison Details</h3>
+					<h3><?php esc_html_e( 'Comparison Details', 'webchangedetector' ); ?></h3>
 				</div>
 				<div class="wcd-modal-body">
 					<div class="comparison-info">
-						<p><strong>URL:</strong> <?php echo esc_url( $comparison['url'] ?? '' ); ?></p>
-						<p><strong>Device:</strong> <?php echo esc_html( $comparison['device'] ?? '' ); ?></p>
-						<p><strong>Date:</strong> <?php echo esc_html( $comparison['created_at'] ?? '' ); ?></p>
-						<p><strong>Status:</strong> <?php echo esc_html( ucfirst( $comparison['status'] ?? '' ) ); ?></p>
+						<p><strong><?php esc_html_e( 'URL:', 'webchangedetector' ); ?></strong> <?php echo esc_url( $comparison['url'] ?? '' ); ?></p>
+						<p><strong><?php esc_html_e( 'Device:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $comparison['device'] ?? '' ); ?></p>
+						<p><strong><?php esc_html_e( 'Date:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $comparison['created_at'] ?? '' ); ?></p>
+						<p><strong><?php esc_html_e( 'Status:', 'webchangedetector' ); ?></strong> <?php echo esc_html( ucfirst( $comparison['status'] ?? '' ) ); ?></p>
 					</div>
 					
 					<?php if ( ! empty( $comparison['image_before'] ) && ! empty( $comparison['image_after'] ) ) : ?>
 						<div class="comparison-images-modal">
 							<div class="image-container">
-								<h4>Before</h4>
-								<img src="<?php echo esc_url( $comparison['image_before'] ); ?>" alt="Before" class="comparison-image">
+								<h4><?php esc_html_e( 'Before', 'webchangedetector' ); ?></h4>
+								<img src="<?php echo esc_url( $comparison['image_before'] ); ?>" alt="<?php echo esc_attr__( 'Before', 'webchangedetector' ); ?>" class="comparison-image">
 							</div>
 							<div class="image-container">
-								<h4>After</h4>
-								<img src="<?php echo esc_url( $comparison['image_after'] ); ?>" alt="After" class="comparison-image">
+								<h4><?php esc_html_e( 'After', 'webchangedetector' ); ?></h4>
+								<img src="<?php echo esc_url( $comparison['image_after'] ); ?>" alt="<?php echo esc_attr__( 'After', 'webchangedetector' ); ?>" class="comparison-image">
 							</div>
 							<?php if ( ! empty( $comparison['image_diff'] ) ) : ?>
 								<div class="image-container">
-									<h4>Difference</h4>
-									<img src="<?php echo esc_url( $comparison['image_diff'] ); ?>" alt="Difference" class="comparison-image">
+									<h4><?php esc_html_e( 'Difference', 'webchangedetector' ); ?></h4>
+									<img src="<?php echo esc_url( $comparison['image_diff'] ); ?>" alt="<?php echo esc_attr__( 'Difference', 'webchangedetector' ); ?>" class="comparison-image">
 								</div>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal()">Close</button>
+					<button type="button" class="button" onclick="closeModal()"><?php esc_html_e( 'Close', 'webchangedetector' ); ?></button>
 					<?php if ( ! empty( $comparison['id'] ) ) : ?>
 						<div class="status-actions">
 							<form method="post" style="display: inline;">
@@ -81,21 +81,21 @@ class WebChangeDetector_Modal_View {
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="ok">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
-								<input type="submit" value="Mark as OK" class="button button-secondary">
+								<input type="submit" value="<?php echo esc_attr__( 'Mark as OK', 'webchangedetector' ); ?>" class="button button-secondary">
 							</form>
 							<form method="post" style="display: inline;">
 								<input type="hidden" name="wcd_action" value="change_comparison_status">
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="to_fix">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
-								<input type="submit" value="Mark as To Fix" class="button button-primary">
+								<input type="submit" value="<?php echo esc_attr__( 'Mark as To Fix', 'webchangedetector' ); ?>" class="button button-primary">
 							</form>
 							<form method="post" style="display: inline;">
 								<input type="hidden" name="wcd_action" value="change_comparison_status">
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="false_positive">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
-								<input type="submit" value="Mark as False Positive" class="button">
+								<input type="submit" value="<?php echo esc_attr__( 'Mark as False Positive', 'webchangedetector' ); ?>" class="button">
 							</form>
 						</div>
 					<?php endif; ?>
@@ -126,14 +126,14 @@ class WebChangeDetector_Modal_View {
 					<p><?php echo wp_kses_post( $message ); ?></p>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal('<?php echo esc_attr( $id ); ?>')">Cancel</button>
+					<button type="button" class="button" onclick="closeModal('<?php echo esc_attr( $id ); ?>')"><?php esc_html_e( 'Cancel', 'webchangedetector' ); ?></button>
 					<form method="post" style="display: inline;">
 						<input type="hidden" name="wcd_action" value="<?php echo esc_attr( $action ); ?>">
 						<?php wp_nonce_field( $action ); ?>
 						<?php foreach ( $hidden_fields as $field => $value ) : ?>
 							<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( $value ); ?>">
 						<?php endforeach; ?>
-						<input type="submit" value="Confirm" class="button button-primary">
+						<input type="submit" value="<?php echo esc_attr__( 'Confirm', 'webchangedetector' ); ?>" class="button button-primary">
 					</form>
 				</div>
 			</div>
@@ -150,7 +150,7 @@ class WebChangeDetector_Modal_View {
 			<div class="wcd-modal-content">
 				<div class="wcd-modal-header">
 					<span class="wcd-modal-close">&times;</span>
-					<h3>Add API Token</h3>
+					<h3><?php esc_html_e( 'Add API Token', 'webchangedetector' ); ?></h3>
 				</div>
 				<div class="wcd-modal-body">
 					<form method="post" id="api-token-form">
@@ -159,12 +159,12 @@ class WebChangeDetector_Modal_View {
 						<table class="form-table">
 							<tr>
 								<th scope="row">
-									<label for="api_token">API Token</label>
+									<label for="api_token"><?php esc_html_e( 'API Token', 'webchangedetector' ); ?></label>
 								</th>
 								<td>
 									<input type="text" id="api_token" name="api_token" class="regular-text" required>
 									<p class="description">
-										Enter your WebChangeDetector API token. You can find this in your account dashboard.
+										<?php esc_html_e( 'Enter your WebChangeDetector API token. You can find this in your account dashboard.', 'webchangedetector' ); ?>
 									</p>
 								</td>
 							</tr>
@@ -172,8 +172,8 @@ class WebChangeDetector_Modal_View {
 					</form>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal('api-token-modal')">Cancel</button>
-					<button type="submit" form="api-token-form" class="button button-primary">Save Token</button>
+					<button type="button" class="button" onclick="closeModal('api-token-modal')"><?php esc_html_e( 'Cancel', 'webchangedetector' ); ?></button>
+					<button type="submit" form="api-token-form" class="button button-primary"><?php esc_html_e( 'Save Token', 'webchangedetector' ); ?></button>
 				</div>
 			</div>
 		</div>
@@ -192,14 +192,14 @@ class WebChangeDetector_Modal_View {
 			<div class="wcd-modal-content screenshot-modal">
 				<div class="wcd-modal-header">
 					<span class="wcd-modal-close">&times;</span>
-					<h3>Screenshot Preview</h3>
+					<h3><?php esc_html_e( 'Screenshot Preview', 'webchangedetector' ); ?></h3>
 				</div>
 				<div class="wcd-modal-body">
 					<?php if ( ! empty( $details ) ) : ?>
 						<div class="screenshot-details">
-							<p><strong>URL:</strong> <?php echo esc_url( $details['url'] ?? '' ); ?></p>
-							<p><strong>Device:</strong> <?php echo esc_html( $details['device'] ?? '' ); ?></p>
-							<p><strong>Date:</strong> <?php echo esc_html( $details['created_at'] ?? '' ); ?></p>
+							<p><strong><?php esc_html_e( 'URL:', 'webchangedetector' ); ?></strong> <?php echo esc_url( $details['url'] ?? '' ); ?></p>
+							<p><strong><?php esc_html_e( 'Device:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $details['device'] ?? '' ); ?></p>
+							<p><strong><?php esc_html_e( 'Date:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $details['created_at'] ?? '' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div class="screenshot-container">
@@ -207,8 +207,8 @@ class WebChangeDetector_Modal_View {
 					</div>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal('screenshot-modal')">Close</button>
-					<a href="<?php echo esc_url( $image_url ); ?>" target="_blank" class="button button-secondary">Open Full Size</a>
+					<button type="button" class="button" onclick="closeModal('screenshot-modal')"><?php esc_html_e( 'Close', 'webchangedetector' ); ?></button>
+					<a href="<?php echo esc_url( $image_url ); ?>" target="_blank" class="button button-secondary"><?php esc_html_e( 'Open Full Size', 'webchangedetector' ); ?></a>
 				</div>
 			</div>
 		</div>
@@ -233,7 +233,7 @@ class WebChangeDetector_Modal_View {
 					<?php echo wp_kses_post( $content ); ?>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal('help-modal')">Close</button>
+					<button type="button" class="button" onclick="closeModal('help-modal')"><?php esc_html_e( 'Close', 'webchangedetector' ); ?></button>
 				</div>
 			</div>
 		</div>
@@ -249,7 +249,7 @@ class WebChangeDetector_Modal_View {
 			<div class="wcd-modal-content">
 				<div class="wcd-modal-header">
 					<span class="wcd-modal-close">&times;</span>
-					<h3>Create Trial Account</h3>
+					<h3><?php esc_html_e( 'Create Trial Account', 'webchangedetector' ); ?></h3>
 				</div>
 				<div class="wcd-modal-body">
 					<form method="post" id="account-creation-form">
@@ -258,13 +258,13 @@ class WebChangeDetector_Modal_View {
 						<table class="form-table">
 							<tr>
 								<th scope="row">
-									<label for="email">Email Address</label>
+									<label for="email"><?php esc_html_e( 'Email Address', 'webchangedetector' ); ?></label>
 								</th>
 								<td>
-									<input type="email" id="email" name="email" class="regular-text" required 
+									<input type="email" id="email" name="email" class="regular-text" required
 											value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
 									<p class="description">
-										We'll create a trial account with this email address.
+										<?php esc_html_e( 'We\'ll create a trial account with this email address.', 'webchangedetector' ); ?>
 									</p>
 								</td>
 							</tr>
@@ -272,8 +272,8 @@ class WebChangeDetector_Modal_View {
 					</form>
 				</div>
 				<div class="wcd-modal-footer">
-					<button type="button" class="button" onclick="closeModal('account-creation-modal')">Cancel</button>
-					<button type="submit" form="account-creation-form" class="button button-primary">Create Account</button>
+					<button type="button" class="button" onclick="closeModal('account-creation-modal')"><?php esc_html_e( 'Cancel', 'webchangedetector' ); ?></button>
+					<button type="submit" form="account-creation-form" class="button button-primary"><?php esc_html_e( 'Create Account', 'webchangedetector' ); ?></button>
 				</div>
 			</div>
 		</div>

@@ -184,7 +184,7 @@ class WebChangeDetector_Settings_Controller {
 			<?php
 			if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
 				echo '<div class="error notice">
-                        <p>Please enter a valid API Token.</p>
+                        <p>' . esc_html__( 'Please enter a valid API Token.', 'webchangedetector' ) . '</p>
                     </div>';
 			} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
 				?>
@@ -199,11 +199,7 @@ class WebChangeDetector_Settings_Controller {
 			}
 			echo '<hr>';
 			$this->admin->account_handler->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
-			$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector account here.
-                                            Please don\'t share your API token with anyone. </p><p>
-                                            Resetting your API Token will allow you to switch accounts. Keep in mind to
-                                            save your API Token before the reset! </p><p>
-                                            When you login with your API token after the reset, all your settings will be still there.</p>';
+			$wizard_text = '<h2>' . esc_html__( 'Your account details', 'webchangedetector' ) . '</h2><p>' . esc_html__( 'You can see your WebChange Detector account here. Please don\'t share your API token with anyone.', 'webchangedetector' ) . '</p><p>' . esc_html__( 'Resetting your API Token will allow you to switch accounts. Keep in mind to save your API Token before the reset!', 'webchangedetector' ) . '</p><p>' . esc_html__( 'When you login with your API token after the reset, all your settings will be still there.', 'webchangedetector' ) . '</p>';
 			// Wizard functionality temporarily removed for phase 1.
 			?>
 

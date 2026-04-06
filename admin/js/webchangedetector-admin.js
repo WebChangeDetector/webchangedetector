@@ -57,7 +57,7 @@ function currentlyProcessing() {
                 $('#wcd-elapsed-time').text(formatTime(elapsed));
 
                 if (window.wcdProcessingDone) {
-                    $('#wcd-estimated-remaining').text('Done');
+                    $('#wcd-estimated-remaining').text(wcdL10n.done || 'Done');
                     clearInterval(timeInterval);
                     return;
                 }
@@ -67,7 +67,7 @@ function currentlyProcessing() {
                     var remaining = window.wcdEstimatedRemaining - timeSinceUpdate;
                     if (remaining <= 0) {
                         window.wcdFinishingSoon = true;
-                        $('#wcd-estimated-remaining').text('Finishing soon...');
+                        $('#wcd-estimated-remaining').text(wcdL10n.finishingSoon || 'Finishing soon...');
                     } else {
                         $('#wcd-estimated-remaining').text(formatTime(remaining));
                     }
@@ -101,7 +101,7 @@ function currentlyProcessing() {
 
                 // Phase-specific counting logic
                 if (phase === 'post') {
-                    $('#processing-title').text('Checks in progress');
+                    $('#processing-title').text(wcdL10n.checksInProgress || 'Checks in progress');
 
                     if (statusData.by_type && statusData.by_type.post) {
                         var postStatus = statusData.by_type.post;
@@ -115,7 +115,7 @@ function currentlyProcessing() {
                         processingCount = Math.max(0, totalPostScreenshots - doneCount - failedCount - openCount);
                     }
                 } else if (phase === 'pre') {
-                    $('#processing-title').text('Screenshots in progress');
+                    $('#processing-title').text(wcdL10n.screenshotsInProgress || 'Screenshots in progress');
 
                     if (statusData.by_type && statusData.by_type.pre) {
                         var preStatus = statusData.by_type.pre;
@@ -125,7 +125,7 @@ function currentlyProcessing() {
                         failedCount = preStatus.failed || 0;
                     }
                 } else {
-                    $('#processing-title').text('Screenshots in progress');
+                    $('#processing-title').text(wcdL10n.screenshotsInProgress || 'Screenshots in progress');
                 }
 
                 var openAndProcessing = openCount + processingCount;
@@ -258,9 +258,9 @@ function currentlyProcessing() {
 
                 // Processing complete check
                 if (openAndProcessing === 0 && processedItems > 0) {
-                    updateCurrentlyProcessing.html('Done');
+                    updateCurrentlyProcessing.html(wcdL10n.done || 'Done');
                     $('#currently-processing-loader .spinner').removeClass('is-active');
-                    $('#update-currently-processing-description').html('<strong>Finished processing</strong>');
+                    $('#update-currently-processing-description').html('<strong>' + (wcdL10n.finishedProcessing || 'Finished processing') + '</strong>');
 
                     // Re-enable cancel button
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
@@ -276,7 +276,7 @@ function currentlyProcessing() {
                     if (timeInterval) {
                         clearInterval(timeInterval);
                         window.wcdProcessingDone = true;
-                        $('#wcd-estimated-remaining').text('Done');
+                        $('#wcd-estimated-remaining').text(wcdL10n.done || 'Done');
                     } else {
                         $('.wcd-time-info').hide();
                     }
@@ -325,9 +325,8 @@ function currentlyProcessing() {
                 above_threshold: !showAll ? 1 : 0
             }, function(data) {
                 // Update count
-                var countText = data.total_count + ' detection';
-                if (data.total_count !== 1) countText += 's';
-                countText += showAll ? ' (showing all)' : ' (with changes only)';
+                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'detections') : (wcdL10n.detection || 'detection'));
+                countText += ' (' + (showAll ? (wcdL10n.showingAll || 'showing all') : (wcdL10n.withChangesOnly || 'with changes only')) + ')';
                 $('#detections-count').text(countText);
 
                 if (data.comparisons && data.comparisons.length > 0) {
@@ -729,7 +728,7 @@ function currentlyProcessing() {
 
         function confirmExit() {
             if (formModified === 1) {
-                return "Changes were not save. Do you wish to leave the page without saving?";
+                return wcdL10n.unsavedChanges || "Changes were not saved. Do you wish to leave the page without saving?";
             }
         }
 
@@ -739,13 +738,14 @@ function currentlyProcessing() {
 
         // Confirm deleting account
         $('#delete-account').submit(function () {
-            return confirm("Are you sure you want to reset your account? This cannot be undone.");
+            return confirm(wcdL10n.confirmResetAccount || "Are you sure you want to reset your account? This cannot be undone.");
         });
 
         // Confirm copy url settings
         $("#copy-url-settings").submit(function () {
             let type = $("#copy-url-settings").data("to_group_type");
-            return confirm("Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.");
+            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.";
+            return confirm(msg);
         });
 
         // Confirm taking pre screenshots
@@ -934,8 +934,8 @@ function currentlyProcessing() {
         var scPerUrlUntilRenew = $("#sc_available_until_renew").data("auto_sc_per_url_until_renewal");
 
         if (availableCredits <= 0) {
-            $("#next_sc_in").html("Not Tracking").css("color", "#A00000");
-            $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>");
+            $("#next_sc_in").html(wcdL10n.notTracking || "Not Tracking").css("color", "#A00000");
+            $("#next_sc_date").html("<span style='color: #a00000'>" + (wcdL10n.ranOutScreenshots || "You ran out of screenshots.") + "</span><br>");
         }
 
         // Calculate total auto sc until renewal
@@ -1300,7 +1300,7 @@ function currentlyProcessing() {
             const nonce = wcdAjaxData.nonce;
             
             // Show loading state.
-            $button.text('Exporting...').prop('disabled', true);
+            $button.text(wcdL10n.exporting || 'Exporting...').prop('disabled', true);
             
             // Prepare data for AJAX request.
             const ajaxData = {
@@ -1326,11 +1326,11 @@ function currentlyProcessing() {
                         // Create and trigger download.
                         downloadCSV(response.data.data.csv_content, response.data.data.filename);
                     } else {                        
-                        alert('Failed to export logs: ' + (response.data && response.data.message ? response.data.message : 'Invalid response structure'));
+                        alert((wcdL10n.exportFailed || 'Failed to export logs') + ': ' + (response.data && response.data.message ? response.data.message : ''));
                     }
                 },
                 error: function() {
-                    alert('Error occurred while exporting logs. Please try again.');
+                    alert(wcdL10n.exportError || 'Error occurred while exporting logs. Please try again.');
                 },
                 complete: function() {
                     // Restore button state.
@@ -2003,11 +2003,11 @@ jQuery(document).ready(function($) {
                             .prop('disabled', true)
                             .addClass('wcd-ai-feedback-btn-done');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to create rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedCreateRule || 'Failed to create rule.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false).text(wcdL10n.confirm || 'Confirm');
@@ -2076,11 +2076,11 @@ jQuery(document).ready(function($) {
                             .prop('disabled', true)
                             .addClass('ignored');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to create rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedCreateRule || 'Failed to create rule.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false).text(wcdL10n.confirm || 'Confirm');
@@ -2110,12 +2110,12 @@ jQuery(document).ready(function($) {
                 success: function (response) {
                     if (!response.success) {
                         $input.prop('checked', !newActive);
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to update rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedUpdateRule || 'Failed to update rule.'));
                     }
                 },
                 error: function () {
                     $input.prop('checked', !newActive);
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $input.prop('disabled', false);
@@ -2129,7 +2129,7 @@ jQuery(document).ready(function($) {
             var ruleId = $btn.data('rule-id');
             var $row = $btn.closest('.wcd-ai-rules-row');
 
-            if (!confirm('Are you sure you want to delete this rule? This cannot be undone.')) {
+            if (!confirm(wcdL10n.confirmDeleteRule || 'Are you sure you want to delete this rule? This cannot be undone.')) {
                 return;
             }
 
@@ -2160,12 +2160,12 @@ jQuery(document).ready(function($) {
                         });
                     } else {
                         $row.css('opacity', '1');
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to delete rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedDeleteRule || 'Failed to delete rule.'));
                     }
                 },
                 error: function () {
                     $row.css('opacity', '1');
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false);
@@ -2202,11 +2202,11 @@ jQuery(document).ready(function($) {
                         $toggle.find('.wcd-ai-rules-scope-option').removeClass('is-selected');
                         $btn.addClass('is-selected');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to update scope.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedUpdateScope || 'Failed to update scope.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $toggle.find('.wcd-ai-rules-scope-option').prop('disabled', false);

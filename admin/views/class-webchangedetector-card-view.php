@@ -40,21 +40,21 @@ class WebChangeDetector_Card_View {
 	public function render_account_status_card( $account_details ) {
 		?>
 		<div class="account-status-card">
-			<h3>Account Status</h3>
+			<h3><?php esc_html_e( 'Account Status', 'webchangedetector' ); ?></h3>
 			<div class="status-info">
-				<p><strong>Email:</strong> <?php echo esc_html( $account_details['email'] ?? 'N/A' ); ?></p>
-				<p><strong>Plan:</strong> <?php echo esc_html( $account_details['plan_name'] ?? 'N/A' ); ?></p>
-				<p><strong>Status:</strong> 
+				<p><strong><?php esc_html_e( 'Email:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $account_details['email'] ?? 'N/A' ); ?></p>
+				<p><strong><?php esc_html_e( 'Plan:', 'webchangedetector' ); ?></strong> <?php echo esc_html( $account_details['plan_name'] ?? 'N/A' ); ?></p>
+				<p><strong><?php esc_html_e( 'Status:', 'webchangedetector' ); ?></strong>
 					<span class="status-badge status-<?php echo esc_attr( $account_details['status'] ?? 'inactive' ); ?>">
 						<?php echo esc_html( ucfirst( $account_details['status'] ?? 'Inactive' ) ); ?>
 					</span>
 				</p>
-				<p><strong>Checks Used:</strong> 
-					<?php echo esc_html( $account_details['checks_done'] ?? 0 ); ?> / 
+				<p><strong><?php esc_html_e( 'Checks Used:', 'webchangedetector' ); ?></strong>
+					<?php echo esc_html( $account_details['checks_done'] ?? 0 ); ?> /
 					<?php echo esc_html( $account_details['checks_limit'] ?? 0 ); ?>
 				</p>
 				<?php if ( ! empty( $account_details['renewal_at'] ) ) : ?>
-					<p><strong>Renewal Date:</strong> 
+					<p><strong><?php esc_html_e( 'Renewal Date:', 'webchangedetector' ); ?></strong> 
 						<span class="local-time" data-date="<?php echo esc_attr( strtotime( $account_details['renewal_at'] ) ); ?>">
 							<?php echo esc_html( gmdate( 'd/m/Y', strtotime( $account_details['renewal_at'] ) ) ); ?>
 						</span>
@@ -151,23 +151,23 @@ class WebChangeDetector_Card_View {
 	public function render_stats_card( $stats ) {
 		?>
 		<div class="stats-card">
-			<h3>Statistics</h3>
+			<h3><?php esc_html_e( 'Statistics', 'webchangedetector' ); ?></h3>
 			<div class="stats-grid">
 				<div class="stat-item">
 					<span class="stat-number"><?php echo esc_html( $stats['total_screenshots'] ?? 0 ); ?></span>
-					<span class="stat-label">Total Screenshots</span>
+					<span class="stat-label"><?php esc_html_e( 'Total Screenshots', 'webchangedetector' ); ?></span>
 				</div>
 				<div class="stat-item">
 					<span class="stat-number"><?php echo esc_html( $stats['total_comparisons'] ?? 0 ); ?></span>
-					<span class="stat-label">Total Comparisons</span>
+					<span class="stat-label"><?php esc_html_e( 'Total Comparisons', 'webchangedetector' ); ?></span>
 				</div>
 				<div class="stat-item">
 					<span class="stat-number"><?php echo esc_html( $stats['urls_monitored'] ?? 0 ); ?></span>
-					<span class="stat-label">URLs Monitored</span>
+					<span class="stat-label"><?php esc_html_e( 'URLs Monitored', 'webchangedetector' ); ?></span>
 				</div>
 				<div class="stat-item">
 					<span class="stat-number"><?php echo esc_html( $stats['changes_detected'] ?? 0 ); ?></span>
-					<span class="stat-label">Changes Detected</span>
+					<span class="stat-label"><?php esc_html_e( 'Changes Detected', 'webchangedetector' ); ?></span>
 				</div>
 			</div>
 		</div>
@@ -182,16 +182,16 @@ class WebChangeDetector_Card_View {
 	 */
 	public function render_update_step_card( $current_step, $step_data ) {
 		$steps = array(
-			WCD_OPTION_UPDATE_STEP_SETTINGS         => 'Configure Settings',
-			WCD_OPTION_UPDATE_STEP_PRE              => 'Take Pre-Update Screenshots',
-			WCD_OPTION_UPDATE_STEP_MAKE_UPDATES     => 'Make Your Updates',
-			WCD_OPTION_UPDATE_STEP_POST             => 'Take Post-Update Screenshots',
-			WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION => 'View Change Detections',
+			WCD_OPTION_UPDATE_STEP_SETTINGS         => __( 'Configure Settings', 'webchangedetector' ),
+			WCD_OPTION_UPDATE_STEP_PRE              => __( 'Take Pre-Update Screenshots', 'webchangedetector' ),
+			WCD_OPTION_UPDATE_STEP_MAKE_UPDATES     => __( 'Make Your Updates', 'webchangedetector' ),
+			WCD_OPTION_UPDATE_STEP_POST             => __( 'Take Post-Update Screenshots', 'webchangedetector' ),
+			WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION => __( 'View Change Detections', 'webchangedetector' ),
 		);
 
 		?>
 		<div class="update-step-card">
-			<h3>Update Process</h3>
+			<h3><?php esc_html_e( 'Update Process', 'webchangedetector' ); ?></h3>
 			<div class="step-progress">
 				<?php foreach ( $steps as $step_key => $step_label ) : ?>
 					<?php

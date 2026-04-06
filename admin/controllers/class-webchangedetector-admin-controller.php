@@ -95,7 +95,7 @@ class WebChangeDetector_Admin_Controller {
 		// Start view output.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
-		echo '<h1>WebChange Detector</h1>';
+		echo '<h1>' . esc_html__( 'WebChange Detector', 'webchangedetector' ) . '</h1>';
 
 		// Handle POST actions.
 		$action_result = $this->handle_post_actions();
@@ -352,7 +352,7 @@ class WebChangeDetector_Admin_Controller {
 	 */
 	private function handle_save_api_token( $postdata ) {
 		if ( empty( $postdata['api_token'] ) ) {
-			echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'No API Token given.', 'webchangedetector' ) . '</p></div>';
 			$this->render_no_account_page();
 			return false;
 		}
@@ -410,11 +410,11 @@ class WebChangeDetector_Admin_Controller {
 				$this->admin->error_handler->debug( "Can't get website_details." );
 				?>
 				<div class="notice notice-error">
-					<p><strong>WebChange Detector:</strong> Sorry, we couldn't retrieve your account settings. Please check your API token or contact support if this issue persists.</p>
+					<p><strong>WebChange Detector:</strong> <?php esc_html_e( 'Sorry, we couldn\'t retrieve your account settings. Please check your API token or contact support if this issue persists.', 'webchangedetector' ); ?></p>
 					<form method="post" style="margin-top: 10px;">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
-						<input type="submit" value="Reset API Token" class="button button-secondary">
+						<input type="submit" value="<?php echo esc_attr__( 'Reset API Token', 'webchangedetector' ); ?>" class="button button-secondary">
 					</form>
 				</div>
 				<?php
@@ -532,11 +532,11 @@ class WebChangeDetector_Admin_Controller {
 		if ( ! $this->admin->manual_group_uuid && ! $this->admin->monitoring_group_uuid ) {
 			?>
 			<div class="notice notice-error">
-				<p>Sorry, we couldn't get your account settings. Please contact us.
+				<p><?php esc_html_e( 'Sorry, we couldn\'t get your account settings. Please contact us.', 'webchangedetector' ); ?>
 				<form method="post">
 					<input type="hidden" name="wcd_action" value="reset_api_token">
 					<?php wp_nonce_field( 'reset_api_token' ); ?>
-					<input type="submit" value="Reset API token" class="button button-delete">
+					<input type="submit" value="<?php echo esc_attr__( 'Reset API token', 'webchangedetector' ); ?>" class="button button-delete">
 				</form>
 				</p>
 			</div>
@@ -631,10 +631,14 @@ class WebChangeDetector_Admin_Controller {
 			case 'webchangedetector-no-billing-account':
 				?>
 				<div style="text-align: center;">
-					<h2>Ooops!</h2>
-					<p>We couldn't get your billing account. <br>
-						Please get in touch with us at <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
-					</p>
+					<h2><?php esc_html_e( 'Ooops!', 'webchangedetector' ); ?></h2>
+					<p><?php
+						printf(
+							/* translators: %s: Support email link */
+							esc_html__( 'We couldn\'t get your billing account. Please get in touch with us at %s.', 'webchangedetector' ),
+							'<a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>'
+						);
+					?></p>
 				</div>
 				<?php
 				break;

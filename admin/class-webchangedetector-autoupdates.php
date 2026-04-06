@@ -1319,7 +1319,7 @@ class WebChangeDetector_Autoupdates {
 				$ai_cell   = '<td></td>';
 
 				if ( ! $comparison['difference_percent'] ) {
-					$ai_cell = '<td style="color: #888;">No difference</td>';
+					$ai_cell = '<td style="color: #888;">' . esc_html__( 'No difference', 'webchangedetector' ) . '</td>';
 				} elseif ( 'verified' === $ai_status && ! empty( $ai_result['summary'] ) ) {
 					$console_cat = $ai_result['console_analysis']['category'] ?? null;
 					$has_alert   = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
@@ -1355,7 +1355,7 @@ class WebChangeDetector_Autoupdates {
 						<td>' . esc_html( $comparison['url'] ) . '</td>
 						<td>' . esc_html( $comparison['device'] ) . '</td>
 						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
-						<td><a href="' . esc_url( $comparison['public_link'] ) . '">See changes</a></td>
+						<td><a href="' . esc_url( $comparison['public_link'] ) . '">' . esc_html__( 'See changes', 'webchangedetector' ) . '</a></td>
 						' . $ai_cell . '
 					</tr>';
 				if ( ! $comparison['difference_percent'] ) {
@@ -1367,37 +1367,35 @@ class WebChangeDetector_Autoupdates {
 			$mail_body .= '<div style="width: 300px; margin: 20px auto; text-align: center; padding: 30px; background: #DCE3ED;">';
 			if ( empty( $with_difference_rows ) ) {
 				$mail_body .= '<div style="padding: 10px;background: green; color: #fff; border-radius: 20px; font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; transform: scaleX(-1) rotate(-35deg);">L</div>
-									<div style="font-size: 18px; padding-top: 20px;">Checks Passed</div>';
+									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'Checks Passed', 'webchangedetector' ) . '</div>';
 			} else {
 				$mail_body .= '<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
-									<div style="font-size: 18px; padding-top: 20px;">We found changes<br>Please check the change detections.</div>';
+									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'We found changes', 'webchangedetector' ) . '<br>' . esc_html__( 'Please check the change detections.', 'webchangedetector' ) . '</div>';
 			}
 			$mail_body .= '</div>';
 
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks with differences', 'webchangedetector' ) . '</strong></div>';
+			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
 			if ( ! empty( $with_difference_rows ) ) {
 				$mail_body .= $with_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
 			}
 			$mail_body .= '</table>';
 
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks without differences', 'webchangedetector' ) . '</strong></div>';
+			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
 			if ( ! empty( $no_difference_rows ) ) {
 				$mail_body .= $no_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
 			}
 			$mail_body .= '</table>';
 		} else {
-			$mail_body .= 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.';
+			$mail_body .= esc_html__( 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.', 'webchangedetector' );
 		}
 
-		$mail_body .= '<div style="margin: 20px 0">You can find all change detections and settings for the checks 
-								in your wp-admin dashboard of your website.<br><br>
-								Your WebChange Detector team</div>';
+		$mail_body .= '<div style="margin: 20px 0">' . esc_html__( 'You can find all change detections and settings for the checks in your wp-admin dashboard of your website.', 'webchangedetector' ) . '<br><br>' . esc_html__( 'Your WebChange Detector team', 'webchangedetector' ) . '</div>';
 
 		$auto_update_settings = self::get_auto_update_settings();
 		$to                   = '';

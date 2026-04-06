@@ -10,8 +10,8 @@
 	<div class="wcd-settings-card wcd-cancel-card">
 		<div class="wcd-form-row">
 			<div class="wcd-form-label-wrapper">
-				<label class="wcd-form-label"><span class="dashicons dashicons-no-alt"></span> Cancel Manual Checks</label>
-				<div class="wcd-description">Stop the current manual checks workflow and return to settings.</div>
+				<label class="wcd-form-label"><span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel Manual Checks', 'webchangedetector' ); ?></label>
+				<div class="wcd-description"><?php esc_html_e( 'Stop the current manual checks workflow and return to settings.', 'webchangedetector' ); ?></div>
 			</div>
 			<div class="wcd-form-control wcd-update-check-button">
 				<form id="frm-cancel-update-detection" method="post">
@@ -19,7 +19,7 @@
 					<?php wp_nonce_field( 'update_detection_step' ); ?>
 					<input type="hidden" name="step" value="settings">
 					<button class="button wcd-cancel-btn" type="submit">
-						<span class="dashicons dashicons-no-alt"></span> Cancel Manual Checks
+						<span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel Manual Checks', 'webchangedetector' ); ?>
 					</button>
 				</form>
 			</div>
