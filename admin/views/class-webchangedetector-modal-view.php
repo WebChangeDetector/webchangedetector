@@ -81,6 +81,7 @@ class WebChangeDetector_Modal_View {
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="ok">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<input type="submit" value="<?php echo esc_attr__( 'Mark as OK', 'webchangedetector' ); ?>" class="button button-secondary">
 							</form>
 							<form method="post" style="display: inline;">
@@ -88,6 +89,7 @@ class WebChangeDetector_Modal_View {
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="to_fix">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<input type="submit" value="<?php echo esc_attr__( 'Mark as To Fix', 'webchangedetector' ); ?>" class="button button-primary">
 							</form>
 							<form method="post" style="display: inline;">
@@ -95,6 +97,7 @@ class WebChangeDetector_Modal_View {
 								<input type="hidden" name="comparison_id" value="<?php echo esc_attr( $comparison['id'] ); ?>">
 								<input type="hidden" name="status" value="false_positive">
 								<?php wp_nonce_field( 'change_comparison_status' ); ?>
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<input type="submit" value="<?php echo esc_attr__( 'Mark as False Positive', 'webchangedetector' ); ?>" class="button">
 							</form>
 						</div>
@@ -130,6 +133,7 @@ class WebChangeDetector_Modal_View {
 					<form method="post" style="display: inline;">
 						<input type="hidden" name="wcd_action" value="<?php echo esc_attr( $action ); ?>">
 						<?php wp_nonce_field( $action ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<?php foreach ( $hidden_fields as $field => $value ) : ?>
 							<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( $value ); ?>">
 						<?php endforeach; ?>
@@ -156,6 +160,7 @@ class WebChangeDetector_Modal_View {
 					<form method="post" id="api-token-form">
 						<input type="hidden" name="wcd_action" value="save_api_token">
 						<?php wp_nonce_field( 'save_api_token' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<table class="form-table">
 							<tr>
 								<th scope="row">
@@ -255,6 +260,7 @@ class WebChangeDetector_Modal_View {
 					<form method="post" id="account-creation-form">
 						<input type="hidden" name="wcd_action" value="create_trial_account">
 						<?php wp_nonce_field( 'create_trial_account' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<table class="form-table">
 							<tr>
 								<th scope="row">

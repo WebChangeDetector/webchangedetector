@@ -341,13 +341,13 @@ class WebChangeDetector_Database_Logger {
 	public function cleanup_old_logs( $days = 30 ) {
 		$cutoff_date = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
 
-		$deleted = $this->wpdb->delete(
-			$this->table_name,
-			array(
-				'timestamp' => $cutoff_date,
-			),
-			array( '%s' )
+		// Delete log rows older than the cutoff. Table name comes from a trusted constant; user input is parameter-bound via prepare().
+		$delete_query = $this->wpdb->prepare(
+			"DELETE FROM `{$this->table_name}` WHERE timestamp < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name from constant.
+			$cutoff_date
 		);
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $delete_query built via $wpdb->prepare() above.
+		$deleted = (int) $this->wpdb->query( $delete_query );
 
 		// Also cleanup if we exceed max entries.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is escaped, no user input.
@@ -364,7 +364,7 @@ class WebChangeDetector_Database_Logger {
 			$deleted += $excess;
 		}
 
-		return $deleted ? $deleted : 0;
+		return $deleted;
 	}
 
 	/**

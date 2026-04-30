@@ -95,12 +95,14 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 		<form method="post" style="display: inline; margin-right: 10px;">
 			<input type="hidden" name="wcd_action" value="update_detection_step">
 			<?php wp_nonce_field( 'update_detection_step' ); ?>
+			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 			<input type="hidden" name="step" value="settings">
 			<input class="button" type="submit" value="<?php echo esc_attr__( '< Back to settings', 'webchangedetector' ); ?>" disabled>
 		</form>
 		<form method="post" style="display: inline;">
 			<input type="hidden" name="wcd_action" value="update_detection_step">
 			<?php wp_nonce_field( 'update_detection_step' ); ?>
+			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 			<input type="hidden" name="step" value="post-update">
 			<input class="button" type="submit" value="<?php echo esc_attr__( 'Re-run checks', 'webchangedetector' ); ?>" disabled>
 		</form>

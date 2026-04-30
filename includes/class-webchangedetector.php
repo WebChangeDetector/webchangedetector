@@ -113,6 +113,11 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-webchangedetector-i18n.php';
 
 		/**
+		 * The multisite helper class for network-aware option access and site management.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-multisite.php';
+
+		/**
 		 * The utility class for admin functions following WordPress standards.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-utils.php';
@@ -156,6 +161,7 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-wordpress-ajax-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-account-ajax-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-ai-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-allowances-ajax-handler.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -263,6 +269,14 @@ class WebChangeDetector {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_wordpress, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_wordpress, 'wcd_plugin_setup_menu' );
 
+		// Register network admin menu if multisite is active.
+		if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+			$this->loader->add_action( 'network_admin_menu', $plugin_wordpress, 'wcd_network_plugin_setup_menu' );
+		}
+
+		// Self-heal token storage (e.g. after manual network-activation toggle via WP-CLI).
+		$this->loader->add_action( 'admin_init', 'WebChangeDetector\\WebChangeDetector_Multisite', 'ensure_token_storage_consistency' );
+
 		// Only register API-dependent hooks if we have an API token.
 		if ( $this->has_api_token() ) {
 			// Post sync hooks.
@@ -291,7 +305,7 @@ class WebChangeDetector {
 		if ( ! defined( 'WCD_WP_OPTION_KEY_API_TOKEN' ) ) {
 			define( 'WCD_WP_OPTION_KEY_API_TOKEN', 'webchangedetector_api_token' );
 		}
-		return ! empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
+		return ! empty( WebChangeDetector_Multisite::get_api_token() );
 	}
 
 	/**

@@ -83,10 +83,10 @@ class WebChangeDetector_Account_Action_Handler {
 			// API can return either an array with data or error strings like 'unauthorized', 'activate account', etc.
 			if ( is_string( $result ) ) {
 				// Store account email.
-				update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, $email );
+				WebChangeDetector_Multisite::set_shared_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, $email );
 
 				// Save the API token.
-				update_option( WCD_WP_OPTION_KEY_API_TOKEN, $result );
+				WebChangeDetector_Multisite::set_api_token( $result );
 
 				// Set flag that initial setup is needed.
 				update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );

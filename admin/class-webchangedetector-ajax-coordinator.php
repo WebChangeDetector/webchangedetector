@@ -59,7 +59,7 @@ class WebChangeDetector_Ajax_Coordinator {
 	 */
 	private function init_ajax_handlers() {
 		// Check if we have an API token.
-		$has_api_token = ! empty( get_option( 'webchangedetector_api_token' ) );
+		$has_api_token = ! empty( WebChangeDetector_Multisite::get_api_token() );
 
 		// Initialize required dependencies.
 		$account_handler     = new WebChangeDetector_Admin_Account();
@@ -96,6 +96,10 @@ class WebChangeDetector_Ajax_Coordinator {
 			$ai_action_handler = new WebChangeDetector_AI_Action_Handler();
 			$ai_ajax           = new WebChangeDetector_AI_Ajax_Handler( $this->admin, $ai_action_handler );
 			$ai_ajax->register_hooks();
+
+			// Initialize and register Allowances AJAX handler (multisite super admin).
+			$allowances_ajax = new WebChangeDetector_Allowances_Ajax_Handler( $this->admin );
+			$allowances_ajax->register_hooks();
 		}
 
 		// Settings AJAX handler handles both API and non-API operations.

@@ -69,6 +69,109 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 		add_action( 'wp_ajax_sync_urls', array( $this, 'ajax_sync_urls' ) );
 		add_action( 'wp_ajax_wcd_get_admin_bar_status', array( $this, 'ajax_get_wcd_admin_bar_status' ) );
 		add_action( 'wp_ajax_wcd_sync_posts', array( $this, 'ajax_sync_posts' ) );
+		add_action( 'wp_ajax_wcd_register_multisite', array( $this, 'ajax_register_multisite' ) );
+	}
+
+	/**
+	 * Handle multisite site registration AJAX request.
+	 *
+	 * Registers a sub-site with the WCD API by creating a website and groups.
+	 *
+	 * @since 4.3.0
+	 */
+	public function ajax_register_multisite() {
+		// Use explicit nonce + capability checks instead of security_check()
+		// to avoid the automatic maybe_switch_to_blog() call, which would
+		// create a duplicate switch_to_blog() and corrupt the WP switch stack.
+		if ( ! $this->verify_nonce( 'ajax-nonce' ) ) {
+			$this->send_error_response(
+				__( 'Security check failed. Please refresh the page and try again.', 'webchangedetector' ),
+				'Nonce verification failed',
+				403
+			);
+			return;
+		}
+
+		if ( ! $this->check_capability( 'manage_network_options' ) ) {
+			$this->send_error_response(
+				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
+				'Capability check failed',
+				403
+			);
+			return;
+		}
+
+		if ( ! WebChangeDetector_Multisite::is_multisite_active() ) {
+			$this->send_error_response( __( 'This action is only available on multisite installations.', 'webchangedetector' ) );
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified above.
+		$blog_id = isset( $_POST['wcd_blog_id'] ) ? absint( $_POST['wcd_blog_id'] ) : 0;
+		if ( ! $blog_id ) {
+			$this->send_error_response( __( 'Invalid site ID.', 'webchangedetector' ) );
+			return;
+		}
+
+		// Validate that the target blog exists.
+		$blog_details = get_blog_details( $blog_id );
+		if ( ! $blog_details ) {
+			$this->send_error_response( __( 'The specified site does not exist.', 'webchangedetector' ) );
+			return;
+		}
+
+		// Single, clean switch to the target blog.
+		switch_to_blog( $blog_id );
+
+		try {
+			// Check if already registered.
+			$existing_website_id = get_option( 'webchangedetector_website_id', '' );
+			if ( ! empty( $existing_website_id ) ) {
+				restore_current_blog();
+				$this->send_success_response(
+					array(
+						'message'    => __( 'Site is already registered.', 'webchangedetector' ),
+						'manage_url' => WebChangeDetector_Multisite::get_admin_url( 'webchangedetector', $blog_id ),
+					)
+				);
+				return;
+			}
+
+			// Create website and groups via the existing method.
+			$result = $this->admin->create_website_and_groups();
+
+			if ( is_array( $result ) && ! isset( $result['error'] ) ) {
+				// Sync posts for the new site.
+				$this->wordpress_handler->sync_posts( true );
+
+				// Clear multisite cache so subsequent queries see the new site.
+				WebChangeDetector_Multisite::clear_cache();
+
+				restore_current_blog();
+				$this->send_success_response(
+					array(
+						'message'    => __( 'Site registered successfully.', 'webchangedetector' ),
+						'manage_url' => WebChangeDetector_Multisite::get_admin_url( 'webchangedetector', $blog_id ),
+					)
+				);
+			} else {
+				$error_message = is_array( $result ) && ! empty( $result['error'] )
+					? $result['error']
+					: __( 'Unknown error', 'webchangedetector' );
+
+				restore_current_blog();
+				$this->send_error_response(
+					/* translators: %s: Error details from the API */
+					sprintf( __( 'Failed to register site: %s', 'webchangedetector' ), $error_message )
+				);
+			}
+		} catch ( \Throwable $e ) {
+			restore_current_blog();
+			$this->send_error_response(
+				__( 'An error occurred while registering the site. Please try again.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
 	}
 
 	/**

@@ -20,10 +20,11 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 		<h2><?php esc_html_e( 'Monitoring Settings', 'webchangedetector' ); ?></h2>
 		<p><?php esc_html_e( 'Configure automatic monitoring settings for your selected URLs and get notified about changes.', 'webchangedetector' ); ?></p>
 
-		<form action="admin.php?page=webchangedetector-auto-settings" method="post">
+		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-auto-settings' ) ); ?>" method="post">
 			<input type="hidden" name="wcd_action" value="save_group_settings">
 			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
 			<?php wp_nonce_field( 'save_group_settings' ); ?>
+			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 			<input type="hidden" name="monitoring" value="1">
 			<input type="hidden" name="group_name" value="<?php echo esc_html( $group_and_urls['name'] ?? '' ); ?>">
 

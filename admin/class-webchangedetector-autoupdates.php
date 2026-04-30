@@ -48,7 +48,7 @@ class WebChangeDetector_Autoupdates {
 		add_action( 'init', array( $this, 'handle_webhook_trigger' ), 5 );
 
 		// Only register API-dependent hooks if we have an API token.
-		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		$api_token = WebChangeDetector_Multisite::get_api_token();
 		if ( ! empty( $api_token ) ) {
 			// Register the complete hook in constructor to ensure it's always registered.
 			add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
@@ -467,16 +467,13 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		// Get the next scheduled wp_version_check.
-		$next_wp_check = wp_next_scheduled( 'wp_version_check' );
+		// Get both cron timestamps. Another plugin or host may reschedule wp_version_check
+		// to a time outside our window, so we also check our backup cron.
+		$wp_check_time  = wp_next_scheduled( 'wp_version_check' );
+		$wcd_check_time = wp_next_scheduled( 'wcd_wp_version_check' );
 
-		// Check for our fallback cron.
-		if ( ! $next_wp_check ) {
-			$next_wp_check = wp_next_scheduled( 'wcd_wp_version_check' );
-		}
-
-		// Skip if no wp_version_check is scheduled.
-		if ( ! $next_wp_check ) {
+		// Skip if neither cron is scheduled.
+		if ( ! $wp_check_time && ! $wcd_check_time ) {
 			return false;
 		}
 
@@ -500,8 +497,37 @@ class WebChangeDetector_Autoupdates {
 		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 		$to_time_utc   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 
-		// Starting from the next wp_version_check time, find the next valid auto-update time.
-		$check_time        = $next_wp_check;
+		// Check both crons and return the earliest match.
+		$candidates = array();
+
+		if ( $wp_check_time ) {
+			$match = self::find_next_matching_cron_time( $wp_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			if ( $match ) {
+				$candidates[] = $match;
+			}
+		}
+
+		if ( $wcd_check_time ) {
+			$match = self::find_next_matching_cron_time( $wcd_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			if ( $match ) {
+				$candidates[] = $match;
+			}
+		}
+
+		return $candidates ? min( $candidates ) : false;
+	}
+
+	/**
+	 * Find the next cron execution time that falls within the enabled weekdays and time window.
+	 *
+	 * @param int    $next_cron_time   Unix timestamp of the next scheduled cron event.
+	 * @param array  $enabled_weekdays Array of enabled weekday names (e.g. 'monday', 'tuesday').
+	 * @param string $from_time_utc    Start of time window in UTC (H:i format).
+	 * @param string $to_time_utc      End of time window in UTC (H:i format).
+	 * @return int|false Unix timestamp of next matching time, or false if none found.
+	 */
+	private static function find_next_matching_cron_time( $next_cron_time, $enabled_weekdays, $from_time_utc, $to_time_utc ) {
+		$check_time        = $next_cron_time;
 		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
 
 		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
@@ -526,8 +552,6 @@ class WebChangeDetector_Autoupdates {
 				}
 
 				if ( $is_in_window ) {
-					// This is a valid auto-update time!
-
 					return $check_time;
 				}
 			}
@@ -542,7 +566,7 @@ class WebChangeDetector_Autoupdates {
 			$next_found = false;
 			foreach ( $crons as $timestamp => $cron ) {
 				if ( $timestamp > $check_time - HOUR_IN_SECONDS && $timestamp < $check_time + HOUR_IN_SECONDS ) {
-					if ( isset( $cron['wp_version_check'] ) ) {
+					if ( isset( $cron['wp_version_check'] ) || isset( $cron['wcd_wp_version_check'] ) ) {
 						$check_time = $timestamp;
 						$next_found = true;
 						break;
@@ -552,9 +576,8 @@ class WebChangeDetector_Autoupdates {
 
 			// If we couldn't find a scheduled check around this time, estimate it.
 			if ( ! $next_found ) {
-				// WordPress usually schedules at the same time each day.
 				// Use the original time of day.
-				$original_hour = gmdate( 'H:i:s', $next_wp_check );
+				$original_hour = gmdate( 'H:i:s', $next_cron_time );
 				$next_date     = gmdate( 'Y-m-d', $check_time );
 				$check_time    = strtotime( $next_date . ' ' . $original_hour . ' GMT' );
 			}
@@ -1468,7 +1491,7 @@ class WebChangeDetector_Autoupdates {
 			);
 
 			// Check configuration while we have the data.
-			$api_token                                = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+			$api_token                                = WebChangeDetector_Multisite::get_api_token();
 			$groups                                   = get_option( WCD_WEBSITE_GROUPS );
 			$health_status['checks']['configuration'] = array(
 				'status'  => ! empty( $api_token ) && ! empty( $groups ),
@@ -1742,7 +1765,7 @@ class WebChangeDetector_Autoupdates {
 					'debug'
 				);
 
-				// TODO: This should be checked somewhere else.
+				// @todo Move this completion check into the cron handler so the webhook stays lean.
 				$this->check_update_completion();
 			}
 

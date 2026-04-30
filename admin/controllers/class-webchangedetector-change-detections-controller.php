@@ -202,29 +202,65 @@ class WebChangeDetector_Change_Detections_Controller {
 		$api_filters = $this->build_api_filters( $filters );
 
 		// Fetch groups limited to plugin's own groups.
-		$plugin_group_ids = get_option( WCD_WEBSITE_GROUPS );
-		$groups_data      = array();
-		if ( is_array( $plugin_group_ids ) ) {
-			foreach ( $plugin_group_ids as $group_key => $group_uuid ) {
-				if ( ! empty( $group_uuid ) ) {
-					$group_label   = WCD_AUTO_DETECTION_GROUP === $group_key
-						? __( 'Monitoring', 'webchangedetector' )
-						: __( 'Manual Checks', 'webchangedetector' );
+		$groups_data    = array();
+		$all_group_uuids = array();
+
+		if ( $this->admin->is_all_sites_mode ) {
+			// All-sites mode: collect groups from all registered sites.
+			$all_groups = WebChangeDetector_Multisite::get_all_group_ids();
+			$all_group_uuids = $all_groups['all'];
+
+			foreach ( $all_groups['by_site'] as $site_data ) {
+				if ( ! empty( $site_data['monitoring'] ) ) {
 					$groups_data[] = array(
-						'id'   => $group_uuid,
-						'name' => $group_label,
+						'id'   => $site_data['monitoring'],
+						'name' => $site_data['url'] . ': ' . __( 'Monitoring', 'webchangedetector' ),
+					);
+				}
+				if ( ! empty( $site_data['manual'] ) ) {
+					$groups_data[] = array(
+						'id'   => $site_data['manual'],
+						'name' => $site_data['url'] . ': ' . __( 'Manual Checks', 'webchangedetector' ),
 					);
 				}
 			}
+		} else {
+			// Single-site mode: use current site's groups.
+			$plugin_group_ids = get_option( WCD_WEBSITE_GROUPS );
+			if ( is_array( $plugin_group_ids ) ) {
+				foreach ( $plugin_group_ids as $group_key => $group_uuid ) {
+					if ( ! empty( $group_uuid ) ) {
+						$group_label   = WCD_AUTO_DETECTION_GROUP === $group_key
+							? __( 'Monitoring', 'webchangedetector' )
+							: __( 'Manual Checks', 'webchangedetector' );
+						$groups_data[] = array(
+							'id'   => $group_uuid,
+							'name' => $group_label,
+						);
+						$all_group_uuids[] = $group_uuid;
+					}
+				}
+			}
 		}
+
+		// Ensure API filters include group scope (prevents fallback to main site only).
+		if ( ! empty( $all_group_uuids ) ) {
+			if ( empty( $api_filters['groups'] ) ) {
+				$api_filters['groups'] = implode( ',', $all_group_uuids );
+			}
+			if ( empty( $api_filters['group_ids'] ) ) {
+				$api_filters['group_ids'] = implode( ',', $all_group_uuids );
+			}
+		}
+
 		$selected_groups = ! empty( $filters['group_id'] ) ? explode( ',', $filters['group_id'] ) : array();
 
 		// Fetch URLs scoped to plugin's groups.
 		$urls_data     = array();
 		$selected_urls = ! empty( $filters['urls'] ) ? explode( ',', $filters['urls'] ) : array();
-		if ( is_array( $plugin_group_ids ) && ! empty( $plugin_group_ids ) ) {
+		if ( ! empty( $all_group_uuids ) ) {
 			$url_filters   = array(
-				'groups'   => implode( ',', array_values( $plugin_group_ids ) ),
+				'groups'   => implode( ',', $all_group_uuids ),
 				'per_page' => 100,
 			);
 			$urls_response = \WebChangeDetector\WebChangeDetector_API_V2::get_urls_v2( $url_filters );
@@ -248,6 +284,11 @@ class WebChangeDetector_Change_Detections_Controller {
 			'source'          => $filters['source'],
 			'difference_only' => $filters['difference_only'],
 		);
+
+		// Preserve blog context in filter/pagination links.
+		if ( $this->admin->is_all_sites_mode ) {
+			$filter_query_args['wcd_blog_id'] = 'all';
+		}
 		if ( ! empty( $filters['status'] ) ) {
 			$filter_query_args['status'] = $filters['status'];
 		}
@@ -266,6 +307,9 @@ class WebChangeDetector_Change_Detections_Controller {
 				<form id="wcd-filter-form" method="get">
 					<input type="hidden" name="page" value="webchangedetector-change-detections">
 					<input type="hidden" name="view_mode" value="<?php echo esc_attr( $filters['view_mode'] ); ?>">
+					<?php if ( $this->admin->is_all_sites_mode ) : ?>
+						<input type="hidden" name="wcd_blog_id" value="all">
+					<?php endif; ?>
 
 					<div class="wcd-filters-layout">
 
@@ -378,7 +422,13 @@ class WebChangeDetector_Change_Detections_Controller {
 							<!-- Row 3: Actions -->
 							<div class="wcd-filter-actions">
 								<button type="submit" class="button button-primary"><?php esc_html_e( 'Filter', 'webchangedetector' ); ?></button>
-								<a href="?page=webchangedetector-change-detections" class="button"><?php esc_html_e( 'Reset', 'webchangedetector' ); ?></a>
+								<?php
+								$reset_args = array( 'page' => 'webchangedetector-change-detections' );
+								if ( $this->admin->is_all_sites_mode ) {
+									$reset_args['wcd_blog_id'] = 'all';
+								}
+								?>
+								<a href="<?php echo esc_url( add_query_arg( $reset_args, $this->get_base_admin_url() ) ); ?>" class="button"><?php esc_html_e( 'Reset', 'webchangedetector' ); ?></a>
 							</div>
 
 						</div>
@@ -396,8 +446,9 @@ class WebChangeDetector_Change_Detections_Controller {
 			}
 
 			// View mode toggle.
-			$batch_url = add_query_arg( array_merge( $filter_query_args, array( 'view_mode' => 'batch' ) ), admin_url( 'admin.php' ) );
-			$flat_url  = add_query_arg( array_merge( $filter_query_args, array( 'view_mode' => 'flat' ) ), admin_url( 'admin.php' ) );
+			$base_url  = $this->get_base_admin_url();
+			$batch_url = add_query_arg( array_merge( $filter_query_args, array( 'view_mode' => 'batch' ) ), $base_url );
+			$flat_url  = add_query_arg( array_merge( $filter_query_args, array( 'view_mode' => 'flat' ) ), $base_url );
 			?>
 			<div class="wcd-view-mode-toggle">
 				<a href="<?php echo esc_url( $batch_url ); ?>" class="wcd-view-mode-btn <?php echo 'batch' === $filters['view_mode'] ? 'active' : ''; ?>">
@@ -456,7 +507,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		);
 
 		// Copy relevant filters.
-		foreach ( array( 'source', 'status', 'above_threshold', 'groups' ) as $key ) {
+		foreach ( array( 'source', 'status', 'above_threshold', 'groups', 'urls' ) as $key ) {
 			if ( isset( $api_filters[ $key ] ) ) {
 				$flat_filters[ $key ] = $api_filters[ $key ];
 			}
@@ -520,6 +571,7 @@ class WebChangeDetector_Change_Detections_Controller {
 	 */
 	private function render_pagination( $meta, $filter_query_args, $view_mode ) {
 		$filter_query_args['view_mode'] = $view_mode;
+		$base_url                       = $this->get_base_admin_url();
 		?>
 		<div class="tablenav">
 			<div class="tablenav-pages">
@@ -529,7 +581,7 @@ class WebChangeDetector_Change_Detections_Controller {
 					foreach ( $meta['links'] as $link ) {
 						$page_num = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_params_of_url( $link['url'] )['page'] ?? '';
 						$class    = ! $link['url'] || $link['active'] ? 'disabled' : '';
-						$href     = add_query_arg( array_merge( $filter_query_args, array( 'paged' => $page_num ) ), admin_url( 'admin.php' ) );
+						$href     = add_query_arg( array_merge( $filter_query_args, array( 'paged' => $page_num ) ), $base_url );
 						?>
 						<a class="tablenav-pages-navspan button <?php echo esc_attr( $class ); ?>"
 							href="<?php echo esc_url( $href ); ?>">
@@ -542,5 +594,20 @@ class WebChangeDetector_Change_Detections_Controller {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Get the correct base admin URL for the current context.
+	 *
+	 * Returns network_admin_url in network admin, admin_url otherwise.
+	 *
+	 * @since 4.3.0
+	 * @return string
+	 */
+	private function get_base_admin_url() {
+		if ( is_network_admin() ) {
+			return network_admin_url( 'admin.php' );
+		}
+		return admin_url( 'admin.php' );
 	}
 }

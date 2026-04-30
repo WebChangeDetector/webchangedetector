@@ -248,12 +248,13 @@ class WebChangeDetector_Card_View {
 							<form method="post" style="display: inline-block;">
 								<input type="hidden" name="wcd_action" value="<?php echo esc_attr( $action['action'] ); ?>">
 								<?php wp_nonce_field( $action['action'] ); ?>
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<?php if ( ! empty( $action['hidden_fields'] ) ) : ?>
 									<?php foreach ( $action['hidden_fields'] as $field => $value ) : ?>
 										<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( $value ); ?>">
 									<?php endforeach; ?>
 								<?php endif; ?>
-								<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>" 
+								<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>"
 										class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
 							</form>
 						<?php endif; ?>
@@ -285,12 +286,13 @@ class WebChangeDetector_Card_View {
 						<form method="post" style="display: inline-block; margin-right: 10px;">
 							<input type="hidden" name="wcd_action" value="<?php echo esc_attr( $action['action'] ); ?>">
 							<?php wp_nonce_field( $action['action'] ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<?php if ( ! empty( $action['hidden_fields'] ) ) : ?>
 								<?php foreach ( $action['hidden_fields'] as $field => $value ) : ?>
 									<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( $value ); ?>">
 								<?php endforeach; ?>
 							<?php endif; ?>
-							<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>" 
+							<input type="submit" value="<?php echo esc_attr( $action['label'] ); ?>"
 									class="button <?php echo esc_attr( $action['class'] ?? '' ); ?>">
 						</form>
 					<?php endforeach; ?>

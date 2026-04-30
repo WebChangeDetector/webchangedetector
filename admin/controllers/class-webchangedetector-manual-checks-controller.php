@@ -48,6 +48,19 @@ class WebChangeDetector_Manual_Checks_Controller {
 	 * Render manual checks page.
 	 */
 	private function render_manual_checks_page() {
+		// In all-sites mode, show settings form without workflow steps.
+		if ( $this->admin->is_all_sites_mode ) {
+			?>
+			<div class="action-container">
+				<?php
+				$this->admin->settings_handler->get_url_settings( false );
+				?>
+			</div>
+			<div class="clear"></div>
+			<?php
+			return;
+		}
+
 		// Check if we have a step in the db.
 		$step = get_option( WCD_OPTION_UPDATE_STEP_KEY );
 		if ( ! $step ) {

@@ -118,6 +118,7 @@ class WebChangeDetector_Settings_Controller {
 					<h2><?php esc_html_e( 'Admin Bar Menu', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
 
 						<div class="wcd-form-row">
@@ -145,6 +146,7 @@ class WebChangeDetector_Settings_Controller {
 					<h2><?php esc_html_e( 'Debug Logging', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_debug_logging_setting' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<input type="hidden" name="wcd_action" value="save_debug_logging_setting">
 
 						<div class="wcd-form-row">
@@ -182,7 +184,7 @@ class WebChangeDetector_Settings_Controller {
 
 			<hr>
 			<?php
-			if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
+			if ( ! WebChangeDetector_Multisite::get_api_token() ) {
 				echo '<div class="error notice">
                         <p>' . esc_html__( 'Please enter a valid API Token.', 'webchangedetector' ) . '</p>
                     </div>';
@@ -198,7 +200,7 @@ class WebChangeDetector_Settings_Controller {
 				<?php
 			}
 			echo '<hr>';
-			$this->admin->account_handler->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
+			$this->admin->account_handler->get_api_token_form( WebChangeDetector_Multisite::get_api_token() );
 			$wizard_text = '<h2>' . esc_html__( 'Your account details', 'webchangedetector' ) . '</h2><p>' . esc_html__( 'You can see your WebChange Detector account here. Please don\'t share your API token with anyone.', 'webchangedetector' ) . '</p><p>' . esc_html__( 'Resetting your API Token will allow you to switch accounts. Keep in mind to save your API Token before the reset!', 'webchangedetector' ) . '</p><p>' . esc_html__( 'When you login with your API token after the reset, all your settings will be still there.', 'webchangedetector' ) . '</p>';
 			// Wizard functionality temporarily removed for phase 1.
 			?>
@@ -239,6 +241,7 @@ class WebChangeDetector_Settings_Controller {
 			<form method="post" style="display: inline-block; margin-right: 10px;">
 				<input type="hidden" name="wcd_action" value="add_post_type">
 				<?php wp_nonce_field( 'add_post_type' ); ?>
+				<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 				<select name="post_type">
 					<?php
 					foreach ( $available_post_types as $available_post_type ) {
@@ -299,6 +302,7 @@ class WebChangeDetector_Settings_Controller {
 			<form method="post" style="display: inline-block; margin-right: 10px;">
 				<input type="hidden" name="wcd_action" value="add_post_type">
 				<?php wp_nonce_field( 'add_post_type' ); ?>
+				<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 				<select name="post_type">
 					<?php
 					foreach ( $available_taxonomies as $available_taxonomy ) {
