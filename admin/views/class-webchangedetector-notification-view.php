@@ -116,6 +116,7 @@ class WebChangeDetector_Notification_View {
 		$message .= '<form method="post" style="margin-top: 10px;">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
+		$message .= WebChangeDetector_Multisite::get_blog_context_field_html();
 		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';
 
@@ -139,6 +140,7 @@ class WebChangeDetector_Notification_View {
 		$message .= '<form method="post">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
+		$message .= WebChangeDetector_Multisite::get_blog_context_field_html();
 		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';
 
@@ -149,14 +151,15 @@ class WebChangeDetector_Notification_View {
 	 * Render website details error notice.
 	 */
 	public function render_website_details_error() {
-		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		$api_token = WebChangeDetector_Multisite::get_api_token();
 
-		$message  = esc_html__( 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.', 'webchangedetector' );
+		$message = esc_html__( 'We couldn\'t find your website settings. Please reset the API token in settings and re-add your website with your API Token.', 'webchangedetector' );
 		/* translators: %s: The current API token */
 		$message .= '<p>' . sprintf( esc_html__( 'Your current API token is: %s.', 'webchangedetector' ), '<strong>' . esc_html( $api_token ) . '</strong>' ) . '</p>';
 		$message .= '<form method="post">';
 		$message .= '<input type="hidden" name="wcd_action" value="reset_api_token">';
 		$message .= wp_nonce_field( 'reset_api_token', '_wpnonce', true, false );
+		$message .= WebChangeDetector_Multisite::get_blog_context_field_html();
 		$message .= '<input type="hidden" name="api_token" value="' . esc_attr( $api_token ) . '">';
 		$message .= '<input type="submit" value="' . esc_attr__( 'Reset API token', 'webchangedetector' ) . '" class="button button-delete">';
 		$message .= '</form>';

@@ -307,19 +307,78 @@ class WebChangeDetector_Admin_WordPress {
 				)
 			);
 
-			wp_localize_script(
-				$this->plugin_name,
-				'wcdAjaxData',
-				array(
-					'ajax_url'                  => admin_url( 'admin-ajax.php' ),
-					'nonce'                     => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
-					'take_screenshots_nonce'    => wp_create_nonce( 'take_screenshots' ),
-					'start_manual_checks_nonce' => wp_create_nonce( 'start_manual_checks' ),
-					'show_detection_nonce'      => wp_create_nonce( 'show_change_detection' ),
-					'show_detection_url'        => admin_url( 'admin.php?page=webchangedetector-show-detection' ),
-					'plugin_url'                => WCD_PLUGIN_URL . 'admin/',
-				)
+			$ajax_data = array(
+				'ajax_url'                  => admin_url( 'admin-ajax.php' ),
+				'nonce'                     => \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-nonce' ),
+				'take_screenshots_nonce'    => wp_create_nonce( 'take_screenshots' ),
+				'start_manual_checks_nonce' => wp_create_nonce( 'start_manual_checks' ),
+				'show_detection_nonce'      => wp_create_nonce( 'show_change_detection' ),
+				'show_detection_url'        => WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-show-detection' ),
+				'manual_checks_url'         => WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ),
+				'plugin_url'                => WCD_PLUGIN_URL . 'admin/',
 			);
+
+			// Include blog context for multisite AJAX requests.
+			if ( WebChangeDetector_Multisite::is_all_sites_mode() ) {
+				$ajax_data['wcd_blog_id'] = 'all';
+			} elseif ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) {
+				$ajax_data['wcd_blog_id'] = WebChangeDetector_Multisite::get_current_managed_blog_id();
+			}
+
+			wp_localize_script( $this->plugin_name, 'wcdAjaxData', $ajax_data );
+
+			// Enqueue multisite sites management script on the sites page.
+			if ( WebChangeDetector_Multisite::is_multisite_active()
+				&& is_network_admin()
+				&& strpos( $hook_suffix, 'webchangedetector-sites' ) !== false
+			) {
+				wp_enqueue_script(
+					'webchangedetector-multisite-sites',
+					WCD_PLUGIN_URL . 'admin/js/webchangedetector-multisite-sites.js',
+					array( 'jquery', $this->plugin_name ),
+					$this->version,
+					true
+				);
+
+				wp_localize_script(
+					'webchangedetector-multisite-sites',
+					'wcdMultisiteData',
+					array(
+						'i18n' => array(
+							'registering'         => __( 'Registering...', 'webchangedetector' ),
+							'registered'          => __( 'Registered', 'webchangedetector' ),
+							'registrationFailed'  => __( 'Registration failed. Please try again.', 'webchangedetector' ),
+							'requestFailed'       => __( 'Request failed. Please try again.', 'webchangedetector' ),
+							'allRegistered'       => __( 'All sites registered!', 'webchangedetector' ),
+							/* translators: %d: number of unregistered sites */
+							'confirmRegisterAll'  => __( 'This will register %d sites with your WebChange Detector account. Continue?', 'webchangedetector' ),
+							/* translators: 1: succeeded count, 2: failed count */
+							'registrationSummary' => __( 'Done: %1$d succeeded, %2$d failed.', 'webchangedetector' ),
+						),
+					)
+				);
+
+				// Allowances management script.
+				wp_enqueue_script(
+					'webchangedetector-multisite-allowances',
+					WCD_PLUGIN_URL . 'admin/js/webchangedetector-multisite-allowances.js',
+					array( 'jquery', $this->plugin_name ),
+					$this->version,
+					true
+				);
+
+				wp_localize_script(
+					'webchangedetector-multisite-allowances',
+					'wcdAllowancesData',
+					array(
+						'i18n' => array(
+							'saving'        => __( 'Saving...', 'webchangedetector' ),
+							'saveFailed'    => __( 'Failed to save allowances. Please try again.', 'webchangedetector' ),
+							'requestFailed' => __( 'Request failed. Please try again.', 'webchangedetector' ),
+						),
+					)
+				);
+			}
 		}
 	}
 
@@ -416,6 +475,41 @@ class WebChangeDetector_Admin_WordPress {
 			add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 			add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 		}
+	}
+
+	/**
+	 * Register the admin menu pages in the network admin.
+	 *
+	 * Mirrors wcd_plugin_setup_menu() but uses manage_network_options capability
+	 * and adds a Sites management submenu page.
+	 *
+	 * @since    4.3.0
+	 * @return   void
+	 */
+	public function wcd_network_plugin_setup_menu() {
+		require_once 'partials/webchangedetector-admin-display.php';
+
+		// In network admin, register all pages unconditionally.
+		// Allowances are per-blog and not available in network context.
+		// The controller enforces per-blog allowances when rendering content.
+		$capability = 'manage_network_options';
+
+		add_menu_page( __( 'WebChange Detector', 'webchangedetector' ), __( 'WebChange Detector', 'webchangedetector' ), $capability, 'webchangedetector', 'wcd_webchangedetector_init', WCD_PLUGIN_URL . 'admin/img/icon-wp-backend.svg' );
+		add_submenu_page( 'webchangedetector', __( 'Dashboard', 'webchangedetector' ), __( 'Dashboard', 'webchangedetector' ), $capability, 'webchangedetector', 'wcd_webchangedetector_init' );
+
+		// Sites management page (multisite only).
+		add_submenu_page( 'webchangedetector', __( 'Sites', 'webchangedetector' ), __( 'Sites', 'webchangedetector' ), $capability, 'webchangedetector-sites', 'wcd_webchangedetector_init' );
+
+		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), $capability, 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), $capability, 'webchangedetector-settings', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), $capability, 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
+
+		// Hidden submenu pages.
+		add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
+		add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), $capability, 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 	}
 
 	/**
@@ -890,7 +984,7 @@ class WebChangeDetector_Admin_WordPress {
 		$post_type                                      = json_decode( $postdata['post_type'], true );
 		$this->admin->website_details['sync_url_types'] = array_merge( $post_type, $this->admin->website_details['sync_url_types'] );
 
-		// TODO: Move to settings handler.
+		// @todo Move this direct API call into WebChangeDetector_Admin_Settings so the handler owns API interactions.
 		$website_details = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2( $this->admin->website_details['id'], $this->admin->website_details );
 		if ( isset( $website_details['data'] ) && ! empty( $website_details['data']['sync_url_types'] ) ) {
 			$this->admin->website_details = $website_details['data'];
@@ -1271,7 +1365,7 @@ class WebChangeDetector_Admin_WordPress {
 		if ( ! empty( $website_details['allowances']['only_frontpage'] ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'only frontpage: ' . wp_json_encode( $website_details['allowances']['only_frontpage'] ), 'sync_posts', 'debug' );
 			$array['frontpage%%Frontpage'][] = array(
-				'url'        => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+				'url'        => WebChangeDetector_Admin_Utils::remove_url_protocol( get_home_url() ),
 				'html_title' => get_bloginfo( 'name' ),
 			);
 			$this->upload_urls_in_batches( $array );

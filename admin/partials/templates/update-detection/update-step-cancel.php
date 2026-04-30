@@ -17,6 +17,7 @@
 				<form id="frm-cancel-update-detection" method="post">
 					<input type="hidden" name="wcd_action" value="update_detection_step">
 					<?php wp_nonce_field( 'update_detection_step' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<input type="hidden" name="step" value="settings">
 					<button class="button wcd-cancel-btn" type="submit">
 						<span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel Manual Checks', 'webchangedetector' ); ?>

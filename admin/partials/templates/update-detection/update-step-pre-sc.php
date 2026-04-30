@@ -48,10 +48,12 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 					<label class="wcd-form-label">
 						<span class="dashicons dashicons-camera"></span> <?php esc_html_e( 'Pre-Update Screenshots', 'webchangedetector' ); ?>
 					</label>
-					<div class="wcd-description"><?php
+					<div class="wcd-description">
+					<?php
 						/* translators: %s: Number of checks that will be used */
 						printf( esc_html__( 'Ready to take pre-update screenshots. This run will use %s checks.', 'webchangedetector' ), '<strong>' . esc_html( $group_urls['meta']['selected_checks_count'] ) . '</strong>' );
-					?></div>
+					?>
+					</div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-button">
 					<?php if ( $insufficient_screenshots ) { ?>
@@ -63,9 +65,10 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 							<?php } ?>
 						</div>
 					<?php } else { ?>
-						<form id="frm-take-pre-sc" action="<?php echo esc_url( admin_url() . WCD_TAB_UPDATE ); ?>" method="post">
+						<form id="frm-take-pre-sc" action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post">
 							<input type="hidden" value="take_screenshots" name="wcd_action">
 							<?php wp_nonce_field( 'take_screenshots' ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<input type="hidden" name="sc_type" value="pre">
 							<button type="submit" class="button button-primary wcd-action-btn">
 								<span class="dashicons dashicons-camera"></span> <?php esc_html_e( 'Take Pre-Update Screenshots', 'webchangedetector' ); ?>

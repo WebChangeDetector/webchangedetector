@@ -64,6 +64,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		add_action( 'wp_ajax_wcd_complete_initial_setup', array( $this, 'ajax_complete_initial_setup' ) );
 		add_action( 'wp_ajax_wcd_export_logs', array( $this, 'ajax_export_logs' ) );
 		add_action( 'wp_ajax_sync_urls', array( $this, 'ajax_sync_urls' ) );
+		add_action( 'wp_ajax_wcd_bulk_update_group_settings', array( $this, 'ajax_bulk_update_group_settings' ) );
 	}
 
 	/**
@@ -450,6 +451,109 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 			$this->send_error_response(
 				__( 'An error occurred while exporting logs.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle bulk update of group settings across all multisite sub-sites.
+	 *
+	 * Collects group UUIDs for the specified type (monitoring or manual) from all
+	 * registered sites and sends parallel PUT requests to update settings.
+	 *
+	 * @since 4.3.0
+	 */
+	public function ajax_bulk_update_group_settings() {
+		if ( ! $this->security_check( 'ajax-nonce', 'manage_network_options' ) ) {
+			return;
+		}
+
+		if ( ! WebChangeDetector_Multisite::is_all_sites_mode() ) {
+			$this->send_error_response( __( 'This action is only available in All Websites mode.', 'webchangedetector' ) );
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
+		$group_type = isset( $_POST['group_type'] ) ? sanitize_text_field( wp_unslash( $_POST['group_type'] ) ) : '';
+		if ( ! in_array( $group_type, array( 'monitoring', 'manual' ), true ) ) {
+			$this->send_error_response( __( 'Invalid group type.', 'webchangedetector' ) );
+			return;
+		}
+
+		$all_groups = WebChangeDetector_Multisite::get_all_group_ids();
+		$group_ids  = $all_groups[ $group_type ];
+
+		if ( empty( $group_ids ) ) {
+			$this->send_error_response( __( 'No registered groups found.', 'webchangedetector' ) );
+			return;
+		}
+
+		// Collect non-empty settings from POST.
+		$settings    = array();
+		$field_names = array( 'interval_in_h', 'hour_of_day', 'threshold', 'alert_emails', 'css' );
+
+		foreach ( $field_names as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
+			if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$value = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
+				if ( 'alert_emails' === $field ) {
+					$settings[ $field ] = array_map( 'trim', explode( ',', $value ) );
+				} elseif ( 'css' === $field ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing
+					$settings[ $field ] = sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) );
+				} else {
+					$settings[ $field ] = $value;
+				}
+			}
+		}
+
+		if ( empty( $settings ) ) {
+			$this->send_error_response( __( 'No settings to update. Please change at least one field.', 'webchangedetector' ) );
+			return;
+		}
+
+		// Build requests for api_v2_bulk().
+		$requests = array();
+		foreach ( $group_ids as $group_id ) {
+			$request           = $settings;
+			$request['action'] = 'groups/' . $group_id;
+			$requests[]        = $request;
+		}
+
+		$results       = \WebChangeDetector\WebChangeDetector_API_V2::api_v2_bulk( $requests, 'PUT' );
+		$success_count = 0;
+		$fail_count    = 0;
+
+		foreach ( $results as $result ) {
+			if ( ! empty( $result['success'] ) ) {
+				++$success_count;
+			} else {
+				++$fail_count;
+			}
+		}
+
+		if ( $fail_count > 0 ) {
+			$this->send_success_response(
+				array(
+					'success_count' => $success_count,
+					'fail_count'    => $fail_count,
+				),
+				sprintf(
+					/* translators: 1: success count, 2: fail count */
+					__( 'Settings updated for %1$d groups. %2$d failed.', 'webchangedetector' ),
+					$success_count,
+					$fail_count
+				)
+			);
+		} else {
+			$this->send_success_response(
+				array( 'success_count' => $success_count ),
+				sprintf(
+					/* translators: %d: number of groups updated */
+					__( 'Settings updated for all %d groups.', 'webchangedetector' ),
+					$success_count
+				)
 			);
 		}
 	}

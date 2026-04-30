@@ -27,11 +27,12 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 
 	<div class="wcd-settings-card">
 		<h2><?php esc_html_e( 'WP Auto Update & Manual Checks Settings', 'webchangedetector' ); ?></h2>
-		<form action="admin.php?page=webchangedetector-update-settings" method="post">
+		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post">
 			<input type="hidden" name="wcd_action" value="save_group_settings">
 			<input type="hidden" name="step" value="pre-update">
 			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
 			<?php wp_nonce_field( 'save_group_settings' ); ?>
+			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-enabled">
 				<div class="wcd-form-label-wrapper">

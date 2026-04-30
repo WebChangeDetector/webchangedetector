@@ -263,8 +263,10 @@ class WebChangeDetector_Admin {
 		$this->ensure_required_constants();
 
 		// Set the group uuids.
-		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
-		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+		$website_groups              = get_option( WCD_WEBSITE_GROUPS );
+		$website_groups              = is_array( $website_groups ) ? $website_groups : array();
+		$this->monitoring_group_uuid = $website_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+		$this->manual_group_uuid     = $website_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
 
 		// Initialize sync_urls array.
 		$this->sync_urls = array();
@@ -290,7 +292,7 @@ class WebChangeDetector_Admin {
 		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
 		// Only register cron job for daily sync if we have an API token.
-		if ( ! empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) ) {
+		if ( ! empty( WebChangeDetector_Multisite::get_api_token() ) ) {
 			add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
 			if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 				wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
@@ -331,6 +333,14 @@ class WebChangeDetector_Admin {
 	 */
 	public $website_details;
 
+	/**
+	 * Whether "All Websites" mode is active (multisite only).
+	 *
+	 * @since 4.3.0
+	 * @var bool
+	 */
+	public $is_all_sites_mode = false;
+
 
 
 
@@ -360,6 +370,7 @@ class WebChangeDetector_Admin {
 			'name'       => $domain,
 			'monitoring' => true,
 			'enabled'    => true,
+			'cms'        => 'wordpress',
 		);
 
 		$monitoring_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
@@ -369,6 +380,7 @@ class WebChangeDetector_Admin {
 			'name'       => $domain,
 			'monitoring' => false,
 			'enabled'    => true,
+			'cms'        => 'wordpress',
 		);
 
 		$manual_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
@@ -735,8 +747,8 @@ class WebChangeDetector_Admin {
 		$group_id_website_details = sanitize_text_field( $postdata['group_id'] );
 		\WebChangeDetector\WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 
-		// TODO Make return to show the result.
-		echo '<div class="updated notice"><p>Settings saved.</p></div>';
+		// @todo Return a structured result so the caller can render a notice instead of echoing.
+		echo '<div class="updated notice"><p>' . esc_html__( 'Settings saved.', 'webchangedetector' ) . '</p></div>';
 	}
 
 

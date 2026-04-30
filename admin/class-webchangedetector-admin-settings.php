@@ -68,7 +68,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @param    array $postdata    The POST data.
 	 * @return   array    The extracted settings ready for the API.
 	 */
-	private function extract_advanced_settings( $postdata ) {
+	public function extract_advanced_settings( $postdata ) {
 		$args = array();
 
 		// Basic Auth User.
@@ -326,7 +326,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   void    Outputs the settings HTML.
 	 */
 	public function get_url_settings( $monitoring_group = false ) {
-		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
+		// @todo Expose post-type-to-sync selection as a user-configurable setting instead of hard-coding it in sync_posts().
 
 		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
 			echo esc_html__( 'Something went wrong. Try again.', 'webchangedetector' );
@@ -397,13 +397,33 @@ class WebChangeDetector_Admin_Settings {
 
 		<div class="wcd-select-urls-container">
 			<?php
-			// Print the status bar for monitoring group.
-			if ( $monitoring_group ) {
+			// Show all-sites mode notice.
+			if ( $this->admin->is_all_sites_mode ) {
+				$site_count = count( \WebChangeDetector\WebChangeDetector_Multisite::get_all_group_ids()['by_site'] );
+				?>
+				<div class="notice notice-info" style="margin: 10px 0 20px;">
+					<p>
+						<span class="dashicons dashicons-admin-multisite"></span>
+						<strong><?php esc_html_e( 'All Websites Mode', 'webchangedetector' ); ?></strong>:
+						<?php
+						printf(
+							/* translators: %d: number of registered sites */
+							esc_html__( 'Settings will be applied to all %d registered websites when saved.', 'webchangedetector' ),
+							(int) $site_count
+						);
+						?>
+					</p>
+				</div>
+				<?php
+			}
+
+			// Print the status bar for monitoring group (skip in all-sites mode).
+			if ( $monitoring_group && ! $this->admin->is_all_sites_mode ) {
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
 			}
 
-			// Add Status Cards section at the top (only for manual checks, not monitoring).
-			if ( ! $monitoring_group ) {
+			// Add Status Cards section at the top (only for manual checks, not monitoring, not all-sites mode).
+			if ( ! $monitoring_group && ! $this->admin->is_all_sites_mode ) {
 				?>
 				<div class="wcd-status-cards-container">
 					<?php
@@ -457,8 +477,20 @@ class WebChangeDetector_Admin_Settings {
 					$this->admin->view_renderer->get_component( 'templates' )->render_auto_settings( $group_and_urls, $group_id );
 				}
 
-				// Select URLs section.
-				if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+				// In all-sites mode, show notice instead of URL selection.
+				if ( $this->admin->is_all_sites_mode ) {
+					?>
+					<div class="wcd-url-selection wcd-settings-card">
+						<h2><?php echo esc_html__( 'Select URLs to Check', 'webchangedetector' ); ?></h2>
+						<div class="wcd-empty-state">
+							<p>
+								<?php esc_html_e( 'URL selection is managed per website. Please select a specific website from the dropdown above to choose which URLs should be checked.', 'webchangedetector' ); ?>
+							</p>
+						</div>
+					</div>
+			</div> <!-- Close flex container -->
+					<?php
+				} elseif ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 					?>
 
 					<div class="wcd-url-selection wcd-settings-card">
@@ -791,7 +823,7 @@ class WebChangeDetector_Admin_Settings {
 					$website = $website_response['data'];
 
 					// Verify the domain still matches our site.
-					if ( strpos( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) === 0 ) {
+					if ( ! empty( $website['domain'] ) && rtrim( $website['domain'], '/' ) === rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) {
 						$website_details = $website;
 						if ( is_string( $website['sync_url_types'] ) ) {
 							$decoded                           = json_decode( $website['sync_url_types'], true );
@@ -826,7 +858,10 @@ class WebChangeDetector_Admin_Settings {
 					}
 
 					foreach ( $websites['data'] as $website ) {
-						if ( strpos( rtrim( $website['domain'], '/' ), $our_domain ) === 0 ) {
+						if ( empty( $website['domain'] ) ) {
+							continue;
+						}
+						if ( rtrim( $website['domain'], '/' ) === $our_domain ) {
 							$website_details = $website;
 							if ( is_string( $website['sync_url_types'] ) ) {
 								$decoded                           = json_decode( $website['sync_url_types'], true );

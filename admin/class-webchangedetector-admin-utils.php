@@ -80,6 +80,8 @@ class WebChangeDetector_Admin_Utils {
 			'fail'              => 'dismiss',
 			'warning'           => 'warning',
 			'upgrade'           => 'cart',
+			'ai-rules'          => 'lightbulb',
+			'sites'             => 'admin-multisite',
 		);
 
 		if ( ! isset( $icons[ $icon ] ) ) {
@@ -164,6 +166,11 @@ class WebChangeDetector_Admin_Utils {
 		// Include port if it exists (important for localhost development).
 		if ( isset( $parsed_url['port'] ) ) {
 			$domain .= ':' . $parsed_url['port'];
+		}
+
+		// Include path for subdirectory multisite support (e.g. example.com/w1).
+		if ( ! empty( $parsed_url['path'] ) && '/' !== $parsed_url['path'] ) {
+			$domain .= rtrim( $parsed_url['path'], '/' );
 		}
 
 		return $domain;

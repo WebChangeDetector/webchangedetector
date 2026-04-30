@@ -144,6 +144,13 @@ class WebChangeDetector_Admin_Dashboard {
 					'per_page' => 5,
 				);
 
+				if ( $this->admin->is_all_sites_mode ) {
+					$all_groups = WebChangeDetector_Multisite::get_all_group_ids();
+					if ( ! empty( $all_groups['all'] ) ) {
+						$filter_batches['group_ids'] = implode( ',', $all_groups['all'] );
+					}
+				}
+
 				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2( $filter_batches );
 				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
 				$this->compare_view_v2( $batches['data'] ?? array() );
@@ -841,6 +848,7 @@ class WebChangeDetector_Admin_Dashboard {
 					<td data-comparison_id="<?php echo esc_html( $compare['id'] ); ?>" style="display: none;">
 						<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . esc_html( $compare['id'] ) ) ); ?>" method="post">
 							<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 							<input type="submit" value="<?php echo esc_attr__( 'Show', 'webchangedetector' ); ?>" class="button">
 						</form>
@@ -1055,6 +1063,7 @@ class WebChangeDetector_Admin_Dashboard {
 					<td data-comparison_id="<?php echo esc_attr( $compare['id'] ); ?>" style="display: none;">
 						<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . esc_attr( $compare['id'] ) ) ); ?>" method="post">
 							<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 							<input type="submit" value="<?php echo esc_attr__( 'Show', 'webchangedetector' ); ?>" class="button">
 						</form>
@@ -1204,12 +1213,14 @@ class WebChangeDetector_Admin_Dashboard {
 			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
 				<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? '' ) ) ); ?>" method="post" style="display:inline-block;">
 					<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 						value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>> &lt; <?php echo esc_html__( 'Previous', 'webchangedetector' ); ?> </button>
 				</form>
 				<form action="<?php echo esc_url( admin_url( 'admin.php?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? '' ) ) ); ?>" method="post" style="display:inline-block;">
 					<?php wp_nonce_field( 'show_change_detection', '_wpnonce' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
 					<button class="button" type="submit" name="token"
 						value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>> <?php echo esc_html__( 'Next', 'webchangedetector' ); ?> &gt; </button>

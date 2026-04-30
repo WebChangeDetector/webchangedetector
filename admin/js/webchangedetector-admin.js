@@ -1,5 +1,29 @@
 const MM_BG_COLOR_DARK_GREEN = '#006400';
 
+/**
+ * Multisite: Automatically include wcd_blog_id in all AJAX requests
+ * when operating in the network admin context.
+ */
+(function($) {
+    if (typeof wcdAjaxData !== 'undefined' && wcdAjaxData.wcd_blog_id) {
+        $.ajaxPrefilter(function(options) {
+            if (options.type && options.type.toUpperCase() === 'POST') {
+                if (typeof options.data === 'string') {
+                    if (options.data.indexOf('wcd_blog_id') === -1) {
+                        options.data += '&wcd_blog_id=' + wcdAjaxData.wcd_blog_id;
+                    }
+                } else if (typeof options.data === 'object' && options.data !== null) {
+                    if (!options.data.wcd_blog_id) {
+                        options.data.wcd_blog_id = wcdAjaxData.wcd_blog_id;
+                    }
+                } else {
+                    options.data = 'wcd_blog_id=' + wcdAjaxData.wcd_blog_id;
+                }
+            }
+        });
+    }
+})(jQuery);
+
 // Global state for time estimation
 window.wcdTotalItems = null;
 window.wcdEstimatedRemaining = null;
@@ -1638,7 +1662,7 @@ function startManualChecks(groupId) {
     // Create a form and submit it to start manual checks
     var form = document.createElement('form');
     form.method = 'POST';
-    form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
+    form.action = wcdAjaxData.manual_checks_url || '/wp-admin/admin.php?page=webchangedetector-update-settings';
 
     // Add the action to advance to next step
     var actionInput = document.createElement('input');
@@ -1654,13 +1678,21 @@ function startManualChecks(groupId) {
     stepInput.value = 'pre-update';
     form.appendChild(stepInput);
 
-    // Add nonce for security - WordPress expects a nonce field that matches the action name
+    // Add nonce for security
     var nonceInput = document.createElement('input');
     nonceInput.type = 'hidden';
     nonceInput.name = '_wpnonce';
-    // Use the correct nonce for the start_manual_checks action
     nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
     form.appendChild(nonceInput);
+
+    // Preserve blog context for multisite network admin
+    if (wcdAjaxData.wcd_blog_id) {
+        var blogInput = document.createElement('input');
+        blogInput.type = 'hidden';
+        blogInput.name = 'wcd_blog_id';
+        blogInput.value = wcdAjaxData.wcd_blog_id;
+        form.appendChild(blogInput);
+    }
 
     // Add form to body and submit
     document.body.appendChild(form);

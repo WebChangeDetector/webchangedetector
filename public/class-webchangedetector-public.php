@@ -30,7 +30,7 @@ class WebChangeDetector_Public {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
+		if ( ! WebChangeDetector_Multisite::get_api_token() ) {
 			// Verify website.
 			$this->verify_website();
 		}
