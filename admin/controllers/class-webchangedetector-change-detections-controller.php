@@ -202,12 +202,12 @@ class WebChangeDetector_Change_Detections_Controller {
 		$api_filters = $this->build_api_filters( $filters );
 
 		// Fetch groups limited to plugin's own groups.
-		$groups_data    = array();
+		$groups_data     = array();
 		$all_group_uuids = array();
 
 		if ( $this->admin->is_all_sites_mode ) {
 			// All-sites mode: collect groups from all registered sites.
-			$all_groups = WebChangeDetector_Multisite::get_all_group_ids();
+			$all_groups      = WebChangeDetector_Multisite::get_all_group_ids();
 			$all_group_uuids = $all_groups['all'];
 
 			foreach ( $all_groups['by_site'] as $site_data ) {
@@ -230,10 +230,10 @@ class WebChangeDetector_Change_Detections_Controller {
 			if ( is_array( $plugin_group_ids ) ) {
 				foreach ( $plugin_group_ids as $group_key => $group_uuid ) {
 					if ( ! empty( $group_uuid ) ) {
-						$group_label   = WCD_AUTO_DETECTION_GROUP === $group_key
+						$group_label       = WCD_AUTO_DETECTION_GROUP === $group_key
 							? __( 'Monitoring', 'webchangedetector' )
 							: __( 'Manual Checks', 'webchangedetector' );
-						$groups_data[] = array(
+						$groups_data[]     = array(
 							'id'   => $group_uuid,
 							'name' => $group_label,
 						);

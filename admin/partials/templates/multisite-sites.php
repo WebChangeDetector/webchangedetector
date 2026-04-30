@@ -109,7 +109,7 @@ $is_all_sites_mode = ( 'all' === $raw_blog_id );
 $show_allowances   = false;
 $allowances        = array();
 $website_uuid      = '';
-$blog_id           = 0;
+$wcd_blog_id       = 0;
 
 if ( $is_all_sites_mode ) {
 	// In "All Websites" mode, show allowances with main site's values as defaults.
@@ -139,7 +139,7 @@ if ( $is_all_sites_mode ) {
 			if ( is_array( $website_response ) && ! empty( $website_response['data']['allowances'] ) ) {
 				$allowances      = $website_response['data']['allowances'];
 				$website_uuid    = $site_website_uuid;
-				$blog_id         = $selected_blog_id;
+				$wcd_blog_id     = $selected_blog_id;
 				$show_allowances = true;
 			}
 		}

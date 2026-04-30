@@ -9,7 +9,7 @@
  * - $allowances       (array)  Current allowance values.
  * - $is_all_sites_mode (bool)  Whether "All Websites" is selected.
  * - $website_uuid     (string) The website UUID (single-site mode only).
- * - $blog_id          (int)    The blog ID (single-site mode only).
+ * - $wcd_blog_id      (int)    The blog ID (single-site mode only).
  *
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/partials/components/multisite
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 $allowances        = $allowances ?? array();
 $is_all_sites_mode = $is_all_sites_mode ?? false;
 $website_uuid      = $website_uuid ?? '';
-$blog_id           = $blog_id ?? 0;
+$wcd_blog_id       = $wcd_blog_id ?? 0;
 
 // All allowance sections with their fields.
 $sections = array(
@@ -106,7 +106,7 @@ $sections = array(
 
 		<div class="wcd-allowances-actions">
 			<input type="hidden" id="wcd-allowances-website-uuid" value="<?php echo esc_attr( $website_uuid ); ?>">
-			<input type="hidden" id="wcd-allowances-blog-id" value="<?php echo esc_attr( $is_all_sites_mode ? 'all' : $blog_id ); ?>">
+			<input type="hidden" id="wcd-allowances-blog-id" value="<?php echo esc_attr( $is_all_sites_mode ? 'all' : $wcd_blog_id ); ?>">
 			<button type="button" class="button button-primary" id="wcd-save-allowances">
 				<?php esc_html_e( 'Save Allowances', 'webchangedetector' ); ?>
 			</button>

@@ -801,24 +801,24 @@ class WebChangeDetector_API_V2 {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
 				$multicall_headers = array(
-						'Accept'        => 'application/json',
-						'Authorization' => 'Bearer ' . $api_token,
-						'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-						'x-wcd-wp-id'   => get_current_user_id(),
-						'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-					);
+					'Accept'        => 'application/json',
+					'Authorization' => 'Bearer ' . $api_token,
+					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+					'x-wcd-wp-id'   => get_current_user_id(),
+					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+				);
 
-					if ( WebChangeDetector_Multisite::is_network_context() ) {
-						$multicall_headers['x-wcd-network-admin'] = '1';
-					}
+				if ( WebChangeDetector_Multisite::is_network_context() ) {
+					$multicall_headers['x-wcd-network-admin'] = '1';
+				}
 
 					$args[] = array(
-					'url'     => $url,
-					'timeout' => WCD_REQUEST_TIMEOUT,
-					'data'    => array_merge( $post, array( $multicall => $multicall_data ) ),
-					'type'    => $method,
-					'headers' => $multicall_headers,
-				);
+						'url'     => $url,
+						'timeout' => WCD_REQUEST_TIMEOUT,
+						'data'    => array_merge( $post, array( $multicall => $multicall_data ) ),
+						'type'    => $method,
+						'headers' => $multicall_headers,
+					);
 			}
 			if ( ! empty( $args ) ) {
 				$log_args = $args;

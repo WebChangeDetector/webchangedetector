@@ -48,10 +48,12 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 					<label class="wcd-form-label">
 						<span class="dashicons dashicons-camera"></span> <?php esc_html_e( 'Pre-Update Screenshots', 'webchangedetector' ); ?>
 					</label>
-					<div class="wcd-description"><?php
+					<div class="wcd-description">
+					<?php
 						/* translators: %s: Number of checks that will be used */
 						printf( esc_html__( 'Ready to take pre-update screenshots. This run will use %s checks.', 'webchangedetector' ), '<strong>' . esc_html( $group_urls['meta']['selected_checks_count'] ) . '</strong>' );
-					?></div>
+					?>
+					</div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-button">
 					<?php if ( $insufficient_screenshots ) { ?>

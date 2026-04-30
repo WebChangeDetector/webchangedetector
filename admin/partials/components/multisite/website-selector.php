@@ -46,7 +46,7 @@ foreach ( $sites as $site ) {
 				printf(
 					/* translators: %d: number of registered sites */
 					esc_html__( 'All Websites (%d)', 'webchangedetector' ),
-					$registered_count
+					(int) $registered_count
 				);
 				?>
 			</option>
