@@ -250,21 +250,22 @@ class WebChangeDetector_Multisite {
 
 		foreach ( $sites as $site ) {
 			switch_to_blog( $site->blog_id );
+			try {
+				$website_id = get_option( 'webchangedetector_website_id', '' );
+				$groups     = get_option( 'wcd_website_groups', array() );
 
-			$website_id = get_option( 'webchangedetector_website_id', '' );
-			$groups     = get_option( 'wcd_website_groups', array() );
-
-			$result[] = array(
-				'blog_id'    => (int) $site->blog_id,
-				'domain'     => $site->domain,
-				'path'       => $site->path,
-				'url'        => get_site_url(),
-				'registered' => ! empty( $website_id ),
-				'website_id' => $website_id,
-				'groups'     => $groups,
-			);
-
-			restore_current_blog();
+				$result[] = array(
+					'blog_id'    => (int) $site->blog_id,
+					'domain'     => $site->domain,
+					'path'       => $site->path,
+					'url'        => get_site_url(),
+					'registered' => ! empty( $website_id ),
+					'website_id' => $website_id,
+					'groups'     => $groups,
+				);
+			} finally {
+				restore_current_blog();
+			}
 		}
 
 		self::$sites_cache = $result;
@@ -293,8 +294,11 @@ class WebChangeDetector_Multisite {
 	 */
 	public static function is_site_registered( $blog_id ) {
 		switch_to_blog( $blog_id );
-		$website_id = get_option( 'webchangedetector_website_id', '' );
-		restore_current_blog();
+		try {
+			$website_id = get_option( 'webchangedetector_website_id', '' );
+		} finally {
+			restore_current_blog();
+		}
 
 		return ! empty( $website_id );
 	}
