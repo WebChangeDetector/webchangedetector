@@ -164,9 +164,15 @@ function activate_webchangedetector( $network_wide = false ) {
 
 		$sites = get_sites( array( 'number' => 0 ) );
 		foreach ( $sites as $site ) {
+			// Use try/finally pattern: if WebChangeDetector_Activator::activate()
+			// throws on one site, the WP $switched_stack would otherwise stay
+			// corrupted and contaminate option writes on remaining sites.
 			switch_to_blog( $site->blog_id );
-			WebChangeDetector_Activator::activate();
-			restore_current_blog();
+			try {
+				WebChangeDetector_Activator::activate();
+			} finally {
+				restore_current_blog();
+			}
 		}
 	} else {
 		WebChangeDetector_Activator::activate();
@@ -192,26 +198,30 @@ function migrate_options_to_network() {
 		'wcd_upgrade_url',
 	);
 
-	// Read from the main site's wp_options.
-	switch_to_blog( get_main_site_id() );
-
-	foreach ( $network_options as $option_key ) {
-		$site_value = get_option( $option_key, false );
-
-		if ( false !== $site_value && '' !== $site_value ) {
-			restore_current_blog();
-
-			// Only migrate if the network option is not already set.
-			$network_value = get_site_option( $option_key, false );
-			if ( false === $network_value || '' === $network_value ) {
-				update_site_option( $option_key, $site_value );
-			}
-
-			switch_to_blog( get_main_site_id() );
+	// Read all options from the main site in one switch (less stack churn than
+	// switching back and forth per option). try/finally ensures the original
+	// blog context is restored even if an error fires inside the loop.
+	$main_site_id = get_main_site_id();
+	$site_values  = array();
+	switch_to_blog( $main_site_id );
+	try {
+		foreach ( $network_options as $option_key ) {
+			$site_values[ $option_key ] = get_option( $option_key, false );
 		}
+	} finally {
+		restore_current_blog();
 	}
 
-	restore_current_blog();
+	// Now write to network-level (no blog switch needed) — only if not already set.
+	foreach ( $site_values as $option_key => $site_value ) {
+		if ( false === $site_value || '' === $site_value ) {
+			continue;
+		}
+		$network_value = get_site_option( $option_key, false );
+		if ( false === $network_value || '' === $network_value ) {
+			update_site_option( $option_key, $site_value );
+		}
+	}
 }
 
 /**
@@ -226,9 +236,14 @@ function deactivate_webchangedetector( $network_wide = false ) {
 	if ( $network_wide && is_multisite() ) {
 		$sites = get_sites( array( 'number' => 0 ) );
 		foreach ( $sites as $site ) {
+			// try/finally so a deactivation error on one site doesn't corrupt
+			// the WP $switched_stack and contaminate remaining sites.
 			switch_to_blog( $site->blog_id );
-			WebChangeDetector_Deactivator::deactivate();
-			restore_current_blog();
+			try {
+				WebChangeDetector_Deactivator::deactivate();
+			} finally {
+				restore_current_blog();
+			}
 		}
 	} else {
 		WebChangeDetector_Deactivator::deactivate();
@@ -250,9 +265,15 @@ function wcd_on_new_site( $new_site ) {
 
 	if ( is_plugin_active_for_network( WCD_PLUGIN_BASENAME ) ) {
 		require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-activator.php';
+		// try/finally so an activation error doesn't leave the $switched_stack
+		// corrupted (this hook fires inside wpmu_create_blog, contaminating that
+		// flow's option writes would be hard to debug).
 		switch_to_blog( $new_site->blog_id );
-		WebChangeDetector_Activator::activate();
-		restore_current_blog();
+		try {
+			WebChangeDetector_Activator::activate();
+		} finally {
+			restore_current_blog();
+		}
 	}
 }
 add_action( 'wp_initialize_site', __NAMESPACE__ . '\wcd_on_new_site', 200 );

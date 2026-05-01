@@ -76,6 +76,40 @@ class WebChangeDetector_Multisite {
 		return is_plugin_active_for_network( WCD_PLUGIN_BASENAME );
 	}
 
+	/**
+	 * Run a callback in the context of another blog and ALWAYS restore the
+	 * original blog on exit, even if the callback throws.
+	 *
+	 * Centralizes the switch_to_blog / restore_current_blog pattern. Without
+	 * try/finally, an uncaught exception inside the callback leaves the WP
+	 * `$switched_stack` corrupted, which causes subsequent option writes to
+	 * land on the wrong blog (and contaminates other plugins running in the
+	 * same request). PLUGIN.md mandates this pattern.
+	 *
+	 * Skips the switch entirely if we're already on the target blog
+	 * (cheap optimization + avoids unnecessary stack growth).
+	 *
+	 * @since 4.3.0
+	 * @param int      $blog_id Target blog id.
+	 * @param callable $fn      Callback to run inside the switched context.
+	 *                          Receives no arguments. Its return value is returned.
+	 * @return mixed The callback's return value.
+	 */
+	public static function with_blog( $blog_id, callable $fn ) {
+		$blog_id = (int) $blog_id;
+
+		if ( $blog_id <= 0 || (int) get_current_blog_id() === $blog_id ) {
+			return $fn();
+		}
+
+		switch_to_blog( $blog_id );
+		try {
+			return $fn();
+		} finally {
+			restore_current_blog();
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// API Token helpers
 	// -------------------------------------------------------------------------
@@ -508,10 +542,17 @@ class WebChangeDetector_Multisite {
 			}
 
 			// Fallback: look for a legacy token on the main site's wp_options.
-			switch_to_blog( get_main_site_id() );
-			$site_token = get_option( 'webchangedetector_api_token', false );
-			$site_email = get_option( 'webchangedetector_account_email', false );
-			restore_current_blog();
+			$site_data = self::with_blog(
+				get_main_site_id(),
+				function () {
+					return array(
+						'token' => get_option( 'webchangedetector_api_token', false ),
+						'email' => get_option( 'webchangedetector_account_email', false ),
+					);
+				}
+			);
+			$site_token = $site_data['token'];
+			$site_email = $site_data['email'];
 
 			if ( ! empty( $site_token ) ) {
 				update_site_option( 'webchangedetector_api_token', $site_token );
@@ -557,17 +598,26 @@ class WebChangeDetector_Multisite {
 			return false;
 		}
 
+		// Require super-admin capability in BOTH branches (defense-in-depth).
+		// WordPress normally enforces `manage_network_options` before rendering
+		// network admin pages, but `is_network_admin()` itself only checks the
+		// URL pattern — and the result of this function is used to set the
+		// `x-wcd-network-admin: 1` header on API calls (see api_v2() / api_v2_bulk()),
+		// which the API trusts for allowance writes. Without this capability check,
+		// any sub-site admin who can reach a network-admin URL (deep link, leaked
+		// path, future routing change) would get the elevated header.
+		if ( ! current_user_can( 'manage_network_options' ) ) {
+			return false;
+		}
+
 		if ( is_network_admin() ) {
 			return true;
 		}
 
 		// In AJAX, is_network_admin() is false. Detect via parameter.
-		// Also require super admin capability to prevent sub-site admins
-		// from triggering network context (and the x-wcd-network-admin header)
-		// by including wcd_blog_id in their requests.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
 		$has_blog_id = ! empty( $_POST['wcd_blog_id'] ) || ! empty( $_GET['wcd_blog_id'] );
 
-		return $has_blog_id && current_user_can( 'manage_network_options' );
+		return $has_blog_id;
 	}
 }

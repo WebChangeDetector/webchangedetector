@@ -260,9 +260,12 @@ class WebChangeDetector_Settings_Action_Handler {
 		$requests        = array();
 
 		foreach ( $sites_data as $site_data ) {
-			switch_to_blog( $site_data['blog_id'] );
-			$website_id = get_option( 'webchangedetector_website_id', '' );
-			restore_current_blog();
+			$website_id = \WebChangeDetector\WebChangeDetector_Multisite::with_blog(
+				$site_data['blog_id'],
+				function () {
+					return get_option( 'webchangedetector_website_id', '' );
+				}
+			);
 
 			if ( empty( $website_id ) || $website_id === $main_website_id ) {
 				continue;

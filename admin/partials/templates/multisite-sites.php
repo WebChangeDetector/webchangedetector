@@ -114,9 +114,12 @@ $wcd_blog_id       = 0;
 if ( $is_all_sites_mode ) {
 	// In "All Websites" mode, show allowances with main site's values as defaults.
 	$main_site_id = get_main_site_id();
-	switch_to_blog( $main_site_id );
-	$main_website_uuid = get_option( 'webchangedetector_website_id', '' );
-	restore_current_blog();
+	$main_website_uuid = WebChangeDetector_Multisite::with_blog(
+		$main_site_id,
+		function () {
+			return get_option( 'webchangedetector_website_id', '' );
+		}
+	);
 
 	if ( ! empty( $main_website_uuid ) ) {
 		$website_response = WebChangeDetector_API_V2::get_website_v2( $main_website_uuid );
@@ -130,9 +133,12 @@ if ( $is_all_sites_mode ) {
 	// Specific site selected.
 	$selected_blog_id = absint( $raw_blog_id );
 	if ( $selected_blog_id > 0 ) {
-		switch_to_blog( $selected_blog_id );
-		$site_website_uuid = get_option( 'webchangedetector_website_id', '' );
-		restore_current_blog();
+		$site_website_uuid = WebChangeDetector_Multisite::with_blog(
+			$selected_blog_id,
+			function () {
+				return get_option( 'webchangedetector_website_id', '' );
+			}
+		);
 
 		if ( ! empty( $site_website_uuid ) ) {
 			$website_response = WebChangeDetector_API_V2::get_website_v2( $site_website_uuid );
