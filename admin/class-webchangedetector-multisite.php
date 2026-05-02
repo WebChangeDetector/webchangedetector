@@ -90,21 +90,21 @@ class WebChangeDetector_Multisite {
 	 * (cheap optimization + avoids unnecessary stack growth).
 	 *
 	 * @since 4.3.0
-	 * @param int      $blog_id Target blog id.
-	 * @param callable $fn      Callback to run inside the switched context.
-	 *                          Receives no arguments. Its return value is returned.
+	 * @param int      $blog_id  Target blog id.
+	 * @param callable $callback Callback to run inside the switched context.
+	 *                           Receives no arguments. Its return value is returned.
 	 * @return mixed The callback's return value.
 	 */
-	public static function with_blog( $blog_id, callable $fn ) {
+	public static function with_blog( $blog_id, callable $callback ) {
 		$blog_id = (int) $blog_id;
 
 		if ( $blog_id <= 0 || (int) get_current_blog_id() === $blog_id ) {
-			return $fn();
+			return $callback();
 		}
 
 		switch_to_blog( $blog_id );
 		try {
-			return $fn();
+			return $callback();
 		} finally {
 			restore_current_blog();
 		}
@@ -542,7 +542,7 @@ class WebChangeDetector_Multisite {
 			}
 
 			// Fallback: look for a legacy token on the main site's wp_options.
-			$site_data = self::with_blog(
+			$site_data  = self::with_blog(
 				get_main_site_id(),
 				function () {
 					return array(

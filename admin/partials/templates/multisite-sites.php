@@ -113,7 +113,7 @@ $wcd_blog_id       = 0;
 
 if ( $is_all_sites_mode ) {
 	// In "All Websites" mode, show allowances with main site's values as defaults.
-	$main_site_id = get_main_site_id();
+	$main_site_id      = get_main_site_id();
 	$main_website_uuid = WebChangeDetector_Multisite::with_blog(
 		$main_site_id,
 		function () {
