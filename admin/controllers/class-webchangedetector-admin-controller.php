@@ -449,9 +449,12 @@ class WebChangeDetector_Admin_Controller {
 			}
 
 			// Check main site's wp_options for the value.
-			switch_to_blog( get_main_site_id() );
-			$site_value = get_option( $option_key, false );
-			restore_current_blog();
+			$site_value = WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				function () use ( $option_key ) {
+					return get_option( $option_key, false );
+				}
+			);
 
 			if ( false !== $site_value && '' !== $site_value ) {
 				update_site_option( $option_key, $site_value );

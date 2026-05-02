@@ -103,9 +103,15 @@ if ( is_multisite() ) {
 		)
 	);
 	foreach ( $wcd_sites as $wcd_site ) {
+		// try/finally so a cleanup error on one site (e.g. corrupt option row)
+		// doesn't leave $switched_stack corrupted and contaminate cleanup of
+		// remaining sites.
 		switch_to_blog( $wcd_site->blog_id );
-		wcd_uninstall_site_cleanup();
-		restore_current_blog();
+		try {
+			wcd_uninstall_site_cleanup();
+		} finally {
+			restore_current_blog();
+		}
 	}
 
 	// Clean up network-wide options.

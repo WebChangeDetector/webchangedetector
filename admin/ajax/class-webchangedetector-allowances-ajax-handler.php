@@ -138,9 +138,12 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
 		$blog_id = isset( $_POST['wcd_blog_id'] ) ? absint( $_POST['wcd_blog_id'] ) : 0;
 		if ( $blog_id > 0 && get_blog_details( $blog_id ) ) {
-			switch_to_blog( $blog_id );
-			update_option( 'wcd_allowances', $allowances );
-			restore_current_blog();
+			WebChangeDetector_Multisite::with_blog(
+				$blog_id,
+				function () use ( $allowances ) {
+					update_option( 'wcd_allowances', $allowances );
+				}
+			);
 		}
 
 		$this->send_success_response(
@@ -190,9 +193,12 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 
 				// Update local allowances option on this blog.
 				if ( isset( $blog_ids[ $index ] ) ) {
-					switch_to_blog( $blog_ids[ $index ] );
-					update_option( 'wcd_allowances', $allowances );
-					restore_current_blog();
+					WebChangeDetector_Multisite::with_blog(
+						$blog_ids[ $index ],
+						function () use ( $allowances ) {
+							update_option( 'wcd_allowances', $allowances );
+						}
+					);
 				}
 			} else {
 				++$fail_count;
