@@ -20,9 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 $sites        = WebChangeDetector_Multisite::get_all_sites_with_status();
 $current_page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : 'webchangedetector'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-// Read raw wcd_blog_id to detect "all" mode (absint would turn 'all' into 0).
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$raw_blog_id     = isset( $_GET['wcd_blog_id'] ) ? sanitize_text_field( wp_unslash( $_GET['wcd_blog_id'] ) ) : '';
+// Use the persisted context so the dropdown reflects the user's last selection
+// even after navigating between WCD admin tabs (which strip query parameters).
+$raw_blog_id     = WebChangeDetector_Multisite::get_persisted_blog_context();
 $is_all_selected = ( 'all' === $raw_blog_id );
 $current_blog_id = $is_all_selected ? 0 : WebChangeDetector_Multisite::get_current_managed_blog_id();
 

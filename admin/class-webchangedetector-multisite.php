@@ -45,6 +45,14 @@ class WebChangeDetector_Multisite {
 	private static $groups_cache = null;
 
 	/**
+	 * Cached result of get_persisted_blog_context().
+	 * Persists only within the current HTTP request. Null = not yet resolved.
+	 *
+	 * @var string|null
+	 */
+	private static $blog_context_cache = null;
+
+	/**
 	 * Options that should be stored network-wide (shared across all sites).
 	 *
 	 * @var array
@@ -53,6 +61,7 @@ class WebChangeDetector_Multisite {
 		'webchangedetector_api_token',
 		'webchangedetector_account_email',
 		'wcd_upgrade_url',
+		'wcd_default_allowances',
 	);
 
 	/**
@@ -222,11 +231,97 @@ class WebChangeDetector_Multisite {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Whether the current user may see / manage account-level features.
+	 *
+	 * Account info, API token reset, delete account, and upgrade-account links
+	 * are all network-shared in network-activated multisite. Sub-site admins
+	 * (manage_options only, not super) must not see or interact with them.
+	 *
+	 * Returns true on single-site / per-site multisite (no shared account) or
+	 * for super admins on network-activated multisite.
+	 *
+	 * @since 4.3.0
+	 * @return bool
+	 */
+	public static function can_manage_account() {
+		return ! self::is_multisite_active() || is_super_admin();
+	}
+
+	/**
+	 * Whether allowance restrictions should be bypassed for the current user.
+	 *
+	 * Sub-site admins are restricted by the per-site `wcd_allowances` option that
+	 * the super admin configures from the network "Sites" page. The super admin
+	 * himself, however, must keep full access on every sub-site so he can
+	 * configure things — otherwise his own restrictions would lock him out.
+	 *
+	 * Returns true only when:
+	 *   - the plugin is network-activated multisite, AND
+	 *   - the current user is a super admin.
+	 *
+	 * On single-site / per-site activated multisite returns false (allowances
+	 * come from the API plan and apply to all users equally).
+	 *
+	 * @since 4.3.0
+	 * @return bool
+	 */
+	public static function should_bypass_allowances() {
+		return self::is_multisite_active() && is_super_admin();
+	}
+
+	/**
+	 * Get the raw blog-context selection ('all' / numeric blog id as string / '').
+	 *
+	 * Reads from GET, then POST. When either is present, persists the value to
+	 * user meta so the selection survives navigation between WCD admin pages
+	 * (the WordPress submenu links don't carry query parameters by default).
+	 * Falls back to the user-meta value when no GET/POST is present.
+	 *
+	 * Restricted to super admins because non-super admins cannot switch sub-site
+	 * context anyway — for them this returns an empty string and callers should
+	 * fall back to their normal default.
+	 *
+	 * @since 4.3.0
+	 * @return string Raw blog context value ('all', a numeric blog id as string, or '').
+	 */
+	public static function get_persisted_blog_context() {
+		if ( null !== self::$blog_context_cache ) {
+			return self::$blog_context_cache;
+		}
+
+		if ( ! is_super_admin() ) {
+			self::$blog_context_cache = '';
+			return '';
+		}
+
+		$raw = '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only context switch.
+		if ( isset( $_GET['wcd_blog_id'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$raw = sanitize_text_field( wp_unslash( $_GET['wcd_blog_id'] ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Read-only context switch.
+		} elseif ( isset( $_POST['wcd_blog_id'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$raw = sanitize_text_field( wp_unslash( $_POST['wcd_blog_id'] ) );
+		}
+
+		if ( '' !== $raw ) {
+			update_user_meta( get_current_user_id(), 'wcd_selected_blog_context', $raw );
+			self::$blog_context_cache = $raw;
+			return $raw;
+		}
+
+		$persisted                = get_user_meta( get_current_user_id(), 'wcd_selected_blog_context', true );
+		self::$blog_context_cache = is_string( $persisted ) ? $persisted : '';
+		return self::$blog_context_cache;
+	}
+
+	/**
 	 * Get the blog ID for the current admin context.
 	 *
-	 * In the network admin, reads from the wcd_blog_id GET/POST parameter.
-	 * Falls back to the main site if no parameter is provided.
-	 * Outside network admin, returns get_current_blog_id().
+	 * In the network admin, resolves the persisted blog context (GET/POST or
+	 * user meta) to an integer blog ID. Falls back to the main site if no
+	 * selection is available. Outside network admin, returns get_current_blog_id().
 	 *
 	 * @since 4.3.0
 	 * @return int The blog ID.
@@ -236,28 +331,17 @@ class WebChangeDetector_Multisite {
 			return get_current_blog_id();
 		}
 
-		// Check GET parameter first, then POST.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only context switch.
-		if ( isset( $_GET['wcd_blog_id'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			if ( 'all' === $_GET['wcd_blog_id'] ) {
-				return get_main_site_id();
+		$raw = self::get_persisted_blog_context();
+		if ( 'all' === $raw ) {
+			return get_main_site_id();
+		}
+		if ( '' !== $raw ) {
+			$blog_id = absint( $raw );
+			if ( $blog_id > 0 ) {
+				return $blog_id;
 			}
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return absint( $_GET['wcd_blog_id'] );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST['wcd_blog_id'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			if ( 'all' === $_POST['wcd_blog_id'] ) {
-				return get_main_site_id();
-			}
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			return absint( $_POST['wcd_blog_id'] );
-		}
-
-		// Default to main site.
 		return get_main_site_id();
 	}
 
@@ -430,17 +514,7 @@ class WebChangeDetector_Multisite {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['wcd_blog_id'] ) && 'all' === $_GET['wcd_blog_id'] ) {
-			return true;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST['wcd_blog_id'] ) && 'all' === $_POST['wcd_blog_id'] ) {
-			return true;
-		}
-
-		return false;
+		return 'all' === self::get_persisted_blog_context();
 	}
 
 	/**
@@ -512,8 +586,9 @@ class WebChangeDetector_Multisite {
 	 * @since 4.3.0
 	 */
 	public static function clear_cache() {
-		self::$sites_cache  = null;
-		self::$groups_cache = null;
+		self::$sites_cache        = null;
+		self::$groups_cache       = null;
+		self::$blog_context_cache = null;
 	}
 
 	/**

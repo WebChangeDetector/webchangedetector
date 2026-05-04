@@ -1570,6 +1570,49 @@ msgstr ""
 "{ display: none !important; }"
 
 #: admin/class-webchangedetector-admin-wordpress.php:243
+msgid "JavaScript Injection"
+msgstr "JavaScript-Injection"
+
+#: admin/class-webchangedetector-admin-wordpress.php:244
+msgid ""
+"Add custom JavaScript that runs before screenshots. Useful for dismissing "
+"cookie banners, closing popups, or triggering a specific UI state. Example: "
+"document.querySelector('.cookie-banner')?.remove();"
+msgstr ""
+"Füge eigenes JavaScript hinzu, das vor jedem Screenshot ausgeführt wird. "
+"Nützlich, um Cookie-Banner wegzuklicken, Popups zu schließen oder einen "
+"bestimmten UI-Zustand auszulösen. Beispiel: document.querySelector('.cookie-"
+"banner')?.remove();"
+
+#: admin/class-webchangedetector-admin-wordpress.php:245
+msgid ""
+"If your site is protected by HTTP Basic Authentication (e.g. staging "
+"environments), enter the username and password here so screenshots can be "
+"taken."
+msgstr ""
+"Wenn deine Seite mit HTTP Basic Authentication geschützt ist (z.B. Staging-"
+"Umgebungen), gib hier Benutzername und Passwort an, damit Screenshots "
+"erstellt werden können."
+
+#: admin/class-webchangedetector-admin-wordpress.php:247
+msgid ""
+"Enable this if your server requires an IP whitelist. Add the displayed "
+"Static IP to your firewall or hosting allowlist so screenshot requests can "
+"reach your site."
+msgstr ""
+"Aktiviere das, wenn dein Server eine IP-Whitelist verlangt. Trage die "
+"angezeigte statische IP-Adresse in deine Firewall- oder Hosting-Whitelist "
+"ein, damit Screenshot-Anfragen deine Seite erreichen."
+
+#: admin/class-webchangedetector-admin-wordpress.php:249
+msgid ""
+"Increase the delay between screenshot starts if your server struggles under "
+"load. Default is 7 seconds, maximum is 60."
+msgstr ""
+"Erhöhe die Verzögerung zwischen Screenshot-Starts, wenn dein Server unter "
+"Last leidet. Standard sind 7 Sekunden, das Maximum sind 60."
+
+#: admin/class-webchangedetector-admin-wordpress.php:243
 msgid "URL Selection Table"
 msgstr "URL-Auswahltabelle"
 
@@ -1740,7 +1783,64 @@ msgstr ""
 "Vorher-/Nachher-Screenshots mit hervorgehobenen Unterschieden zu sehen. Die "
 "Filter oben helfen dir, bestimmte Änderungen zu finden."
 
+#: admin/class-webchangedetector-admin-wordpress.php:259
+msgid "Schedule & Notifications"
+msgstr "Zeitplan & Benachrichtigungen"
+
+#: admin/class-webchangedetector-admin-wordpress.php:260
+msgid ""
+"Configure when WordPress runs auto-updates (timeframe and weekdays), who "
+"gets notified by email, and how sensitive change detection should be. The "
+"descriptions next to each field explain the individual options."
+msgstr ""
+"Lege fest, wann WordPress Auto-Updates ausführt (Zeitfenster und "
+"Wochentage), wer per E-Mail benachrichtigt wird und wie empfindlich die "
+"Änderungserkennung sein soll. Die Beschreibungen neben den Feldern erklären "
+"die einzelnen Optionen."
+
+#: admin/class-webchangedetector-admin-wordpress.php:271
+msgid "Advanced Screenshot Settings"
+msgstr "Erweiterte Screenshot-Einstellungen"
+
+#: admin/class-webchangedetector-admin-wordpress.php:272
+msgid ""
+"Optional: configure HTTP Basic Authentication for protected sites, route "
+"screenshots through the Static IP for whitelisting, or increase the delay "
+"between screenshots if your server is under load."
+msgstr ""
+"Optional: HTTP Basic Authentication für geschützte Seiten konfigurieren, "
+"Screenshots über die statische IP routen (für Whitelisting) oder die "
+"Verzögerung zwischen Screenshots erhöhen, wenn dein Server unter Last steht."
+
 #: admin/class-webchangedetector-admin-wordpress.php:273
+msgid "Code Injection"
+msgstr "Code-Injection"
+
+#: admin/class-webchangedetector-admin-wordpress.php:274
+msgid ""
+"Inject custom CSS or JavaScript that runs before screenshots are taken. Use "
+"CSS to hide dynamic elements (timestamps, ads), and JavaScript to dismiss "
+"popups or trigger specific UI states."
+msgstr ""
+"Eigenes CSS oder JavaScript einfügen, das vor jedem Screenshot ausgeführt "
+"wird. CSS, um dynamische Elemente zu verbergen (Zeitstempel, Werbung), und "
+"JavaScript, um Popups zu schließen oder bestimmte UI-Zustände auszulösen."
+
+#: admin/class-webchangedetector-admin-wordpress.php:282
+msgid "Schedule & Alerts"
+msgstr "Zeitplan & Benachrichtigungen"
+
+#: admin/class-webchangedetector-admin-wordpress.php:283
+msgid ""
+"Set how often we check your site, when checks should run, the change "
+"sensitivity, and who receives alerts. The descriptions next to each field "
+"explain the individual options."
+msgstr ""
+"Lege fest, wie oft deine Seite geprüft wird, wann die Checks laufen, wie "
+"empfindlich die Änderungserkennung ist und wer Benachrichtigungen erhält. "
+"Die Beschreibungen neben den Feldern erklären die einzelnen Optionen."
+
+#: admin/class-webchangedetector-admin-wordpress.php:300
 msgid "Filter Options"
 msgstr "Filteroptionen"
 
@@ -1753,6 +1853,29 @@ msgstr ""
 "zu finden oder nur Änderungen mit Unterschieden anzuzeigen."
 
 #: admin/class-webchangedetector-admin-wordpress.php:277
+msgid ""
+"AI Rules teach the system which changes are safe to ignore. Rules are "
+"created directly from change detection views by clicking \"Ignore in future"
+"\" on a region."
+msgstr ""
+"KI-Regeln bringen dem System bei, welche Änderungen gefahrlos ignoriert "
+"werden können. Regeln werden direkt in der Änderungserkennung erstellt - "
+"klicke bei einer Region auf „Zukünftig ignorieren\"."
+
+#: admin/class-webchangedetector-admin-wordpress.php:278
+msgid "Your Rules"
+msgstr "Deine Regeln"
+
+#: admin/class-webchangedetector-admin-wordpress.php:279
+msgid ""
+"Active rules are applied automatically to future comparisons. You can "
+"toggle, change scope, or delete rules from this list."
+msgstr ""
+"Aktive Regeln werden automatisch auf zukünftige Vergleiche angewendet. Du "
+"kannst Regeln in dieser Liste ein- und ausschalten, ihren Geltungsbereich "
+"ändern oder sie löschen."
+
+#: admin/class-webchangedetector-admin-wordpress.php:283
 msgid "Activity Logs"
 msgstr "Aktivitätsprotokolle"
 

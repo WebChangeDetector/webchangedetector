@@ -411,6 +411,34 @@ class WebChangeDetector_Admin {
 				// Ensure website details include default settings to avoid unnecessary API calls later.
 				$website_data = $website_response['data'];
 
+				// Apply network-wide default allowances. Only relevant on multisite — on
+				// single-site there is no UI to configure these, so we skip the lookup
+				// to keep the contract narrow and predictable.
+				if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() ) {
+					$default_allowances = \WebChangeDetector\WebChangeDetector_Multisite::get_shared_option( 'wcd_default_allowances', null );
+					if ( is_array( $default_allowances ) && ! empty( $default_allowances ) ) {
+						$update_response = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2(
+							$website_data['id'],
+							array( 'allowances' => $default_allowances )
+						);
+						$update_failed   = is_string( $update_response )
+							|| ( is_array( $update_response ) && ! empty( $update_response['error'] ) );
+						if ( $update_failed ) {
+							$error_message = is_string( $update_response )
+								? $update_response
+								: $update_response['error'];
+							$this->log_error(
+								'Default allowances could not be applied to new sub-site (' . $website_data['id'] . '): ' . $error_message,
+								'multisite_register',
+								'warning'
+							);
+						} else {
+							$website_data['allowances'] = $default_allowances;
+							update_option( WCD_ALLOWANCES, $default_allowances );
+						}
+					}
+				}
+
 				// Set default sync types if not present.
 				if ( empty( $website_data['sync_url_types'] ) ) {
 					$website_data['sync_url_types'] = array(

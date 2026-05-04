@@ -269,7 +269,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					<div class="wcd-description"><?php esc_html_e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
-					<div style="margin-top: 10px; width: 100%;">
+					<div class="wcd-code-injection-wrapper">
 						<div class="code-tags default-bg">&lt;style&gt;</div>
 						<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
 						<div class="code-tags default-bg">&lt;/style&gt;</div>
@@ -277,96 +277,26 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 				</div>
 			</div>
 
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-js" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'JS Settings', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Run custom JavaScript before taking screenshots (e.g. close popups, trigger interactions).', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-code-injection-wrapper">
+						<div class="code-tags default-bg">&lt;script&gt;</div>
+						<textarea name="js" class="codearea wcd-js-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['js'] ?? '' ); ?></textarea>
+						<div class="code-tags default-bg">&lt;/script&gt;</div>
+					</div>
+				</div>
+			</div>
+
 			<?php submit_button( __( 'Save Settings', 'webchangedetector' ), 'primary wizard-save-auto-settings', 'submit', true, array( 'onclick' => 'return wcdValidateFormAutoSettings()' ) ); ?>
 		</form>
 	</div>
-
-	<script type="text/javascript">
-		// Toggle monitoring settings visibility with slide animation.
-		jQuery(document).ready(function($) {
-			// Listen for changes on the toggle switch.
-			$(document).on('change', 'input[name="enabled"]', function() {
-				if ($(this).is(':checked')) {
-					$('.monitoring-setting').slideDown(400, function() {
-						// Initialize CodeMirror for CSS textarea when monitoring is enabled.
-						var cssTextarea = $('.wcd-monitoring-css .wcd-css-textarea')[0];
-						if (cssTextarea && window.wp && window.wp.codeEditor) {
-							// Check if CodeMirror is already initialized.
-							var existingEditor = null;
-							if (cssTextarea.nextElementSibling && cssTextarea.nextElementSibling.classList.contains('CodeMirror')) {
-								// CodeMirror already exists, just refresh it.
-								var cmInstance = cssTextarea.nextElementSibling.CodeMirror;
-								if (cmInstance) {
-									// Refresh after a small delay to ensure the element is fully visible.
-									setTimeout(function() {
-										cmInstance.refresh();
-									}, 100);
-								}
-							} else {
-								// Initialize new CodeMirror instance.
-								var editorSettings = {};
-								if (typeof cm_settings !== 'undefined' && cm_settings.codeEditor) {
-									editorSettings = cm_settings.codeEditor;
-								}
-								var editor = wp.codeEditor.initialize(cssTextarea, editorSettings);
-
-								// Refresh the editor after initialization to fix line numbers.
-								if (editor && editor.codemirror) {
-									setTimeout(function() {
-										editor.codemirror.refresh();
-									}, 100);
-								}
-							}
-						}
-					});
-
-					// Respect schedule type visibility when enabling monitoring.
-					var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
-					$('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
-					$('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
-					// Disable hidden checkboxes so they don't submit.
-					$('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
-					$('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
-				} else {
-					$('.monitoring-setting').slideUp();
-				}
-			});
-
-			// Schedule type toggle.
-			function toggleScheduleFields(radioEl) {
-				var type = $(radioEl).val();
-				$('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
-				$('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
-				// Disable hidden checkboxes so they don't submit duplicate schedule_days[].
-				$('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
-				$('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
-			}
-
-			$(document).on('change', '.wcd-schedule-type', function() {
-				toggleScheduleFields(this);
-			});
-
-			// On page load, apply to checked radio button.
-			$('.wcd-schedule-type:checked').each(function() {
-				toggleScheduleFields(this);
-			});
-		});
-
-		function wcdValidateFormAutoSettings() {
-			// Only validate if monitoring is enabled.
-			var monitoringEnabled = document.querySelector('input[name="enabled"]');
-			if (monitoringEnabled && monitoringEnabled.checked) {
-				// Validate email if present.
-				if (typeof window['validate_alert_emails'] === 'function') {
-					if (!window['validate_alert_emails']()) {
-						return false;
-					}
-				}
-			}
-
-			return true;
-		}
-	</script>
 	<?php
+	// Toggle behavior, schedule-field visibility, CodeMirror init and
+	// wcdValidateFormAutoSettings() live in admin/js/webchangedetector-admin.js
+	// (extracted to comply with the "no inline JS" project rule).
 }
 ?>

@@ -134,8 +134,10 @@ class WebChangeDetector_Admin_Controller {
 		echo '<div class="webchangedetector">';
 		echo '<h1>' . esc_html__( 'WebChange Detector', 'webchangedetector' ) . '</h1>';
 
-		// Render website selector in network admin context.
-		if ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) {
+		// Render website selector in network admin context, but only once an API token
+		// exists. Without a token there are no registered sites to switch between, so
+		// the selector would only show "All Websites (0)" on a fresh install.
+		if ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() && $api_token ) {
 			$this->render_website_selector();
 		}
 
@@ -157,7 +159,14 @@ class WebChangeDetector_Admin_Controller {
 
 		// Check if we have an API token.
 		if ( ! WebChangeDetector_Multisite::get_api_token() ) {
-			$this->render_no_account_page();
+			// On a sub-site of a network-activated install, the token is owned by the
+			// super-admin in the network admin. Show a contact-admin notice instead of
+			// the sign-up form to keep the account creation flow centralized.
+			if ( WebChangeDetector_Multisite::is_multisite_active() && ! is_network_admin() ) {
+				$this->render_subsite_setup_required_notice();
+			} else {
+				$this->render_no_account_page();
+			}
 			echo '</div></div>'; // Close wrapper divs.
 			return false;
 		}
@@ -774,6 +783,19 @@ class WebChangeDetector_Admin_Controller {
 		// For now, call the existing method.
 		// In later phases, this will be moved to a view renderer.
 		$this->admin->account_handler->get_no_account_page();
+	}
+
+	/**
+	 * Render the "setup required" notice shown on a sub-site when the network
+	 * has not been set up yet (no API token in wp_sitemeta).
+	 *
+	 * @since 4.3.0
+	 */
+	private function render_subsite_setup_required_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-setup-required.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
 	}
 
 	/**

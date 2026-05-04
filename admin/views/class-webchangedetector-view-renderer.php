@@ -230,7 +230,7 @@ class WebChangeDetector_View_Renderer {
 				</a>
 				<?php endif; ?>
 
-				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) : ?>
+				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) && \WebChangeDetector\WebChangeDetector_Multisite::can_manage_account() ) : ?>
 				<a href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> <?php echo esc_html__( 'Upgrade Account', 'webchangedetector' ); ?>

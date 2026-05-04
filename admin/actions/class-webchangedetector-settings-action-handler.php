@@ -139,6 +139,15 @@ class WebChangeDetector_Settings_Action_Handler {
 		if ( isset( $data['css'] ) ) {
 			$args['css'] = sanitize_textarea_field( $data['css'] );
 		}
+		if ( isset( $data['js'] ) ) {
+			// JS is stored verbatim — content sanitization (sanitize_textarea_field
+			// strips HTML tags, wp_kses strips script syntax) would corrupt valid
+			// JavaScript. Access is gated by the manage_options capability on the
+			// settings form, and the script never executes in WordPress; it is
+			// passed to the headless browser that captures screenshots of the
+			// user's own site.
+			$args['js'] = $data['js'];
+		}
 		if ( isset( $data['group_name'] ) ) {
 			$args['name'] = sanitize_text_field( $data['group_name'] );
 		}

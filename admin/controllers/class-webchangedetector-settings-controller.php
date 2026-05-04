@@ -182,27 +182,32 @@ class WebChangeDetector_Settings_Controller {
 				</div>
 			</div>
 
-			<hr>
 			<?php
-			if ( ! WebChangeDetector_Multisite::get_api_token() ) {
-				echo '<div class="error notice">
-                        <p>' . esc_html__( 'Please enter a valid API Token.', 'webchangedetector' ) . '</p>
-                    </div>';
-			} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
+			// Account info, upgrade, reset and delete-account are all network-shared
+			// on network-activated multisite — restrict to super admins (or anyone
+			// in single-site / per-site activation). See can_manage_account().
+			if ( WebChangeDetector_Multisite::can_manage_account() ) {
 				?>
-				<div class="wcd-settings-section">
-					<div class="wcd-settings-card">
-						<h2><?php esc_html_e( 'Need more checks?', 'webchangedetector' ); ?></h2>
-						<p><?php esc_html_e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
-						<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php esc_html_e( 'Upgrade', 'webchangedetector' ); ?></a>
-					</div>
-				</div>
+				<hr>
 				<?php
+				if ( ! WebChangeDetector_Multisite::get_api_token() ) {
+					echo '<div class="error notice">
+							<p>' . esc_html__( 'Please enter a valid API Token.', 'webchangedetector' ) . '</p>
+						</div>';
+				} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
+					?>
+					<div class="wcd-settings-section">
+						<div class="wcd-settings-card">
+							<h2><?php esc_html_e( 'Need more checks?', 'webchangedetector' ); ?></h2>
+							<p><?php esc_html_e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
+							<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php esc_html_e( 'Upgrade', 'webchangedetector' ); ?></a>
+						</div>
+					</div>
+					<?php
+				}
+				echo '<hr>';
+				$this->admin->account_handler->get_api_token_form( WebChangeDetector_Multisite::get_api_token() );
 			}
-			echo '<hr>';
-			$this->admin->account_handler->get_api_token_form( WebChangeDetector_Multisite::get_api_token() );
-			$wizard_text = '<h2>' . esc_html__( 'Your account details', 'webchangedetector' ) . '</h2><p>' . esc_html__( 'You can see your WebChange Detector account here. Please don\'t share your API token with anyone.', 'webchangedetector' ) . '</p><p>' . esc_html__( 'Resetting your API Token will allow you to switch accounts. Keep in mind to save your API Token before the reset!', 'webchangedetector' ) . '</p><p>' . esc_html__( 'When you login with your API token after the reset, all your settings will be still there.', 'webchangedetector' ) . '</p>';
-			// Wizard functionality temporarily removed for phase 1.
 			?>
 
 		</div>

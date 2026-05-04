@@ -48,12 +48,67 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 	);
 
 	/**
+	 * Get the grouped allowance sections used by the partials to render forms.
+	 *
+	 * Single source of truth so any new field is added in exactly one place.
+	 * Translation strings are evaluated at call time (i18n-safe).
+	 *
+	 * @since 4.3.0
+	 * @return array<int, array{title: string, description: string, fields: array<string, string>}>
+	 */
+	public static function get_sections() {
+		return array(
+			array(
+				'title'       => __( 'Tabs in WP Plugin', 'webchangedetector' ),
+				'description' => __( 'Select which tabs should be enabled at the WP website.', 'webchangedetector' ),
+				'fields'      => array(
+					'manual_checks_view'     => __( 'Manual checks view', 'webchangedetector' ),
+					'monitoring_checks_view' => __( 'Monitoring checks view', 'webchangedetector' ),
+					'change_detections_view' => __( 'Change Detections view', 'webchangedetector' ),
+					'ai_rules_view'          => __( 'AI Rules view', 'webchangedetector' ),
+					'settings_view'          => __( 'Settings view', 'webchangedetector' ),
+					'logs_view'              => __( 'Queue view', 'webchangedetector' ),
+				),
+			),
+			array(
+				'title'       => __( 'Manual Checks', 'webchangedetector' ),
+				'description' => __( 'The "Manual checks view" must be enabled.', 'webchangedetector' ),
+				'fields'      => array(
+					'manual_checks_start'    => __( 'Allow start manual checks', 'webchangedetector' ),
+					'manual_checks_settings' => __( 'Show manual checks settings', 'webchangedetector' ),
+					'manual_checks_urls'     => __( 'Show manual checks urls', 'webchangedetector' ),
+				),
+			),
+			array(
+				'title'       => __( 'Monitoring Checks', 'webchangedetector' ),
+				'description' => __( 'The "Monitoring checks view" must be enabled.', 'webchangedetector' ),
+				'fields'      => array(
+					'monitoring_checks_settings' => __( 'Show monitoring checks settings', 'webchangedetector' ),
+					'monitoring_checks_urls'     => __( 'Show monitoring checks urls', 'webchangedetector' ),
+				),
+			),
+			array(
+				'title'       => __( 'Other Settings', 'webchangedetector' ),
+				'description' => __( 'Additional restrictions for the WP website.', 'webchangedetector' ),
+				'fields'      => array(
+					'settings_add_urls'         => __( 'Show add url types in settings', 'webchangedetector' ),
+					'settings_account_settings' => __( 'Show account settings', 'webchangedetector' ),
+					'upgrade_account'           => __( 'Allow upgrading account', 'webchangedetector' ),
+					'wizard_start'              => __( 'Start the wizard', 'webchangedetector' ),
+					'only_frontpage'            => __( 'Allow only checks for frontpage', 'webchangedetector' ),
+				),
+			),
+		);
+	}
+
+	/**
 	 * Register AJAX hooks.
 	 *
 	 * @since 4.3.0
 	 */
 	public function register_hooks() {
 		add_action( 'wp_ajax_wcd_save_allowances', array( $this, 'ajax_save_allowances' ) );
+		add_action( 'wp_ajax_wcd_save_default_allowances', array( $this, 'ajax_save_default_allowances' ) );
 	}
 
 	/**
@@ -85,13 +140,14 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 	 * Extract and sanitize allowance values from POST data.
 	 *
 	 * @since 4.3.0
+	 * @param string $prefix POST key prefix (defaults to "allowances_").
 	 * @return array Sanitized allowances array.
 	 */
-	private function extract_allowances_from_post() {
+	private function extract_allowances_from_post( $prefix = 'allowances_' ) {
 		$allowances = array();
 
 		foreach ( self::ALLOWANCE_FIELDS as $field ) {
-			$post_key = 'allowances_' . $field;
+			$post_key = $prefix . $field;
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
 			if ( isset( $_POST[ $post_key ] ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -100,6 +156,45 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 		}
 
 		return $allowances;
+	}
+
+	/**
+	 * Handle save default allowances AJAX request.
+	 *
+	 * Stores network-wide default allowances. These defaults are applied
+	 * automatically when a new sub-site is registered with WCD. Existing sites
+	 * are not affected.
+	 *
+	 * @since 4.3.0
+	 */
+	public function ajax_save_default_allowances() {
+		if ( ! $this->security_check( 'ajax-nonce', 'manage_network_options' ) ) {
+			return;
+		}
+
+		// Saving "all toggles off" is a valid configuration, so we don't reject an
+		// empty result. Instead, verify that at least one expected POST key was
+		// present, which guards against a bare/malformed request.
+		$has_payload = false;
+		foreach ( self::ALLOWANCE_FIELDS as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
+			if ( isset( $_POST[ 'default_allowances_' . $field ] ) ) {
+				$has_payload = true;
+				break;
+			}
+		}
+		if ( ! $has_payload ) {
+			$this->send_error_response( __( 'No allowance data received.', 'webchangedetector' ) );
+			return;
+		}
+
+		$defaults = $this->extract_allowances_from_post( 'default_allowances_' );
+		WebChangeDetector_Multisite::set_shared_option( 'wcd_default_allowances', $defaults );
+
+		$this->send_success_response(
+			null,
+			__( 'Defaults for new sites saved.', 'webchangedetector' )
+		);
 	}
 
 	/**

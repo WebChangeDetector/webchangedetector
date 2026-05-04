@@ -155,6 +155,7 @@ class WebChangeDetector_Admin_Settings {
 			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
 			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
 			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
+			'js'            => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
 		);
 
 		// Schedule type.
@@ -302,6 +303,11 @@ class WebChangeDetector_Admin_Settings {
 
 		if ( isset( $postdata['css'] ) ) {
 			$args['css'] = sanitize_textarea_field( $postdata['css'] );
+		}
+		if ( isset( $postdata['js'] ) ) {
+			// Stored verbatim — see settings-action-handler::handle_save_group_settings
+			// for the security rationale (capability gate, no server-side execution).
+			$args['js'] = $postdata['js'];
 		}
 
 		// Merge advanced settings (basic auth, proxy, screenshot delay).
@@ -496,11 +502,21 @@ class WebChangeDetector_Admin_Settings {
 					<div class="wcd-url-selection wcd-settings-card">
 						<h2><?php echo esc_html__( 'Select URLs to Check', 'webchangedetector' ); ?><br><small></small></h2>
 						<p style="text-align: center;">
-							<strong><?php echo esc_html__( 'Currently selected URLs:', 'webchangedetector' ); ?> <span class="wcd-selected-urls-total"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span></strong><br>
-							<?php echo esc_html__( 'Missing URLs? Select them from other post types and taxonomies by enabling them in the', 'webchangedetector' ); ?>
-							<a href="?page=webchangedetector-settings"><?php echo esc_html__( 'Settings', 'webchangedetector' ); ?></a><br>
-
+							<strong><?php echo esc_html__( 'Currently selected URLs:', 'webchangedetector' ); ?> <span class="wcd-selected-urls-total"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span></strong>
 						</p>
+						<div class="notice notice-info inline wcd-missing-urls-notice">
+							<p>
+								<span class="dashicons dashicons-info"></span>
+								<strong><?php esc_html_e( 'Missing URLs?', 'webchangedetector' ); ?></strong>
+								<?php
+								printf(
+									/* translators: %s: link to the Settings page */
+									esc_html__( 'Select them from other post types and taxonomies by enabling them in the %s.', 'webchangedetector' ),
+									'<a href="?page=webchangedetector-settings">' . esc_html__( 'Settings', 'webchangedetector' ) . '</a>'
+								);
+								?>
+							</p>
+						</div>
 						<input type="hidden" value="webchangedetector" name="page">
 						<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>" name="group_id">
 
@@ -976,6 +992,12 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   bool|int    True if allowed, false if not, or integer value for specific allowances.
 	 */
 	public function is_allowed( $allowed ) {
+		// Super admins on network-activated multisite bypass per-site allowances —
+		// they configured them for sub-site admins and must keep full access themselves.
+		if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+			return true;
+		}
+
 		$website_details = $this->admin->website_details;
 		$allowances      = $website_details['allowances'] ?? false;
 

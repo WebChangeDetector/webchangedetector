@@ -725,7 +725,18 @@ function currentlyProcessing() {
                     return; // Skip this textarea, it will be initialized when accordion opens
                 }
             }
-            wp.codeEditor.initialize(item);
+            // Pass settings explicitly per textarea type. wp_enqueue_code_editor()
+            // sets a single global default (the LAST call wins), so omitting the
+            // settings arg would give every editor the same mode regardless of class.
+            var settings;
+            if (typeof cm_settings !== 'undefined') {
+                if ($(item).hasClass('wcd-js-textarea') && cm_settings.codeEditorJs) {
+                    settings = cm_settings.codeEditorJs;
+                } else if (cm_settings.codeEditor) {
+                    settings = cm_settings.codeEditor;
+                }
+            }
+            wp.codeEditor.initialize(item, settings);
         });
 
         // Init accordions
@@ -2490,3 +2501,122 @@ jQuery(document).ready(function($) {
         });
     });
 })(jQuery);
+
+/* ------------------------------------------------------------------------
+ * Group settings (manual + monitoring) page behaviors.
+ *
+ * Extracted from inline <script> blocks in admin/partials/templates/
+ * update-settings.php and auto-settings.php so the rendered HTML stays free
+ * of inline JS. Listeners use document-level delegation so they bind safely
+ * even when the templates aren't rendered on the current page.
+ * ------------------------------------------------------------------------ */
+(function ($) {
+    'use strict';
+
+    // Initialize / refresh CodeMirror on a code-injection textarea. Existing
+    // instances are refreshed (line numbers / cursor positions go stale after
+    // slideDown), new ones are initialized with the matching settings key.
+    function initOrRefreshCodeEditor(textarea, settingsKey) {
+        if (!textarea || !window.wp || !window.wp.codeEditor) {
+            return;
+        }
+        if (textarea.nextElementSibling && textarea.nextElementSibling.classList.contains('CodeMirror')) {
+            var cmInstance = textarea.nextElementSibling.CodeMirror;
+            if (cmInstance) {
+                setTimeout(function () { cmInstance.refresh(); }, 100);
+            }
+            return;
+        }
+        var editorSettings = {};
+        if (typeof cm_settings !== 'undefined' && cm_settings[settingsKey]) {
+            editorSettings = cm_settings[settingsKey];
+        }
+        var editor = wp.codeEditor.initialize(textarea, editorSettings);
+        if (editor && editor.codemirror) {
+            setTimeout(function () { editor.codemirror.refresh(); }, 100);
+        }
+    }
+
+    // Schedule fields visibility (monitoring tab).
+    function toggleScheduleFields(radioEl) {
+        var type = $(radioEl).val();
+        $('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
+        $('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
+        // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
+        $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
+        $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
+    }
+
+    $(document).ready(function () {
+        // Manual / Auto-Update tab: toggle auto-update settings visibility.
+        $(document).on('change', 'input[name="auto_update_checks_enabled"]', function () {
+            if ($(this).is(':checked')) {
+                $('.auto-update-setting').slideDown();
+            } else {
+                $('.auto-update-setting').slideUp();
+            }
+        });
+
+        // Monitoring tab: toggle monitoring settings visibility + init CodeMirror
+        // editors after slide so they render correctly.
+        $(document).on('change', 'input[name="enabled"]', function () {
+            if ($(this).is(':checked')) {
+                $('.monitoring-setting').slideDown(400, function () {
+                    initOrRefreshCodeEditor($('.wcd-monitoring-css .wcd-css-textarea')[0], 'codeEditor');
+                    initOrRefreshCodeEditor($('.wcd-monitoring-js .wcd-js-textarea')[0], 'codeEditorJs');
+                });
+
+                // Respect schedule type visibility when enabling monitoring.
+                var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
+                $('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
+                $('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
+                $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
+                $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
+            } else {
+                $('.monitoring-setting').slideUp();
+            }
+        });
+
+        // Schedule type radio change.
+        $(document).on('change', '.wcd-schedule-type', function () {
+            toggleScheduleFields(this);
+        });
+
+        // On page load, apply schedule visibility to the checked radio.
+        $('.wcd-schedule-type:checked').each(function () {
+            toggleScheduleFields(this);
+        });
+    });
+})(jQuery);
+
+/* ------------------------------------------------------------------------
+ * Form validation entry points used as inline `onclick` handlers from
+ * submit_button() in the group-settings templates. Must be globals.
+ * ------------------------------------------------------------------------ */
+function wcdValidateFormGroupSettings() {
+    // Only validate if auto-update checks are enabled.
+    var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
+    if (autoUpdateEnabled && autoUpdateEnabled.checked) {
+        if (typeof window['validate_weekdays_auto_update_checks'] === 'function' &&
+            !window['validate_weekdays_auto_update_checks']()) {
+            return false;
+        }
+        if (typeof window['validate_auto_update_checks_emails'] === 'function' &&
+            !window['validate_auto_update_checks_emails']()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function wcdValidateFormAutoSettings() {
+    // Only validate if monitoring is enabled.
+    var monitoringEnabled = document.querySelector('input[name="enabled"]');
+    if (monitoringEnabled && monitoringEnabled.checked) {
+        if (typeof window['validate_alert_emails'] === 'function' &&
+            !window['validate_alert_emails']()) {
+            return false;
+        }
+    }
+    return true;
+}

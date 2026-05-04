@@ -34,10 +34,16 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 			<?php wp_nonce_field( 'save_group_settings' ); ?>
 			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 
+			<div class="notice notice-info inline wcd-auto-updates-precondition-notice">
+				<p>
+					<span class="dashicons dashicons-info"></span>
+					<?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?>
+				</p>
+			</div>
+
 			<div class="wcd-form-row wcd-auto-update-setting-enabled">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Checks', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -164,18 +170,24 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<div class="wcd-description"><?php esc_html_e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
-					<?php
-					// CSS Injection using Accordion Component.
-					$header_text  = __( 'CSS Injection', 'webchangedetector' );
-					$accordion_id = 'css-injection-manual';
-					$open         = false;
-
-					// Build content.
-					?>
-					<div style="margin-top: 10px; width: 100%;">
+					<div class="wcd-code-injection-wrapper">
 						<div class="code-tags default-bg">&lt;style&gt;</div>
 						<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
 						<div class="code-tags default-bg">&lt;/style&gt;</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="wcd-form-row wcd-auto-update-setting-js">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'JS Settings', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Run custom JavaScript before taking screenshots (e.g. close popups, trigger interactions).', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-code-injection-wrapper">
+						<div class="code-tags default-bg">&lt;script&gt;</div>
+						<textarea name="js" class="codearea wcd-js-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['js'] ?? '' ); ?></textarea>
+						<div class="code-tags default-bg">&lt;/script&gt;</div>
 					</div>
 				</div>
 			</div>
@@ -185,43 +197,9 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 			<?php submit_button( __( 'Save Settings', 'webchangedetector' ), 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormGroupSettings()' ) ); ?>
 		</form>
 	</div>
-
-
-	<script type="text/javascript">
-		// Toggle auto update checks settings visibility with slide animation.
-		jQuery(document).ready(function($) {
-			// Listen for changes on the toggle switch.
-			$(document).on('change', 'input[name="auto_update_checks_enabled"]', function() {
-				if ($(this).is(':checked')) {
-					$('.auto-update-setting').slideDown();
-				} else {
-					$('.auto-update-setting').slideUp();
-				}
-			});
-		});
-
-		function wcdValidateFormGroupSettings() {
-			// Only validate if auto update checks are enabled.
-			var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
-			if (autoUpdateEnabled && autoUpdateEnabled.checked) {
-				// Validate weekdays using the component's validation function.
-				if (typeof window['validate_weekdays_auto_update_checks'] === 'function') {
-					if (!window['validate_weekdays_auto_update_checks']()) {
-						return false;
-					}
-				}
-
-				// Validate email if present.
-				if (typeof window['validate_auto_update_checks_emails'] === 'function') {
-					if (!window['validate_auto_update_checks_emails']()) {
-						return false;
-					}
-				}
-			}
-
-			return true;
-		}
-	</script>
 	<?php
+	// Toggle behavior + wcdValidateFormGroupSettings() live in
+	// admin/js/webchangedetector-admin.js (extracted to comply with the
+	// "no inline JS" project rule).
 }
 ?>

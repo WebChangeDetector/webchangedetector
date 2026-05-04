@@ -234,7 +234,7 @@ class WebChangeDetector_Admin_Account {
 			<div class="wcd-settings-section wcd-settings-section-api-token">
 				<div class="wcd-settings-card">
 					<h2><span class="dashicons dashicons-admin-users"></span> Account</h2>
-					<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
+					<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector' ) ); ?>" method="post"
 						onsubmit="return confirm('<?php echo esc_js( __( 'Are you sure you want to reset the API token?', 'webchangedetector' ) ); ?>');">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
@@ -328,7 +328,7 @@ class WebChangeDetector_Admin_Account {
 			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
 			?>
 			<div class="highlight-container">
-				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
+				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector' ) ); ?>" method="post">
 					<input type="hidden" name="wcd_action" value="save_api_token">
 					<?php wp_nonce_field( 'save_api_token' ); ?>
 					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>

@@ -188,8 +188,35 @@ class WebChangeDetector_Admin_WordPress {
 				),
 			);
 			$cm_settings['codeEditor'] = wp_enqueue_code_editor( $css_settings );
+
+			// CodeMirror settings for JS (used by the JS injection field).
+			$js_settings                 = array(
+				'type'       => 'application/javascript',
+				'codemirror' => array(
+					'theme'             => 'darcula',
+					'mode'              => 'javascript',
+					'lineNumbers'       => true,
+					'autoCloseBrackets' => true,
+					'matchBrackets'     => true,
+					'styleActiveLine'   => true,
+					'indentUnit'        => 2,
+					'tabSize'           => 2,
+				),
+			);
+			$cm_settings['codeEditorJs'] = wp_enqueue_code_editor( $js_settings );
+
 			wp_localize_script( 'jquery', 'cm_settings', $cm_settings );
 			wp_enqueue_script( 'wp-theme-plugin-editor' );
+
+			$wizard_allowances = get_option( WCD_ALLOWANCES );
+			if ( ! is_array( $wizard_allowances ) ) {
+				$wizard_allowances = array();
+			}
+			// Super admins on network-activated multisite see all wizard steps,
+			// regardless of the per-site allowances configured for sub-site admins.
+			if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+				$wizard_allowances = array_fill_keys( array_keys( $wizard_allowances ), true );
+			}
 
 			wp_localize_script(
 				'wcd-wizard',
@@ -197,6 +224,7 @@ class WebChangeDetector_Admin_WordPress {
 				array(
 					'ajax_url'     => admin_url( 'admin-ajax.php' ),
 					'nonce'        => wp_create_nonce( 'wcd_wizard_nonce' ),
+					'allowances'   => $wizard_allowances,
 					'translations' => array(
 						// Navigation buttons.
 						'nextBtnText'                 => __( 'Next →', 'webchangedetector' ),
@@ -221,45 +249,34 @@ class WebChangeDetector_Admin_WordPress {
 						'recentChangesTitle'          => __( 'Recent Changes', 'webchangedetector' ),
 						'recentChangesDesc'           => __( 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector' ),
 
-						// URL selection steps.
+						// Manual Checks / Auto Update steps.
 						'autoUpdateStatusTitle'       => __( 'Auto Update Checks Status', 'webchangedetector' ),
 						'autoUpdateStatusDesc'        => __( 'This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues.', 'webchangedetector' ),
 						'manualChecksTitle'           => __( 'Manual Checks & Auto Update Settings', 'webchangedetector' ),
 						'manualChecksDesc'            => __( 'You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
 						'enableAutoUpdateDesc'        => __( 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.', 'webchangedetector' ),
-						'enabledAutoUpdatesTitle'     => __( 'Enabled Auto Updates', 'webchangedetector' ),
-						'enabledAutoUpdatesDesc'      => __( 'Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings.', 'webchangedetector' ),
-						'autoUpdateTimeframeTitle'    => __( 'Auto Update Timeframe', 'webchangedetector' ),
-						'autoUpdateTimeframeDesc'     => __( 'Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.', 'webchangedetector' ),
-						'weekdaySelectionTitle'       => __( 'Weekday Selection', 'webchangedetector' ),
-						'weekdaySelectionDesc'        => __( 'Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.', 'webchangedetector' ),
-						'notificationEmailsTitle'     => __( 'Notification Emails', 'webchangedetector' ),
-						'notificationEmailsDesc'      => __( 'Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.', 'webchangedetector' ),
-						'changeThresholdTitle'        => __( 'Change Detection Threshold', 'webchangedetector' ),
-						'changeThresholdDesc'         => __( 'Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.', 'webchangedetector' ),
-						'cssInjectionTitle'           => __( 'CSS Injection', 'webchangedetector' ),
-						'cssInjectionDesc'            => __( 'Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }', 'webchangedetector' ),
+						'scheduleNotificationsTitle'  => __( 'Schedule & Notifications', 'webchangedetector' ),
+						'scheduleNotificationsDesc'   => __( 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive change detection should be. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
+
 						'urlSelectionTitle'           => __( 'URL Selection Table', 'webchangedetector' ),
 						'urlSelectionDesc'            => __( 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.', 'webchangedetector' ),
 						'saveSettingsTitle'           => __( 'Save Your Settings', 'webchangedetector' ),
 						'saveSettingsDesc'            => __( 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.', 'webchangedetector' ),
+
+						// Advanced screenshot + code injection steps (shared between Manual Checks and Monitoring).
+						'advancedScreenshotTitle'     => __( 'Advanced Screenshot Settings', 'webchangedetector' ),
+						'advancedScreenshotDesc'      => __( 'Optional: configure HTTP Basic Authentication for protected sites, route screenshots through the Static IP for whitelisting, or increase the delay between screenshots if your server is under load.', 'webchangedetector' ),
+						'codeInjectionTitle'          => __( 'Code Injection', 'webchangedetector' ),
+						'codeInjectionDesc'           => __( 'Inject custom CSS or JavaScript that runs before screenshots are taken. Use CSS to hide dynamic elements (timestamps, ads), and JavaScript to dismiss popups or trigger specific UI states.', 'webchangedetector' ),
 
 						// Monitoring steps.
 						'monitoringSettingsTitle'     => __( 'Automatic Monitoring Settings', 'webchangedetector' ),
 						'monitoringSettingsDesc'      => __( 'Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues.', 'webchangedetector' ),
 						'enableMonitoringTitle'       => __( 'Enable Monitoring', 'webchangedetector' ),
 						'enableMonitoringDesc'        => __( 'Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings.', 'webchangedetector' ),
-						'checkFrequencyTitle'         => __( 'Check Frequency', 'webchangedetector' ),
-						'checkFrequencyDesc'          => __( 'How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.', 'webchangedetector' ),
-						'preferredCheckTimeTitle'     => __( 'Preferred Check Time', 'webchangedetector' ),
-						'preferredCheckTimeDesc'      => __( 'Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.', 'webchangedetector' ),
-						'changeSensitivityTitle'      => __( 'Change Sensitivity', 'webchangedetector' ),
-						'changeSensitivityDesc'       => __( 'Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.', 'webchangedetector' ),
-						'alertRecipientsTitle'        => __( 'Alert Recipients', 'webchangedetector' ),
-						'alertRecipientsDesc'         => __( 'Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.', 'webchangedetector' ),
-						'cssCustomizationTitle'       => __( 'CSS Customization', 'webchangedetector' ),
-						'cssCustomizationDesc'        => __( 'Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.', 'webchangedetector' ),
+						'monitoringScheduleTitle'     => __( 'Schedule & Alerts', 'webchangedetector' ),
+						'monitoringScheduleDesc'      => __( 'Set how often we check your site, when checks should run, the change sensitivity, and who receives alerts. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
 						'saveMonitoringTitle'         => __( 'Save Monitoring Settings', 'webchangedetector' ),
 						'saveMonitoringDesc'          => __( 'Save your configuration to activate monitoring. Changes take effect immediately.', 'webchangedetector' ),
 						'selectPagesToMonitorTitle'   => __( 'Select Pages to Monitor', 'webchangedetector' ),
@@ -272,6 +289,12 @@ class WebChangeDetector_Admin_WordPress {
 						'detectionTableDesc'          => __( 'Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.', 'webchangedetector' ),
 						'filterOptionsTitle'          => __( 'Filter Options', 'webchangedetector' ),
 						'filterOptionsDesc'           => __( 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.', 'webchangedetector' ),
+
+						// AI Rules steps.
+						'aiRulesTitle'                => __( 'AI Rules', 'webchangedetector' ),
+						'aiRulesDesc'                 => __( 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from change detection views by clicking "Ignore in future" on a region.', 'webchangedetector' ),
+						'aiRulesListTitle'            => __( 'Your Rules', 'webchangedetector' ),
+						'aiRulesListDesc'             => __( 'Active rules are applied automatically to future comparisons. You can toggle, change scope, or delete rules from this list.', 'webchangedetector' ),
 
 						// Logs steps.
 						'activityLogsTitle'           => __( 'Activity Logs', 'webchangedetector' ),
@@ -378,6 +401,28 @@ class WebChangeDetector_Admin_WordPress {
 						),
 					)
 				);
+
+				// Default allowances management script (only used in "All Websites" mode,
+				// but the script bails harmlessly when its DOM elements are absent).
+				wp_enqueue_script(
+					'webchangedetector-multisite-default-allowances',
+					WCD_PLUGIN_URL . 'admin/js/webchangedetector-multisite-default-allowances.js',
+					array( 'jquery', $this->plugin_name ),
+					$this->version,
+					true
+				);
+
+				wp_localize_script(
+					'webchangedetector-multisite-default-allowances',
+					'wcdDefaultAllowancesData',
+					array(
+						'i18n' => array(
+							'saving'        => __( 'Saving...', 'webchangedetector' ),
+							'saveFailed'    => __( 'Failed to save defaults. Please try again.', 'webchangedetector' ),
+							'requestFailed' => __( 'Request failed. Please try again.', 'webchangedetector' ),
+						),
+					)
+				);
 			}
 		}
 	}
@@ -433,37 +478,42 @@ class WebChangeDetector_Admin_WordPress {
 	public function wcd_plugin_setup_menu() {
 		require_once 'partials/webchangedetector-admin-display.php';
 		$allowances = get_option( WCD_ALLOWANCES );
+		// Super admins on network-activated multisite must keep full access on every
+		// sub-site even when allowances restrict the sub-site admin.
+		$bypass = WebChangeDetector_Multisite::should_bypass_allowances();
 
 		add_menu_page( __( 'WebChange Detector', 'webchangedetector' ), __( 'WebChange Detector', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init', WCD_PLUGIN_URL . 'admin/img/icon-wp-backend.svg' );
 		add_submenu_page( 'webchangedetector', __( 'Dashboard', 'webchangedetector' ), __( 'Dashboard', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init' );
 
-		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && $allowances['manual_checks_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['manual_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && $allowances['logs_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['logs_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), 'manage_options', 'webchangedetector-logs', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && $allowances['settings_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['settings_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), 'manage_options', 'webchangedetector-settings', 'wcd_webchangedetector_init' );
 		}
-		if ( is_array( $allowances ) && ( $allowances['ai_rules_view'] ?? true ) ) {
+		if ( $bypass || ( is_array( $allowances ) && ( $allowances['ai_rules_view'] ?? true ) ) ) {
 			add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), 'manage_options', 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
 		}
 
 		// Upgrade Account link (external URL, always last in sidebar).
-		if ( is_array( $allowances ) && ! empty( $allowances['upgrade_account'] ) ) {
+		// Hidden for sub-site admins on network-activated multisite — the upgrade
+		// flow targets the network-shared account, not the sub-site.
+		if ( is_array( $allowances ) && ! empty( $allowances['upgrade_account'] ) && WebChangeDetector_Multisite::can_manage_account() ) {
 			$upgrade_url = $this->admin->account_handler->get_upgrade_url();
 			if ( $upgrade_url ) {
 				global $submenu;
 				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Adding external link to submenu.
 				$submenu['webchangedetector'][] = array(
-					__( 'Upgrade Account', 'webchangedetector' ),
+					'<span class="wcd-upgrade-account-link">' . esc_html__( 'Upgrade Account', 'webchangedetector' ) . '</span>',
 					'manage_options',
 					$upgrade_url,
 				);
@@ -471,7 +521,7 @@ class WebChangeDetector_Admin_WordPress {
 		}
 
 		// Hidden submenu pages (not visible in menu but accessible via URL).
-		if ( is_array( $allowances ) && $allowances['change_detections_view'] ) {
+		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
 			add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 			add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 		}

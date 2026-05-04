@@ -103,8 +103,7 @@ $total_count = count( $sites );
 <?php
 // Allowances management section.
 // Show when a specific registered site is selected or when "All Websites" is selected.
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$raw_blog_id       = isset( $_GET['wcd_blog_id'] ) ? sanitize_text_field( wp_unslash( $_GET['wcd_blog_id'] ) ) : '';
+$raw_blog_id       = WebChangeDetector_Multisite::get_persisted_blog_context();
 $is_all_sites_mode = ( 'all' === $raw_blog_id );
 $show_allowances   = false;
 $allowances        = array();
@@ -129,9 +128,13 @@ if ( $is_all_sites_mode ) {
 	}
 	$show_allowances = true;
 
-} elseif ( ! empty( $raw_blog_id ) ) {
-	// Specific site selected.
-	$selected_blog_id = absint( $raw_blog_id );
+} else {
+	// Specific site selected, or initial page load (no parameter) → fall back to
+	// the site shown selected in the dropdown above (defaults to main site).
+	$selected_blog_id = ! empty( $raw_blog_id )
+		? absint( $raw_blog_id )
+		: WebChangeDetector_Multisite::get_current_managed_blog_id();
+
 	if ( $selected_blog_id > 0 ) {
 		$site_website_uuid = WebChangeDetector_Multisite::with_blog(
 			$selected_blog_id,
@@ -155,3 +158,10 @@ if ( $is_all_sites_mode ) {
 if ( $show_allowances ) :
 	include WCD_PLUGIN_DIR . 'admin/partials/components/multisite/allowances-manager.php';
 endif;
+
+// In "All Websites" mode, also render the "Defaults for new sites" accordion.
+// These defaults are applied when a new sub-site is manually registered.
+if ( $is_all_sites_mode ) {
+	$default_allowances_values = WebChangeDetector_Multisite::get_shared_option( 'wcd_default_allowances', $allowances );
+	include WCD_PLUGIN_DIR . 'admin/partials/components/multisite/default-allowances-manager.php';
+}

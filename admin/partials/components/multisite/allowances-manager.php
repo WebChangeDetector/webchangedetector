@@ -25,49 +25,7 @@ $is_all_sites_mode = $is_all_sites_mode ?? false;
 $website_uuid      = $website_uuid ?? '';
 $wcd_blog_id       = $wcd_blog_id ?? 0;
 
-// All allowance sections with their fields.
-$sections = array(
-	array(
-		'title'       => __( 'Tabs in WP Plugin', 'webchangedetector' ),
-		'description' => __( 'Select which tabs should be enabled at the WP website.', 'webchangedetector' ),
-		'fields'      => array(
-			'manual_checks_view'     => __( 'Manual checks view', 'webchangedetector' ),
-			'monitoring_checks_view' => __( 'Monitoring checks view', 'webchangedetector' ),
-			'change_detections_view' => __( 'Change Detections view', 'webchangedetector' ),
-			'ai_rules_view'          => __( 'AI Rules view', 'webchangedetector' ),
-			'settings_view'          => __( 'Settings view', 'webchangedetector' ),
-			'logs_view'              => __( 'Queue view', 'webchangedetector' ),
-		),
-	),
-	array(
-		'title'       => __( 'Manual Checks', 'webchangedetector' ),
-		'description' => __( 'The "Manual checks view" must be enabled.', 'webchangedetector' ),
-		'fields'      => array(
-			'manual_checks_start'    => __( 'Allow start manual checks', 'webchangedetector' ),
-			'manual_checks_settings' => __( 'Show manual checks settings', 'webchangedetector' ),
-			'manual_checks_urls'     => __( 'Show manual checks urls', 'webchangedetector' ),
-		),
-	),
-	array(
-		'title'       => __( 'Monitoring Checks', 'webchangedetector' ),
-		'description' => __( 'The "Monitoring checks view" must be enabled.', 'webchangedetector' ),
-		'fields'      => array(
-			'monitoring_checks_settings' => __( 'Show monitoring checks settings', 'webchangedetector' ),
-			'monitoring_checks_urls'     => __( 'Show monitoring checks urls', 'webchangedetector' ),
-		),
-	),
-	array(
-		'title'       => __( 'Other Settings', 'webchangedetector' ),
-		'description' => __( 'Additional restrictions for the WP website.', 'webchangedetector' ),
-		'fields'      => array(
-			'settings_add_urls'         => __( 'Show add url types in settings', 'webchangedetector' ),
-			'settings_account_settings' => __( 'Show account settings', 'webchangedetector' ),
-			'upgrade_account'           => __( 'Allow upgrading account', 'webchangedetector' ),
-			'wizard_start'              => __( 'Start the wizard', 'webchangedetector' ),
-			'only_frontpage'            => __( 'Allow only checks for frontpage', 'webchangedetector' ),
-		),
-	),
-);
+$sections = WebChangeDetector_Allowances_Ajax_Handler::get_sections();
 ?>
 
 <div class="wcd-allowances-manager">
