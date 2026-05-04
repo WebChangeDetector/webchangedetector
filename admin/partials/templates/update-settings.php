@@ -23,6 +23,14 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 	}
 
 	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( true === $auto_update_settings['auto_update_checks_enabled'] || '1' === $auto_update_settings['auto_update_checks_enabled'] || 1 === $auto_update_settings['auto_update_checks_enabled'] );
+
+	// Multisite Subsites inherit their schedule from the main site. Only the
+	// auto_update_checks_enabled toggle stays editable per subsite.
+	$is_multisite_subsite = \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite();
+	$parent_domain        = '';
+	if ( $is_multisite_subsite && ! empty( $this->admin->website_details['parent_multisite_website']['domain'] ) ) {
+		$parent_domain = $this->admin->website_details['parent_multisite_website']['domain'];
+	}
 	?>
 
 	<div class="wcd-settings-card">
@@ -40,6 +48,28 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?>
 				</p>
 			</div>
+
+			<?php if ( $is_multisite_subsite ) : ?>
+				<div class="notice notice-warning inline wcd-multisite-inherited-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php
+						if ( '' !== $parent_domain ) {
+							echo wp_kses(
+								sprintf(
+									/* translators: %s: domain of the multisite main site. */
+									__( 'The schedule for auto-update checks is managed network-wide on the multisite main site (<strong>%s</strong>). Only the toggle below decides whether this subsite participates.', 'webchangedetector' ),
+									esc_html( $parent_domain )
+								),
+								array( 'strong' => array() )
+							);
+						} else {
+							esc_html_e( 'The schedule for auto-update checks is managed network-wide on the multisite main site. Only the toggle below decides whether this subsite participates.', 'webchangedetector' );
+						}
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-enabled">
 				<div class="wcd-form-label-wrapper">
@@ -69,6 +99,10 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					</div>
 				</div>
 			</div>
+
+			<?php if ( $is_multisite_subsite ) : ?>
+				<fieldset class="wcd-multisite-inherited-fieldset" disabled>
+			<?php endif; ?>
 
 			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
@@ -145,6 +179,10 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					
 				</div>
 			</div>
+
+			<?php if ( $is_multisite_subsite ) : ?>
+				</fieldset>
+			<?php endif; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-threshold">
 				<div class="wcd-form-label-wrapper">

@@ -280,9 +280,15 @@ class WebChangeDetector_Settings_Action_Handler {
 				continue;
 			}
 
+			// Subsites inherit the full schedule from the main site. Send only
+			// the enabled toggle so each subsite can opt out individually
+			// (e.g. staging or duplicate language sites) without persisting
+			// stale schedule copies that the API would ignore on read.
 			$request                         = array();
 			$request['action']               = 'websites/' . $website_id;
-			$request['auto_update_settings'] = $prepared;
+			$request['auto_update_settings'] = array(
+				'auto_update_checks_enabled' => $prepared['auto_update_checks_enabled'],
+			);
 			$requests[]                      = $request;
 		}
 

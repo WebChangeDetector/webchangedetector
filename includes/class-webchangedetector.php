@@ -277,6 +277,10 @@ class WebChangeDetector {
 		// Self-heal token storage (e.g. after manual network-activation toggle via WP-CLI).
 		$this->loader->add_action( 'admin_init', 'WebChangeDetector\\WebChangeDetector_Multisite', 'ensure_token_storage_consistency' );
 
+		// Self-heal multisite hierarchy link (FEAT-16): persist main UUID on the
+		// main site, backfill parent_multisite_website_id on sub-sites.
+		$this->loader->add_action( 'admin_init', 'WebChangeDetector\\WebChangeDetector_Multisite', 'ensure_multisite_link' );
+
 		// Only register API-dependent hooks if we have an API token.
 		if ( $this->has_api_token() ) {
 			// Post sync hooks.

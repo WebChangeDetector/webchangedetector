@@ -387,15 +387,43 @@ class WebChangeDetector_Admin {
 
 		// Check if both groups were created successfully.
 		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
+			// Multisite Subsite registration: link to the network main site's Website
+			// so the API resolves auto_update_settings via inheritance. Hauptseite
+			// (main site) registers as standalone — we persist its UUID below so
+			// later sub-site registrations can reference it.
+			$parent_multisite_website_id = null;
+			if (
+				\WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active()
+				&& ! is_main_site()
+			) {
+				$parent_multisite_website_id = \WebChangeDetector\WebChangeDetector_Multisite::get_main_website_id();
+				if ( '' === $parent_multisite_website_id ) {
+					// Main site hasn't registered yet — link cannot be set atomically.
+					// ensure_multisite_link() backfills on the next settings render.
+					$parent_multisite_website_id = null;
+				}
+			}
+
 			// Create the website with the group IDs.
 			$website_response = \WebChangeDetector\WebChangeDetector_API_V2::create_website_v2(
 				$domain,
 				$manual_group_response['data']['id'],
-				$monitoring_group_response['data']['id']
+				$monitoring_group_response['data']['id'],
+				$parent_multisite_website_id
 			);
 
 			// Check if website was created successfully.
 			if ( ! empty( $website_response['data']['id'] ) ) {
+				// Persist the main site's Website UUID into the shared NETWORK_OPTION
+				// once. Sub-sites read this when they register so they can populate
+				// parent_multisite_website_id and inherit the schedule.
+				if (
+					\WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active()
+					&& is_main_site()
+				) {
+					\WebChangeDetector\WebChangeDetector_Multisite::set_main_website_id( $website_response['data']['id'] );
+				}
+
 				// Save group IDs to wp_options.
 				$groups = array(
 					WCD_AUTO_DETECTION_GROUP   => $monitoring_group_response['data']['id'],

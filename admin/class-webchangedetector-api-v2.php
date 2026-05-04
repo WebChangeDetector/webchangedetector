@@ -106,18 +106,25 @@ class WebChangeDetector_API_V2 {
 	/**
 	 * Create website.
 	 *
-	 * @param string $domain The domain for the website.
-	 * @param string $manual_detection_group_id The manual detection group ID.
-	 * @param string $auto_detection_group_id The auto detection group ID.
+	 * @param string      $domain The domain for the website.
+	 * @param string      $manual_detection_group_id The manual detection group ID.
+	 * @param string      $auto_detection_group_id The auto detection group ID.
+	 * @param string|null $parent_multisite_website_id Optional UUID of the multisite main site's
+	 *                                                 Website. When set, this Website becomes a
+	 *                                                 Subsite that inherits its schedule from the
+	 *                                                 referenced main.
 	 * @return mixed|string
 	 */
-	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id ) {
+	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id, $parent_multisite_website_id = null ) {
 		$args = array(
 			'action'                    => 'websites',
 			'domain'                    => $domain,
 			'manual_detection_group_id' => $manual_detection_group_id,
 			'auto_detection_group_id'   => $auto_detection_group_id,
 		);
+		if ( ! empty( $parent_multisite_website_id ) ) {
+			$args['parent_multisite_website_id'] = $parent_multisite_website_id;
+		}
 		return self::api_v2( $args, 'POST' );
 	}
 

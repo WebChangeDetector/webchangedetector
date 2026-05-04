@@ -35,44 +35,45 @@ require_once plugin_dir_path( __FILE__ ) . 'admin/class-webchangedetector-databa
 // Include the multisite helper so we can share the canonical network options list.
 require_once plugin_dir_path( __FILE__ ) . 'admin/class-webchangedetector-multisite.php';
 
-// Per-site options to delete.
-$wcd_site_options_to_delete = array(
-	'webchangedetector_website_id',
-	'webchangedetector_debug_logging',
-	'webchangedetector_health_status',
-	'wcd_website_groups',
-	'wcd_wizard',
-	'wcd_initial_setup_needed',
-	'wcd_allowances',
-	'wcd_auto_update_history',
-	'wcd_manual_checks_batch',
-	'wcd_manual_checks_pre_batch',
-	'wcd_manual_checks_post_batch',
-	'wcd_manual_checks_status',
-	'wcd_manual_checks_started_at',
-	'webchangedetector_update_detection_step',
-	'wcd_pre_auto_update',
-	'wcd_post_auto_update',
-	'wcd_auto_updates_running',
-	'wcd_wordpress_cron',
-	'auto_updater.lock',
-	'wcd_disable_admin_bar_menu',
-);
-
 // Network-wide options to delete (single source of truth: multisite helper).
 $wcd_network_options_to_delete = \WebChangeDetector\WebChangeDetector_Multisite::NETWORK_OPTIONS;
 
 /**
  * Clean up a single site's data.
+ *
+ * The per-site options list is declared inside this function intentionally:
+ * uninstall.php is included from inside uninstall_plugin(), so file-scope
+ * variables would not be visible here via the `global` keyword.
  */
 function wcd_uninstall_site_cleanup() {
-	global $wcd_site_options_to_delete;
+	$site_options_to_delete = array(
+		'webchangedetector_website_id',
+		'webchangedetector_debug_logging',
+		'webchangedetector_health_status',
+		'wcd_website_groups',
+		'wcd_wizard',
+		'wcd_initial_setup_needed',
+		'wcd_allowances',
+		'wcd_auto_update_history',
+		'wcd_manual_checks_batch',
+		'wcd_manual_checks_pre_batch',
+		'wcd_manual_checks_post_batch',
+		'wcd_manual_checks_status',
+		'wcd_manual_checks_started_at',
+		'webchangedetector_update_detection_step',
+		'wcd_pre_auto_update',
+		'wcd_post_auto_update',
+		'wcd_auto_updates_running',
+		'wcd_wordpress_cron',
+		'auto_updater.lock',
+		'wcd_disable_admin_bar_menu',
+	);
 
 	// Drop database tables.
 	\WebChangeDetector\WebChangeDetector_Database_Logger::drop_table();
 
 	// Delete per-site options.
-	foreach ( $wcd_site_options_to_delete as $wcd_option ) {
+	foreach ( $site_options_to_delete as $wcd_option ) {
 		delete_option( $wcd_option );
 	}
 

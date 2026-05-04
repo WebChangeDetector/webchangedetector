@@ -47,6 +47,42 @@ class WebChangeDetector_Autoupdates {
 		// Add webhook endpoint for triggering cron jobs (always available for manual triggers).
 		add_action( 'init', array( $this, 'handle_webhook_trigger' ), 5 );
 
+		// On a multisite Subsite, the network main site orchestrates auto-update
+		// pre/post screenshots for the whole network in a single API batch. We
+		// skip all hook + cron registration here so the Subsite's WP-cron run
+		// never tries to trigger its own pre/post pipeline (which only ever
+		// captured this one site's URLs anyway, leaving the rest of the
+		// network unprotected — the bug FEAT-16 fixes). State (PRE/POST/RUNNING/
+		// auto_updater.lock) lives naturally in the orchestrator's wp_options
+		// because Hook-Gating ensures only the main-site cron writes them — no
+		// shared-option / wp_sitemeta wrapper needed.
+		if ( WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			// Orphan cron events from previous plugin versions (when subsites still
+			// orchestrated their own pipeline). Both recurring AND single events.
+			$orphan_hooks = array(
+				'wcd_sync_auto_update_schedule',
+				'wcd_check_update_completion',
+				'wcd_wp_version_check',
+				'wcd_cron_check_post_queues',
+				'wp_maybe_auto_update', // Single-event reschedules we added.
+			);
+			foreach ( $orphan_hooks as $hook ) {
+				if ( wp_next_scheduled( $hook ) ) {
+					wp_clear_scheduled_hook( $hook );
+				}
+			}
+
+			// Stale API webhook: previous-version subsites registered a cron-trigger
+			// webhook so the API could ping them daily. With Hook-Gating that ping
+			// goes nowhere — drop the registration so the API stops calling.
+			$webhook_id = get_option( WCD_WORDPRESS_CRON );
+			if ( $webhook_id ) {
+				\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( $webhook_id );
+				delete_option( WCD_WORDPRESS_CRON );
+			}
+			return;
+		}
+
 		// Only register API-dependent hooks if we have an API token.
 		$api_token = WebChangeDetector_Multisite::get_api_token();
 		if ( ! empty( $api_token ) ) {
@@ -161,7 +197,16 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting post-update screenshots and comparisons.', 'automatic_updates_complete', 'debug' );
 
 		try {
-			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post', 'auto_update' );
+			// Mirror the group selection used for pre-update so post screenshots cover
+			// exactly the same sub-sites that were captured before the update ran.
+			$group_ids = $this->collect_network_group_ids();
+			if ( empty( $group_ids ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto-update checks were disabled mid-cycle (between pre and post) or no sites are enabled. Cleaning up pre-update state.', 'automatic_updates_complete', 'warning' );
+				delete_option( WCD_PRE_AUTO_UPDATE );
+				delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+				return;
+			}
+			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $group_ids, 'post', 'auto_update' );
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Post-Screenshot Response: ' . wp_json_encode( $response ), 'automatic_updates_complete', 'debug' );
 
 			// Validate response structure.
@@ -192,6 +237,7 @@ class WebChangeDetector_Autoupdates {
 
 			// Clean up pre-update data since we can't complete the comparison.
 			delete_option( WCD_PRE_AUTO_UPDATE );
+			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
 			return;
 		}
 
@@ -718,6 +764,85 @@ class WebChangeDetector_Autoupdates {
 
 
 	/**
+	 * Collect manual_group_ids of all sites that should participate in this
+	 * pre/post auto-update batch.
+	 *
+	 * Single-site / per-site-activation: returns this site's manual_group_id.
+	 * Multisite-network: iterates all sub-sites + the main site, includes those
+	 * where the per-site `auto_update_checks_enabled` flag is true. The flag is
+	 * read from each site's locally cached `webchangedetector_website_details`
+	 * option (written on every settings save — see
+	 * WebChangeDetector_Admin_Settings::update_manual_check_group_settings()).
+	 *
+	 * **Stale-cache caveat:** the hourly `wcd_sync_auto_update_schedule` cron is
+	 * removed from sub-sites by Hook-Gating, so a sub-site's local cache only
+	 * refreshes when the sub-site admin saves the settings page. If the cache
+	 * write ever fails silently after a successful API write, the network
+	 * orchestrator reads the stale flag until the sub-site admin re-renders the
+	 * Settings page. Documented as accepted edge case in FEAT-16 — fix is to
+	 * have the sub-site admin visit Settings once.
+	 *
+	 * **Why not reuse `WebChangeDetector_Multisite::get_all_sites_with_status()`:**
+	 * that helper reads only `webchangedetector_website_id` and `wcd_website_groups`
+	 * per site. We additionally need `webchangedetector_website_details.auto_update_settings.auto_update_checks_enabled`,
+	 * which would force a second `with_blog()` round-trip per site — negating
+	 * any DRY benefit. Single-pass implementation here is faster and clearer.
+	 *
+	 * Returned UUIDs go into a single take_screenshot_v2() call — the API
+	 * accepts an array of group IDs and returns one batch_id, so the existing
+	 * polling loop is unchanged.
+	 *
+	 * @since 4.4.0
+	 * @return string[] List of manual group UUIDs (deduplicated, may be empty).
+	 */
+	private function collect_network_group_ids() {
+		// Single-site / per-site-activation: only this site, gated by its own enabled flag.
+		if ( ! WebChangeDetector_Multisite::is_multisite_active() ) {
+			$settings = self::get_auto_update_settings();
+			if ( empty( $settings['auto_update_checks_enabled'] ) || empty( $this->manual_group_id ) ) {
+				return array();
+			}
+			return array( $this->manual_group_id );
+		}
+
+		// Multisite-network: gather from every site (including the main).
+		// `'number' => 0` makes the query unbounded — default is 100 and would
+		// silently drop sub-sites on networks larger than that.
+		$group_ids = array();
+		$sites     = get_sites(
+			array(
+				'archived' => 0,
+				'spam'     => 0,
+				'deleted'  => 0,
+				'number'   => 0,
+			)
+		);
+
+		foreach ( $sites as $site ) {
+			$site_data = WebChangeDetector_Multisite::with_blog(
+				(int) $site->blog_id,
+				static function () {
+					$groups       = get_option( 'wcd_website_groups', array() );
+					$details      = get_option( 'webchangedetector_website_details', array() );
+					$manual_group = is_array( $groups ) ? ( $groups[ WCD_MANUAL_DETECTION_GROUP ] ?? '' ) : '';
+					$enabled      = ! empty( $details['auto_update_settings']['auto_update_checks_enabled'] );
+					return array(
+						'manual_group' => is_string( $manual_group ) ? $manual_group : '',
+						'enabled'      => $enabled,
+					);
+				}
+			);
+
+			if ( empty( $site_data['manual_group'] ) || empty( $site_data['enabled'] ) ) {
+				continue;
+			}
+			$group_ids[] = $site_data['manual_group'];
+		}
+
+		return array_values( array_unique( $group_ids ) );
+	}
+
+	/**
 	 * Start pre-update screenshots.
 	 *
 	 * @return bool True if started successfully, false on error.
@@ -728,10 +853,26 @@ class WebChangeDetector_Autoupdates {
 		// Clear caches.
 		$this->clear_wordpress_caches();
 
+		// Resolve participating groups. Single-site: just this site's group;
+		// multisite-network: every enabled site's manual group in a single batch.
+		// On the pre-path validate_wcd_configuration() runs first, so this empty
+		// case is rare (network-wide all-disabled) but defensive.
+		$group_ids = $this->collect_network_group_ids();
+		if ( empty( $group_ids ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'No enabled sites for auto-update screenshots. Skipping.',
+				'wp_maybe_auto_update',
+				'debug'
+			);
+			delete_option( WCD_AUTO_UPDATES_RUNNING );
+			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+			return false;
+		}
+
 		// Take screenshots.
 		try {
 			$sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2(
-				$this->manual_group_id,
+				$group_ids,
 				'pre',
 				'auto_update'
 			);

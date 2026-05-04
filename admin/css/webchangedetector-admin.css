@@ -6033,3 +6033,17 @@ Settings
 .wcd-allowances-actions span[id$="-status"].wcd-status-error {
     color: #d63638;
 }
+
+/* Multisite Subsite — schedule fields are inherited from the main site.
+   The disabled <fieldset> wraps timeframe/weekdays/emails to lock them
+   without JS. Default fieldset styling has border + padding; reset here. */
+.webchangedetector fieldset.wcd-multisite-inherited-fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+
+.webchangedetector fieldset.wcd-multisite-inherited-fieldset > .wcd-form-row {
+    opacity: 0.6;
+}

@@ -284,6 +284,17 @@ class WebChangeDetector_Admin_Settings {
 			$auto_update_settings['auto_update_checks_enabled'] = false;
 		}
 
+		// Multisite Subsites inherit the schedule from the main site. Strip
+		// everything except the enabled toggle so the API row stays clean
+		// (the API would silently ignore the schedule fields on read, but
+		// keeping them out of the DB avoids confusing drift).
+		if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			$auto_update_settings = array_intersect_key(
+				$auto_update_settings,
+				array( 'auto_update_checks_enabled' => null )
+			);
+		}
+
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
