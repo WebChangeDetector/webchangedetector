@@ -334,10 +334,10 @@ class WebChangeDetector_Admin_Account {
 					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<h2><?php esc_html_e( 'Use Existing API Token', 'webchangedetector' ); ?></h2>
 					<p>
-						<?php esc_html_e( 'Use the API token of your existing account. To get your API token, please login to your account at', 'webchangedetector' ); ?>
-						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>
+						<?php esc_html_e( 'Find your token in your account at', 'webchangedetector' ); ?>
+						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>.
 					</p>
-					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" required>
+					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" placeholder="<?php echo esc_attr__( 'e.g. aBc1dEf2gHi3jKl4mNo5pQr6sTu7vWx8yZ901234', 'webchangedetector' ); ?>" required>
 					<input type="submit" value="<?php esc_attr_e( 'Save', 'webchangedetector' ); ?>" class="button button-primary">
 				</form>
 			</div>
@@ -369,14 +369,13 @@ class WebChangeDetector_Admin_Account {
 		<div class="no-account-page">
 			<div class="no-account">
 				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . 'admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
-				<h2><?php echo esc_html__( 'See what changed before your users do.', 'webchangedetector' ); ?></h2>
 			</div>
 			<div class="highlight-wrapper">
 				<div class="highlight-container">
 					<div class="highlight-inner">
 						<h2><?php echo esc_html__( 'Create Free Account', 'webchangedetector' ); ?></h2>
 						<p>
-							<?php echo esc_html__( 'Create your free account with', 'webchangedetector' ); ?><br><strong><?php echo esc_html__( '1000 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'in the first month and', 'webchangedetector' ); ?> <strong><?php echo esc_html__( '50 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'after.', 'webchangedetector' ); ?><br>
+							<?php echo esc_html__( 'Sign up and start detecting visual changes in seconds.', 'webchangedetector' ); ?>
 						</p>
 						<form class="frm_new_account" method="post">
 							<input type="hidden" name="wcd_action" value="create_trial_account">
