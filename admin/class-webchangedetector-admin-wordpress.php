@@ -350,11 +350,17 @@ class WebChangeDetector_Admin_WordPress {
 
 			wp_localize_script( $this->plugin_name, 'wcdAjaxData', $ajax_data );
 
-			// Enqueue multisite sites management script on the sites page.
-			if ( WebChangeDetector_Multisite::is_multisite_active()
-				&& is_network_admin()
-				&& strpos( $hook_suffix, 'webchangedetector-sites' ) !== false
-			) {
+			// Enqueue multisite scripts on the relevant network-admin pages.
+			if ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) {
+				$is_sites_page       = strpos( $hook_suffix, 'webchangedetector-sites' ) !== false;
+				$is_allowances_page = strpos( $hook_suffix, 'webchangedetector-allowances' ) !== false;
+			} else {
+				$is_sites_page       = false;
+				$is_allowances_page = false;
+			}
+
+			// Sites management script (Register / Register All buttons) — Sites page only.
+			if ( $is_sites_page ) {
 				wp_enqueue_script(
 					'webchangedetector-multisite-sites',
 					WCD_PLUGIN_URL . 'admin/js/webchangedetector-multisite-sites.js',
@@ -380,8 +386,10 @@ class WebChangeDetector_Admin_WordPress {
 						),
 					)
 				);
+			}
 
-				// Allowances management script.
+			// Allowances scripts — Sub-Site Allowances page only.
+			if ( $is_allowances_page ) {
 				wp_enqueue_script(
 					'webchangedetector-multisite-allowances',
 					WCD_PLUGIN_URL . 'admin/js/webchangedetector-multisite-allowances.js',
@@ -549,6 +557,9 @@ class WebChangeDetector_Admin_WordPress {
 
 		// Sites management page (multisite only).
 		add_submenu_page( 'webchangedetector', __( 'Sites', 'webchangedetector' ), __( 'Sites', 'webchangedetector' ), $capability, 'webchangedetector-sites', 'wcd_webchangedetector_init' );
+
+		// Sub-site allowances page (multisite only).
+		add_submenu_page( 'webchangedetector', __( 'Sub-Site Allowances', 'webchangedetector' ), __( 'Sub-Site Allowances', 'webchangedetector' ), $capability, 'webchangedetector-allowances', 'wcd_webchangedetector_init' );
 
 		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
@@ -721,18 +732,68 @@ class WebChangeDetector_Admin_WordPress {
 	/**
 	 * Daily synchronization cron job handler.
 	 *
+	 * In network-activated multisite the cron is registered on the main site
+	 * only and iterates every registered sub-site so a single cron tick covers
+	 * the whole network (sub-site domains often have no cron trigger of their
+	 * own). On single-site or per-site activation, behaves as before.
+	 *
 	 * @since    4.0.0
 	 * @return   void
 	 */
 	public function daily_sync_posts_cron_job() {
-		// Sync posts.
-		$this->sync_posts( true );
+		if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() ) {
+			$this->sync_posts_for_all_registered_sites();
+		} else {
+			$this->sync_posts( true );
+		}
 
 		// Cleanup old logs daily instead of randomly.
 		$logger  = new \WebChangeDetector\WebChangeDetector_Database_Logger();
 		$deleted = $logger->cleanup_old_logs();
 		if ( $deleted > 0 ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( "Daily log cleanup: deleted {$deleted} old log entries", 'daily_sync_posts_cron_job', 'info' );
+		}
+	}
+
+	/**
+	 * Iterate every registered sub-site (incl. main) and sync its URLs.
+	 *
+	 * Each iteration runs inside `with_blog()` to guarantee try/finally
+	 * restore. Force-refreshes website_details inside the switched context
+	 * so we get the sub-site's own data, not a static-cached value from a
+	 * previous iteration. A failure on one site does not abort the others.
+	 *
+	 * @return void
+	 */
+	private function sync_posts_for_all_registered_sites() {
+		$sites = \WebChangeDetector\WebChangeDetector_Multisite::get_all_sites_with_status();
+		foreach ( $sites as $site ) {
+			if ( empty( $site['registered'] ) ) {
+				continue;
+			}
+			\WebChangeDetector\WebChangeDetector_Multisite::with_blog(
+				(int) $site['blog_id'],
+				function () use ( $site ) {
+					try {
+						$website_details = $this->admin->settings_handler->get_website_details( true );
+						if ( ! is_array( $website_details ) ) {
+							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+								'Skipping cron sync for blog ' . (int) $site['blog_id'] . ': no website details.',
+								'daily_sync_posts_cron_job',
+								'warning'
+							);
+							return;
+						}
+						$this->sync_posts( true, $website_details );
+					} catch ( \Throwable $e ) {
+						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+							'Cron sync failed for blog ' . (int) $site['blog_id'] . ': ' . $e->getMessage(),
+							'daily_sync_posts_cron_job',
+							'error'
+						);
+					}
+				}
+			);
 		}
 	}
 

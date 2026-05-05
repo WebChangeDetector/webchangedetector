@@ -120,6 +120,17 @@ class WebChangeDetector_WordPress_Ajax_Handler extends WebChangeDetector_Ajax_Ha
 			return;
 		}
 
+		// Sub-site registration requires the main site's WCD Website UUID so the
+		// API can link the sub-site via parent_multisite_website_id. Bail with a
+		// clear message if the main hasn't registered yet — this prevents a
+		// silently-orphaned sub-site that would otherwise get no inheritance.
+		if ( get_main_site_id() !== (int) $blog_id && '' === WebChangeDetector_Multisite::get_main_website_id() ) {
+			$this->send_error_response(
+				__( 'Please register the main site first. Sub-sites inherit their auto-update schedule from the main site.', 'webchangedetector' )
+			);
+			return;
+		}
+
 		// Single, clean switch to the target blog.
 		switch_to_blog( $blog_id );
 

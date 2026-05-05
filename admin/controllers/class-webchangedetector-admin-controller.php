@@ -469,6 +469,24 @@ class WebChangeDetector_Admin_Controller {
 				update_site_option( $option_key, $site_value );
 			}
 		}
+
+		// Pre-4.3.0 installs only persisted the main site's WCD website UUID
+		// under the per-site `webchangedetector_website_id`. The new network
+		// option `webchangedetector_main_website_id` did not exist, so the
+		// loop above can't migrate it (the source key has a different name).
+		// One-shot key-translation here so sub-sites can read the parent UUID
+		// during registration. Idempotent — early-return once populated.
+		if ( '' === WebChangeDetector_Multisite::get_main_website_id() ) {
+			$main_local_id = WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				static function () {
+					return get_option( 'webchangedetector_website_id', '' );
+				}
+			);
+			if ( is_string( $main_local_id ) && '' !== $main_local_id ) {
+				WebChangeDetector_Multisite::set_main_website_id( $main_local_id );
+			}
+		}
 	}
 
 	/**
@@ -503,6 +521,19 @@ class WebChangeDetector_Admin_Controller {
 
 		// Create new ones if we don't have them yet.
 		if ( ! $this->admin->website_details || ! is_array( $this->admin->website_details ) ) {
+			// Sub-site in network-activated multisite: do NOT auto-register.
+			// Registration is reserved for the super-admin via the Network
+			// Sites page. Otherwise merely viewing a sub-site (e.g. selecting
+			// it in the dropdown) would silently allocate an account slot.
+			if ( WebChangeDetector_Multisite::is_multisite_active() && ! is_main_site() ) {
+				if ( is_network_admin() && current_user_can( 'manage_network_options' ) ) {
+					$this->render_subsite_unregistered_notice();
+				} else {
+					$this->render_subsite_pending_activation_notice();
+				}
+				return false;
+			}
+
 			$create_result                = $this->admin->create_website_and_groups();
 			$this->admin->website_details = $this->admin->settings_handler->get_website_details( true );
 
@@ -721,6 +752,13 @@ class WebChangeDetector_Admin_Controller {
 				}
 				break;
 
+			case 'webchangedetector-allowances':
+				// Multisite: Sub-site allowances page.
+				if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+					include WCD_PLUGIN_DIR . 'admin/partials/templates/multisite-allowances.php';
+				}
+				break;
+
 			case 'webchangedetector-ai-rules':
 				// Check permissions.
 				if ( ! $this->admin->settings_handler->is_allowed( 'ai_rules_view' ) ) {
@@ -793,6 +831,30 @@ class WebChangeDetector_Admin_Controller {
 	 */
 	private function render_subsite_setup_required_notice() {
 		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-setup-required.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
+	}
+
+	/**
+	 * Render the "sub-site not registered" notice shown to a super-admin in
+	 * the network admin when they select an unregistered sub-site. Replaces
+	 * the previous silent auto-registration.
+	 */
+	private function render_subsite_unregistered_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-unregistered-notice.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
+	}
+
+	/**
+	 * Render the "activation pending" notice shown in the site admin of an
+	 * unregistered sub-site. Sub-site admins cannot register on their own;
+	 * the super-admin must do it from the network admin.
+	 */
+	private function render_subsite_pending_activation_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-pending-activation.php';
 		if ( file_exists( $template_path ) ) {
 			include $template_path;
 		}

@@ -5925,18 +5925,31 @@ Settings
  * Multisite
  */
 
+.webchangedetector .wcd-multisite-selector-card h2 {
+    margin-top: 0;
+}
+
+.webchangedetector .wcd-multisite-selector-card .wcd-description {
+    margin: 0 0 16px 0;
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .wcd-multisite-selector {
-    background: #f0f0f1;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 10px 15px;
-    margin-bottom: 15px;
     display: flex;
     align-items: center;
+    gap: 10px;
+}
+
+.wcd-multisite-selector form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .wcd-multisite-selector label {
-    margin-right: 10px;
     white-space: nowrap;
 }
 
@@ -6016,7 +6029,6 @@ Settings
 .wcd-allowances-actions {
     margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px solid #f0f0f1;
     display: flex;
     align-items: center;
     gap: 10px;

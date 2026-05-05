@@ -24,18 +24,25 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 
 	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( true === $auto_update_settings['auto_update_checks_enabled'] || '1' === $auto_update_settings['auto_update_checks_enabled'] || 1 === $auto_update_settings['auto_update_checks_enabled'] );
 
-	// Multisite Subsites inherit their schedule from the main site. Only the
-	// auto_update_checks_enabled toggle stays editable per subsite.
+	// Multisite Subsites inherit schedule + emails from the main site. Only the
+	// auto_update_checks_enabled toggle stays editable per subsite — it controls
+	// whether THIS subsite's URLs are included in the network-wide checks.
 	$is_multisite_subsite = \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite();
+	$is_multisite_main    = \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site();
 	$parent_domain        = '';
 	if ( $is_multisite_subsite && ! empty( $this->admin->website_details['parent_multisite_website']['domain'] ) ) {
 		$parent_domain = $this->admin->website_details['parent_multisite_website']['domain'];
 	}
+
+	// On a multisite-network main site the schedule + emails govern the whole
+	// network — they must stay visible even when main's own toggle is OFF, so a
+	// super-admin can still configure timing for participating subsites.
+	$schedule_hidden_style = ( $auto_update_checks_enabled || $is_multisite_main ) ? '' : 'display: none;';
 	?>
 
 	<div class="wcd-settings-card">
 		<h2><?php esc_html_e( 'WP Auto Update & Manual Checks Settings', 'webchangedetector' ); ?></h2>
-		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post">
+		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post"<?php echo $is_multisite_main ? ' class="wcd-multisite-main"' : ''; ?>>
 			<input type="hidden" name="wcd_action" value="save_group_settings">
 			<input type="hidden" name="step" value="pre-update">
 			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
@@ -58,15 +65,22 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 							echo wp_kses(
 								sprintf(
 									/* translators: %s: domain of the multisite main site. */
-									__( 'The schedule for auto-update checks is managed network-wide on the multisite main site (<strong>%s</strong>). Only the toggle below decides whether this subsite participates.', 'webchangedetector' ),
+									__( 'Schedule and notification emails for auto-update checks are managed network-wide on the multisite main site (<strong>%s</strong>). The toggle below decides whether this subsite participates in the network-wide checks.', 'webchangedetector' ),
 									esc_html( $parent_domain )
 								),
 								array( 'strong' => array() )
 							);
 						} else {
-							esc_html_e( 'The schedule for auto-update checks is managed network-wide on the multisite main site. Only the toggle below decides whether this subsite participates.', 'webchangedetector' );
+							esc_html_e( 'Schedule and notification emails for auto-update checks are managed network-wide on the multisite main site. The toggle below decides whether this subsite participates in the network-wide checks.', 'webchangedetector' );
 						}
 						?>
+					</p>
+				</div>
+			<?php elseif ( $is_multisite_main ) : ?>
+				<div class="notice notice-warning inline wcd-multisite-main-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php esc_html_e( 'The schedule and notification email settings on this page apply network-wide — they are inherited by every subsite. Each subsite admin can still decide via their own auto-update toggle whether the subsite participates in the network-wide checks.', 'webchangedetector' ); ?>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -104,7 +118,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<fieldset class="wcd-multisite-inherited-fieldset" disabled>
 			<?php endif; ?>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Timeframe', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the time frame in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
@@ -128,7 +142,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="local-timezone"></div>
 			</div>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Weekdays', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the weekdays in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
@@ -146,7 +160,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Notifications', 'webchangedetector' ); ?></label>
 					<div class="wcd-description">

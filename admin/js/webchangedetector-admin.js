@@ -2550,6 +2550,13 @@ jQuery(document).ready(function($) {
     $(document).ready(function () {
         // Manual / Auto-Update tab: toggle auto-update settings visibility.
         $(document).on('change', 'input[name="auto_update_checks_enabled"]', function () {
+            // On a multisite-network main site the schedule + email settings
+            // govern the whole network and stay visible regardless of main's
+            // own toggle, so a super-admin can configure timing for
+            // participating subsites even when main itself opts out.
+            if ($(this).closest('form').hasClass('wcd-multisite-main')) {
+                return;
+            }
             if ($(this).is(':checked')) {
                 $('.auto-update-setting').slideDown();
             } else {

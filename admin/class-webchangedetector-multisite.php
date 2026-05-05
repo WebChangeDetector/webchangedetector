@@ -63,6 +63,7 @@ class WebChangeDetector_Multisite {
 		'wcd_upgrade_url',
 		'wcd_default_allowances',
 		'webchangedetector_main_website_id',
+		'webchangedetector_main_auto_update_settings',
 	);
 
 	/**
@@ -277,80 +278,6 @@ class WebChangeDetector_Multisite {
 			return false;
 		}
 		return ! is_main_site();
-	}
-
-	/**
-	 * Self-healing backfill for the multisite hierarchy link.
-	 *
-	 * Two scenarios:
-	 *   1. Existing customer upgrades the plugin: the main site's Website UUID
-	 *      was never persisted into the NETWORK_OPTION because that option
-	 *      didn't exist before. We backfill it from the main site's local
-	 *      `webchangedetector_website_id` so sub-sites can find their parent.
-	 *   2. A sub-site registered before the main site (rare race) or before
-	 *      this feature shipped. The API row has no parent_multisite_website_id.
-	 *      We PATCH the API once and persist the parent UUID so we don't repeat
-	 *      the call — but if the main UUID later changes (re-registration),
-	 *      the next admin_init notices the mismatch and re-syncs automatically.
-	 *
-	 * Both branches are no-ops on non-multisite, non-network-activated, or
-	 * already-linked installs. Wired into `admin_init`. Capability-gated so
-	 * low-privilege users (Subscribers, Contributors) cannot trigger an API
-	 * PATCH on their first admin pageload.
-	 *
-	 * @since 4.4.0
-	 */
-	public static function ensure_multisite_link() {
-		if ( ! self::is_multisite_active() ) {
-			return;
-		}
-
-		// Only site admins should drive this — guards against unintended API
-		// traffic from low-privilege users hitting wp-admin.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		// Main site: persist its own Website UUID so sub-sites can read it.
-		if ( is_main_site() ) {
-			if ( '' !== self::get_main_website_id() ) {
-				return;
-			}
-			$main_website_id = get_option( 'webchangedetector_website_id', '' );
-			if ( ! empty( $main_website_id ) ) {
-				self::set_main_website_id( $main_website_id );
-			}
-			return;
-		}
-
-		// Sub-site: backfill parent_multisite_website_id on the API if not yet linked.
-		$main_website_id = self::get_main_website_id();
-		if ( '' === $main_website_id ) {
-			return; // Main hasn't registered yet — try again on next admin_init.
-		}
-
-		// Skip when we've already synced this exact parent UUID. Stored as the
-		// UUID itself (not a boolean) so re-registration of the main site
-		// auto-triggers a re-sync — no stale link possible.
-		$synced_for = get_option( 'wcd_multisite_parent_synced_for', '' );
-		if ( $synced_for === $main_website_id ) {
-			return;
-		}
-
-		$local_website_id = get_option( 'webchangedetector_website_id', '' );
-		if ( empty( $local_website_id ) ) {
-			return; // Sub-site itself isn't registered yet.
-		}
-
-		$response = WebChangeDetector_API_V2::update_website_v2(
-			$local_website_id,
-			array( 'parent_multisite_website_id' => $main_website_id )
-		);
-
-		$failed = is_string( $response ) || ( is_array( $response ) && ! empty( $response['error'] ) );
-		if ( ! $failed ) {
-			update_option( 'wcd_multisite_parent_synced_for', $main_website_id, false );
-		}
 	}
 
 	// -------------------------------------------------------------------------

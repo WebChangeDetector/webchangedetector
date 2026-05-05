@@ -500,6 +500,30 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
+	 * Read a WP-cron timestamp from the orchestrator site's context.
+	 *
+	 * On a multisite-network sub-site the orchestrator is the main site;
+	 * the sub-site's own wp_version_check stays at WP core's default random
+	 * hour because the autoupdates constructor early-returns and never
+	 * reschedules it to the inherited window. Reading it locally would yield
+	 * a time-of-day that cannot match the inherited weekday/time window.
+	 *
+	 * @param string $hook Cron hook name (e.g. 'wp_version_check').
+	 * @return int|false Next scheduled timestamp, or false if not scheduled.
+	 */
+	public static function get_orchestrator_cron_time( $hook ) {
+		if ( WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			return WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				static function () use ( $hook ) {
+					return wp_next_scheduled( $hook );
+				}
+			);
+		}
+		return wp_next_scheduled( $hook );
+	}
+
+	/**
 	 * Calculate the next time auto-updates will actually run based on weekday settings.
 	 *
 	 * @return int|false Unix timestamp of next auto-update run, or false if not scheduled.
@@ -515,8 +539,8 @@ class WebChangeDetector_Autoupdates {
 
 		// Get both cron timestamps. Another plugin or host may reschedule wp_version_check
 		// to a time outside our window, so we also check our backup cron.
-		$wp_check_time  = wp_next_scheduled( 'wp_version_check' );
-		$wcd_check_time = wp_next_scheduled( 'wcd_wp_version_check' );
+		$wp_check_time  = self::get_orchestrator_cron_time( 'wp_version_check' );
+		$wcd_check_time = self::get_orchestrator_cron_time( 'wcd_wp_version_check' );
 
 		// Skip if neither cron is scheduled.
 		if ( ! $wp_check_time && ! $wcd_check_time ) {
@@ -634,14 +658,24 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Check if WCD auto-update checks are properly configured and enabled.
+	 * Check if WCD auto-update checks are properly configured and at least one
+	 * site participates.
 	 *
-	 * @return array|false Auto-update settings or false if not configured.
+	 * Single-site / per-site activation: gated by this site's own
+	 * `auto_update_checks_enabled` toggle.
+	 *
+	 * Multisite-network: gated by the aggregated participants list across all
+	 * sub-sites + the main site. Main toggle off + at least one sub-site on
+	 * still passes — orchestration runs and screenshots only the participating
+	 * sub-sites. The schedule (when to run, today's allowed weekdays, time
+	 * window) always comes from the main site's settings, returned here.
+	 *
+	 * @return array|false Auto-update settings or false if not configured / no participants.
 	 */
 	private function validate_wcd_configuration() {
 		$auto_update_settings = self::get_auto_update_settings();
 
-		// Check if we have settings and group ID.
+		// Check if we have settings and a group ID on the orchestrator site.
 		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Running auto updates without checks. Don\'t have a group_id or auto update settings.',
@@ -651,11 +685,11 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		// Check if auto-update checks are enabled.
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
-			empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+		// Anyone opted in? On single-site this is just this site's toggle; on
+		// multisite-network this is "any registered site has participate=on".
+		if ( empty( $this->collect_network_group_ids() ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Running auto updates without checks. They are disabled in WCD.',
+				'Running auto updates without checks. No site has auto-update checks enabled.',
 				'wp_maybe_auto_update',
 				'debug'
 			);
@@ -767,36 +801,29 @@ class WebChangeDetector_Autoupdates {
 	 * Collect manual_group_ids of all sites that should participate in this
 	 * pre/post auto-update batch.
 	 *
-	 * Single-site / per-site-activation: returns this site's manual_group_id.
-	 * Multisite-network: iterates all sub-sites + the main site, includes those
-	 * where the per-site `auto_update_checks_enabled` flag is true. The flag is
-	 * read from each site's locally cached `webchangedetector_website_details`
-	 * option (written on every settings save — see
-	 * WebChangeDetector_Admin_Settings::update_manual_check_group_settings()).
+	 * Single-site / per-site activation: returns this site's manual group when
+	 * its `auto_update_checks_enabled` toggle is on.
 	 *
-	 * **Stale-cache caveat:** the hourly `wcd_sync_auto_update_schedule` cron is
-	 * removed from sub-sites by Hook-Gating, so a sub-site's local cache only
-	 * refreshes when the sub-site admin saves the settings page. If the cache
-	 * write ever fails silently after a successful API write, the network
-	 * orchestrator reads the stale flag until the sub-site admin re-renders the
-	 * Settings page. Documented as accepted edge case in FEAT-16 — fix is to
-	 * have the sub-site admin visit Settings once.
+	 * Multisite-network: each registered site (main + subsites) decides
+	 * independently via its own per-site `WCD_AUTO_UPDATE_PARTICIPATE` option
+	 * (mirror of the toggle, written by
+	 * `WebChangeDetector_Admin_Settings::update_manual_check_group_settings()`).
+	 * No global "main must be on" gate — main off + subsites on still runs;
+	 * only the participating subsites get screenshotted. The orchestrator only
+	 * runs on the main site (subsites early-return in the constructor; WP core
+	 * itself gates `WP_Automatic_Updater::run()` to
+	 * `is_main_network() && is_main_site()` so subsites cannot trigger
+	 * auto-updates anyway). The schedule fields (when to run) live on the main
+	 * site and are read by the caller via `get_auto_update_settings()`.
 	 *
-	 * **Why not reuse `WebChangeDetector_Multisite::get_all_sites_with_status()`:**
-	 * that helper reads only `webchangedetector_website_id` and `wcd_website_groups`
-	 * per site. We additionally need `webchangedetector_website_details.auto_update_settings.auto_update_checks_enabled`,
-	 * which would force a second `with_blog()` round-trip per site — negating
-	 * any DRY benefit. Single-pass implementation here is faster and clearer.
-	 *
-	 * Returned UUIDs go into a single take_screenshot_v2() call — the API
-	 * accepts an array of group IDs and returns one batch_id, so the existing
-	 * polling loop is unchanged.
+	 * Returned UUIDs go into a single `take_screenshot_v2()` call. Empty array
+	 * means nobody participates — orchestrator skips.
 	 *
 	 * @since 4.4.0
 	 * @return string[] List of manual group UUIDs (deduplicated, may be empty).
 	 */
 	private function collect_network_group_ids() {
-		// Single-site / per-site-activation: only this site, gated by its own enabled flag.
+		// Single-site / per-site activation: only this site, gated by its own toggle.
 		if ( ! WebChangeDetector_Multisite::is_multisite_active() ) {
 			$settings = self::get_auto_update_settings();
 			if ( empty( $settings['auto_update_checks_enabled'] ) || empty( $this->manual_group_id ) ) {
@@ -805,9 +832,10 @@ class WebChangeDetector_Autoupdates {
 			return array( $this->manual_group_id );
 		}
 
-		// Multisite-network: gather from every site (including the main).
-		// `'number' => 0` makes the query unbounded — default is 100 and would
-		// silently drop sub-sites on networks larger than that.
+		// Multisite-network: aggregate from each registered site that opted in
+		// via its per-site participate flag. `'number' => 0` makes the query
+		// unbounded — default is 100 and would silently drop sub-sites on
+		// networks larger than that.
 		$group_ids = array();
 		$sites     = get_sites(
 			array(
@@ -823,20 +851,17 @@ class WebChangeDetector_Autoupdates {
 				(int) $site->blog_id,
 				static function () {
 					$groups       = get_option( 'wcd_website_groups', array() );
-					$details      = get_option( 'webchangedetector_website_details', array() );
 					$manual_group = is_array( $groups ) ? ( $groups[ WCD_MANUAL_DETECTION_GROUP ] ?? '' ) : '';
-					$enabled      = ! empty( $details['auto_update_settings']['auto_update_checks_enabled'] );
 					return array(
+						'participate'  => (bool) get_option( WCD_AUTO_UPDATE_PARTICIPATE, false ),
 						'manual_group' => is_string( $manual_group ) ? $manual_group : '',
-						'enabled'      => $enabled,
 					);
 				}
 			);
 
-			if ( empty( $site_data['manual_group'] ) || empty( $site_data['enabled'] ) ) {
-				continue;
+			if ( ! empty( $site_data['participate'] ) && ! empty( $site_data['manual_group'] ) ) {
+				$group_ids[] = $site_data['manual_group'];
 			}
-			$group_ids[] = $site_data['manual_group'];
 		}
 
 		return array_values( array_unique( $group_ids ) );
@@ -1957,6 +1982,12 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
 			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
+		}
+		if ( ! defined( 'WCD_AUTO_UPDATE_PARTICIPATE' ) ) {
+			// Per-site flag mirroring the auto_update_checks_enabled toggle.
+			// Read by the network orchestrator's collect_network_group_ids()
+			// to decide which sub-sites' URLs go into the pre/post batch.
+			define( 'WCD_AUTO_UPDATE_PARTICIPATE', 'wcd_auto_update_participate' );
 		}
 		if ( ! defined( 'WCD_ALLOWANCES' ) ) {
 			define( 'WCD_ALLOWANCES', 'wcd_allowances' );

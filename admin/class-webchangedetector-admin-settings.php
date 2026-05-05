@@ -284,7 +284,7 @@ class WebChangeDetector_Admin_Settings {
 			$auto_update_settings['auto_update_checks_enabled'] = false;
 		}
 
-		// Multisite Subsites inherit the schedule from the main site. Strip
+		// Multisite Subsites inherit schedule + emails from the main site. Strip
 		// everything except the enabled toggle so the API row stays clean
 		// (the API would silently ignore the schedule fields on read, but
 		// keeping them out of the DB avoids confusing drift).
@@ -292,6 +292,27 @@ class WebChangeDetector_Admin_Settings {
 			$auto_update_settings = array_intersect_key(
 				$auto_update_settings,
 				array( 'auto_update_checks_enabled' => null )
+			);
+		}
+
+		// Persist the per-site toggle locally so the network orchestrator can
+		// read it cheaply via with_blog() without N API roundtrips. Read in
+		// WebChangeDetector_AutoUpdates::collect_network_group_ids().
+		update_option(
+			WCD_AUTO_UPDATE_PARTICIPATE,
+			! empty( $auto_update_settings['auto_update_checks_enabled'] ),
+			false
+		);
+
+		// On the multisite-network main site, mirror the schedule + emails into
+		// a network-shared option. Subsites read this in get_website_details()
+		// so their status bar and form show the inherited schedule values —
+		// the API does not serve them via parent-row inheritance, so we cache
+		// the source of truth here on the plugin side.
+		if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site() ) {
+			\WebChangeDetector\WebChangeDetector_Multisite::set_shared_option(
+				'webchangedetector_main_auto_update_settings',
+				$auto_update_settings
 			);
 		}
 
@@ -972,6 +993,27 @@ class WebChangeDetector_Admin_Settings {
 
 		if ( $update ) {
 			$this->update_website_details( $website_details );
+		}
+
+		// On a multisite-network subsite, overlay the schedule + email fields
+		// from the main site (stored in the shared NETWORK_OPTION). Keep this
+		// subsite's own auto_update_checks_enabled toggle — that's the only
+		// per-site auto-update setting. Without this overlay, status bar and
+		// form would render with empty schedule values because subsites never
+		// persist schedule fields on their own API row.
+		if ( ! empty( $website_details )
+			&& \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			$main_settings = \WebChangeDetector\WebChangeDetector_Multisite::get_shared_option(
+				'webchangedetector_main_auto_update_settings',
+				array()
+			);
+			if ( is_array( $main_settings ) && ! empty( $main_settings ) ) {
+				$local_toggle                            = ! empty( $website_details['auto_update_settings']['auto_update_checks_enabled'] );
+				$website_details['auto_update_settings'] = array_merge(
+					$main_settings,
+					array( 'auto_update_checks_enabled' => $local_toggle )
+				);
+			}
 		}
 
 		return $website_details ?? false;

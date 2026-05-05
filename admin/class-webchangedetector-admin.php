@@ -292,10 +292,19 @@ class WebChangeDetector_Admin {
 		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
 		// Only register cron job for daily sync if we have an API token.
+		// In network-activated multisite, schedule only on the main site so a
+		// single cron tick iterates all registered sub-sites (the per-site
+		// schedule would not fire if the sub-site domain has no cron trigger).
 		if ( ! empty( WebChangeDetector_Multisite::get_api_token() ) ) {
-			add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
-			if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
-				wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+			$register_cron = ! WebChangeDetector_Multisite::is_multisite_active() || is_main_site();
+			if ( $register_cron ) {
+				add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
+				if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+					wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+				}
+			} elseif ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+				// Clear orphaned per-sub-site schedule from pre-upgrade installs.
+				wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
 			}
 		} elseif ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 			// Clear any existing scheduled event if no API token.
@@ -387,21 +396,18 @@ class WebChangeDetector_Admin {
 
 		// Check if both groups were created successfully.
 		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
-			// Multisite Subsite registration: link to the network main site's Website
-			// so the API resolves auto_update_settings via inheritance. Hauptseite
-			// (main site) registers as standalone — we persist its UUID below so
-			// later sub-site registrations can reference it.
+			// Multisite Subsite registration: link to the network main site's
+			// Website so the API resolves auto_update_settings via inheritance.
+			// The main site registers as standalone — its UUID is persisted
+			// below so later sub-site registrations can reference it. The
+			// AJAX handler guards against subsite-before-main registration,
+			// so get_main_website_id() is guaranteed populated here for subsites.
 			$parent_multisite_website_id = null;
 			if (
 				\WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active()
 				&& ! is_main_site()
 			) {
 				$parent_multisite_website_id = \WebChangeDetector\WebChangeDetector_Multisite::get_main_website_id();
-				if ( '' === $parent_multisite_website_id ) {
-					// Main site hasn't registered yet — link cannot be set atomically.
-					// ensure_multisite_link() backfills on the next settings render.
-					$parent_multisite_website_id = null;
-				}
 			}
 
 			// Create the website with the group IDs.

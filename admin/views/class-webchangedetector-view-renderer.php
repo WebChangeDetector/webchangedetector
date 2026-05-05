@@ -228,6 +228,10 @@ class WebChangeDetector_View_Renderer {
 					class="nav-tab <?php echo 'webchangedetector-sites' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'sites' ); ?> <?php echo esc_html__( 'Sites', 'webchangedetector' ); ?>
 				</a>
+				<a href="?page=webchangedetector-allowances<?php echo esc_attr( $blog_param ); ?>"
+					class="nav-tab <?php echo 'webchangedetector-allowances' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Sub-Site Allowances', 'webchangedetector' ); ?>
+				</a>
 				<?php endif; ?>
 
 				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) && \WebChangeDetector\WebChangeDetector_Multisite::can_manage_account() ) : ?>

@@ -34,36 +34,45 @@ foreach ( $sites as $site ) {
 	}
 }
 ?>
-<div class="wcd-multisite-selector">
-	<form method="get" action="<?php echo esc_url( network_admin_url( 'admin.php' ) ); ?>">
-		<input type="hidden" name="page" value="<?php echo esc_attr( $current_page ); ?>">
-		<label for="wcd-blog-selector">
-			<strong><?php esc_html_e( 'Site:', 'webchangedetector' ); ?></strong>
-		</label>
-		<select name="wcd_blog_id" id="wcd-blog-selector" onchange="this.form.submit()">
-			<option value="all" <?php selected( $is_all_selected ); ?>>
-				<?php
-				printf(
-					/* translators: %d: number of registered sites */
-					esc_html__( 'All Websites (%d)', 'webchangedetector' ),
-					(int) $registered_count
-				);
-				?>
-			</option>
-			<?php foreach ( $sites as $site ) : ?>
-				<option value="<?php echo esc_attr( $site['blog_id'] ); ?>"
-					<?php selected( ! $is_all_selected && (int) $site['blog_id'] === $current_blog_id ); ?>
-				>
-					<?php echo esc_html( $site['url'] ); ?>
-					<?php if ( ! $site['registered'] ) : ?>
-						<?php echo esc_html__( '(not registered)', 'webchangedetector' ); ?>
-					<?php endif; ?>
+<div class="wcd-settings-card wcd-multisite-selector-card">
+	<h2>
+		<span class="dashicons dashicons-admin-multisite"></span>
+		<?php esc_html_e( 'Sub-Site Selection', 'webchangedetector' ); ?>
+	</h2>
+	<p class="wcd-description">
+		<?php esc_html_e( 'Pick the sub-site you want to manage. Choose "All Websites" to apply changes to every registered sub-site at once. Your selection is remembered as you switch between WebChange Detector tabs.', 'webchangedetector' ); ?>
+	</p>
+	<div class="wcd-multisite-selector">
+		<form method="get" action="<?php echo esc_url( network_admin_url( 'admin.php' ) ); ?>">
+			<input type="hidden" name="page" value="<?php echo esc_attr( $current_page ); ?>">
+			<label for="wcd-blog-selector">
+				<strong><?php esc_html_e( 'Site:', 'webchangedetector' ); ?></strong>
+			</label>
+			<select name="wcd_blog_id" id="wcd-blog-selector" onchange="this.form.submit()">
+				<option value="all" <?php selected( $is_all_selected ); ?>>
+					<?php
+					printf(
+						/* translators: %d: number of registered sites */
+						esc_html__( 'All Websites (%d)', 'webchangedetector' ),
+						(int) $registered_count
+					);
+					?>
 				</option>
-			<?php endforeach; ?>
-		</select>
-		<noscript>
-			<input type="submit" value="<?php esc_attr_e( 'Switch', 'webchangedetector' ); ?>" class="button button-secondary">
-		</noscript>
-	</form>
+				<?php foreach ( $sites as $site ) : ?>
+					<option value="<?php echo esc_attr( $site['blog_id'] ); ?>"
+						<?php selected( ! $is_all_selected && (int) $site['blog_id'] === $current_blog_id ); ?>
+					>
+						<?php echo esc_html( $site['url'] ); ?>
+						<?php if ( ! $site['registered'] ) : ?>
+							<?php echo esc_html__( '(not registered)', 'webchangedetector' ); ?>
+						<?php endif; ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<noscript>
+				<input type="submit" value="<?php esc_attr_e( 'Switch', 'webchangedetector' ); ?>" class="button button-secondary">
+			</noscript>
+		</form>
+	</div>
 </div>
 <?php
