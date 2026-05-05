@@ -295,27 +295,6 @@ class WebChangeDetector_Admin_Settings {
 			);
 		}
 
-		// Persist the per-site toggle locally so the network orchestrator can
-		// read it cheaply via with_blog() without N API roundtrips. Read in
-		// WebChangeDetector_AutoUpdates::collect_network_group_ids().
-		update_option(
-			WCD_AUTO_UPDATE_PARTICIPATE,
-			! empty( $auto_update_settings['auto_update_checks_enabled'] ),
-			false
-		);
-
-		// On the multisite-network main site, mirror the schedule + emails into
-		// a network-shared option. Subsites read this in get_website_details()
-		// so their status bar and form show the inherited schedule values —
-		// the API does not serve them via parent-row inheritance, so we cache
-		// the source of truth here on the plugin side.
-		if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site() ) {
-			\WebChangeDetector\WebChangeDetector_Multisite::set_shared_option(
-				'webchangedetector_main_auto_update_settings',
-				$auto_update_settings
-			);
-		}
-
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
@@ -348,8 +327,24 @@ class WebChangeDetector_Admin_Settings {
 
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->manual_group_uuid, $args );
 
-		// Sync advanced settings to the sibling (monitoring) group.
+		// Only persist local cache + sibling sync once the API has confirmed the
+		// write. Writing the participate flag or the network-option mirror before
+		// the API ack would cause drift on transient failure (collect_network_group_ids
+		// would include or exclude this site against the actual API state).
 		if ( $result && ! is_string( $result ) ) {
+			update_option(
+				WCD_AUTO_UPDATE_PARTICIPATE,
+				! empty( $auto_update_settings['auto_update_checks_enabled'] ),
+				false
+			);
+
+			if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site() ) {
+				\WebChangeDetector\WebChangeDetector_Multisite::set_shared_option(
+					'webchangedetector_main_auto_update_settings',
+					$auto_update_settings
+				);
+			}
+
 			$this->sync_to_sibling_group( $advanced_settings, $this->admin->manual_group_uuid );
 		}
 

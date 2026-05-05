@@ -273,17 +273,4 @@ class WebChangeDetector_View_Renderer {
 		<div class="clear"></div>
 		<?php
 	}
-
-	/**
-	 * Render inline JavaScript.
-	 *
-	 * @param string $script The JavaScript code.
-	 */
-	public function render_inline_script( $script ) {
-		?>
-		<script type="text/javascript">
-			<?php echo $script; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-		</script>
-		<?php
-	}
 }
