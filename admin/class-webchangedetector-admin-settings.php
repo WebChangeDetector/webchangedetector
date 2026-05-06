@@ -869,8 +869,13 @@ class WebChangeDetector_Admin_Settings {
 				if ( ! empty( $website_response['data'] ) && ! empty( $website_response['data']['id'] ) ) {
 					$website = $website_response['data'];
 
+					// Playground mode (WP Playground demo) bypasses the domain check so a pre-seeded
+					// website_id continues to resolve even though the Playground host differs from the
+					// registered domain.
+					$playground_mode = (bool) get_option( 'wcd_playground_mode' );
+
 					// Verify the domain still matches our site.
-					if ( ! empty( $website['domain'] ) && rtrim( $website['domain'], '/' ) === rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) {
+					if ( $playground_mode || ( ! empty( $website['domain'] ) && rtrim( $website['domain'], '/' ) === rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) ) {
 						$website_details = $website;
 						if ( is_string( $website['sync_url_types'] ) ) {
 							$decoded                           = json_decode( $website['sync_url_types'], true );
