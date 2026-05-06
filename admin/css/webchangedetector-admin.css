@@ -344,8 +344,9 @@
     outline: none;
 }
 
-/* CSS Textarea styling */
-.webchangedetector .wcd-css-textarea {
+/* CSS / JS Textarea styling (CodeMirror initializes on top of these) */
+.webchangedetector .wcd-css-textarea,
+.webchangedetector .wcd-js-textarea {
     width: 100%;
     max-width: 800px;
     min-height: 300px;
@@ -360,7 +361,8 @@
     box-sizing: border-box;
 }
 
-.webchangedetector .wcd-css-textarea:focus {
+.webchangedetector .wcd-css-textarea:focus,
+.webchangedetector .wcd-js-textarea:focus {
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
     outline: none;
@@ -370,7 +372,8 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .webchangedetector .wcd-css-textarea {
+    .webchangedetector .wcd-css-textarea,
+    .webchangedetector .wcd-js-textarea {
         max-width: 100%;
         width: 100%;
     }
@@ -433,8 +436,10 @@
     height: auto !important;
 }
 
-#toplevel_page_webchangedetector .wp-submenu li:last-child a {
-    /* Upgrade account link (always last item) */
+#toplevel_page_webchangedetector .wp-submenu .wcd-upgrade-account-link {
+    /* Upgrade account link is highlighted green; targeted explicitly because the
+       link can be hidden for sub-site admins, in which case :last-child would
+       wrongly color the next-to-last item. */
     color: #3eb43e;
 }
 
@@ -1094,9 +1099,14 @@ Manual Checks
 }
 
 .webchangedetector .wcd-step-container {
-    max-width: 1200px;
+    max-width: 600px;
     margin: 50px auto;
     text-align: center;
+}
+
+.webchangedetector .wcd-step-container.wcd-pre-processing,
+.webchangedetector .wcd-step-container.wcd-post-processing {
+    max-width: 1200px !important;
 }
 
 .webchangedetector .update-status-container {
@@ -4211,6 +4221,10 @@ Settings
 }
 
 .webchangedetector .wcd-toggle-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    cursor: pointer;
     font-weight: 500;
     font-size: 14px;
     color: #1d2327;
@@ -5166,6 +5180,8 @@ Settings
     display: inline-block;
     width: 36px;
     height: 20px;
+    margin-right: 10px;
+    flex-shrink: 0;
 }
 
 .webchangedetector .wcd-toggle-switch input {
@@ -5903,4 +5919,143 @@ Settings
     .webchangedetector .wcd-filter-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/**
+ * Multisite
+ */
+
+.webchangedetector .wcd-multisite-selector-card h2 {
+    margin-top: 0;
+}
+
+.webchangedetector .wcd-multisite-selector-card .wcd-description {
+    margin: 0 0 16px 0;
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wcd-multisite-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wcd-multisite-selector form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.wcd-multisite-selector label {
+    white-space: nowrap;
+}
+
+.wcd-multisite-selector select {
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.wcd-multisite-sites-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wcd-multisite-sites-table th,
+.wcd-multisite-sites-table td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.wcd-multisite-sites-table th {
+    background: #f0f0f1;
+    font-weight: 600;
+}
+
+.wcd-site-status-registered {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+.wcd-site-status-not-registered {
+    color: #d63638;
+}
+
+.wcd-multisite-actions {
+    margin: 15px 0;
+}
+
+/* Allowances Manager */
+.wcd-allowances-manager,
+.wcd-default-allowances-manager {
+    margin-top: 24px;
+}
+
+/* Code-injection wrapper (CSS / JS textareas in Manual + Monitoring settings) */
+.webchangedetector .wcd-code-injection-wrapper {
+    display: block;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.wcd-allowances-section {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wcd-allowances-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.wcd-allowances-section h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.wcd-allowances-section .wcd-description {
+    margin-bottom: 12px;
+}
+
+.wcd-allowances-section .wcd-toggle-label:last-child {
+    margin-bottom: 0;
+}
+
+.wcd-allowances-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wcd-allowances-actions span[id$="-status"] {
+    font-style: italic;
+}
+
+.wcd-allowances-actions span[id$="-status"].wcd-status-success {
+    color: #00a32a;
+}
+
+.wcd-allowances-actions span[id$="-status"].wcd-status-error {
+    color: #d63638;
+}
+
+/* Multisite Subsite — schedule fields are inherited from the main site.
+   The disabled <fieldset> wraps timeframe/weekdays/emails to lock them
+   without JS. Default fieldset styling has border + padding; reset here. */
+.webchangedetector fieldset.wcd-multisite-inherited-fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+
+.webchangedetector fieldset.wcd-multisite-inherited-fieldset > .wcd-form-row {
+    opacity: 0.6;
 }

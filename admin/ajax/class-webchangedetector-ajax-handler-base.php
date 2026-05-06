@@ -218,6 +218,78 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 			return false;
 		}
 
+		// Switch to the correct blog context for multisite AJAX requests.
+		// Note: is_network_admin() is always false in AJAX, so we detect
+		// multisite context via the wcd_blog_id parameter instead.
+		$this->maybe_switch_to_blog();
+
 		return true;
+	}
+
+	/**
+	 * Switch to the correct blog context for multisite AJAX requests.
+	 *
+	 * Reads wcd_blog_id from POST data and switches blog context.
+	 * Requires manage_network_options capability to prevent sub-site
+	 * admins from accessing other sites' data via crafted requests.
+	 *
+	 * @since 4.3.0
+	 */
+	protected function maybe_switch_to_blog() {
+		if ( ! WebChangeDetector_Multisite::is_multisite_active() ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
+		if ( ! isset( $_POST['wcd_blog_id'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Already verified in security_check.
+		$raw_blog_id = sanitize_text_field( wp_unslash( $_POST['wcd_blog_id'] ) );
+
+		// In "All Websites" mode, do not switch to any specific blog.
+		if ( 'all' === $raw_blog_id ) {
+			return;
+		}
+
+		if ( ! empty( $raw_blog_id ) ) {
+			// Only network admins may switch blog context.
+			if ( ! current_user_can( 'manage_network_options' ) ) {
+				$this->send_error_response(
+					__( 'You do not have permission to manage other sites.', 'webchangedetector' ),
+					'Blog context switch denied: missing manage_network_options',
+					403
+				);
+				return;
+			}
+
+			$blog_id = absint( $raw_blog_id );
+			if ( $blog_id > 0 ) {
+				// Validate that the target blog exists.
+				$blog_details = get_blog_details( $blog_id );
+				if ( ! $blog_details ) {
+					$this->send_error_response(
+						__( 'The specified site does not exist.', 'webchangedetector' ),
+						'Blog context switch denied: blog does not exist',
+						400
+					);
+					return;
+				}
+
+				switch_to_blog( $blog_id );
+			}
+		}
+	}
+
+	/**
+	 * Restore blog context after multisite AJAX processing.
+	 *
+	 * @since 4.3.0
+	 */
+	protected function restore_blog_context() {
+		if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+			restore_current_blog();
+		}
 	}
 }

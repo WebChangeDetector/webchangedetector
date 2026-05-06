@@ -106,18 +106,25 @@ class WebChangeDetector_API_V2 {
 	/**
 	 * Create website.
 	 *
-	 * @param string $domain The domain for the website.
-	 * @param string $manual_detection_group_id The manual detection group ID.
-	 * @param string $auto_detection_group_id The auto detection group ID.
+	 * @param string      $domain The domain for the website.
+	 * @param string      $manual_detection_group_id The manual detection group ID.
+	 * @param string      $auto_detection_group_id The auto detection group ID.
+	 * @param string|null $parent_multisite_website_id Optional UUID of the multisite main site's
+	 *                                                 Website. When set, this Website becomes a
+	 *                                                 Subsite that inherits its schedule from the
+	 *                                                 referenced main.
 	 * @return mixed|string
 	 */
-	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id ) {
+	public static function create_website_v2( $domain, $manual_detection_group_id, $auto_detection_group_id, $parent_multisite_website_id = null ) {
 		$args = array(
 			'action'                    => 'websites',
 			'domain'                    => $domain,
 			'manual_detection_group_id' => $manual_detection_group_id,
 			'auto_detection_group_id'   => $auto_detection_group_id,
 		);
+		if ( ! empty( $parent_multisite_website_id ) ) {
+			$args['parent_multisite_website_id'] = $parent_multisite_website_id;
+		}
 		return self::api_v2( $args, 'POST' );
 	}
 
@@ -318,6 +325,7 @@ class WebChangeDetector_API_V2 {
 			'css',
 			'js',
 			'threshold',
+			'cms',
 		);
 
 		// Only allow possible args.
@@ -352,8 +360,10 @@ class WebChangeDetector_API_V2 {
 	 */
 	public static function get_comparisons_v2( $filters = array() ) {
 
-		// Make sure to show only change detections from the current website.
-		if ( empty( $filters['groups'] ) ) {
+		// When fetching by batch ID, skip the groups filter as the batch
+		// already scopes results to the correct account. This is needed for
+		// multisite where batches may belong to different subsites' groups.
+		if ( empty( $filters['groups'] ) && empty( $filters['batches'] ) ) {
 			$groups = get_option( WCD_WEBSITE_GROUPS );
 			if ( $groups ) {
 				$filters['groups'] = implode( ',', $groups );
@@ -666,6 +676,98 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/**
+	 * Send multiple API requests to different endpoints in parallel with chunking.
+	 *
+	 * Unlike the multi_call pattern in api_v2() which sends different data to the
+	 * same endpoint, this sends requests to different endpoints (e.g., updating
+	 * settings for multiple groups at once).
+	 *
+	 * @since 4.3.0
+	 * @param array  $requests   Array of request arrays, each with 'action' key and data params.
+	 * @param string $method     HTTP method (default: PUT).
+	 * @param int    $chunk_size Max concurrent requests per batch (default: 10).
+	 * @return array Combined results from all requests.
+	 */
+	public static function api_v2_bulk( $requests, $method = 'PUT', $chunk_size = 10 ) {
+		if ( empty( $requests ) ) {
+			return array();
+		}
+
+		$api_token = WebChangeDetector_Multisite::get_api_token();
+		$base_url  = 'https://api.webchangedetector.com/api/v2/';
+		if ( defined( 'WCD_API_URL_V2' ) && is_string( WCD_API_URL_V2 ) && ! empty( WCD_API_URL_V2 ) ) {
+			$base_url = WCD_API_URL_V2;
+		}
+
+		$headers = array(
+			'Accept'        => 'application/json',
+			'Authorization' => 'Bearer ' . $api_token,
+			'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+			'x-wcd-wp-id'   => get_current_user_id(),
+			'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+		);
+
+		if ( WebChangeDetector_Multisite::is_network_context() ) {
+			$headers['x-wcd-network-admin'] = '1';
+		}
+
+		$all_results = array();
+		$chunks      = array_chunk( $requests, $chunk_size );
+
+		foreach ( $chunks as $chunk ) {
+			$batch = array();
+			foreach ( $chunk as $request ) {
+				$action = $request['action'];
+				unset( $request['action'] );
+
+				$batch[] = array(
+					'url'     => $base_url . $action,
+					'timeout' => WCD_REQUEST_TIMEOUT,
+					'data'    => $request,
+					'type'    => $method,
+					'headers' => $headers,
+				);
+			}
+
+			WebChangeDetector_Admin_Utils::log_error(
+				'Bulk API request: ' . count( $batch ) . ' ' . $method . ' requests',
+				'api_v2_bulk',
+				'debug'
+			);
+
+			$responses = \WpOrg\Requests\Requests::request_multiple(
+				$batch,
+				array( 'data-format' => 'data' )
+			);
+
+			foreach ( $responses as $response ) {
+				$code = (int) $response->status_code;
+				$body = json_decode( $response->body, true );
+
+				if ( 200 === $code || 201 === $code ) {
+					$all_results[] = array(
+						'success' => true,
+						'data'    => $body,
+					);
+				} else {
+					WebChangeDetector_Admin_Utils::log_error(
+						'Bulk request failed with code ' . $code . ': ' . $response->body,
+						'api_v2_bulk',
+						'error'
+					);
+					$all_results[] = array(
+						'success' => false,
+						'code'    => $code,
+						'data'    => $body,
+					);
+				}
+			}
+		}
+
+		return $all_results;
+	}
+
 	/** Call the WCD api.
 	 *
 	 * @param array  $post All params for the request.
@@ -675,7 +777,7 @@ class WebChangeDetector_API_V2 {
 	 * @return mixed|string
 	 */
 	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null ) {
-		$api_token = $custom_api_token ? $custom_api_token : get_option( 'webchangedetector_api_token' );
+		$api_token = $custom_api_token ? $custom_api_token : WebChangeDetector_Multisite::get_api_token();
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
 		$url_web = 'https://api.webchangedetector.com/';
@@ -705,19 +807,25 @@ class WebChangeDetector_API_V2 {
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
-				$args[] = array(
-					'url'     => $url,
-					'timeout' => WCD_REQUEST_TIMEOUT,
-					'data'    => array_merge( $post, array( $multicall => $multicall_data ) ),
-					'type'    => $method,
-					'headers' => array(
-						'Accept'        => 'application/json',
-						'Authorization' => 'Bearer ' . $api_token,
-						'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-						'x-wcd-wp-id'   => get_current_user_id(),
-						'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-					),
+				$multicall_headers = array(
+					'Accept'        => 'application/json',
+					'Authorization' => 'Bearer ' . $api_token,
+					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+					'x-wcd-wp-id'   => get_current_user_id(),
+					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
 				);
+
+				if ( WebChangeDetector_Multisite::is_network_context() ) {
+					$multicall_headers['x-wcd-network-admin'] = '1';
+				}
+
+					$args[] = array(
+						'url'     => $url,
+						'timeout' => WCD_REQUEST_TIMEOUT,
+						'data'    => array_merge( $post, array( $multicall => $multicall_data ) ),
+						'type'    => $method,
+						'headers' => $multicall_headers,
+					);
 			}
 			if ( ! empty( $args ) ) {
 				$log_args = $args;
@@ -779,17 +887,23 @@ class WebChangeDetector_API_V2 {
 				return $results;
 			}
 		} else {
+			$request_headers = array(
+				'Accept'        => 'application/json',
+				'Authorization' => 'Bearer ' . $api_token,
+				'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
+				'x-wcd-wp-id'   => get_current_user_id(),
+				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+			);
+
+			if ( WebChangeDetector_Multisite::is_network_context() ) {
+				$request_headers['x-wcd-network-admin'] = '1';
+			}
+
 			$args = array(
 				'timeout' => WCD_REQUEST_TIMEOUT,
 				'body'    => $post,
 				'method'  => $method,
-				'headers' => array(
-					'Accept'        => 'application/json',
-					'Authorization' => 'Bearer ' . $api_token,
-					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-					'x-wcd-wp-id'   => get_current_user_id(),
-					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-				),
+				'headers' => $request_headers,
 			);
 
 			$log_args = $args;

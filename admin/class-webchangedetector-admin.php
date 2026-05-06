@@ -263,8 +263,10 @@ class WebChangeDetector_Admin {
 		$this->ensure_required_constants();
 
 		// Set the group uuids.
-		$this->monitoring_group_uuid = get_option( WCD_WEBSITE_GROUPS )[ WCD_AUTO_DETECTION_GROUP ] ?? false;
-		$this->manual_group_uuid     = get_option( WCD_WEBSITE_GROUPS )[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+		$website_groups              = get_option( WCD_WEBSITE_GROUPS );
+		$website_groups              = is_array( $website_groups ) ? $website_groups : array();
+		$this->monitoring_group_uuid = $website_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+		$this->manual_group_uuid     = $website_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
 
 		// Initialize sync_urls array.
 		$this->sync_urls = array();
@@ -290,10 +292,19 @@ class WebChangeDetector_Admin {
 		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
 		// Only register cron job for daily sync if we have an API token.
-		if ( ! empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) ) {
-			add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
-			if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
-				wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+		// In network-activated multisite, schedule only on the main site so a
+		// single cron tick iterates all registered sub-sites (the per-site
+		// schedule would not fire if the sub-site domain has no cron trigger).
+		if ( ! empty( WebChangeDetector_Multisite::get_api_token() ) ) {
+			$register_cron = ! WebChangeDetector_Multisite::is_multisite_active() || is_main_site();
+			if ( $register_cron ) {
+				add_action( 'wcd_daily_sync_event', array( $this->wordpress_handler, 'daily_sync_posts_cron_job' ) );
+				if ( ! wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+					wp_schedule_event( time(), 'daily', 'wcd_daily_sync_event' );
+				}
+			} elseif ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
+				// Clear orphaned per-sub-site schedule from pre-upgrade installs.
+				wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
 			}
 		} elseif ( wp_next_scheduled( 'wcd_daily_sync_event' ) ) {
 			// Clear any existing scheduled event if no API token.
@@ -331,6 +342,14 @@ class WebChangeDetector_Admin {
 	 */
 	public $website_details;
 
+	/**
+	 * Whether "All Websites" mode is active (multisite only).
+	 *
+	 * @since 4.3.0
+	 * @var bool
+	 */
+	public $is_all_sites_mode = false;
+
 
 
 
@@ -360,6 +379,7 @@ class WebChangeDetector_Admin {
 			'name'       => $domain,
 			'monitoring' => true,
 			'enabled'    => true,
+			'cms'        => 'wordpress',
 		);
 
 		$monitoring_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
@@ -369,21 +389,47 @@ class WebChangeDetector_Admin {
 			'name'       => $domain,
 			'monitoring' => false,
 			'enabled'    => true,
+			'cms'        => 'wordpress',
 		);
 
 		$manual_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $manual_group_args );
 
 		// Check if both groups were created successfully.
 		if ( ! empty( $monitoring_group_response['data']['id'] ) && ! empty( $manual_group_response['data']['id'] ) ) {
+			// Multisite Subsite registration: link to the network main site's
+			// Website so the API resolves auto_update_settings via inheritance.
+			// The main site registers as standalone — its UUID is persisted
+			// below so later sub-site registrations can reference it. The
+			// AJAX handler guards against subsite-before-main registration,
+			// so get_main_website_id() is guaranteed populated here for subsites.
+			$parent_multisite_website_id = null;
+			if (
+				\WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active()
+				&& ! is_main_site()
+			) {
+				$parent_multisite_website_id = \WebChangeDetector\WebChangeDetector_Multisite::get_main_website_id();
+			}
+
 			// Create the website with the group IDs.
 			$website_response = \WebChangeDetector\WebChangeDetector_API_V2::create_website_v2(
 				$domain,
 				$manual_group_response['data']['id'],
-				$monitoring_group_response['data']['id']
+				$monitoring_group_response['data']['id'],
+				$parent_multisite_website_id
 			);
 
 			// Check if website was created successfully.
 			if ( ! empty( $website_response['data']['id'] ) ) {
+				// Persist the main site's Website UUID into the shared NETWORK_OPTION
+				// once. Sub-sites read this when they register so they can populate
+				// parent_multisite_website_id and inherit the schedule.
+				if (
+					\WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active()
+					&& is_main_site()
+				) {
+					\WebChangeDetector\WebChangeDetector_Multisite::set_main_website_id( $website_response['data']['id'] );
+				}
+
 				// Save group IDs to wp_options.
 				$groups = array(
 					WCD_AUTO_DETECTION_GROUP   => $monitoring_group_response['data']['id'],
@@ -398,6 +444,34 @@ class WebChangeDetector_Admin {
 
 				// Ensure website details include default settings to avoid unnecessary API calls later.
 				$website_data = $website_response['data'];
+
+				// Apply network-wide default allowances. Only relevant on multisite — on
+				// single-site there is no UI to configure these, so we skip the lookup
+				// to keep the contract narrow and predictable.
+				if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() ) {
+					$default_allowances = \WebChangeDetector\WebChangeDetector_Multisite::get_shared_option( 'wcd_default_allowances', null );
+					if ( is_array( $default_allowances ) && ! empty( $default_allowances ) ) {
+						$update_response = \WebChangeDetector\WebChangeDetector_API_V2::update_website_v2(
+							$website_data['id'],
+							array( 'allowances' => $default_allowances )
+						);
+						$update_failed   = is_string( $update_response )
+							|| ( is_array( $update_response ) && ! empty( $update_response['error'] ) );
+						if ( $update_failed ) {
+							$error_message = is_string( $update_response )
+								? $update_response
+								: $update_response['error'];
+							$this->log_error(
+								'Default allowances could not be applied to new sub-site (' . $website_data['id'] . '): ' . $error_message,
+								'multisite_register',
+								'warning'
+							);
+						} else {
+							$website_data['allowances'] = $default_allowances;
+							update_option( WCD_ALLOWANCES, $default_allowances );
+						}
+					}
+				}
 
 				// Set default sync types if not present.
 				if ( empty( $website_data['sync_url_types'] ) ) {
@@ -735,8 +809,8 @@ class WebChangeDetector_Admin {
 		$group_id_website_details = sanitize_text_field( $postdata['group_id'] );
 		\WebChangeDetector\WebChangeDetector_API_V2::update_urls_in_group_v2( $group_id_website_details, $active_posts );
 
-		// TODO Make return to show the result.
-		echo '<div class="updated notice"><p>Settings saved.</p></div>';
+		// @todo Return a structured result so the caller can render a notice instead of echoing.
+		echo '<div class="updated notice"><p>' . esc_html__( 'Settings saved.', 'webchangedetector' ) . '</p></div>';
 	}
 
 
@@ -776,28 +850,26 @@ class WebChangeDetector_Admin {
 	}
 
 	/**
-	 * Check if user can access specific feature based on plan.
+	 * Check if the account has access to a specific plan feature.
 	 *
-	 * @param string      $feature Feature name.
-	 * @param string|null $user_plan User plan level.
+	 * Reads the authoritative `plan_features` map from the API account response
+	 * (see UserResource::toArray on the API side). This avoids drift from a
+	 * hardcoded plan-slug whitelist whenever a new plan is added.
+	 *
+	 * @param string     $feature      Feature name (e.g. 'ai_verification', 'browser_console').
+	 * @param array|null $user_account Optional pre-fetched account array. Falls back to account_handler->get_account().
 	 * @return bool
 	 */
-	public function can_access_feature( $feature, $user_plan = null ) {
-		if ( ! $user_plan ) {
-			$account   = $this->account_handler->get_account();
-			$user_plan = $account['plan'] ?? 'free';
+	public function can_access_feature( $feature, $user_account = null ) {
+		if ( ! is_array( $user_account ) ) {
+			$user_account = $this->account_handler->get_account();
 		}
 
-		$feature_plans = array(
-			'browser_console' => array( 'trial', 'personal_pro', 'freelancer', 'agency' ),
-			'ai_verification' => array( 'trial', 'solo', 'personal_pro', 'freelancer', 'agency' ),
-		);
+		$plan_features = isset( $user_account['plan_features'] ) && is_array( $user_account['plan_features'] )
+			? $user_account['plan_features']
+			: array();
 
-		if ( ! isset( $feature_plans[ $feature ] ) ) {
-			return true; // Feature not restricted.
-		}
-
-		return in_array( $user_plan, $feature_plans[ $feature ], true );
+		return ! empty( $plan_features[ $feature ] );
 	}
 
 	/**

@@ -86,16 +86,60 @@ class WebChangeDetector_Admin_Controller {
 	 * @return bool|void
 	 */
 	public function init() {
-		global $wpdb;
+		// Switch to the managed blog context in network admin.
+		$is_network_context = WebChangeDetector_Multisite::is_multisite_active() && is_network_admin();
+		if ( $is_network_context ) {
+			if ( WebChangeDetector_Multisite::is_all_sites_mode() ) {
+				// In "All Websites" mode, use main site for account validation and allowances.
+				switch_to_blog( get_main_site_id() );
+				$this->admin->is_all_sites_mode = true;
+			} else {
+				$managed_blog_id = WebChangeDetector_Multisite::get_current_managed_blog_id();
+				switch_to_blog( $managed_blog_id );
+			}
 
+			// Re-read group UUIDs from the switched blog context.
+			// The constructor reads these before switch_to_blog(), so they
+			// point to the main site's groups. Must update them here before
+			// any POST actions (like take_screenshots) are processed.
+			$blog_groups                        = get_option( WCD_WEBSITE_GROUPS );
+			$blog_groups                        = is_array( $blog_groups ) ? $blog_groups : array();
+			$this->admin->monitoring_group_uuid = $blog_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+			$this->admin->manual_group_uuid     = $blog_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
+		}
+
+		try {
+			return $this->init_render();
+		} finally {
+			// Guarantee blog context restore even on exception.
+			if ( $is_network_context ) {
+				restore_current_blog();
+			}
+		}
+	}
+
+	/**
+	 * Internal rendering method called within the correct blog context.
+	 *
+	 * @since 4.3.0
+	 * @return bool
+	 */
+	private function init_render() {
 		// Initialize admin and website details.
 		$this->admin->website_details = $this->admin->settings_handler->get_website_details();
-		$api_token                    = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		$api_token                    = WebChangeDetector_Multisite::get_api_token();
 
 		// Start view output.
 		echo '<div class="wrap">';
 		echo '<div class="webchangedetector">';
-		echo '<h1>WebChange Detector</h1>';
+		echo '<h1>' . esc_html__( 'WebChange Detector', 'webchangedetector' ) . '</h1>';
+
+		// Render website selector in network admin context, but only once an API token
+		// exists. Without a token there are no registered sites to switch between, so
+		// the selector would only show "All Websites (0)" on a fresh install.
+		if ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() && $api_token ) {
+			$this->render_website_selector();
+		}
 
 		// Handle POST actions.
 		$action_result = $this->handle_post_actions();
@@ -114,8 +158,15 @@ class WebChangeDetector_Admin_Controller {
 		$this->migrate_api_token_option();
 
 		// Check if we have an API token.
-		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
-			$this->render_no_account_page();
+		if ( ! WebChangeDetector_Multisite::get_api_token() ) {
+			// On a sub-site of a network-activated install, the token is owned by the
+			// super-admin in the network admin. Show a contact-admin notice instead of
+			// the sign-up form to keep the account creation flow centralized.
+			if ( WebChangeDetector_Multisite::is_multisite_active() && ! is_network_admin() ) {
+				$this->render_subsite_setup_required_notice();
+			} else {
+				$this->render_no_account_page();
+			}
 			echo '</div></div>'; // Close wrapper divs.
 			return false;
 		}
@@ -134,6 +185,18 @@ class WebChangeDetector_Admin_Controller {
 		echo '</div>'; // Close wrap div.
 
 		return true;
+	}
+
+	/**
+	 * Render the website selector for multisite network admin.
+	 *
+	 * @since 4.3.0
+	 */
+	private function render_website_selector() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/website-selector.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
 	}
 
 	/**
@@ -318,14 +381,14 @@ class WebChangeDetector_Admin_Controller {
 	 * @return bool
 	 */
 	private function handle_reset_api_token() {
-		delete_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		WebChangeDetector_Multisite::delete_api_token();
 		delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 		delete_option( WCD_WEBSITE_GROUPS );
 		delete_option( WCD_OPTION_UPDATE_STEP_KEY );
 		delete_option( WCD_AUTO_UPDATE_SETTINGS );
 		delete_option( WCD_ALLOWANCES );
-		delete_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
-		delete_option( WCD_WP_OPTION_KEY_UPGRADE_URL );
+		WebChangeDetector_Multisite::delete_shared_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL );
+		WebChangeDetector_Multisite::delete_shared_option( WCD_WP_OPTION_KEY_UPGRADE_URL );
 		return true;
 	}
 
@@ -352,7 +415,7 @@ class WebChangeDetector_Admin_Controller {
 	 */
 	private function handle_save_api_token( $postdata ) {
 		if ( empty( $postdata['api_token'] ) ) {
-			echo '<div class="notice notice-error"><p>No API Token given.</p></div>';
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'No API Token given.', 'webchangedetector' ) . '</p></div>';
 			$this->render_no_account_page();
 			return false;
 		}
@@ -361,13 +424,68 @@ class WebChangeDetector_Admin_Controller {
 	}
 
 	/**
-	 * Migrate API token option from old version.
+	 * Migrate API token option from old version and single-site to multisite.
 	 */
 	private function migrate_api_token_option() {
 		// Change api token option name from V1.0.7.
-		if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) && get_option( 'webchangedetector_api_key' ) ) {
-			add_option( WCD_WP_OPTION_KEY_API_TOKEN, get_option( 'webchangedetector_api_key' ), '', false );
+		if ( ! WebChangeDetector_Multisite::get_api_token() && get_option( 'webchangedetector_api_key' ) ) {
+			WebChangeDetector_Multisite::set_api_token( get_option( 'webchangedetector_api_key' ) );
 			delete_option( 'webchangedetector_api_key' );
+		}
+
+		// Migrate shared options from wp_options to wp_sitemeta (single-site to multisite).
+		// Catches edge cases where the activation hook migration did not run.
+		if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+			$this->migrate_options_to_network();
+		}
+	}
+
+	/**
+	 * Migrate shared options from main site's wp_options to wp_sitemeta.
+	 *
+	 * Fallback for cases where a site was converted to multisite without
+	 * re-activating the plugin (so the activation hook migration was skipped).
+	 *
+	 * @since 4.3.0
+	 */
+	private function migrate_options_to_network() {
+		foreach ( WebChangeDetector_Multisite::NETWORK_OPTIONS as $option_key ) {
+			$network_value = get_site_option( $option_key, false );
+
+			// Skip if network option is already set.
+			if ( false !== $network_value && '' !== $network_value ) {
+				continue;
+			}
+
+			// Check main site's wp_options for the value.
+			$site_value = WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				function () use ( $option_key ) {
+					return get_option( $option_key, false );
+				}
+			);
+
+			if ( false !== $site_value && '' !== $site_value ) {
+				update_site_option( $option_key, $site_value );
+			}
+		}
+
+		// Pre-4.3.0 installs only persisted the main site's WCD website UUID
+		// under the per-site `webchangedetector_website_id`. The new network
+		// option `webchangedetector_main_website_id` did not exist, so the
+		// loop above can't migrate it (the source key has a different name).
+		// One-shot key-translation here so sub-sites can read the parent UUID
+		// during registration. Idempotent — early-return once populated.
+		if ( '' === WebChangeDetector_Multisite::get_main_website_id() ) {
+			$main_local_id = WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				static function () {
+					return get_option( 'webchangedetector_website_id', '' );
+				}
+			);
+			if ( is_string( $main_local_id ) && '' !== $main_local_id ) {
+				WebChangeDetector_Multisite::set_main_website_id( $main_local_id );
+			}
 		}
 	}
 
@@ -402,19 +520,49 @@ class WebChangeDetector_Admin_Controller {
 		$this->admin->website_details = $this->admin->settings_handler->get_website_details();
 
 		// Create new ones if we don't have them yet.
-		if ( ! $this->admin->website_details ) {
-			$success                      = $this->admin->create_website_and_groups();
-			$this->admin->website_details = $this->admin->settings_handler->get_website_details();
+		if ( ! $this->admin->website_details || ! is_array( $this->admin->website_details ) ) {
+			// Sub-site in network-activated multisite: do NOT auto-register.
+			// Registration is reserved for the super-admin via the Network
+			// Sites page. Otherwise merely viewing a sub-site (e.g. selecting
+			// it in the dropdown) would silently allocate an account slot.
+			if ( WebChangeDetector_Multisite::is_multisite_active() && ! is_main_site() ) {
+				if ( is_network_admin() && current_user_can( 'manage_network_options' ) ) {
+					$this->render_subsite_unregistered_notice();
+				} else {
+					$this->render_subsite_pending_activation_notice();
+				}
+				return false;
+			}
 
-			if ( ! $this->admin->website_details ) {
+			$create_result                = $this->admin->create_website_and_groups();
+			$this->admin->website_details = $this->admin->settings_handler->get_website_details( true );
+
+			if ( ! $this->admin->website_details || ! is_array( $this->admin->website_details ) ) {
 				$this->admin->error_handler->debug( "Can't get website_details." );
+
+				// Extract API error message if available.
+				$api_error = '';
+				if ( is_array( $create_result ) && ! empty( $create_result['error'] ) ) {
+					$api_error = $create_result['error'];
+					// Check for detailed API response errors.
+					foreach ( array( 'website_response', 'monitoring_response', 'manual_response' ) as $response_key ) {
+						if ( ! empty( $create_result[ $response_key ]['message'] ) ) {
+							$api_error .= ': ' . $create_result[ $response_key ]['message'];
+							break;
+						}
+					}
+				}
 				?>
 				<div class="notice notice-error">
-					<p><strong>WebChange Detector:</strong> Sorry, we couldn't retrieve your account settings. Please check your API token or contact support if this issue persists.</p>
+					<p><strong>WebChange Detector:</strong> <?php esc_html_e( 'Sorry, we couldn\'t retrieve your account settings. Please check your API token or contact support if this issue persists.', 'webchangedetector' ); ?></p>
+					<?php if ( $api_error ) : ?>
+						<p><?php echo esc_html( $api_error ); ?></p>
+					<?php endif; ?>
 					<form method="post" style="margin-top: 10px;">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
-						<input type="submit" value="Reset API Token" class="button button-secondary">
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
+						<input type="submit" value="<?php echo esc_attr__( 'Reset API Token', 'webchangedetector' ); ?>" class="button button-secondary">
 					</form>
 				</div>
 				<?php
@@ -422,7 +570,7 @@ class WebChangeDetector_Admin_Controller {
 			}
 
 			// Make the initial post sync.
-			// TODO: make this asynchronous and show loading screen.
+			// @todo Make this asynchronous (via wcd_async_full_sync) and show a loading state so page load is not blocked.
 			$this->admin->wordpress_handler->sync_posts( true );
 
 			// If only the frontpage is allowed, we activate the URLs.
@@ -532,11 +680,12 @@ class WebChangeDetector_Admin_Controller {
 		if ( ! $this->admin->manual_group_uuid && ! $this->admin->monitoring_group_uuid ) {
 			?>
 			<div class="notice notice-error">
-				<p>Sorry, we couldn't get your account settings. Please contact us.
+				<p><?php esc_html_e( 'Sorry, we couldn\'t get your account settings. Please contact us.', 'webchangedetector' ); ?>
 				<form method="post">
 					<input type="hidden" name="wcd_action" value="reset_api_token">
 					<?php wp_nonce_field( 'reset_api_token' ); ?>
-					<input type="submit" value="Reset API token" class="button button-delete">
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
+					<input type="submit" value="<?php echo esc_attr__( 'Reset API token', 'webchangedetector' ); ?>" class="button button-delete">
 				</form>
 				</p>
 			</div>
@@ -596,6 +745,20 @@ class WebChangeDetector_Admin_Controller {
 				$this->page_controllers['settings']->handle_request();
 				break;
 
+			case 'webchangedetector-sites':
+				// Multisite: Sites management page.
+				if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+					include WCD_PLUGIN_DIR . 'admin/partials/templates/multisite-sites.php';
+				}
+				break;
+
+			case 'webchangedetector-allowances':
+				// Multisite: Sub-site allowances page.
+				if ( WebChangeDetector_Multisite::is_multisite_active() ) {
+					include WCD_PLUGIN_DIR . 'admin/partials/templates/multisite-allowances.php';
+				}
+				break;
+
 			case 'webchangedetector-ai-rules':
 				// Check permissions.
 				if ( ! $this->admin->settings_handler->is_allowed( 'ai_rules_view' ) ) {
@@ -631,9 +794,15 @@ class WebChangeDetector_Admin_Controller {
 			case 'webchangedetector-no-billing-account':
 				?>
 				<div style="text-align: center;">
-					<h2>Ooops!</h2>
-					<p>We couldn't get your billing account. <br>
-						Please get in touch with us at <a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>.
+					<h2><?php esc_html_e( 'Ooops!', 'webchangedetector' ); ?></h2>
+					<p>
+					<?php
+						printf(
+							/* translators: %s: Support email link */
+							esc_html__( 'We couldn\'t get your billing account. Please get in touch with us at %s.', 'webchangedetector' ),
+							'<a href="mailto:support@webchangedetector.com">support@webchangedetector.com</a>'
+						);
+					?>
 					</p>
 				</div>
 				<?php
@@ -652,6 +821,43 @@ class WebChangeDetector_Admin_Controller {
 		// For now, call the existing method.
 		// In later phases, this will be moved to a view renderer.
 		$this->admin->account_handler->get_no_account_page();
+	}
+
+	/**
+	 * Render the "setup required" notice shown on a sub-site when the network
+	 * has not been set up yet (no API token in wp_sitemeta).
+	 *
+	 * @since 4.3.0
+	 */
+	private function render_subsite_setup_required_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-setup-required.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
+	}
+
+	/**
+	 * Render the "sub-site not registered" notice shown to a super-admin in
+	 * the network admin when they select an unregistered sub-site. Replaces
+	 * the previous silent auto-registration.
+	 */
+	private function render_subsite_unregistered_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-unregistered-notice.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
+	}
+
+	/**
+	 * Render the "activation pending" notice shown in the site admin of an
+	 * unregistered sub-site. Sub-site admins cannot register on their own;
+	 * the super-admin must do it from the network admin.
+	 */
+	private function render_subsite_pending_activation_notice() {
+		$template_path = WCD_PLUGIN_DIR . 'admin/partials/components/multisite/subsite-pending-activation.php';
+		if ( file_exists( $template_path ) ) {
+			include $template_path;
+		}
 	}
 
 	/**

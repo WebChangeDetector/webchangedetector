@@ -1,5 +1,29 @@
 const MM_BG_COLOR_DARK_GREEN = '#006400';
 
+/**
+ * Multisite: Automatically include wcd_blog_id in all AJAX requests
+ * when operating in the network admin context.
+ */
+(function($) {
+    if (typeof wcdAjaxData !== 'undefined' && wcdAjaxData.wcd_blog_id) {
+        $.ajaxPrefilter(function(options) {
+            if (options.type && options.type.toUpperCase() === 'POST') {
+                if (typeof options.data === 'string') {
+                    if (options.data.indexOf('wcd_blog_id') === -1) {
+                        options.data += '&wcd_blog_id=' + wcdAjaxData.wcd_blog_id;
+                    }
+                } else if (typeof options.data === 'object' && options.data !== null) {
+                    if (!options.data.wcd_blog_id) {
+                        options.data.wcd_blog_id = wcdAjaxData.wcd_blog_id;
+                    }
+                } else {
+                    options.data = 'wcd_blog_id=' + wcdAjaxData.wcd_blog_id;
+                }
+            }
+        });
+    }
+})(jQuery);
+
 // Global state for time estimation
 window.wcdTotalItems = null;
 window.wcdEstimatedRemaining = null;
@@ -57,7 +81,7 @@ function currentlyProcessing() {
                 $('#wcd-elapsed-time').text(formatTime(elapsed));
 
                 if (window.wcdProcessingDone) {
-                    $('#wcd-estimated-remaining').text('Done');
+                    $('#wcd-estimated-remaining').text(wcdL10n.done || 'Done');
                     clearInterval(timeInterval);
                     return;
                 }
@@ -67,7 +91,7 @@ function currentlyProcessing() {
                     var remaining = window.wcdEstimatedRemaining - timeSinceUpdate;
                     if (remaining <= 0) {
                         window.wcdFinishingSoon = true;
-                        $('#wcd-estimated-remaining').text('Finishing soon...');
+                        $('#wcd-estimated-remaining').text(wcdL10n.finishingSoon || 'Finishing soon...');
                     } else {
                         $('#wcd-estimated-remaining').text(formatTime(remaining));
                     }
@@ -101,7 +125,7 @@ function currentlyProcessing() {
 
                 // Phase-specific counting logic
                 if (phase === 'post') {
-                    $('#processing-title').text('Checks in progress');
+                    $('#processing-title').text(wcdL10n.checksInProgress || 'Checks in progress');
 
                     if (statusData.by_type && statusData.by_type.post) {
                         var postStatus = statusData.by_type.post;
@@ -115,7 +139,7 @@ function currentlyProcessing() {
                         processingCount = Math.max(0, totalPostScreenshots - doneCount - failedCount - openCount);
                     }
                 } else if (phase === 'pre') {
-                    $('#processing-title').text('Screenshots in progress');
+                    $('#processing-title').text(wcdL10n.screenshotsInProgress || 'Screenshots in progress');
 
                     if (statusData.by_type && statusData.by_type.pre) {
                         var preStatus = statusData.by_type.pre;
@@ -125,7 +149,7 @@ function currentlyProcessing() {
                         failedCount = preStatus.failed || 0;
                     }
                 } else {
-                    $('#processing-title').text('Screenshots in progress');
+                    $('#processing-title').text(wcdL10n.screenshotsInProgress || 'Screenshots in progress');
                 }
 
                 var openAndProcessing = openCount + processingCount;
@@ -258,9 +282,9 @@ function currentlyProcessing() {
 
                 // Processing complete check
                 if (openAndProcessing === 0 && processedItems > 0) {
-                    updateCurrentlyProcessing.html('Done');
+                    updateCurrentlyProcessing.html(wcdL10n.done || 'Done');
                     $('#currently-processing-loader .spinner').removeClass('is-active');
-                    $('#update-currently-processing-description').html('<strong>Finished processing</strong>');
+                    $('#update-currently-processing-description').html('<strong>' + (wcdL10n.finishedProcessing || 'Finished processing') + '</strong>');
 
                     // Re-enable cancel button
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
@@ -276,7 +300,7 @@ function currentlyProcessing() {
                     if (timeInterval) {
                         clearInterval(timeInterval);
                         window.wcdProcessingDone = true;
-                        $('#wcd-estimated-remaining').text('Done');
+                        $('#wcd-estimated-remaining').text(wcdL10n.done || 'Done');
                     } else {
                         $('.wcd-time-info').hide();
                     }
@@ -325,9 +349,8 @@ function currentlyProcessing() {
                 above_threshold: !showAll ? 1 : 0
             }, function(data) {
                 // Update count
-                var countText = data.total_count + ' detection';
-                if (data.total_count !== 1) countText += 's';
-                countText += showAll ? ' (showing all)' : ' (with changes only)';
+                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'detections') : (wcdL10n.detection || 'detection'));
+                countText += ' (' + (showAll ? (wcdL10n.showingAll || 'showing all') : (wcdL10n.withChangesOnly || 'with changes only')) + ')';
                 $('#detections-count').text(countText);
 
                 if (data.comparisons && data.comparisons.length > 0) {
@@ -702,7 +725,18 @@ function currentlyProcessing() {
                     return; // Skip this textarea, it will be initialized when accordion opens
                 }
             }
-            wp.codeEditor.initialize(item);
+            // Pass settings explicitly per textarea type. wp_enqueue_code_editor()
+            // sets a single global default (the LAST call wins), so omitting the
+            // settings arg would give every editor the same mode regardless of class.
+            var settings;
+            if (typeof cm_settings !== 'undefined') {
+                if ($(item).hasClass('wcd-js-textarea') && cm_settings.codeEditorJs) {
+                    settings = cm_settings.codeEditorJs;
+                } else if (cm_settings.codeEditor) {
+                    settings = cm_settings.codeEditor;
+                }
+            }
+            wp.codeEditor.initialize(item, settings);
         });
 
         // Init accordions
@@ -729,7 +763,7 @@ function currentlyProcessing() {
 
         function confirmExit() {
             if (formModified === 1) {
-                return "Changes were not save. Do you wish to leave the page without saving?";
+                return wcdL10n.unsavedChanges || "Changes were not saved. Do you wish to leave the page without saving?";
             }
         }
 
@@ -739,13 +773,14 @@ function currentlyProcessing() {
 
         // Confirm deleting account
         $('#delete-account').submit(function () {
-            return confirm("Are you sure you want to reset your account? This cannot be undone.");
+            return confirm(wcdL10n.confirmResetAccount || "Are you sure you want to reset your account? This cannot be undone.");
         });
 
         // Confirm copy url settings
         $("#copy-url-settings").submit(function () {
             let type = $("#copy-url-settings").data("to_group_type");
-            return confirm("Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.");
+            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.";
+            return confirm(msg);
         });
 
         // Confirm taking pre screenshots
@@ -934,8 +969,8 @@ function currentlyProcessing() {
         var scPerUrlUntilRenew = $("#sc_available_until_renew").data("auto_sc_per_url_until_renewal");
 
         if (availableCredits <= 0) {
-            $("#next_sc_in").html("Not Tracking").css("color", "#A00000");
-            $("#next_sc_date").html("<span style='color: #a00000'>You ran out of screenshots.</span><br>");
+            $("#next_sc_in").html(wcdL10n.notTracking || "Not Tracking").css("color", "#A00000");
+            $("#next_sc_date").html("<span style='color: #a00000'>" + (wcdL10n.ranOutScreenshots || "You ran out of screenshots.") + "</span><br>");
         }
 
         // Calculate total auto sc until renewal
@@ -1300,7 +1335,7 @@ function currentlyProcessing() {
             const nonce = wcdAjaxData.nonce;
             
             // Show loading state.
-            $button.text('Exporting...').prop('disabled', true);
+            $button.text(wcdL10n.exporting || 'Exporting...').prop('disabled', true);
             
             // Prepare data for AJAX request.
             const ajaxData = {
@@ -1326,11 +1361,11 @@ function currentlyProcessing() {
                         // Create and trigger download.
                         downloadCSV(response.data.data.csv_content, response.data.data.filename);
                     } else {                        
-                        alert('Failed to export logs: ' + (response.data && response.data.message ? response.data.message : 'Invalid response structure'));
+                        alert((wcdL10n.exportFailed || 'Failed to export logs') + ': ' + (response.data && response.data.message ? response.data.message : ''));
                     }
                 },
                 error: function() {
-                    alert('Error occurred while exporting logs. Please try again.');
+                    alert(wcdL10n.exportError || 'Error occurred while exporting logs. Please try again.');
                 },
                 complete: function() {
                     // Restore button state.
@@ -1638,7 +1673,7 @@ function startManualChecks(groupId) {
     // Create a form and submit it to start manual checks
     var form = document.createElement('form');
     form.method = 'POST';
-    form.action = '/wp-admin/admin.php?page=webchangedetector-update-settings';
+    form.action = wcdAjaxData.manual_checks_url || '/wp-admin/admin.php?page=webchangedetector-update-settings';
 
     // Add the action to advance to next step
     var actionInput = document.createElement('input');
@@ -1654,13 +1689,21 @@ function startManualChecks(groupId) {
     stepInput.value = 'pre-update';
     form.appendChild(stepInput);
 
-    // Add nonce for security - WordPress expects a nonce field that matches the action name
+    // Add nonce for security
     var nonceInput = document.createElement('input');
     nonceInput.type = 'hidden';
     nonceInput.name = '_wpnonce';
-    // Use the correct nonce for the start_manual_checks action
     nonceInput.value = wcdAjaxData.start_manual_checks_nonce;
     form.appendChild(nonceInput);
+
+    // Preserve blog context for multisite network admin
+    if (wcdAjaxData.wcd_blog_id) {
+        var blogInput = document.createElement('input');
+        blogInput.type = 'hidden';
+        blogInput.name = 'wcd_blog_id';
+        blogInput.value = wcdAjaxData.wcd_blog_id;
+        form.appendChild(blogInput);
+    }
 
     // Add form to body and submit
     document.body.appendChild(form);
@@ -2003,11 +2046,11 @@ jQuery(document).ready(function($) {
                             .prop('disabled', true)
                             .addClass('wcd-ai-feedback-btn-done');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to create rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedCreateRule || 'Failed to create rule.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false).text(wcdL10n.confirm || 'Confirm');
@@ -2076,11 +2119,11 @@ jQuery(document).ready(function($) {
                             .prop('disabled', true)
                             .addClass('ignored');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to create rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedCreateRule || 'Failed to create rule.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false).text(wcdL10n.confirm || 'Confirm');
@@ -2110,12 +2153,12 @@ jQuery(document).ready(function($) {
                 success: function (response) {
                     if (!response.success) {
                         $input.prop('checked', !newActive);
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to update rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedUpdateRule || 'Failed to update rule.'));
                     }
                 },
                 error: function () {
                     $input.prop('checked', !newActive);
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $input.prop('disabled', false);
@@ -2129,7 +2172,7 @@ jQuery(document).ready(function($) {
             var ruleId = $btn.data('rule-id');
             var $row = $btn.closest('.wcd-ai-rules-row');
 
-            if (!confirm('Are you sure you want to delete this rule? This cannot be undone.')) {
+            if (!confirm(wcdL10n.confirmDeleteRule || 'Are you sure you want to delete this rule? This cannot be undone.')) {
                 return;
             }
 
@@ -2160,12 +2203,12 @@ jQuery(document).ready(function($) {
                         });
                     } else {
                         $row.css('opacity', '1');
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to delete rule.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedDeleteRule || 'Failed to delete rule.'));
                     }
                 },
                 error: function () {
                     $row.css('opacity', '1');
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $btn.prop('disabled', false);
@@ -2202,11 +2245,11 @@ jQuery(document).ready(function($) {
                         $toggle.find('.wcd-ai-rules-scope-option').removeClass('is-selected');
                         $btn.addClass('is-selected');
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Failed to update scope.');
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedUpdateScope || 'Failed to update scope.'));
                     }
                 },
                 error: function () {
-                    alert('Something went wrong. Please try again.');
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 },
                 complete: function () {
                     $toggle.find('.wcd-ai-rules-scope-option').prop('disabled', false);
@@ -2458,3 +2501,129 @@ jQuery(document).ready(function($) {
         });
     });
 })(jQuery);
+
+/* ------------------------------------------------------------------------
+ * Group settings (manual + monitoring) page behaviors.
+ *
+ * Extracted from inline <script> blocks in admin/partials/templates/
+ * update-settings.php and auto-settings.php so the rendered HTML stays free
+ * of inline JS. Listeners use document-level delegation so they bind safely
+ * even when the templates aren't rendered on the current page.
+ * ------------------------------------------------------------------------ */
+(function ($) {
+    'use strict';
+
+    // Initialize / refresh CodeMirror on a code-injection textarea. Existing
+    // instances are refreshed (line numbers / cursor positions go stale after
+    // slideDown), new ones are initialized with the matching settings key.
+    function initOrRefreshCodeEditor(textarea, settingsKey) {
+        if (!textarea || !window.wp || !window.wp.codeEditor) {
+            return;
+        }
+        if (textarea.nextElementSibling && textarea.nextElementSibling.classList.contains('CodeMirror')) {
+            var cmInstance = textarea.nextElementSibling.CodeMirror;
+            if (cmInstance) {
+                setTimeout(function () { cmInstance.refresh(); }, 100);
+            }
+            return;
+        }
+        var editorSettings = {};
+        if (typeof cm_settings !== 'undefined' && cm_settings[settingsKey]) {
+            editorSettings = cm_settings[settingsKey];
+        }
+        var editor = wp.codeEditor.initialize(textarea, editorSettings);
+        if (editor && editor.codemirror) {
+            setTimeout(function () { editor.codemirror.refresh(); }, 100);
+        }
+    }
+
+    // Schedule fields visibility (monitoring tab).
+    function toggleScheduleFields(radioEl) {
+        var type = $(radioEl).val();
+        $('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
+        $('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
+        // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
+        $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
+        $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
+    }
+
+    $(document).ready(function () {
+        // Manual / Auto-Update tab: toggle auto-update settings visibility.
+        $(document).on('change', 'input[name="auto_update_checks_enabled"]', function () {
+            // On a multisite-network main site the schedule + email settings
+            // govern the whole network and stay visible regardless of main's
+            // own toggle, so a super-admin can configure timing for
+            // participating subsites even when main itself opts out.
+            if ($(this).closest('form').hasClass('wcd-multisite-main')) {
+                return;
+            }
+            if ($(this).is(':checked')) {
+                $('.auto-update-setting').slideDown();
+            } else {
+                $('.auto-update-setting').slideUp();
+            }
+        });
+
+        // Monitoring tab: toggle monitoring settings visibility + init CodeMirror
+        // editors after slide so they render correctly.
+        $(document).on('change', 'input[name="enabled"]', function () {
+            if ($(this).is(':checked')) {
+                $('.monitoring-setting').slideDown(400, function () {
+                    initOrRefreshCodeEditor($('.wcd-monitoring-css .wcd-css-textarea')[0], 'codeEditor');
+                    initOrRefreshCodeEditor($('.wcd-monitoring-js .wcd-js-textarea')[0], 'codeEditorJs');
+                });
+
+                // Respect schedule type visibility when enabling monitoring.
+                var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
+                $('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
+                $('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
+                $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
+                $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
+            } else {
+                $('.monitoring-setting').slideUp();
+            }
+        });
+
+        // Schedule type radio change.
+        $(document).on('change', '.wcd-schedule-type', function () {
+            toggleScheduleFields(this);
+        });
+
+        // On page load, apply schedule visibility to the checked radio.
+        $('.wcd-schedule-type:checked').each(function () {
+            toggleScheduleFields(this);
+        });
+    });
+})(jQuery);
+
+/* ------------------------------------------------------------------------
+ * Form validation entry points used as inline `onclick` handlers from
+ * submit_button() in the group-settings templates. Must be globals.
+ * ------------------------------------------------------------------------ */
+function wcdValidateFormGroupSettings() {
+    // Only validate if auto-update checks are enabled.
+    var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
+    if (autoUpdateEnabled && autoUpdateEnabled.checked) {
+        if (typeof window['validate_weekdays_auto_update_checks'] === 'function' &&
+            !window['validate_weekdays_auto_update_checks']()) {
+            return false;
+        }
+        if (typeof window['validate_auto_update_checks_emails'] === 'function' &&
+            !window['validate_auto_update_checks_emails']()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function wcdValidateFormAutoSettings() {
+    // Only validate if monitoring is enabled.
+    var monitoringEnabled = document.querySelector('input[name="enabled"]');
+    if (monitoringEnabled && monitoringEnabled.checked) {
+        if (typeof window['validate_alert_emails'] === 'function' &&
+            !window['validate_alert_emails']()) {
+            return false;
+        }
+    }
+    return true;
+}

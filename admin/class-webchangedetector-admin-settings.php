@@ -68,7 +68,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @param    array $postdata    The POST data.
 	 * @return   array    The extracted settings ready for the API.
 	 */
-	private function extract_advanced_settings( $postdata ) {
+	public function extract_advanced_settings( $postdata ) {
 		$args = array();
 
 		// Basic Auth User.
@@ -155,6 +155,7 @@ class WebChangeDetector_Admin_Settings {
 			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
 			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
 			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
+			'js'            => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
 		);
 
 		// Schedule type.
@@ -283,6 +284,17 @@ class WebChangeDetector_Admin_Settings {
 			$auto_update_settings['auto_update_checks_enabled'] = false;
 		}
 
+		// Multisite Subsites inherit schedule + emails from the main site. Strip
+		// everything except the enabled toggle so the API row stays clean
+		// (the API would silently ignore the schedule fields on read, but
+		// keeping them out of the DB avoids confusing drift).
+		if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			$auto_update_settings = array_intersect_key(
+				$auto_update_settings,
+				array( 'auto_update_checks_enabled' => null )
+			);
+		}
+
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
@@ -303,6 +315,11 @@ class WebChangeDetector_Admin_Settings {
 		if ( isset( $postdata['css'] ) ) {
 			$args['css'] = sanitize_textarea_field( $postdata['css'] );
 		}
+		if ( isset( $postdata['js'] ) ) {
+			// Stored verbatim — see settings-action-handler::handle_save_group_settings
+			// for the security rationale (capability gate, no server-side execution).
+			$args['js'] = $postdata['js'];
+		}
 
 		// Merge advanced settings (basic auth, proxy, screenshot delay).
 		$advanced_settings = $this->extract_advanced_settings( $postdata );
@@ -310,8 +327,24 @@ class WebChangeDetector_Admin_Settings {
 
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->manual_group_uuid, $args );
 
-		// Sync advanced settings to the sibling (monitoring) group.
+		// Only persist local cache + sibling sync once the API has confirmed the
+		// write. Writing the participate flag or the network-option mirror before
+		// the API ack would cause drift on transient failure (collect_network_group_ids
+		// would include or exclude this site against the actual API state).
 		if ( $result && ! is_string( $result ) ) {
+			update_option(
+				WCD_AUTO_UPDATE_PARTICIPATE,
+				! empty( $auto_update_settings['auto_update_checks_enabled'] ),
+				false
+			);
+
+			if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site() ) {
+				\WebChangeDetector\WebChangeDetector_Multisite::set_shared_option(
+					'webchangedetector_main_auto_update_settings',
+					$auto_update_settings
+				);
+			}
+
 			$this->sync_to_sibling_group( $advanced_settings, $this->admin->manual_group_uuid );
 		}
 
@@ -326,7 +359,7 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   void    Outputs the settings HTML.
 	 */
 	public function get_url_settings( $monitoring_group = false ) {
-		// Sync urls - post_types defined in function @TODO make settings for post_types to sync.
+		// @todo Expose post-type-to-sync selection as a user-configurable setting instead of hard-coding it in sync_posts().
 
 		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
 			echo esc_html__( 'Something went wrong. Try again.', 'webchangedetector' );
@@ -397,13 +430,33 @@ class WebChangeDetector_Admin_Settings {
 
 		<div class="wcd-select-urls-container">
 			<?php
-			// Print the status bar for monitoring group.
-			if ( $monitoring_group ) {
+			// Show all-sites mode notice.
+			if ( $this->admin->is_all_sites_mode ) {
+				$site_count = count( \WebChangeDetector\WebChangeDetector_Multisite::get_all_group_ids()['by_site'] );
+				?>
+				<div class="notice notice-info" style="margin: 10px 0 20px;">
+					<p>
+						<span class="dashicons dashicons-admin-multisite"></span>
+						<strong><?php esc_html_e( 'All Websites Mode', 'webchangedetector' ); ?></strong>:
+						<?php
+						printf(
+							/* translators: %d: number of registered sites */
+							esc_html__( 'Settings will be applied to all %d registered websites when saved.', 'webchangedetector' ),
+							(int) $site_count
+						);
+						?>
+					</p>
+				</div>
+				<?php
+			}
+
+			// Print the status bar for monitoring group (skip in all-sites mode).
+			if ( $monitoring_group && ! $this->admin->is_all_sites_mode ) {
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
 			}
 
-			// Add Status Cards section at the top (only for manual checks, not monitoring).
-			if ( ! $monitoring_group ) {
+			// Add Status Cards section at the top (only for manual checks, not monitoring, not all-sites mode).
+			if ( ! $monitoring_group && ! $this->admin->is_all_sites_mode ) {
 				?>
 				<div class="wcd-status-cards-container">
 					<?php
@@ -411,35 +464,39 @@ class WebChangeDetector_Admin_Settings {
 					include WCD_PLUGIN_DIR . 'admin/partials/components/settings/auto-update-status-bar.php';
 
 					// Manual Checks Workflow Card.
-					$has_urls = $group_and_urls['selected_urls_count'] > 0;
+					if ( $this->is_allowed( 'manual_checks_start' ) ) {
+						$has_urls = $group_and_urls['selected_urls_count'] > 0;
+						?>
+						<div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr( 'wcd-status-' . ( $has_urls ? 'ready' : 'no-urls' ) ); ?>"
+							data-initial-count="<?php echo esc_attr( $group_and_urls['selected_urls_count'] ); ?>">
+							<div class="wcd-monitoring-status-header">
+								<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'Manual Checks', 'webchangedetector' ); ?></h3>
+							</div>
+							<div class="wcd-monitoring-status-content">
+								<div class="wcd-next-check-container">
+									<div class="wcd-status-label wcd-mc-ready-label"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>><?php echo esc_html__( 'Ready to check', 'webchangedetector' ); ?></div>
+									<div class="wcd-status-label wcd-mc-no-urls-label"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'No URLs selected', 'webchangedetector' ); ?></div>
+									<div class="wcd-status-value wcd-mc-no-urls-value"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'Select URLs below', 'webchangedetector' ); ?></div>
+									<button type="button" class="button button-primary wcd-mc-start-btn"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>
+										onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
+										<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start Manual Checks', 'webchangedetector' ); ?>
+									</button>
+								</div>
+								<div class="wcd-monitoring-stats wcd-mc-stats"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>>
+									<div class="wcd-stat-item">
+										<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
+										<span class="wcd-stat-value wcd-mc-selected-count"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span>
+									</div>
+									<div class="wcd-stat-item">
+										<span class="wcd-stat-label"><?php esc_html_e( 'Check Type', 'webchangedetector' ); ?></span>
+										<span class="wcd-stat-value"><?php esc_html_e( 'On-Demand', 'webchangedetector' ); ?></span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<?php
+					}
 					?>
-					<div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr( 'wcd-status-' . ( $has_urls ? 'ready' : 'no-urls' ) ); ?>"
-						data-initial-count="<?php echo esc_attr( $group_and_urls['selected_urls_count'] ); ?>">
-						<div class="wcd-monitoring-status-header">
-							<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'Manual Checks', 'webchangedetector' ); ?></h3>
-						</div>
-						<div class="wcd-monitoring-status-content">
-							<div class="wcd-next-check-container">
-								<div class="wcd-status-label wcd-mc-ready-label"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>><?php echo esc_html__( 'Ready to check', 'webchangedetector' ); ?></div>
-								<div class="wcd-status-label wcd-mc-no-urls-label"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'No URLs selected', 'webchangedetector' ); ?></div>
-								<div class="wcd-status-value wcd-mc-no-urls-value"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'Select URLs below', 'webchangedetector' ); ?></div>
-								<button type="button" class="button button-primary wcd-mc-start-btn"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>
-									onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
-									<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start Manual Checks', 'webchangedetector' ); ?>
-								</button>
-							</div>
-							<div class="wcd-monitoring-stats wcd-mc-stats"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>>
-								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
-									<span class="wcd-stat-value wcd-mc-selected-count"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span>
-								</div>
-								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php esc_html_e( 'Check Type', 'webchangedetector' ); ?></span>
-									<span class="wcd-stat-value"><?php esc_html_e( 'On-Demand', 'webchangedetector' ); ?></span>
-								</div>
-							</div>
-						</div>
-					</div>
 				</div>
 
 				<hr style="margin: 20px 0; border-color: #e1e5e9;">
@@ -457,18 +514,40 @@ class WebChangeDetector_Admin_Settings {
 					$this->admin->view_renderer->get_component( 'templates' )->render_auto_settings( $group_and_urls, $group_id );
 				}
 
-				// Select URLs section.
-				if ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
+				// In all-sites mode, show notice instead of URL selection.
+				if ( $this->admin->is_all_sites_mode ) {
+					?>
+					<div class="wcd-url-selection wcd-settings-card">
+						<h2><?php echo esc_html__( 'Select URLs to Check', 'webchangedetector' ); ?></h2>
+						<div class="wcd-empty-state">
+							<p>
+								<?php esc_html_e( 'URL selection is managed per website. Please select a specific website from the dropdown above to choose which URLs should be checked.', 'webchangedetector' ); ?>
+							</p>
+						</div>
+					</div>
+			</div> <!-- Close flex container -->
+					<?php
+				} elseif ( ( ! $monitoring_group && $this->is_allowed( 'manual_checks_urls' ) ) || ( $monitoring_group && $this->is_allowed( 'monitoring_checks_urls' ) ) ) {
 					?>
 
 					<div class="wcd-url-selection wcd-settings-card">
 						<h2><?php echo esc_html__( 'Select URLs to Check', 'webchangedetector' ); ?><br><small></small></h2>
 						<p style="text-align: center;">
-							<strong><?php echo esc_html__( 'Currently selected URLs:', 'webchangedetector' ); ?> <span class="wcd-selected-urls-total"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span></strong><br>
-							<?php echo esc_html__( 'Missing URLs? Select them from other post types and taxonomies by enabling them in the', 'webchangedetector' ); ?>
-							<a href="?page=webchangedetector-settings"><?php echo esc_html__( 'Settings', 'webchangedetector' ); ?></a><br>
-
+							<strong><?php echo esc_html__( 'Currently selected URLs:', 'webchangedetector' ); ?> <span class="wcd-selected-urls-total"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span></strong>
 						</p>
+						<div class="notice notice-info inline wcd-missing-urls-notice">
+							<p>
+								<span class="dashicons dashicons-info"></span>
+								<strong><?php esc_html_e( 'Missing URLs?', 'webchangedetector' ); ?></strong>
+								<?php
+								printf(
+									/* translators: %s: link to the Settings page */
+									esc_html__( 'Select them from other post types and taxonomies by enabling them in the %s.', 'webchangedetector' ),
+									'<a href="?page=webchangedetector-settings">' . esc_html__( 'Settings', 'webchangedetector' ) . '</a>'
+								);
+								?>
+							</p>
+						</div>
 						<input type="hidden" value="webchangedetector" name="page">
 						<input type="hidden" value="<?php echo esc_html( $group_and_urls['id'] ?? '' ); ?>" name="group_id">
 
@@ -791,7 +870,7 @@ class WebChangeDetector_Admin_Settings {
 					$website = $website_response['data'];
 
 					// Verify the domain still matches our site.
-					if ( strpos( rtrim( $website['domain'], '/' ), rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) === 0 ) {
+					if ( ! empty( $website['domain'] ) && rtrim( $website['domain'], '/' ) === rtrim( \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(), '/' ) ) {
 						$website_details = $website;
 						if ( is_string( $website['sync_url_types'] ) ) {
 							$decoded                           = json_decode( $website['sync_url_types'], true );
@@ -826,7 +905,10 @@ class WebChangeDetector_Admin_Settings {
 					}
 
 					foreach ( $websites['data'] as $website ) {
-						if ( strpos( rtrim( $website['domain'], '/' ), $our_domain ) === 0 ) {
+						if ( empty( $website['domain'] ) ) {
+							continue;
+						}
+						if ( rtrim( $website['domain'], '/' ) === $our_domain ) {
 							$website_details = $website;
 							if ( is_string( $website['sync_url_types'] ) ) {
 								$decoded                           = json_decode( $website['sync_url_types'], true );
@@ -912,6 +994,27 @@ class WebChangeDetector_Admin_Settings {
 			$this->update_website_details( $website_details );
 		}
 
+		// On a multisite-network subsite, overlay the schedule + email fields
+		// from the main site (stored in the shared NETWORK_OPTION). Keep this
+		// subsite's own auto_update_checks_enabled toggle — that's the only
+		// per-site auto-update setting. Without this overlay, status bar and
+		// form would render with empty schedule values because subsites never
+		// persist schedule fields on their own API row.
+		if ( ! empty( $website_details )
+			&& \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			$main_settings = \WebChangeDetector\WebChangeDetector_Multisite::get_shared_option(
+				'webchangedetector_main_auto_update_settings',
+				array()
+			);
+			if ( is_array( $main_settings ) && ! empty( $main_settings ) ) {
+				$local_toggle                            = ! empty( $website_details['auto_update_settings']['auto_update_checks_enabled'] );
+				$website_details['auto_update_settings'] = array_merge(
+					$main_settings,
+					array( 'auto_update_checks_enabled' => $local_toggle )
+				);
+			}
+		}
+
 		return $website_details ?? false;
 	}
 
@@ -941,6 +1044,12 @@ class WebChangeDetector_Admin_Settings {
 	 * @return   bool|int    True if allowed, false if not, or integer value for specific allowances.
 	 */
 	public function is_allowed( $allowed ) {
+		// Super admins on network-activated multisite bypass per-site allowances —
+		// they configured them for sub-site admins and must keep full access themselves.
+		if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+			return true;
+		}
+
 		$website_details = $this->admin->website_details;
 		$allowances      = $website_details['allowances'] ?? false;
 

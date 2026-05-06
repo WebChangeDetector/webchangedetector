@@ -156,6 +156,7 @@ class WebChangeDetector_Logs_Controller {
 						) {
 							?>
 							<form method="post" action="?page=webchangedetector-show-screenshot">
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<button class="button" type="submit" name="img_url" value="<?php echo esc_url( $queue['image_link'] ); ?>">Show</button>
 							</form>
 							<?php
@@ -350,6 +351,7 @@ class WebChangeDetector_Logs_Controller {
 					<?php if ( current_user_can( 'manage_options' ) ) : ?>
 						<form method="post" style="display: inline-block;" onsubmit="return confirm('<?php esc_attr_e( 'Are you sure you want to clear all logs? This action cannot be undone.', 'webchangedetector' ); ?>');">
 							<?php wp_nonce_field( 'clear_logs' ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<input type="hidden" name="wcd_action" value="clear_logs">
 							<button type="submit" class="button button-secondary"><?php esc_html_e( 'Clear All Logs', 'webchangedetector' ); ?></button>
 						</form>

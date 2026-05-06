@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: Web Change Detector 4.2.1\n"
+"Project-Id-Version: Web Change Detector 4.2.2.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/webchangedetector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-16T11:11:30+00:00\n"
+"POT-Creation-Date: 2026-04-17T11:30:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: webchangedetector\n"
@@ -35,6 +35,28 @@ msgstr ""
 msgid "Mike Miler"
 msgstr ""
 
+#: admin/actions/class-webchangedetector-settings-action-handler.php:77
+msgid "You do not have permission to modify settings for all websites."
+msgstr ""
+
+#: admin/actions/class-webchangedetector-settings-action-handler.php:89
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:487
+msgid "No registered groups found."
+msgstr ""
+
+#. translators: 1: success count, 2: fail count
+#: admin/actions/class-webchangedetector-settings-action-handler.php:198
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:544
+#, php-format
+msgid "Settings updated for %1$d groups. %2$d failed."
+msgstr ""
+
+#. translators: %d: number of groups updated
+#: admin/actions/class-webchangedetector-settings-action-handler.php:209
+#, php-format
+msgid "Settings saved for all %d websites."
+msgstr ""
+
 #: admin/ajax/class-webchangedetector-account-ajax-handler.php:123
 msgid "Unable to retrieve account information."
 msgstr ""
@@ -48,6 +70,7 @@ msgid "Comparison ID is required."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-ai-ajax-handler.php:97
+#: admin/class-webchangedetector-admin-wordpress.php:157
 msgid "Failed to create rule."
 msgstr ""
 
@@ -57,10 +80,12 @@ msgid "Rule ID is required."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-ai-ajax-handler.php:124
+#: admin/class-webchangedetector-admin-wordpress.php:158
 msgid "Failed to update rule."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-ai-ajax-handler.php:150
+#: admin/class-webchangedetector-admin-wordpress.php:159
 msgid "Failed to delete rule."
 msgstr ""
 
@@ -73,11 +98,56 @@ msgid "Failed to update rule scope."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-ajax-handler-base.php:205
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:88
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-ajax-handler-base.php:214
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:97
 msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-ajax-handler-base.php:260
+msgid "You do not have permission to manage other sites."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-ajax-handler-base.php:273
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:119
+msgid "The specified site does not exist."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:73
+msgid "No allowance data received."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:116
+msgid "No website UUID provided."
+msgstr ""
+
+#. translators: %s: error message
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:130
+#, php-format
+msgid "Failed to update allowances: %s"
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:148
+msgid "Allowances saved successfully."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:179
+msgid "No registered sites found."
+msgstr ""
+
+#. translators: 1: success count, 2: fail count
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:210
+#, php-format
+msgid "Allowances updated for %1$d sites. %2$d failed."
+msgstr ""
+
+#. translators: %d: number of sites
+#: admin/ajax/class-webchangedetector-allowances-ajax-handler.php:220
+#, php-format
+msgid "Allowances updated for all %d sites."
 msgstr ""
 
 #: admin/ajax/class-webchangedetector-screenshots-ajax-handler.php:97
@@ -125,109 +195,158 @@ msgstr ""
 msgid "An error occurred while getting failed queues."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:93
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:94
 msgid "Settings saved successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:97
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:98
 msgid "Method not available."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:103
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:104
 msgid "An error occurred while saving settings."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:127
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:128
 msgid "Wizard disabled successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:131
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:132
 msgid "Failed to disable wizard."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:137
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:138
 msgid "An error occurred while disabling wizard."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:198
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:199
 msgid "Failed to get initial setup data."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:221
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:91
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:222
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:194
 msgid "Missing sync types data."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:243
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:244
 msgid "Initial setup saved successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:248
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:249
 msgid "An error occurred while saving initial setup."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:282
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:283
 msgid "Sync types updated successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:287
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:288
 msgid "An error occurred while updating sync types."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:320
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:321
 msgid "Initial setup completed successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:325
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:326
 msgid "An error occurred while completing initial setup."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:370
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:382
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:371
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:383
 msgid "Sync failed"
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:429
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:430
 msgid "No logs found to export."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:446
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:447
 msgid "Logs exported successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:451
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:452
 msgid "An error occurred while exporting logs."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:111
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:472
+msgid "This action is only available in All Websites mode."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:479
+msgid "Invalid group type."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:512
+msgid "No settings to update. Please change at least one field."
+msgstr ""
+
+#. translators: %d: number of groups updated
+#: admin/ajax/class-webchangedetector-settings-ajax-handler.php:554
+#, php-format
+msgid "Settings updated for all %d groups."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:105
+msgid "This action is only available on multisite installations."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:112
+msgid "Invalid site ID."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:133
+msgid "Site is already registered."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:153
+msgid "Site registered successfully."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:160
+#: admin/class-webchangedetector-admin-dashboard.php:656
+msgid "Unknown error"
+msgstr ""
+
+#. translators: %s: Error details from the API
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:165
+#, php-format
+msgid "Failed to register site: %s"
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:171
+msgid "An error occurred while registering the site. Please try again."
+msgstr ""
+
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:214
 msgid "No valid sync types provided."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:122
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:225
 msgid "Failed to synchronize URLs."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:136
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:239
 msgid "URLs synchronized successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:141
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:244
 msgid "An error occurred while synchronizing URLs."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:161
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:264
 msgid "Admin bar status handler not available."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:186
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:289
 msgid "Failed to synchronize posts."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:196
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:299
 msgid "Posts synchronized successfully."
 msgstr ""
 
-#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:201
+#: admin/ajax/class-webchangedetector-wordpress-ajax-handler.php:304
 msgid "An error occurred while synchronizing posts."
 msgstr ""
 
@@ -239,142 +358,144 @@ msgstr ""
 msgid "Are you sure you want to reset the API token?"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:244
+#: admin/class-webchangedetector-admin-account.php:245
 msgid "Account Information"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:245
+#: admin/class-webchangedetector-admin-account.php:246
 msgid "Your account details and API token for WebChange Detector service."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:249
+#: admin/class-webchangedetector-admin-account.php:250
+#: admin/views/class-webchangedetector-card-view.php:45
 msgid "Email:"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:250
+#: admin/class-webchangedetector-admin-account.php:251
 msgid "API Token:"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:260
+#: admin/class-webchangedetector-admin-account.php:261
 msgid "Keep your API token secure and never share it publicly"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:295
-#: admin/class-webchangedetector-admin-account.php:299
+#: admin/class-webchangedetector-admin-account.php:296
+#: admin/class-webchangedetector-admin-account.php:300
+#: admin/controllers/class-webchangedetector-admin-controller.php:522
 msgid "Reset API Token"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:296
+#: admin/class-webchangedetector-admin-account.php:297
 msgid "With resetting the API Token, auto detections still continue and your settings will be still available when you use the same api token with this website again."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:308
+#: admin/class-webchangedetector-admin-account.php:309
 msgid "Delete Account"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:311
+#: admin/class-webchangedetector-admin-account.php:312
 msgid "Account Deletion"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:312
+#: admin/class-webchangedetector-admin-account.php:313
 msgid "To completely remove your account and all associated data."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:315
+#: admin/class-webchangedetector-admin-account.php:316
 msgid "To delete your account completely, please login to your account at"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:333
+#: admin/class-webchangedetector-admin-account.php:335
 msgid "Use Existing API Token"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:335
+#: admin/class-webchangedetector-admin-account.php:337
 msgid "Use the API token of your existing account. To get your API token, please login to your account at"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:339
+#: admin/class-webchangedetector-admin-account.php:341
 msgid "Save"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:369
+#: admin/class-webchangedetector-admin-account.php:371
 msgid "WebChangeDetector Logo"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:370
+#: admin/class-webchangedetector-admin-account.php:372
 msgid "See what changed before your users do."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:375
-#: admin/class-webchangedetector-admin-account.php:387
+#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:390
 msgid "Create Free Account"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:379
 msgid "Create your free account with"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:379
 msgid "1000 checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:379
 msgid "in the first month and"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:379
 msgid "50 checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:377
+#: admin/class-webchangedetector-admin-account.php:379
 msgid "after."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:382
+#: admin/class-webchangedetector-admin-account.php:385
 msgid "First Name"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:383
+#: admin/class-webchangedetector-admin-account.php:386
 msgid "Last Name"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:384
+#: admin/class-webchangedetector-admin-account.php:387
 msgid "Email"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:385
+#: admin/class-webchangedetector-admin-account.php:388
 #: admin/partials/components/settings/advanced-screenshot-settings.php:46
 msgid "Password"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:417
+#: admin/class-webchangedetector-admin-account.php:420
 msgid "Account Activation Required"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:429
+#: admin/class-webchangedetector-admin-account.php:432
 msgid "Check Your Email"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:431
+#: admin/class-webchangedetector-admin-account.php:434
 msgid "We've sent an activation link to your email address. Please click the link to complete your account setup."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:444
+#: admin/class-webchangedetector-admin-account.php:447
 msgid "Check your email inbox (and spam folder)"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:448
+#: admin/class-webchangedetector-admin-account.php:451
 msgid "Click the activation link in the email"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:452
+#: admin/class-webchangedetector-admin-account.php:455
 msgid "Return here and refresh to access your dashboard"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:458
+#: admin/class-webchangedetector-admin-account.php:461
 msgid "The activation email usually arrives within a few minutes. If you don't see it, please check your spam folder."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-account.php:467
+#: admin/class-webchangedetector-admin-account.php:471
 msgid "Reset & Start Over"
 msgstr ""
 
@@ -414,55 +535,56 @@ msgstr ""
 msgid "Latest Change Detections"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:153
+#: admin/class-webchangedetector-admin-dashboard.php:160
 msgid "Show All Change Detections"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:245
+#: admin/class-webchangedetector-admin-dashboard.php:252
 msgid "No change detections (yet)."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:246
+#: admin/class-webchangedetector-admin-dashboard.php:253
 msgid "Try different filters to show change detections."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:282
-#: admin/class-webchangedetector-admin-dashboard.php:369
+#: admin/class-webchangedetector-admin-dashboard.php:289
+#: admin/class-webchangedetector-admin-dashboard.php:376
 msgid "processing..."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:296
+#: admin/class-webchangedetector-admin-dashboard.php:303
 msgid "Needs Attention"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:299
+#: admin/class-webchangedetector-admin-dashboard.php:306
 msgid "Looks Good"
 msgstr ""
 
 #. translators: %d: number of failed checks
-#: admin/class-webchangedetector-admin-dashboard.php:320
+#: admin/class-webchangedetector-admin-dashboard.php:327
 #, php-format
 msgid "%d check failed"
 msgid_plural "%d checks failed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:329
+#: admin/class-webchangedetector-admin-dashboard.php:336
+#: admin/partials/components/multisite/allowances-manager.php:52
 msgid "Monitoring Checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:332
-#: admin/class-webchangedetector-admin-wordpress.php:282
-#: admin/partials/templates/update-settings.php:38
+#: admin/class-webchangedetector-admin-dashboard.php:339
+#: admin/class-webchangedetector-admin-wordpress.php:304
+#: admin/partials/templates/update-settings.php:39
 msgid "Auto Update Checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:338
+#: admin/class-webchangedetector-admin-dashboard.php:345
 msgid "Core"
 msgstr ""
 
 #. translators: %d: number of plugins.
-#: admin/class-webchangedetector-admin-dashboard.php:343
+#: admin/class-webchangedetector-admin-dashboard.php:350
 #, php-format
 msgid "%d plugin"
 msgid_plural "%d plugins"
@@ -470,44 +592,46 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of themes.
-#: admin/class-webchangedetector-admin-dashboard.php:348
+#: admin/class-webchangedetector-admin-dashboard.php:355
 #, php-format
 msgid "%d theme"
 msgid_plural "%d themes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:357
-#: admin/class-webchangedetector-admin-settings.php:419
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:212
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:371
+#: admin/class-webchangedetector-admin-dashboard.php:364
+#: admin/class-webchangedetector-admin-settings.php:439
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:223
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:235
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:415
+#: admin/partials/components/multisite/allowances-manager.php:43
 msgid "Manual Checks"
 msgstr ""
 
 #. translators: %s: time difference
-#: admin/class-webchangedetector-admin-dashboard.php:366
+#: admin/class-webchangedetector-admin-dashboard.php:373
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:380
+#: admin/class-webchangedetector-admin-dashboard.php:387
 msgid "AI Summary"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:388
+#: admin/class-webchangedetector-admin-dashboard.php:395
 msgid "AI summary skipped"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:401
+#: admin/class-webchangedetector-admin-dashboard.php:408
 msgid "Loading"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:442
+#: admin/class-webchangedetector-admin-dashboard.php:449
 msgid "Related Auto-Update"
 msgstr ""
 
 #. translators: %d: number of plugins.
-#: admin/class-webchangedetector-admin-dashboard.php:494
+#: admin/class-webchangedetector-admin-dashboard.php:501
 #, php-format
 msgid "%d plugin updated successfully"
 msgid_plural "%d plugins updated successfully"
@@ -515,7 +639,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of plugins.
-#: admin/class-webchangedetector-admin-dashboard.php:508
+#: admin/class-webchangedetector-admin-dashboard.php:515
 #, php-format
 msgid "%d plugin update failed"
 msgid_plural "%d plugin updates failed"
@@ -523,7 +647,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of themes.
-#: admin/class-webchangedetector-admin-dashboard.php:539
+#: admin/class-webchangedetector-admin-dashboard.php:546
 #, php-format
 msgid "%d theme updated successfully"
 msgid_plural "%d themes updated successfully"
@@ -531,186 +655,189 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of themes.
-#: admin/class-webchangedetector-admin-dashboard.php:553
+#: admin/class-webchangedetector-admin-dashboard.php:560
 #, php-format
 msgid "%d theme update failed"
 msgid_plural "%d theme updates failed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:577
+#: admin/class-webchangedetector-admin-dashboard.php:584
 msgid "View Full Update Details"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:610
+#: admin/class-webchangedetector-admin-dashboard.php:617
 msgid "Failed Checks"
 msgstr ""
 
 #. translators: %d: number of failed checks
-#: admin/class-webchangedetector-admin-dashboard.php:614
+#: admin/class-webchangedetector-admin-dashboard.php:621
 #, php-format
 msgid "%d failed check"
 msgid_plural "%d failed checks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:624
-#: admin/class-webchangedetector-admin-dashboard.php:702
-#: admin/class-webchangedetector-admin-dashboard.php:917
-#: admin/class-webchangedetector-admin-dashboard.php:1109
-#: admin/class-webchangedetector-admin-settings.php:563
+#: admin/class-webchangedetector-admin-dashboard.php:631
+#: admin/class-webchangedetector-admin-dashboard.php:709
+#: admin/class-webchangedetector-admin-dashboard.php:925
+#: admin/class-webchangedetector-admin-dashboard.php:1118
+#: admin/class-webchangedetector-admin-settings.php:595
+#: admin/class-webchangedetector-autoupdates.php:1401
+#: admin/class-webchangedetector-autoupdates.php:1410
 #: admin/partials/templates/ai-feedback-rules.php:52
+#: admin/partials/templates/multisite-sites.php:53
 msgid "URL"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:625
+#: admin/class-webchangedetector-admin-dashboard.php:632
 #: admin/class-webchangedetector-admin-screenshots.php:103
 msgid "Error Message"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:649
-msgid "Unknown error"
-msgstr ""
-
-#: admin/class-webchangedetector-admin-dashboard.php:683
+#: admin/class-webchangedetector-admin-dashboard.php:690
 msgid "No comparisons found for this batch."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:701
-#: admin/class-webchangedetector-admin-dashboard.php:916
-#: admin/class-webchangedetector-admin-dashboard.php:1108
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:328
+#: admin/class-webchangedetector-admin-dashboard.php:708
+#: admin/class-webchangedetector-admin-dashboard.php:924
+#: admin/class-webchangedetector-admin-dashboard.php:1117
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:372
 #: admin/partials/templates/ai-feedback-rules.php:49
+#: admin/partials/templates/multisite-sites.php:54
 #: admin/partials/templates/show-change-detection.php:105
 msgid "Status"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:703
-#: admin/class-webchangedetector-admin-dashboard.php:918
-#: admin/class-webchangedetector-admin-dashboard.php:1110
+#: admin/class-webchangedetector-admin-dashboard.php:710
+#: admin/class-webchangedetector-admin-dashboard.php:926
+#: admin/class-webchangedetector-admin-dashboard.php:1119
 msgid "Compared Screenshots"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:704
-#: admin/class-webchangedetector-admin-dashboard.php:919
-#: admin/class-webchangedetector-admin-dashboard.php:1111
+#: admin/class-webchangedetector-admin-dashboard.php:711
+#: admin/class-webchangedetector-admin-dashboard.php:927
+#: admin/class-webchangedetector-admin-dashboard.php:1120
+#: admin/views/class-webchangedetector-modal-view.php:68
+#: admin/views/class-webchangedetector-modal-view.php:69
 msgid "Difference"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:728
-#: admin/class-webchangedetector-admin-dashboard.php:942
+#: admin/class-webchangedetector-admin-dashboard.php:735
+#: admin/class-webchangedetector-admin-dashboard.php:950
 #: admin/partials/templates/show-change-detection.php:110
 msgid "Change Status to:"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:736
-#: admin/class-webchangedetector-admin-dashboard.php:950
-#: admin/class-webchangedetector-admin-utils.php:114
+#: admin/class-webchangedetector-admin-dashboard.php:743
+#: admin/class-webchangedetector-admin-dashboard.php:958
+#: admin/class-webchangedetector-admin-utils.php:116
 #: admin/class-webchangedetector-admin-wordpress.php:130
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:237
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:273
 #: admin/partials/templates/show-change-detection.php:117
 msgid "Ok"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:743
-#: admin/class-webchangedetector-admin-dashboard.php:957
-#: admin/class-webchangedetector-admin-utils.php:115
+#: admin/class-webchangedetector-admin-dashboard.php:750
+#: admin/class-webchangedetector-admin-dashboard.php:965
+#: admin/class-webchangedetector-admin-utils.php:117
 #: admin/class-webchangedetector-admin-wordpress.php:131
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:238
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:274
 #: admin/partials/templates/show-change-detection.php:124
 msgid "To Fix"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:750
-#: admin/class-webchangedetector-admin-dashboard.php:964
-#: admin/class-webchangedetector-admin-utils.php:116
+#: admin/class-webchangedetector-admin-dashboard.php:757
+#: admin/class-webchangedetector-admin-dashboard.php:972
+#: admin/class-webchangedetector-admin-utils.php:118
 #: admin/class-webchangedetector-admin-wordpress.php:132
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:239
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:275
 #: admin/partials/templates/show-change-detection.php:131
 msgid "False Positive"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:794
-#: admin/class-webchangedetector-admin-dashboard.php:1008
+#: admin/class-webchangedetector-admin-dashboard.php:801
+#: admin/class-webchangedetector-admin-dashboard.php:1016
 msgid "AI analysis skipped: No visual difference detected"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:821
-#: admin/class-webchangedetector-admin-dashboard.php:1035
+#: admin/class-webchangedetector-admin-dashboard.php:828
+#: admin/class-webchangedetector-admin-dashboard.php:1043
 #: admin/partials/templates/show-change-detection.php:270
 msgid "AI analysis in progress..."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:827
-#: admin/class-webchangedetector-admin-dashboard.php:1041
+#: admin/class-webchangedetector-admin-dashboard.php:834
+#: admin/class-webchangedetector-admin-dashboard.php:1049
 msgid "AI analysis failed"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:845
-#: admin/class-webchangedetector-admin-dashboard.php:1059
+#: admin/class-webchangedetector-admin-dashboard.php:853
+#: admin/class-webchangedetector-admin-dashboard.php:1068
 msgid "Show"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:883
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:526
+#: admin/class-webchangedetector-admin-dashboard.php:891
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:578
 msgid "items"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:900
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:470
+#: admin/class-webchangedetector-admin-dashboard.php:908
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:521
 msgid "No Change Detections (yet)"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:901
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:471
+#: admin/class-webchangedetector-admin-dashboard.php:909
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:522
 msgid "Start monitoring webpages or start Manual Checks. Try different filters if there should be Change Detections."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1102
+#: admin/class-webchangedetector-admin-dashboard.php:1111
 #: admin/class-webchangedetector-admin-screenshots.php:94
 msgid "No failed URLs found for this batch."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1134
-#: admin/class-webchangedetector-admin-dashboard.php:1136
+#: admin/class-webchangedetector-admin-dashboard.php:1143
+#: admin/class-webchangedetector-admin-dashboard.php:1145
 msgid "n/a"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1161
+#: admin/class-webchangedetector-admin-dashboard.php:1170
 #: admin/class-webchangedetector-admin-screenshots.php:154
-#: admin/class-webchangedetector-admin-settings.php:1001
+#: admin/class-webchangedetector-admin-settings.php:1036
 #: admin/class-webchangedetector-admin-wordpress.php:118
 msgid "Something went wrong. Please try again."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1209
-#: admin/class-webchangedetector-admin-screenshots.php:211
-#: admin/class-webchangedetector-admin-settings.php:692
-#: admin/class-webchangedetector-admin-settings.php:694
-#: admin/controllers/class-webchangedetector-logs-controller.php:479
+#: admin/class-webchangedetector-admin-dashboard.php:1219
+#: admin/class-webchangedetector-admin-screenshots.php:212
+#: admin/class-webchangedetector-admin-settings.php:724
+#: admin/class-webchangedetector-admin-settings.php:726
+#: admin/controllers/class-webchangedetector-logs-controller.php:481
 msgid "Previous"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1215
-#: admin/class-webchangedetector-admin-screenshots.php:218
-#: admin/class-webchangedetector-admin-settings.php:734
-#: admin/class-webchangedetector-admin-settings.php:736
-#: admin/controllers/class-webchangedetector-logs-controller.php:495
+#: admin/class-webchangedetector-admin-dashboard.php:1226
+#: admin/class-webchangedetector-admin-screenshots.php:220
+#: admin/class-webchangedetector-admin-settings.php:766
+#: admin/class-webchangedetector-admin-settings.php:768
+#: admin/controllers/class-webchangedetector-logs-controller.php:497
 msgid "Next"
 msgstr ""
 
 #. translators: %s: link to change detections page
-#: admin/class-webchangedetector-admin-dashboard.php:1227
+#: admin/class-webchangedetector-admin-dashboard.php:1238
 #, php-format
 msgid "Ooops! There was no change detection selected. Please go to %s and select a change detection to show."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-dashboard.php:1228
-#: admin/class-webchangedetector-admin-screenshots.php:229
-#: admin/class-webchangedetector-admin-settings.php:1031
-#: admin/class-webchangedetector-admin-wordpress.php:360
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:112
-#: admin/views/class-webchangedetector-view-renderer.php:191
+#: admin/class-webchangedetector-admin-dashboard.php:1239
+#: admin/class-webchangedetector-admin-screenshots.php:231
+#: admin/class-webchangedetector-admin-settings.php:1066
+#: admin/class-webchangedetector-admin-wordpress.php:441
+#: admin/class-webchangedetector-admin-wordpress.php:503
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:114
+#: admin/views/class-webchangedetector-view-renderer.php:201
 msgid "Change Detections"
 msgstr ""
 
@@ -719,6 +846,8 @@ msgid "Failed URLs"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-screenshots.php:102
+#: admin/class-webchangedetector-autoupdates.php:1401
+#: admin/class-webchangedetector-autoupdates.php:1410
 msgid "Device"
 msgstr ""
 
@@ -734,15 +863,15 @@ msgstr ""
 msgid "Go back to Change Detections"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-screenshots.php:228
+#: admin/class-webchangedetector-admin-screenshots.php:230
 msgid "Ooops! There was no change detection selected. Please go to"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-screenshots.php:230
+#: admin/class-webchangedetector-admin-screenshots.php:232
 msgid "and select a change detection to show."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-screenshots.php:247
+#: admin/class-webchangedetector-admin-screenshots.php:249
 msgid "Sorry, we couldn't find the screenshot. Please try again."
 msgstr ""
 
@@ -774,158 +903,179 @@ msgstr ""
 msgid "Select URLs for manual checks to get started."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:423
+#: admin/class-webchangedetector-admin-settings.php:407
+msgid "All Websites Mode"
+msgstr ""
+
+#. translators: %d: number of registered sites
+#: admin/class-webchangedetector-admin-settings.php:411
+#, php-format
+msgid "Settings will be applied to all %d registered websites when saved."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-settings.php:443
 msgid "Ready to check"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:424
+#: admin/class-webchangedetector-admin-settings.php:444
 #: admin/partials/components/settings/auto-update-status-bar.php:129
 msgid "No URLs selected"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:425
+#: admin/class-webchangedetector-admin-settings.php:445
 #: admin/partials/components/settings/auto-update-status-bar.php:130
 msgid "Select URLs below"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:428
+#: admin/class-webchangedetector-admin-settings.php:448
 msgid "Start Manual Checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:433
-#: admin/class-webchangedetector-admin.php:648
+#: admin/class-webchangedetector-admin-settings.php:453
+#: admin/class-webchangedetector-admin.php:660
 #: admin/partials/components/settings/auto-update-status-bar.php:149
 msgid "Selected URLs"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:437
+#: admin/class-webchangedetector-admin-settings.php:457
 msgid "Check Type"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:438
+#: admin/class-webchangedetector-admin-settings.php:458
 msgid "On-Demand"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:465
+#: admin/class-webchangedetector-admin-settings.php:484
+#: admin/class-webchangedetector-admin-settings.php:497
 msgid "Select URLs to Check"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:467
+#: admin/class-webchangedetector-admin-settings.php:487
+msgid "URL selection is managed per website. Please select a specific website from the dropdown above to choose which URLs should be checked."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-settings.php:499
 msgid "Currently selected URLs:"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:468
+#: admin/class-webchangedetector-admin-settings.php:500
 msgid "Missing URLs? Select them from other post types and taxonomies by enabling them in the"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:469
-#: admin/class-webchangedetector-admin-settings.php:1043
-#: admin/class-webchangedetector-admin-wordpress.php:372
-#: admin/views/class-webchangedetector-view-renderer.php:212
+#: admin/class-webchangedetector-admin-settings.php:501
+#: admin/class-webchangedetector-admin-settings.php:1078
+#: admin/class-webchangedetector-admin-wordpress.php:453
+#: admin/class-webchangedetector-admin-wordpress.php:507
+#: admin/partials/templates/update-detection/update-step-tiles.php:21
+#: admin/views/class-webchangedetector-view-renderer.php:222
 msgid "Settings"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:480
+#: admin/class-webchangedetector-admin-settings.php:512
 msgid "Post types"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:482
-#: admin/class-webchangedetector-admin-settings.php:515
+#: admin/class-webchangedetector-admin-settings.php:514
+#: admin/class-webchangedetector-admin-settings.php:547
 msgid "All"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:495
-#: admin/class-webchangedetector-admin-settings.php:1071
-#: admin/class-webchangedetector-admin-settings.php:1140
+#: admin/class-webchangedetector-admin-settings.php:527
+#: admin/class-webchangedetector-admin-settings.php:1106
+#: admin/class-webchangedetector-admin-settings.php:1175
 msgid "Frontpage"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:513
-#: admin/class-webchangedetector-admin-settings.php:1089
+#: admin/class-webchangedetector-admin-settings.php:545
+#: admin/class-webchangedetector-admin-settings.php:1124
 msgid "Taxonomies"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:533
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:380
-#: admin/controllers/class-webchangedetector-logs-controller.php:320
+#: admin/class-webchangedetector-admin-settings.php:565
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:424
+#: admin/controllers/class-webchangedetector-logs-controller.php:321
 msgid "Filter"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:554
-#: admin/class-webchangedetector-admin-settings.php:555
+#: admin/class-webchangedetector-admin-settings.php:586
+#: admin/class-webchangedetector-admin-settings.php:587
 msgid "Search"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:561
-#: admin/class-webchangedetector-admin-wordpress.php:334
+#: admin/class-webchangedetector-admin-settings.php:593
+#: admin/class-webchangedetector-admin-wordpress.php:415
 msgid "Desktop"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:562
-#: admin/class-webchangedetector-admin-wordpress.php:335
+#: admin/class-webchangedetector-admin-settings.php:594
+#: admin/class-webchangedetector-admin-wordpress.php:416
 msgid "Mobile"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:564
+#: admin/class-webchangedetector-admin-settings.php:596
 msgid "Post type"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:593
+#: admin/class-webchangedetector-admin-settings.php:625
 msgid "Select all"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:657
+#: admin/class-webchangedetector-admin-settings.php:689
 msgid "No URLs found. Try adjusting your filters or check your URL sync settings."
 msgstr ""
 
 #. translators: %1$s: Current page number, %2$s: Total pages, %3$s: Total items count
-#: admin/class-webchangedetector-admin-settings.php:680
+#: admin/class-webchangedetector-admin-settings.php:712
 #, php-format
 msgid "Showing page %1$s of %2$s (%3$s total URLs)"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:825
+#: admin/class-webchangedetector-admin-settings.php:857
 msgid "No website details. Create them first."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:1013
-#: admin/class-webchangedetector-admin-wordpress.php:357
-#: admin/class-webchangedetector-admin-wordpress.php:682
-#: admin/views/class-webchangedetector-view-renderer.php:170
+#: admin/class-webchangedetector-admin-settings.php:1048
+#: admin/class-webchangedetector-admin-wordpress.php:438
+#: admin/class-webchangedetector-admin-wordpress.php:498
+#: admin/class-webchangedetector-admin-wordpress.php:798
+#: admin/views/class-webchangedetector-view-renderer.php:180
 msgid "Dashboard"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:1019
-#: admin/class-webchangedetector-admin-wordpress.php:363
-#: admin/views/class-webchangedetector-view-renderer.php:177
+#: admin/class-webchangedetector-admin-settings.php:1054
+#: admin/class-webchangedetector-admin-wordpress.php:444
+#: admin/class-webchangedetector-admin-wordpress.php:504
+#: admin/views/class-webchangedetector-view-renderer.php:187
 msgid "Auto Update Checks & Manual Checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:1025
-#: admin/class-webchangedetector-admin-wordpress.php:283
-#: admin/class-webchangedetector-admin-wordpress.php:333
-#: admin/class-webchangedetector-admin-wordpress.php:366
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:211
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:372
-#: admin/views/class-webchangedetector-view-renderer.php:184
+#: admin/class-webchangedetector-admin-settings.php:1060
+#: admin/class-webchangedetector-admin-wordpress.php:305
+#: admin/class-webchangedetector-admin-wordpress.php:414
+#: admin/class-webchangedetector-admin-wordpress.php:447
+#: admin/class-webchangedetector-admin-wordpress.php:505
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:217
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:234
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:416
+#: admin/views/class-webchangedetector-view-renderer.php:194
 msgid "Monitoring"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:1037
+#: admin/class-webchangedetector-admin-settings.php:1072
 #: admin/controllers/class-webchangedetector-logs-controller.php:68
 msgid "Queue"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-utils.php:113
-#: admin/class-webchangedetector-admin-utils.php:120
+#: admin/class-webchangedetector-admin-utils.php:115
+#: admin/class-webchangedetector-admin-utils.php:122
 #: admin/class-webchangedetector-admin-wordpress.php:134
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:236
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:272
 msgid "New"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-utils.php:117
+#: admin/class-webchangedetector-admin-utils.php:119
 #: admin/class-webchangedetector-admin-wordpress.php:133
-#: admin/controllers/class-webchangedetector-logs-controller.php:543
+#: admin/controllers/class-webchangedetector-logs-controller.php:545
 #: admin/partials/templates/update-detection/update-step-post-sc-processing.php:67
 #: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:67
 msgid "Failed"
@@ -958,7 +1108,7 @@ msgid "Currently"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:116
-#: admin/class-webchangedetector-admin.php:642
+#: admin/class-webchangedetector-admin.php:654
 #: admin/views/class-webchangedetector-card-view.php:135
 msgid "Next monitoring checks in "
 msgstr ""
@@ -1035,435 +1185,666 @@ msgstr ""
 msgid "Every hour"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:180
+#: admin/class-webchangedetector-admin-wordpress.php:142
+msgid "Done"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:143
+msgid "Finishing soon..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:144
+msgid "Finished processing"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:145
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:38
+msgid "Screenshots in progress"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:146
+#: admin/partials/components/settings/auto-update-status-bar.php:64
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:38
+msgid "Checks in progress"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:147
+msgid "showing all"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:148
+msgid "with changes only"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:149
+msgid "detection"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:150
+msgid "detections"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:151
+msgid "Exporting..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:152
+msgid "Failed to export logs"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:153
+msgid "Error occurred while exporting logs. Please try again."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:154
+msgid "Are you sure you want to delete this rule? This cannot be undone."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:155
+msgid "Creating rule..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:156
+msgid "Rule created"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:160
+msgid "Failed to update scope."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:161
+msgid "You ran out of screenshots."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:162
+#: admin/partials/templates/show-change-detection.php:561
+#: admin/partials/templates/show-change-detection.php:593
+#: admin/views/class-webchangedetector-modal-view.php:140
+msgid "Confirm"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:163
+msgid "Ignored"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:202
 msgid "Next →"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:181
+#: admin/class-webchangedetector-admin-wordpress.php:203
 msgid "← Previous"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:182
+#: admin/class-webchangedetector-admin-wordpress.php:204
 msgid "Finish Wizard"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:183
+#: admin/class-webchangedetector-admin-wordpress.php:205
 msgid "Exit Wizard"
 msgstr ""
 
 #. translators: {{current}}: Current step number, {{total}}: Total number of steps
-#: admin/class-webchangedetector-admin-wordpress.php:185
+#: admin/class-webchangedetector-admin-wordpress.php:207
 msgid "Step {{current}} of {{total}}"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:186
+#: admin/class-webchangedetector-admin-wordpress.php:208
 msgid "Finish Tour →"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:189
+#: admin/class-webchangedetector-admin-wordpress.php:211
 msgid "Let's continue on the next page."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:190
-#: admin/class-webchangedetector-admin-wordpress.php:673
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:146
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:161
+#: admin/class-webchangedetector-admin-wordpress.php:212
+#: admin/class-webchangedetector-admin-wordpress.php:789
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:148
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:163
 msgid "Loading..."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:191
+#: admin/class-webchangedetector-admin-wordpress.php:213
 msgid "Wizard Complete!"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:192
+#: admin/class-webchangedetector-admin-wordpress.php:214
 msgid "Returning to dashboard..."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:195
+#: admin/class-webchangedetector-admin-wordpress.php:217
 msgid "Welcome to WebChange Detector"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:196
+#: admin/class-webchangedetector-admin-wordpress.php:218
 msgid "WebChange Detector monitors your WordPress site for visual changes. It takes screenshots, compares them, and alerts you to any differences. Let's start the tour!"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:197
+#: admin/class-webchangedetector-admin-wordpress.php:219
 msgid "Your Check Credits"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:198
+#: admin/class-webchangedetector-admin-wordpress.php:220
 msgid "This shows your available checks and current usage. Monitor your usage to stay within limits. You will see warnings if the estimated amount of checks is higher than your credits."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:199
+#: admin/class-webchangedetector-admin-wordpress.php:221
 msgid "Recent Changes"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:200
+#: admin/class-webchangedetector-admin-wordpress.php:222
 msgid "Your latest detected changes appear here. You'll see visual comparisons highlighting what changed on your site."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:203
+#: admin/class-webchangedetector-admin-wordpress.php:225
 msgid "Auto Update Checks Status"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:204
+#: admin/class-webchangedetector-admin-wordpress.php:226
 msgid "This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:205
+#: admin/class-webchangedetector-admin-wordpress.php:227
 msgid "Manual Checks & Auto Update Settings"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:206
+#: admin/class-webchangedetector-admin-wordpress.php:228
 msgid "You can start the Manual Checks here. But first, let's walk through each important setting."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:207
+#: admin/class-webchangedetector-admin-wordpress.php:229
 msgid "Enable Auto Update Checks"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:208
+#: admin/class-webchangedetector-admin-wordpress.php:230
 msgid "Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don't want to use it."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:209
+#: admin/class-webchangedetector-admin-wordpress.php:231
 msgid "Enabled Auto Updates"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:210
+#: admin/class-webchangedetector-admin-wordpress.php:232
 msgid "Here you see a list of all enabled auto updates. Enable or disable the auto updates in the WordPress settings."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:211
-#: admin/partials/templates/update-settings.php:68
+#: admin/class-webchangedetector-admin-wordpress.php:233
+#: admin/partials/templates/update-settings.php:69
 msgid "Auto Update Timeframe"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:212
+#: admin/class-webchangedetector-admin-wordpress.php:234
 msgid "Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:213
+#: admin/class-webchangedetector-admin-wordpress.php:235
 msgid "Weekday Selection"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:214
+#: admin/class-webchangedetector-admin-wordpress.php:236
 msgid "Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:215
+#: admin/class-webchangedetector-admin-wordpress.php:237
 msgid "Notification Emails"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:216
+#: admin/class-webchangedetector-admin-wordpress.php:238
 msgid "Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:217
-#: admin/partials/templates/auto-settings.php:211
-#: admin/partials/templates/update-settings.php:144
+#: admin/class-webchangedetector-admin-wordpress.php:239
+#: admin/partials/templates/auto-settings.php:212
+#: admin/partials/templates/update-settings.php:145
 msgid "Change Detection Threshold"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:218
+#: admin/class-webchangedetector-admin-wordpress.php:240
 msgid "Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:219
-#: admin/partials/templates/update-settings.php:168
+#: admin/class-webchangedetector-admin-wordpress.php:241
+#: admin/partials/templates/update-settings.php:169
 msgid "CSS Injection"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:220
+#: admin/class-webchangedetector-admin-wordpress.php:242
 msgid "Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:221
+#: admin/class-webchangedetector-admin-wordpress.php:243
 msgid "URL Selection Table"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:222
+#: admin/class-webchangedetector-admin-wordpress.php:244
 msgid "Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:223
+#: admin/class-webchangedetector-admin-wordpress.php:245
 msgid "Save Your Settings"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:224
+#: admin/class-webchangedetector-admin-wordpress.php:246
 msgid "Don't forget to save! Your settings will be applied to both manual checks and auto-update monitoring."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:227
+#: admin/class-webchangedetector-admin-wordpress.php:249
 msgid "Automatic Monitoring Settings"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:228
+#: admin/class-webchangedetector-admin-wordpress.php:250
 msgid "Set up automatic monitoring to regularly check your website for unexpected changes. This is perfect for detecting hacks, broken layouts, or content issues."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:229
-#: admin/partials/templates/auto-settings.php:32
+#: admin/class-webchangedetector-admin-wordpress.php:251
+#: admin/partials/templates/auto-settings.php:33
 msgid "Enable Monitoring"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:230
+#: admin/class-webchangedetector-admin-wordpress.php:252
 msgid "Please turn this ON to activate automatic monitoring. This is required to continue the wizard. Your selected pages will be checked regularly based on your schedule settings."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:231
+#: admin/class-webchangedetector-admin-wordpress.php:253
 msgid "Check Frequency"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:232
+#: admin/class-webchangedetector-admin-wordpress.php:254
 msgid "How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:233
+#: admin/class-webchangedetector-admin-wordpress.php:255
 msgid "Preferred Check Time"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:234
+#: admin/class-webchangedetector-admin-wordpress.php:256
 msgid "Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:235
+#: admin/class-webchangedetector-admin-wordpress.php:257
 msgid "Change Sensitivity"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:236
+#: admin/class-webchangedetector-admin-wordpress.php:258
 msgid "Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:237
+#: admin/class-webchangedetector-admin-wordpress.php:259
 msgid "Alert Recipients"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:238
+#: admin/class-webchangedetector-admin-wordpress.php:260
 msgid "Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:239
+#: admin/class-webchangedetector-admin-wordpress.php:261
 msgid "CSS Customization"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:240
+#: admin/class-webchangedetector-admin-wordpress.php:262
 msgid "Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:241
+#: admin/class-webchangedetector-admin-wordpress.php:263
 msgid "Save Monitoring Settings"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:242
+#: admin/class-webchangedetector-admin-wordpress.php:264
 msgid "Save your configuration to activate monitoring. Changes take effect immediately."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:243
+#: admin/class-webchangedetector-admin-wordpress.php:265
 msgid "Select Pages to Monitor"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:244
+#: admin/class-webchangedetector-admin-wordpress.php:266
 msgid "Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:247
+#: admin/class-webchangedetector-admin-wordpress.php:269
 msgid "Change Detection History"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:248
+#: admin/class-webchangedetector-admin-wordpress.php:270
 msgid "This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:249
+#: admin/class-webchangedetector-admin-wordpress.php:271
 msgid "Detection Table"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:250
+#: admin/class-webchangedetector-admin-wordpress.php:272
 msgid "Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:251
+#: admin/class-webchangedetector-admin-wordpress.php:273
 msgid "Filter Options"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:252
+#: admin/class-webchangedetector-admin-wordpress.php:274
 msgid "Use these filters to find specific changes by date, check type, status, or to show only changes with differences."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:255
+#: admin/class-webchangedetector-admin-wordpress.php:277
 msgid "Activity Logs"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:256
+#: admin/class-webchangedetector-admin-wordpress.php:278
 msgid "Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:257
+#: admin/class-webchangedetector-admin-wordpress.php:279
 msgid "Log Details"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:258
+#: admin/class-webchangedetector-admin-wordpress.php:280
 msgid "Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:261
+#: admin/class-webchangedetector-admin-wordpress.php:283
 msgid "URL Management"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:262
+#: admin/class-webchangedetector-admin-wordpress.php:284
 msgid "Control which content types appear in your URL list. Add custom post types, taxonomies, or WooCommerce products for monitoring."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:263
+#: admin/class-webchangedetector-admin-wordpress.php:285
 msgid "URL Synchronization"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:264
+#: admin/class-webchangedetector-admin-wordpress.php:286
 msgid "WebChange Detector syncs your site's URLs automatically. Use \"Sync Now\" after adding new content or if URLs are missing."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:265
+#: admin/class-webchangedetector-admin-wordpress.php:287
 msgid "Quick Access"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:266
+#: admin/class-webchangedetector-admin-wordpress.php:288
 msgid "The admin bar menu provides quick access to WebChange Detector from your site's frontend. Disable if you prefer a cleaner toolbar."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:267
+#: admin/class-webchangedetector-admin-wordpress.php:289
 msgid "API Connection"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:268
+#: admin/class-webchangedetector-admin-wordpress.php:290
 msgid "Your API token connects this site to WebChange Detector's screenshot service. Keep it secret and secure!"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:269
+#: admin/class-webchangedetector-admin-wordpress.php:291
 msgid "Setup Complete!"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:270
+#: admin/class-webchangedetector-admin-wordpress.php:292
 msgid "You're all set! WebChange Detector is now monitoring your site. Check the dashboard for updates and configure additional settings as needed."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:273
-#: admin/class-webchangedetector-admin-wordpress.php:356
+#: admin/class-webchangedetector-admin-wordpress.php:295
+#: admin/class-webchangedetector-admin-wordpress.php:437
+#: admin/class-webchangedetector-admin-wordpress.php:497
+#: admin/controllers/class-webchangedetector-admin-controller.php:135
+#: webchangedetector.php:137
 msgid "WebChange Detector"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:274
+#: admin/class-webchangedetector-admin-wordpress.php:296
 msgid "Welcome to WebChange Detector! Use the navigation tabs to access different features."
 msgstr ""
 
 #. translators: %s: Account creation/validation/recovery message or error
-#: admin/class-webchangedetector-admin-wordpress.php:276
+#: admin/class-webchangedetector-admin-wordpress.php:298
 #, php-format
 msgid "API connection restored: %s"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:279
+#: admin/class-webchangedetector-admin-wordpress.php:301
 msgid "Required Setting"
 msgstr ""
 
 #. translators: %s: Setting name.
-#: admin/class-webchangedetector-admin-wordpress.php:281
+#: admin/class-webchangedetector-admin-wordpress.php:303
 #, php-format
 msgid "Please enable <strong>%s</strong> to continue with the wizard. <br>You can disable this after finishing the wizard again."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:329
-msgid "Loading WCD Status..."
+#: admin/class-webchangedetector-admin-wordpress.php:348
+msgid "Registering..."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:330
-msgid "Error loading status."
+#: admin/class-webchangedetector-admin-wordpress.php:349
+#: admin/partials/templates/multisite-sites.php:82
+msgid "Registered"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:331
-msgid "URL not tracked by WCD"
+#: admin/class-webchangedetector-admin-wordpress.php:350
+msgid "Registration failed. Please try again."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:332
-msgid "Manual / Auto Update Checks"
+#: admin/class-webchangedetector-admin-wordpress.php:351
+#: admin/class-webchangedetector-admin-wordpress.php:377
+msgid "Request failed. Please try again."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:336
-#: admin/class-webchangedetector-admin-wordpress.php:664
-msgid "WCD Dashboard"
+#: admin/class-webchangedetector-admin-wordpress.php:352
+msgid "All sites registered!"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:338
-msgid "Error: Missing data needed to save the change."
+#. translators: %d: number of unregistered sites
+#: admin/class-webchangedetector-admin-wordpress.php:354
+#, php-format
+msgid "This will register %d sites with your WebChange Detector account. Continue?"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:339
-msgid "Error: Configuration data missing. Cannot save change."
-msgstr ""
-
-#: admin/class-webchangedetector-admin-wordpress.php:340
-msgid "Failed to update setting. Please try again."
-msgstr ""
-
-#: admin/class-webchangedetector-admin-wordpress.php:369
-#: admin/views/class-webchangedetector-view-renderer.php:205
-msgid "Logs"
+#. translators: 1: succeeded count, 2: failed count
+#: admin/class-webchangedetector-admin-wordpress.php:356
+#, php-format
+msgid "Done: %1$d succeeded, %2$d failed."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:375
-#: admin/views/class-webchangedetector-view-renderer.php:198
+msgid "Saving..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:376
+msgid "Failed to save allowances. Please try again."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:410
+msgid "Loading WCD Status..."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:411
+msgid "Error loading status."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:412
+msgid "URL not tracked by WCD"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:413
+msgid "Manual / Auto Update Checks"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:417
+#: admin/class-webchangedetector-admin-wordpress.php:780
+msgid "WCD Dashboard"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:419
+msgid "Error: Missing data needed to save the change."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:420
+msgid "Error: Configuration data missing. Cannot save change."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:421
+msgid "Failed to update setting. Please try again."
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:450
+#: admin/class-webchangedetector-admin-wordpress.php:506
+#: admin/views/class-webchangedetector-view-renderer.php:215
+msgid "Logs"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:456
+#: admin/class-webchangedetector-admin-wordpress.php:508
+#: admin/views/class-webchangedetector-view-renderer.php:208
 msgid "AI Rules"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:385
-#: admin/views/class-webchangedetector-view-renderer.php:219
+#: admin/class-webchangedetector-admin-wordpress.php:466
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:62
+#: admin/views/class-webchangedetector-view-renderer.php:236
 msgid "Upgrade Account"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:394
+#: admin/class-webchangedetector-admin-wordpress.php:475
+#: admin/class-webchangedetector-admin-wordpress.php:511
 msgid "Show Detection"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:395
+#: admin/class-webchangedetector-admin-wordpress.php:476
+#: admin/class-webchangedetector-admin-wordpress.php:512
 msgid "Show Screenshot"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:657
+#: admin/class-webchangedetector-admin-wordpress.php:501
+#: admin/views/class-webchangedetector-view-renderer.php:229
+msgid "Sites"
+msgstr ""
+
+#: admin/class-webchangedetector-admin-wordpress.php:773
 msgid "WCD"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:674
+#: admin/class-webchangedetector-admin-wordpress.php:790
 msgid "Current page monitoring status"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:684
+#: admin/class-webchangedetector-admin-wordpress.php:800
 msgid "Go to WCD Dashboard"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:698
+#: admin/class-webchangedetector-admin-wordpress.php:814
 msgid "Invalid nonce."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:702
+#: admin/class-webchangedetector-admin-wordpress.php:818
 msgid "Permission denied."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:708
+#: admin/class-webchangedetector-admin-wordpress.php:824
 msgid "No URL provided."
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:720
+#: admin/class-webchangedetector-admin-wordpress.php:836
 msgid "URL not tracked by WebChange Detector"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:1454
-#: admin/class-webchangedetector-admin-wordpress.php:1455
+#: admin/class-webchangedetector-admin-wordpress.php:1570
+#: admin/class-webchangedetector-admin-wordpress.php:1571
 msgid "No URLs found to sync"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-wordpress.php:1493
+#: admin/class-webchangedetector-admin-wordpress.php:1609
 msgid "We couldn't reach the WP Api. Please make sure it is enabled on the WP website"
+msgstr ""
+
+#: admin/class-webchangedetector-admin.php:751
+#: admin/views/class-webchangedetector-notification-view.php:174
+msgid "Settings saved."
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1345
+msgid "No difference"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1381
+msgid "See changes"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1393
+msgid "Checks Passed"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1396
+msgid "We found changes"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1396
+msgid "Please check the change detections."
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1400
+msgid "Checks with differences"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1401
+#: admin/class-webchangedetector-autoupdates.php:1410
+msgid "Change in %"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1401
+#: admin/class-webchangedetector-autoupdates.php:1410
+msgid "Change Detection Page"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1401
+#: admin/class-webchangedetector-autoupdates.php:1410
+msgid "AI Analysis"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1405
+#: admin/class-webchangedetector-autoupdates.php:1414
+msgid "No change detections to show here"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1409
+msgid "Checks without differences"
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1418
+msgid "Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin."
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1421
+msgid "You can find all change detections and settings for the checks in your wp-admin dashboard of your website."
+msgstr ""
+
+#: admin/class-webchangedetector-autoupdates.php:1421
+msgid "Your WebChange Detector team"
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-admin-controller.php:409
+msgid "No API Token given."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-admin-controller.php:514
+msgid "Sorry, we couldn't retrieve your account settings. Please check your API token or contact support if this issue persists."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-admin-controller.php:640
+msgid "Sorry, we couldn't get your account settings. Please contact us."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-admin-controller.php:645
+#: admin/views/class-webchangedetector-notification-view.php:120
+#: admin/views/class-webchangedetector-notification-view.php:144
+#: admin/views/class-webchangedetector-notification-view.php:164
+msgid "Reset API token"
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-admin-controller.php:747
+msgid "Ooops!"
+msgstr ""
+
+#. translators: %s: Support email link
+#: admin/controllers/class-webchangedetector-admin-controller.php:752
+#, php-format
+msgid "We couldn't get your billing account. Please get in touch with us at %s."
 msgstr ""
 
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:73
@@ -1474,63 +1855,63 @@ msgstr ""
 msgid "Invalid status."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:276
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:320
 msgid "Date Range"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:279
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:323
 msgid "7 Days"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:280
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:324
 msgid "30 Days"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:281
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:325
 msgid "90 Days"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:282
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:326
 msgid "All Time"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:298
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:342
 msgid "URLs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:300
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:304
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:344
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:348
 #: admin/partials/templates/ai-feedback-rules.php:102
 msgid "All URLs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:330
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:334
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:374
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:378
 msgid "All Status"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:356
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:400
 #: admin/partials/templates/show-change-detection.php:377
 msgid "Visual Changes"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:359
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:403
 msgid "All detections"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:360
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:404
 msgid "With changes only"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:367
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:411
 msgid "Type"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:370
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:414
 msgid "All Checks"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:373
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:417
 #: admin/partials/components/settings/auto-update-status-bar.php:63
 #: admin/partials/components/settings/auto-update-status-bar.php:70
 #: admin/partials/components/settings/auto-update-status-bar.php:86
@@ -1540,27 +1921,27 @@ msgstr ""
 msgid "Auto-Update Checks"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:381
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:431
 msgid "Reset"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:405
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:456
 msgid "Batch View"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:409
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:460
 msgid "List View"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:495
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:546
 msgid "Batch not found."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:505
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:556
 msgid "Viewing Auto-Update Check visual comparisons. "
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-change-detections-controller.php:506
+#: admin/controllers/class-webchangedetector-change-detections-controller.php:557
 msgid "← Back to Auto-Update History"
 msgstr ""
 
@@ -1606,242 +1987,243 @@ msgstr ""
 msgid "Debug Logs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:238
+#: admin/controllers/class-webchangedetector-logs-controller.php:239
 msgid "Log Statistics"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:242
+#: admin/controllers/class-webchangedetector-logs-controller.php:243
 msgid "Total Logs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:246
+#: admin/controllers/class-webchangedetector-logs-controller.php:247
 msgid "Last 24 Hours"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:264
-#: admin/controllers/class-webchangedetector-logs-controller.php:370
+#: admin/controllers/class-webchangedetector-logs-controller.php:265
+#: admin/controllers/class-webchangedetector-logs-controller.php:372
 msgid "Level"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:266
+#: admin/controllers/class-webchangedetector-logs-controller.php:267
 msgid "All Levels"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:267
+#: admin/controllers/class-webchangedetector-logs-controller.php:268
 msgid "Debug"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:268
+#: admin/controllers/class-webchangedetector-logs-controller.php:269
 msgid "Info"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:269
+#: admin/controllers/class-webchangedetector-logs-controller.php:270
 msgid "Warning"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:270
-#: admin/controllers/class-webchangedetector-logs-controller.php:537
+#: admin/controllers/class-webchangedetector-logs-controller.php:271
+#: admin/controllers/class-webchangedetector-logs-controller.php:539
 msgid "Error"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:271
+#: admin/controllers/class-webchangedetector-logs-controller.php:272
 msgid "Critical"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:276
-#: admin/controllers/class-webchangedetector-logs-controller.php:371
+#: admin/controllers/class-webchangedetector-logs-controller.php:277
+#: admin/controllers/class-webchangedetector-logs-controller.php:373
 msgid "Context"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:278
+#: admin/controllers/class-webchangedetector-logs-controller.php:279
 msgid "All Contexts"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:288
+#: admin/controllers/class-webchangedetector-logs-controller.php:289
 msgid "Search Message"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:289
+#: admin/controllers/class-webchangedetector-logs-controller.php:290
 msgid "Search in messages..."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:293
+#: admin/controllers/class-webchangedetector-logs-controller.php:294
 msgid "From Date"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:302
+#: admin/controllers/class-webchangedetector-logs-controller.php:303
 msgid "To Date"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:311
+#: admin/controllers/class-webchangedetector-logs-controller.php:312
 msgid "Per Page"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:321
+#: admin/controllers/class-webchangedetector-logs-controller.php:322
 msgid "Clear"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:347
+#: admin/controllers/class-webchangedetector-logs-controller.php:348
 msgid "Export to CSV"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:351
+#: admin/controllers/class-webchangedetector-logs-controller.php:352
 msgid "Are you sure you want to clear all logs? This action cannot be undone."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:354
+#: admin/controllers/class-webchangedetector-logs-controller.php:356
 msgid "Clear All Logs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:362
+#: admin/controllers/class-webchangedetector-logs-controller.php:364
 msgid "No logs found."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:363
+#: admin/controllers/class-webchangedetector-logs-controller.php:365
 msgid "Try adjusting your filters or enable debug logging in settings."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:369
+#: admin/controllers/class-webchangedetector-logs-controller.php:371
 msgid "Timestamp"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:372
+#: admin/controllers/class-webchangedetector-logs-controller.php:374
 msgid "Message"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:373
+#: admin/controllers/class-webchangedetector-logs-controller.php:375
 msgid "User"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:374
+#: admin/controllers/class-webchangedetector-logs-controller.php:376
 msgid "IP"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:431
+#: admin/controllers/class-webchangedetector-logs-controller.php:433
 msgid "Additional Data"
 msgstr ""
 
 #. translators: %s: Number of items
-#: admin/controllers/class-webchangedetector-logs-controller.php:452
+#: admin/controllers/class-webchangedetector-logs-controller.php:454
 #, php-format
 msgid "%s item"
 msgid_plural "%s items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:477
+#: admin/controllers/class-webchangedetector-logs-controller.php:479
 msgid "‹ Previous"
 msgstr ""
 
 #. translators: 1: Current page number, 2: Total number of pages
-#: admin/controllers/class-webchangedetector-logs-controller.php:486
+#: admin/controllers/class-webchangedetector-logs-controller.php:488
 #, php-format
 msgid "%1$s of %2$s"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:493
+#: admin/controllers/class-webchangedetector-logs-controller.php:495
 msgid "Next ›"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:520
+#: admin/controllers/class-webchangedetector-logs-controller.php:522
 msgid "No auto-update history yet."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:521
+#: admin/controllers/class-webchangedetector-logs-controller.php:523
 msgid "Auto-update results will appear here after WordPress performs automatic updates."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:541
+#: admin/controllers/class-webchangedetector-logs-controller.php:543
 #: admin/partials/templates/update-detection/update-step-post-sc-processing.php:61
 #: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:61
 msgid "Completed"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:542
+#: admin/controllers/class-webchangedetector-logs-controller.php:544
 msgid "Completed with Errors"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:564
-#: admin/controllers/class-webchangedetector-logs-controller.php:612
+#: admin/controllers/class-webchangedetector-logs-controller.php:566
+#: admin/controllers/class-webchangedetector-logs-controller.php:614
 msgid "Auto-Update Cooldown Active"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:566
+#: admin/controllers/class-webchangedetector-logs-controller.php:568
 msgid "Technical Error Occurred"
 msgstr ""
 
 #. translators: 1: number of successful updates, 2: total attempted updates
-#: admin/controllers/class-webchangedetector-logs-controller.php:572
+#: admin/controllers/class-webchangedetector-logs-controller.php:574
 #, php-format
 msgid "%1$d of %2$d updates successful"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:614
+#: admin/controllers/class-webchangedetector-logs-controller.php:616
 msgid "Technical Error"
 msgstr ""
 
 #. translators: %s: time when next check is allowed
-#: admin/controllers/class-webchangedetector-logs-controller.php:626
+#: admin/controllers/class-webchangedetector-logs-controller.php:628
 #, php-format
 msgid "The auto-update cooldown period is still active. Auto-updates were last checked at %1$s. Next check will be allowed at %2$s."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:627
-#: admin/controllers/class-webchangedetector-logs-controller.php:628
+#: admin/controllers/class-webchangedetector-logs-controller.php:629
+#: admin/controllers/class-webchangedetector-logs-controller.php:630
 msgid "unknown time"
 msgstr ""
 
 #. translators: %s: hours remaining
-#: admin/controllers/class-webchangedetector-logs-controller.php:637
+#: admin/controllers/class-webchangedetector-logs-controller.php:639
 #, php-format
 msgid "Time remaining: %s hours"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:645
+#: admin/controllers/class-webchangedetector-logs-controller.php:647
 msgid "Phase:"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:649
+#: admin/controllers/class-webchangedetector-logs-controller.php:651
 msgid "Taking screenshots before updates"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:652
+#: admin/controllers/class-webchangedetector-logs-controller.php:654
 msgid "Taking screenshots after updates"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:655
+#: admin/controllers/class-webchangedetector-logs-controller.php:657
 msgid "Checking screenshot processing status"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:664
+#: admin/controllers/class-webchangedetector-logs-controller.php:666
 msgid "Error Message:"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:671
+#: admin/controllers/class-webchangedetector-logs-controller.php:673
 msgid "This error prevented the auto-update process from completing. Please check your API connection and try again."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:686
+#: admin/controllers/class-webchangedetector-logs-controller.php:688
 msgid "View Visual Comparisons"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:692
+#: admin/controllers/class-webchangedetector-logs-controller.php:694
 msgid "WordPress Core"
 msgstr ""
 
 #. translators: 1: from version, 2: to version
-#: admin/controllers/class-webchangedetector-logs-controller.php:703
-#: admin/controllers/class-webchangedetector-logs-controller.php:731
-#: admin/controllers/class-webchangedetector-logs-controller.php:760
+#: admin/controllers/class-webchangedetector-logs-controller.php:705
+#: admin/controllers/class-webchangedetector-logs-controller.php:733
+#: admin/controllers/class-webchangedetector-logs-controller.php:762
 #, php-format
 msgid "Version %1$s → %2$s"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:718
+#: admin/controllers/class-webchangedetector-logs-controller.php:720
+#: admin/views/class-webchangedetector-notification-view.php:104
 msgid "Plugins"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-logs-controller.php:747
+#: admin/controllers/class-webchangedetector-logs-controller.php:749
 msgid "Themes"
 msgstr ""
 
@@ -1887,65 +2269,86 @@ msgstr ""
 msgid "Admin Bar Menu"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:125
+#: admin/controllers/class-webchangedetector-settings-controller.php:126
 msgid "Disable Admin Bar Menu"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:126
+#: admin/controllers/class-webchangedetector-settings-controller.php:127
 msgid "Check this box to hide the WCD menu item in the frontend admin bar."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:131
+#: admin/controllers/class-webchangedetector-settings-controller.php:132
 msgid "Disable WCD Menu in Admin Bar"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:136
+#: admin/controllers/class-webchangedetector-settings-controller.php:137
 msgid "Save Admin Bar Setting"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:145
+#: admin/controllers/class-webchangedetector-settings-controller.php:146
 msgid "Debug Logging"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:152
-#: admin/controllers/class-webchangedetector-settings-controller.php:158
+#: admin/controllers/class-webchangedetector-settings-controller.php:154
+#: admin/controllers/class-webchangedetector-settings-controller.php:160
 msgid "Enable Debug Logging"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:153
+#: admin/controllers/class-webchangedetector-settings-controller.php:155
 msgid "Enable detailed debug logging to help troubleshoot issues. Logs are stored in the database and older logs are automatically cleaned up after 30 days."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:166
+#: admin/controllers/class-webchangedetector-settings-controller.php:168
 msgid "Save Debug Logging Setting"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:171
-#: admin/controllers/class-webchangedetector-settings-controller.php:176
+#: admin/controllers/class-webchangedetector-settings-controller.php:173
+#: admin/controllers/class-webchangedetector-settings-controller.php:178
 msgid "View Debug Logs"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:172
+#: admin/controllers/class-webchangedetector-settings-controller.php:174
 msgid "Logs are now stored in the database for better performance and searchability."
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:193
-msgid "Need more checks?"
-msgstr ""
-
-#: admin/controllers/class-webchangedetector-settings-controller.php:194
-msgid "If you need more checks, please upgrade your account with the button below."
+#: admin/controllers/class-webchangedetector-settings-controller.php:189
+msgid "Please enter a valid API Token."
 msgstr ""
 
 #: admin/controllers/class-webchangedetector-settings-controller.php:195
+msgid "Need more checks?"
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:196
+msgid "If you need more checks, please upgrade your account with the button below."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:197
+#: admin/views/class-webchangedetector-notification-view.php:137
 msgid "Upgrade"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:265
+#: admin/controllers/class-webchangedetector-settings-controller.php:204
+msgid "Your account details"
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:204
+msgid "You can see your WebChange Detector account here. Please don't share your API token with anyone."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:204
+msgid "Resetting your API Token will allow you to switch accounts. Keep in mind to save your API Token before the reset!"
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:204
+msgid "When you login with your API token after the reset, all your settings will be still there."
+msgstr ""
+
+#: admin/controllers/class-webchangedetector-settings-controller.php:264
 msgid "Show Post Type"
 msgstr ""
 
-#: admin/controllers/class-webchangedetector-settings-controller.php:270
+#: admin/controllers/class-webchangedetector-settings-controller.php:269
 msgid "All available post types are already shown."
 msgstr ""
 
@@ -2006,7 +2409,7 @@ msgid "from"
 msgstr ""
 
 #: admin/partials/components/forms/time-range-selector.php:45
-#: admin/partials/templates/auto-settings.php:194
+#: admin/partials/templates/auto-settings.php:195
 msgid "to"
 msgstr ""
 
@@ -2019,37 +2422,37 @@ msgid "Select the days for the operation."
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:35
-#: admin/partials/templates/auto-settings.php:134
+#: admin/partials/templates/auto-settings.php:135
 msgid "Mon"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:36
-#: admin/partials/templates/auto-settings.php:135
+#: admin/partials/templates/auto-settings.php:136
 msgid "Tue"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:37
-#: admin/partials/templates/auto-settings.php:136
+#: admin/partials/templates/auto-settings.php:137
 msgid "Wed"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:38
-#: admin/partials/templates/auto-settings.php:137
+#: admin/partials/templates/auto-settings.php:138
 msgid "Thu"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:39
-#: admin/partials/templates/auto-settings.php:138
+#: admin/partials/templates/auto-settings.php:139
 msgid "Fri"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:40
-#: admin/partials/templates/auto-settings.php:139
+#: admin/partials/templates/auto-settings.php:140
 msgid "Sat"
 msgstr ""
 
 #: admin/partials/components/forms/weekday-selector.php:41
-#: admin/partials/templates/auto-settings.php:140
+#: admin/partials/templates/auto-settings.php:141
 msgid "Sun"
 msgstr ""
 
@@ -2062,7 +2465,7 @@ msgid "Hour of the day"
 msgstr ""
 
 #: admin/partials/components/monitoring/hour-selector.php:29
-#: admin/partials/templates/auto-settings.php:76
+#: admin/partials/templates/auto-settings.php:77
 msgid "Set the hour on which the monitoring checks should be done."
 msgstr ""
 
@@ -2071,7 +2474,7 @@ msgid "Interval in hours"
 msgstr ""
 
 #: admin/partials/components/monitoring/interval-selector.php:31
-#: admin/partials/templates/auto-settings.php:54
+#: admin/partials/templates/auto-settings.php:55
 msgid "This is the interval in which the checks are done."
 msgstr ""
 
@@ -2105,6 +2508,132 @@ msgstr ""
 
 #: admin/partials/components/monitoring/interval-selector.php:87
 msgid "(\"Freelancer\" plan or higher)"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:31
+msgid "Tabs in WP Plugin"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:32
+msgid "Select which tabs should be enabled at the WP website."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:34
+msgid "Manual checks view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:35
+msgid "Monitoring checks view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:36
+msgid "Change Detections view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:37
+msgid "AI Rules view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:38
+msgid "Settings view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:39
+msgid "Queue view"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:44
+msgid "The \"Manual checks view\" must be enabled."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:46
+msgid "Allow start manual checks"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:47
+msgid "Show manual checks settings"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:48
+msgid "Show manual checks urls"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:53
+msgid "The \"Monitoring checks view\" must be enabled."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:55
+msgid "Show monitoring checks settings"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:56
+msgid "Show monitoring checks urls"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:60
+msgid "Other Settings"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:61
+msgid "Additional restrictions for the WP website."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:63
+msgid "Show add url types in settings"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:64
+msgid "Show account settings"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:65
+msgid "Allow upgrading account"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:66
+msgid "Start the wizard"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:67
+msgid "Allow only checks for frontpage"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:77
+msgid "Allowances"
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:81
+msgid "Set which features are enabled for all sub-websites. Changes will apply to all registered sites."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:83
+msgid "Saving will overwrite the allowances on all registered sub-sites."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:86
+msgid "Set which features are enabled for this sub-website."
+msgstr ""
+
+#: admin/partials/components/multisite/allowances-manager.php:111
+msgid "Save Allowances"
+msgstr ""
+
+#: admin/partials/components/multisite/website-selector.php:41
+msgid "Site:"
+msgstr ""
+
+#. translators: %d: number of registered sites
+#: admin/partials/components/multisite/website-selector.php:48
+#, php-format
+msgid "All Websites (%d)"
+msgstr ""
+
+#: admin/partials/components/multisite/website-selector.php:59
+msgid "(not registered)"
+msgstr ""
+
+#: admin/partials/components/multisite/website-selector.php:65
+msgid "Switch"
 msgstr ""
 
 #: admin/partials/components/settings/advanced-screenshot-settings.php:32
@@ -2173,11 +2702,6 @@ msgstr ""
 
 #: admin/partials/components/settings/auto-update-info.php:115
 msgid "Currently enabled auto-updates: "
-msgstr ""
-
-#: admin/partials/components/settings/auto-update-status-bar.php:64
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:38
-msgid "Checks in progress"
 msgstr ""
 
 #: admin/partials/components/settings/auto-update-status-bar.php:65
@@ -2267,6 +2791,7 @@ msgid "Matches"
 msgstr ""
 
 #: admin/partials/templates/ai-feedback-rules.php:56
+#: admin/partials/templates/multisite-sites.php:55
 msgid "Actions"
 msgstr ""
 
@@ -2300,94 +2825,126 @@ msgstr ""
 msgid "Configure automatic monitoring settings for your selected URLs and get notified about changes."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:33
+#: admin/partials/templates/auto-settings.php:34
 msgid "Enable or disable the monitoring for your selected URLs."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:53
+#: admin/partials/templates/auto-settings.php:54
 msgid "Interval in Hours"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:75
+#: admin/partials/templates/auto-settings.php:76
 msgid "Hour of the Day"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:105
+#: admin/partials/templates/auto-settings.php:106
 msgid "Run on"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:106
+#: admin/partials/templates/auto-settings.php:107
 msgid "Choose when monitoring checks should run."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:112
+#: admin/partials/templates/auto-settings.php:113
 msgid "Every day"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:116
+#: admin/partials/templates/auto-settings.php:117
 msgid "Specific weekdays"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:120
+#: admin/partials/templates/auto-settings.php:121
 msgid "Specific days in month"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:128
+#: admin/partials/templates/auto-settings.php:129
 msgid "Select Days"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:156
+#: admin/partials/templates/auto-settings.php:157
 msgid "Select Days of Month"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:171
+#: admin/partials/templates/auto-settings.php:172
 msgid "Last day"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:180
+#: admin/partials/templates/auto-settings.php:181
 msgid "Quiet Hours"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:181
+#: admin/partials/templates/auto-settings.php:182
 msgid "No checks will be performed during this time."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:186
-#: admin/partials/templates/auto-settings.php:196
+#: admin/partials/templates/auto-settings.php:187
+#: admin/partials/templates/auto-settings.php:197
 msgid "None"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:212
-#: admin/partials/templates/update-settings.php:145
+#: admin/partials/templates/auto-settings.php:213
+#: admin/partials/templates/update-settings.php:146
 msgid "Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:227
+#: admin/partials/templates/auto-settings.php:228
 msgid "Alerts"
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:229
+#: admin/partials/templates/auto-settings.php:230
 msgid "Enter the email address(es) which should get notified about monitoring alerts."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:232
-#: admin/partials/templates/update-settings.php:115
+#: admin/partials/templates/auto-settings.php:233
+#: admin/partials/templates/update-settings.php:116
 msgid "You can also connect <a href=\"https://zapier.com/apps/webchange-detector/integrations\" target=\"_blank\">Zapier</a> to get alerts directly in 6000+ apps."
-msgstr ""
-
-#: admin/partials/templates/auto-settings.php:267
-#: admin/partials/templates/update-settings.php:162
-msgid "CSS Settings"
 msgstr ""
 
 #: admin/partials/templates/auto-settings.php:268
 #: admin/partials/templates/update-settings.php:163
+msgid "CSS Settings"
+msgstr ""
+
+#: admin/partials/templates/auto-settings.php:269
+#: admin/partials/templates/update-settings.php:164
 msgid "Hide or modify elements via CSS before taking screenshots (e.g. dynamic content)."
 msgstr ""
 
-#: admin/partials/templates/auto-settings.php:279
-#: admin/partials/templates/update-settings.php:184
+#: admin/partials/templates/auto-settings.php:280
+#: admin/partials/templates/update-settings.php:185
 msgid "Save Settings"
+msgstr ""
+
+#: admin/partials/templates/multisite-sites.php:28
+msgid "Network Sites"
+msgstr ""
+
+#. translators: 1: registered count, 2: total count
+#: admin/partials/templates/multisite-sites.php:33
+#, php-format
+msgid "%1$d of %2$d sites registered with WebChange Detector."
+msgstr ""
+
+#: admin/partials/templates/multisite-sites.php:43
+msgid "Register All Unregistered Sites"
+msgstr ""
+
+#: admin/partials/templates/multisite-sites.php:52
+msgid "Site"
+msgstr ""
+
+#. translators: %d: blog ID
+#: admin/partials/templates/multisite-sites.php:68
+#, php-format
+msgid "Blog ID: %d"
+msgstr ""
+
+#: admin/partials/templates/multisite-sites.php:86
+msgid "Not Registered"
+msgstr ""
+
+#: admin/partials/templates/multisite-sites.php:93
+msgid "Register"
 msgstr ""
 
 #: admin/partials/templates/show-change-detection.php:68
@@ -2588,18 +3145,35 @@ msgstr ""
 msgid "this group"
 msgstr ""
 
-#: admin/partials/templates/show-change-detection.php:561
-#: admin/partials/templates/show-change-detection.php:593
-msgid "Confirm"
-msgstr ""
-
 #: admin/partials/templates/show-change-detection.php:562
 #: admin/partials/templates/show-change-detection.php:594
+#: admin/views/class-webchangedetector-modal-view.php:132
+#: admin/views/class-webchangedetector-modal-view.php:180
+#: admin/views/class-webchangedetector-modal-view.php:281
 msgid "Cancel"
 msgstr ""
 
 #: admin/partials/templates/show-change-detection.php:572
 msgid "Ignore this console error in future?"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-cancel.php:13
+#: admin/partials/templates/update-detection/update-step-cancel.php:23
+msgid "Cancel Manual Checks"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-cancel.php:14
+msgid "Stop the current manual checks workflow and return to settings."
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-change-detection.php:18
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:100
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:110
+msgid "< Back to settings"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-change-detection.php:25
+msgid "Create Change Detection again"
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-post-sc-processing.php:49
@@ -2627,29 +3201,42 @@ msgstr ""
 msgid "Calculating..."
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:118
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:107
+msgid "Re-run checks"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:120
 msgid "Only with changes"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:123
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:125
 msgid "All comparisons"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:132
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:134
 msgid "No changes detected yet."
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:133
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:135
 msgid "Change detections will appear here as comparisons complete."
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:144
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:159
+#: admin/partials/templates/update-detection/update-step-post-sc-processing.php:146
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:161
 msgid "Failed Items"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:38
-msgid "Screenshots in progress"
+#: admin/partials/templates/update-detection/update-step-post-sc.php:16
+#: admin/partials/templates/update-detection/update-step-post-sc.php:25
+msgid "Create Change Detections"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-post-sc.php:17
+msgid "Done with updates or other changes?"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-post-sc.php:17
+msgid "Create change detections to see what changed."
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:95
@@ -2666,58 +3253,311 @@ msgstr ""
 msgid "Updates"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:122
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:117
+msgid "Next >"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:124
 msgid "Completed Screenshots"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:128
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:130
 msgid "Screenshots will appear here as they complete."
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:139
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:141
 msgid "Pre-Update Screenshot"
 msgstr ""
 
-#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:143
+#: admin/partials/templates/update-detection/update-step-pre-sc-processing.php:145
 msgid "Webpage:"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:22
+msgid "URLs Selected"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:24
+msgid "URLs have been successfully selected for manual checks."
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-pre-sc.php:28
 msgid "URLs selected for checking"
 msgstr ""
 
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:49
+msgid "Pre-Update Screenshots"
+msgstr ""
+
+#. translators: %s: Number of checks that will be used
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:53
+#, php-format
+msgid "Ready to take pre-update screenshots. This run will use %s checks."
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:59
+msgid "Insufficient Screenshots Available"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:60
+msgid "Sorry, you don't have enough screenshots available. Please upgrade your account or select fewer URLs."
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-pre-sc.php:72
+#: admin/views/class-webchangedetector-card-view.php:186
+msgid "Take Pre-Update Screenshots"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-tiles.php:38
+msgid "Pre-Update"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-tiles.php:55
+msgid "Post-Update"
+msgstr ""
+
+#: admin/partials/templates/update-detection/update-step-tiles.php:72
+msgid "Checks"
+msgstr ""
+
 #: admin/partials/templates/update-settings.php:29
 msgid "WP Auto Update & Manual Checks Settings"
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:39
+#: admin/partials/templates/update-settings.php:40
 msgid "WP auto updates have to be enabled. This option only enables checks during auto updates."
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:69
+#: admin/partials/templates/update-settings.php:70
 msgid "Set the time frame in which you want to allow WP auto updates."
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:82
+#: admin/partials/templates/update-settings.php:83
 msgid "Only"
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:92
+#: admin/partials/templates/update-settings.php:93
 msgid "Weekdays"
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:93
+#: admin/partials/templates/update-settings.php:94
 msgid "Set the weekdays in which you want to allow WP auto updates."
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:110
+#: admin/partials/templates/update-settings.php:111
 msgid "Notifications"
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:112
+#: admin/partials/templates/update-settings.php:113
 msgid "Enter the email address(es) which should get notified about auto update checks."
 msgstr ""
 
-#: admin/partials/templates/update-settings.php:132
+#: admin/partials/templates/update-settings.php:133
 msgid "Notification email to"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:43
+msgid "Account Status"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:46
+msgid "Plan:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:47
+#: admin/views/class-webchangedetector-modal-view.php:53
+msgid "Status:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:52
+msgid "Checks Used:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:57
+msgid "Renewal Date:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:154
+msgid "Statistics"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:158
+msgid "Total Screenshots"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:162
+msgid "Total Comparisons"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:166
+msgid "URLs Monitored"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:170
+msgid "Changes Detected"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:185
+msgid "Configure Settings"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:187
+msgid "Make Your Updates"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:188
+msgid "Take Post-Update Screenshots"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:189
+msgid "View Change Detections"
+msgstr ""
+
+#: admin/views/class-webchangedetector-card-view.php:194
+msgid "Update Process"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:46
+msgid "Comparison Details"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:50
+#: admin/views/class-webchangedetector-modal-view.php:205
+msgid "URL:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:51
+#: admin/views/class-webchangedetector-modal-view.php:206
+msgid "Device:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:52
+#: admin/views/class-webchangedetector-modal-view.php:207
+msgid "Date:"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:59
+#: admin/views/class-webchangedetector-modal-view.php:60
+msgid "Before"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:63
+#: admin/views/class-webchangedetector-modal-view.php:64
+msgid "After"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:76
+#: admin/views/class-webchangedetector-modal-view.php:215
+#: admin/views/class-webchangedetector-modal-view.php:241
+msgid "Close"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:85
+msgid "Mark as OK"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:93
+msgid "Mark as To Fix"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:101
+msgid "Mark as False Positive"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:157
+msgid "Add API Token"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:167
+msgid "API Token"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:172
+msgid "Enter your WebChangeDetector API token. You can find this in your account dashboard."
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:181
+msgid "Save Token"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:200
+msgid "Screenshot Preview"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:216
+msgid "Open Full Size"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:257
+msgid "Create Trial Account"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:267
+msgid "Email Address"
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:273
+msgid "We'll create a trial account with this email address."
+msgstr ""
+
+#: admin/views/class-webchangedetector-modal-view.php:282
+msgid "Create Account"
+msgstr ""
+
+#: admin/views/class-webchangedetector-notification-view.php:84
+msgid "You ran out of checks. Please upgrade your account to continue."
+msgstr ""
+
+#. translators: %d: Percentage of checks used
+#: admin/views/class-webchangedetector-notification-view.php:90
+#, php-format
+msgid "You used %d%% of your checks."
+msgstr ""
+
+#. translators: %s: Link to plugins page
+#: admin/views/class-webchangedetector-notification-view.php:103
+#, php-format
+msgid "There are major updates in our system which requires to update the plugin WebChangeDetector. Please install the update at %s."
+msgstr ""
+
+#: admin/views/class-webchangedetector-notification-view.php:115
+msgid "Something went wrong. Maybe the API token is invalid?"
+msgstr ""
+
+#. translators: %s: Account status
+#: admin/views/class-webchangedetector-notification-view.php:133
+#, php-format
+msgid "Your account status is %s"
+msgstr ""
+
+#. translators: %s: Upgrade link
+#: admin/views/class-webchangedetector-notification-view.php:136
+#, php-format
+msgid "Please %s to re-activate your account."
+msgstr ""
+
+#: admin/views/class-webchangedetector-notification-view.php:139
+msgid "To use a different account, please reset the API token."
+msgstr ""
+
+#: admin/views/class-webchangedetector-notification-view.php:156
+msgid "We couldn't find your website settings. Please reset the API token in settings and re-add your website with your API Token."
+msgstr ""
+
+#. translators: %s: The current API token
+#: admin/views/class-webchangedetector-notification-view.php:158
+#, php-format
+msgid "Your current API token is: %s."
+msgstr ""
+
+#: webchangedetector.php:138
+msgid "Currently running in"
+msgstr ""
+
+#: webchangedetector.php:139
+msgid "Beta (dev branch)"
+msgstr ""
+
+#: webchangedetector.php:140
+msgid "update mode. You will receive beta updates."
 msgstr ""

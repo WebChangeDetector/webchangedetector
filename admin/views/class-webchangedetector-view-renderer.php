@@ -122,6 +122,7 @@ class WebChangeDetector_View_Renderer {
 								<form method="post" style="display: inline-block; margin-right: 10px;">
 									<input type="hidden" name="wcd_action" value="<?php echo esc_attr( $action['action'] ); ?>">
 									<?php wp_nonce_field( $action['action'] ); ?>
+									<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 									<?php if ( ! empty( $action['hidden_fields'] ) ) : ?>
 										<?php foreach ( $action['hidden_fields'] as $field => $value ) : ?>
 											<input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="<?php echo esc_attr( $value ); ?>">
@@ -161,59 +162,79 @@ class WebChangeDetector_View_Renderer {
 	 * @param string $active_tab The currently active tab.
 	 */
 	public function render_navigation_tabs( $active_tab ) {
+		// Preserve blog context in tab URLs for multisite network admin.
+		$blog_param   = '';
+		$is_all_sites = \WebChangeDetector\WebChangeDetector_Multisite::is_all_sites_mode();
+		if ( $is_all_sites ) {
+			$blog_param = '&wcd_blog_id=all';
+		} elseif ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) {
+			$blog_id    = \WebChangeDetector\WebChangeDetector_Multisite::get_current_managed_blog_id();
+			$blog_param = '&wcd_blog_id=' . intval( $blog_id );
+		}
 		?>
 		<div class="wrap">
 			<h2 class="nav-tab-wrapper">
 				<?php if ( $this->admin->settings_handler->is_allowed( 'dashboard_view' ) ) : ?>
-				<a href="?page=webchangedetector"
+				<a href="?page=webchangedetector<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> <?php echo esc_html__( 'Dashboard', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 				
 				<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) ) : ?>
-				<a href="?page=webchangedetector-update-settings"
+				<a href="?page=webchangedetector-update-settings<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & Manual Checks', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
-				
+
 				<?php if ( $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' ) ) : ?>
-				<a href="?page=webchangedetector-auto-settings"
+				<a href="?page=webchangedetector-auto-settings<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> <?php echo esc_html__( 'Monitoring', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
-				
+
 				<?php if ( $this->admin->settings_handler->is_allowed( 'change_detections_view' ) ) : ?>
-				<a href="?page=webchangedetector-change-detections"
+				<a href="?page=webchangedetector-change-detections<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 
 				<?php if ( $this->admin->settings_handler->is_allowed( 'ai_rules_view' ) ) : ?>
-				<a href="?page=webchangedetector-ai-rules"
+				<a href="?page=webchangedetector-ai-rules<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-ai-rules' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php echo esc_html__( 'AI Rules', 'webchangedetector' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'ai-rules' ); ?> <?php echo esc_html__( 'AI Rules', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 
 				<?php if ( $this->admin->settings_handler->is_allowed( 'logs_view' ) ) : ?>
-				<a href="?page=webchangedetector-logs"
+				<a href="?page=webchangedetector-logs<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Logs', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
-				
-				<?php if ( $this->admin->settings_handler->is_allowed( 'settings_view' ) ) : ?>
-				<a href="?page=webchangedetector-settings"
+
+				<?php if ( $this->admin->settings_handler->is_allowed( 'settings_view' ) && ! $is_all_sites ) : ?>
+				<a href="?page=webchangedetector-settings<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Settings', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
-				
-				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) : ?>
+
+				<?php if ( \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) : ?>
+				<a href="?page=webchangedetector-sites"
+					class="nav-tab <?php echo 'webchangedetector-sites' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'sites' ); ?> <?php echo esc_html__( 'Sites', 'webchangedetector' ); ?>
+				</a>
+				<a href="?page=webchangedetector-allowances<?php echo esc_attr( $blog_param ); ?>"
+					class="nav-tab <?php echo 'webchangedetector-allowances' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Sub-Site Allowances', 'webchangedetector' ); ?>
+				</a>
+				<?php endif; ?>
+
+				<?php if ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) && \WebChangeDetector\WebChangeDetector_Multisite::can_manage_account() ) : ?>
 				<a href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>" target="_blank"
 					class="nav-tab upgrade">
 					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'upgrade' ); ?> <?php echo esc_html__( 'Upgrade Account', 'webchangedetector' ); ?>
@@ -250,19 +271,6 @@ class WebChangeDetector_View_Renderer {
 			?>
 		</div>
 		<div class="clear"></div>
-		<?php
-	}
-
-	/**
-	 * Render inline JavaScript.
-	 *
-	 * @param string $script The JavaScript code.
-	 */
-	public function render_inline_script( $script ) {
-		?>
-		<script type="text/javascript">
-			<?php echo $script; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-		</script>
 		<?php
 	}
 }

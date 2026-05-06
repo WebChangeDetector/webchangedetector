@@ -23,20 +23,71 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 	}
 
 	$auto_update_checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] ) && ( true === $auto_update_settings['auto_update_checks_enabled'] || '1' === $auto_update_settings['auto_update_checks_enabled'] || 1 === $auto_update_settings['auto_update_checks_enabled'] );
+
+	// Multisite Subsites inherit schedule + emails from the main site. Only the
+	// auto_update_checks_enabled toggle stays editable per subsite — it controls
+	// whether THIS subsite's URLs are included in the network-wide checks.
+	$is_multisite_subsite = \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_subsite();
+	$is_multisite_main    = \WebChangeDetector\WebChangeDetector_Multisite::is_multisite_active() && is_main_site();
+	$parent_domain        = '';
+	if ( $is_multisite_subsite && ! empty( $this->admin->website_details['parent_multisite_website']['domain'] ) ) {
+		$parent_domain = $this->admin->website_details['parent_multisite_website']['domain'];
+	}
+
+	// On a multisite-network main site the schedule + emails govern the whole
+	// network — they must stay visible even when main's own toggle is OFF, so a
+	// super-admin can still configure timing for participating subsites.
+	$schedule_hidden_style = ( $auto_update_checks_enabled || $is_multisite_main ) ? '' : 'display: none;';
 	?>
 
 	<div class="wcd-settings-card">
 		<h2><?php esc_html_e( 'WP Auto Update & Manual Checks Settings', 'webchangedetector' ); ?></h2>
-		<form action="admin.php?page=webchangedetector-update-settings" method="post">
+		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post"<?php echo $is_multisite_main ? ' class="wcd-multisite-main"' : ''; ?>>
 			<input type="hidden" name="wcd_action" value="save_group_settings">
 			<input type="hidden" name="step" value="pre-update">
 			<input type="hidden" name="group_id" value="<?php echo esc_html( $group_id ); ?>">
 			<?php wp_nonce_field( 'save_group_settings' ); ?>
+			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
+
+			<div class="notice notice-info inline wcd-auto-updates-precondition-notice">
+				<p>
+					<span class="dashicons dashicons-info"></span>
+					<?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?>
+				</p>
+			</div>
+
+			<?php if ( $is_multisite_subsite ) : ?>
+				<div class="notice notice-warning inline wcd-multisite-inherited-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php
+						if ( '' !== $parent_domain ) {
+							echo wp_kses(
+								sprintf(
+									/* translators: %s: domain of the multisite main site. */
+									__( 'Schedule and notification emails for auto-update checks are managed network-wide on the multisite main site (<strong>%s</strong>). The toggle below decides whether this subsite participates in the network-wide checks.', 'webchangedetector' ),
+									esc_html( $parent_domain )
+								),
+								array( 'strong' => array() )
+							);
+						} else {
+							esc_html_e( 'Schedule and notification emails for auto-update checks are managed network-wide on the multisite main site. The toggle below decides whether this subsite participates in the network-wide checks.', 'webchangedetector' );
+						}
+						?>
+					</p>
+				</div>
+			<?php elseif ( $is_multisite_main ) : ?>
+				<div class="notice notice-warning inline wcd-multisite-main-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php esc_html_e( 'The schedule and notification email settings on this page apply network-wide — they are inherited by every subsite. Each subsite admin can still decide via their own auto-update toggle whether the subsite participates in the network-wide checks.', 'webchangedetector' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-enabled">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Checks', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
 					<?php
@@ -63,7 +114,11 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<?php if ( $is_multisite_subsite ) : ?>
+				<fieldset class="wcd-multisite-inherited-fieldset" disabled>
+			<?php endif; ?>
+
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-from" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Auto Update Timeframe', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the time frame in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
@@ -87,7 +142,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="local-timezone"></div>
 			</div>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-weekday" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Weekdays', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the weekdays in which you want to allow WP auto updates.', 'webchangedetector' ); ?></div>
@@ -105,7 +160,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
-			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo $auto_update_checks_enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Notifications', 'webchangedetector' ); ?></label>
 					<div class="wcd-description">
@@ -139,6 +194,10 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
+			<?php if ( $is_multisite_subsite ) : ?>
+				</fieldset>
+			<?php endif; ?>
+
 			<div class="wcd-form-row wcd-auto-update-setting-threshold">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
@@ -163,18 +222,24 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 					<div class="wcd-description"><?php esc_html_e( 'Hide or modify elements via CSS before taking screenshots (e.g. dynamic content).', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
-					<?php
-					// CSS Injection using Accordion Component.
-					$header_text  = __( 'CSS Injection', 'webchangedetector' );
-					$accordion_id = 'css-injection-manual';
-					$open         = false;
-
-					// Build content.
-					?>
-					<div style="margin-top: 10px; width: 100%;">
+					<div class="wcd-code-injection-wrapper">
 						<div class="code-tags default-bg">&lt;style&gt;</div>
 						<textarea name="css" class="codearea wcd-css-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['css'] ?? '' ); ?></textarea>
 						<div class="code-tags default-bg">&lt;/style&gt;</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="wcd-form-row wcd-auto-update-setting-js">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'JS Settings', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Run custom JavaScript before taking screenshots (e.g. close popups, trigger interactions).', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<div class="wcd-code-injection-wrapper">
+						<div class="code-tags default-bg">&lt;script&gt;</div>
+						<textarea name="js" class="codearea wcd-js-textarea" rows="15" cols="80"><?php echo esc_textarea( $group_and_urls['js'] ?? '' ); ?></textarea>
+						<div class="code-tags default-bg">&lt;/script&gt;</div>
 					</div>
 				</div>
 			</div>
@@ -184,43 +249,9 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 			<?php submit_button( __( 'Save Settings', 'webchangedetector' ), 'primary', 'submit', true, array( 'onclick' => 'return wcdValidateFormGroupSettings()' ) ); ?>
 		</form>
 	</div>
-
-
-	<script type="text/javascript">
-		// Toggle auto update checks settings visibility with slide animation.
-		jQuery(document).ready(function($) {
-			// Listen for changes on the toggle switch.
-			$(document).on('change', 'input[name="auto_update_checks_enabled"]', function() {
-				if ($(this).is(':checked')) {
-					$('.auto-update-setting').slideDown();
-				} else {
-					$('.auto-update-setting').slideUp();
-				}
-			});
-		});
-
-		function wcdValidateFormGroupSettings() {
-			// Only validate if auto update checks are enabled.
-			var autoUpdateEnabled = document.querySelector('input[name="auto_update_checks_enabled"]');
-			if (autoUpdateEnabled && autoUpdateEnabled.checked) {
-				// Validate weekdays using the component's validation function.
-				if (typeof window['validate_weekdays_auto_update_checks'] === 'function') {
-					if (!window['validate_weekdays_auto_update_checks']()) {
-						return false;
-					}
-				}
-
-				// Validate email if present.
-				if (typeof window['validate_auto_update_checks_emails'] === 'function') {
-					if (!window['validate_auto_update_checks_emails']()) {
-						return false;
-					}
-				}
-			}
-
-			return true;
-		}
-	</script>
 	<?php
+	// Toggle behavior + wcdValidateFormGroupSettings() live in
+	// admin/js/webchangedetector-admin.js (extracted to comply with the
+	// "no inline JS" project rule).
 }
 ?>

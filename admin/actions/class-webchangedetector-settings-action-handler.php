@@ -40,6 +40,11 @@ class WebChangeDetector_Settings_Action_Handler {
 	 */
 	public function handle_save_group_settings( $data ) {
 		try {
+			// In all-sites mode, save to all groups across all sites.
+			if ( $this->admin->is_all_sites_mode ) {
+				return $this->handle_bulk_save_group_settings( $data );
+			}
+
 			$this->admin->error_handler->debug( 'Monitoring settings data: ' . wp_json_encode( $data ) );
 			if ( ! empty( $data['monitoring'] ) && 1 === (int) $data['monitoring'] ) {
 				return $this->handle_monitoring_settings( $data );
@@ -51,6 +56,244 @@ class WebChangeDetector_Settings_Action_Handler {
 				'success' => false,
 				'message' => 'Error saving group settings: ' . $e->getMessage(),
 			);
+		}
+	}
+
+	/**
+	 * Handle bulk save of group settings across all multisite sub-sites.
+	 *
+	 * Saves the same settings to all monitoring or manual groups using
+	 * parallel API requests via api_v2_bulk().
+	 *
+	 * @since 4.3.0
+	 * @param array $data The settings data from the form.
+	 * @return array Result with success status and message.
+	 */
+	private function handle_bulk_save_group_settings( $data ) {
+		// Only super admins may bulk-update all sites.
+		if ( ! current_user_can( 'manage_network_options' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You do not have permission to modify settings for all websites.', 'webchangedetector' ),
+			);
+		}
+
+		$is_monitoring = ! empty( $data['monitoring'] ) && 1 === (int) $data['monitoring'];
+		$all_groups    = \WebChangeDetector\WebChangeDetector_Multisite::get_all_group_ids();
+		$group_key     = $is_monitoring ? 'monitoring' : 'manual';
+		$group_ids     = $all_groups[ $group_key ];
+
+		if ( empty( $group_ids ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'No registered groups found.', 'webchangedetector' ),
+			);
+		}
+
+		// First, save to the current site's group normally (this handles auto-update website settings too).
+		if ( $is_monitoring ) {
+			$single_result = $this->handle_monitoring_settings( $data );
+		} else {
+			$single_result = $this->handle_manual_check_settings( $data );
+		}
+
+		// Build the group settings args (same logic as update_monitoring_settings / update_manual_check_group_settings).
+		$args = array();
+
+		if ( $is_monitoring ) {
+			if ( isset( $data['hour_of_day'] ) ) {
+				$args['hour_of_day'] = sanitize_key( $data['hour_of_day'] );
+			}
+			if ( isset( $data['interval_in_h'] ) ) {
+				$args['interval_in_h'] = sanitize_text_field( $data['interval_in_h'] );
+			}
+			$args['enabled']    = isset( $data['enabled'] ) && ( 'on' === $data['enabled'] || '1' === $data['enabled'] );
+			$args['monitoring'] = true;
+			if ( isset( $data['alert_emails'] ) ) {
+				$args['alert_emails'] = explode( ',', sanitize_textarea_field( $data['alert_emails'] ) );
+			}
+			if ( isset( $data['schedule_type'] ) ) {
+				$args['schedule_type'] = sanitize_text_field( $data['schedule_type'] );
+			}
+			if ( isset( $data['schedule_days'] ) && is_array( $data['schedule_days'] ) ) {
+				$args['schedule_days'] = array_map(
+					function ( $day ) {
+						$day = sanitize_text_field( $day );
+						return 'last' === $day ? $day : intval( $day );
+					},
+					$data['schedule_days']
+				);
+			}
+			if ( isset( $data['quiet_hours_start'] ) && '' !== $data['quiet_hours_start'] ) {
+				$args['quiet_hours_start'] = intval( $data['quiet_hours_start'] );
+			}
+			if ( isset( $data['quiet_hours_end'] ) && '' !== $data['quiet_hours_end'] ) {
+				$args['quiet_hours_end'] = intval( $data['quiet_hours_end'] );
+			}
+		}
+
+		// Common settings for both group types.
+		if ( isset( $data['threshold'] ) ) {
+			$args['threshold'] = sanitize_text_field( $data['threshold'] );
+		}
+		if ( isset( $data['css'] ) ) {
+			$args['css'] = sanitize_textarea_field( $data['css'] );
+		}
+		if ( isset( $data['js'] ) ) {
+			// JS is stored verbatim — content sanitization (sanitize_textarea_field
+			// strips HTML tags, wp_kses strips script syntax) would corrupt valid
+			// JavaScript. Access is gated by the manage_options capability on the
+			// settings form, and the script never executes in WordPress; it is
+			// passed to the headless browser that captures screenshots of the
+			// user's own site.
+			$args['js'] = $data['js'];
+		}
+		if ( isset( $data['group_name'] ) ) {
+			$args['name'] = sanitize_text_field( $data['group_name'] );
+		}
+
+		// Merge advanced settings (basic auth, proxy, screenshot delay).
+		$advanced_settings = $this->admin->settings_handler->extract_advanced_settings( $data );
+		$args              = array_merge( $args, $advanced_settings );
+
+		// Build bulk requests for all OTHER groups (main site was already saved above).
+		$main_group_id = $is_monitoring ? $this->admin->monitoring_group_uuid : $this->admin->manual_group_uuid;
+		$requests      = array();
+
+		foreach ( $group_ids as $gid ) {
+			if ( $gid === $main_group_id ) {
+				continue; // Already saved above.
+			}
+			$request           = $args;
+			$request['action'] = 'groups/' . $gid;
+			$requests[]        = $request;
+		}
+
+		// Send bulk update for remaining groups.
+		$success_count = 1; // Main site already succeeded.
+		$fail_count    = 0;
+
+		if ( ! empty( $requests ) ) {
+			$results = \WebChangeDetector\WebChangeDetector_API_V2::api_v2_bulk( $requests, 'PUT' );
+
+			foreach ( $results as $result ) {
+				if ( ! empty( $result['success'] ) ) {
+					++$success_count;
+				} else {
+					++$fail_count;
+				}
+			}
+		}
+
+		// For manual checks: also propagate auto-update website settings to all other websites.
+		if ( ! $is_monitoring ) {
+			$auto_update_settings = array();
+			foreach ( $data as $key => $value ) {
+				if ( 0 === strpos( $key, 'auto_update_checks_' ) ) {
+					$auto_update_settings[ $key ] = $value;
+				}
+			}
+
+			if ( ! empty( $auto_update_settings ) ) {
+				$this->bulk_update_auto_update_settings( $auto_update_settings, $all_groups['by_site'] );
+			}
+		}
+
+		if ( $fail_count > 0 ) {
+			return array(
+				'success' => true,
+				'message' => sprintf(
+					/* translators: 1: success count, 2: fail count */
+					__( 'Settings updated for %1$d groups. %2$d failed.', 'webchangedetector' ),
+					$success_count,
+					$fail_count
+				),
+			);
+		}
+
+		return array(
+			'success' => true,
+			'message' => sprintf(
+				/* translators: %d: number of groups updated */
+				__( 'Settings saved for all %d websites.', 'webchangedetector' ),
+				$success_count
+			),
+		);
+	}
+
+	/**
+	 * Propagate auto-update settings to all registered websites.
+	 *
+	 * @since 4.3.0
+	 * @param array $auto_update_settings The auto-update settings to propagate.
+	 * @param array $sites_data           Array of site data from get_all_group_ids()['by_site'].
+	 */
+	private function bulk_update_auto_update_settings( $auto_update_settings, $sites_data ) {
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
+
+		// Prepare the settings (same logic as update_manual_check_group_settings).
+		$prepared = array();
+		foreach ( $auto_update_settings as $key => $value ) {
+			if (
+				'auto_update_checks_enabled' === $key ||
+				in_array(
+					$key,
+					array(
+						'auto_update_checks_monday',
+						'auto_update_checks_tuesday',
+						'auto_update_checks_wednesday',
+						'auto_update_checks_thursday',
+						'auto_update_checks_friday',
+						'auto_update_checks_saturday',
+						'auto_update_checks_sunday',
+					),
+					true
+				)
+			) {
+				$prepared[ $key ] = ( '1' === $value || 1 === $value || true === $value );
+			} elseif ( 'auto_update_checks_from' === $key || 'auto_update_checks_to' === $key ) {
+				$prepared[ $key ] = \WebChangeDetector\WebChangeDetector_Timezone_Helper::site_time_to_utc( $value );
+			} elseif ( 'auto_update_checks_emails' === $key ) {
+				$prepared[ $key ] = array_values( array_filter( array_map( 'trim', explode( ',', sanitize_textarea_field( $value ) ) ) ) );
+			} else {
+				$prepared[ $key ] = $value;
+			}
+		}
+
+		if ( ! isset( $prepared['auto_update_checks_enabled'] ) ) {
+			$prepared['auto_update_checks_enabled'] = false;
+		}
+
+		// Build website update requests (skip main site, already saved).
+		$main_website_id = get_option( 'webchangedetector_website_id', '' );
+		$requests        = array();
+
+		foreach ( $sites_data as $site_data ) {
+			$website_id = \WebChangeDetector\WebChangeDetector_Multisite::with_blog(
+				$site_data['blog_id'],
+				function () {
+					return get_option( 'webchangedetector_website_id', '' );
+				}
+			);
+
+			if ( empty( $website_id ) || $website_id === $main_website_id ) {
+				continue;
+			}
+
+			// Subsites inherit the full schedule from the main site. Send only
+			// the enabled toggle so each subsite can opt out individually
+			// (e.g. staging or duplicate language sites) without persisting
+			// stale schedule copies that the API would ignore on read.
+			$request                         = array();
+			$request['action']               = 'websites/' . $website_id;
+			$request['auto_update_settings'] = array(
+				'auto_update_checks_enabled' => $prepared['auto_update_checks_enabled'],
+			);
+			$requests[]                      = $request;
+		}
+
+		if ( ! empty( $requests ) ) {
+			\WebChangeDetector\WebChangeDetector_API_V2::api_v2_bulk( $requests, 'PUT' );
 		}
 	}
 

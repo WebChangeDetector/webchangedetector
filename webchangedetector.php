@@ -17,7 +17,7 @@
  * Text Domain:       webchangedetector
  * Plugin URI:        https://www.webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
- * Version:           4.2.2
+ * Version:           4.3.0
  * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
  * Primary Branch:    main
  * Author:            Mike Miler
@@ -132,9 +132,14 @@ function wcd_update_mode_admin_notice() {
 		return;
 	}
 
-	printf(
-		'<div class="notice notice-warning"><p><strong>WebChange Detector:</strong> ⚠️ Currently running in <strong>Beta (dev branch)</strong> update mode. You will receive beta updates.</p></div>'
+	$notice = sprintf(
+		'<div class="notice notice-warning"><p><strong>%1$s:</strong> ⚠️ %2$s <strong>%3$s</strong> %4$s</p></div>',
+		esc_html__( 'WebChange Detector', 'webchangedetector' ),
+		esc_html__( 'Currently running in', 'webchangedetector' ),
+		esc_html__( 'Beta (dev branch)', 'webchangedetector' ),
+		esc_html__( 'update mode. You will receive beta updates.', 'webchangedetector' )
 	);
+	echo wp_kses_post( $notice );
 }
 add_action( 'admin_notices', __NAMESPACE__ . '\wcd_update_mode_admin_notice' );
 
@@ -142,22 +147,136 @@ add_action( 'admin_notices', __NAMESPACE__ . '\wcd_update_mode_admin_notice' );
  * The code that runs during plugin activation.
  * This action is documented in includes/class-webchangedetector-activator.php
  */
-function activate_webchangedetector() {
+/**
+ * Plugin activation handler.
+ *
+ * Supports both single-site and network-wide activation on multisite.
+ *
+ * @param bool $network_wide Whether the plugin is being activated network-wide.
+ */
+function activate_webchangedetector( $network_wide = false ) {
 	require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-activator.php';
-	WebChangeDetector_Activator::activate();
+
+	if ( $network_wide && is_multisite() ) {
+		// Migrate shared options from main site's wp_options to wp_sitemeta.
+		// This handles the case where a single-site install is converted to multisite.
+		migrate_options_to_network();
+
+		$sites = get_sites( array( 'number' => 0 ) );
+		foreach ( $sites as $site ) {
+			// Use try/finally pattern: if WebChangeDetector_Activator::activate()
+			// throws on one site, the WP $switched_stack would otherwise stay
+			// corrupted and contaminate option writes on remaining sites.
+			switch_to_blog( $site->blog_id );
+			try {
+				WebChangeDetector_Activator::activate();
+			} finally {
+				restore_current_blog();
+			}
+		}
+	} else {
+		WebChangeDetector_Activator::activate();
+	}
+}
+
+/**
+ * Migrate shared options from wp_options (main site) to wp_sitemeta.
+ *
+ * When a single-site install is converted to multisite, the API token and
+ * other shared options remain in wp_options. This function copies them to
+ * the network-level wp_sitemeta table so the plugin can find them.
+ *
+ * Only copies if the network option does not already exist (no overwrite).
+ * The original wp_options values are kept as fallback.
+ *
+ * @since 4.3.0
+ */
+function migrate_options_to_network() {
+	$network_options = array(
+		'webchangedetector_api_token',
+		'webchangedetector_account_email',
+		'wcd_upgrade_url',
+	);
+
+	// Read all options from the main site in one switch (less stack churn than
+	// switching back and forth per option). try/finally ensures the original
+	// blog context is restored even if an error fires inside the loop.
+	$main_site_id = get_main_site_id();
+	$site_values  = array();
+	switch_to_blog( $main_site_id );
+	try {
+		foreach ( $network_options as $option_key ) {
+			$site_values[ $option_key ] = get_option( $option_key, false );
+		}
+	} finally {
+		restore_current_blog();
+	}
+
+	// Now write to network-level (no blog switch needed) — only if not already set.
+	foreach ( $site_values as $option_key => $site_value ) {
+		if ( false === $site_value || '' === $site_value ) {
+			continue;
+		}
+		$network_value = get_site_option( $option_key, false );
+		if ( false === $network_value || '' === $network_value ) {
+			update_site_option( $option_key, $site_value );
+		}
+	}
 }
 
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-webchangedetector-deactivator.php
+ *
+ * @param bool $network_wide Whether the plugin is being deactivated network-wide.
  */
-function deactivate_webchangedetector() {
+function deactivate_webchangedetector( $network_wide = false ) {
 	require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-deactivator.php';
-	WebChangeDetector_Deactivator::deactivate();
+
+	if ( $network_wide && is_multisite() ) {
+		$sites = get_sites( array( 'number' => 0 ) );
+		foreach ( $sites as $site ) {
+			// try/finally so a deactivation error on one site doesn't corrupt
+			// the WP $switched_stack and contaminate remaining sites.
+			switch_to_blog( $site->blog_id );
+			try {
+				WebChangeDetector_Deactivator::deactivate();
+			} finally {
+				restore_current_blog();
+			}
+		}
+	} else {
+		WebChangeDetector_Deactivator::deactivate();
+	}
 }
 
 register_activation_hook( __FILE__, __NAMESPACE__ . '\activate_webchangedetector' );
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\deactivate_webchangedetector' );
+
+/**
+ * Activate plugin for newly created sites on multisite networks.
+ *
+ * @param \WP_Site $new_site The new site object.
+ */
+function wcd_on_new_site( $new_site ) {
+	if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
+
+	if ( is_plugin_active_for_network( WCD_PLUGIN_BASENAME ) ) {
+		require_once WCD_PLUGIN_DIR . 'includes/class-webchangedetector-activator.php';
+		// try/finally so an activation error doesn't leave the $switched_stack
+		// corrupted (this hook fires inside wpmu_create_blog, contaminating that
+		// flow's option writes would be hard to debug).
+		switch_to_blog( $new_site->blog_id );
+		try {
+			WebChangeDetector_Activator::activate();
+		} finally {
+			restore_current_blog();
+		}
+	}
+}
+add_action( 'wp_initialize_site', __NAMESPACE__ . '\wcd_on_new_site', 200 );
 
 /**
  * The core plugin class that is used to define internationalization,

@@ -18,7 +18,7 @@
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Settings</h3>
+			<h3><?php esc_html_e( 'Settings', 'webchangedetector' ); ?></h3>
 		</div>
 	</div>
 
@@ -35,7 +35,7 @@
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Pre-Update</h3>
+			<h3><?php esc_html_e( 'Pre-Update', 'webchangedetector' ); ?></h3>
 		</div>
 	</div>
 
@@ -52,7 +52,7 @@
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Post-Update</h3>
+			<h3><?php esc_html_e( 'Post-Update', 'webchangedetector' ); ?></h3>
 		</div>
 	</div>
 
@@ -69,7 +69,7 @@
 			<?php endif; ?>
 		</div>
 		<div class="wcd-step-content">
-			<h3>Checks</h3>
+			<h3><?php esc_html_e( 'Checks', 'webchangedetector' ); ?></h3>
 		</div>
 	</div>
 </div>

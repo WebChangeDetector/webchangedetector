@@ -32,21 +32,19 @@ $has_browser_console_data = ! empty( $browser_console_added ) ||
 	! empty( $browser_console_removed ) ||
 	( $browser_console_change && 'unchanged' !== $browser_console_change );
 
-// Check user plan access for browser console feature.
+// Check feature access via the API's plan_features map.
 $user_account               = null;
-$user_plan                  = 'free';
 $can_access_browser_console = false;
 $can_access_ai_verification = false;
 
 try {
 	if ( isset( $this->account_handler ) && method_exists( $this->account_handler, 'get_account' ) ) {
 		$user_account = $this->account_handler->get_account();
-		$user_plan    = isset( $user_account['plan'] ) && is_string( $user_account['plan'] ) ? $user_account['plan'] : 'free';
 	}
 
 	if ( isset( $this->admin ) && method_exists( $this->admin, 'can_access_feature' ) ) {
-		$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
-		$can_access_ai_verification = $this->admin->can_access_feature( 'ai_verification', $user_plan );
+		$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_account );
+		$can_access_ai_verification = $this->admin->can_access_feature( 'ai_verification', $user_account );
 	}
 } catch ( Exception $e ) {
 	\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Feature access check failed: ' . $e->getMessage(), 'template_error', 'error' );

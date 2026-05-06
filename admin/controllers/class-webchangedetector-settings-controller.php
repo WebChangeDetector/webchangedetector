@@ -118,6 +118,7 @@ class WebChangeDetector_Settings_Controller {
 					<h2><?php esc_html_e( 'Admin Bar Menu', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_admin_bar_setting' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<input type="hidden" name="wcd_action" value="save_admin_bar_setting">
 
 						<div class="wcd-form-row">
@@ -145,6 +146,7 @@ class WebChangeDetector_Settings_Controller {
 					<h2><?php esc_html_e( 'Debug Logging', 'webchangedetector' ); ?></h2>
 					<form method="post">
 						<?php wp_nonce_field( 'save_debug_logging_setting' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 						<input type="hidden" name="wcd_action" value="save_debug_logging_setting">
 
 						<div class="wcd-form-row">
@@ -180,31 +182,32 @@ class WebChangeDetector_Settings_Controller {
 				</div>
 			</div>
 
-			<hr>
 			<?php
-			if ( ! get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ) {
-				echo '<div class="error notice">
-                        <p>Please enter a valid API Token.</p>
-                    </div>';
-			} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
+			// Account info, upgrade, reset and delete-account are all network-shared
+			// on network-activated multisite — restrict to super admins (or anyone
+			// in single-site / per-site activation). See can_manage_account().
+			if ( WebChangeDetector_Multisite::can_manage_account() ) {
 				?>
-				<div class="wcd-settings-section">
-					<div class="wcd-settings-card">
-						<h2><?php esc_html_e( 'Need more checks?', 'webchangedetector' ); ?></h2>
-						<p><?php esc_html_e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
-						<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php esc_html_e( 'Upgrade', 'webchangedetector' ); ?></a>
-					</div>
-				</div>
+				<hr>
 				<?php
+				if ( ! WebChangeDetector_Multisite::get_api_token() ) {
+					echo '<div class="error notice">
+							<p>' . esc_html__( 'Please enter a valid API Token.', 'webchangedetector' ) . '</p>
+						</div>';
+				} elseif ( $this->admin->settings_handler->is_allowed( 'upgrade_account' ) ) {
+					?>
+					<div class="wcd-settings-section">
+						<div class="wcd-settings-card">
+							<h2><?php esc_html_e( 'Need more checks?', 'webchangedetector' ); ?></h2>
+							<p><?php esc_html_e( 'If you need more checks, please upgrade your account with the button below.', 'webchangedetector' ); ?></p>
+							<a class="button" href="<?php echo esc_url( $this->admin->account_handler->get_upgrade_url() ); ?>"><?php esc_html_e( 'Upgrade', 'webchangedetector' ); ?></a>
+						</div>
+					</div>
+					<?php
+				}
+				echo '<hr>';
+				$this->admin->account_handler->get_api_token_form( WebChangeDetector_Multisite::get_api_token() );
 			}
-			echo '<hr>';
-			$this->admin->account_handler->get_api_token_form( get_option( WCD_WP_OPTION_KEY_API_TOKEN ) );
-			$wizard_text = '<h2>Your account details</h2><p>You can see your WebChange Detector account here.
-                                            Please don\'t share your API token with anyone. </p><p>
-                                            Resetting your API Token will allow you to switch accounts. Keep in mind to
-                                            save your API Token before the reset! </p><p>
-                                            When you login with your API token after the reset, all your settings will be still there.</p>';
-			// Wizard functionality temporarily removed for phase 1.
 			?>
 
 		</div>
@@ -243,6 +246,7 @@ class WebChangeDetector_Settings_Controller {
 			<form method="post" style="display: inline-block; margin-right: 10px;">
 				<input type="hidden" name="wcd_action" value="add_post_type">
 				<?php wp_nonce_field( 'add_post_type' ); ?>
+				<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 				<select name="post_type">
 					<?php
 					foreach ( $available_post_types as $available_post_type ) {
@@ -303,6 +307,7 @@ class WebChangeDetector_Settings_Controller {
 			<form method="post" style="display: inline-block; margin-right: 10px;">
 				<input type="hidden" name="wcd_action" value="add_post_type">
 				<?php wp_nonce_field( 'add_post_type' ); ?>
+				<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 				<select name="post_type">
 					<?php
 					foreach ( $available_taxonomies as $available_taxonomy ) {

@@ -47,8 +47,44 @@ class WebChangeDetector_Autoupdates {
 		// Add webhook endpoint for triggering cron jobs (always available for manual triggers).
 		add_action( 'init', array( $this, 'handle_webhook_trigger' ), 5 );
 
+		// On a multisite Subsite, the network main site orchestrates auto-update
+		// pre/post screenshots for the whole network in a single API batch. We
+		// skip all hook + cron registration here so the Subsite's WP-cron run
+		// never tries to trigger its own pre/post pipeline (which only ever
+		// captured this one site's URLs anyway, leaving the rest of the
+		// network unprotected — the bug FEAT-16 fixes). State (PRE/POST/RUNNING/
+		// auto_updater.lock) lives naturally in the orchestrator's wp_options
+		// because Hook-Gating ensures only the main-site cron writes them — no
+		// shared-option / wp_sitemeta wrapper needed.
+		if ( WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			// Orphan cron events from previous plugin versions (when subsites still
+			// orchestrated their own pipeline). Both recurring AND single events.
+			$orphan_hooks = array(
+				'wcd_sync_auto_update_schedule',
+				'wcd_check_update_completion',
+				'wcd_wp_version_check',
+				'wcd_cron_check_post_queues',
+				'wp_maybe_auto_update', // Single-event reschedules we added.
+			);
+			foreach ( $orphan_hooks as $hook ) {
+				if ( wp_next_scheduled( $hook ) ) {
+					wp_clear_scheduled_hook( $hook );
+				}
+			}
+
+			// Stale API webhook: previous-version subsites registered a cron-trigger
+			// webhook so the API could ping them daily. With Hook-Gating that ping
+			// goes nowhere — drop the registration so the API stops calling.
+			$webhook_id = get_option( WCD_WORDPRESS_CRON );
+			if ( $webhook_id ) {
+				\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( $webhook_id );
+				delete_option( WCD_WORDPRESS_CRON );
+			}
+			return;
+		}
+
 		// Only register API-dependent hooks if we have an API token.
-		$api_token = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+		$api_token = WebChangeDetector_Multisite::get_api_token();
 		if ( ! empty( $api_token ) ) {
 			// Register the complete hook in constructor to ensure it's always registered.
 			add_action( 'automatic_updates_complete', array( $this, 'automatic_updates_complete' ), 10, 1 );
@@ -161,7 +197,16 @@ class WebChangeDetector_Autoupdates {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting post-update screenshots and comparisons.', 'automatic_updates_complete', 'debug' );
 
 		try {
-			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->manual_group_id, 'post', 'auto_update' );
+			// Mirror the group selection used for pre-update so post screenshots cover
+			// exactly the same sub-sites that were captured before the update ran.
+			$group_ids = $this->collect_network_group_ids();
+			if ( empty( $group_ids ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto-update checks were disabled mid-cycle (between pre and post) or no sites are enabled. Cleaning up pre-update state.', 'automatic_updates_complete', 'warning' );
+				delete_option( WCD_PRE_AUTO_UPDATE );
+				delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+				return;
+			}
+			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $group_ids, 'post', 'auto_update' );
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Post-Screenshot Response: ' . wp_json_encode( $response ), 'automatic_updates_complete', 'debug' );
 
 			// Validate response structure.
@@ -192,6 +237,7 @@ class WebChangeDetector_Autoupdates {
 
 			// Clean up pre-update data since we can't complete the comparison.
 			delete_option( WCD_PRE_AUTO_UPDATE );
+			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
 			return;
 		}
 
@@ -454,6 +500,30 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
+	 * Read a WP-cron timestamp from the orchestrator site's context.
+	 *
+	 * On a multisite-network sub-site the orchestrator is the main site;
+	 * the sub-site's own wp_version_check stays at WP core's default random
+	 * hour because the autoupdates constructor early-returns and never
+	 * reschedules it to the inherited window. Reading it locally would yield
+	 * a time-of-day that cannot match the inherited weekday/time window.
+	 *
+	 * @param string $hook Cron hook name (e.g. 'wp_version_check').
+	 * @return int|false Next scheduled timestamp, or false if not scheduled.
+	 */
+	public static function get_orchestrator_cron_time( $hook ) {
+		if ( WebChangeDetector_Multisite::is_multisite_subsite() ) {
+			return WebChangeDetector_Multisite::with_blog(
+				get_main_site_id(),
+				static function () use ( $hook ) {
+					return wp_next_scheduled( $hook );
+				}
+			);
+		}
+		return wp_next_scheduled( $hook );
+	}
+
+	/**
 	 * Calculate the next time auto-updates will actually run based on weekday settings.
 	 *
 	 * @return int|false Unix timestamp of next auto-update run, or false if not scheduled.
@@ -467,16 +537,13 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		// Get the next scheduled wp_version_check.
-		$next_wp_check = wp_next_scheduled( 'wp_version_check' );
+		// Get both cron timestamps. Another plugin or host may reschedule wp_version_check
+		// to a time outside our window, so we also check our backup cron.
+		$wp_check_time  = self::get_orchestrator_cron_time( 'wp_version_check' );
+		$wcd_check_time = self::get_orchestrator_cron_time( 'wcd_wp_version_check' );
 
-		// Check for our fallback cron.
-		if ( ! $next_wp_check ) {
-			$next_wp_check = wp_next_scheduled( 'wcd_wp_version_check' );
-		}
-
-		// Skip if no wp_version_check is scheduled.
-		if ( ! $next_wp_check ) {
+		// Skip if neither cron is scheduled.
+		if ( ! $wp_check_time && ! $wcd_check_time ) {
 			return false;
 		}
 
@@ -500,8 +567,37 @@ class WebChangeDetector_Autoupdates {
 		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
 		$to_time_utc   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
 
-		// Starting from the next wp_version_check time, find the next valid auto-update time.
-		$check_time        = $next_wp_check;
+		// Check both crons and return the earliest match.
+		$candidates = array();
+
+		if ( $wp_check_time ) {
+			$match = self::find_next_matching_cron_time( $wp_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			if ( $match ) {
+				$candidates[] = $match;
+			}
+		}
+
+		if ( $wcd_check_time ) {
+			$match = self::find_next_matching_cron_time( $wcd_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			if ( $match ) {
+				$candidates[] = $match;
+			}
+		}
+
+		return $candidates ? min( $candidates ) : false;
+	}
+
+	/**
+	 * Find the next cron execution time that falls within the enabled weekdays and time window.
+	 *
+	 * @param int    $next_cron_time   Unix timestamp of the next scheduled cron event.
+	 * @param array  $enabled_weekdays Array of enabled weekday names (e.g. 'monday', 'tuesday').
+	 * @param string $from_time_utc    Start of time window in UTC (H:i format).
+	 * @param string $to_time_utc      End of time window in UTC (H:i format).
+	 * @return int|false Unix timestamp of next matching time, or false if none found.
+	 */
+	private static function find_next_matching_cron_time( $next_cron_time, $enabled_weekdays, $from_time_utc, $to_time_utc ) {
+		$check_time        = $next_cron_time;
 		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
 
 		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
@@ -526,8 +622,6 @@ class WebChangeDetector_Autoupdates {
 				}
 
 				if ( $is_in_window ) {
-					// This is a valid auto-update time!
-
 					return $check_time;
 				}
 			}
@@ -542,7 +636,7 @@ class WebChangeDetector_Autoupdates {
 			$next_found = false;
 			foreach ( $crons as $timestamp => $cron ) {
 				if ( $timestamp > $check_time - HOUR_IN_SECONDS && $timestamp < $check_time + HOUR_IN_SECONDS ) {
-					if ( isset( $cron['wp_version_check'] ) ) {
+					if ( isset( $cron['wp_version_check'] ) || isset( $cron['wcd_wp_version_check'] ) ) {
 						$check_time = $timestamp;
 						$next_found = true;
 						break;
@@ -552,9 +646,8 @@ class WebChangeDetector_Autoupdates {
 
 			// If we couldn't find a scheduled check around this time, estimate it.
 			if ( ! $next_found ) {
-				// WordPress usually schedules at the same time each day.
 				// Use the original time of day.
-				$original_hour = gmdate( 'H:i:s', $next_wp_check );
+				$original_hour = gmdate( 'H:i:s', $next_cron_time );
 				$next_date     = gmdate( 'Y-m-d', $check_time );
 				$check_time    = strtotime( $next_date . ' ' . $original_hour . ' GMT' );
 			}
@@ -565,14 +658,24 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Check if WCD auto-update checks are properly configured and enabled.
+	 * Check if WCD auto-update checks are properly configured and at least one
+	 * site participates.
 	 *
-	 * @return array|false Auto-update settings or false if not configured.
+	 * Single-site / per-site activation: gated by this site's own
+	 * `auto_update_checks_enabled` toggle.
+	 *
+	 * Multisite-network: gated by the aggregated participants list across all
+	 * sub-sites + the main site. Main toggle off + at least one sub-site on
+	 * still passes — orchestration runs and screenshots only the participating
+	 * sub-sites. The schedule (when to run, today's allowed weekdays, time
+	 * window) always comes from the main site's settings, returned here.
+	 *
+	 * @return array|false Auto-update settings or false if not configured / no participants.
 	 */
 	private function validate_wcd_configuration() {
 		$auto_update_settings = self::get_auto_update_settings();
 
-		// Check if we have settings and group ID.
+		// Check if we have settings and a group ID on the orchestrator site.
 		if ( ! $auto_update_settings || ! $this->manual_group_id ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Running auto updates without checks. Don\'t have a group_id or auto update settings.',
@@ -582,11 +685,11 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		// Check if auto-update checks are enabled.
-		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ||
-			empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+		// Anyone opted in? On single-site this is just this site's toggle; on
+		// multisite-network this is "any registered site has participate=on".
+		if ( empty( $this->collect_network_group_ids() ) ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Running auto updates without checks. They are disabled in WCD.',
+				'Running auto updates without checks. No site has auto-update checks enabled.',
 				'wp_maybe_auto_update',
 				'debug'
 			);
@@ -695,6 +798,76 @@ class WebChangeDetector_Autoupdates {
 
 
 	/**
+	 * Collect manual_group_ids of all sites that should participate in this
+	 * pre/post auto-update batch.
+	 *
+	 * Single-site / per-site activation: returns this site's manual group when
+	 * its `auto_update_checks_enabled` toggle is on.
+	 *
+	 * Multisite-network: each registered site (main + subsites) decides
+	 * independently via its own per-site `WCD_AUTO_UPDATE_PARTICIPATE` option
+	 * (mirror of the toggle, written by
+	 * `WebChangeDetector_Admin_Settings::update_manual_check_group_settings()`).
+	 * No global "main must be on" gate — main off + subsites on still runs;
+	 * only the participating subsites get screenshotted. The orchestrator only
+	 * runs on the main site (subsites early-return in the constructor; WP core
+	 * itself gates `WP_Automatic_Updater::run()` to
+	 * `is_main_network() && is_main_site()` so subsites cannot trigger
+	 * auto-updates anyway). The schedule fields (when to run) live on the main
+	 * site and are read by the caller via `get_auto_update_settings()`.
+	 *
+	 * Returned UUIDs go into a single `take_screenshot_v2()` call. Empty array
+	 * means nobody participates — orchestrator skips.
+	 *
+	 * @since 4.4.0
+	 * @return string[] List of manual group UUIDs (deduplicated, may be empty).
+	 */
+	private function collect_network_group_ids() {
+		// Single-site / per-site activation: only this site, gated by its own toggle.
+		if ( ! WebChangeDetector_Multisite::is_multisite_active() ) {
+			$settings = self::get_auto_update_settings();
+			if ( empty( $settings['auto_update_checks_enabled'] ) || empty( $this->manual_group_id ) ) {
+				return array();
+			}
+			return array( $this->manual_group_id );
+		}
+
+		// Multisite-network: aggregate from each registered site that opted in
+		// via its per-site participate flag. `'number' => 0` makes the query
+		// unbounded — default is 100 and would silently drop sub-sites on
+		// networks larger than that.
+		$group_ids = array();
+		$sites     = get_sites(
+			array(
+				'archived' => 0,
+				'spam'     => 0,
+				'deleted'  => 0,
+				'number'   => 0,
+			)
+		);
+
+		foreach ( $sites as $site ) {
+			$site_data = WebChangeDetector_Multisite::with_blog(
+				(int) $site->blog_id,
+				static function () {
+					$groups       = get_option( 'wcd_website_groups', array() );
+					$manual_group = is_array( $groups ) ? ( $groups[ WCD_MANUAL_DETECTION_GROUP ] ?? '' ) : '';
+					return array(
+						'participate'  => (bool) get_option( WCD_AUTO_UPDATE_PARTICIPATE, false ),
+						'manual_group' => is_string( $manual_group ) ? $manual_group : '',
+					);
+				}
+			);
+
+			if ( ! empty( $site_data['participate'] ) && ! empty( $site_data['manual_group'] ) ) {
+				$group_ids[] = $site_data['manual_group'];
+			}
+		}
+
+		return array_values( array_unique( $group_ids ) );
+	}
+
+	/**
 	 * Start pre-update screenshots.
 	 *
 	 * @return bool True if started successfully, false on error.
@@ -705,10 +878,26 @@ class WebChangeDetector_Autoupdates {
 		// Clear caches.
 		$this->clear_wordpress_caches();
 
+		// Resolve participating groups. Single-site: just this site's group;
+		// multisite-network: every enabled site's manual group in a single batch.
+		// On the pre-path validate_wcd_configuration() runs first, so this empty
+		// case is rare (network-wide all-disabled) but defensive.
+		$group_ids = $this->collect_network_group_ids();
+		if ( empty( $group_ids ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'No enabled sites for auto-update screenshots. Skipping.',
+				'wp_maybe_auto_update',
+				'debug'
+			);
+			delete_option( WCD_AUTO_UPDATES_RUNNING );
+			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+			return false;
+		}
+
 		// Take screenshots.
 		try {
 			$sc_response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2(
-				$this->manual_group_id,
+				$group_ids,
 				'pre',
 				'auto_update'
 			);
@@ -1319,7 +1508,7 @@ class WebChangeDetector_Autoupdates {
 				$ai_cell   = '<td></td>';
 
 				if ( ! $comparison['difference_percent'] ) {
-					$ai_cell = '<td style="color: #888;">No difference</td>';
+					$ai_cell = '<td style="color: #888;">' . esc_html__( 'No difference', 'webchangedetector' ) . '</td>';
 				} elseif ( 'verified' === $ai_status && ! empty( $ai_result['summary'] ) ) {
 					$console_cat = $ai_result['console_analysis']['category'] ?? null;
 					$has_alert   = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
@@ -1355,7 +1544,7 @@ class WebChangeDetector_Autoupdates {
 						<td>' . esc_html( $comparison['url'] ) . '</td>
 						<td>' . esc_html( $comparison['device'] ) . '</td>
 						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
-						<td><a href="' . esc_url( $comparison['public_link'] ) . '">See changes</a></td>
+						<td><a href="' . esc_url( $comparison['public_link'] ) . '">' . esc_html__( 'See changes', 'webchangedetector' ) . '</a></td>
 						' . $ai_cell . '
 					</tr>';
 				if ( ! $comparison['difference_percent'] ) {
@@ -1367,37 +1556,35 @@ class WebChangeDetector_Autoupdates {
 			$mail_body .= '<div style="width: 300px; margin: 20px auto; text-align: center; padding: 30px; background: #DCE3ED;">';
 			if ( empty( $with_difference_rows ) ) {
 				$mail_body .= '<div style="padding: 10px;background: green; color: #fff; border-radius: 20px; font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; transform: scaleX(-1) rotate(-35deg);">L</div>
-									<div style="font-size: 18px; padding-top: 20px;">Checks Passed</div>';
+									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'Checks Passed', 'webchangedetector' ) . '</div>';
 			} else {
 				$mail_body .= '<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
-									<div style="font-size: 18px; padding-top: 20px;">We found changes<br>Please check the change detections.</div>';
+									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'We found changes', 'webchangedetector' ) . '<br>' . esc_html__( 'Please check the change detections.', 'webchangedetector' ) . '</div>';
 			}
 			$mail_body .= '</div>';
 
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks with differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks with differences', 'webchangedetector' ) . '</strong></div>';
+			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
 			if ( ! empty( $with_difference_rows ) ) {
 				$mail_body .= $with_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
 			}
 			$mail_body .= '</table>';
 
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>Checks without differences</strong></div>';
-			$mail_body .= '<table><tr><th>URL</th><th>Device</th><th>Change in %</th><th>Change Detection Page</th><th>AI Analysis</th></tr>';
+			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks without differences', 'webchangedetector' ) . '</strong></div>';
+			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
 			if ( ! empty( $no_difference_rows ) ) {
 				$mail_body .= $no_difference_rows;
 			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">No change detections to show here</td>';
+				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
 			}
 			$mail_body .= '</table>';
 		} else {
-			$mail_body .= 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.';
+			$mail_body .= esc_html__( 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.', 'webchangedetector' );
 		}
 
-		$mail_body .= '<div style="margin: 20px 0">You can find all change detections and settings for the checks 
-								in your wp-admin dashboard of your website.<br><br>
-								Your WebChange Detector team</div>';
+		$mail_body .= '<div style="margin: 20px 0">' . esc_html__( 'You can find all change detections and settings for the checks in your wp-admin dashboard of your website.', 'webchangedetector' ) . '<br><br>' . esc_html__( 'Your WebChange Detector team', 'webchangedetector' ) . '</div>';
 
 		$auto_update_settings = self::get_auto_update_settings();
 		$to                   = '';
@@ -1470,7 +1657,7 @@ class WebChangeDetector_Autoupdates {
 			);
 
 			// Check configuration while we have the data.
-			$api_token                                = get_option( WCD_WP_OPTION_KEY_API_TOKEN );
+			$api_token                                = WebChangeDetector_Multisite::get_api_token();
 			$groups                                   = get_option( WCD_WEBSITE_GROUPS );
 			$health_status['checks']['configuration'] = array(
 				'status'  => ! empty( $api_token ) && ! empty( $groups ),
@@ -1744,7 +1931,7 @@ class WebChangeDetector_Autoupdates {
 					'debug'
 				);
 
-				// TODO: This should be checked somewhere else.
+				// @todo Move this completion check into the cron handler so the webhook stays lean.
 				$this->check_update_completion();
 			}
 
@@ -1795,6 +1982,12 @@ class WebChangeDetector_Autoupdates {
 		}
 		if ( ! defined( 'WCD_AUTO_UPDATE_SETTINGS' ) ) {
 			define( 'WCD_AUTO_UPDATE_SETTINGS', 'wcd_auto_update_settings' );
+		}
+		if ( ! defined( 'WCD_AUTO_UPDATE_PARTICIPATE' ) ) {
+			// Per-site flag mirroring the auto_update_checks_enabled toggle.
+			// Read by the network orchestrator's collect_network_group_ids()
+			// to decide which sub-sites' URLs go into the pre/post batch.
+			define( 'WCD_AUTO_UPDATE_PARTICIPATE', 'wcd_auto_update_participate' );
 		}
 		if ( ! defined( 'WCD_ALLOWANCES' ) ) {
 			define( 'WCD_ALLOWANCES', 'wcd_allowances' );

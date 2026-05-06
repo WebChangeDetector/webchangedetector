@@ -102,9 +102,9 @@ class WebChangeDetector_Admin_Account {
 
 		// Save email address on account creation for showing on activate account page.
 		if ( ! empty( $postdata['email'] ) ) {
-			update_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( wp_unslash( $postdata['email'] ) ), false );
+			WebChangeDetector_Multisite::set_shared_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, sanitize_email( wp_unslash( $postdata['email'] ) ) );
 		}
-		update_option( WCD_WP_OPTION_KEY_API_TOKEN, sanitize_text_field( $api_token ), false );
+		WebChangeDetector_Multisite::set_api_token( $api_token );
 		delete_transient( 'wcd_account_details' );
 
 		return true;
@@ -181,7 +181,7 @@ class WebChangeDetector_Admin_Account {
 		}
 
 		$upgrade_url = $this->get_billing_url() . '?secret=' . $account_details['magic_login_secret'];
-		update_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
+		WebChangeDetector_Multisite::set_shared_option( WCD_WP_OPTION_KEY_UPGRADE_URL, $upgrade_url );
 
 		return $upgrade_url;
 	}
@@ -234,10 +234,11 @@ class WebChangeDetector_Admin_Account {
 			<div class="wcd-settings-section wcd-settings-section-api-token">
 				<div class="wcd-settings-card">
 					<h2><span class="dashicons dashicons-admin-users"></span> Account</h2>
-					<form action="<?php echo esc_url( admin_url() . '/admin.php?page=webchangedetector' ); ?>" method="post"
+					<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector' ) ); ?>" method="post"
 						onsubmit="return confirm('<?php echo esc_js( __( 'Are you sure you want to reset the API token?', 'webchangedetector' ) ); ?>');">
 						<input type="hidden" name="wcd_action" value="reset_api_token">
 						<?php wp_nonce_field( 'reset_api_token' ); ?>
+						<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
@@ -327,15 +328,16 @@ class WebChangeDetector_Admin_Account {
 			$api_token_after_reset = isset( $_POST['api_token'] ) ? sanitize_text_field( wp_unslash( $_POST['api_token'] ) ) : false;
 			?>
 			<div class="highlight-container">
-				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( admin_url() ); ?>/admin.php?page=webchangedetector" method="post">
+				<form class="frm_use_api_token highlight-inner" action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector' ) ); ?>" method="post">
 					<input type="hidden" name="wcd_action" value="save_api_token">
 					<?php wp_nonce_field( 'save_api_token' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<h2><?php esc_html_e( 'Use Existing API Token', 'webchangedetector' ); ?></h2>
 					<p>
-						<?php esc_html_e( 'Use the API token of your existing account. To get your API token, please login to your account at', 'webchangedetector' ); ?>
-						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>
+						<?php esc_html_e( 'Find your token in your account at', 'webchangedetector' ); ?>
+						<a href="<?php echo esc_url( $this->get_app_url() ); ?>login" target="_blank">webchangedetector.com</a>.
 					</p>
-					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" required>
+					<input type="text" name="api_token" value="<?php echo esc_html( $api_token_after_reset ); ?>" placeholder="<?php echo esc_attr__( 'e.g. aBc1dEf2gHi3jKl4mNo5pQr6sTu7vWx8yZ901234', 'webchangedetector' ); ?>" required>
 					<input type="submit" value="<?php esc_attr_e( 'Save', 'webchangedetector' ); ?>" class="button button-primary">
 				</form>
 			</div>
@@ -355,7 +357,7 @@ class WebChangeDetector_Admin_Account {
 	 */
 	public function get_no_account_page( $api_token = '' ) {
 		// Set initial setup needed flag for new users (only if no API token exists).
-		if ( empty( get_option( WCD_WP_OPTION_KEY_API_TOKEN, '' ) ) ) {
+		if ( empty( WebChangeDetector_Multisite::get_api_token() ) ) {
 			update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
 		}
 
@@ -367,18 +369,18 @@ class WebChangeDetector_Admin_Account {
 		<div class="no-account-page">
 			<div class="no-account">
 				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . 'admin/img/logo-webchangedetector.png' ); ?>" alt="<?php echo esc_attr__( 'WebChangeDetector Logo', 'webchangedetector' ); ?>" class="wcd-logo">
-				<h2><?php echo esc_html__( 'See what changed before your users do.', 'webchangedetector' ); ?></h2>
 			</div>
 			<div class="highlight-wrapper">
 				<div class="highlight-container">
 					<div class="highlight-inner">
 						<h2><?php echo esc_html__( 'Create Free Account', 'webchangedetector' ); ?></h2>
 						<p>
-							<?php echo esc_html__( 'Create your free account with', 'webchangedetector' ); ?><br><strong><?php echo esc_html__( '1000 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'in the first month and', 'webchangedetector' ); ?> <strong><?php echo esc_html__( '50 checks', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'after.', 'webchangedetector' ); ?><br>
+							<?php echo esc_html__( 'Sign up and start detecting visual changes in seconds.', 'webchangedetector' ); ?>
 						</p>
 						<form class="frm_new_account" method="post">
 							<input type="hidden" name="wcd_action" value="create_trial_account">
 							<?php wp_nonce_field( 'create_trial_account' ); ?>
+							<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 							<input type="text" name="name_first" placeholder="<?php echo esc_attr__( 'First Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $first_name ); ?>" required>
 							<input type="text" name="name_last" placeholder="<?php echo esc_attr__( 'Last Name', 'webchangedetector' ); ?>" value="<?php echo esc_html( $last_name ); ?>" required>
 							<input type="email" name="email" placeholder="<?php echo esc_attr__( 'Email', 'webchangedetector' ); ?>" value="<?php echo esc_html( $email ); ?>" required>
@@ -406,7 +408,7 @@ class WebChangeDetector_Admin_Account {
 	 * @return   void               Outputs the activation page HTML.
 	 */
 	public function show_activate_account( $error ) {
-		$account_email = get_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, '' );
+		$account_email = WebChangeDetector_Multisite::get_shared_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, '' );
 		?>
 		<div class="wcd-activate-account-modern">
 			<div class="wcd-activation-container">
@@ -462,6 +464,7 @@ class WebChangeDetector_Admin_Account {
 							<form method="post" style="margin: 0;">
 								<input type="hidden" name="wcd_action" value="reset_api_token">
 								<?php wp_nonce_field( 'reset_api_token' ); ?>
+								<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 								<button type="submit" class="wcd-reset-button" onclick="return confirmReset()">
 									<span class="dashicons dashicons-trash"></span>
 									<?php esc_html_e( 'Reset & Start Over', 'webchangedetector' ); ?>
@@ -554,7 +557,7 @@ class WebChangeDetector_Admin_Account {
 		$action   = $post['action']; // For debugging.
 
 		// Get API Token from WP DB.
-		$api_token = $post['api_token'] ?? get_option( WCD_WP_OPTION_KEY_API_TOKEN ) ?? null;
+		$api_token = $post['api_token'] ?? WebChangeDetector_Multisite::get_api_token() ?? null;
 
 		unset( $post['action'] ); // don't need to send as action as it's now the url.
 		unset( $post['api_token'] ); // just in case.

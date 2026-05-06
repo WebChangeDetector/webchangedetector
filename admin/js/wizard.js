@@ -22,11 +22,68 @@
             this.steps = [];
             this.isActive = false;
 
+            // Allowances drive which pages the wizard visits. Missing keys default
+            // to allowed so older sites without ai_rules_view in their stored array
+            // still get the AI Rules step.
+            this.allowances = (typeof wcdWizardData !== 'undefined' && wcdWizardData.allowances) || {};
+
+            // Page sequence the wizard walks through. Pages whose allowance is
+            // explicitly false are skipped in getNextEnabledPage().
+            this.wizardPageOrder = [
+                { page: 'webchangedetector',                   allowance: null },
+                { page: 'webchangedetector-update-settings',   allowance: 'manual_checks_view' },
+                { page: 'webchangedetector-auto-settings',     allowance: 'monitoring_checks_view' },
+                { page: 'webchangedetector-change-detections', allowance: 'change_detections_view' },
+                { page: 'webchangedetector-ai-rules',          allowance: 'ai_rules_view' },
+                { page: 'webchangedetector-logs',              allowance: 'logs_view' },
+                { page: 'webchangedetector-settings',          allowance: 'settings_view' }
+            ];
+
             // Bind methods
             this.init = this.init.bind(this);
             this.startWizard = this.startWizard.bind(this);
             this.stopWizard = this.stopWizard.bind(this);
             this.createSteps = this.createSteps.bind(this);
+            this.advanceToNextPage = this.advanceToNextPage.bind(this);
+        }
+
+        /**
+         * Check whether a page in wizardPageOrder is allowed for this site.
+         */
+        isPageAllowed(pageEntry) {
+            if (!pageEntry.allowance) {
+                return true;
+            }
+            return this.allowances[pageEntry.allowance] !== false;
+        }
+
+        /**
+         * Find the next enabled page after the given current page.
+         * Returns null when no further allowed page exists.
+         */
+        getNextEnabledPage(currentPage) {
+            const idx = this.wizardPageOrder.findIndex(e => e.page === currentPage);
+            if (idx < 0) {
+                return null;
+            }
+            for (let i = idx + 1; i < this.wizardPageOrder.length; i++) {
+                if (this.isPageAllowed(this.wizardPageOrder[i])) {
+                    return this.wizardPageOrder[i].page;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Navigate to the next enabled page, or finish the wizard if none remains.
+         */
+        advanceToNextPage() {
+            const next = this.getNextEnabledPage(this.getCurrentPage());
+            if (next) {
+                this.navigateToPage(next);
+            } else {
+                this.completeWizard();
+            }
         }
 
         /**
@@ -174,6 +231,8 @@
                     return this.getMonitoringSteps();
                 case 'webchangedetector-change-detections':
                     return this.getChangeDetectionSteps();
+                case 'webchangedetector-ai-rules':
+                    return this.getAiRulesSteps();
                 case 'webchangedetector-logs':
                     return this.getLogsSteps();
                 case 'webchangedetector-settings':
@@ -292,8 +351,7 @@
                         align: 'start',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
-                            // Navigate to URL selection page with wizard parameter
-                            this.navigateToPage('webchangedetector-update-settings');
+                            this.advanceToNextPage();
                         }
                     }
                 }
@@ -352,35 +410,17 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-from',
                     popover: {
-                        title: this.getTranslation('autoUpdateTimeframeTitle', 'Auto Update Timeframe'),
-                        description: this.getTranslation('autoUpdateTimeframeDesc', 'Set the time window when WordPress is allowed to perform auto-updates. WebChange Detector will check your site during this period. For example: 2:00 AM - 4:00 AM when traffic is low.'),
+                        title: this.getTranslation('scheduleNotificationsTitle', 'Schedule & Notifications'),
+                        description: this.getTranslation('scheduleNotificationsDesc', 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive change detection should be. The descriptions next to each field explain the individual options.'),
                         side: 'left',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.wcd-form-row.wcd-auto-update-setting-weekday',
+                    element: '.wcd-setting-basic-auth',
                     popover: {
-                        title: this.getTranslation('weekdaySelectionTitle', 'Weekday Selection'),
-                        description: this.getTranslation('weekdaySelectionDesc', 'Choose which days WordPress can perform auto-updates. Many prefer weekdays to avoid weekend issues, or specific days when support is available.'),
-                        side: 'left',
-                        align: 'start'
-                    }
-                },
-                {
-                    element: '.wcd-form-row.wcd-auto-update-setting-emails',
-                    popover: {
-                        title: this.getTranslation('notificationEmailsTitle', 'Notification Emails'),
-                        description: this.getTranslation('notificationEmailsDesc', 'Enter email addresses to receive notifications about auto-update check results. You can add multiple emails separated by commas.'),
-                        side: 'left',
-                        align: 'start'
-                    }
-                },
-                {
-                    element: '.wcd-form-row.wcd-auto-update-setting-threshold',
-                    popover: {
-                        title: this.getTranslation('changeThresholdTitle', 'Change Detection Threshold'),
-                        description: this.getTranslation('changeThresholdDesc', 'Set the sensitivity for detecting changes (0-100%). Note: even small changes like 0.1% can be significant on long pages.'),
+                        title: this.getTranslation('advancedScreenshotTitle', 'Advanced Screenshot Settings'),
+                        description: this.getTranslation('advancedScreenshotDesc', 'Optional: configure HTTP Basic Authentication for protected sites, route screenshots through the Static IP for whitelisting, or increase the delay between screenshots if your server is under load.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -388,8 +428,8 @@
                 {
                     element: '.wcd-form-row.wcd-auto-update-setting-css',
                     popover: {
-                        title: this.getTranslation('cssInjectionTitle', 'CSS Injection'),
-                        description: this.getTranslation('cssInjectionDesc', 'Add custom CSS to hide dynamic elements before screenshots (like dates, counters, ads). Example: .dynamic-date { display: none !important; }'),
+                        title: this.getTranslation('codeInjectionTitle', 'Code Injection'),
+                        description: this.getTranslation('codeInjectionDesc', 'Inject custom CSS or JavaScript that runs before screenshots are taken. Use CSS to hide dynamic elements (timestamps, ads), and JavaScript to dismiss popups or trigger specific UI states.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -412,8 +452,7 @@
                         align: 'center',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
-                            // Navigate to monitoring settings page with wizard parameter
-                            this.navigateToPage('webchangedetector-auto-settings');
+                            this.advanceToNextPage();
                         }
                     }
                 }
@@ -460,35 +499,17 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-interval',
                     popover: {
-                        title: this.getTranslation('checkFrequencyTitle', 'Check Frequency'),
-                        description: this.getTranslation('checkFrequencyDesc', 'How often should we check your site? Daily (24h) is recommended for most sites. High-traffic sites may want more frequent checks.'),
+                        title: this.getTranslation('monitoringScheduleTitle', 'Schedule & Alerts'),
+                        description: this.getTranslation('monitoringScheduleDesc', 'Set how often we check your site, when checks should run, the change sensitivity, and who receives alerts. The descriptions next to each field explain the individual options.'),
                         side: 'left',
                         align: 'start'
                     }
                 },
                 {
-                    element: '.wcd-form-row.wcd-monitoring-hour-of-day',
+                    element: '.wcd-setting-basic-auth',
                     popover: {
-                        title: this.getTranslation('preferredCheckTimeTitle', 'Preferred Check Time'),
-                        description: this.getTranslation('preferredCheckTimeDesc', 'Choose when checks should run. Pick a low-traffic time like 3 AM to minimize impact on visitors.'),
-                        side: 'left',
-                        align: 'start'
-                    }
-                },
-                {
-                    element: '.wcd-form-row.wcd-monitoring-threshold',
-                    popover: {
-                        title: this.getTranslation('changeSensitivityTitle', 'Change Sensitivity'),
-                        description: this.getTranslation('changeSensitivityDesc', 'Set how sensitive the monitoring should be. Note: even 0.1% changes can be significant on long pages.'),
-                        side: 'left',
-                        align: 'start'
-                    }
-                },
-                {
-                    element: '.wcd-form-row.wcd-monitoring-alert-emails',
-                    popover: {
-                        title: this.getTranslation('alertRecipientsTitle', 'Alert Recipients'),
-                        description: this.getTranslation('alertRecipientsDesc', 'Who should be notified when changes are detected? Add multiple emails separated by commas. Include your developer and key stakeholders.'),
+                        title: this.getTranslation('advancedScreenshotTitle', 'Advanced Screenshot Settings'),
+                        description: this.getTranslation('advancedScreenshotDesc', 'Optional: configure HTTP Basic Authentication for protected sites, route screenshots through the Static IP for whitelisting, or increase the delay between screenshots if your server is under load.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -496,8 +517,8 @@
                 {
                     element: '.wcd-form-row.wcd-monitoring-css',
                     popover: {
-                        title: this.getTranslation('cssCustomizationTitle', 'CSS Customization'),
-                        description: this.getTranslation('cssCustomizationDesc', 'Hide dynamic content that changes frequently (timestamps, visitor counters, etc.) to avoid false positives in monitoring.'),
+                        title: this.getTranslation('codeInjectionTitle', 'Code Injection'),
+                        description: this.getTranslation('codeInjectionDesc', 'Inject custom CSS or JavaScript that runs before screenshots are taken. Use CSS to hide dynamic elements (timestamps, ads), and JavaScript to dismiss popups or trigger specific UI states.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -520,8 +541,7 @@
                         align: 'start',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
-                            // Navigate to change detections page with wizard parameter
-                            this.navigateToPage('webchangedetector-change-detections');
+                            this.advanceToNextPage();
                         }
                     }
                 }
@@ -551,8 +571,40 @@
                         align: 'start',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
-                            // Navigate to logs page with wizard parameter
-                            this.navigateToPage('webchangedetector-logs');
+                            this.advanceToNextPage();
+                        }
+                    }
+                }
+            ];
+        }
+
+        /**
+         * AI Rules wizard steps.
+         *
+         * The page renders either an empty-state notice or a rules table, so the
+         * second step targets both selectors so it works regardless of state.
+         */
+        getAiRulesSteps() {
+            return [
+                {
+                    element: '.wcd-ai-rules-info',
+                    popover: {
+                        title: this.getTranslation('aiRulesTitle', 'AI Rules'),
+                        description: this.getTranslation('aiRulesDesc', 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from change detection views by clicking "Ignore in future" on a region.'),
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.wcd-ai-rules-empty, .wcd-ai-rules-table-wrap',
+                    popover: {
+                        title: this.getTranslation('aiRulesListTitle', 'Your Rules'),
+                        description: this.getTranslation('aiRulesListDesc', 'Active rules are applied automatically to future comparisons. You can toggle, change scope, or delete rules from this list.'),
+                        side: 'top',
+                        align: 'start',
+                        nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
+                        onNextClick: () => {
+                            this.advanceToNextPage();
                         }
                     }
                 }
@@ -573,8 +625,7 @@
                         align: 'start',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
                         onNextClick: () => {
-                            // Navigate to logs page with wizard parameter
-                            this.navigateToPage('webchangedetector-settings');
+                            this.advanceToNextPage();
                         }
                     }
                 },

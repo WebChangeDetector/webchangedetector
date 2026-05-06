@@ -206,6 +206,7 @@ class WebChangeDetector_Admin_Screenshots {
 			<div style="width: 100%; margin-bottom: 20px; text-align: center; margin-left: auto; margin-right: auto">
 				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $before_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $before_token ) ?? null; ?>" <?php echo ! $before_token ? 'disabled' : ''; ?>>
 						< <?php esc_html_e( 'Previous', 'webchangedetector' ); ?>
@@ -213,6 +214,7 @@ class WebChangeDetector_Admin_Screenshots {
 				</form>
 				<form action="<?php echo esc_html( wp_nonce_url( '?page=webchangedetector-show-detection&id=' . ( esc_html( $after_token ) ?? null ) ) ); ?>" method="post" style="display:inline-block;">
 					<input type="hidden" name="all_tokens" value='<?php echo wp_json_encode( $all_tokens ); ?>'>
+					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<button class="button" type="submit" name="token"
 							value="<?php echo esc_html( $after_token ) ?? null; ?>" <?php echo ! $after_token ? 'disabled' : ''; ?>>
 						<?php esc_html_e( 'Next', 'webchangedetector' ); ?> >
