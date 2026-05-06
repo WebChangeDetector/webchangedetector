@@ -56,6 +56,7 @@ Get more checks and lower monitoring intervals with our premium plans. You find 
 
 = 4.3.0 =
 * Feature: Multisite support (network-activated and per-site activation)
+* Feature: Sub-site allowance management on network admin layer
 * Fix: Change detection view for mobile devices
 * Fix: Translations
 
