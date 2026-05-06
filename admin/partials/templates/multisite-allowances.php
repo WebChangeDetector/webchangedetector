@@ -87,8 +87,8 @@ if ( $is_all_sites_mode ) {
 			<p>
 				<?php
 				printf(
-					/* translators: %s: link to the Sites tab */
 					wp_kses(
+						/* translators: %s: link to the Sites tab */
 						__( 'No registered sub-site is selected. Register a sub-site on the %s tab, then return here to manage its allowances.', 'webchangedetector' ),
 						array( 'a' => array( 'href' => array() ) )
 					),
