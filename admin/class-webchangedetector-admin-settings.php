@@ -464,35 +464,39 @@ class WebChangeDetector_Admin_Settings {
 					include WCD_PLUGIN_DIR . 'admin/partials/components/settings/auto-update-status-bar.php';
 
 					// Manual Checks Workflow Card.
-					$has_urls = $group_and_urls['selected_urls_count'] > 0;
+					if ( $this->is_allowed( 'manual_checks_start' ) ) {
+						$has_urls = $group_and_urls['selected_urls_count'] > 0;
+						?>
+						<div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr( 'wcd-status-' . ( $has_urls ? 'ready' : 'no-urls' ) ); ?>"
+							data-initial-count="<?php echo esc_attr( $group_and_urls['selected_urls_count'] ); ?>">
+							<div class="wcd-monitoring-status-header">
+								<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'Manual Checks', 'webchangedetector' ); ?></h3>
+							</div>
+							<div class="wcd-monitoring-status-content">
+								<div class="wcd-next-check-container">
+									<div class="wcd-status-label wcd-mc-ready-label"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>><?php echo esc_html__( 'Ready to check', 'webchangedetector' ); ?></div>
+									<div class="wcd-status-label wcd-mc-no-urls-label"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'No URLs selected', 'webchangedetector' ); ?></div>
+									<div class="wcd-status-value wcd-mc-no-urls-value"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'Select URLs below', 'webchangedetector' ); ?></div>
+									<button type="button" class="button button-primary wcd-mc-start-btn"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>
+										onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
+										<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start Manual Checks', 'webchangedetector' ); ?>
+									</button>
+								</div>
+								<div class="wcd-monitoring-stats wcd-mc-stats"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>>
+									<div class="wcd-stat-item">
+										<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
+										<span class="wcd-stat-value wcd-mc-selected-count"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span>
+									</div>
+									<div class="wcd-stat-item">
+										<span class="wcd-stat-label"><?php esc_html_e( 'Check Type', 'webchangedetector' ); ?></span>
+										<span class="wcd-stat-value"><?php esc_html_e( 'On-Demand', 'webchangedetector' ); ?></span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<?php
+					}
 					?>
-					<div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr( 'wcd-status-' . ( $has_urls ? 'ready' : 'no-urls' ) ); ?>"
-						data-initial-count="<?php echo esc_attr( $group_and_urls['selected_urls_count'] ); ?>">
-						<div class="wcd-monitoring-status-header">
-							<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'Manual Checks', 'webchangedetector' ); ?></h3>
-						</div>
-						<div class="wcd-monitoring-status-content">
-							<div class="wcd-next-check-container">
-								<div class="wcd-status-label wcd-mc-ready-label"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>><?php echo esc_html__( 'Ready to check', 'webchangedetector' ); ?></div>
-								<div class="wcd-status-label wcd-mc-no-urls-label"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'No URLs selected', 'webchangedetector' ); ?></div>
-								<div class="wcd-status-value wcd-mc-no-urls-value"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'Select URLs below', 'webchangedetector' ); ?></div>
-								<button type="button" class="button button-primary wcd-mc-start-btn"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>
-									onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
-									<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start Manual Checks', 'webchangedetector' ); ?>
-								</button>
-							</div>
-							<div class="wcd-monitoring-stats wcd-mc-stats"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>>
-								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php esc_html_e( 'Selected URLs', 'webchangedetector' ); ?></span>
-									<span class="wcd-stat-value wcd-mc-selected-count"><?php echo esc_html( $group_and_urls['selected_urls_count'] ); ?></span>
-								</div>
-								<div class="wcd-stat-item">
-									<span class="wcd-stat-label"><?php esc_html_e( 'Check Type', 'webchangedetector' ); ?></span>
-									<span class="wcd-stat-value"><?php esc_html_e( 'On-Demand', 'webchangedetector' ); ?></span>
-								</div>
-							</div>
-						</div>
-					</div>
 				</div>
 
 				<hr style="margin: 20px 0; border-color: #e1e5e9;">
