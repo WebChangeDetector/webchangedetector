@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat,henkwhite
 Tags: visual regression, monitoring, auto updates, screenshot, change detection
 Requires at least: 5.5
 Tested up to: 6.9
-Stable tag: 4.3.0
+Stable tag: 4.3.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -209,6 +209,9 @@ Screenshots are stored on Google Cloud Storage with retention based on your plan
 8. Multisite network admin: manage sub-sites and set per-site allowances from one place.
 
 == Changelog ==
+= 4.3.1 =
+* Fix: Calendar selector in change detections
+* Fix: Show only batches with comparisons in dasboard
 
 = 4.3.0 =
 * Feature: Multisite support (network-activated and per-site activation)

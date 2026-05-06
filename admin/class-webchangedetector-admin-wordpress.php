@@ -697,6 +697,15 @@ class WebChangeDetector_Admin_WordPress {
 		$website_details = $this->admin->settings_handler->get_website_details();
 		$to_sync         = false;
 
+		// get_website_details() returns an error string when the website cannot be
+		// resolved (invalid token, domain mismatch, website deleted on API). On
+		// PHP 8+ a string offset access throws a fatal TypeError, which would
+		// kill any save_post that runs in this state (e.g. cron-triggered post
+		// inserts from third-party plugins).
+		if ( ! is_array( $website_details ) || empty( $website_details['sync_url_types'] ) || ! is_array( $website_details['sync_url_types'] ) ) {
+			return true;
+		}
+
 		// Get both the WordPress post type name and the rest_base for comparison.
 		$wp_post_type_name = $post_type->name; // WordPress internal name (e.g., "product").
 		$wp_rest_base      = \WebChangeDetector\WebChangeDetector_Admin_Utils::get_post_type_slug( $post_type ); // rest_base (e.g., "products").
@@ -1470,6 +1479,12 @@ class WebChangeDetector_Admin_WordPress {
 		$array = array(); // init.
 		if ( ! $website_details ) {
 			$website_details = $this->admin->settings_handler->get_website_details();
+		}
+
+		// get_website_details() can return an error string. Bail out cleanly
+		// instead of crashing on PHP 8+ string offset access.
+		if ( ! is_array( $website_details ) ) {
+			return false;
 		}
 
 		// We only sync the frontpage.

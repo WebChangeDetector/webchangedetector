@@ -1,4 +1,4 @@
-vendor/*
+/vendor/*
 .DS_Store
 *_bkp
 deploy-wp.sh

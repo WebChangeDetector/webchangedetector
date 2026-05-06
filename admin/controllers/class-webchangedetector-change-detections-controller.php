@@ -172,7 +172,7 @@ class WebChangeDetector_Change_Detections_Controller {
 		if ( ! empty( $filters['status'] ) ) {
 			$api_filters['status'] = $filters['status'];
 		} else {
-			$api_filters['status'] = 'new,ok,to_fix,false_positive';
+			$api_filters['status'] = implode( ',', WebChangeDetector_Admin::VALID_COMPARISON_STATUS );
 		}
 
 		if ( ! empty( $filters['difference_only'] ) ) {

@@ -142,6 +142,7 @@ class WebChangeDetector_Admin_Dashboard {
 
 				$filter_batches = array(
 					'per_page' => 5,
+					'status'   => implode( ',', WebChangeDetector_Admin::VALID_COMPARISON_STATUS ),
 				);
 
 				if ( $this->admin->is_all_sites_mode ) {
