@@ -850,28 +850,26 @@ class WebChangeDetector_Admin {
 	}
 
 	/**
-	 * Check if user can access specific feature based on plan.
+	 * Check if the account has access to a specific plan feature.
 	 *
-	 * @param string      $feature Feature name.
-	 * @param string|null $user_plan User plan level.
+	 * Reads the authoritative `plan_features` map from the API account response
+	 * (see UserResource::toArray on the API side). This avoids drift from a
+	 * hardcoded plan-slug whitelist whenever a new plan is added.
+	 *
+	 * @param string     $feature      Feature name (e.g. 'ai_verification', 'browser_console').
+	 * @param array|null $user_account Optional pre-fetched account array. Falls back to account_handler->get_account().
 	 * @return bool
 	 */
-	public function can_access_feature( $feature, $user_plan = null ) {
-		if ( ! $user_plan ) {
-			$account   = $this->account_handler->get_account();
-			$user_plan = $account['plan'] ?? 'free';
+	public function can_access_feature( $feature, $user_account = null ) {
+		if ( ! is_array( $user_account ) ) {
+			$user_account = $this->account_handler->get_account();
 		}
 
-		$feature_plans = array(
-			'browser_console' => array( 'trial', 'personal_pro', 'freelancer', 'agency' ),
-			'ai_verification' => array( 'trial', 'solo', 'personal_pro', 'freelancer', 'agency' ),
-		);
+		$plan_features = isset( $user_account['plan_features'] ) && is_array( $user_account['plan_features'] )
+			? $user_account['plan_features']
+			: array();
 
-		if ( ! isset( $feature_plans[ $feature ] ) ) {
-			return true; // Feature not restricted.
-		}
-
-		return in_array( $user_plan, $feature_plans[ $feature ], true );
+		return ! empty( $plan_features[ $feature ] );
 	}
 
 	/**

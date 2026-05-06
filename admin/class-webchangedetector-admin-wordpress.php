@@ -352,10 +352,10 @@ class WebChangeDetector_Admin_WordPress {
 
 			// Enqueue multisite scripts on the relevant network-admin pages.
 			if ( WebChangeDetector_Multisite::is_multisite_active() && is_network_admin() ) {
-				$is_sites_page       = strpos( $hook_suffix, 'webchangedetector-sites' ) !== false;
+				$is_sites_page      = strpos( $hook_suffix, 'webchangedetector-sites' ) !== false;
 				$is_allowances_page = strpos( $hook_suffix, 'webchangedetector-allowances' ) !== false;
 			} else {
-				$is_sites_page       = false;
+				$is_sites_page      = false;
 				$is_allowances_page = false;
 			}
 

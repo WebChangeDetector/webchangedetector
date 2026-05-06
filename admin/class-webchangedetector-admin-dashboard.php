@@ -308,8 +308,7 @@ class WebChangeDetector_Admin_Dashboard {
 
 									// Show browser console changes indicator (only for supported plans).
 									$user_account               = $this->admin->account_handler->get_account();
-									$user_plan                  = $user_account['plan'] ?? 'free';
-									$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
+									$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_account );
 
 									if ( $can_access_browser_console && $console_changes_count > 0 ) {
 										$console_total = $console_changes_count;
@@ -759,8 +758,7 @@ class WebChangeDetector_Admin_Dashboard {
 							<?php
 							// Show console changes badge if present.
 							$user_account               = $this->admin->account_handler->get_account();
-							$user_plan                  = $user_account['plan'] ?? 'free';
-							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
+							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_account );
 
 							if ( $can_access_browser_console && ! empty( $compare['browser_console_change'] ) && 'unchanged' !== $compare['browser_console_change'] ) {
 								$console_added   = count( $compare['browser_console_added'] ?? array() );
@@ -974,8 +972,7 @@ class WebChangeDetector_Admin_Dashboard {
 							<?php
 							// Console changes badge.
 							$user_account               = $this->admin->account_handler->get_account();
-							$user_plan                  = $user_account['plan'] ?? 'free';
-							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_plan );
+							$can_access_browser_console = $this->admin->can_access_feature( 'browser_console', $user_account );
 
 							if ( $can_access_browser_console && ! empty( $compare['browser_console_change'] ) && 'unchanged' !== $compare['browser_console_change'] ) {
 								$console_added   = count( $compare['browser_console_added'] ?? array() );
