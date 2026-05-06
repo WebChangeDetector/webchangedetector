@@ -70,14 +70,9 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 
 Most WordPress site owners check their site after an update by clicking through a few pages and trusting their memory. That works until it does not.
 
-|   | Manual click-through | WebChange Detector |
-|---|---|---|
-| Pages covered | Whatever you remember | Every URL you select, every time |
-| Time per check | 10 to 60 minutes | Seconds |
-| Mobile included? | Rarely | Always |
-| Catches subtle pixel shifts? | No, your memory is not pixel-accurate | Yes |
-| Runs while you sleep? | No | Yes (monitoring + auto-update mode) |
-| Output you can share with a designer? | A panicked Slack message | A public link with side-by-side comparison |
+A manual click-through covers only the pages you happen to remember, takes 10 to 60 minutes per round, almost never includes the mobile viewport, and depends on your eyes catching pixel shifts that the human visual system is genuinely bad at. The output, when something does break, is usually a panicked Slack message after a customer noticed first.
+
+WebChange Detector checks every URL you selected, every single time, on desktop *and* mobile, in seconds. It catches subpixel layout shifts your memory cannot, runs unattended while you sleep (in monitoring and auto-update modes), and produces a public side-by-side comparison link you can paste straight to a designer or developer.
 
 Manual QA is fine for one-off changes. WebChange Detector pays for itself the first time an auto-update silently breaks a checkout button at 3 a.m.
 
