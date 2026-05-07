@@ -214,14 +214,13 @@ In addition to layout, the browser console log is checked for errors.
 
 == Screenshots ==
 
-1. Change detection view: see exactly what changed, with differences highlighted on the post-update screenshot.
-2. Comparison slider: drag to compare the before and after states pixel by pixel.
-3. Dashboard: account overview, recent change detections, and quick actions.
-4. Auto-update settings: pick the pages WordPress will screenshot before and after each automatic update.
-5. Manual checks: run an on-demand visual diff before a deployment.
-6. Monitoring settings: select pages and intervals for continuous monitoring.
-7. Change detections list: every result, grouped by source (monitoring, manual, auto-update) and filterable by status.
-8. Multisite network admin: manage sub-sites and set per-site allowances from one place.
+1. Change detection view: before-screenshot left and after-screenshot right with highlighted changes.
+2. Dashboard: account overview, recent change detections, and quick actions.
+3. Auto-update Checks & Manual checks: settings for the auto update checks. Also run an on-demand visual diff before and after updates or other changes.
+4. Monitoring settings: select pages, intervals and other settings for continuous monitoring.
+5. Change detections list: every result, grouped by source (monitoring, manual, auto-update) and filterable by status.
+6. After Manual Checks: see the results immediatelly after the checks ran.
+7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
 
 == Changelog ==
 = 4.3.1 =
