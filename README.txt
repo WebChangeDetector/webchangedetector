@@ -12,52 +12,73 @@ Visual regression testing for WordPress: catch broken layouts after auto-updates
 
 == Description ==
 
-## Stop guessing whether the last update broke your site
+## Find visual bugs befor your visitors do
 
-Every time WordPress core, a plugin, or a theme updates, something on your site can quietly break. A pushed-down menu. A missing button. A broken hero. By the time a visitor reports it, you have already lost trust (and probably sales).
+Every time WordPress core, a plugin, or a theme updates, something on your site can quietly break. By the time a visitor reports it, you have already lost trust and probably sales.
 
-WebChange Detector takes a screenshot of your pages **before** the change, another **after**, and tells you exactly what is different. Pixel by pixel. Desktop and mobile. With AI that ignores the moving parts (sliders, ads, cookie banners) so you only see what actually matters.
+WebChange Detector takes a screenshot of your pages **before** the change, another **after**, and tells you exactly what is different on desktop and mobile. The AI check  ignores moving parts like sliders, caroussels and animations. So you only get alerts that actually matter.
 
 ### What is visual regression testing?
 
-Visual regression testing is the practice of taking a screenshot of a web page in a known-good state, then comparing a new screenshot to it after any change (an update, a deploy, a CSS tweak, a plugin install). Anything that looks different is flagged. It is the fastest way to catch layout breakage that traditional testing (PHP errors, broken links, JavaScript console) cannot see, because the page can render "successfully" while still looking wrong to a human visitor. WebChange Detector brings this practice to WordPress with one-click setup, no headless-browser scripting, and no Selenium know-how required.
+Visual regression testing is the practice of taking a screenshot of a web page in a known-good state, then comparing a new screenshot to it after any change like an update, a deploy, a CSS tweak, or a plugin install. Anything that looks different is flagged. 
+
+It is the fastest way to catch layout breakage that traditional testing like PHP errors or broken links cannot see, because the page can render "successfully" while still looking wrong to a human visitor. WebChange Detector brings this practice to WordPress with one-click setup, no headless-browser scripting, and no Selenium or BackstopJS know-how required.
 
 ### What you can detect
 
-* Layout breaks after **WordPress auto-updates** (core, plugins, themes)
+* Layout breaks after **WordPress updates** (core, plugins, themes)
 * Side effects of **installing or activating a new plugin**
 * Visual regressions after **deployments, CSS edits, or pagespeed tweaks**
-* Unexpected changes from **caching, CDN, or hosting issues**
 * Silent breakage from **third-party scripts, fonts, or external APIs**
 * **Hacks, defacement, or injected ads** during continuous monitoring
 * Theme regressions after switching themes or updating a child theme
 * Block library or page-builder breakage (Gutenberg, Elementor, Divi, Beaver Builder, Bricks)
 * Mobile-only layout issues that you would never see on desktop
+* Scheduled monitoring checks from every 15 minutes up to once per month
+* Quite times when monitoring gets skipped to save checks credits
 
 ### Three ways to detect changes
 
 WebChange Detector gives you three independent check modes. Use one, two, or all three side by side, depending on how you manage your site.
 
 **1. Auto Update Checks: automatic safety net for WordPress auto-updates.**
-This mode hooks directly into the WordPress auto-update system. Right before WordPress installs a core, plugin, or theme update automatically, WebChange Detector takes a "before" screenshot of the pages you selected. Right after the update finishes, it takes the "after" screenshot. If anything changed visually you get an email with the affected pages highlighted, plus an AI summary of what looks different. If nothing changed, you stay in your inbox-zero peace. This is the mode that lets you actually leave WordPress auto-updates turned on without losing sleep. Included on the free plan.
+This mode hooks directly into the WordPress auto-update system. Right before WordPress installs a core, plugin, or theme update automatically, WebChange Detector takes a "before" screenshot of the pages you selected. Right after the native WordPress auto-update finishes, it takes the "after" screenshot. If anything changed visually you get an email with the affected pages highlighted, plus an AI summary of what looks different. This is the mode that lets you actually leave WordPress auto-updates turned on without losing sleep.
 
 **2. Manual Checks: visual diffs on your own schedule.**
-Run a check on demand right before and right after any change you make: a deploy, a plugin install, a CSS tweak, a theme switch, a hosting migration. Manual checks are perfect for teams that already have an update workflow in tools like **MainWP, ManageWP, WP Umbrella, InfiniteWP, or WP Remote**. Use those tools to push your updates, and use WebChange Detector to verify visually that nothing broke. The plugin captures the pre-state, you push your changes, you trigger the post-state, and you get a side-by-side diff. Manual checks are included on the free plan.
+Run a check on demand right before and right after any change you make: a deploy, a plugin install, a CSS tweak, a theme switch, a hosting migration. Manual checks are perfect for teams that already have an update workflow in tools like **MainWP, ManageWP, WP Umbrella, InfiniteWP, or WP Remote**. Use those tools to push your updates, and use WebChange Detector to verify visually that nothing broke. The plugin captures the pre-state, you push your changes, you trigger the post-state, and you get a side-by-side diff.
 
 **3. Monitoring: continuous visual surveillance with alerts.**
-Schedule recurring checks at fixed intervals (24h on the free plan, sub-hourly on premium). The plugin captures and compares your selected pages on schedule, and emails you the moment a difference appears. Monitoring catches changes that nobody on your team pushed: hacks, defacement, expired SSL, third-party-script breakage, broken CDN assets, accidental edits, server-side issues, theme regressions, vendor outages. It is your "site is silently broken" alarm.
+Schedule recurring checks at fixed intervals. The plugin captures and compares your selected pages on schedule, and emails you the moment a difference appears. Monitoring catches changes that nobody on your team pushed: hacks, defacement, expired SSL, third-party-script breakage, broken CDN assets, accidental edits, server-side issues, theme regressions, vendor outages. It is your "site is silently broken" alarm.
 
 You can mix all three. A typical agency setup: auto-update checks on every client site so nothing breaks silently during automated WordPress updates, monitoring at 24h intervals on the same selection, and manual checks fired from the agency's MainWP or ManageWP dashboard before scheduled maintenance windows.
+
+### Features
+
+* Automatic cookie banner opt-in to load all content which is blocked initially.
+* Hiding ads which might cause changes on every check.
+* AI classification if a change is an actual change or just a moving element.
+* Train AI to see intentional changes like A/B testing to ignore specific patterns.
+* Smart shift detection: if your hero section gets taller, we don't flag the entire page below it as 'changed'.
+* Check desktop and mobile screen sizes.
+* Pausing dynamic content like sliders, caroussels, gifs, videos, etc. before taking screenshots.
+* Trigger lazy load elements before starting the visual regression testing.
+* Check browser console logs for new errors to detect errors like a broken contact form.
+* WPML and Polylang support.
+* WP Multisite support.
+* Public accessible link to a change detection to share with your agency or developer.
+* Basic Auth support to check websites behind a password.
+* Static IP proxy to whitelist the IP in a firewall which blocks other users.
+
 
 ### Why site owners and agencies pick WebChange Detector
 
 * **Works on staging, password-protected, and firewalled sites.** Basic-auth credentials and an optional static IP for firewall whitelisting come built in. Most visual-regression plugins refuse to run on anything that is not public.
 * **Manual checks, auto-update checks, and the API are free.** No paywall on the core workflow.
-* **AI-powered noise filtering.** Sliders, dynamic ads, cookie banners, and randomized content are filtered out automatically so you stop drowning in false positives.
+* **AI-powered noise filtering.** Sliders, counters and other randomized content are filtered out automatically so you stop drowning in false positives.
 * **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features.
 * **WPML and Polylang ready.** Each language version is synced and checked separately.
 * **Share results without giving WP access.** Every comparison has a public link you can paste into Slack or send to a designer.
-* **Desktop and mobile in every check.** Both viewports captured automatically; no extra setup, no extra cost.
+* **Desktop and/or mobile in every check.** Choose which screensize(s) you want to check per site.
 
 ### How it works
 
@@ -72,7 +93,7 @@ Most WordPress site owners check their site after an update by clicking through 
 
 A manual click-through covers only the pages you happen to remember, takes 10 to 60 minutes per round, almost never includes the mobile viewport, and depends on your eyes catching pixel shifts that the human visual system is genuinely bad at. The output, when something does break, is usually a panicked Slack message after a customer noticed first.
 
-WebChange Detector checks every URL you selected, every single time, on desktop *and* mobile, in seconds. It catches subpixel layout shifts your memory cannot, runs unattended while you sleep (in monitoring and auto-update modes), and produces a public side-by-side comparison link you can paste straight to a designer or developer.
+WebChange Detector checks every URL you selected, every single time, on desktop *and* mobile, in seconds. It runs unattended while you sleep (in monitoring and auto-update modes), and produces a public side-by-side comparison link you can paste straight to a designer or developer.
 
 Manual QA is fine for one-off changes. WebChange Detector pays for itself the first time an auto-update silently breaks a checkout button at 3 a.m.
 
@@ -100,29 +121,32 @@ WebChange Detector renders the front-end of your site through a real browser, so
 * **Themes**: Astra, GeneratePress, Kadence, Blocksy, Hello, Divi, Avada, Storefront, and any well-coded theme.
 * **WooCommerce**, EDD, MemberPress, LearnDash, BuddyBoss, bbPress, and most WordPress ecosystems.
 * **Caching plugins**: WP Rocket, W3 Total Cache, LiteSpeed Cache, WP Super Cache, FlyingPress.
-* **Multilingual**: WPML, Polylang, TranslatePress.
+* **Multilingual**: WPML, Polylang.
 * **Hosts**: works on shared hosting, VPS, managed (Kinsta, WP Engine, SiteGround, Pressable, Cloudways), and on-premise.
+
+### Trial plan
+
+* **1,000 checks in your first month**
+* Use and test all features mentioned above
 
 ### Free plan
 
-* **1,000 checks in your first month**, then **50 free checks every month** after.
-* Manual checks, auto-update checks, and monitoring (24h interval) included.
-* Desktop and mobile viewports.
-* AI noise filtering and rules included.
-* Shareable comparison links included.
-* No credit card required to sign up.
+After trial you autmatically get switched to our free plan with some restrictions:
+* 50 checks per month
+* No browser console log errors
+* No AI classification of the detected changes
 
 ### Premium plans
 
-Need more checks, sub-24h monitoring intervals, longer retention, or higher concurrency? See the pricing page at [webchangedetector.com/pricing](https://www.webchangedetector.com/pricing/).
+Need more checks and all features unlocked? See the pricing page at [webchangedetector.com/pricing](https://www.webchangedetector.com/pricing/).
 
 ### Privacy and data
 
-Screenshots are taken from our servers and stored encrypted. We never inject anything into your site. Your API token can be revoked from the plugin settings or your account dashboard at any time. We are based in Germany and operate under GDPR.
+Screenshots are taken from our servers only for publicly available sites or sites you give access to via our proxy or basic auth. We never inject anything into your site or load any styles or scripts on the public site. We operate under GDPR.
 
 ### About WebChange Detector
 
-WebChange Detector is built and maintained by a small WordPress-focused team. The web app, the screenshot infrastructure, and the comparison engine are all developed in-house, so when something needs improving, we ship it ourselves. Learn more at [webchangedetector.com](https://www.webchangedetector.com/).
+WebChange Detector started because we kept finding client sites broken after updates. First we started builing it for our own web agency. Now we help agencies too to catch problems before their clients do.
 
 == Installation ==
 
@@ -138,15 +162,15 @@ Manual install: upload the `webchangedetector` folder to `/wp-content/plugins/`,
 
 = What is the difference between auto-update checks, manual checks, and monitoring? =
 
-These are the three check modes the plugin offers. **Auto-update checks** are fired automatically by the WordPress auto-update system: a "before" screenshot right before the update runs, an "after" screenshot right after, and an email if anything looks different. **Manual checks** are run by you on demand, typically right before and after a deploy or update you trigger yourself (good for use with MainWP, ManageWP, WP Umbrella, and similar update dashboards). **Monitoring** is a recurring schedule (24h on the free plan, sub-hourly on premium) that catches changes nobody pushed: hacks, broken caches, expired SSL, third-party script changes. You can use one, two, or all three at the same time.
+These are the three check modes the plugin offers. **Auto-update checks** are fired automatically by the WordPress auto-update system: a "before" screenshot right before the update runs, an "after" screenshot right after, and an email if anything looks different. **Manual checks** are run by you on demand, typically right before and after a deploy or update you trigger yourself. **Monitoring** is a recurring schedule that catches changes nobody pushed. You can use one, two, or all three at the same time.
 
 = Can I use it with MainWP, ManageWP, WP Umbrella, or InfiniteWP? =
 
-Yes. WebChange Detector is the visual-verification layer those tools do not provide. Run your updates through whichever dashboard you already use, and let WebChange Detector handle the before/after visual diff. Manual checks can be triggered from the WordPress admin or the REST API, so you can also wire them into your own scripts or pipelines.
+Yes. WebChange Detector is the visual-verification layer those tools might not provide. Run your updates through whichever dashboard you already use, and let WebChange Detector handle the before/after visual diff. Manual checks can be triggered from the WordPress admin, the webapp or the REST API, so you can also wire them into your own scripts or pipelines.
 
 = Will it work on a staging site or behind a password? =
 
-Yes. WebChange Detector supports HTTP basic auth credentials and an optional static IP proxy that you can whitelist in your firewall. This is the main reason teams switch to us from other visual-regression plugins.
+Yes. WebChange Detector supports HTTP basic auth credentials and an optional static IP proxy that you can whitelist in your firewall.
 
 = How does it differ from manually clicking through pages after an update? =
 
@@ -154,7 +178,7 @@ Manual QA does not scale, you forget pages, and you cannot remember the exact pi
 
 = How does the AI know what to ignore? =
 
-The AI is trained to recognize dynamic elements that are designed to change every page load: image sliders, ad slots, cookie banners, randomized testimonials, live counters. You can also create your own per-URL or per-website rules to ignore specific regions permanently.
+The AI is trained to recognize dynamic elements that are designed to change every page load: image sliders, ad slots, randomized testimonials, live counters. You can also create your own per-URL or per-website rules to ignore specific classifications permanently.
 
 = Does it work with WordPress multisite? =
 
@@ -166,7 +190,7 @@ Yes. URLs are synced per language and each language version is checked independe
 
 = Are mobile and desktop both checked? =
 
-Yes. Every URL is captured at a desktop and a mobile viewport. The change detection view shows both side by side.
+Yes. You can select per URL to check a desktop and/or a mobile viewport. 
 
 = Does it work with Elementor, Divi, Gutenberg, or other page builders? =
 
@@ -178,19 +202,15 @@ Yes. Every change detection has a public share link that opens the comparison vi
 
 = What does the free plan include? =
 
-1,000 checks in your first month, then 50 free checks every month after. Manual checks, auto-update checks, monitoring at 24h intervals, AI noise filtering, and desktop + mobile views are all included.
+1,000 checks in your first month, then 50 free checks every month after. The free plan activates automatically after your trial with some restricions.
 
-= Can I trigger checks from a deploy pipeline or WP-CLI? =
+= Can I trigger checks from a deploy pipeline? =
 
-Yes. The REST API v2 covers websites, groups, comparisons, AI rules, and webhooks. WP-CLI hooks are also exposed.
+Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks. 
 
 = What is monitored besides visual changes? =
 
-In addition to layout, you can opt in to browser console-log checks (errors and warnings) and the health-check observer (server availability and response).
-
-= Where are screenshots stored and for how long? =
-
-Screenshots are stored on Google Cloud Storage with retention based on your plan. You can delete them from the dashboard at any time.
+In addition to layout, the browser console-log gets checked.
 
 == Screenshots ==
 
