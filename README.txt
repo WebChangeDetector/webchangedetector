@@ -1,5 +1,5 @@
 === WebChange Detector ===
-Contributors: Mike.Miler,Repat,henkwhite
+Contributors: Mike.Miler,Repat
 Tags: visual regression, monitoring, auto updates, screenshot, change detection
 Requires at least: 5.5
 Tested up to: 6.9
@@ -12,11 +12,11 @@ Visual regression testing for WordPress: catch broken layouts after auto-updates
 
 == Description ==
 
-## Find visual bugs befor your visitors do
+## Find visual bugs before your visitors do
 
 Every time WordPress core, a plugin, or a theme updates, something on your site can quietly break. By the time a visitor reports it, you have already lost trust and probably sales.
 
-WebChange Detector takes a screenshot of your pages **before** the change, another **after**, and tells you exactly what is different on desktop and mobile. The AI check  ignores moving parts like sliders, caroussels and animations. So you only get alerts that actually matter.
+WebChange Detector takes a screenshot of your pages **before** the change, another **after**, and tells you exactly what is different on desktop and mobile. The AI check ignores moving parts like sliders, carousels, and animations, so you only get alerts that actually matter.
 
 ### What is visual regression testing?
 
@@ -35,7 +35,7 @@ It is the fastest way to catch layout breakage that traditional testing like PHP
 * Block library or page-builder breakage (Gutenberg, Elementor, Divi, Beaver Builder, Bricks)
 * Mobile-only layout issues that you would never see on desktop
 * Scheduled monitoring checks from every 15 minutes up to once per month
-* Quite times when monitoring gets skipped to save checks credits
+* Quiet times when monitoring gets skipped to save check credits
 
 ### Three ways to detect changes
 
@@ -55,17 +55,17 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 ### Features
 
 * Automatic cookie banner opt-in to load all content which is blocked initially.
-* Hiding ads which might cause changes on every check.
-* AI classification if a change is an actual change or just a moving element.
-* Train AI to see intentional changes like A/B testing to ignore specific patterns.
+* Hiding ads that might cause changes on every check.
+* AI classification of whether a change is an actual change or just a moving element.
+* Train the AI to recognize intentional changes like A/B tests so specific patterns get ignored.
 * Smart shift detection: if your hero section gets taller, we don't flag the entire page below it as 'changed'.
 * Check desktop and mobile screen sizes.
-* Pausing dynamic content like sliders, caroussels, gifs, videos, etc. before taking screenshots.
+* Pausing dynamic content like sliders, carousels, GIFs, videos, etc. before taking screenshots.
 * Trigger lazy load elements before starting the visual regression testing.
 * Check browser console logs for new errors to detect errors like a broken contact form.
 * WPML and Polylang support.
 * WP Multisite support.
-* Public accessible link to a change detection to share with your agency or developer.
+* Publicly accessible link to a change detection to share with your agency or developer.
 * Basic Auth support to check websites behind a password.
 * Static IP proxy to whitelist the IP in a firewall which blocks other users.
 
@@ -78,7 +78,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 * **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features.
 * **WPML and Polylang ready.** Each language version is synced and checked separately.
 * **Share results without giving WP access.** Every comparison has a public link you can paste into Slack or send to a designer.
-* **Desktop and/or mobile in every check.** Choose which screensize(s) you want to check per site.
+* **Desktop and/or mobile in every check.** Choose which screen size(s) you want to check per site.
 
 ### How it works
 
@@ -131,7 +131,7 @@ WebChange Detector renders the front-end of your site through a real browser, so
 
 ### Free plan
 
-After trial you autmatically get switched to our free plan with some restrictions:
+After the trial, you are automatically switched to our free plan with some restrictions:
 * 50 checks per month
 * No browser console log errors
 * No AI classification of the detected changes
@@ -146,7 +146,7 @@ Screenshots are taken from our servers only for publicly available sites or site
 
 ### About WebChange Detector
 
-WebChange Detector started because we kept finding client sites broken after updates. First we started builing it for our own web agency. Now we help agencies too to catch problems before their clients do.
+WebChange Detector started because we kept finding client sites broken after updates. We first built it for our own web agency. Now we help other agencies catch problems before their clients do.
 
 == Installation ==
 
@@ -190,7 +190,7 @@ Yes. URLs are synced per language and each language version is checked independe
 
 = Are mobile and desktop both checked? =
 
-Yes. You can select per URL to check a desktop and/or a mobile viewport. 
+Yes. You can select per URL whether to check the desktop and/or mobile viewport.
 
 = Does it work with Elementor, Divi, Gutenberg, or other page builders? =
 
@@ -202,7 +202,7 @@ Yes. Every change detection has a public share link that opens the comparison vi
 
 = What does the free plan include? =
 
-1,000 checks in your first month, then 50 free checks every month after. The free plan activates automatically after your trial with some restricions.
+1,000 checks in your first month, then 50 free checks every month after. The free plan activates automatically after your trial with some restrictions.
 
 = Can I trigger checks from a deploy pipeline? =
 
@@ -210,7 +210,7 @@ Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks.
 
 = What is monitored besides visual changes? =
 
-In addition to layout, the browser console-log gets checked.
+In addition to layout, the browser console log is checked for errors.
 
 == Screenshots ==
 
@@ -226,7 +226,7 @@ In addition to layout, the browser console-log gets checked.
 == Changelog ==
 = 4.3.1 =
 * Fix: Calendar selector in change detections
-* Fix: Show only batches with comparisons in dasboard
+* Fix: Show only batches with comparisons in dashboard
 
 = 4.3.0 =
 * Feature: Multisite support (network-activated and per-site activation)
