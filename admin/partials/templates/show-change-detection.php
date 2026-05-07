@@ -159,6 +159,12 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 	</div>
 </div>
 
+<?php
+// Render mobile screenshots at their real device width (375px CSS) instead of stretched
+// to fill the image area. Webapp uses the same 377px wrapper convention.
+$mobile_modifier = ( isset( $compare['device'] ) && 'mobile' === $compare['device'] ) ? ' wcd-mobile-width' : '';
+?>
+
 <!-- Main Layout: 2/3 Image + 1/3 Sidebar -->
 <div class="wcd-popup-main-layout">
 
@@ -166,13 +172,13 @@ $nonce = \WebChangeDetector\WebChangeDetector_Admin_Utils::create_nonce( 'ajax-n
 	<div class="wcd-popup-image-area">
 
 		<!-- View toggle buttons -->
-		<div class="wcd-view-toggle">
+		<div class="wcd-view-toggle<?php echo esc_attr( $mobile_modifier ); ?>">
 			<button type="button" class="wcd-view-btn wcd-view-diff active"><?php esc_html_e( 'Before <-> Change Detection', 'webchangedetector' ); ?></button>
 			<button type="button" class="wcd-view-btn wcd-view-after"><?php esc_html_e( 'Before <-> After', 'webchangedetector' ); ?></button>
 		</div>
 
 		<!-- Single slider with swappable second image -->
-		<div class="wcd-slider-wrapper">
+		<div class="wcd-slider-wrapper<?php echo esc_attr( $mobile_modifier ); ?>">
 			<div id="comp-slider">
 				<div id="diff-container"
 					data-token="<?php echo esc_attr( $token ); ?>"

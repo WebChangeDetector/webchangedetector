@@ -4436,6 +4436,11 @@ Settings
     border: 1px solid #c3c4c7;
 }
 
+/* Mobile change detections render at their real device width (375px CSS + 2px border). */
+.webchangedetector .wcd-mobile-width {
+    max-width: 377px;
+}
+
 /* Sidebar Sections */
 .webchangedetector .wcd-popup-sidebar .wcd-section-headline {
     display: flex;
