@@ -73,7 +73,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 ### Why site owners and agencies pick WebChange Detector
 
 * **Works on staging, password-protected, and firewalled sites.** Basic-auth credentials and an optional static IP for firewall whitelisting come built in. Most visual-regression plugins refuse to run on anything that is not public.
-* **Manual checks, auto-update checks, and the API are free.** No paywall on the core workflow.
+* **Free plan with 10 monthly checks.** Manual checks, auto-update checks, and the API are all included; no paywall on the core workflow.
 * **AI-powered noise filtering.** Sliders, counters and other randomized content are filtered out automatically so you stop drowning in false positives.
 * **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features.
 * **WPML and Polylang ready.** Each language version is synced and checked separately.
@@ -126,15 +126,14 @@ WebChange Detector renders the front-end of your site through a real browser, so
 
 ### Trial plan
 
-* **1,000 checks in your first month**
+* **1,000 checks during your 14-day trial**
 * Use and test all features mentioned above
 
 ### Free plan
 
 After the trial, you are automatically switched to our free plan with some restrictions:
-* 50 checks per month
+* 10 checks per month
 * No browser console log errors
-* No AI classification of the detected changes
 
 ### Premium plans
 
@@ -202,7 +201,7 @@ Yes. Every change detection has a public share link that opens the comparison vi
 
 = What does the free plan include? =
 
-1,000 checks in your first month, then 50 free checks every month after. The free plan activates automatically after your trial with some restrictions.
+1,000 checks during the 14-day trial, then 10 free checks every month after. The free plan activates automatically after your trial with some restrictions (no browser console log monitoring).
 
 = Can I trigger checks from a deploy pipeline? =
 
@@ -213,15 +212,13 @@ Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks.
 In addition to layout, the browser console log is checked for errors.
 
 == Screenshots ==
-
-1. Change detection view: see exactly what changed, with differences highlighted on the post-update screenshot.
-2. Comparison slider: drag to compare the before and after states pixel by pixel.
-3. Dashboard: account overview, recent change detections, and quick actions.
-4. Auto-update settings: pick the pages WordPress will screenshot before and after each automatic update.
-5. Manual checks: run an on-demand visual diff before a deployment.
-6. Monitoring settings: select pages and intervals for continuous monitoring.
-7. Change detections list: every result, grouped by source (monitoring, manual, auto-update) and filterable by status.
-8. Multisite network admin: manage sub-sites and set per-site allowances from one place.
+1. Change detection view: before-screenshot left and after-screenshot right with highlighted changes.
+2. Dashboard: account overview, recent change detections, and quick actions.
+3. Auto-update Checks & Manual checks: settings for the auto update checks. Also run an on-demand visual diff before and after updates or other changes.
+4. Monitoring settings: select pages, intervals and other settings for continuous monitoring.
+5. Change detections list: every result, grouped by source (monitoring, manual, auto-update) and filterable by status.
+6. After Manual Checks: see the results immediatelly after the checks ran.
+7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
 
 == Changelog ==
 = 4.3.1 =
