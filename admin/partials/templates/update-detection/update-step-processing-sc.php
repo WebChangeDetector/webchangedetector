@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks - processing-sc
+ * On-demand checks - processing-sc
  *
  *   @package    webchangedetector
  */

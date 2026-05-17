@@ -19,7 +19,7 @@ namespace WebChangeDetector;
  * WebChange Detector Admin Settings Class
  *
  * Manages plugin settings, configuration, and website details.
- * Handles monitoring settings, manual check settings, permissions,
+ * Handles monitoring settings, on-demand check settings, permissions,
  * and tab navigation.
  *
  * @since      1.0.0
@@ -108,7 +108,7 @@ class WebChangeDetector_Admin_Settings {
 	 * Sync advanced settings to the sibling group.
 	 *
 	 * When settings are saved on the monitoring group, they get synced
-	 * to the manual check group and vice versa.
+	 * to the on-demand check group and vice versa.
 	 *
 	 * @since    4.1.0
 	 * @param    array  $settings            The settings to sync.
@@ -232,7 +232,7 @@ class WebChangeDetector_Admin_Settings {
 	}
 
 	/**
-	 * Update manual check group settings.
+	 * Update on-demand check group settings (method name kept for backwards compatibility).
 	 *
 	 * @since    1.0.0
 	 * @param    array $postdata    The POST data containing settings.
@@ -415,12 +415,12 @@ class WebChangeDetector_Admin_Settings {
 			$tab = 'auto-settings';
 		}
 
-		// Show message if no urls are selected (manual checks only).
+		// Show message if no urls are selected (on-demand checks only).
 		if ( ! $monitoring_group ) {
 			$notice_hidden = $group_and_urls['selected_urls_count'] > 0;
 			?>
 			<div id="wcd-no-urls-notice" class="notice notice-warning" <?php echo $notice_hidden ? 'style="display:none;"' : ''; ?>>
-				<p><strong><?php echo esc_html__( 'WebChange Detector:', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'Select URLs for manual checks to get started.', 'webchangedetector' ); ?></p>
+				<p><strong><?php echo esc_html__( 'WebChange Detector:', 'webchangedetector' ); ?></strong> <?php echo esc_html__( 'Select URLs for on-demand checks to get started.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
 		}
@@ -455,7 +455,7 @@ class WebChangeDetector_Admin_Settings {
 				$this->admin->print_monitoring_status_bar( $group_and_urls );
 			}
 
-			// Add Status Cards section at the top (only for manual checks, not monitoring, not all-sites mode).
+			// Add Status Cards section at the top (only for on-demand checks, not monitoring, not all-sites mode).
 			if ( ! $monitoring_group && ! $this->admin->is_all_sites_mode ) {
 				?>
 				<div class="wcd-status-cards-container">
@@ -463,14 +463,14 @@ class WebChangeDetector_Admin_Settings {
 					// Add Auto-Update Status Bar.
 					include WCD_PLUGIN_DIR . 'admin/partials/components/settings/auto-update-status-bar.php';
 
-					// Manual Checks Workflow Card.
+					// On-Demand Checks Workflow Card.
 					if ( $this->is_allowed( 'manual_checks_start' ) ) {
 						$has_urls = $group_and_urls['selected_urls_count'] > 0;
 						?>
 						<div class="wcd-settings-card wcd-monitoring-status-card wcd-manual-checks-card <?php echo esc_attr( 'wcd-status-' . ( $has_urls ? 'ready' : 'no-urls' ) ); ?>"
 							data-initial-count="<?php echo esc_attr( $group_and_urls['selected_urls_count'] ); ?>">
 							<div class="wcd-monitoring-status-header">
-								<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'Manual Checks', 'webchangedetector' ); ?></h3>
+								<h3><span class="dashicons wcd-mc-icon <?php echo esc_attr( $has_urls ? 'dashicons-controls-play' : 'dashicons-info' ); ?>"></span> <?php echo esc_html__( 'On-Demand Checks', 'webchangedetector' ); ?></h3>
 							</div>
 							<div class="wcd-monitoring-status-content">
 								<div class="wcd-next-check-container">
@@ -479,7 +479,7 @@ class WebChangeDetector_Admin_Settings {
 									<div class="wcd-status-value wcd-mc-no-urls-value"<?php echo $has_urls ? ' style="display:none;"' : ''; ?>><?php echo esc_html__( 'Select URLs below', 'webchangedetector' ); ?></div>
 									<button type="button" class="button button-primary wcd-mc-start-btn"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>
 										onclick="startManualChecks('<?php echo esc_js( $group_id ); ?>')">
-										<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start Manual Checks', 'webchangedetector' ); ?>
+										<span class="dashicons dashicons-controls-play"></span> <?php echo esc_html__( 'Start On-Demand Checks', 'webchangedetector' ); ?>
 									</button>
 								</div>
 								<div class="wcd-monitoring-stats wcd-mc-stats"<?php echo $has_urls ? '' : ' style="display:none;"'; ?>>
@@ -1130,7 +1130,7 @@ class WebChangeDetector_Admin_Settings {
 			<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & Manual Checks', 'webchangedetector' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ); ?>
 				</a>
 			<?php } ?>
 			<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>

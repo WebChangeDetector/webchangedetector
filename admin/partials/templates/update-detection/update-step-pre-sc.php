@@ -1,12 +1,12 @@
 <?php
 /**
- * Manual checks - pre update sc
+ * On-demand checks - pre update sc
  *
  *   @package    webchangedetector
  */
 
 /**
- * Include manual check tiles
+ * Include on-demand check tiles
  */
 require 'update-step-tiles.php';
 $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $wcd->manual_group_uuid );
@@ -21,7 +21,7 @@ $group_urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $w
 					<label class="wcd-form-label">
 						<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'URLs Selected', 'webchangedetector' ); ?>
 					</label>
-					<div class="wcd-description"><?php esc_html_e( 'URLs have been successfully selected for manual checks.', 'webchangedetector' ); ?></div>
+					<div class="wcd-description"><?php esc_html_e( 'URLs have been successfully selected for on-demand checks.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control wcd-update-check-urls">
 					<div class="wcd-status-info">

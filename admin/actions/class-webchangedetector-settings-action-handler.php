@@ -185,7 +185,7 @@ class WebChangeDetector_Settings_Action_Handler {
 			}
 		}
 
-		// For manual checks: also propagate auto-update website settings to all other websites.
+		// For on-demand checks: also propagate auto-update website settings to all other websites.
 		if ( ! $is_monitoring ) {
 			$auto_update_settings = array();
 			foreach ( $data as $key => $value ) {
@@ -322,24 +322,24 @@ class WebChangeDetector_Settings_Action_Handler {
 	}
 
 	/**
-	 * Handle manual check group settings update.
+	 * Handle on-demand check group settings update (method name kept for backwards compatibility).
 	 *
-	 * @param array $data The manual check settings data.
+	 * @param array $data The on-demand check settings data.
 	 * @return array Result with success status and message.
 	 */
 	private function handle_manual_check_settings( $data ) {
-		// Update manual check group settings.
+		// Update on-demand check group settings.
 		$result = $this->admin->settings_handler->update_manual_check_group_settings( $data );
 
 		if ( $result ) {
 			return array(
 				'success' => true,
-				'message' => 'Auto update checks & manual check settings saved successfully.',
+				'message' => 'Auto update checks & on-demand check settings saved successfully.',
 			);
 		} else {
 			return array(
 				'success' => false,
-				'message' => 'Failed to save manual check settings.',
+				'message' => 'Failed to save on-demand check settings.',
 			);
 		}
 	}

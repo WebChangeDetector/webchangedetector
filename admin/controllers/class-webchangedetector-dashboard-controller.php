@@ -190,7 +190,7 @@ class WebChangeDetector_Dashboard_Controller {
 	}
 
 	/**
-	 * Handle start manual checks action.
+	 * Handle start on-demand checks action (method name kept for backwards compatibility).
 	 *
 	 * @param array $postdata The POST data.
 	 */

@@ -1,8 +1,8 @@
 <?php
 /**
- * Manual Checks Controller for WebChangeDetector
+ * On-Demand Checks Controller for WebChangeDetector (class name kept for backwards compatibility).
  *
- * Handles manual checks page requests and logic.
+ * Handles on-demand checks page requests and logic.
  *
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/controllers
@@ -12,7 +12,7 @@
 namespace WebChangeDetector;
 
 /**
- * Manual Checks Controller Class.
+ * On-Demand Checks Controller Class (class name kept for backwards compatibility).
  */
 class WebChangeDetector_Manual_Checks_Controller {
 
@@ -33,7 +33,7 @@ class WebChangeDetector_Manual_Checks_Controller {
 	}
 
 	/**
-	 * Handle manual checks request.
+	 * Handle on-demand checks request.
 	 */
 	public function handle_request() {
 		// Check permissions.
@@ -45,7 +45,7 @@ class WebChangeDetector_Manual_Checks_Controller {
 	}
 
 	/**
-	 * Render manual checks page.
+	 * Render on-demand checks page (method name kept for backwards compatibility).
 	 */
 	private function render_manual_checks_page() {
 		// In all-sites mode, show settings form without workflow steps.

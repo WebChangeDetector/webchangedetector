@@ -220,7 +220,7 @@ class WebChangeDetector_Change_Detections_Controller {
 				if ( ! empty( $site_data['manual'] ) ) {
 					$groups_data[] = array(
 						'id'   => $site_data['manual'],
-						'name' => $site_data['url'] . ': ' . __( 'Manual Checks', 'webchangedetector' ),
+						'name' => $site_data['url'] . ': ' . __( 'On-Demand Checks', 'webchangedetector' ),
 					);
 				}
 			}
@@ -232,7 +232,7 @@ class WebChangeDetector_Change_Detections_Controller {
 					if ( ! empty( $group_uuid ) ) {
 						$group_label       = WCD_AUTO_DETECTION_GROUP === $group_key
 							? __( 'Monitoring', 'webchangedetector' )
-							: __( 'Manual Checks', 'webchangedetector' );
+							: __( 'On-Demand Checks', 'webchangedetector' );
 						$groups_data[]     = array(
 							'id'   => $group_uuid,
 							'name' => $group_label,
@@ -412,7 +412,7 @@ class WebChangeDetector_Change_Detections_Controller {
 									</div>
 									<select name="source" class="wcd-filter-select">
 										<option value="" <?php selected( $filters['source'], '' ); ?>><?php esc_html_e( 'All Checks', 'webchangedetector' ); ?></option>
-										<option value="manual" <?php selected( $filters['source'], 'manual' ); ?>><?php esc_html_e( 'Manual Checks', 'webchangedetector' ); ?></option>
+										<option value="manual" <?php selected( $filters['source'], 'manual' ); ?>><?php esc_html_e( 'On-Demand Checks', 'webchangedetector' ); ?></option>
 										<option value="monitoring" <?php selected( $filters['source'], 'monitoring' ); ?>><?php esc_html_e( 'Monitoring', 'webchangedetector' ); ?></option>
 										<option value="auto_update" <?php selected( $filters['source'], 'auto_update' ); ?>><?php esc_html_e( 'Auto-Update Checks', 'webchangedetector' ); ?></option>
 									</select>
@@ -519,7 +519,7 @@ class WebChangeDetector_Change_Detections_Controller {
 			?>
 			<div class="wcd-empty-state">
 				<strong><?php esc_html_e( 'No Change Detections (yet)', 'webchangedetector' ); ?></strong>
-				<p><?php esc_html_e( 'Start monitoring webpages or start Manual Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
+				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
 			return;

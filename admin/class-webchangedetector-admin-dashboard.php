@@ -361,7 +361,7 @@ class WebChangeDetector_Admin_Dashboard {
 										}
 									} else {
 										\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' );
-										echo ' ' . esc_html__( 'Manual Checks', 'webchangedetector' );
+										echo ' ' . esc_html__( 'On-Demand Checks', 'webchangedetector' );
 									}
 
 									?>
@@ -905,7 +905,7 @@ class WebChangeDetector_Admin_Dashboard {
 			?>
 			<div class="wcd-empty-state">
 				<strong><?php esc_html_e( 'No Change Detections (yet)', 'webchangedetector' ); ?></strong>
-				<p><?php esc_html_e( 'Start monitoring webpages or start Manual Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
+				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
 			return;

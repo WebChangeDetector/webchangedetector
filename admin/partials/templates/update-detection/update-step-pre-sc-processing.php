@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks: Pre-update screenshots processing display.
+ * On-demand checks: Pre-update screenshots processing display.
  *
  * Shows real-time progress with status tiles, progress bar,
  * time estimate, and completed screenshots list.

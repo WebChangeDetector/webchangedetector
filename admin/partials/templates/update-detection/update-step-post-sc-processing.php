@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks: Post-update screenshots processing display.
+ * On-demand checks: Post-update screenshots processing display.
  *
  * Shows real-time progress with status tiles, progress bar,
  * time estimate, and live change detections table.
