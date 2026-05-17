@@ -184,7 +184,7 @@ class WebChangeDetector_View_Renderer {
 				<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) ) : ?>
 				<a href="?page=webchangedetector-update-settings<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'On-Demand Checks', 'webchangedetector' ); ?>
 				</a>
 				<?php endif; ?>
 

@@ -497,7 +497,7 @@ class WebChangeDetector_Admin_WordPress {
 			add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['manual_checks_view'] ) ) {
-			add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ), __( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
+			add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
@@ -562,7 +562,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'Sub-Site Allowances', 'webchangedetector' ), __( 'Sub-Site Allowances', 'webchangedetector' ), $capability, 'webchangedetector-allowances', 'wcd_webchangedetector_init' );
 
 		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
-		add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ), __( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), $capability, 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), $capability, 'webchangedetector-settings', 'wcd_webchangedetector_init' );

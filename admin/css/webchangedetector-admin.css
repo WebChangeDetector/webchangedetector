@@ -1087,7 +1087,7 @@ Monitoring
 }
 
 /***************
-Manual Checks
+On-Demand Checks
  ***************/
 
 .webchangedetector .step-button {
@@ -4112,7 +4112,7 @@ Settings
     border-left-color: #ffc107;
 }
 
-/* Manual checks card styling */
+/* On-demand checks card styling (CSS class kept for backwards compatibility) */
 .wcd-status-cards-container .wcd-manual-checks-card {
     border-left-color: #0073aa;
 }
@@ -5253,7 +5253,7 @@ Settings
 }
 
 /* ============================================================
-   Manual Checks Processing UI
+   On-Demand Checks Processing UI
    ============================================================ */
 
 /* Status Grid Layout */

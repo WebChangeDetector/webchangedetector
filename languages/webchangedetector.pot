@@ -605,7 +605,7 @@ msgstr[1] ""
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:235
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:415
 #: admin/partials/components/multisite/allowances-manager.php:43
-msgid "Manual Checks"
+msgid "On-Demand Checks"
 msgstr ""
 
 #. translators: %s: time difference
@@ -789,7 +789,7 @@ msgstr ""
 
 #: admin/class-webchangedetector-admin-dashboard.php:909
 #: admin/controllers/class-webchangedetector-change-detections-controller.php:522
-msgid "Start monitoring webpages or start Manual Checks. Try different filters if there should be Change Detections."
+msgid "Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Change Detections."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-dashboard.php:1111
@@ -900,7 +900,7 @@ msgid "WebChange Detector:"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-settings.php:390
-msgid "Select URLs for manual checks to get started."
+msgid "Select URLs for on-demand checks to get started."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-settings.php:407
@@ -928,7 +928,7 @@ msgid "Select URLs below"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-settings.php:448
-msgid "Start Manual Checks"
+msgid "Start On-Demand Checks"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-settings.php:453
@@ -1042,13 +1042,6 @@ msgstr ""
 msgid "Dashboard"
 msgstr ""
 
-#: admin/class-webchangedetector-admin-settings.php:1054
-#: admin/class-webchangedetector-admin-wordpress.php:444
-#: admin/class-webchangedetector-admin-wordpress.php:504
-#: admin/views/class-webchangedetector-view-renderer.php:187
-msgid "Auto Update Checks & Manual Checks"
-msgstr ""
-
 #: admin/class-webchangedetector-admin-settings.php:1060
 #: admin/class-webchangedetector-admin-wordpress.php:305
 #: admin/class-webchangedetector-admin-wordpress.php:414
@@ -1096,7 +1089,7 @@ msgid "Are you sure you want to overwrite the %s detection settings? This cannot
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:113
-msgid "Are you sure you want to cancel the manual checks?"
+msgid "Are you sure you want to cancel the on-demand checks?"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:114
@@ -1344,11 +1337,11 @@ msgid "This shows the current status of your WordPress auto-update checks. When 
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:227
-msgid "Manual Checks & Auto Update Settings"
+msgid "On-Demand Checks & Auto Update Settings"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:228
-msgid "You can start the Manual Checks here. But first, let's walk through each important setting."
+msgid "You can start the On-Demand Checks here. But first, let's walk through each important setting."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:229
@@ -1424,7 +1417,7 @@ msgid "Save Your Settings"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:246
-msgid "Don't forget to save! Your settings will be applied to both manual checks and auto-update monitoring."
+msgid "Don't forget to save! Your settings will be applied to both on-demand checks and auto-update monitoring."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:249
@@ -1529,7 +1522,7 @@ msgid "Activity Logs"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:278
-msgid "Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting."
+msgid "Track all WebChange Detector activities - scheduled checks, on-demand checks, API calls, and system events. Essential for troubleshooting."
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:279
@@ -1663,7 +1656,7 @@ msgid "URL not tracked by WCD"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:413
-msgid "Manual / Auto Update Checks"
+msgid "On-Demand / Auto Update Checks"
 msgstr ""
 
 #: admin/class-webchangedetector-admin-wordpress.php:417
@@ -2519,7 +2512,7 @@ msgid "Select which tabs should be enabled at the WP website."
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:34
-msgid "Manual checks view"
+msgid "On-demand checks view"
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:35
@@ -2543,19 +2536,19 @@ msgid "Queue view"
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:44
-msgid "The \"Manual checks view\" must be enabled."
+msgid "The \"On-demand checks view\" must be enabled."
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:46
-msgid "Allow start manual checks"
+msgid "Allow start on-demand checks"
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:47
-msgid "Show manual checks settings"
+msgid "Show on-demand checks settings"
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:48
-msgid "Show manual checks urls"
+msgid "Show on-demand checks urls"
 msgstr ""
 
 #: admin/partials/components/multisite/allowances-manager.php:53
@@ -3159,11 +3152,11 @@ msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-cancel.php:13
 #: admin/partials/templates/update-detection/update-step-cancel.php:23
-msgid "Cancel Manual Checks"
+msgid "Cancel On-Demand Checks"
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-cancel.php:14
-msgid "Stop the current manual checks workflow and return to settings."
+msgid "Stop the current on-demand checks workflow and return to settings."
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-change-detection.php:18
@@ -3278,7 +3271,7 @@ msgid "URLs Selected"
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-pre-sc.php:24
-msgid "URLs have been successfully selected for manual checks."
+msgid "URLs have been successfully selected for on-demand checks."
 msgstr ""
 
 #: admin/partials/templates/update-detection/update-step-pre-sc.php:28
@@ -3321,7 +3314,7 @@ msgid "Checks"
 msgstr ""
 
 #: admin/partials/templates/update-settings.php:29
-msgid "WP Auto Update & Manual Checks Settings"
+msgid "WP Auto Update & On-Demand Checks Settings"
 msgstr ""
 
 #: admin/partials/templates/update-settings.php:40

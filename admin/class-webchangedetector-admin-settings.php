@@ -1130,7 +1130,7 @@ class WebChangeDetector_Admin_Settings {
 			<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
 				<a href="?page=webchangedetector-update-settings"
 					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'Auto Update Checks & On-Demand Checks', 'webchangedetector' ); ?>
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'On-Demand Checks', 'webchangedetector' ); ?>
 				</a>
 			<?php } ?>
 			<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>

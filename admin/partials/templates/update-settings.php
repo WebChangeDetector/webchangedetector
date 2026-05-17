@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks settings - Refactored with Components
+ * On-demand checks settings - Refactored with Components
  *
  * @package    webchangedetector
  */
