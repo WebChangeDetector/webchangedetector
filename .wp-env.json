@@ -1,0 +1,11 @@
+{
+    "core": null,
+    "plugins": [
+        "."
+    ],
+    "port": 8080,
+    "testsEnvironment": false,
+    "config": {
+        "WCD_API_URL_V2": "http://host.docker.internal/api/v2/"
+    }
+}
