@@ -110,7 +110,7 @@ class WebChangeDetector_Admin_WordPress {
 					'confirmResetAccount'      => __( 'Are you sure you want to reset your account? This cannot be undone.', 'webchangedetector' ),
 					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
 					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s detection settings? This cannot be undone.', 'webchangedetector' ),
-					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the manual checks?', 'webchangedetector' ),
+					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
 					'nextMonitoringChecks'     => __( 'Next monitoring checks in ', 'webchangedetector' ),
@@ -249,11 +249,11 @@ class WebChangeDetector_Admin_WordPress {
 						'recentChangesTitle'          => __( 'Recent Changes', 'webchangedetector' ),
 						'recentChangesDesc'           => __( 'Your latest detected changes appear here. You\'ll see visual comparisons highlighting what changed on your site.', 'webchangedetector' ),
 
-						// Manual Checks / Auto Update steps.
+						// On-Demand Checks / Auto Update steps.
 						'autoUpdateStatusTitle'       => __( 'Auto Update Checks Status', 'webchangedetector' ),
 						'autoUpdateStatusDesc'        => __( 'This shows the current status of your WordPress auto-update checks. When enabled, WebChange Detector will automatically monitor your site before and after WordPress updates to detect any visual changes or issues.', 'webchangedetector' ),
-						'manualChecksTitle'           => __( 'Manual Checks & Auto Update Settings', 'webchangedetector' ),
-						'manualChecksDesc'            => __( 'You can start the Manual Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
+						'manualChecksTitle'           => __( 'On-Demand Checks & Auto Update Settings', 'webchangedetector' ),
+						'manualChecksDesc'            => __( 'You can start the On-Demand Checks here. But first, let\'s walk through each important setting.', 'webchangedetector' ),
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
 						'enableAutoUpdateDesc'        => __( 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.', 'webchangedetector' ),
 						'scheduleNotificationsTitle'  => __( 'Schedule & Notifications', 'webchangedetector' ),
@@ -262,9 +262,9 @@ class WebChangeDetector_Admin_WordPress {
 						'urlSelectionTitle'           => __( 'URL Selection Table', 'webchangedetector' ),
 						'urlSelectionDesc'            => __( 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.', 'webchangedetector' ),
 						'saveSettingsTitle'           => __( 'Save Your Settings', 'webchangedetector' ),
-						'saveSettingsDesc'            => __( 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.', 'webchangedetector' ),
+						'saveSettingsDesc'            => __( 'Don\'t forget to save! Your settings will be applied to both on-demand checks and auto-update monitoring.', 'webchangedetector' ),
 
-						// Advanced screenshot + code injection steps (shared between Manual Checks and Monitoring).
+						// Advanced screenshot + code injection steps (shared between On-Demand Checks and Monitoring).
 						'advancedScreenshotTitle'     => __( 'Advanced Screenshot Settings', 'webchangedetector' ),
 						'advancedScreenshotDesc'      => __( 'Optional: configure HTTP Basic Authentication for protected sites, route screenshots through the Static IP for whitelisting, or increase the delay between screenshots if your server is under load.', 'webchangedetector' ),
 						'codeInjectionTitle'          => __( 'Code Injection', 'webchangedetector' ),
@@ -298,7 +298,7 @@ class WebChangeDetector_Admin_WordPress {
 
 						// Logs steps.
 						'activityLogsTitle'           => __( 'Activity Logs', 'webchangedetector' ),
-						'activityLogsDesc'            => __( 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.', 'webchangedetector' ),
+						'activityLogsDesc'            => __( 'Track all WebChange Detector activities - scheduled checks, on-demand checks, API calls, and system events. Essential for troubleshooting.', 'webchangedetector' ),
 						'logDetailsTitle'             => __( 'Log Details', 'webchangedetector' ),
 						'logDetailsDesc'              => __( 'Each entry shows: timestamp, action type, status (success/error), and details. Green entries show successful operations, red indicates errors.', 'webchangedetector' ),
 
@@ -463,7 +463,7 @@ class WebChangeDetector_Admin_WordPress {
 					'loading_text'          => __( 'Loading WCD Status...', 'webchangedetector' ),
 					'error_text'            => __( 'Error loading status.', 'webchangedetector' ),
 					'not_tracked_text'      => __( 'URL not tracked by WCD', 'webchangedetector' ),
-					'manual_label'          => __( 'Manual / Auto Update Checks', 'webchangedetector' ),
+					'manual_label'          => __( 'On-Demand / Auto Update Checks', 'webchangedetector' ),
 					'monitoring_label'      => __( 'Monitoring', 'webchangedetector' ),
 					'desktop_label'         => __( 'Desktop', 'webchangedetector' ),
 					'mobile_label'          => __( 'Mobile', 'webchangedetector' ),
@@ -497,7 +497,7 @@ class WebChangeDetector_Admin_WordPress {
 			add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['manual_checks_view'] ) ) {
-			add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
+			add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['monitoring_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), 'manage_options', 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
@@ -562,7 +562,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'Sub-Site Allowances', 'webchangedetector' ), __( 'Sub-Site Allowances', 'webchangedetector' ), $capability, 'webchangedetector-allowances', 'wcd_webchangedetector_init' );
 
 		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
-		add_submenu_page( 'webchangedetector', __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), __( 'Auto Update Checks & Manual Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), $capability, 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), $capability, 'webchangedetector-settings', 'wcd_webchangedetector_init' );

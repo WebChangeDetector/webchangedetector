@@ -62,7 +62,7 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 				'title'       => __( 'Tabs in WP Plugin', 'webchangedetector' ),
 				'description' => __( 'Select which tabs should be enabled at the WP website.', 'webchangedetector' ),
 				'fields'      => array(
-					'manual_checks_view'     => __( 'Manual checks view', 'webchangedetector' ),
+					'manual_checks_view'     => __( 'On-demand checks view', 'webchangedetector' ),
 					'monitoring_checks_view' => __( 'Monitoring checks view', 'webchangedetector' ),
 					'change_detections_view' => __( 'Change Detections view', 'webchangedetector' ),
 					'ai_rules_view'          => __( 'AI Rules view', 'webchangedetector' ),
@@ -71,12 +71,12 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 				),
 			),
 			array(
-				'title'       => __( 'Manual Checks', 'webchangedetector' ),
-				'description' => __( 'The "Manual checks view" must be enabled.', 'webchangedetector' ),
+				'title'       => __( 'On-Demand Checks', 'webchangedetector' ),
+				'description' => __( 'The "On-demand checks view" must be enabled.', 'webchangedetector' ),
 				'fields'      => array(
-					'manual_checks_start'    => __( 'Allow start manual checks', 'webchangedetector' ),
-					'manual_checks_settings' => __( 'Show manual checks settings', 'webchangedetector' ),
-					'manual_checks_urls'     => __( 'Show manual checks urls', 'webchangedetector' ),
+					'manual_checks_start'    => __( 'Allow start on-demand checks', 'webchangedetector' ),
+					'manual_checks_settings' => __( 'Show on-demand checks settings', 'webchangedetector' ),
+					'manual_checks_urls'     => __( 'Show on-demand checks urls', 'webchangedetector' ),
 				),
 			),
 			array(

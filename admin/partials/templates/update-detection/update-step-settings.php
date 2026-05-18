@@ -1,12 +1,12 @@
 <?php
 /**
- * Manual checks - step settings
+ * On-demand checks - step settings
  *
  *   @package    webchangedetector
  */
 
 /**
- * Include manual check tiles
+ * Include on-demand check tiles
  */
 
 ?>

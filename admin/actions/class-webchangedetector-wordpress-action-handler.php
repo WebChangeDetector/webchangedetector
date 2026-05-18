@@ -91,7 +91,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 	}
 
 	/**
-	 * Handle manual checks workflow steps.
+	 * Handle on-demand checks workflow steps.
 	 *
 	 * @param array $data The step data.
 	 * @return array Result with success status and message.
@@ -139,9 +139,9 @@ class WebChangeDetector_WordPress_Action_Handler {
 	}
 
 	/**
-	 * Handle start manual checks action.
+	 * Handle start on-demand checks action (method name kept for backwards compatibility).
 	 *
-	 * @param array $data The manual checks data.
+	 * @param array $data The on-demand checks data.
 	 * @return array Result with success status and message.
 	 */
 	public function handle_start_manual_checks( $data ) {
@@ -165,13 +165,13 @@ class WebChangeDetector_WordPress_Action_Handler {
 
 			return array(
 				'success'      => true,
-				'message'      => 'Manual checks workflow started successfully.',
+				'message'      => 'On-demand checks workflow started successfully.',
 				'current_step' => $current_step,
 			);
 		} catch ( \Exception $e ) {
 			return array(
 				'success' => false,
-				'message' => 'Error starting manual checks: ' . $e->getMessage(),
+				'message' => 'Error starting on-demand checks: ' . $e->getMessage(),
 			);
 		}
 	}

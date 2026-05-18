@@ -25,7 +25,7 @@ class WebChangeDetector_Autoupdates {
 	 */
 	private string $lock_name = 'auto_updater.lock';
 
-	/** Group ID for manual checks.
+	/** Group ID for on-demand checks (property name kept for backwards compatibility).
 	 *
 	 * @var string
 	 */

@@ -4,7 +4,7 @@
  *
  * Shared component for Basic Authentication, Static IP Proxy,
  * and Screenshot Delay settings. Used in both monitoring and
- * manual check settings templates.
+ * on-demand check settings templates.
  *
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/partials/components/settings

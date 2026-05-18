@@ -75,7 +75,7 @@ class WebChangeDetector_Screenshot_Action_Handler {
 				update_option( 'wcd_manual_checks_status', $sc_type );
 				update_option( 'wcd_manual_checks_started_at', time() );
 
-				// Update step tracking for manual checks.
+				// Update step tracking for on-demand checks.
 				$this->update_step_tracking( $sc_type );
 
 				return array(

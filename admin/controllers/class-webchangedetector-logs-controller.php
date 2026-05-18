@@ -129,7 +129,7 @@ class WebChangeDetector_Logs_Controller {
 
 				if ( ! empty( $queues ) && is_iterable( $queues ) ) {
 					foreach ( $queues as $queue ) {
-						$group_type = $queue['monitoring'] ? 'Monitoring' : 'Manual Checks';
+						$group_type = $queue['monitoring'] ? 'Monitoring' : 'On-Demand Checks';
 						echo '<tr class="queue-status-' . esc_html( $queue['status'] ) . '">';
 						echo '<td>';
 						\WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( $queue['device'] );

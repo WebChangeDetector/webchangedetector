@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks - step tiles
+ * On-demand checks - step tiles
  *
  *   @package    webchangedetector
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks settings - Refactored with Components
+ * On-demand checks settings - Refactored with Components
  *
  * @package    webchangedetector
  */
@@ -41,7 +41,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 	?>
 
 	<div class="wcd-settings-card">
-		<h2><?php esc_html_e( 'WP Auto Update & Manual Checks Settings', 'webchangedetector' ); ?></h2>
+		<h2><?php esc_html_e( 'WP Auto Update & On-Demand Checks Settings', 'webchangedetector' ); ?></h2>
 		<form action="<?php echo esc_url( \WebChangeDetector\WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-update-settings' ) ); ?>" method="post"<?php echo $is_multisite_main ? ' class="wcd-multisite-main"' : ''; ?>>
 			<input type="hidden" name="wcd_action" value="save_group_settings">
 			<input type="hidden" name="step" value="pre-update">

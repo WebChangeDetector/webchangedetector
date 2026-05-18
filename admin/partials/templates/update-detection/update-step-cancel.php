@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual checks - cancel
+ * On-demand checks - cancel
  *
  *   @package    webchangedetector
  */
@@ -10,8 +10,8 @@
 	<div class="wcd-settings-card wcd-cancel-card">
 		<div class="wcd-form-row">
 			<div class="wcd-form-label-wrapper">
-				<label class="wcd-form-label"><span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel Manual Checks', 'webchangedetector' ); ?></label>
-				<div class="wcd-description"><?php esc_html_e( 'Stop the current manual checks workflow and return to settings.', 'webchangedetector' ); ?></div>
+				<label class="wcd-form-label"><span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel On-Demand Checks', 'webchangedetector' ); ?></label>
+				<div class="wcd-description"><?php esc_html_e( 'Stop the current on-demand checks workflow and return to settings.', 'webchangedetector' ); ?></div>
 			</div>
 			<div class="wcd-form-control wcd-update-check-button">
 				<form id="frm-cancel-update-detection" method="post">
@@ -20,7 +20,7 @@
 					<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 					<input type="hidden" name="step" value="settings">
 					<button class="button wcd-cancel-btn" type="submit">
-						<span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel Manual Checks', 'webchangedetector' ); ?>
+						<span class="dashicons dashicons-no-alt"></span> <?php esc_html_e( 'Cancel On-Demand Checks', 'webchangedetector' ); ?>
 					</button>
 				</form>
 			</div>

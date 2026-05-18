@@ -95,16 +95,16 @@ class WebChangeDetector_Admin {
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      string $monitoring_group_uuid The manual checks group uuid.
+	 * @var      string $monitoring_group_uuid The monitoring checks group uuid.
 	 */
 	public $monitoring_group_uuid;
 
 	/**
-	 * The manual checks group uuid.
+	 * The on-demand checks group uuid.
 	 *
 	 * @since    1.0.0
 	 * @access   public
-	 * @var      string $manual_group_uuid The manual checks group uuid.
+	 * @var      string $manual_group_uuid The on-demand checks group uuid (property name kept for backwards compatibility).
 	 */
 	public $manual_group_uuid;
 
@@ -384,7 +384,7 @@ class WebChangeDetector_Admin {
 
 		$monitoring_group_response = \WebChangeDetector\WebChangeDetector_API_V2::create_group_v2( $monitoring_group_args );
 
-		// Create manual checks group.
+		// Create on-demand checks group.
 		$manual_group_args = array(
 			'name'       => $domain,
 			'monitoring' => false,
@@ -761,7 +761,7 @@ class WebChangeDetector_Admin {
 
 	/** Save url settings.
 	 *
-	 * Handles saving URL selections for groups (monitoring or manual checks).
+	 * Handles saving URL selections for groups (monitoring or on-demand checks).
 	 * Updates the selected URLs for desktop and mobile views through the API.
 	 *
 	 * @param array $postdata The postdata containing URL selections.

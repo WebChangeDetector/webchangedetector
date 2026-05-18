@@ -1087,7 +1087,7 @@ Monitoring
 }
 
 /***************
-Manual Checks
+On-Demand Checks
  ***************/
 
 .webchangedetector .step-button {
@@ -4112,7 +4112,7 @@ Settings
     border-left-color: #ffc107;
 }
 
-/* Manual checks card styling */
+/* On-demand checks card styling (CSS class kept for backwards compatibility) */
 .wcd-status-cards-container .wcd-manual-checks-card {
     border-left-color: #0073aa;
 }
@@ -4436,9 +4436,11 @@ Settings
     border: 1px solid #c3c4c7;
 }
 
-/* Mobile change detections render at their real device width (375px CSS + 2px border). */
-.webchangedetector .wcd-mobile-width {
-    max-width: 377px;
+/* Mobile change detections render at the real mobile viewport width. Mirrors the webapp's slider rule. */
+.webchangedetector .wcd-slider-wrapper.wcd-slider-mobile {
+    max-width: 375px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Sidebar Sections */
@@ -5253,7 +5255,7 @@ Settings
 }
 
 /* ============================================================
-   Manual Checks Processing UI
+   On-Demand Checks Processing UI
    ============================================================ */
 
 /* Status Grid Layout */

@@ -33,7 +33,7 @@ window.wcdFinishingSoon = false;
 
 /**
  * Initialize processing polling on page load.
- * Supports phase-aware manual checks (pre/post screenshots).
+ * Supports phase-aware on-demand checks (pre/post screenshots).
  */
 function currentlyProcessing() {
     (function($) {
@@ -793,7 +793,7 @@ function currentlyProcessing() {
             return true;
         });
 
-        // Confirm cancel manual checks
+        // Confirm cancel on-demand checks
         $('#frm-cancel-update-detection').submit(function () {
             return confirm(wcdL10n.confirmCancelChecks);
         });
@@ -1540,7 +1540,7 @@ function mmMarkRows(postId) {
 }
 
 /**
- * Updates the manual checks card, warning notice, and selected URLs counter
+ * Updates the on-demand checks card, warning notice, and selected URLs counter
  * based on the current state of checkboxes on the page.
  *
  * Uses row-level counting: a URL counts as "selected" if at least one
@@ -1666,11 +1666,11 @@ function showUpdates() {
 }
 
 /**
- * Start manual checks by advancing to the pre-screenshot step
- * @param {string} groupId - The group ID for manual checks
+ * Start on-demand checks by advancing to the pre-screenshot step (function name kept for backwards compatibility)
+ * @param {string} groupId - The group ID for on-demand checks
  */
 function startManualChecks(groupId) {
-    // Create a form and submit it to start manual checks
+    // Create a form and submit it to start on-demand checks
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = wcdAjaxData.manual_checks_url || '/wp-admin/admin.php?page=webchangedetector-update-settings';

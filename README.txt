@@ -1,9 +1,9 @@
-=== WebChange Detector ===
+=== WebChange Detector: Visual Regression Testing & Visual Checks After Updates ===
 Contributors: Mike.Miler,Repat
-Tags: visual regression, monitoring, auto updates, screenshot, change detection
+Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
 Tested up to: 6.9
-Stable tag: 4.3.1
+Stable tag: 4.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -44,13 +44,13 @@ WebChange Detector gives you three independent check modes. Use one, two, or all
 **1. Auto Update Checks: automatic safety net for WordPress auto-updates.**
 This mode hooks directly into the WordPress auto-update system. Right before WordPress installs a core, plugin, or theme update automatically, WebChange Detector takes a "before" screenshot of the pages you selected. Right after the native WordPress auto-update finishes, it takes the "after" screenshot. If anything changed visually you get an email with the affected pages highlighted, plus an AI summary of what looks different. This is the mode that lets you actually leave WordPress auto-updates turned on without losing sleep.
 
-**2. Manual Checks: visual diffs on your own schedule.**
-Run a check on demand right before and right after any change you make: a deploy, a plugin install, a CSS tweak, a theme switch, a hosting migration. Manual checks are perfect for teams that already have an update workflow in tools like **MainWP, ManageWP, WP Umbrella, InfiniteWP, or WP Remote**. Use those tools to push your updates, and use WebChange Detector to verify visually that nothing broke. The plugin captures the pre-state, you push your changes, you trigger the post-state, and you get a side-by-side diff.
+**2. On-Demand Checks: visual diffs on your own schedule.**
+Run a check on demand right before and right after any change you make: a deploy, a plugin install, a CSS tweak, a theme switch, a hosting migration. On-demand checks are perfect for teams that already have an update workflow in tools like **MainWP, ManageWP, WP Umbrella, InfiniteWP, or WP Remote**. Use those tools to push your updates, and use WebChange Detector to verify visually that nothing broke. The plugin captures the pre-state, you push your changes, you trigger the post-state, and you get a side-by-side diff.
 
 **3. Monitoring: continuous visual surveillance with alerts.**
 Schedule recurring checks at fixed intervals. The plugin captures and compares your selected pages on schedule, and emails you the moment a difference appears. Monitoring catches changes that nobody on your team pushed: hacks, defacement, expired SSL, third-party-script breakage, broken CDN assets, accidental edits, server-side issues, theme regressions, vendor outages. It is your "site is silently broken" alarm.
 
-You can mix all three. A typical agency setup: auto-update checks on every client site so nothing breaks silently during automated WordPress updates, monitoring at 24h intervals on the same selection, and manual checks fired from the agency's MainWP or ManageWP dashboard before scheduled maintenance windows.
+You can mix all three. A typical agency setup: auto-update checks on every client site so nothing breaks silently during automated WordPress updates, monitoring at 24h intervals on the same selection, and on-demand checks fired from the agency's MainWP or ManageWP dashboard before scheduled maintenance windows.
 
 ### Features
 
@@ -73,7 +73,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 ### Why site owners and agencies pick WebChange Detector
 
 * **Works on staging, password-protected, and firewalled sites.** Basic-auth credentials and an optional static IP for firewall whitelisting come built in. Most visual-regression plugins refuse to run on anything that is not public.
-* **Free plan with 10 monthly checks.** Manual checks, auto-update checks, and the API are all included; no paywall on the core workflow.
+* **Free plan with 10 monthly checks.** On-demand checks, auto-update checks, and the API are all included; no paywall on the core workflow.
 * **AI-powered noise filtering.** Sliders, counters and other randomized content are filtered out automatically so you stop drowning in false positives.
 * **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features.
 * **WPML and Polylang ready.** Each language version is synced and checked separately.
@@ -84,7 +84,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 
 1. Install the plugin and create a free account from inside WordPress.
 2. Pick the pages you want watched (posts, pages, custom post types, taxonomies, custom URLs).
-3. Pick your check mode: auto-update, manual, monitoring, or any combination.
+3. Pick your check mode: auto-update checks, on-demand checks, monitoring, or any combination.
 4. Get an email alert with the changed pages highlighted. Open the slider view to compare before/after, mark the result Ok / To Fix / False Positive, and share the link with your team.
 
 ### Manual QA vs. automated visual regression testing
@@ -159,13 +159,13 @@ Manual install: upload the `webchangedetector` folder to `/wp-content/plugins/`,
 
 == Frequently Asked Questions ==
 
-= What is the difference between auto-update checks, manual checks, and monitoring? =
+= What is the difference between auto-update checks, on-demand checks, and monitoring? =
 
-These are the three check modes the plugin offers. **Auto-update checks** are fired automatically by the WordPress auto-update system: a "before" screenshot right before the update runs, an "after" screenshot right after, and an email if anything looks different. **Manual checks** are run by you on demand, typically right before and after a deploy or update you trigger yourself. **Monitoring** is a recurring schedule that catches changes nobody pushed. You can use one, two, or all three at the same time.
+These are the three check modes the plugin offers. **Auto-update checks** are fired automatically by the WordPress auto-update system: a "before" screenshot right before the update runs, an "after" screenshot right after, and an email if anything looks different. **On-demand checks** are run by you on demand, typically right before and after a deploy or update you trigger yourself. **Monitoring** is a recurring schedule that catches changes nobody pushed. You can use one, two, or all three at the same time.
 
 = Can I use it with MainWP, ManageWP, WP Umbrella, or InfiniteWP? =
 
-Yes. WebChange Detector is the visual-verification layer those tools might not provide. Run your updates through whichever dashboard you already use, and let WebChange Detector handle the before/after visual diff. Manual checks can be triggered from the WordPress admin, the webapp or the REST API, so you can also wire them into your own scripts or pipelines.
+Yes. WebChange Detector is the visual-verification layer those tools might not provide. Run your updates through whichever dashboard you already use, and let WebChange Detector handle the before/after visual diff. On-demand checks can be triggered from the WordPress admin, the webapp or the REST API, so you can also wire them into your own scripts or pipelines.
 
 = Will it work on a staging site or behind a password? =
 
@@ -214,13 +214,17 @@ In addition to layout, the browser console log is checked for errors.
 == Screenshots ==
 1. Change detection view: before-screenshot left and after-screenshot right with highlighted changes.
 2. Dashboard: account overview, recent change detections, and quick actions.
-3. Auto-update Checks & Manual checks: settings for the auto update checks. Also run an on-demand visual diff before and after updates or other changes.
+3. On-Demand Checks: settings for the auto update checks and on-demand checks. Also run an on-demand visual diff before and after updates or other changes.
 4. Monitoring settings: select pages, intervals and other settings for continuous monitoring.
-5. Change detections list: every result, grouped by source (monitoring, manual, auto-update) and filterable by status.
-6. After Manual Checks: see the results immediatelly after the checks ran.
+5. Change detections list: every result, grouped by source (monitoring, on-demand, auto-update) and filterable by status.
+6. After On-Demand Checks: see the results immediatelly after the checks ran.
 7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.3.2 =
+* Improvement: Change wording from "manual checks" to "on-demand checks"
+* Fix: View for mobile change detections
+
 = 4.3.1 =
 * Fix: Calendar selector in change detections
 * Fix: Show only batches with comparisons in dashboard

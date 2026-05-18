@@ -375,8 +375,8 @@
                 {
                     element: '.webchangedetector .wcd-manual-checks-card',
                     popover: {
-                        title: this.getTranslation('manualChecksTitle', 'WP Auto Update & Manual Checks Settings'),
-                        description: this.getTranslation('manualChecksDesc', 'Configure settings for both WordPress auto-update checks and manual checks. Let\'s walk through each important setting.'),
+                        title: this.getTranslation('manualChecksTitle', 'WP Auto Update & On-Demand Checks Settings'),
+                        description: this.getTranslation('manualChecksDesc', 'Configure settings for both WordPress auto-update checks and on-demand checks. Let\'s walk through each important setting.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -447,7 +447,7 @@
                     element: '.webchangedetector input[type="submit"][name="submit"]',
                     popover: {
                         title: this.getTranslation('saveSettingsTitle', 'Save Your Settings'),
-                        description: this.getTranslation('saveSettingsDesc', 'Don\'t forget to save! Your settings will be applied to both manual checks and auto-update monitoring.'),
+                        description: this.getTranslation('saveSettingsDesc', 'Don\'t forget to save! Your settings will be applied to both on-demand checks and auto-update monitoring.'),
                         side: 'top',
                         align: 'center',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
@@ -620,7 +620,7 @@
                     element: '.webchangedetector .wizard-logs',
                     popover: {
                         title: this.getTranslation('activityLogsTitle', 'Activity Logs'),
-                        description: this.getTranslation('activityLogsDesc', 'Track all WebChange Detector activities - scheduled checks, manual checks, API calls, and system events. Essential for troubleshooting.'),
+                        description: this.getTranslation('activityLogsDesc', 'Track all WebChange Detector activities - scheduled checks, on-demand checks, API calls, and system events. Essential for troubleshooting.'),
                         side: 'bottom',
                         align: 'start',
                         nextBtnText: this.getTranslation('nextBtnText', 'Next →'),
