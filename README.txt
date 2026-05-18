@@ -1,6 +1,6 @@
 === WebChange Detector: Visual Regression Testing & Visual Checks After Updates ===
 Contributors: Mike.Miler,Repat
-Tags: visual regression, monitoring, auto updates, screenshot, change detection
+Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
 Tested up to: 6.9
 Stable tag: 4.3.2
