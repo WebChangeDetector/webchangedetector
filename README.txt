@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: visual regression, monitoring, auto updates, screenshot, change detection
 Requires at least: 5.5
 Tested up to: 6.9
-Stable tag: 4.3.1
+Stable tag: 4.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -84,7 +84,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 
 1. Install the plugin and create a free account from inside WordPress.
 2. Pick the pages you want watched (posts, pages, custom post types, taxonomies, custom URLs).
-3. Pick your check mode: auto-update, manual, monitoring, or any combination.
+3. Pick your check mode: auto-update checks, on-demand checks, monitoring, or any combination.
 4. Get an email alert with the changed pages highlighted. Open the slider view to compare before/after, mark the result Ok / To Fix / False Positive, and share the link with your team.
 
 ### Manual QA vs. automated visual regression testing
@@ -221,6 +221,10 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.3.2 =
+* Improvement: Change wording from "manual checks" to "on-demand checks"
+* Fix: View for mobile change detections
+
 = 4.3.1 =
 * Fix: Calendar selector in change detections
 * Fix: Show only batches with comparisons in dashboard
