@@ -813,6 +813,28 @@ class WebChangeDetector_Admin {
 		echo '<div class="updated notice"><p>' . esc_html__( 'Settings saved.', 'webchangedetector' ) . '</p></div>';
 	}
 
+	/**
+	 * Toggle one device (desktop|mobile) for ALL urls of a group in a single API call.
+	 *
+	 * Used by the "Select all" toggles. One SQL UPDATE server-side, so it stays fast on sites with
+	 * many urls. Only the given device column changes; the other viewport stays untouched.
+	 *
+	 * @param array $postdata The postdata (group_id, device, enabled).
+	 *
+	 * @return void
+	 */
+	public function select_all_urls( $postdata ) {
+		$group_id = sanitize_text_field( $postdata['group_id'] ?? '' );
+		$device   = sanitize_text_field( $postdata['device'] ?? '' );
+		$enabled  = ( ! empty( $postdata['enabled'] ) && 'false' !== $postdata['enabled'] && '0' !== (string) $postdata['enabled'] ) ? 1 : 0;
+
+		if ( empty( $group_id ) || ! in_array( $device, array( 'desktop', 'mobile' ), true ) ) {
+			return;
+		}
+
+		\WebChangeDetector\WebChangeDetector_API_V2::select_all_urls_in_group_v2( $group_id, $device, $enabled );
+	}
+
 
 
 	/** Get group details and its urls.

@@ -200,6 +200,27 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/** Select or deselect one device (desktop|mobile) for ALL urls of a group in a single API call.
+	 *
+	 * The API runs one SQL UPDATE over the group's urls, so this stays fast no matter how many urls
+	 * the group has. Only the given device column changes; the other viewport stays untouched.
+	 *
+	 * @param string $group_id The group id.
+	 * @param string $device   'desktop' or 'mobile'.
+	 * @param int    $enabled  1 to enable that device for every url, 0 to disable.
+	 *
+	 * @return array|string
+	 */
+	public static function select_all_urls_in_group_v2( $group_id, $device, $enabled ) {
+		$args = array(
+			'action'  => 'groups/' . $group_id . '/urls/select-all',
+			'device'  => $device,
+			'enabled' => $enabled,
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
 	/** Get group details.
 	 *
 	 * @param string $group_id The group id.

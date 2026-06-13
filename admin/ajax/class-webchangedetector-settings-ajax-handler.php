@@ -56,6 +56,7 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 	 */
 	public function register_hooks() {
 		add_action( 'wp_ajax_post_url', array( $this, 'ajax_post_url' ) );
+		add_action( 'wp_ajax_select_all_urls', array( $this, 'ajax_select_all_urls' ) );
 		add_action( 'wp_ajax_wcd_disable_wizard', array( $this, 'ajax_disable_wizard' ) );
 		add_action( 'wp_ajax_create_website_and_groups_ajax', array( $this, 'ajax_create_website_and_groups' ) );
 		add_action( 'wp_ajax_wcd_get_initial_setup', array( $this, 'ajax_get_initial_setup' ) );
@@ -97,6 +98,41 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 				$this->send_error_response(
 					__( 'Method not available.', 'webchangedetector' ),
 					'post_urls method missing'
+				);
+			}
+		} catch ( \Exception $e ) {
+			$this->send_error_response(
+				__( 'An error occurred while saving settings.', 'webchangedetector' ),
+				'Exception: ' . $e->getMessage()
+			);
+		}
+	}
+
+	/**
+	 * Handle select-all URLs AJAX request.
+	 *
+	 * Toggles one device (desktop|mobile) for ALL urls of a group in a single API call.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_select_all_urls() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		try {
+			if ( $this->admin && method_exists( $this->admin, 'select_all_urls' ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified above.
+				$this->admin->select_all_urls( $_POST );
+
+				$this->send_success_response(
+					null,
+					__( 'Settings saved successfully.', 'webchangedetector' )
+				);
+			} else {
+				$this->send_error_response(
+					__( 'Method not available.', 'webchangedetector' ),
+					'select_all_urls method missing'
 				);
 			}
 		} catch ( \Exception $e ) {

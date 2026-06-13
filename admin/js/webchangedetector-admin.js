@@ -1488,17 +1488,15 @@ function postUrl(postId) {
         //const type = selectAllCheckbox.data('type');
         const screensize = selectAllCheckbox.data('screensize');
 
+        // One API call toggles the whole device column server-side (single SQL UPDATE), instead of
+        // posting every URL id. mmToggle() (called before postUrl) already synced the visible boxes.
         data = {
-            action: 'post_url',
+            action: 'select_all_urls',
             nonce: jQuery(selectAllCheckbox).data('nonce'),
             group_id: groupId.value,
+            device: screensize,
+            enabled: selectAllCheckbox.is(':checked') ? 1 : 0,
         }
-
-        let posts = jQuery("td.checkbox-" + screensize + " input[type='checkbox']");
-
-        jQuery(posts).each(function () {
-            data = { ...data, [screensize + "-" + jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
-        });
 
     } else {
         let desktop = document.getElementById("desktop-" + postId);
