@@ -55,118 +55,80 @@ class WebChangeDetector_Account_Ajax_Handler extends WebChangeDetector_Ajax_Hand
 	 * @since    4.0.0
 	 */
 	public function register_hooks() {
-		add_action( 'wp_ajax_get_dashboard_usage_stats', array( $this, 'ajax_get_dashboard_usage_stats' ) );
+		add_action( 'wp_ajax_get_dashboard_latest_changes', array( $this, 'ajax_get_dashboard_latest_changes' ) );
+		add_action( 'wp_ajax_get_dashboard_latest_cleared', array( $this, 'ajax_get_dashboard_latest_cleared' ) );
 	}
 
 	/**
-	 * Handle get dashboard usage stats AJAX request.
+	 * Render the "Latest Detected Changes" dashboard card.
 	 *
-	 * Retrieves usage statistics for the dashboard including auto-detection,
-	 * auto-update checks, and account limits.
+	 * Returns the last few comparisons with status=new (the final post-AI verdict)
+	 * for THIS website only. get_comparisons_v2() auto-scopes to the current site's
+	 * groups (WCD_WEBSITE_GROUPS), so no extra website filter is needed. Echoes the
+	 * shared card partial as raw HTML for the lazy-loader to inject.
 	 *
 	 * @since    4.0.0
 	 */
-	public function ajax_get_dashboard_usage_stats() {
+	public function ajax_get_dashboard_latest_changes() {
 		if ( ! $this->security_check() ) {
 			return;
 		}
 
-		try {
-			// Get group data for usage calculations.
-			$monitoring_group_uuid = $this->admin->monitoring_group_uuid ?? '';
-			$manual_group_uuid     = $this->admin->manual_group_uuid ?? '';
-
-			$auto_group   = array();
-			$update_group = array();
-
-			if ( ! empty( $monitoring_group_uuid ) ) {
-				$auto_group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $monitoring_group_uuid );
-				$auto_group          = isset( $auto_group_response['data'] ) ? $auto_group_response['data'] : array();
-			}
-
-			if ( ! empty( $manual_group_uuid ) ) {
-				$update_group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $manual_group_uuid );
-				$update_group          = isset( $update_group_response['data'] ) ? $update_group_response['data'] : array();
-			}
-
-			// Get estimated monthly checks (calculated by API, accounts for schedule type, schedule days, and quiet hours).
-			$amount_auto_detection = 0;
-			if ( ! empty( $auto_group['enabled'] ) && isset( $auto_group['estimated_monthly_checks'] ) ) {
-				$amount_auto_detection = (int) $auto_group['estimated_monthly_checks'];
-			}
-
-			// Get auto update settings.
-			$auto_update_settings    = \WebChangeDetector\WebChangeDetector_Autoupdates::get_auto_update_settings();
-			$max_auto_update_checks  = 0;
-			$amount_auto_update_days = 0;
-
-			if ( ! empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
-				// Count enabled weekdays.
-				$weekdays = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
-				foreach ( $weekdays as $weekday ) {
-					if ( isset( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) &&
-						! empty( $auto_update_settings[ 'auto_update_checks_' . $weekday ] ) ) {
-						++$amount_auto_update_days;
-					}
-				}
-
-				// Calculate max auto update checks.
-				$update_checks_count    = isset( $update_group['selected_checks_count'] ) ? $update_group['selected_checks_count'] : 0;
-				$max_auto_update_checks = $update_checks_count * $amount_auto_update_days * 4; // multiplied by weeks in a month.
-			}
-
-			// Get account data for renewal calculations.
-			$client_account = $this->account_handler->get_account();
-
-			if ( empty( $client_account ) || ! is_array( $client_account ) ) {
-				$this->send_error_response(
-					__( 'Unable to retrieve account information.', 'webchangedetector' ),
-					'Account data not available'
-				);
-				return;
-			}
-
-			// Calculate checks until renewal.
-			$checks_until_renewal = 0;
-			if ( ! empty( $client_account['renewal_at'] ) && $amount_auto_detection > 0 ) {
-				$renewal_timestamp     = strtotime( $client_account['renewal_at'] );
-				$current_timestamp     = time();
-				$seconds_until_renewal = $renewal_timestamp - $current_timestamp;
-
-				if ( $seconds_until_renewal > 0 && defined( 'WCD_SECONDS_IN_MONTH' ) ) {
-					$checks_until_renewal = ( $amount_auto_detection / WCD_SECONDS_IN_MONTH ) * $seconds_until_renewal;
-				}
-			}
-
-			// Calculate checks needed and available.
-			$checks_needed    = $checks_until_renewal + $max_auto_update_checks;
-			$checks_available = 0;
-
-			if ( isset( $client_account['checks_limit'] ) && isset( $client_account['checks_done'] ) ) {
-				$checks_available = $client_account['checks_limit'] - $client_account['checks_done'];
-			}
-
-			// Prepare response data.
-			$response_data = array(
-				'amount_auto_detection'  => $amount_auto_detection,
-				'max_auto_update_checks' => $max_auto_update_checks,
-				'checks_needed'          => $checks_needed,
-				'checks_available'       => $checks_available,
-				'checks_until_renewal'   => $checks_until_renewal,
-				'auto_group_enabled'     => isset( $auto_group['enabled'] ) ? $auto_group['enabled'] : 'not set',
-				'auto_group_interval'    => isset( $auto_group['interval_in_h'] ) ? $auto_group['interval_in_h'] : 'not set',
-				'auto_group_checks'      => isset( $auto_group['selected_checks_count'] ) ? $auto_group['selected_checks_count'] : 'not set',
-				'update_group_checks'    => isset( $update_group['selected_checks_count'] ) ? $update_group['selected_checks_count'] : 'not set',
-				'auto_update_settings'   => $auto_update_settings,
-			);
-
-			$this->send_success_response( $response_data );
-
-		} catch ( \Exception $e ) {
-			$this->send_error_response(
-				__( 'An error occurred while getting dashboard usage stats.', 'webchangedetector' ),
-				'Exception: ' . $e->getMessage()
-			);
+		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2(
+			array(
+				'status'   => 'new',
+				'per_page' => 7,
+			)
+		);
+		if ( ! is_array( $comparisons ) ) {
+			$comparisons = array();
 		}
+
+		$card_title         = __( 'Latest Detected Changes', 'webchangedetector' );
+		$card_icon          = 'warning';
+		$card_icon_modifier = 'wcd-card-header-icon-warning';
+		$card_intro         = __( 'Most recent changes WCD flagged for your attention.', 'webchangedetector' );
+		$empty_state        = __( 'No detected changes yet.', 'webchangedetector' );
+		$view_all_url       = admin_url( 'admin.php?page=webchangedetector-change-detections' );
+
+		require WCD_PLUGIN_DIR . 'admin/partials/dashboard/card-comparison-list.php';
+		wp_die();
+	}
+
+	/**
+	 * Render the "Recently AI-Cleared" dashboard card.
+	 *
+	 * Returns the last few comparisons with status=ok AND above_threshold for THIS
+	 * website: visual diffs above the threshold that the AI classified as "no real
+	 * change". Shows the value of AI verification — what it filtered out so the user
+	 * does not have to look at it. Auto-scoped to the current site's groups.
+	 *
+	 * @since    4.0.0
+	 */
+	public function ajax_get_dashboard_latest_cleared() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2(
+			array(
+				'status'          => 'ok',
+				'above_threshold' => 1,
+				'per_page'        => 7,
+			)
+		);
+		if ( ! is_array( $comparisons ) ) {
+			$comparisons = array();
+		}
+
+		$card_title         = __( 'Recently AI-Cleared', 'webchangedetector' );
+		$card_icon          = 'shield';
+		$card_icon_modifier = 'wcd-card-header-icon-success';
+		$card_intro         = __( 'Visual diffs WCD AI determined were not real changes.', 'webchangedetector' );
+		$empty_state        = __( 'Nothing AI-cleared recently.', 'webchangedetector' );
+		$view_all_url       = admin_url( 'admin.php?page=webchangedetector-change-detections' );
+
+		require WCD_PLUGIN_DIR . 'admin/partials/dashboard/card-comparison-list.php';
+		wp_die();
 	}
 }

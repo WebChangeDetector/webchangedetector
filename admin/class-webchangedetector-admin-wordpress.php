@@ -79,6 +79,7 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_styles() {
 		wp_enqueue_style( 'jquery-ui-accordion' );
 		wp_enqueue_style( $this->plugin_name, WCD_PLUGIN_URL . 'admin/css/webchangedetector-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name . '-dashboard', WCD_PLUGIN_URL . 'admin/css/webchangedetector-dashboard.css', array( $this->plugin_name ), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', WCD_PLUGIN_URL . 'admin/css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
 		wp_enqueue_style( 'codemirror-darcula', WCD_PLUGIN_URL . 'admin/css/darcula.css', array(), $this->version, 'all' );
@@ -96,6 +97,7 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_scripts( $hook_suffix ) {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, WCD_PLUGIN_URL . 'admin/js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( $this->plugin_name . '-dashboard', WCD_PLUGIN_URL . 'admin/js/webchangedetector-dashboard.js', array( 'jquery', $this->plugin_name ), $this->version, false );
 
 			// WordPress timezone data for JavaScript.
 			$wp_tz_offset    = wp_timezone()->getOffset( new \DateTime( 'now', new \DateTimeZone( 'UTC' ) ) );

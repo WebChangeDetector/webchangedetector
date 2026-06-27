@@ -62,7 +62,7 @@ class WebChangeDetector_Admin_Settings {
 	/**
 	 * Extract advanced screenshot settings from POST data.
 	 *
-	 * Handles basic auth, proxy, and screenshot delay fields.
+	 * Handles basic auth, proxy, screenshot delay, and screenshot region fields.
 	 *
 	 * @since    4.1.0
 	 * @param    array $postdata    The POST data.
@@ -101,6 +101,14 @@ class WebChangeDetector_Admin_Settings {
 			$args['screenshot_delay'] = '' === $delay ? null : intval( $delay );
 		}
 
+		// Screenshot Region. Constrain to the allowed values; 'auto' lets the API
+		// geolocate and resolve to a concrete 'us'/'eu'. Default to 'auto' for any
+		// unexpected value so the API never receives junk.
+		if ( isset( $postdata['screenshot_region'] ) ) {
+			$region                    = sanitize_text_field( $postdata['screenshot_region'] );
+			$args['screenshot_region'] = in_array( $region, array( 'us', 'eu', 'auto' ), true ) ? $region : 'auto';
+		}
+
 		return $args;
 	}
 
@@ -110,11 +118,19 @@ class WebChangeDetector_Admin_Settings {
 	 * When settings are saved on the monitoring group, they get synced
 	 * to the on-demand check group and vice versa.
 	 *
+	 * Note: screenshot_region is intentionally NOT synced here. The API mirrors
+	 * the region to the sibling group server-side (GroupObserver) when it is saved
+	 * on the primary group, so forwarding it from the client would just make the
+	 * API dispatch the resolve job twice per 'auto' save.
+	 *
 	 * @since    4.1.0
 	 * @param    array  $settings            The settings to sync.
 	 * @param    string $current_group_uuid   The UUID of the group being saved.
 	 */
 	private function sync_to_sibling_group( $settings, $current_group_uuid ) {
+		// The API owns screenshot_region sibling-sync server-side; never forward it.
+		unset( $settings['screenshot_region'] );
+
 		if ( empty( $settings ) ) {
 			return;
 		}
@@ -147,15 +163,19 @@ class WebChangeDetector_Admin_Settings {
 		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
 
 		$args = array(
-			'monitoring'    => true,
-			'hour_of_day'   => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
-			'interval_in_h' => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
-			'enabled'       => isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ),
-			'alert_emails'  => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
-			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
-			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
-			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
-			'js'            => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
+			'monitoring'      => true,
+			'hour_of_day'     => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
+			'interval_in_h'   => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
+			'enabled'         => isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ),
+			'alert_emails'    => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
+			'name'            => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
+			'threshold'       => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
+			'css'             => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
+			'js'              => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
+			// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is
+			// always present; fall back to the current group value if missing (e.g. legacy form).
+			'default_desktop' => isset( $group_data['default_desktop'] ) ? ( '1' === (string) $group_data['default_desktop'] ) : ( $monitoring_settings['default_desktop'] ?? false ),
+			'default_mobile'  => isset( $group_data['default_mobile'] ) ? ( '1' === (string) $group_data['default_mobile'] ) : ( $monitoring_settings['default_mobile'] ?? false ),
 		);
 
 		// Schedule type.
@@ -319,6 +339,15 @@ class WebChangeDetector_Admin_Settings {
 			// Stored verbatim — see settings-action-handler::handle_save_group_settings
 			// for the security rationale (capability gate, no server-side execution).
 			$args['js'] = $postdata['js'];
+		}
+
+		// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is
+		// always present when the form was rendered.
+		if ( isset( $postdata['default_desktop'] ) ) {
+			$args['default_desktop'] = '1' === (string) $postdata['default_desktop'];
+		}
+		if ( isset( $postdata['default_mobile'] ) ) {
+			$args['default_mobile'] = '1' === (string) $postdata['default_mobile'];
 		}
 
 		// Merge advanced settings (basic auth, proxy, screenshot delay).

@@ -67,99 +67,261 @@ class WebChangeDetector_Admin_Dashboard {
 	 * @return   void
 	 */
 	public function get_dashboard_view( $client_account ) {
-		// Usage statistics will be loaded via AJAX to avoid blocking dashboard load.
-		$amount_auto_detection  = 0; // Will be loaded via AJAX.
-		$max_auto_update_checks = 0; // Will be loaded via AJAX.
+		// Per-website figures, scoped to THIS site's own groups. The account/token
+		// may hold many websites; only billing (plan/usage/renewal) is account-wide.
+		$dashboard_stats = $this->get_dashboard_scoped_stats( $client_account );
+		$monitoring      = $dashboard_stats['monitoring'];
+		$auto_update     = $dashboard_stats['auto_update'];
+		$on_demand       = $dashboard_stats['on_demand'];
+		$status_bar      = $dashboard_stats['status_bar'];
+
+		$is_subaccount         = ! empty( $client_account['is_subaccount'] );
+		$upgrade_url           = $this->admin->account_handler->get_upgrade_url();
+		$show_monitoring_card  = $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' );
+		$show_manual_card      = $this->admin->settings_handler->is_allowed( 'manual_checks_view' );
+		$show_auto_update_card = $show_manual_card || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED );
 
 		// Check if this is the first time visiting the dashboard.
 		$first_time_visit = $this->is_first_time_dashboard_visit();
 
 		?>
 		<div class="dashboard">
-			<div class="wcd-settings-card">
-				<div class="box-half no-border">
-					<p>
-						<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/logo-webchangedetector.png" style="max-width: 200px">
-					</p>
-					<hr>
-					<p>
-						<?php echo esc_html__( 'Perform visual checks (visual regression tests) on your WordPress website to find unwanted visual changes on your web pages before anyone else sees them.', 'webchangedetector' ); ?>
-					</p>
-					<?php if ( $this->admin->settings_handler->is_allowed( 'wizard_start' ) ) { ?>
-						<p>
-							<?php echo esc_html__( 'Start the Wizard to see what you can do with WebChange Detector.', 'webchangedetector' ); ?>
-						</p>
-						<input type="button" class="button button-primary" value="<?php echo esc_attr__( 'Start Tour', 'webchangedetector' ); ?>" onclick="window.wcdStartWizard()">
-					<?php } ?>
-				</div>
-				<div class="box-half credit">
-					<?php if ( empty( $client_account['is_subaccount'] ) ) { ?>
-						<p style="margin-top: 20px;">
-							<strong><?php echo esc_html__( 'Your Plan:', 'webchangedetector' ); ?></strong>
-							<?php echo esc_html( $client_account['plan_name'] ); ?>
-							(<?php echo esc_html__( 'renews on:', 'webchangedetector' ); ?> <?php echo esc_html( gmdate( 'd/m/Y', strtotime( $client_account['renewal_at'] ) ) ); ?>)
-						</p>
-					<?php } ?>
-					<p style="margin-top:10px;">
-						<strong><?php echo esc_html__( 'Used checks:', 'webchangedetector' ); ?></strong>
-						<?php
-						$usage_percent = 0;
-						if ( ! empty( $client_account['checks_limit'] ) ) {
-							$usage_percent = number_format( $client_account['checks_done'] / $client_account['checks_limit'] * 100, 1 );
-						}
-						?>
-						<?php echo esc_html( $client_account['checks_done'] ); ?> /
-						<?php echo esc_html( $client_account['checks_limit'] ); ?>
-					</p>
-					<div style="width: 100%; background: #aaa; height: 20px; display: inline-block; position: relative; text-align: center;">
-						<span style="z-index: 5; position: absolute; color: #fff;"><?php echo esc_html( $usage_percent ); ?> %</span>
-						<div style="width: <?php echo esc_html( $usage_percent ); ?>%; background: #266ECC; height: 20px; text-align: center; position: absolute"></div>
+			<div class="wcd-modern-dashboard">
+
+				<!-- Status bar: account billing (account-wide) + usage forecast (this site). -->
+				<div class="wcd-status-bar <?php echo $status_bar['overage'] ? 'wcd-status-bar-overage' : ''; ?>">
+					<div class="wcd-status-bar-account">
+						<div class="wcd-status-bar-account-plan">
+							<span class="wcd-status-bar-account-plan-name"><?php echo esc_html( ! empty( $client_account['plan_name'] ) ? $client_account['plan_name'] : '—' ); ?></span>
+							<?php if ( ! $is_subaccount ) : ?>
+								<span class="wcd-plan-badge"><?php echo esc_html__( 'Active', 'webchangedetector' ); ?></span>
+							<?php endif; ?>
+						</div>
+						<?php if ( ! empty( $client_account['email'] ) ) : ?>
+							<div class="wcd-status-bar-account-email" title="<?php echo esc_attr( $client_account['email'] ); ?>">
+								<span class="dashicons dashicons-email"></span>
+								<span class="wcd-status-bar-account-email-text"><?php echo esc_html( $client_account['email'] ); ?></span>
+							</div>
+						<?php endif; ?>
+						<div class="wcd-status-bar-account-actions">
+							<a href="?page=webchangedetector-settings" class="wcd-status-bar-account-btn">
+								<span class="dashicons dashicons-admin-generic"></span>
+								<?php echo esc_html__( 'Settings', 'webchangedetector' ); ?>
+							</a>
+							<?php if ( ! $is_subaccount ) : ?>
+								<?php if ( $status_bar['overage'] ) : ?>
+									<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wcd-status-bar-account-upgrade wcd-status-bar-account-upgrade-strong">
+										<?php echo esc_html__( 'Upgrade Plan →', 'webchangedetector' ); ?>
+									</a>
+								<?php else : ?>
+									<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wcd-status-bar-account-btn">
+										<span class="dashicons dashicons-cart"></span>
+										<?php echo esc_html__( 'Manage plan', 'webchangedetector' ); ?>
+									</a>
+								<?php endif; ?>
+							<?php endif; ?>
+						</div>
 					</div>
-					<?php if ( $this->admin->settings_handler->is_allowed( 'monitoring_checks_view' ) ) { ?>
-						<p id="wcd-monitoring-stats">
-							<strong><?php echo esc_html__( 'Monitoring:', 'webchangedetector' ); ?> </strong>
-							<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
-						</p>
-					<?php } ?>
 
-					<?php if ( $this->admin->settings_handler->is_allowed( 'manual_checks_view' ) || ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) ) { ?>
-						<p id="wcd-auto-update-stats">
-							<strong><?php echo esc_html__( 'Auto update checks:', 'webchangedetector' ); ?> </strong>
-							<img src="<?php echo esc_url( $this->wordpress_handler->get_wcd_plugin_url() ); ?>/admin/img/loader.gif" style="height: 12px; margin-left: 5px;">
-						</p>
-					<?php } ?>
+					<div class="wcd-status-bar-main">
+						<div class="wcd-status-bar-headline">
+							<span class="wcd-status-bar-figure wcd-status-bar-figure-used">
+								<strong><?php echo esc_html( number_format_i18n( $status_bar['done'] ) ); ?></strong>
+								<span class="wcd-status-bar-figure-label"><?php echo esc_html__( 'used', 'webchangedetector' ); ?></span>
+							</span>
+							<span class="wcd-status-bar-plus">+</span>
+							<span class="wcd-status-bar-figure wcd-status-bar-figure-expected">
+								<strong>≈ <?php echo esc_html( number_format_i18n( $status_bar['expected_remaining'] ) ); ?></strong>
+								<span class="wcd-status-bar-figure-label"><?php echo esc_html__( 'more expected', 'webchangedetector' ); ?></span>
+							</span>
+							<span class="wcd-status-bar-headline-suffix">
+								<?php
+								/* translators: %s: total checks included in the plan for the period. */
+								printf( esc_html__( 'of %s checks this period', 'webchangedetector' ), '<strong>' . esc_html( number_format_i18n( $status_bar['limit'] ) ) . '</strong>' );
+								?>
+							</span>
+						</div>
+						<div class="wcd-status-bar-progress">
+							<div class="wcd-status-bar-progress-bar wcd-status-bar-progress-bar-used" style="width: <?php echo esc_attr( $status_bar['percent_used'] ); ?>%;"></div>
+							<div class="wcd-status-bar-progress-bar wcd-status-bar-progress-bar-expected" style="width: <?php echo esc_attr( $status_bar['percent_expected'] ); ?>%;"></div>
+						</div>
+						<div class="wcd-status-bar-meta">
+							<?php if ( $status_bar['days_left'] > 0 ) : ?>
+								<span>
+									<?php
+									/* translators: %d: number of days until the plan renews. */
+									echo esc_html( sprintf( _n( '%d day until renewal', '%d days until renewal', $status_bar['days_left'], 'webchangedetector' ), $status_bar['days_left'] ) );
+									?>
+								</span>
+								<span class="wcd-status-bar-divider">·</span>
+							<?php endif; ?>
+							<span><?php echo esc_html( sprintf( /* translators: %s: estimated monthly monitoring checks. */ __( 'Monitoring ~%s/mo', 'webchangedetector' ), number_format_i18n( $status_bar['monitoring_estimate'] ) ) ); ?></span>
+							<span class="wcd-status-bar-divider">+</span>
+							<span><?php echo esc_html( sprintf( /* translators: %s: estimated monthly auto update checks. */ __( 'Auto Update Checks max ~%s/mo', 'webchangedetector' ), number_format_i18n( $status_bar['auto_update_estimate'] ) ) ); ?></span>
+						</div>
+					</div>
+				</div>
 
-					<!-- Usage warning will be loaded via AJAX -->
-					<div id="wcd-usage-warning"></div>
+				<?php if ( $status_bar['overage'] ) : ?>
+					<div class="wcd-status-bar-overage-banner">
+						<span class="dashicons dashicons-warning"></span>
+						<strong>
+							<?php
+							/* translators: 1: projected total checks, 2: plan limit. */
+							echo esc_html( sprintf( __( 'Projected %1$s checks exceeds your plan limit of %2$s.', 'webchangedetector' ), number_format_i18n( $status_bar['projected_total'] ), number_format_i18n( $status_bar['limit'] ) ) );
+							?>
+						</strong>
+						<?php echo esc_html__( 'Consider upgrading or reducing scheduled checks before renewal.', 'webchangedetector' ); ?>
+					</div>
+				<?php endif; ?>
+
+				<!-- Per-site stat cards: figures for THIS website only. -->
+				<div class="wcd-dashboard-grid wcd-dashboard-grid-3col">
+
+					<?php if ( $show_monitoring_card ) : ?>
+						<div class="wcd-card wcd-stat-card">
+							<div class="wcd-card-header">
+								<h2><span class="dashicons dashicons-visibility wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Monitoring', 'webchangedetector' ); ?></h2>
+							</div>
+							<div class="wcd-card-content">
+								<div class="wcd-stat-main">
+									<span class="wcd-stat-number"><?php echo esc_html( number_format_i18n( $monitoring['urls'] ) ); ?></span>
+									<span class="wcd-stat-label"><?php echo esc_html__( 'URLs monitored', 'webchangedetector' ); ?></span>
+								</div>
+								<ul class="wcd-stat-list">
+									<?php if ( $monitoring['enabled'] ) : ?>
+										<li><span class="dashicons dashicons-chart-line"></span> <?php echo esc_html( sprintf( /* translators: %s: estimated monthly checks. */ __( '~%s checks / month', 'webchangedetector' ), number_format_i18n( $monitoring['monthly_checks'] ) ) ); ?></li>
+										<?php if ( $monitoring['interval_h'] ) : ?>
+											<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html( sprintf( /* translators: %s: interval in hours. */ __( 'Every %s h', 'webchangedetector' ), $monitoring['interval_h'] ) ); ?></li>
+										<?php endif; ?>
+									<?php else : ?>
+										<li class="wcd-stat-list-warning"><span class="dashicons dashicons-warning"></span> <?php echo esc_html__( 'Monitoring is off', 'webchangedetector' ); ?></li>
+									<?php endif; ?>
+								</ul>
+								<a href="?page=webchangedetector-auto-settings" class="wcd-stat-link"><?php echo esc_html__( 'Manage monitoring →', 'webchangedetector' ); ?></a>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php if ( $show_auto_update_card ) : ?>
+						<div class="wcd-card wcd-stat-card">
+							<div class="wcd-card-header">
+								<h2><span class="dashicons dashicons-update" style="color: #FF9800;"></span> <?php echo esc_html__( 'Auto Update Checks', 'webchangedetector' ); ?></h2>
+							</div>
+							<div class="wcd-card-content">
+								<div class="wcd-stat-main">
+									<span class="wcd-stat-number"><?php echo esc_html( number_format_i18n( $auto_update['max_monthly_checks'] ) ); ?></span>
+									<span class="wcd-stat-label"><?php echo esc_html__( 'Checks / month (max)', 'webchangedetector' ); ?></span>
+								</div>
+								<ul class="wcd-stat-list">
+									<li>
+										<span class="dashicons dashicons-calendar-alt"></span>
+										<?php echo esc_html( ! empty( $auto_update['active_days'] ) ? implode( ', ', $auto_update['active_days'] ) : __( 'No active days', 'webchangedetector' ) ); ?>
+									</li>
+									<?php if ( $auto_update['missing_email'] ) : ?>
+										<li class="wcd-stat-list-warning"><span class="dashicons dashicons-warning"></span> <?php echo esc_html__( 'No alert email set', 'webchangedetector' ); ?></li>
+									<?php endif; ?>
+								</ul>
+								<a href="?page=webchangedetector-update-settings" class="wcd-stat-link"><?php echo esc_html__( 'Manage Auto Update Checks →', 'webchangedetector' ); ?></a>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php if ( $show_manual_card ) : ?>
+						<div class="wcd-card wcd-stat-card">
+							<div class="wcd-card-header">
+								<h2><span class="dashicons dashicons-controls-play" style="color: #9C27B0;"></span> <?php echo esc_html__( 'On-Demand', 'webchangedetector' ); ?></h2>
+							</div>
+							<div class="wcd-card-content">
+								<div class="wcd-stat-main">
+									<span class="wcd-stat-number"><?php echo esc_html( number_format_i18n( $on_demand['urls'] ) ); ?></span>
+									<span class="wcd-stat-label"><?php echo esc_html__( 'URLs selected', 'webchangedetector' ); ?></span>
+								</div>
+								<ul class="wcd-stat-list">
+									<li><span class="dashicons dashicons-controls-play"></span> <?php echo esc_html( sprintf( /* translators: %s: number of checks per on-demand run. */ __( '%s checks per On-Demand Check', 'webchangedetector' ), number_format_i18n( $on_demand['checks_per_run'] ) ) ); ?></li>
+								</ul>
+								<a href="?page=webchangedetector-update-settings" class="wcd-stat-link"><?php echo esc_html__( 'Take an On-Demand Check →', 'webchangedetector' ); ?></a>
+							</div>
+						</div>
+					<?php endif; ?>
 
 				</div>
-				<div class="clear"></div>
-			</div>
 
-			<div class="wizard-dashboard-latest-change-detections">
-				<h2><?php echo esc_html__( 'Latest Change Detections', 'webchangedetector' ); ?></h2>
-				<?php
+				<!-- Latest changes + AI-cleared (this site), lazy-loaded after page render.
+					Hidden in all-sites mode: these cards are scoped to a single website,
+					so showing one site's changes inside the network-wide "All Websites"
+					view would be misleading. -->
+				<?php if ( ! $this->admin->is_all_sites_mode ) : ?>
+				<div class="wcd-dashboard-grid wcd-dashboard-grid-2col">
+					<div class="wcd-card wcd-stat-card" data-lazy-action="get_dashboard_latest_changes">
+						<div class="wcd-card-header">
+							<h2><span class="dashicons dashicons-warning wcd-card-header-icon-warning"></span> <?php echo esc_html__( 'Latest Detected Changes', 'webchangedetector' ); ?></h2>
+						</div>
+						<div class="wcd-card-content">
+							<div class="wcd-lazy-skeleton">
+								<div class="wcd-lazy-skeleton-bar"></div>
+								<div class="wcd-lazy-skeleton-bar wcd-lazy-skeleton-bar-short"></div>
+								<div class="wcd-lazy-skeleton-bar"></div>
+								<div class="wcd-lazy-skeleton-bar wcd-lazy-skeleton-bar-short"></div>
+							</div>
+						</div>
+					</div>
 
-				$filter_batches = array(
-					'per_page' => 5,
-					'status'   => implode( ',', WebChangeDetector_Admin::VALID_COMPARISON_STATUS ),
-				);
+					<div class="wcd-card wcd-stat-card" data-lazy-action="get_dashboard_latest_cleared">
+						<div class="wcd-card-header">
+							<h2><span class="dashicons dashicons-shield wcd-card-header-icon-success"></span> <?php echo esc_html__( 'Recently AI-Cleared', 'webchangedetector' ); ?></h2>
+						</div>
+						<div class="wcd-card-content">
+							<div class="wcd-lazy-skeleton">
+								<div class="wcd-lazy-skeleton-bar"></div>
+								<div class="wcd-lazy-skeleton-bar wcd-lazy-skeleton-bar-short"></div>
+								<div class="wcd-lazy-skeleton-bar"></div>
+								<div class="wcd-lazy-skeleton-bar wcd-lazy-skeleton-bar-short"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<?php endif; ?>
 
-				if ( $this->admin->is_all_sites_mode ) {
-					$all_groups = WebChangeDetector_Multisite::get_all_group_ids();
-					if ( ! empty( $all_groups['all'] ) ) {
-						$filter_batches['group_ids'] = implode( ',', $all_groups['all'] );
-					}
-				}
+				<!-- Resource cards. -->
+				<div class="wcd-dashboard-grid wcd-dashboard-grid-3col">
+					<div class="wcd-card wcd-stat-card wcd-resource-card">
+						<div class="wcd-card-header">
+							<h2><span class="dashicons dashicons-book wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Getting Started', 'webchangedetector' ); ?></h2>
+						</div>
+						<div class="wcd-card-content">
+							<p class="wcd-resource-card-headline"><?php echo esc_html__( 'New to WebChange Detector?', 'webchangedetector' ); ?></p>
+							<p class="wcd-resource-card-body"><?php echo esc_html__( 'Our getting-started tutorial walks you through adding URLs, picking a check type, and reviewing your first results.', 'webchangedetector' ); ?></p>
+							<?php if ( $this->admin->settings_handler->is_allowed( 'wizard_start' ) ) : ?>
+								<a href="#" class="wcd-stat-link wcd-start-wizard"><?php echo esc_html__( 'Start the tour →', 'webchangedetector' ); ?></a>
+							<?php else : ?>
+								<a href="https://www.webchangedetector.com/getting-started-with-webchange-detector/" target="_blank" rel="noopener" class="wcd-stat-link"><?php echo esc_html__( 'Read the tutorial', 'webchangedetector' ); ?> <span class="dashicons dashicons-external"></span></a>
+							<?php endif; ?>
+						</div>
+					</div>
 
-				$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2( $filter_batches );
-				// Pass only batch data to create accordion containers, content will be loaded via AJAX.
-				$this->compare_view_v2( $batches['data'] ?? array() );
+					<div class="wcd-card wcd-stat-card wcd-resource-card">
+						<div class="wcd-card-header">
+							<h2><span class="dashicons dashicons-admin-site-alt3 wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?></h2>
+						</div>
+						<div class="wcd-card-content">
+							<p class="wcd-resource-card-headline"><?php echo esc_html__( 'Review every check in one place.', 'webchangedetector' ); ?></p>
+							<p class="wcd-resource-card-body"><?php echo esc_html__( 'Browse the full history of visual checks for this website, filter by status, and confirm or dismiss detected changes.', 'webchangedetector' ); ?></p>
+							<a href="?page=webchangedetector-change-detections" class="wcd-stat-link"><?php echo esc_html__( 'Open change detections →', 'webchangedetector' ); ?></a>
+						</div>
+					</div>
 
-				if ( ! empty( $batches['data'] ) ) {
-					?>
-					<p><a class="button" href="?page=webchangedetector-change-detections"><?php echo esc_html__( 'Show All Change Detections', 'webchangedetector' ); ?></a></p>
-				<?php } ?>
+					<div class="wcd-card wcd-stat-card wcd-resource-card">
+						<div class="wcd-card-header">
+							<h2><span class="dashicons dashicons-rest-api wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Developer API', 'webchangedetector' ); ?></h2>
+						</div>
+						<div class="wcd-card-content">
+							<p class="wcd-resource-card-headline"><?php echo esc_html__( 'Integrate WCD into your own stack.', 'webchangedetector' ); ?></p>
+							<p class="wcd-resource-card-body"><?php echo esc_html__( 'Trigger checks, fetch results, and wire WCD into your CI/CD or internal tools with the public REST API.', 'webchangedetector' ); ?></p>
+							<a href="https://api.webchangedetector.com/docs" target="_blank" rel="noopener" class="wcd-stat-link"><?php echo esc_html__( 'View API docs', 'webchangedetector' ); ?> <span class="dashicons dashicons-external"></span></a>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<div class="clear"></div>
@@ -180,6 +342,108 @@ class WebChangeDetector_Admin_Dashboard {
 		<?php
 	}
 
+	/**
+	 * Build per-website dashboard figures, scoped to THIS site's own groups.
+	 *
+	 * The account/token can hold many websites, but the plugin only ever shows
+	 * numbers for its own monitoring and manual detection groups. Account-wide
+	 * billing (plan, checks done/limit, renewal) is the only shared data and is
+	 * passed in via $client_account.
+	 *
+	 * @since    1.0.0
+	 * @param    array $client_account The account details from the API.
+	 * @return   array {
+	 *     @type array $monitoring  Monitoring figures for this site.
+	 *     @type array $auto_update Auto Update Checks figures for this site.
+	 *     @type array $on_demand   On-Demand figures for this site.
+	 *     @type array $status_bar  Account usage + this site's forecast.
+	 * }
+	 */
+	private function get_dashboard_scoped_stats( $client_account ) {
+		$monitoring_group = array();
+		$manual_group     = array();
+
+		if ( ! empty( $this->admin->monitoring_group_uuid ) ) {
+			$response         = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid );
+			$monitoring_group = $response['data'] ?? array();
+		}
+		if ( ! empty( $this->admin->manual_group_uuid ) ) {
+			$response     = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->manual_group_uuid );
+			$manual_group = $response['data'] ?? array();
+		}
+
+		// Monitoring (this site). Estimated monthly checks are computed API-side.
+		$monitoring_enabled = ! empty( $monitoring_group['enabled'] );
+		$monitoring_checks  = $monitoring_enabled ? intval( $monitoring_group['estimated_monthly_checks'] ?? 0 ) : 0;
+		$monitoring         = array(
+			'enabled'        => $monitoring_enabled,
+			'urls'           => intval( $monitoring_group['selected_urls_count'] ?? 0 ),
+			'monthly_checks' => $monitoring_checks,
+			'interval_h'     => $monitoring_group['interval_in_h'] ?? 0,
+		);
+
+		// Auto Update Checks (this site). Schedule lives in the auto-update settings.
+		$au_settings = \WebChangeDetector\WebChangeDetector_Autoupdates::get_auto_update_settings();
+		$au_enabled  = ! empty( $au_settings['auto_update_checks_enabled'] );
+		$weekday_map = array(
+			'monday'    => __( 'Mon', 'webchangedetector' ),
+			'tuesday'   => __( 'Tue', 'webchangedetector' ),
+			'wednesday' => __( 'Wed', 'webchangedetector' ),
+			'thursday'  => __( 'Thu', 'webchangedetector' ),
+			'friday'    => __( 'Fri', 'webchangedetector' ),
+			'saturday'  => __( 'Sat', 'webchangedetector' ),
+			'sunday'    => __( 'Sun', 'webchangedetector' ),
+		);
+		$active_days = array();
+		if ( $au_enabled ) {
+			foreach ( $weekday_map as $key => $label ) {
+				if ( ! empty( $au_settings[ 'auto_update_checks_' . $key ] ) ) {
+					$active_days[] = $label;
+				}
+			}
+		}
+		// Worst-case monthly estimate: checks per run × active days × ~4 weeks.
+		$checks_per_run = intval( $manual_group['selected_checks_count'] ?? 0 );
+		$au_max_monthly = $au_enabled ? $checks_per_run * count( $active_days ) * 4 : 0;
+		$au_emails      = $au_settings['auto_update_checks_emails'] ?? '';
+		$auto_update    = array(
+			'enabled'            => $au_enabled,
+			'active_days'        => $active_days,
+			'max_monthly_checks' => $au_max_monthly,
+			'missing_email'      => $au_enabled && ( '' === trim( (string) $au_emails ) ),
+		);
+
+		// On-Demand (this site) — uses the same manual detection group.
+		$on_demand = array(
+			'urls'           => intval( $manual_group['selected_urls_count'] ?? 0 ),
+			'checks_per_run' => $checks_per_run,
+		);
+
+		// Status bar: account-wide billing + this site's forecast to renewal.
+		$limit              = intval( $client_account['checks_limit'] ?? 0 );
+		$done               = intval( $client_account['checks_done'] ?? 0 );
+		$renewal_ts         = ! empty( $client_account['renewal_at'] ) ? strtotime( $client_account['renewal_at'] ) : 0;
+		$days_left          = $renewal_ts ? max( 0, (int) floor( ( $renewal_ts - time() ) / DAY_IN_SECONDS ) ) : 0;
+		$monthly_forecast   = $monitoring_checks + $au_max_monthly;
+		$expected_remaining = max( 0, (int) round( ( $monthly_forecast / 30 ) * $days_left ) );
+		$projected_total    = $done + $expected_remaining;
+		$percent_used       = $limit > 0 ? min( 100, ( $done / $limit ) * 100 ) : 0;
+		$percent_expected   = $limit > 0 ? max( 0, min( 100 - $percent_used, ( $expected_remaining / $limit ) * 100 ) ) : 0;
+		$status_bar         = array(
+			'done'                 => $done,
+			'limit'                => $limit,
+			'expected_remaining'   => $expected_remaining,
+			'projected_total'      => $projected_total,
+			'percent_used'         => round( $percent_used, 1 ),
+			'percent_expected'     => round( $percent_expected, 1 ),
+			'days_left'            => $days_left,
+			'monitoring_estimate'  => $monitoring_checks,
+			'auto_update_estimate' => $au_max_monthly,
+			'overage'              => $limit > 0 && $projected_total > $limit,
+		);
+
+		return compact( 'monitoring', 'auto_update', 'on_demand', 'status_bar' );
+	}
 
 	/**
 	 * Check if this is the first time the user is visiting the dashboard.

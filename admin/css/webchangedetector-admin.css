@@ -1809,7 +1809,6 @@ Settings
 .webchangedetector textarea {
     border: 1px solid #dcdcde;
     border-radius: 4px;
-    padding: 8px 12px;
     font-size: 14px;
     background: #fff;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1881,7 +1880,6 @@ Settings
     color: #fff !important;
     border: none !important;
     border-radius: 6px !important;
-    padding: 8px 16px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     cursor: pointer !important;
@@ -4123,10 +4121,6 @@ Settings
 
 .wcd-manual-checks-card .wcd-mc-start-btn {
     margin-top: 8px;
-}
-
-.wcd-manual-checks-card .wcd-mc-start-btn .dashicons {
-    vertical-align: middle;
 }
 
 /* Spinning animation for loading states */

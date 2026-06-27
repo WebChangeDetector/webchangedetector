@@ -1250,74 +1250,7 @@ function currentlyProcessing() {
         initComparisonStatusButtons($(document));
 
         initBatchComparisonsPagination();
-
-        // Load dashboard usage statistics asynchronously
-        loadDashboardUsageStats();
     });
-
-    // Function to load dashboard usage statistics via AJAX
-    function loadDashboardUsageStats() {
-        // Only load if we're on the dashboard page and the elements exist
-        if ($('#wcd-monitoring-stats, #wcd-auto-update-stats').length === 0) {
-            return;
-        }
-
-        $.ajax({
-            url: wcdAjaxData.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'get_dashboard_usage_stats',
-                nonce: wcdAjaxData.nonce
-            },
-            success: function (response) {
-                
-                if (response.success && response.data) {
-                    const data = response.data.data;
-
-                    // Update monitoring stats
-                    const monitoringElement = $('#wcd-monitoring-stats');
-                    if (monitoringElement.length > 0) {
-                        if (data.amount_auto_detection > 0) {
-                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.amount_auto_detection + ' checks / month)');
-                        } else {
-                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: red; font-weight: 900">Off</span>');
-                        }
-                    }
-
-                    // Update auto-update stats
-                    const autoUpdateElement = $('#wcd-auto-update-stats');
-                    if (autoUpdateElement.length > 0) {
-                        if (data.max_auto_update_checks > 0 && data.auto_update_settings.auto_update_checks_enabled) {
-                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
-                        } else {
-                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: red; font-weight: 900">Off</span>');
-                        }
-                    }
-
-                    // Update usage warning
-                    const warningElement = $('#wcd-usage-warning');
-                    if (warningElement.length > 0 && data.checks_needed > data.checks_available) {
-                        const shortfall = Math.round(data.checks_needed - data.checks_available);
-                        let warningHtml = '<span class="notice notice-warning" style="display:block; padding: 10px;">' +
-                            '<span class="dashicons dashicons-warning"></span>' +
-                            '<strong>You might run out of checks before renewal day. </strong><br>' +
-                            'Current settings require up to ' + shortfall + ' more checks. <br>';
-
-                        // Add upgrade link if not a subaccount (we'll assume it's available)
-                        // Note: We can't access PHP variables here, so this would need to be passed differently
-                        // For now, we'll include it and it will only show if the upgrade URL is available
-                        warningHtml += '</span>';
-                        warningElement.html(warningHtml);
-                    }
-                }
-            },
-            error: function () {
-                // Show error state
-                $('#wcd-monitoring-stats').html('<strong>Monitoring: </strong><span style="color: #666;">Error loading stats</span>');
-                $('#wcd-auto-update-stats').html('<strong>Auto update checks: </strong><span style="color: #666;">Error loading stats</span>');
-            }
-        });
-    }
 })(jQuery);
 
 // CSV Export functionality for logs page.

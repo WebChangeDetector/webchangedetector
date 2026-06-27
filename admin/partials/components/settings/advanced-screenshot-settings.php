@@ -112,6 +112,22 @@ $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr
 	</div>
 </div>
 
+<!-- Screenshot Region -->
+<div class="wcd-form-row wcd-setting-screenshot-region <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped on assignment. ?>>
+	<div class="wcd-form-label-wrapper">
+		<label class="wcd-form-label" for="screenshot_region"><?php esc_html_e( 'Screenshot Region', 'webchangedetector' ); ?></label>
+		<div class="wcd-description"><?php esc_html_e( 'Choose the region screenshots are taken from. Auto-Detect picks the closest region based on your website location.', 'webchangedetector' ); ?></div>
+	</div>
+	<div class="wcd-form-control">
+		<?php $screenshot_region = $group_and_urls['screenshot_region'] ?? 'auto'; ?>
+		<select id="screenshot_region" name="screenshot_region">
+			<option value="auto" <?php selected( $screenshot_region, 'auto' ); ?>><?php esc_html_e( 'Auto-Detect', 'webchangedetector' ); ?></option>
+			<option value="us" <?php selected( $screenshot_region, 'us' ); ?>><?php esc_html_e( 'United States', 'webchangedetector' ); ?></option>
+			<option value="eu" <?php selected( $screenshot_region, 'eu' ); ?>><?php esc_html_e( 'Europe', 'webchangedetector' ); ?></option>
+		</select>
+	</div>
+</div>
+
 <!-- Screenshot Delay -->
 <div class="wcd-form-row wcd-setting-screenshot-delay <?php echo esc_attr( $advanced_settings_class ); ?>"<?php echo $advanced_settings_style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-escaped on assignment. ?>>
 	<div class="wcd-form-label-wrapper">

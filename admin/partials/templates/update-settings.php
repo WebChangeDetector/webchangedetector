@@ -214,6 +214,25 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
+			<div class="wcd-form-row wcd-auto-update-setting-new-url-activation">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Activate newly synced URLs by default', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'When new URLs are added (e.g. on sync), activate them automatically for these screenshot types in this group.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<label>
+						<input type="hidden" name="default_desktop" value="0" />
+						<input type="checkbox" name="default_desktop" value="1" <?php checked( ! empty( $group_and_urls['default_desktop'] ) ); ?> />
+						<?php esc_html_e( 'Desktop', 'webchangedetector' ); ?>
+					</label>
+					<label>
+						<input type="hidden" name="default_mobile" value="0" />
+						<input type="checkbox" name="default_mobile" value="1" <?php checked( ! empty( $group_and_urls['default_mobile'] ) ); ?> />
+						<?php esc_html_e( 'Mobile', 'webchangedetector' ); ?>
+					</label>
+				</div>
+			</div>
+
 			<?php include WCD_PLUGIN_DIR . 'admin/partials/components/settings/advanced-screenshot-settings.php'; ?>
 
 			<div class="wcd-form-row wcd-auto-update-setting-css">
