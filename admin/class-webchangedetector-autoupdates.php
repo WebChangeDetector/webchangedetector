@@ -177,6 +177,17 @@ class WebChangeDetector_Autoupdates {
 		// Also ensure lock is removed in case it got stuck.
 		delete_option( $this->lock_name );
 
+		// Idempotency guard: if a post-update batch is already in flight, never start a second one.
+		$existing_post_update_data = get_option( WCD_POST_AUTO_UPDATE );
+		if ( ! empty( $existing_post_update_data ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Post-update workflow already running for batch ' . ( $existing_post_update_data['batch_id'] ?? 'unknown' ) . '. Skipping duplicate trigger.',
+				'automatic_updates_complete',
+				'debug'
+			);
+			return;
+		}
+
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = self::get_auto_update_settings();
 		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
@@ -1185,6 +1196,17 @@ class WebChangeDetector_Autoupdates {
 				'debug'
 			);
 
+			// Idempotency guard: the post-update workflow already started (automatic_updates_complete fired).
+			$post_update_data = get_option( WCD_POST_AUTO_UPDATE );
+			if ( ! empty( $post_update_data ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Update completion check: Post-update workflow already running for batch ' . ( $post_update_data['batch_id'] ?? 'unknown' ) . '. Skipping duplicate trigger.',
+					'check_update_completion',
+					'debug'
+				);
+				return;
+			}
+
 			// Check how long ago we triggered the updates.
 			$triggered_time = get_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
 			if ( $triggered_time ) {
@@ -1194,6 +1216,18 @@ class WebChangeDetector_Autoupdates {
 					'check_update_completion',
 					'debug'
 				);
+
+				// Too recent: the updater may still be starting up (the missing lock can be a race
+				// with the 120s fallback delay). Re-check instead of treating the run as finished.
+				if ( $elapsed < 120 ) {
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+						'Update completion check: Updates were triggered only ' . $elapsed . ' seconds ago. Re-checking in 1 minute.',
+						'check_update_completion',
+						'debug'
+					);
+					wp_schedule_single_event( time() + 60, 'wcd_check_update_completion' );
+					return;
+				}
 			}
 
 			// Handle the case where no updates were available.
@@ -1354,8 +1388,11 @@ class WebChangeDetector_Autoupdates {
 		set_transient( 'wcd_update_check_running', time(), 30 );
 
 		// Step 2: Check if we started pre-update screenshots already.
+		// Only enter while the pre-update batch is still 'processing': after the update ran,
+		// the option stays with status 'done' until post-queue cleanup, and re-entering here
+		// would re-trigger the updates and produce duplicate post-update batches.
 		$wcd_pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-		if ( $wcd_pre_update_data && isset( $wcd_pre_update_data['batch_id'] ) ) {
+		if ( $wcd_pre_update_data && isset( $wcd_pre_update_data['batch_id'] ) && isset( $wcd_pre_update_data['status'] ) && 'processing' === $wcd_pre_update_data['status'] ) {
 			$is_ready = $this->check_pre_update_screenshots_status( $wcd_pre_update_data );
 
 			// Check if pre-update screenshots are ready.
