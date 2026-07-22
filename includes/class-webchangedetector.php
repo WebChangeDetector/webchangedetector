@@ -162,6 +162,7 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-account-ajax-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-ai-ajax-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-allowances-ajax-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/ajax/class-webchangedetector-flows-ajax-handler.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -178,6 +179,7 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-manual-checks-controller.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-change-detections-controller.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-logs-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/controllers/class-webchangedetector-flows-controller.php';
 
 		/**
 		 * Action handler classes for business logic separation.

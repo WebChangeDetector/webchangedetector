@@ -209,6 +209,13 @@ class WebChangeDetector_View_Renderer {
 				</a>
 				<?php endif; ?>
 
+				<?php if ( $this->admin->settings_handler->is_allowed( 'flows_view' ) && ! $is_all_sites ) : ?>
+				<a href="?page=webchangedetector-flows<?php echo esc_attr( $blog_param ); ?>"
+					class="nav-tab <?php echo 'webchangedetector-flows' === $active_tab ? 'nav-tab-active' : ''; ?>">
+					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'flows' ); ?> <?php echo esc_html__( 'Flows', 'webchangedetector' ); ?>
+				</a>
+				<?php endif; ?>
+
 				<?php if ( $this->admin->settings_handler->is_allowed( 'logs_view' ) ) : ?>
 				<a href="?page=webchangedetector-logs<?php echo esc_attr( $blog_param ); ?>"
 					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">

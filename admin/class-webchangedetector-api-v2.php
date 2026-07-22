@@ -697,6 +697,103 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/** Get interaction flows of a website (FEAT-61).
+	 *
+	 * @param string $website_id The website UUID to filter flows by.
+	 * @param int    $per_page   Flows per page.
+	 * @param int    $page       Page number.
+	 * @return mixed|string
+	 */
+	public static function get_flows_v2( $website_id, $per_page = 50, $page = 1 ) {
+		if ( empty( $website_id ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action'     => 'flows',
+			'website_id' => $website_id,
+			'per_page'   => $per_page,
+			'page'       => $page,
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Get a single interaction flow including its (redacted) steps.
+	 *
+	 * @param string $uuid The flow UUID.
+	 * @return mixed|string
+	 */
+	public static function get_flow_v2( $uuid ) {
+		if ( empty( $uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'flows/' . $uuid,
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Get the runs of an interaction flow.
+	 *
+	 * @param string $flow_uuid The flow UUID.
+	 * @param int    $per_page  Runs per page.
+	 * @return mixed|string
+	 */
+	public static function get_flow_runs_v2( $flow_uuid, $per_page = 20 ) {
+		if ( empty( $flow_uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action'   => 'flows/' . $flow_uuid . '/runs',
+			'per_page' => $per_page,
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Get a single flow run with per-step results (polling endpoint).
+	 *
+	 * @param string $run_uuid The flow run UUID.
+	 * @return mixed|string
+	 */
+	public static function get_flow_run_v2( $run_uuid ) {
+		if ( empty( $run_uuid ) ) {
+			return false;
+		}
+
+		$args = array(
+			'action' => 'flow-runs/' . $run_uuid,
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/** Update an interaction flow (partial update).
+	 *
+	 * Used for toggling: callers pass ONLY `enabled_manual` or
+	 * `enabled_monitoring` (0/1) in $fields.
+	 *
+	 * @param string $uuid   The flow UUID.
+	 * @param array  $fields The fields to update.
+	 * @return mixed|string
+	 */
+	public static function update_flow_v2( $uuid, $fields ) {
+		if ( empty( $uuid ) || empty( $fields ) ) {
+			return false;
+		}
+
+		$args = array_merge(
+			array( 'action' => 'flows/' . $uuid ),
+			$fields
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
 	/**
 	 * Send multiple API requests to different endpoints in parallel with chunking.
 	 *

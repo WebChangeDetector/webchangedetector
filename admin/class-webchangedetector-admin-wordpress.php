@@ -160,6 +160,8 @@ class WebChangeDetector_Admin_WordPress {
 					'failedUpdateRule'         => __( 'Failed to update rule.', 'webchangedetector' ),
 					'failedDeleteRule'         => __( 'Failed to delete rule.', 'webchangedetector' ),
 					'failedUpdateScope'        => __( 'Failed to update scope.', 'webchangedetector' ),
+					'failedUpdateFlow'         => __( 'Failed to update flow.', 'webchangedetector' ),
+					'flowStepPending'          => __( 'Pending', 'webchangedetector' ),
 					'ranOutScreenshots'        => __( 'You ran out of screenshots.', 'webchangedetector' ),
 					'confirm'                  => __( 'Confirm', 'webchangedetector' ),
 					'ignored'                  => __( 'Ignored', 'webchangedetector' ),
@@ -513,6 +515,9 @@ class WebChangeDetector_Admin_WordPress {
 		if ( $bypass || ( is_array( $allowances ) && ( $allowances['ai_rules_view'] ?? true ) ) ) {
 			add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), 'manage_options', 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
 		}
+		if ( $bypass || ( is_array( $allowances ) && ( $allowances['flows_view'] ?? true ) ) ) {
+			add_submenu_page( 'webchangedetector', __( 'Flows', 'webchangedetector' ), __( 'Flows', 'webchangedetector' ), 'manage_options', 'webchangedetector-flows', 'wcd_webchangedetector_init' );
+		}
 
 		// Upgrade Account link (external URL, always last in sidebar).
 		// Hidden for sub-site admins on network-activated multisite — the upgrade
@@ -569,6 +574,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Settings', 'webchangedetector' ), __( 'Settings', 'webchangedetector' ), $capability, 'webchangedetector-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), $capability, 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Flows', 'webchangedetector' ), __( 'Flows', 'webchangedetector' ), $capability, 'webchangedetector-flows', 'wcd_webchangedetector_init' );
 
 		// Hidden submenu pages.
 		add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );

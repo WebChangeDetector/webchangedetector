@@ -2187,7 +2187,110 @@ jQuery(document).ready(function($) {
                 }
             });
         });
+
+        // --- Flows Page ---
+
+        // Toggle a flow lifecycle (On-Demand Checks / Monitoring) enabled state.
+        $(document).on('change', '.wcd-flow-toggle-input', function () {
+            var $input = $(this);
+            var flowId = $input.data('flow-id');
+            var lifecycle = $input.data('lifecycle');
+            var newEnabled = $input.is(':checked') ? 1 : 0;
+
+            $input.prop('disabled', true);
+
+            $.ajax({
+                url: wcdAjaxData.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcd_toggle_flow',
+                    nonce: wcdAjaxData.nonce,
+                    flow_id: flowId,
+                    lifecycle: lifecycle,
+                    enabled: newEnabled
+                },
+                success: function (response) {
+                    if (!response.success) {
+                        $input.prop('checked', !newEnabled);
+                        alert(response.data && response.data.message ? response.data.message : (wcdL10n.failedUpdateFlow || 'Failed to update flow.'));
+                    }
+                },
+                error: function () {
+                    $input.prop('checked', !newEnabled);
+                    alert(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
+                },
+                complete: function () {
+                    $input.prop('disabled', false);
+                }
+            });
+        });
+
+        // Poll a processing flow run every 10 seconds and update step statuses.
+        // Only active while the run-detail view is open AND the run is processing.
+        var $flowRunDetail = $('#wcd-flow-run-detail');
+        if ($flowRunDetail.length && $flowRunDetail.data('status') === 'processing') {
+            var wcdFlowRunPollInterval = window.setInterval(function () {
+                $.ajax({
+                    url: wcdAjaxData.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wcd_get_flow_run',
+                        nonce: wcdAjaxData.nonce,
+                        flow_run_id: $flowRunDetail.data('run-id')
+                    },
+                    success: function (response) {
+                        if (!response.success || !response.data || !response.data.data) {
+                            return;
+                        }
+                        var run = response.data.data;
+                        wcdUpdateFlowRunSteps(run.steps || []);
+                        if (run.status !== 'processing') {
+                            // Final state: stop polling and reload for the
+                            // full server-rendered result view.
+                            window.clearInterval(wcdFlowRunPollInterval);
+                            window.location.reload();
+                        }
+                    }
+                });
+            }, 10000);
+
+            // Stop the interval when the page is left (no leaked timers).
+            $(window).on('beforeunload pagehide', function () {
+                window.clearInterval(wcdFlowRunPollInterval);
+            });
+        }
     });
+
+    /**
+     * Update the flow run step badges from a polled run payload.
+     */
+    function wcdUpdateFlowRunSteps(steps) {
+        steps.forEach(function (step) {
+            if (!step.id) {
+                return;
+            }
+            var $step = $('.wcd-flow-step[data-step-id="' + String(step.id).replace(/[^a-zA-Z0-9_-]/g, '') + '"]');
+            if (!$step.length) {
+                return;
+            }
+
+            var status = step.status ? String(step.status).replace(/[^a-z0-9_-]/gi, '') : 'pending';
+            var label = step.status
+                ? status.charAt(0).toUpperCase() + status.slice(1)
+                : (wcdL10n.flowStepPending || 'Pending');
+            $step.find('.wcd-flow-step-status')
+                .attr('class', 'wcd-status-badge wcd-flow-step-status wcd-flow-status-' + status)
+                .text(label);
+
+            if (step.duration_ms !== null && typeof step.duration_ms !== 'undefined') {
+                $step.find('.wcd-flow-step-duration').text(parseInt(step.duration_ms, 10) + ' ms');
+            }
+
+            if (step.error) {
+                $step.find('.wcd-flow-step-error').text(step.error).removeClass('wcd-flows-hidden');
+            }
+        });
+    }
 
     /**
      * Initialize Flatpickr inline date range picker.

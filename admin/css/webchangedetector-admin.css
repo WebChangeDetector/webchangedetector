@@ -5249,6 +5249,238 @@ Settings
 }
 
 /* ============================================================
+   Interaction Flows (FEAT-61)
+   ============================================================ */
+
+.webchangedetector .wcd-flows-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #f0f6fc;
+    border-left: 4px solid #2271b1;
+    padding: 12px 16px;
+    margin: 16px 0;
+}
+
+.webchangedetector .wcd-flows-info p {
+    margin: 0;
+}
+
+.webchangedetector .wcd-flows-info .dashicons {
+    color: #2271b1;
+}
+
+.webchangedetector .wcd-flows-empty {
+    text-align: center;
+    padding: 48px 24px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.webchangedetector .wcd-flows-empty .dashicons {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #c3c4c7;
+}
+
+.webchangedetector .wcd-flows-empty h3 {
+    margin: 12px 0 4px;
+}
+
+.webchangedetector .wcd-flows-empty p {
+    color: #646970;
+    margin: 0;
+}
+
+.webchangedetector .wcd-flows-table-wrap {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.webchangedetector .wcd-flows-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.webchangedetector .wcd-flows-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #dcdcde;
+    font-weight: 600;
+}
+
+.webchangedetector .wcd-flows-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f1;
+    vertical-align: middle;
+}
+
+.webchangedetector .wcd-flows-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.webchangedetector .wcd-flows-table tbody tr:hover {
+    background: #f6f7f7;
+}
+
+.webchangedetector .wcd-flows-start-path {
+    display: block;
+    color: #646970;
+    font-size: 12px;
+}
+
+.webchangedetector .wcd-flows-lastrun-when {
+    display: block;
+    color: #646970;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.webchangedetector .wcd-flows-billing-note {
+    color: #646970;
+    margin: 12px 0;
+}
+
+.webchangedetector .wcd-flows-back {
+    margin: 16px 0 8px;
+}
+
+.webchangedetector .wcd-flows-headline {
+    margin-bottom: 4px;
+}
+
+.webchangedetector .wcd-flow-run-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #646970;
+}
+
+.webchangedetector .wcd-flow-steps {
+    margin: 0;
+    padding-left: 24px;
+}
+
+.webchangedetector .wcd-flow-steps > li {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.webchangedetector .wcd-flow-steps > li:last-child {
+    border-bottom: none;
+}
+
+.webchangedetector .wcd-flow-step-type {
+    display: inline-block;
+    background: #f0f0f1;
+    color: #50575e;
+    border-radius: 3px;
+    padding: 1px 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+}
+
+.webchangedetector .wcd-flow-step-selector {
+    margin: 0 6px;
+    font-size: 12px;
+}
+
+.webchangedetector .wcd-flow-step-value-masked {
+    color: #646970;
+    letter-spacing: 2px;
+}
+
+.webchangedetector .wcd-flow-step-duration {
+    color: #646970;
+    font-size: 12px;
+    margin-left: 6px;
+}
+
+.webchangedetector .wcd-flow-step-error {
+    color: #dc2626;
+    background: #fef2f2;
+    border-radius: 3px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.webchangedetector .wcd-flow-step-assertion {
+    display: block;
+    margin-top: 6px;
+    color: #50575e;
+    font-size: 12px;
+}
+
+.webchangedetector .wcd-flow-checkpoint {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 8px;
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+.webchangedetector .wcd-flow-checkpoint-screenshot img {
+    max-width: 120px;
+    height: auto;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    display: block;
+}
+
+.webchangedetector .wcd-flow-checkpoint-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.webchangedetector .wcd-flow-checkpoint-note {
+    color: #646970;
+    font-size: 12px;
+}
+
+/* Flow status badge colors (used with .wcd-status-badge). */
+.webchangedetector .wcd-flow-status-done {
+    background: #d4edda;
+    color: #155724;
+}
+
+.webchangedetector .wcd-flow-status-failed {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+.webchangedetector .wcd-flow-status-processing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.webchangedetector .wcd-flow-status-pending,
+.webchangedetector .wcd-flow-status-unknown,
+.webchangedetector .wcd-flow-status-skipped {
+    background: #f0f0f1;
+    color: #50575e;
+}
+
+.webchangedetector .wcd-flow-status-baseline {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.webchangedetector .wcd-flows-hidden {
+    display: none;
+}
+
+/* ============================================================
    On-Demand Checks Processing UI
    ============================================================ */
 

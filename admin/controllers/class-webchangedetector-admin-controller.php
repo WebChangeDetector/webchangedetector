@@ -75,6 +75,7 @@ class WebChangeDetector_Admin_Controller {
 			'manual_checks'     => new WebChangeDetector_Manual_Checks_Controller( $this->admin ),
 			'change_detections' => new WebChangeDetector_Change_Detections_Controller( $this->admin ),
 			'logs'              => new WebChangeDetector_Logs_Controller( $this->admin ),
+			'flows'             => new WebChangeDetector_Flows_Controller( $this->admin ),
 		);
 	}
 
@@ -757,6 +758,10 @@ class WebChangeDetector_Admin_Controller {
 				if ( WebChangeDetector_Multisite::is_multisite_active() ) {
 					include WCD_PLUGIN_DIR . 'admin/partials/templates/multisite-allowances.php';
 				}
+				break;
+
+			case 'webchangedetector-flows':
+				$this->page_controllers['flows']->handle_request();
 				break;
 
 			case 'webchangedetector-ai-rules':

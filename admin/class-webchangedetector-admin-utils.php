@@ -81,6 +81,7 @@ class WebChangeDetector_Admin_Utils {
 			'warning'           => 'warning',
 			'upgrade'           => 'cart',
 			'ai-rules'          => 'lightbulb',
+			'flows'             => 'controls-repeat',
 			'sites'             => 'admin-multisite',
 		);
 

@@ -100,6 +100,10 @@ class WebChangeDetector_Ajax_Coordinator {
 			// Initialize and register Allowances AJAX handler (multisite super admin).
 			$allowances_ajax = new WebChangeDetector_Allowances_Ajax_Handler( $this->admin );
 			$allowances_ajax->register_hooks();
+
+			// Initialize and register Flows AJAX handler.
+			$flows_ajax = new WebChangeDetector_Flows_Ajax_Handler( $this->admin );
+			$flows_ajax->register_hooks();
 		}
 
 		// Settings AJAX handler handles both API and non-API operations.
