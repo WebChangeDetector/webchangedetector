@@ -315,6 +315,21 @@ class WebChangeDetector_Admin_Settings {
 			);
 		}
 
+		// Local-only override toggle: re-enable WP auto updates when another tool
+		// disabled them. Rendered with the hidden-0 + checkbox-1 pattern, so the key
+		// is present whenever the form offered the toggle. This is a per-site
+		// wp_option and intentionally not part of the API payload, so it is saved
+		// immediately and not gated on the API response below.
+		if ( isset( $postdata['wcd_force_enable_wp_updates'] ) ) {
+			$wcd_force_enable_wp_updates = '1' === (string) $postdata['wcd_force_enable_wp_updates'];
+			update_option( WebChangeDetector_Autoupdate_Guard::OPTION, $wcd_force_enable_wp_updates );
+
+			// Sync the filter within this request: the settings page renders right
+			// after this POST (no redirect), and register_override() ran at plugin
+			// load with the old option value.
+			WebChangeDetector_Autoupdate_Guard::sync_override( $wcd_force_enable_wp_updates );
+		}
+
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
@@ -324,7 +339,7 @@ class WebChangeDetector_Admin_Settings {
 		// Force refresh website details cache after saving.
 		$this->get_website_details( true );
 
-		do_action( 'wcd_save_update_group_settings' );
+		do_action( 'wcd_save_update_group_settings', $auto_update_settings );
 
 		// Update group settings in API.
 		$args = array(
@@ -918,10 +933,23 @@ class WebChangeDetector_Admin_Settings {
 						delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 						$saved_website_id = null;
 					}
-				} else {
-					// Failed to get website by ID, delete the saved ID.
+				} elseif ( 'not found' === $website_response ) {
+					// The API positively says this website no longer exists (HTTP 404,
+					// mapped to the terminal 'not found' string by api_v2()), so the
+					// stored id is stale: delete it and re-resolve below.
 					delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 					$saved_website_id = null;
+				} else {
+					// Any other failure is treated as transient: api_v2() returns plain
+					// strings ('', 'unauthorized', 'update plugin') for timeouts and auth
+					// hiccups and decoded Laravel error bodies for 5xx/429. Keep the stored
+					// website id; a temporary API problem must not destroy the site's
+					// configuration.
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+						'Could not fetch website by id (transient API error). Keeping stored website id.',
+						'get_website_details',
+						'warning'
+					);
 				}
 			}
 

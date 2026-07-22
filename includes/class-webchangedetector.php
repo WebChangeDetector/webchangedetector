@@ -216,6 +216,20 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-api-v2.php';
 
 		/**
+		 * Guard for externally disabled WP automatic updates. Registered on every
+		 * request (including wp-cron) so the opt-in override filter is live when
+		 * core's automatic updater runs.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdate-guard.php';
+		WebChangeDetector_Autoupdate_Guard::register_override();
+
+		/**
+		 * Cache clearing across third-party cache plugins (used by the auto-update
+		 * workflow before taking screenshots).
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-cache-clearer.php';
+
+		/**
 		 * The class responsible for auto-update-checks
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';

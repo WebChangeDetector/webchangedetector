@@ -984,6 +984,10 @@ if ( ! defined( 'WCD_HTTP_UNAUTHORIZED' ) ) {
 	define( 'WCD_HTTP_UNAUTHORIZED', 401 );
 }
 
+if ( ! defined( 'WCD_HTTP_NOT_FOUND' ) ) {
+	define( 'WCD_HTTP_NOT_FOUND', 404 );
+}
+
 if ( ! defined( 'WCD_HTTP_INTERNAL_SERVER_ERROR' ) ) {
 	define( 'WCD_HTTP_INTERNAL_SERVER_ERROR', 500 );
 }

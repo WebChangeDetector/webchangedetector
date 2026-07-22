@@ -27,15 +27,25 @@ class WebChangeDetector_Autoupdates {
 
 	/** Group ID for on-demand checks (property name kept for backwards compatibility).
 	 *
+	 * Initialized to '' so the constructor's early return (missing groups option,
+	 * e.g. during onboarding) cannot leave the typed property uninitialized,
+	 * which would fatal on every cron pass in validate_wcd_configuration().
+	 *
 	 * @var string
 	 */
-	public string $manual_group_id;
+	public string $manual_group_id = '';
 
 	/** Group ID for monitoring checks.
 	 *
 	 * @var string
 	 */
-	public string $monitoring_group_id;
+	public string $monitoring_group_id = '';
+
+	/** Per-request cache for the auto-update settings from the API.
+	 *
+	 * @var array|null
+	 */
+	private static $auto_update_settings_cache = null;
 
 	/**
 	 * Plugin constructor.
@@ -93,7 +103,7 @@ class WebChangeDetector_Autoupdates {
 			add_action( 'wcd_check_update_completion', array( $this, 'check_update_completion' ) );
 
 			// Post updates.
-			add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ), 10, 2 );
+			add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ) );
 
 			// Saving settings.
 			add_action( 'wcd_save_update_group_settings', array( $this, 'wcd_save_update_group_settings' ) );
@@ -104,7 +114,12 @@ class WebChangeDetector_Autoupdates {
 			// Hooking into the update process.
 			add_action( 'wp_maybe_auto_update', array( $this, 'wp_maybe_auto_update' ), 5 );
 
-			// Add hourly sync check for auto-update settings from API.
+			// Hourly sync with the API. This must stay HOURLY, never reduce it to daily:
+			// (a) its re-pin of wp_version_check heals third-party cron displacement within 1h whenever the API is reachable;
+			// (b) its stuck-process sweeper is the termination bound for the post-queue retry loop and the cleanup point
+			// for the wcd_wordpress_cron webhook option; both degrade to 24h+ on a daily schedule;
+			// (c) the gate values (window/weekdays/enabled) do NOT depend on this sync, every cron tick reads them fresh
+			// from the API; the sync exists only for cron re-pinning, webhook maintenance, health status and the sweeper.
 			add_action( 'wcd_sync_auto_update_schedule', array( $this, 'sync_auto_update_schedule_from_api' ) );
 			if ( ! wp_next_scheduled( 'wcd_sync_auto_update_schedule' ) ) {
 				wp_schedule_event( time(), 'hourly', 'wcd_sync_auto_update_schedule' );
@@ -126,13 +141,20 @@ class WebChangeDetector_Autoupdates {
 		if ( ! $wcd_groups ) {
 			return;
 		}
-		$this->manual_group_id     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? false;
-		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? false;
+		$this->manual_group_id     = $wcd_groups[ WCD_MANUAL_DETECTION_GROUP ] ?? '';
+		$this->monitoring_group_id = $wcd_groups[ WCD_AUTO_DETECTION_GROUP ] ?? '';
 	}
 
 	/**
 	 * This is a backup cron job for checking for updates.
 	 * We need to be careful not to interfere with an already running update process.
+	 *
+	 * Do not delete this cron as "redundant": if another plugin or the host reschedules
+	 * or unschedules the native wp_version_check cron outside our allowed window, this
+	 * is the only API-independent trigger left at the window start. The hourly sync's
+	 * re-pin only runs when its API call succeeds, and the daily wordpress_single_call
+	 * webhook only spawns ALREADY-DUE cron events via spawn_cron(), so neither can
+	 * replace it.
 	 *
 	 * @return void
 	 */
@@ -202,7 +224,7 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Clear all caches before taking post-update screenshots.
-		$this->clear_wordpress_caches();
+		WebChangeDetector_Cache_Clearer::clear_all();
 
 		// Start the post-update screenshots.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Starting post-update screenshots and comparisons.', 'automatic_updates_complete', 'debug' );
@@ -213,8 +235,7 @@ class WebChangeDetector_Autoupdates {
 			$group_ids = $this->collect_network_group_ids();
 			if ( empty( $group_ids ) ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto-update checks were disabled mid-cycle (between pre and post) or no sites are enabled. Cleaning up pre-update state.', 'automatic_updates_complete', 'warning' );
-				delete_option( WCD_PRE_AUTO_UPDATE );
-				delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+				$this->cleanup_auto_update_run();
 				return;
 			}
 			$response = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $group_ids, 'post', 'auto_update' );
@@ -247,8 +268,7 @@ class WebChangeDetector_Autoupdates {
 			);
 
 			// Clean up pre-update data since we can't complete the comparison.
-			delete_option( WCD_PRE_AUTO_UPDATE );
-			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+			$this->cleanup_auto_update_run();
 			return;
 		}
 
@@ -269,11 +289,23 @@ class WebChangeDetector_Autoupdates {
 
 		// Add the batch id to the comparison batches. This is used to send the mail and for showing "Auto Update Checks" in the change detection page.
 		$comparison_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
-		if ( ! $comparison_batches ) {
+		if ( ! is_array( $comparison_batches ) ) {
 			$comparison_batches = array();
 		}
 		$comparison_batches[] = $response['batch'];
-		update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches );
+
+		// Keep only the newest 30 batch ids (mirrors the history option cap). Batches older
+		// than that merely lose their "Auto Update Checks" label in the listings. Store
+		// non-autoloaded; the option used to grow unbounded and load on every request.
+		$comparison_batches = array_slice( $comparison_batches, -30 );
+		if ( function_exists( 'wp_set_option_autoload' ) ) {
+			update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches, false );
+			wp_set_option_autoload( WCD_AUTO_UPDATE_COMPARISON_BATCHES, false );
+		} else {
+			// Pre-WP-6.4: delete + add is the only deterministic way to drop the autoload flag.
+			delete_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
+			update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches, false );
+		}
 
 		$this->wcd_cron_check_post_queues();
 	}
@@ -298,6 +330,22 @@ class WebChangeDetector_Autoupdates {
 		$response = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $post_sc_option['batch_id'], 'open,processing' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response: ' . wp_json_encode( $response ), 'wcd_cron_check_post_queues', 'debug' );
 
+		// Validate the response before using it. api_v2() returns plain strings on failure.
+		if ( ! is_array( $response ) || ! isset( $response['data'] ) || ! is_array( $response['data'] ) ) {
+			$terminal_errors = array( 'unauthorized', 'No API token found', 'update plugin', 'not found' );
+			if ( is_string( $response ) && in_array( $response, $terminal_errors, true ) ) {
+				// Terminal error: retrying cannot succeed, so clean up the run right away. No mail.
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Terminal API error while checking post-update queues: ' . $response . '. Cleaning up the auto-update run.', 'wcd_cron_check_post_queues', 'error' );
+				$this->cleanup_auto_update_run();
+				return;
+			}
+
+			// Transient error: retry in 30 seconds. The hourly stuck-sweeper bounds this retry loop.
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Invalid API response while checking post-update queues. Retrying in 30 seconds.', 'wcd_cron_check_post_queues', 'warning' );
+			$this->reschedule( 'wcd_cron_check_post_queues' );
+			return;
+		}
+
 		// Check if the batch is done.
 		if ( count( $response['data'] ) > 0 ) {
 			// There are still open or processing queues. So we check again in a minute.
@@ -305,23 +353,39 @@ class WebChangeDetector_Autoupdates {
 			$this->reschedule( 'wcd_cron_check_post_queues' );
 		} else {
 
-			// Send the mail and update the last successful auto updates.
-			$this->send_change_detection_mail( $post_sc_option );
-			update_option( WCD_LAST_SUCCESSFULL_AUTO_UPDATES, time() );
+			// Send the mail. The cleanup below must always run, even if the mail fails.
+			try {
+				$this->send_change_detection_mail( $post_sc_option );
+			} catch ( \Throwable $e ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Failed to send change detection mail: ' . $e->getMessage(), 'wcd_cron_check_post_queues', 'error' );
+			}
 
-			// We don't need the webhook anymore.
-			\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( get_option( WCD_WORDPRESS_CRON ) );
-
-			// Cleanup wp_options and cron webhook.
-			delete_option( WCD_WORDPRESS_CRON );
-			delete_option( WCD_PRE_AUTO_UPDATE );
-			delete_option( WCD_POST_AUTO_UPDATE );
-			delete_option( WCD_AUTO_UPDATES_RUNNING );
-			delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
-
-			// Clean up scheduled fallback check.
-			wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+			// Cleanup wp_options, cron webhook and scheduled fallback check.
+			$this->cleanup_auto_update_run();
 		}
+	}
+
+	/**
+	 * Delete all auto-update run state options, the API minute-webhook and the scheduled fallback check.
+	 *
+	 * @return void
+	 */
+	private function cleanup_auto_update_run() {
+		// We don't need the webhook anymore.
+		$webhook_id = get_option( WCD_WORDPRESS_CRON );
+		if ( $webhook_id ) {
+			\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( $webhook_id );
+			delete_option( WCD_WORDPRESS_CRON );
+		}
+
+		// Cleanup wp_options.
+		delete_option( WCD_PRE_AUTO_UPDATE );
+		delete_option( WCD_POST_AUTO_UPDATE );
+		delete_option( WCD_AUTO_UPDATES_RUNNING );
+		delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+
+		// Clean up scheduled fallback check.
+		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
 	}
 
 	/**
@@ -343,32 +407,22 @@ class WebChangeDetector_Autoupdates {
 		delete_option( $this->lock_name );
 	}
 
-
 	/**
-	 * Clean up stuck auto-update state (helper method for recovery)
+	 * Set the lock unless a WordPress auto-update is currently running.
 	 *
-	 * This method provides a centralized way to clean up all auto-update related
-	 * options and transients when the system gets stuck or needs to be reset.
+	 * The skip branches (cooldown / weekday / time window) can fire from a cron tick
+	 * while core's updater holds the real auto_updater.lock. Overwriting that live
+	 * lock with our backdated one mid-update could let a second updater start.
+	 * No stalling branch runs while WCD_AUTO_UPDATES_RUNNING is set, so skipping is safe.
 	 *
 	 * @return void
 	 */
-	public function cleanup_stuck_auto_update_state() {
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Cleaning up stuck auto-update state', 'cleanup_stuck_auto_update_state', 'warning' );
-
-		// Use the centralized stuck process checker to clean everything.
-		$this->check_and_clean_all_stuck_processes();
-
-		// Additionally clean up any remaining options that might not be covered.
-		delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
-
-		// Delete webhook if exists.
-		$webhook_id = get_option( WCD_WORDPRESS_CRON );
-		if ( $webhook_id ) {
-			\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( $webhook_id );
-			delete_option( WCD_WORDPRESS_CRON );
+	private function set_lock_if_not_updating() {
+		if ( get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Skipping lock: WordPress auto-updates are currently running.', 'set_lock', 'debug' );
+			return;
 		}
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto-update state cleanup completed', 'cleanup_stuck_auto_update_state', 'info' );
+		$this->set_lock();
 	}
 
 	/**
@@ -439,30 +493,51 @@ class WebChangeDetector_Autoupdates {
 			'total'   => 0,
 		);
 
-		// Check for core updates.
+		// Check for core updates. Count only offers WordPress installs automatically
+		// ('autoupdate' response, mirroring find_core_auto_update()). 'upgrade' offers
+		// (e.g. a pending major release) are manual-only and would start a pointless
+		// cycle for weeks while the offer is up.
 		$core_updates = get_site_transient( 'update_core' );
 		if ( $core_updates && ! empty( $core_updates->updates ) ) {
 			foreach ( $core_updates->updates as $update ) {
-				if ( 'upgrade' === $update->response || 'development' === $update->response ) {
-					$has_updates['core'] = true;
-					++$has_updates['total'];
+				if ( 'autoupdate' !== $update->response ) {
+					continue;
+				}
+
+				// Mirror core's full decision via Core_Upgrader::should_update_to_version():
+				// static and side-effect-free (reads WP_AUTO_UPDATE_CORE, the auto_update_core_*
+				// options, the critical-failure lockout and the allow_*_auto_core_updates filters).
+				// It covers cases the 'autoupdate' offer alone does not, e.g. WP_AUTO_UPDATE_CORE
+				// set to false or disabled minor updates. Core only loads the upgrader classes in
+				// its own priority-10 cron callback, after our priority-5 callback runs, so we
+				// load them ourselves (core re-requires the same file moments later).
+				require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+				if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
 					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-						'Core update available: ' . $update->version,
+						'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
 						'check_for_available_updates',
 						'debug'
 					);
-					break;
+					continue;
 				}
+
+				$has_updates['core'] = true;
+				++$has_updates['total'];
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Core auto-update available: ' . $update->version,
+					'check_for_available_updates',
+					'debug'
+				);
+				break;
 			}
 		}
 
-		// Check for plugin updates (only those with auto-updates enabled).
-		$plugin_updates      = get_site_transient( 'update_plugins' );
-		$auto_update_plugins = get_site_option( 'auto_update_plugins' );
-		if ( $plugin_updates && ! empty( $plugin_updates->response ) && is_array( $auto_update_plugins ) ) {
+		// Check for plugin updates (only those WordPress will actually auto-install).
+		$plugin_updates = get_site_transient( 'update_plugins' );
+		if ( $plugin_updates && ! empty( $plugin_updates->response ) ) {
 			$auto_updatable_count = 0;
-			foreach ( array_keys( $plugin_updates->response ) as $plugin_file ) {
-				if ( in_array( $plugin_file, $auto_update_plugins, true ) ) {
+			foreach ( $plugin_updates->response as $item ) {
+				if ( $this->wp_would_auto_update_item( 'plugin', $item ) ) {
 					++$auto_updatable_count;
 				}
 			}
@@ -477,13 +552,12 @@ class WebChangeDetector_Autoupdates {
 			}
 		}
 
-		// Check for theme updates (only those with auto-updates enabled).
-		$theme_updates      = get_site_transient( 'update_themes' );
-		$auto_update_themes = get_site_option( 'auto_update_themes' );
-		if ( $theme_updates && ! empty( $theme_updates->response ) && is_array( $auto_update_themes ) ) {
+		// Check for theme updates (only those WordPress will actually auto-install).
+		$theme_updates = get_site_transient( 'update_themes' );
+		if ( $theme_updates && ! empty( $theme_updates->response ) ) {
 			$auto_updatable_count = 0;
-			foreach ( array_keys( $theme_updates->response ) as $theme_slug ) {
-				if ( in_array( $theme_slug, $auto_update_themes, true ) ) {
+			foreach ( $theme_updates->response as $item ) {
+				if ( $this->wp_would_auto_update_item( 'theme', (object) $item ) ) {
 					++$auto_updatable_count;
 				}
 			}
@@ -508,6 +582,44 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Replicate WordPress core's per-item auto-update decision for plugins and themes.
+	 *
+	 * Mirrors the item rule in WP_Automatic_Updater::should_update()
+	 * (wp-admin/includes/class-wp-automatic-updater.php) WITHOUT its side effects
+	 * (filesystem credential check, core notification mails): the wp.org-forced
+	 * `$item->autoupdate` flag OR the `auto_update_{$type}s` site option, minus
+	 * `disable_autoupdate`, passed through the `auto_update_{$type}` filter.
+	 * Counting only the site option (old behavior) missed forced security updates
+	 * and filter-managed setups, and counted filter-blocked items.
+	 *
+	 * @param string $type Either 'plugin' or 'theme'.
+	 * @param object $item Update offer item from the update_{plugins|themes} transient.
+	 * @return bool True when WordPress would auto-install this item.
+	 */
+	private function wp_would_auto_update_item( $type, $item ) {
+		$update = ! empty( $item->autoupdate );
+
+		// wp_is_auto_update_enabled_for_type() lives in wp-admin/includes/update.php, which core
+		// only loads in its own priority-10 cron callback, AFTER our priority-5 callback runs.
+		// Load it ourselves (core loads the superset moments later in the same request); keep the
+		// function_exists guard as belt-and-braces, defaulting to enabled like core.
+		require_once ABSPATH . 'wp-admin/includes/update.php';
+		$type_enabled = ! function_exists( 'wp_is_auto_update_enabled_for_type' ) || wp_is_auto_update_enabled_for_type( $type );
+		if ( ! $update && $type_enabled ) {
+			$enabled_items = (array) get_site_option( "auto_update_{$type}s", array() );
+			$update        = in_array( $item->{$type} ?? '', $enabled_items, true );
+		}
+
+		// The disable_autoupdate flag overrides any user choice, but filters still apply.
+		if ( ! empty( $item->disable_autoupdate ) ) {
+			$update = false;
+		}
+
+		/** This filter is documented in wp-admin/includes/class-wp-automatic-updater.php */
+		return (bool) apply_filters( "auto_update_{$type}", $update, $item );
 	}
 
 	/**
@@ -573,23 +685,18 @@ class WebChangeDetector_Autoupdates {
 			return false;
 		}
 
-		// Get the time window settings in UTC from API.
-		// All times are handled in UTC to avoid timezone conversion issues and DST bugs.
-		$from_time_utc = $auto_update_settings['auto_update_checks_from'] ?? '00:00';
-		$to_time_utc   = $auto_update_settings['auto_update_checks_to'] ?? '23:59';
-
 		// Check both crons and return the earliest match.
 		$candidates = array();
 
 		if ( $wp_check_time ) {
-			$match = self::find_next_matching_cron_time( $wp_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			$match = self::find_next_matching_cron_time( $wp_check_time, $auto_update_settings );
 			if ( $match ) {
 				$candidates[] = $match;
 			}
 		}
 
 		if ( $wcd_check_time ) {
-			$match = self::find_next_matching_cron_time( $wcd_check_time, $enabled_weekdays, $from_time_utc, $to_time_utc );
+			$match = self::find_next_matching_cron_time( $wcd_check_time, $auto_update_settings );
 			if ( $match ) {
 				$candidates[] = $match;
 			}
@@ -601,40 +708,21 @@ class WebChangeDetector_Autoupdates {
 	/**
 	 * Find the next cron execution time that falls within the enabled weekdays and time window.
 	 *
-	 * @param int    $next_cron_time   Unix timestamp of the next scheduled cron event.
-	 * @param array  $enabled_weekdays Array of enabled weekday names (e.g. 'monday', 'tuesday').
-	 * @param string $from_time_utc    Start of time window in UTC (H:i format).
-	 * @param string $to_time_utc      End of time window in UTC (H:i format).
+	 * Uses evaluate_schedule_window() so the prediction applies exactly the same
+	 * site-local weekday + window rule as the gate in wp_maybe_auto_update().
+	 *
+	 * @param int   $next_cron_time       Unix timestamp of the next scheduled cron event.
+	 * @param array $auto_update_settings Auto-update settings.
 	 * @return int|false Unix timestamp of next matching time, or false if none found.
 	 */
-	private static function find_next_matching_cron_time( $next_cron_time, $enabled_weekdays, $from_time_utc, $to_time_utc ) {
+	private static function find_next_matching_cron_time( $next_cron_time, $auto_update_settings ) {
 		$check_time        = $next_cron_time;
 		$max_days_to_check = 8; // Check up to a week ahead plus one day for safety.
 
 		for ( $i = 0; $i < $max_days_to_check; $i++ ) {
-			// Get the weekday for this check time in UTC.
-			$weekday_name = strtolower( gmdate( 'l', $check_time ) );
-
-			// Check if this weekday is enabled.
-			if ( in_array( $weekday_name, $enabled_weekdays, true ) ) {
-				// Get the current time in UTC (H:i format) for comparison.
-				$check_time_hm = gmdate( 'H:i', $check_time );
-
-				// Check if the time is within the allowed window.
-				// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
-				$is_in_window = false;
-
-				if ( $from_time_utc <= $to_time_utc ) {
-					// Normal case: e.g., 09:00 to 17:00.
-					$is_in_window = ( $check_time_hm >= $from_time_utc && $check_time_hm <= $to_time_utc );
-				} else {
-					// Midnight wraparound case: e.g., 22:00 to 06:00.
-					$is_in_window = ( $check_time_hm >= $from_time_utc || $check_time_hm <= $to_time_utc );
-				}
-
-				if ( $is_in_window ) {
-					return $check_time;
-				}
+			$schedule = self::evaluate_schedule_window( $check_time, $auto_update_settings );
+			if ( $schedule['weekday_allowed'] && $schedule['in_window'] ) {
+				return $check_time;
 			}
 
 			// Move to the next day's scheduled time.
@@ -711,20 +799,73 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Check if auto-updates are allowed for today's weekday.
+	 * Evaluate the weekday + time window rule for a moment, in site-local time.
+	 *
+	 * The from/to times are stored in UTC (converted on save) and are converted
+	 * back to site-local time here; the weekday checkboxes are stored as the
+	 * user's LOCAL days. The weekday that counts is the weekday of the window
+	 * START in site-local time: for a window wrapping local midnight (from > to,
+	 * e.g. 23:00-01:00), a moment in the post-midnight portion belongs to the
+	 * PREVIOUS local day's window. Both the gate (is_allowed_today /
+	 * is_within_time_window) and the status-bar prediction
+	 * (get_next_auto_update_time) must use this helper so they never diverge.
+	 *
+	 * @param int   $timestamp            Unix timestamp of the moment to evaluate.
+	 * @param array $auto_update_settings Auto-update settings.
+	 * @return array {
+	 *     Evaluation result.
+	 *
+	 *     @type bool   $in_window       Whether the moment is inside the from/to window.
+	 *     @type bool   $weekday_allowed Whether the local window-start weekday is enabled.
+	 *     @type string $weekday         Local window-start weekday name (lowercase).
+	 *     @type string $from_local      Window start in site-local H:i.
+	 *     @type string $to_local        Window end in site-local H:i.
+	 * }
+	 */
+	private static function evaluate_schedule_window( $timestamp, $auto_update_settings ) {
+		require_once WCD_PLUGIN_DIR . 'admin/class-webchangedetector-timezone-helper.php';
+
+		$utc_date   = gmdate( 'Y-m-d', $timestamp );
+		$from_local = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $auto_update_settings['auto_update_checks_from'] ?? '00:00', $utc_date );
+		$to_local   = \WebChangeDetector\WebChangeDetector_Timezone_Helper::utc_to_site_time( $auto_update_settings['auto_update_checks_to'] ?? '23:59', $utc_date );
+
+		$local          = ( new \DateTimeImmutable( '@' . $timestamp ) )->setTimezone( wp_timezone() );
+		$local_time_hm  = $local->format( 'H:i' );
+		$window_weekday = strtolower( $local->format( 'l' ) );
+
+		if ( $from_local <= $to_local ) {
+			// Window within one local day: e.g., 09:00 to 17:00.
+			$in_window = ( $local_time_hm >= $from_local && $local_time_hm <= $to_local );
+		} else {
+			// Window wrapping local midnight: e.g., 23:00 to 01:00.
+			$in_window = ( $local_time_hm >= $from_local || $local_time_hm <= $to_local );
+			if ( $local_time_hm <= $to_local ) {
+				// Post-midnight portion: this moment belongs to the previous local day's window.
+				$window_weekday = strtolower( $local->modify( '-1 day' )->format( 'l' ) );
+			}
+		}
+
+		return array(
+			'in_window'       => $in_window,
+			'weekday_allowed' => ! empty( $auto_update_settings[ 'auto_update_checks_' . $window_weekday ] ),
+			'weekday'         => $window_weekday,
+			'from_local'      => $from_local,
+			'to_local'        => $to_local,
+		);
+	}
+
+	/**
+	 * Check if auto-updates are allowed for today's weekday (site-local time).
 	 *
 	 * @param array $auto_update_settings Auto-update settings.
 	 * @return bool True if allowed today, false otherwise.
 	 */
 	private function is_allowed_today( $auto_update_settings ) {
-		// Use UTC for weekday check to match time window logic (which also uses UTC).
-		$todays_weekday = strtolower( gmdate( 'l' ) );
-		$weekday_key    = 'auto_update_checks_' . $todays_weekday;
+		$schedule = self::evaluate_schedule_window( time(), $auto_update_settings );
 
-		if ( ! array_key_exists( $weekday_key, $auto_update_settings ) ||
-			empty( $auto_update_settings[ $weekday_key ] ) ) {
+		if ( ! $schedule['weekday_allowed'] ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Canceling auto updates: ' . $todays_weekday . ' UTC is disabled.',
+				'Canceling auto updates: ' . $schedule['weekday'] . ' (site-local day of the window start) is disabled.',
 				'wp_maybe_auto_update',
 				'debug'
 			);
@@ -734,52 +875,32 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Check if current time is within the allowed time window.
+	 * Check if current time is within the allowed time window (site-local time).
 	 *
 	 * @param array $auto_update_settings Auto-update settings.
 	 * @return bool True if within time window, false otherwise.
 	 */
 	private function is_within_time_window( $auto_update_settings ) {
-		// Get the time window settings in UTC from API.
-		// All times are handled in UTC to avoid timezone conversion issues and DST bugs.
-		$from_time_utc = $auto_update_settings['auto_update_checks_from'];
-		$to_time_utc   = $auto_update_settings['auto_update_checks_to'];
+		$schedule = self::evaluate_schedule_window( time(), $auto_update_settings );
 
-		// Get current time in UTC (H:i format) for comparison.
-		$current_time_utc = gmdate( 'H:i' );
-
-		// Check if current time is within the allowed window.
-		// Handle both normal (09:00-17:00) and midnight wraparound (22:00-06:00) cases.
-		$is_in_window = false;
-
-		if ( $from_time_utc <= $to_time_utc ) {
-			// Normal case: e.g., 09:00 to 17:00.
-			$is_in_window = ( $current_time_utc >= $from_time_utc && $current_time_utc <= $to_time_utc );
-			if ( ! $is_in_window ) {
-				$this->log_time_window_violation( $from_time_utc, $to_time_utc, false );
-			}
-		} else {
-			// Midnight wraparound case: e.g., 22:00 to 06:00.
-			$is_in_window = ( $current_time_utc >= $from_time_utc || $current_time_utc <= $to_time_utc );
-			if ( ! $is_in_window ) {
-				$this->log_time_window_violation( $from_time_utc, $to_time_utc, true );
-			}
+		if ( ! $schedule['in_window'] ) {
+			$this->log_time_window_violation( $schedule['from_local'], $schedule['to_local'], $schedule['from_local'] > $schedule['to_local'] );
 		}
 
-		return $is_in_window;
+		return $schedule['in_window'];
 	}
 
 	/**
 	 * Log time window violation.
 	 *
-	 * @param string $from_time From time in UTC.
-	 * @param string $to_time To time in UTC.
+	 * @param string $from_time From time in site-local time.
+	 * @param string $to_time To time in site-local time.
 	 * @param bool   $spans_midnight Whether the time range spans midnight.
 	 */
 	private function log_time_window_violation( $from_time, $to_time, $spans_midnight ) {
 		$message = sprintf(
-			'Canceling auto updates: %s UTC is not between %s and %s UTC%s',
-			gmdate( 'H:i' ),
+			'Canceling auto updates: %s site time is not between %s and %s site time%s',
+			wp_date( 'H:i' ),
 			$from_time,
 			$to_time,
 			$spans_midnight ? ' (spans midnight)' : ''
@@ -790,23 +911,6 @@ class WebChangeDetector_Autoupdates {
 			'debug'
 		);
 	}
-
-	/**
-	 * Log the filter context for debugging.
-	 */
-	private function log_filter_context() {
-		if ( ! doing_filter( 'wp_maybe_auto_update' ) &&
-			! doing_filter( 'jetpack_pre_plugin_upgrade' ) &&
-			! doing_filter( 'jetpack_pre_theme_upgrade' ) &&
-			! doing_filter( 'jetpack_pre_core_upgrade' ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Not called from one of the known filters. Continuing anyway.',
-				'wp_maybe_auto_update',
-				'debug'
-			);
-		}
-	}
-
 
 	/**
 	 * Collect manual_group_ids of all sites that should participate in this
@@ -887,7 +991,7 @@ class WebChangeDetector_Autoupdates {
 	private function start_pre_update_screenshots() {
 
 		// Clear caches.
-		$this->clear_wordpress_caches();
+		WebChangeDetector_Cache_Clearer::clear_all();
 
 		// Resolve participating groups. Single-site: just this site's group;
 		// multisite-network: every enabled site's manual group in a single batch.
@@ -1010,6 +1114,10 @@ class WebChangeDetector_Autoupdates {
 	/**
 	 * Check if pre-update screenshots are ready.
 	 *
+	 * On every false return (still processing or transient API error) the single
+	 * caller, wp_maybe_auto_update() Step 2, reschedules the check and re-sets
+	 * the lock; this method only reports the status.
+	 *
 	 * @param array $pre_update_data Pre-update data with batch ID.
 	 * @return bool True if ready, false if still processing.
 	 * @throws \Exception If the API response is invalid.
@@ -1051,8 +1159,6 @@ class WebChangeDetector_Autoupdates {
 				'wp_maybe_auto_update',
 				'debug'
 			);
-			$this->reschedule( 'wp_maybe_auto_update' );
-			$this->set_lock();
 			return false;
 
 		} catch ( \Exception $e ) {
@@ -1071,8 +1177,6 @@ class WebChangeDetector_Autoupdates {
 				)
 			);
 
-			$this->reschedule( 'wp_maybe_auto_update' );
-			$this->set_lock();
 			return false;
 		}
 	}
@@ -1181,7 +1285,7 @@ class WebChangeDetector_Autoupdates {
 				$this->handle_no_updates_scenario();
 			} else {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-					'Update completion check: Lock still exists (age: ' . $lock_age . ' seconds). Updates arte still running.',
+					'Update completion check: Lock still exists (age: ' . $lock_age . ' seconds). Updates are still running.',
 					'check_update_completion',
 					'debug'
 				);
@@ -1256,13 +1360,24 @@ class WebChangeDetector_Autoupdates {
 
 	/** Reset next cron run of wp_version_check to our auto_update_checks_from.
 	 *
-	 * @param array $group_settings Array of group settings.
+	 * @param array $group_settings Array of group settings (auto_update_checks_* keys).
 	 * @return void
 	 */
-	public function wcd_save_update_group_settings( $group_settings ) {
+	public function wcd_save_update_group_settings( $group_settings = array() ) {
 		$auto_update_settings = self::get_auto_update_settings();
-		// We only need to setup the webhook if auto update checks are enabled.
-		if ( empty( $auto_update_settings['auto_update_checks_enabled'] ) ) {
+
+		// We only need to setup the webhook if auto update checks are enabled. Prefer the
+		// passed payload for the gate (fresh from the save/sync path); fall back to the
+		// cached settings otherwise. The WCD_AUTO_UPDATES_ENABLED define override always wins.
+		if ( is_array( $group_settings ) && array_key_exists( 'auto_update_checks_enabled', $group_settings ) ) {
+			$checks_enabled = ! empty( $group_settings['auto_update_checks_enabled'] );
+		} else {
+			$checks_enabled = ! empty( $auto_update_settings['auto_update_checks_enabled'] );
+		}
+		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
+			$checks_enabled = true;
+		}
+		if ( ! $checks_enabled ) {
 			return;
 		}
 
@@ -1345,28 +1460,46 @@ class WebChangeDetector_Autoupdates {
 		);
 
 		// Set the webhook to expire at the next run. Expires is the next and only run time for this webhook.
-		$expires_at = $should_next_run_gmt + MINUTE_IN_SECONDS;
+		$expires_at     = $should_next_run_gmt + MINUTE_IN_SECONDS;
+		$expires_at_gmt = gmdate( 'Y-m-d H:i:s', $expires_at );
 
-		// Check if we have a webhook for the single call. If so, we update it.
-		$webhook_id = get_transient( 'wcd_single_call_webhook_id' );
+		// Stored value is an array with the id and the last-sent url + expiry
+		// (legacy installs may still hold a plain id string).
+		$stored_webhook = get_transient( 'wcd_single_call_webhook_id' );
+		$webhook_id     = is_array( $stored_webhook ) ? ( $stored_webhook['id'] ?? '' ) : $stored_webhook;
+
 		if ( $webhook_id ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook already exists. Deleting it.', 'reschedule', 'debug' );
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_webhook_v2( $webhook_id, $webhook_url, gmdate( 'Y-m-d H:i:s', $expires_at ) );
-			if ( isset( $result['data']['id'] ) ) {
-				set_transient( 'wcd_single_call_webhook_id', $result['data']['id'], $expires_at - time() );
-			} else {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook update failed. Deleting it.', 'reschedule', 'debug' );
-				delete_transient( 'wcd_single_call_webhook_id' );
+			// This method runs hourly via the schedule sync, but url + expiry only change
+			// about once a day. Skip the API write when nothing changed.
+			if ( is_array( $stored_webhook )
+				&& ( $stored_webhook['url'] ?? '' ) === $webhook_url
+				&& ( $stored_webhook['expires_at'] ?? '' ) === $expires_at_gmt ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Daily webhook unchanged (same url and expiry). Skipping API update.', 'wcd_save_update_group_settings', 'debug' );
+				return;
 			}
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook already exists. Updating it.', 'wcd_save_update_group_settings', 'debug' );
+			$result = \WebChangeDetector\WebChangeDetector_API_V2::update_webhook_v2( $webhook_id, $webhook_url, $expires_at_gmt );
 		} else {
 			// Add a one-time webhook to trigger the wp_version_check cron.
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Creating webhook to trigger ' . WCD_TRIGGER_WP_VERSION_CHECK, 'reschedule', 'debug' );
-			$result = \WebChangeDetector\WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_single_call', gmdate( 'Y-m-d H:i:s', $expires_at ) );
-			if ( isset( $result['data']['id'] ) ) {
-				set_transient( 'wcd_single_call_webhook_id', $result['data']['id'], $expires_at - time() );
-			}
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Creating webhook to trigger ' . WCD_TRIGGER_WP_VERSION_CHECK, 'wcd_save_update_group_settings', 'debug' );
+			$result = \WebChangeDetector\WebChangeDetector_API_V2::add_webhook_v2( $webhook_url, 'wordpress_single_call', $expires_at_gmt );
 		}
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook result: ' . wp_json_encode( $result ), 'reschedule', 'debug' );
+
+		if ( isset( $result['data']['id'] ) ) {
+			set_transient(
+				'wcd_single_call_webhook_id',
+				array(
+					'id'         => $result['data']['id'],
+					'url'        => $webhook_url,
+					'expires_at' => $expires_at_gmt,
+				),
+				$expires_at - time()
+			);
+		} else {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook create/update failed. Clearing stored webhook id.', 'wcd_save_update_group_settings', 'debug' );
+			delete_transient( 'wcd_single_call_webhook_id' );
+		}
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Webhook result: ' . wp_json_encode( $result ), 'wcd_save_update_group_settings', 'debug' );
 	}
 
 	/** Starting the pre-update screenshots before auto-updates are started.
@@ -1417,7 +1550,7 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 3: Check cooldown period.
 		if ( $this->is_within_cooldown_period() ) {
-			$this->set_lock();
+			$this->set_lock_if_not_updating();
 			return;
 		}
 
@@ -1429,13 +1562,13 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 5: Check if updates are allowed today.
 		if ( ! $this->is_allowed_today( $auto_update_settings ) ) {
-			$this->set_lock();
+			$this->set_lock_if_not_updating();
 			return;
 		}
 
 		// Step 6: Check if current time is within allowed window.
 		if ( ! $this->is_within_time_window( $auto_update_settings ) ) {
-			$this->set_lock();
+			$this->set_lock_if_not_updating();
 			return;
 		}
 
@@ -1449,14 +1582,35 @@ class WebChangeDetector_Autoupdates {
 			'debug'
 		);
 
-		// Step 7: Log filter context (informational only).
-		$this->log_filter_context();
-
 		// Step 8: Handle pre-update screenshots.
 
 		if ( false === $wcd_pre_update_data ) {
 
-			// Step 9: Check if there are actually updates available.
+			// Step 9: Skip when WP automatic updates are disabled (e.g. by a hosting
+			// tool via the 'automatic_updater_disabled' filter or constant). Core's
+			// updater would exit immediately, so pre/post screenshots would only
+			// produce pointless "no changes" results.
+			$wp_updates_status = WebChangeDetector_Autoupdate_Guard::get_status();
+			if ( $wp_updates_status['effective_disabled'] ) {
+				$this->log_auto_update_error(
+					'wp_updates_disabled',
+					array(
+						'cause'           => $wp_updates_status['cause'],
+						'override_active' => WebChangeDetector_Autoupdate_Guard::is_override_enabled(),
+					)
+				);
+
+				// Clear any stuck state since WP will not run updates. Also removes the
+				// minute-webhook and the fallback check with it (webhook lifecycle is
+				// tied to the pre/post state lifecycle); all deletes are no-op safe.
+				$this->cleanup_auto_update_run();
+
+				// Set lock to prevent checking again too soon.
+				$this->set_lock();
+				return;
+			}
+
+			// Step 10: Check if there are actually updates available.
 			$available_updates = $this->check_for_available_updates();
 
 			// If we don't have updates to install, we remove all options and set the lock.
@@ -1467,11 +1621,10 @@ class WebChangeDetector_Autoupdates {
 					'info'
 				);
 
-				// Clear any stuck state since there's nothing to update.
-				delete_option( WCD_PRE_AUTO_UPDATE );
-				delete_option( WCD_POST_AUTO_UPDATE );
-				delete_option( WCD_AUTO_UPDATES_RUNNING );
-				delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
+				// Clear any stuck state since there's nothing to update. Also removes the
+				// minute-webhook and the fallback check with it (webhook lifecycle is
+				// tied to the pre/post state lifecycle); all deletes are no-op safe.
+				$this->cleanup_auto_update_run();
 
 				// Set lock to prevent checking again too soon.
 				$this->set_lock();
@@ -1500,128 +1653,21 @@ class WebChangeDetector_Autoupdates {
 
 	/** Send the change detection mail.
 	 *
+	 * Assembles the data, renders the mail body from the auto-update-mail partial
+	 * and sends it via wp_mail().
+	 *
 	 * @param array $post_sc_option Data about the post sc.
 	 * @return void
 	 */
 	public function send_change_detection_mail( $post_sc_option ) {
 		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-		$comparisons      = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
-		$batch_ai_summary = $comparisons['data'][0]['batch']['ai_summary']['summary'] ?? '';
-		$mail_body        = '<style>
-								table {
-									border: 1px solid #ccc;
-									width: 100%;
-								}
-								th, td {
-								  padding: 10px;
-								  border-top: 1px solid #aaa;
-								}
-								tr:nth-child(odd),
-								 {
-									background: #F0F0F1;
-								}
-								th {
-									background: #DCE3ED;
-								}
-								</style>
-								<div style="width: 800px; margin: 0 auto;">';
+		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
 
-		$mail_body .= '<p>Howdy again, we checked your website for visual changes during the WP auto updates with WebChange Detector. Here are the results:</p>';
-
-		if ( ! empty( $batch_ai_summary ) ) {
-			$mail_body .= '<div style="background: #f0f4ff; border-left: 4px solid #4a6cf7; padding: 15px; margin: 15px 0;">
-								<strong>AI Summary:</strong><br>
-								' . esc_html( $batch_ai_summary ) . '
-							</div>';
+		// Validate the response before using it. api_v2() returns plain strings on failure.
+		if ( ! is_array( $comparisons ) || ! isset( $comparisons['data'] ) || ! is_array( $comparisons['data'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Invalid API response for comparisons. Skipping the change detection mail. Results are still available in the app.', 'send_change_detection_mail', 'error' );
+			return;
 		}
-
-		if ( count( $comparisons['data'] ) ) {
-			$no_difference_rows   = '';
-			$with_difference_rows = '';
-
-			foreach ( $comparisons['data'] as $comparison ) {
-				$ai_status = $comparison['ai_verification_status'] ?? '';
-				$ai_result = $comparison['ai_verification_result'] ?? array();
-				$ai_cell   = '<td></td>';
-
-				if ( ! $comparison['difference_percent'] ) {
-					$ai_cell = '<td style="color: #888;">' . esc_html__( 'No difference', 'webchangedetector' ) . '</td>';
-				} elseif ( 'verified' === $ai_status && ! empty( $ai_result['summary'] ) ) {
-					$console_cat = $ai_result['console_analysis']['category'] ?? null;
-					$has_alert   = ! empty( $ai_result['alerts'] ) || 'alert' === $console_cat;
-					$has_unsure  = ! empty( $ai_result['not_sure'] ) || 'not_sure' === $console_cat;
-					$overall     = $has_alert ? 'alert' : ( $has_unsure ? 'not_sure' : 'all_good' );
-					$badge_map   = array(
-						'alert'    => array(
-							'label' => 'Alert',
-							'color' => '#c0392b',
-						),
-						'not_sure' => array(
-							'label' => 'Unsure',
-							'color' => '#e67e22',
-						),
-						'all_good' => array(
-							'label' => 'OK',
-							'color' => '#27ae60',
-						),
-					);
-					$badge       = $badge_map[ $overall ];
-					$summary_raw = $ai_result['summary'];
-					if ( mb_strlen( $summary_raw ) > 120 ) {
-						$summary_raw = mb_substr( $summary_raw, 0, 120 ) . '...';
-					}
-					$ai_cell = '<td>
-						<span style="background:' . esc_attr( $badge['color'] ) . '; color:#fff; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold;">' . esc_html( $badge['label'] ) . '</span>
-						<span style="font-size: 13px; margin-left: 6px;">' . esc_html( $summary_raw ) . '</span>
-					</td>';
-				}
-
-				$row =
-					'<tr>
-						<td>' . esc_html( $comparison['url'] ) . '</td>
-						<td>' . esc_html( $comparison['device'] ) . '</td>
-						<td>' . esc_html( $comparison['difference_percent'] ) . ' %</td>
-						<td><a href="' . esc_url( $comparison['public_link'] ) . '">' . esc_html__( 'See changes', 'webchangedetector' ) . '</a></td>
-						' . $ai_cell . '
-					</tr>';
-				if ( ! $comparison['difference_percent'] ) {
-					$no_difference_rows .= $row;
-				} else {
-					$with_difference_rows .= $row;
-				}
-			}
-			$mail_body .= '<div style="width: 300px; margin: 20px auto; text-align: center; padding: 30px; background: #DCE3ED;">';
-			if ( empty( $with_difference_rows ) ) {
-				$mail_body .= '<div style="padding: 10px;background: green; color: #fff; border-radius: 20px; font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; transform: scaleX(-1) rotate(-35deg);">L</div>
-									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'Checks Passed', 'webchangedetector' ) . '</div>';
-			} else {
-				$mail_body .= '<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
-									<div style="font-size: 18px; padding-top: 20px;">' . esc_html__( 'We found changes', 'webchangedetector' ) . '<br>' . esc_html__( 'Please check the change detections.', 'webchangedetector' ) . '</div>';
-			}
-			$mail_body .= '</div>';
-
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks with differences', 'webchangedetector' ) . '</strong></div>';
-			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
-			if ( ! empty( $with_difference_rows ) ) {
-				$mail_body .= $with_difference_rows;
-			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
-			}
-			$mail_body .= '</table>';
-
-			$mail_body .= '<div style="margin: 20px 0 10px 0"><strong>' . esc_html__( 'Checks without differences', 'webchangedetector' ) . '</strong></div>';
-			$mail_body .= '<table><tr><th>' . esc_html__( 'URL', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Device', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change in %', 'webchangedetector' ) . '</th><th>' . esc_html__( 'Change Detection Page', 'webchangedetector' ) . '</th><th>' . esc_html__( 'AI Analysis', 'webchangedetector' ) . '</th></tr>';
-			if ( ! empty( $no_difference_rows ) ) {
-				$mail_body .= $no_difference_rows;
-			} else {
-				$mail_body .= '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
-			}
-			$mail_body .= '</table>';
-		} else {
-			$mail_body .= esc_html__( 'Sorry, there were no comparisons. Please check your settings in your WebChange Detector Plugin.', 'webchangedetector' );
-		}
-
-		$mail_body .= '<div style="margin: 20px 0">' . esc_html__( 'You can find all change detections and settings for the checks in your wp-admin dashboard of your website.', 'webchangedetector' ) . '<br><br>' . esc_html__( 'Your WebChange Detector team', 'webchangedetector' ) . '</div>';
 
 		$auto_update_settings = self::get_auto_update_settings();
 		$to                   = '';
@@ -1635,6 +1681,18 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		$comparison_rows  = $comparisons['data'];
+		$batch_ai_summary = $comparison_rows[0]['batch']['ai_summary']['summary'] ?? '';
+
+		// finally guarantees the output buffer is closed even when the include throws
+		// (the caller catches the Throwable; a leaked buffer would swallow later output).
+		ob_start();
+		try {
+			include WCD_PLUGIN_DIR . 'admin/partials/templates/auto-update-mail.php';
+		} finally {
+			$mail_body = ob_get_clean();
+		}
+
 		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sending Mail with differences', 'send_change_detection_mail', 'debug' );
@@ -1643,25 +1701,39 @@ class WebChangeDetector_Autoupdates {
 
 	/** Get the auto-update settings.
 	 *
-	 * @param bool $force_refresh Force refresh from API, bypassing static cache.
-	 * @return false|mixed|null
+	 * @param bool $force_refresh Force refresh from API, bypassing the cache.
+	 * @return array
 	 */
 	public static function get_auto_update_settings( $force_refresh = false ) {
-		static $auto_update_settings;
-
 		// Return cached version unless force refresh is requested.
-		if ( $auto_update_settings && ! $force_refresh ) {
-			return $auto_update_settings;
+		if ( ! empty( self::$auto_update_settings_cache ) && ! $force_refresh ) {
+			return self::$auto_update_settings_cache;
 		}
 
-		$wcd                  = new WebChangeDetector_Admin();
-		$auto_update_settings = $wcd->settings_handler->get_website_details( $force_refresh )['auto_update_settings'] ?? array();
+		$wcd = new WebChangeDetector_Admin();
+		return self::cache_auto_update_settings( $wcd->settings_handler->get_website_details( $force_refresh )['auto_update_settings'] ?? array() );
+	}
+
+	/** Store auto-update settings in the per-request cache.
+	 *
+	 * Lets the hourly sync refresh the cache from already-fetched website details
+	 * instead of triggering a second forced API call via get_auto_update_settings( true ).
+	 *
+	 * @param array $settings Auto-update settings as returned by the API.
+	 * @return array The cached settings (with the define override applied).
+	 */
+	private static function cache_auto_update_settings( $settings ) {
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
 
 		// Enable auto-update checks if the defines are set.
 		if ( defined( 'WCD_AUTO_UPDATES_ENABLED' ) && true === WCD_AUTO_UPDATES_ENABLED ) {
-			$auto_update_settings['auto_update_checks_enabled'] = true;
+			$settings['auto_update_checks_enabled'] = true;
 		}
-		return $auto_update_settings;
+
+		self::$auto_update_settings_cache = $settings;
+		return $settings;
 	}
 
 	/**
@@ -1706,15 +1778,16 @@ class WebChangeDetector_Autoupdates {
 			if ( empty( $api_auto_update_settings ) ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No auto-update settings from API, skipping sync', 'sync_auto_update_schedule_from_api', 'debug' );
 			} else {
-				// Clear the static cache in get_auto_update_settings.
-				self::get_auto_update_settings( true );
+				// Refresh the settings cache from the already-fetched details; previously
+				// this was a second forced API call for the same data.
+				self::cache_auto_update_settings( $api_auto_update_settings );
 
 				// Update the schedule using existing method (this reschedules the crons).
 				// The wcd_save_update_group_settings method already handles everything:.
 				// - Reschedules wp_version_check.
 				// - Reschedules wcd_wp_version_check.
 				// - Sets the correct timeframe.
-				$this->wcd_save_update_group_settings( $api_auto_update_settings ); // true = skip API save.
+				$this->wcd_save_update_group_settings( $api_auto_update_settings );
 
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 					'Auto-update schedule synced with API settings',
@@ -1766,7 +1839,8 @@ class WebChangeDetector_Autoupdates {
 	 * @return array List of cleaned stuck processes for logging
 	 */
 	private function check_and_clean_all_stuck_processes() {
-		$stuck_processes = array();
+		$stuck_processes      = array();
+		$cleaned_update_state = false;
 
 		// Define timeout thresholds (in seconds).
 		$pre_update_timeout     = 2 * HOUR_IN_SECONDS; // 2 hours for pre-update screenshots.
@@ -1797,7 +1871,8 @@ class WebChangeDetector_Autoupdates {
 					);
 					delete_option( WCD_PRE_AUTO_UPDATE );
 					delete_option( WCD_AUTO_UPDATES_RUNNING );
-					$stuck_processes[] = 'pre-update (age: ' . $age_in_seconds . 's)';
+					$cleaned_update_state = true;
+					$stuck_processes[]    = 'pre-update (age: ' . $age_in_seconds . 's)';
 				}
 			}
 		}
@@ -1825,8 +1900,22 @@ class WebChangeDetector_Autoupdates {
 						'warning'
 					);
 					delete_option( WCD_POST_AUTO_UPDATE );
-					$stuck_processes[] = 'post-update (age: ' . $age_in_seconds . 's)';
+					$cleaned_update_state = true;
+					$stuck_processes[]    = 'post-update (age: ' . $age_in_seconds . 's)';
 				}
+			}
+		}
+
+		// The minute-webhook only serves the pre/post-update state. When we clean that state, the webhook
+		// (and its stored id) must go too. Otherwise reschedule() skips webhook creation against a stale id forever.
+		if ( $cleaned_update_state ) {
+			$webhook_id = get_option( WCD_WORDPRESS_CRON );
+			if ( $webhook_id ) {
+				// The webhook may already be expired or deleted on the API. We ignore the response; deleting the option is what matters.
+				\WebChangeDetector\WebChangeDetector_API_V2::delete_webhook_v2( $webhook_id );
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Deleted minute-webhook ' . $webhook_id . ' together with stuck auto-update state.', 'check_and_clean_all_stuck_processes', 'debug' );
+				delete_option( WCD_WORDPRESS_CRON );
+				$stuck_processes[] = 'minute webhook';
 			}
 		}
 
@@ -1951,7 +2040,7 @@ class WebChangeDetector_Autoupdates {
 
 			if ( in_array( $wcd_action, $authorized_actions, true ) && ! empty( $key ) ) {
 				$webhook_key = $this->get_or_create_webhook_key();
-				if ( ! empty( $webhook_key ) && $key === $webhook_key ) {
+				if ( ! empty( $webhook_key ) && hash_equals( $webhook_key, $key ) ) {
 					$is_authorized = true;
 				}
 			}
@@ -1999,9 +2088,6 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_WORDPRESS_CRON' ) ) {
 			define( 'WCD_WORDPRESS_CRON', 'wcd_wordpress_cron' );
 		}
-		if ( ! defined( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES' ) ) {
-			define( 'WCD_LAST_SUCCESSFULL_AUTO_UPDATES', 'wcd_last_successfull_auto_updates' );
-		}
 		if ( ! defined( 'WCD_LAST_AUTO_UPDATE_CHECK_TIME' ) ) {
 			define( 'WCD_LAST_AUTO_UPDATE_CHECK_TIME', 'wcd_last_auto_update_check_time' );
 		}
@@ -2029,9 +2115,6 @@ class WebChangeDetector_Autoupdates {
 		if ( ! defined( 'WCD_ALLOWANCES' ) ) {
 			define( 'WCD_ALLOWANCES', 'wcd_allowances' );
 		}
-		if ( ! defined( 'WCD_HOUR_IN_SECONDS' ) ) {
-			define( 'WCD_HOUR_IN_SECONDS', 3600 );
-		}
 		if ( ! defined( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES' ) ) {
 			define( 'WCD_AUTO_UPDATE_COMPARISON_BATCHES', 'wcd_auto_update_comparison_batches' );
 		}
@@ -2057,354 +2140,6 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Clear all known WordPress cache plugins and systems.
-	 *
-	 * This method clears caches from various popular caching plugins and systems
-	 * to ensure fresh screenshots are taken during the auto-update process.
-	 *
-	 * @return void
-	 */
-	private function clear_wordpress_caches() {
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Clearing all WordPress caches before taking screenshots.', 'clear_wordpress_caches', 'debug' );
-
-		$cleared_caches = array();
-		$failed_caches  = array();
-
-		// WP Rocket.
-		try {
-			if ( function_exists( '\rocket_clean_domain' ) ) {
-				rocket_clean_domain();
-				if ( function_exists( '\rocket_clean_minify' ) ) {
-					rocket_clean_minify();
-				}
-				$cleared_caches[] = 'WP Rocket';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP Rocket: ' . $e->getMessage();
-		}
-
-		// W3 Total Cache.
-		try {
-			if ( function_exists( '\w3tc_flush_all' ) ) {
-				w3tc_flush_all();
-				$cleared_caches[] = 'W3 Total Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'W3 Total Cache: ' . $e->getMessage();
-		}
-
-		// LiteSpeed Cache.
-		try {
-			if ( defined( 'LSCWP_VERSION' ) ) {
-				do_action( 'litespeed_purge_all' );
-				do_action( 'litespeed_purge_cssjs' );
-				do_action( 'litespeed_purge_object' );
-				$cleared_caches[] = 'LiteSpeed Cache';
-			}
-			if ( class_exists( '\LiteSpeed_Cache_API' ) && method_exists( '\LiteSpeed_Cache_API', 'purge_all' ) ) {
-				\LiteSpeed_Cache_API::purge_all();
-				if ( ! in_array( 'LiteSpeed Cache', $cleared_caches, true ) ) {
-					$cleared_caches[] = 'LiteSpeed Cache';
-				}
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'LiteSpeed Cache: ' . $e->getMessage();
-		}
-
-		// WP Super Cache.
-		try {
-			if ( function_exists( '\wp_cache_clear_cache' ) ) {
-				wp_cache_clear_cache( true );
-				$cleared_caches[] = 'WP Super Cache';
-			} elseif ( function_exists( '\wp_cache_post_change' ) ) {
-				wp_cache_post_change( '' );
-				$cleared_caches[] = 'WP Super Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP Super Cache: ' . $e->getMessage();
-		}
-
-		// WP Fastest Cache.
-		try {
-			if ( function_exists( '\wpfc_clear_all_cache' ) ) {
-				wpfc_clear_all_cache( true );
-				$cleared_caches[] = 'WP Fastest Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP Fastest Cache: ' . $e->getMessage();
-		}
-
-		// Cache Enabler.
-		try {
-			if ( class_exists( '\Cache_Enabler' ) && method_exists( '\Cache_Enabler', 'clear_total_cache' ) ) {
-				\Cache_Enabler::clear_total_cache();
-				$cleared_caches[] = 'Cache Enabler';
-			}
-			// New Cache Enabler (v1.5.0+).
-			if ( class_exists( '\Cache_Enabler_Engine' ) && method_exists( '\Cache_Enabler_Engine', 'clear_cache' ) ) {
-				\Cache_Enabler_Engine::clear_cache();
-				if ( ! in_array( 'Cache Enabler', $cleared_caches, true ) ) {
-					$cleared_caches[] = 'Cache Enabler';
-				}
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Cache Enabler: ' . $e->getMessage();
-		}
-
-		// Comet Cache.
-		try {
-			if ( class_exists( '\comet_cache' ) && method_exists( '\comet_cache', 'clear' ) ) {
-				\comet_cache::clear();
-				$cleared_caches[] = 'Comet Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Comet Cache: ' . $e->getMessage();
-		}
-
-		// Swift Performance.
-		try {
-			if ( class_exists( '\Swift_Performance_Cache' ) && method_exists( '\Swift_Performance_Cache', 'clear_all_cache' ) ) {
-				\Swift_Performance_Cache::clear_all_cache();
-				$cleared_caches[] = 'Swift Performance';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Swift Performance: ' . $e->getMessage();
-		}
-
-		// Borlabs Cache.
-		try {
-			if ( function_exists( '\borlabsCacheClearCache' ) ) {
-				borlabsCacheClearCache();
-				$cleared_caches[] = 'Borlabs Cache';
-			}
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.ValidHookName.NotLowercase -- Third-party hook name.
-			if ( has_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache' ) ) {
-				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.ValidHookName.NotLowercase -- Third-party hook name.
-				do_action( 'borlabsCookie/thirdPartyCacheClearer/shouldClearCache', true );
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Borlabs Cache: ' . $e->getMessage();
-		}
-
-		// NitroPack.
-		try {
-			if ( function_exists( '\nitropack_reset_cache' ) ) {
-				nitropack_reset_cache();
-				$cleared_caches[] = 'NitroPack';
-			} elseif ( function_exists( '\nitropack_purge_cache' ) ) {
-				nitropack_purge_cache();
-				$cleared_caches[] = 'NitroPack';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'NitroPack: ' . $e->getMessage();
-		}
-
-		// Redis Object Cache.
-		try {
-			global $wp_object_cache;
-			if ( $wp_object_cache && method_exists( $wp_object_cache, 'flush' ) ) {
-				$wp_object_cache->flush();
-				$cleared_caches[] = 'Redis Object Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Redis Object Cache: ' . $e->getMessage();
-		}
-
-		// Object Cache Pro.
-		try {
-			if ( class_exists( '\Object_Cache_Pro' ) ) {
-				global $wp_object_cache;
-				if ( method_exists( $wp_object_cache, 'flushRuntime' ) ) {
-					$wp_object_cache->flushRuntime();
-				}
-				if ( method_exists( $wp_object_cache, 'flushBlog' ) ) {
-					$wp_object_cache->flushBlog();
-				}
-				$cleared_caches[] = 'Object Cache Pro';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Object Cache Pro: ' . $e->getMessage();
-		}
-
-		// SG Optimizer.
-		try {
-			if ( function_exists( '\sg_cachepress_purge_cache' ) ) {
-				sg_cachepress_purge_cache();
-				$cleared_caches[] = 'SG Optimizer';
-			}
-			if ( has_action( 'siteground_optimizer_flush_cache' ) ) {
-				do_action( 'siteground_optimizer_flush_cache' );
-				if ( ! in_array( 'SG Optimizer', $cleared_caches, true ) ) {
-					$cleared_caches[] = 'SG Optimizer';
-				}
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'SG Optimizer: ' . $e->getMessage();
-		}
-
-		// WP-Optimize.
-		try {
-			if ( function_exists( '\wpo_cache_flush' ) ) {
-				wpo_cache_flush();
-				$cleared_caches[] = 'WP-Optimize';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP-Optimize: ' . $e->getMessage();
-		}
-
-		// Autoptimize.
-		try {
-			if ( class_exists( '\autoptimizeCache' ) && method_exists( '\autoptimizeCache', 'clearall' ) ) {
-				\autoptimizeCache::clearall();
-				$cleared_caches[] = 'Autoptimize';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Autoptimize: ' . $e->getMessage();
-		}
-
-		// Hummingbird.
-		try {
-			if ( did_action( 'plugins_loaded' ) ) {
-				do_action( 'wphb_clear_page_cache' );
-				$cleared_caches[] = 'Hummingbird';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Hummingbird: ' . $e->getMessage();
-		}
-
-		// Breeze (Cloudways).
-		try {
-			do_action( 'breeze_clear_all_cache' );
-			$cleared_caches[] = 'Breeze';
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Breeze: ' . $e->getMessage();
-		}
-
-		// Kinsta Cache.
-		try {
-			if ( class_exists( '\Kinsta\Cache' ) && ! empty( $kinsta_cache ) ) {
-				$kinsta_cache->kinsta_cache_purge->purge_complete_caches();
-				$cleared_caches[] = 'Kinsta Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Kinsta Cache: ' . $e->getMessage();
-		}
-
-		// Pagely Cache.
-		try {
-			if ( class_exists( '\PagelyCachePurge' ) && method_exists( '\PagelyCachePurge', 'purgeAll' ) ) {
-				\PagelyCachePurge::purgeAll();
-				$cleared_caches[] = 'Pagely Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Pagely Cache: ' . $e->getMessage();
-		}
-
-		// WP Engine System.
-		try {
-			if ( class_exists( '\WpeCommon' ) && method_exists( '\WpeCommon', 'purge_memcached' ) ) {
-				\WpeCommon::purge_memcached();
-				$cleared_caches[] = 'WP Engine Memcached';
-			}
-			if ( class_exists( '\WpeCommon' ) && method_exists( '\WpeCommon', 'purge_varnish_cache' ) ) {
-				\WpeCommon::purge_varnish_cache();
-				$cleared_caches[] = 'WP Engine Varnish';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP Engine: ' . $e->getMessage();
-		}
-
-		// Cloudflare.
-		try {
-			if ( class_exists( '\CF\WordPress\Hooks' ) ) {
-				$cloudflare = new \CF\WordPress\Hooks();
-				if ( method_exists( $cloudflare, 'purgeCacheEverything' ) ) {
-					$cloudflare->purgeCacheEverything();
-					$cleared_caches[] = 'Cloudflare';
-				}
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Cloudflare: ' . $e->getMessage();
-		}
-
-		// Flying Press.
-		try {
-			if ( class_exists( '\FlyingPress' ) && method_exists( '\FlyingPress', 'purge_cached_pages' ) ) {
-				\FlyingPress::purge_cached_pages();
-				$cleared_caches[] = 'Flying Press';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Flying Press: ' . $e->getMessage();
-		}
-
-		// WP Cloudflare Super Page Cache.
-		try {
-			if ( class_exists( '\SW_CLOUDFLARE_PAGECACHE' ) && method_exists( '\SW_CLOUDFLARE_PAGECACHE', 'cloudflare_purge_cache' ) ) {
-				$cf_cache = new \SW_CLOUDFLARE_PAGECACHE();
-				$cf_cache->cloudflare_purge_cache();
-				$cleared_caches[] = 'WP Cloudflare Super Page Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP Cloudflare Super Page Cache: ' . $e->getMessage();
-		}
-
-		// Perfmatters.
-		try {
-			if ( function_exists( '\perfmatters_clear_page_cache' ) ) {
-				perfmatters_clear_page_cache();
-				$cleared_caches[] = 'Perfmatters';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'Perfmatters: ' . $e->getMessage();
-		}
-
-		// WP-Rocket Cloudflare Add-on.
-		try {
-			if ( function_exists( '\rocket_cloudflare_purge_cache' ) ) {
-				rocket_cloudflare_purge_cache();
-				$cleared_caches[] = 'WP-Rocket Cloudflare Add-on';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WP-Rocket Cloudflare Add-on: ' . $e->getMessage();
-		}
-
-		// WordPress Core Object Cache.
-		try {
-			if ( function_exists( '\wp_cache_flush' ) ) {
-				wp_cache_flush();
-				$cleared_caches[] = 'WordPress Core Object Cache';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WordPress Core Object Cache: ' . $e->getMessage();
-		}
-
-		// WordPress Transients.
-		try {
-			if ( function_exists( '\wc_delete_product_transients' ) ) {
-				wc_delete_product_transients();
-				$cleared_caches[] = 'WooCommerce Transients';
-			}
-			if ( function_exists( '\delete_expired_transients' ) ) {
-				delete_expired_transients( true );
-				$cleared_caches[] = 'Expired Transients';
-			}
-		} catch ( \Exception $e ) {
-			$failed_caches[] = 'WordPress Transients: ' . $e->getMessage();
-		}
-
-		// Log summary.
-		if ( ! empty( $cleared_caches ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Successfully cleared caches: ' . implode( ', ', $cleared_caches ), 'clear_wordpress_caches', 'debug' );
-		}
-		if ( ! empty( $failed_caches ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Failed to clear some caches: ' . implode( '; ', $failed_caches ), 'clear_wordpress_caches', 'debug' );
-		}
-		if ( empty( $cleared_caches ) && empty( $failed_caches ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No cache plugins detected or cleared.', 'clear_wordpress_caches', 'debug' );
-		}
-	}
-
-	/**
 	 * Save auto-update results to options for frontend display.
 	 *
 	 * @param array       $update_results The update results from WordPress.
@@ -2426,16 +2161,15 @@ class WebChangeDetector_Autoupdates {
 				$history = array();
 			}
 
-			// Parse results with error handling.
-			$parsed_updates = $this->parse_update_results( $update_results );
-			$summary        = $this->calculate_summary( $update_results );
+			// Parse results and summary in a single pass.
+			$results = $this->parse_update_results( $update_results );
 
 			// Create new entry with parsed results.
 			$new_entry = array(
 				'timestamp' => time(),
 				'batch_id'  => $batch_id_post_update,
-				'updates'   => $parsed_updates,
-				'summary'   => $summary,
+				'updates'   => $results['updates'],
+				'summary'   => $results['summary'],
 			);
 
 			// Add new entry to beginning of array.
@@ -2469,7 +2203,7 @@ class WebChangeDetector_Autoupdates {
 	 * configured auto-updates didn't execute.
 	 *
 	 * @since 4.0.2
-	 * @param string $error_type Error type: 'skip_cooldown' or 'skip_error'.
+	 * @param string $error_type Error type: 'skip_cooldown', 'skip_error' or 'wp_updates_disabled'.
 	 * @param array  $details    Error details (context-specific information).
 	 * @return void
 	 */
@@ -2514,230 +2248,28 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Parse WordPress update results into structured format.
-	 * Based on WordPress core structure from class-wp-automatic-updater.php
+	 * Parse WordPress update results into structured entries plus summary counts.
+	 *
+	 * Single pass over the raw results produced by WP_Automatic_Updater
+	 * (class-wp-automatic-updater.php): each entry is an object with ->item,
+	 * ->result and, for plugins/themes, ->name. The pre-update versions are read
+	 * ONCE from WCD_PRE_AUTO_UPDATE, which is guaranteed to still exist here
+	 * (post-queue cleanup deletes it later).
 	 *
 	 * @param array $update_results Raw update results from WordPress.
-	 * @return array Parsed update results.
+	 * @return array {
+	 *     Parsed results.
+	 *
+	 *     @type array $updates Parsed entries: core (array|null), plugins (array[]), themes (array[]).
+	 *     @type array $summary Counts: total_attempted, successful, failed, status.
+	 * }
 	 */
 	private function parse_update_results( $update_results ) {
-		$parsed = array(
+		$parsed  = array(
 			'core'    => null,
 			'plugins' => array(),
 			'themes'  => array(),
 		);
-
-		try {
-			// Parse core updates.
-			if ( isset( $update_results['core'] ) && is_array( $update_results['core'] ) ) {
-				foreach ( $update_results['core'] as $core_update ) {
-					try {
-						// Safely check if this is an object.
-						if ( ! is_object( $core_update ) ) {
-							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-								'Core update entry is not an object: ' . wp_json_encode( $core_update ),
-								'parse_update_results',
-								'warning'
-							);
-							continue;
-						}
-
-						$core_data = array(
-							'attempted'    => true,
-							'success'      => false,
-							'from_version' => 'unknown',
-							'to_version'   => 'unknown',
-							'error'        => null,
-						);
-
-						// Safely get versions.
-						if ( isset( $core_update->item ) && is_object( $core_update->item ) ) {
-							$core_data['from_version'] = property_exists( $core_update->item, 'current' ) ? $core_update->item->current : 'unknown';
-							$core_data['to_version']   = property_exists( $core_update->item, 'version' ) ? $core_update->item->version : 'unknown';
-						}
-
-						// Check result.
-						if ( property_exists( $core_update, 'result' ) ) {
-							if ( is_wp_error( $core_update->result ) ) {
-								$core_data['success'] = false;
-								$core_data['error']   = $core_update->result->get_error_message();
-							} else {
-								$core_data['success'] = true;
-							}
-						}
-
-						$parsed['core'] = $core_data;
-					} catch ( \Exception $e ) {
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-							'Error parsing core update: ' . $e->getMessage(),
-							'parse_update_results',
-							'error'
-						);
-					}
-				}
-			}
-
-			// Parse plugin updates.
-			if ( isset( $update_results['plugin'] ) && is_array( $update_results['plugin'] ) ) {
-				foreach ( $update_results['plugin'] as $plugin_update ) {
-					try {
-						// Safely check if this is an object.
-						if ( ! is_object( $plugin_update ) ) {
-							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-								'Plugin update entry is not an object: ' . wp_json_encode( $plugin_update ),
-								'parse_update_results',
-								'warning'
-							);
-							continue;
-						}
-
-						$plugin_data = array(
-							'slug'         => 'unknown',
-							'name'         => 'Unknown Plugin',
-							'from_version' => '',
-							'to_version'   => 'unknown',
-							'success'      => false,
-							'error'        => null,
-						);
-
-						// Safely get plugin info.
-						if ( property_exists( $plugin_update, 'name' ) ) {
-							$plugin_data['name'] = $plugin_update->name;
-						}
-
-						if ( isset( $plugin_update->item ) && is_object( $plugin_update->item ) ) {
-							if ( property_exists( $plugin_update->item, 'slug' ) ) {
-								$plugin_data['slug'] = $plugin_update->item->slug;
-							}
-							if ( property_exists( $plugin_update->item, 'new_version' ) ) {
-								$plugin_data['to_version'] = $plugin_update->item->new_version;
-							}
-
-							// Try to get the pre-update version from stored data.
-							$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-
-							if ( $pre_update_data && isset( $pre_update_data['versions']['plugins'] ) && property_exists( $plugin_update->item, 'plugin' ) ) {
-								$plugin_key = $plugin_update->item->plugin;
-								if ( isset( $pre_update_data['versions']['plugins'][ $plugin_key ] ) ) {
-									$plugin_data['from_version'] = $pre_update_data['versions']['plugins'][ $plugin_key ];
-								} else {
-									$plugin_data['from_version'] = 'n/a';
-								}
-							} else {
-								$plugin_data['from_version'] = 'n/a';
-							}
-						}
-
-						// Check result.
-						if ( property_exists( $plugin_update, 'result' ) ) {
-							if ( is_wp_error( $plugin_update->result ) ) {
-								$plugin_data['success'] = false;
-								$plugin_data['error']   = $plugin_update->result->get_error_message();
-							} else {
-								$plugin_data['success'] = true;
-							}
-						}
-
-						$parsed['plugins'][] = $plugin_data;
-					} catch ( \Exception $e ) {
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-							'Error parsing plugin update: ' . $e->getMessage(),
-							'parse_update_results',
-							'error'
-						);
-					}
-				}
-			}
-
-			// Parse theme updates.
-			if ( isset( $update_results['theme'] ) && is_array( $update_results['theme'] ) ) {
-				foreach ( $update_results['theme'] as $theme_update ) {
-					try {
-						// Safely check if this is an object.
-						if ( ! is_object( $theme_update ) ) {
-							\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-								'Theme update entry is not an object: ' . wp_json_encode( $theme_update ),
-								'parse_update_results',
-								'warning'
-							);
-							continue;
-						}
-
-						$theme_data = array(
-							'slug'         => 'unknown',
-							'name'         => 'Unknown Theme',
-							'from_version' => '',
-							'to_version'   => 'unknown',
-							'success'      => false,
-							'error'        => null,
-						);
-
-						// Safely get theme info.
-						if ( property_exists( $theme_update, 'name' ) ) {
-							$theme_data['name'] = $theme_update->name;
-						}
-
-						if ( isset( $theme_update->item ) && is_object( $theme_update->item ) ) {
-							if ( property_exists( $theme_update->item, 'theme' ) ) {
-								$theme_data['slug'] = $theme_update->item->theme;
-
-								// Try to get the pre-update version from stored data.
-								$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
-
-								if ( $pre_update_data && isset( $pre_update_data['versions']['themes'] ) ) {
-									$theme_key = $theme_update->item->theme;
-									if ( isset( $pre_update_data['versions']['themes'][ $theme_key ] ) ) {
-										$theme_data['from_version'] = $pre_update_data['versions']['themes'][ $theme_key ];
-									} else {
-										$theme_data['from_version'] = 'n/a';
-									}
-								} else {
-									$theme_data['from_version'] = 'n/a';
-								}
-							}
-							if ( property_exists( $theme_update->item, 'new_version' ) ) {
-								$theme_data['to_version'] = $theme_update->item->new_version;
-							}
-						}
-
-						// Check result.
-						if ( property_exists( $theme_update, 'result' ) ) {
-							if ( is_wp_error( $theme_update->result ) ) {
-								$theme_data['success'] = false;
-								$theme_data['error']   = $theme_update->result->get_error_message();
-							} else {
-								$theme_data['success'] = true;
-							}
-						}
-
-						$parsed['themes'][] = $theme_data;
-					} catch ( \Exception $e ) {
-						\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-							'Error parsing theme update: ' . $e->getMessage(),
-							'parse_update_results',
-							'error'
-						);
-					}
-				}
-			}
-		} catch ( \Exception $e ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Fatal error in parse_update_results: ' . $e->getMessage(),
-				'parse_update_results',
-				'error'
-			);
-		}
-
-		return $parsed;
-	}
-
-	/**
-	 * Calculate summary statistics for update results.
-	 *
-	 * @param array $update_results Raw update results from WordPress.
-	 * @return array Summary statistics.
-	 */
-	private function calculate_summary( $update_results ) {
 		$summary = array(
 			'total_attempted' => 0,
 			'successful'      => 0,
@@ -2745,81 +2277,70 @@ class WebChangeDetector_Autoupdates {
 			'status'          => 'completed',
 		);
 
-		try {
-			// Count core updates.
-			if ( isset( $update_results['core'] ) && is_array( $update_results['core'] ) ) {
-				foreach ( $update_results['core'] as $core_update ) {
-					if ( ! is_object( $core_update ) ) {
-						continue;
-					}
-					++$summary['total_attempted'];
-					if ( property_exists( $core_update, 'result' ) ) {
-						if ( ! is_wp_error( $core_update->result ) && false !== $core_update->result ) {
-							++$summary['successful'];
-						} else {
-							++$summary['failed'];
-						}
-					} else {
-						// If no result property, consider it failed.
-						++$summary['failed'];
-					}
-				}
+		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+		$known_versions  = is_array( $pre_update_data ) && isset( $pre_update_data['versions'] ) ? $pre_update_data['versions'] : array();
+
+		foreach ( array( 'core', 'plugin', 'theme' ) as $type ) {
+			if ( ! isset( $update_results[ $type ] ) || ! is_array( $update_results[ $type ] ) ) {
+				continue;
 			}
 
-			// Count plugin updates.
-			if ( isset( $update_results['plugin'] ) && is_array( $update_results['plugin'] ) ) {
-				foreach ( $update_results['plugin'] as $plugin_update ) {
-					if ( ! is_object( $plugin_update ) ) {
-						continue;
-					}
-					++$summary['total_attempted'];
-					if ( property_exists( $plugin_update, 'result' ) ) {
-						if ( ! is_wp_error( $plugin_update->result ) && false !== $plugin_update->result ) {
-							++$summary['successful'];
-						} else {
-							++$summary['failed'];
-						}
-					} else {
-						// If no result property, consider it failed.
-						++$summary['failed'];
-					}
+			foreach ( $update_results[ $type ] as $update ) {
+				if ( ! is_object( $update ) ) {
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+						ucfirst( $type ) . ' update entry is not an object: ' . wp_json_encode( $update ),
+						'parse_update_results',
+						'warning'
+					);
+					continue;
 				}
-			}
 
-			// Count theme updates.
-			if ( isset( $update_results['theme'] ) && is_array( $update_results['theme'] ) ) {
-				foreach ( $update_results['theme'] as $theme_update ) {
-					if ( ! is_object( $theme_update ) ) {
-						continue;
-					}
-					++$summary['total_attempted'];
-					if ( property_exists( $theme_update, 'result' ) ) {
-						if ( ! is_wp_error( $theme_update->result ) && false !== $theme_update->result ) {
-							++$summary['successful'];
-						} else {
-							++$summary['failed'];
-						}
-					} else {
-						// If no result property, consider it failed.
-						++$summary['failed'];
-					}
+				$item       = isset( $update->item ) && is_object( $update->item ) ? $update->item : null;
+				$has_result = property_exists( $update, 'result' );
+				$error      = $has_result && is_wp_error( $update->result ) ? $update->result->get_error_message() : null;
+				$success    = $has_result && null === $error;
+
+				// Summary counts: a result of false (core: update not attempted) counts as failed,
+				// while the per-entry success flag mirrors the historical parse behavior.
+				++$summary['total_attempted'];
+				if ( $success && false !== $update->result ) {
+					++$summary['successful'];
+				} else {
+					++$summary['failed'];
 				}
-			}
 
-			// Determine overall status.
-			if ( $summary['failed'] > 0 && $summary['successful'] > 0 ) {
-				$summary['status'] = 'completed_with_errors';
-			} elseif ( $summary['failed'] > 0 && 0 === $summary['successful'] ) {
-				$summary['status'] = 'failed';
+				if ( 'core' === $type ) {
+					$parsed['core'] = array(
+						'attempted'    => true,
+						'success'      => $success,
+						'from_version' => $item->current ?? 'unknown',
+						'to_version'   => $item->version ?? 'unknown',
+						'error'        => $error,
+					);
+					continue;
+				}
+
+				// Key into the captured pre-update versions: plugin file resp. theme slug.
+				$version_key = 'plugin' === $type ? ( $item->plugin ?? null ) : ( $item->theme ?? null );
+
+				$parsed[ $type . 's' ][] = array(
+					'slug'         => 'plugin' === $type ? ( $item->slug ?? 'unknown' ) : ( $item->theme ?? 'unknown' ),
+					'name'         => $update->name ?? ( 'plugin' === $type ? 'Unknown Plugin' : 'Unknown Theme' ),
+					'from_version' => null !== $version_key && isset( $known_versions[ $type . 's' ][ $version_key ] ) ? $known_versions[ $type . 's' ][ $version_key ] : 'n/a',
+					'to_version'   => $item->new_version ?? 'unknown',
+					'success'      => $success,
+					'error'        => $error,
+				);
 			}
-		} catch ( \Exception $e ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Error calculating summary: ' . $e->getMessage(),
-				'calculate_summary',
-				'error'
-			);
 		}
 
-		return $summary;
+		if ( $summary['failed'] > 0 ) {
+			$summary['status'] = $summary['successful'] > 0 ? 'completed_with_errors' : 'failed';
+		}
+
+		return array(
+			'updates' => $parsed,
+			'summary' => $summary,
+		);
 	}
 }

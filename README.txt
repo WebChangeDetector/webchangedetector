@@ -2,8 +2,8 @@
 Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
-Tested up to: 6.9
-Stable tag: 4.3.2
+Tested up to: 7.0.2
+Stable tag: 4.4.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -221,6 +221,22 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.4.0 =
+* Improvement: New Dashboard with more details
+* Feature: Detect when WP auto updates were disabled by another tool or your hosting provider and show it on the Auto Update Checks settings page
+* Feature: Optional switch to re-enable WP auto updates so Auto Update Checks can run again
+* Improvement: Auto Update Checks are skipped and logged when WP auto updates are disabled, instead of running checks that can never find updates
+* Improvement: Auto Update Checks now recover from temporary API errors while waiting for the post-update screenshots instead of aborting the run
+* Improvement: Auto Update Checks only start when WordPress will actually install updates automatically, instead of also counting updates that need a manual confirmation
+* Fix: A failed result email no longer leaves the Auto Update Check run in a stuck state
+* Fix: Auto Update Checks could permanently lose their external cron trigger on low-traffic sites after an aborted run
+* Fix: Auto Update Checks now respect the configured weekdays and time window in the website's own timezone
+* Fix: PHP error on every cron run when the plugin has an API token but the setup was not finished yet
+* Improvement: Support for more cache plugins and hosting caches when clearing caches before Auto Update Check screenshots, including Nginx Helper, Seraphinite Accelerator, Swis Performance, RunCloud Hub, FastPixel, Pressable and Super Page Cache
+* Fix: Cache clearing before Auto Update Check screenshots now works on Kinsta and with FlyingPress, NitroPack, Cache Enabler and SiteGround Optimizer
+* Improvement: Reduced background requests between your website and the WebChange Detector service
+* Fix: A temporary connection problem to the WebChange Detector service no longer resets the website connection of the plugin
+
 = 4.3.2 =
 * Improvement: Change wording from "manual checks" to "on-demand checks"
 * Fix: View for mobile change detections

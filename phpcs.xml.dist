@@ -45,6 +45,7 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound">
 		<exclude-pattern>*/admin/class-webchangedetector-admin-wordpress.php</exclude-pattern>
 		<exclude-pattern>*/admin/class-webchangedetector-autoupdates.php</exclude-pattern>
+		<exclude-pattern>*/admin/class-webchangedetector-cache-clearer.php</exclude-pattern>
 	</rule>
 
 	<!-- Template files use local-scope variables passed via include, not true globals -->

@@ -564,6 +564,8 @@ class WebChangeDetector_Logs_Controller {
 													// Display error type for error entries.
 													if ( 'skip_cooldown' === $entry['error']['type'] ) {
 														esc_html_e( 'Auto-Update Cooldown Active', 'webchangedetector' );
+													} elseif ( 'wp_updates_disabled' === $entry['error']['type'] ) {
+														esc_html_e( 'WP Auto Updates Disabled', 'webchangedetector' );
 													} else {
 														esc_html_e( 'Technical Error Occurred', 'webchangedetector' );
 													}
@@ -612,6 +614,8 @@ class WebChangeDetector_Logs_Controller {
 													<?php
 													if ( 'skip_cooldown' === $entry['error']['type'] ) {
 														esc_html_e( 'Auto-Update Cooldown Active', 'webchangedetector' );
+													} elseif ( 'wp_updates_disabled' === $entry['error']['type'] ) {
+														esc_html_e( 'WP Auto Updates Disabled', 'webchangedetector' );
 													} else {
 														esc_html_e( 'Technical Error', 'webchangedetector' );
 													}
@@ -642,6 +646,18 @@ class WebChangeDetector_Logs_Controller {
 															);
 															echo '</p>';
 														}
+													} elseif ( 'wp_updates_disabled' === $entry['error']['type'] ) {
+														// WP automatic updates are disabled by an external tool or configuration.
+														echo '<p>';
+														esc_html_e( 'WordPress automatic updates are disabled on this website, e.g. by your hosting provider or another tool. Auto Update Checks were skipped because WordPress will not perform any updates.', 'webchangedetector' );
+														echo '</p>';
+														echo '<p>';
+														if ( ! empty( $entry['error']['details']['override_active'] ) ) {
+															esc_html_e( 'The WebChange Detector override is enabled, but WP auto updates are still disabled by the server configuration.', 'webchangedetector' );
+														} else {
+															esc_html_e( 'You can re-enable WP auto updates on the Auto Update Checks settings page.', 'webchangedetector' );
+														}
+														echo '</p>';
 													} else {
 														// Display technical error details.
 														echo '<p><strong>' . esc_html__( 'Phase:', 'webchangedetector' ) . '</strong> ';

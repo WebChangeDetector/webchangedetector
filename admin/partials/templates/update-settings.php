@@ -38,6 +38,15 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 	// network — they must stay visible even when main's own toggle is OFF, so a
 	// super-admin can still configure timing for participating subsites.
 	$schedule_hidden_style = ( $auto_update_checks_enabled || $is_multisite_main ) ? '' : 'display: none;';
+
+	// Detect externally disabled WP automatic updates (e.g. by a hosting tool)
+	// and whether the opt-in override is active.
+	$wp_updates_status    = \WebChangeDetector\WebChangeDetector_Autoupdate_Guard::get_status();
+	$wcd_override_enabled = \WebChangeDetector\WebChangeDetector_Autoupdate_Guard::is_override_enabled();
+	$show_force_toggle    = ! $is_multisite_subsite
+		&& ! $this->admin->is_all_sites_mode
+		&& ! $wp_updates_status['file_mods_blocked']
+		&& ( $wp_updates_status['raw_disabled'] || $wcd_override_enabled );
 	?>
 
 	<div class="wcd-settings-card">
@@ -49,12 +58,56 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 			<?php wp_nonce_field( 'save_group_settings' ); ?>
 			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 
-			<div class="notice notice-info inline wcd-auto-updates-precondition-notice">
-				<p>
-					<span class="dashicons dashicons-info"></span>
-					<?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?>
-				</p>
-			</div>
+			<?php
+			// Subsites always get the generic notice (else-branch): updates are
+			// orchestrated by the network main site only, so the disabled/override
+			// states of THIS site are irrelevant and would only mislead.
+			?>
+			<?php if ( ! $is_multisite_subsite && $wp_updates_status['file_mods_blocked'] ) : ?>
+				<div class="notice notice-error inline wcd-auto-updates-precondition-notice">
+					<p>
+						<span class="dashicons dashicons-warning"></span>
+						<?php esc_html_e( 'WordPress automatic updates are disabled on this server because file modifications are not allowed. WebChange Detector cannot re-enable them, so Auto Update Checks will not run.', 'webchangedetector' ); ?>
+					</p>
+				</div>
+			<?php elseif ( ! $is_multisite_subsite && $wp_updates_status['raw_disabled'] && $wcd_override_enabled && ! $wp_updates_status['effective_disabled'] ) : ?>
+				<div class="notice notice-info inline wcd-auto-updates-precondition-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php esc_html_e( 'WP auto updates were disabled on this website, e.g. by your hosting provider or another tool. The WebChange Detector override is active, so WP auto updates and Auto Update Checks run normally.', 'webchangedetector' ); ?>
+					</p>
+				</div>
+			<?php elseif ( ! $is_multisite_subsite && $wp_updates_status['raw_disabled'] ) : ?>
+				<div class="notice notice-warning inline wcd-auto-updates-precondition-notice">
+					<p>
+						<span class="dashicons dashicons-warning"></span>
+						<?php esc_html_e( 'WP auto updates have been disabled on this website, e.g. by your hosting provider or another tool. Auto Update Checks cannot run while WP auto updates are disabled.', 'webchangedetector' ); ?>
+					</p>
+				</div>
+			<?php else : ?>
+				<div class="notice notice-info inline wcd-auto-updates-precondition-notice">
+					<p>
+						<span class="dashicons dashicons-info"></span>
+						<?php esc_html_e( 'WP auto updates have to be enabled. This option only enables checks during auto updates.', 'webchangedetector' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( $show_force_toggle ) : ?>
+				<div class="wcd-form-row wcd-auto-update-setting-force-enable">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label"><?php esc_html_e( 'Re-enable WP auto updates', 'webchangedetector' ); ?></label>
+						<div class="wcd-description"><?php esc_html_e( 'Another tool may manage updates on this website on purpose. Forcing WP auto updates back on can lead to two competing update mechanisms.', 'webchangedetector' ); ?></div>
+					</div>
+					<div class="wcd-form-control">
+						<label>
+							<input type="hidden" name="wcd_force_enable_wp_updates" value="0" />
+							<input type="checkbox" name="wcd_force_enable_wp_updates" value="1" <?php checked( $wcd_override_enabled ); ?> />
+							<?php esc_html_e( 'Re-enable WP auto updates', 'webchangedetector' ); ?>
+						</label>
+					</div>
+				</div>
+			<?php endif; ?>
 
 			<?php if ( $is_multisite_subsite ) : ?>
 				<div class="notice notice-warning inline wcd-multisite-inherited-notice">

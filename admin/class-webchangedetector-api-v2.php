@@ -979,6 +979,13 @@ class WebChangeDetector_API_V2 {
 			return 'unauthorized';
 		}
 
+		// Positive not-found (stale/deleted resource id). Returned as a terminal string like
+		// the other failure strings so consumers can distinguish it from transient errors
+		// (5xx/429 keep returning the decoded Laravel error body).
+		if ( WCD_HTTP_NOT_FOUND === $response_code ) {
+			return 'not found';
+		}
+
 		// if parsing JSON into $decoded_body was without error.
 		if ( JSON_ERROR_NONE === json_last_error() ) {
 			return $decoded_body ?? true;
