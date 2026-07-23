@@ -2529,12 +2529,19 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Schedule fields visibility (monitoring tab).
+    // Schedule fields visibility (monitoring tab). Accepts the checked
+    // .wcd-schedule-type radio (element or jQuery set); an empty set falls
+    // back to 'interval', which hides both schedule rows.
     function toggleScheduleFields(radioEl) {
-        var type = $(radioEl).val();
-        $('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
-        $('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
+        var type = $(radioEl).val() || 'interval';
+        // A schedule row may only become visible while monitoring is enabled,
+        // otherwise it would re-appear next to the hidden .monitoring-setting rows.
+        var monitoringEnabled = $('.wcd-monitoring-enabled input[name="enabled"]').is(':checked');
+        $('.wcd-schedule-weekly-fields').toggle(monitoringEnabled && type === 'weekly');
+        $('.wcd-schedule-monthly-fields').toggle(monitoringEnabled && type === 'monthly');
         // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
+        // This stays independent of the monitoring toggle: the checkboxes of the
+        // non-selected schedule type must never be submitted.
         $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
         $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
     }
@@ -2565,12 +2572,10 @@ jQuery(document).ready(function($) {
                     initOrRefreshCodeEditor($('.wcd-monitoring-js .wcd-js-textarea')[0], 'codeEditorJs');
                 });
 
-                // Respect schedule type visibility when enabling monitoring.
-                var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
-                $('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
-                $('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
-                $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
-                $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
+                // Respect schedule type visibility when enabling monitoring:
+                // slideDown() above reveals every .monitoring-setting row, so the
+                // schedule row that doesn't match the checked type is hidden again.
+                toggleScheduleFields($('.wcd-schedule-type:checked'));
             } else {
                 $('.monitoring-setting').slideUp();
             }
@@ -2581,10 +2586,10 @@ jQuery(document).ready(function($) {
             toggleScheduleFields(this);
         });
 
-        // On page load, apply schedule visibility to the checked radio.
-        $('.wcd-schedule-type:checked').each(function () {
-            toggleScheduleFields(this);
-        });
+        // On page load, apply schedule visibility to the checked radio. Passing
+        // the (possibly empty) set directly keeps the disabled-state invariant
+        // even when no radio is checked, e.g. an empty or unknown schedule_type.
+        toggleScheduleFields($('.wcd-schedule-type:checked'));
     });
 })(jQuery);
 

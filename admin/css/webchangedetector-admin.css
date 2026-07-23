@@ -5786,6 +5786,13 @@ Settings
     background: transparent;
     line-height: 22px;
     color: #555;
+    border: none !important;
+}
+
+.webchangedetector .wcd-checkbox-dropdown-search:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .webchangedetector .wcd-checkbox-dropdown-option.wcd-hidden {
