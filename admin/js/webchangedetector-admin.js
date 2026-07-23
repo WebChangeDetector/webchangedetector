@@ -1413,10 +1413,19 @@ function sync_urls(force = 0) {
     });
 }
 
+// Counts the select-all requests so an out-of-order response can't write a stale count.
+var wcdSelectAllRequestId = 0;
+
+// All URL selection checkboxes, locked while a select-all request is in flight.
+var wcdUrlCheckboxes = '#select-desktop, #select-mobile, .checkbox-desktop input[type="checkbox"], .checkbox-mobile input[type="checkbox"]';
+
 function postUrl(postId) {
     let groupId = document.getElementsByName('group_id')[0]
     let data;
-    if (postId.startsWith('select')) {
+    let isSelectAll = postId.startsWith('select');
+    let requestId = 0;
+
+    if (isSelectAll) {
         const selectAllCheckbox = jQuery('#' + postId);
         //const type = selectAllCheckbox.data('type');
         const screensize = selectAllCheckbox.data('screensize');
@@ -1431,6 +1440,12 @@ function postUrl(postId) {
             enabled: selectAllCheckbox.is(':checked') ? 1 : 0,
         }
 
+        requestId = ++wcdSelectAllRequestId;
+
+        // Lock the checkboxes until the request settles: two concurrent select-all requests can be
+        // processed in either order, so a response could predate the other column's update. It also
+        // keeps an individual row toggle from racing the group-wide count, and shows the round trip.
+        jQuery(wcdUrlCheckboxes).prop('disabled', true);
     } else {
         let desktop = document.getElementById("desktop-" + postId);
         let mobile = document.getElementById("mobile-" + postId);
@@ -1442,12 +1457,24 @@ function postUrl(postId) {
             ['desktop-' + postId]: desktop.checked ? 1 : 0,
             ['mobile-' + postId]: mobile.checked ? 1 : 0,
         }
+
+        // A single row toggle changes exactly one visible row, so the local delta is correct.
+        wcdUpdateManualChecksUI();
     }
 
-    wcdUpdateManualChecksUI();
-
     jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
-        // TODO confirm saving.
+        // Select-all changes every URL of the group, also on other pages and outside the current
+        // filter, so only the server knows the new total.
+        if (isSelectAll && requestId === wcdSelectAllRequestId
+            && response && response.success && response.data && response.data.data
+            && typeof response.data.data.selected_urls_count !== 'undefined') {
+            wcdApplySelectedUrlsCount(parseInt(response.data.data.selected_urls_count) || 0);
+        }
+    }).always(function () {
+        // always(), so a failed request can never leave the checkboxes disabled.
+        if (isSelectAll) {
+            jQuery(wcdUrlCheckboxes).prop('disabled', false);
+        }
     });
 }
 
@@ -1468,6 +1495,48 @@ function mmMarkRows(postId) {
     }
     // red
     row.style.background = "#dc323247";
+}
+
+/**
+ * Counts the currently selected URL rows on the page.
+ *
+ * A row counts as "selected" if at least one device (desktop or mobile) checkbox is checked.
+ *
+ * @return {int} Number of selected rows on the current page.
+ */
+function wcdCountSelectedPageRows() {
+    var selectedRows = 0;
+    jQuery('.live-filter-row').each(function () {
+        var rowId = jQuery(this).attr('id');
+        var desktopChecked = jQuery('#desktop-' + rowId).is(':checked');
+        var mobileChecked = jQuery('#mobile-' + rowId).is(':checked');
+        if (desktopChecked || mobileChecked) {
+            selectedRows++;
+        }
+    });
+    return selectedRows;
+}
+
+/**
+ * Applies a group-wide selected URLs count coming from the server.
+ *
+ * Re-baselines the card so the delta model of wcdUpdateManualChecksUI() yields exactly this count,
+ * and all notice / class / icon / label / button toggling stays in that one function.
+ *
+ * @param {int} count Group-wide number of selected URLs.
+ */
+function wcdApplySelectedUrlsCount(count) {
+    // Also rendered on the monitoring page, where there is no on-demand card.
+    jQuery('.wcd-selected-urls-total').text(count);
+
+    var card = jQuery('.wcd-manual-checks-card');
+    if (!card.length) {
+        return;
+    }
+
+    card.data('initial-count', count);
+    card.data('initial-page-rows', wcdCountSelectedPageRows());
+    wcdUpdateManualChecksUI();
 }
 
 /**
@@ -1501,15 +1570,7 @@ function wcdUpdateManualChecksUI() {
     }
 
     // Count currently selected rows on page.
-    var currentPageRows = 0;
-    jQuery('.live-filter-row').each(function () {
-        var rowId = jQuery(this).attr('id');
-        var desktopChecked = jQuery('#desktop-' + rowId).is(':checked');
-        var mobileChecked = jQuery('#mobile-' + rowId).is(':checked');
-        if (desktopChecked || mobileChecked) {
-            currentPageRows++;
-        }
-    });
+    var currentPageRows = wcdCountSelectedPageRows();
 
     var currentTotal = initialServerCount - card.data('initial-page-rows') + currentPageRows;
     if (currentTotal < 0) {

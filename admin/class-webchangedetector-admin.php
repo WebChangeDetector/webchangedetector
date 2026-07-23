@@ -821,7 +821,7 @@ class WebChangeDetector_Admin {
 	 *
 	 * @param array $postdata The postdata (group_id, device, enabled).
 	 *
-	 * @return void
+	 * @return array|string The api response (contains the group-wide selected_urls_count) or a failure string.
 	 */
 	public function select_all_urls( $postdata ) {
 		$group_id = sanitize_text_field( $postdata['group_id'] ?? '' );
@@ -829,10 +829,12 @@ class WebChangeDetector_Admin {
 		$enabled  = ( ! empty( $postdata['enabled'] ) && 'false' !== $postdata['enabled'] && '0' !== (string) $postdata['enabled'] ) ? 1 : 0;
 
 		if ( empty( $group_id ) || ! in_array( $device, array( 'desktop', 'mobile' ), true ) ) {
-			return;
+			return array();
 		}
 
-		\WebChangeDetector\WebChangeDetector_API_V2::select_all_urls_in_group_v2( $group_id, $device, $enabled );
+		// The response carries the authoritative group-wide count, which the caller needs because the
+		// url list is paginated and filtered: the visible checkboxes are not the whole group.
+		return \WebChangeDetector\WebChangeDetector_API_V2::select_all_urls_in_group_v2( $group_id, $device, $enabled );
 	}
 
 

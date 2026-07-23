@@ -17,9 +17,9 @@
  * Text Domain:       webchangedetector
  * Plugin URI:        https://www.webchangedetector.com
  * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
- * Version:           4.4.0
- * GitHub Plugin URI: https://github.com/webchangedetector/webchangedetector
- * Primary Branch:    main
+ * Version:           4.3.2
+ * GitHub Plugin URI: https://github.com/WebChangeDetector/webchangedetector
+ * Primary Branch:    master
  * Author:            Mike Miler
  * Author URI:        https://www.webchangedetector.com
  * License:           GPL-2.0+
@@ -74,26 +74,31 @@ if ( ! defined( 'WCD_PLUGIN_BASENAME' ) ) {
 }
 
 /**
- * Set default branch preference for beta updates.
- * Only enabled if Git Updater plugin is active.
- * Can be overridden in wp-config.php by defining WCD_USE_DEV_BRANCH.
+ * Beta update channel opt-in (dev and staging sites only).
+ *
+ * WCD_USE_DEV_BRANCH must be defined explicitly in wp-config.php. There is
+ * deliberately NO auto-detection: the previous version enabled the beta channel
+ * whenever the Git Updater plugin happened to be active, which silently served
+ * unreleased dev-branch code to any customer who installed Git Updater.
+ *
+ * Default (constant absent or false): no branch override, so Git Updater
+ * resolves updates from the published releases/tags of the repository named in
+ * the "GitHub Plugin URI" header, against "Primary Branch: master".
+ *
+ * Opt-in (constant defined as true): updates track the `dev` branch instead.
  */
 if ( ! defined( 'WCD_USE_DEV_BRANCH' ) ) {
-	// Check if Git Updater plugin is active.
-	$wcd_git_updater_active = false;
-	if ( function_exists( 'is_plugin_active' ) ) {
-		$wcd_git_updater_active = is_plugin_active( 'git-updater/git-updater.php' );
-	}
-
-	define( 'WCD_USE_DEV_BRANCH', $wcd_git_updater_active );
+	define( 'WCD_USE_DEV_BRANCH', false );
 }
 
 /**
- * Git Updater filter to set the primary branch based on WCD_USE_DEV_BRANCH setting.
- * Only applies to this plugin (webchangedetector) and only when Git Updater is active.
+ * Point Git Updater at the `dev` branch for this plugin.
  *
- * @param string $branch   The default branch.
- * @param string $slug     The plugin slug.
+ * Registered only while the WCD_USE_DEV_BRANCH opt-in is active, so the default
+ * (tag based) update path is never overridden.
+ *
+ * @param string $branch The branch Git Updater resolved.
+ * @param string $slug   The plugin slug.
  * @return string The branch to use for updates.
  */
 function wcd_set_git_updater_branch( $branch, $slug ) {
@@ -102,11 +107,10 @@ function wcd_set_git_updater_branch( $branch, $slug ) {
 		return $branch;
 	}
 
-	// Return dev branch for beta updates, main for stable.
-	return WCD_USE_DEV_BRANCH ? 'dev' : 'main';
+	return 'dev';
 }
 
-// Only add filter if Git Updater is available.
+// Only override the branch when the beta channel was explicitly opted into.
 if ( WCD_USE_DEV_BRANCH ) {
 	add_filter( 'gu_primary_branch', __NAMESPACE__ . '\wcd_set_git_updater_branch', 10, 2 );
 }

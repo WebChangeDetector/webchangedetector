@@ -123,10 +123,17 @@ class WebChangeDetector_Settings_Ajax_Handler extends WebChangeDetector_Ajax_Han
 		try {
 			if ( $this->admin && method_exists( $this->admin, 'select_all_urls' ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified above.
-				$this->admin->select_all_urls( $_POST );
+				$result = $this->admin->select_all_urls( $_POST );
+
+				// api_v2() returns plain strings on failure, so shape-validate before forwarding the count.
+				// Without a count the JS keeps the current number, which still matches the unchanged server state.
+				$data = null;
+				if ( is_array( $result ) && isset( $result['selected_urls_count'] ) ) {
+					$data = array( 'selected_urls_count' => (int) $result['selected_urls_count'] );
+				}
 
 				$this->send_success_response(
-					null,
+					$data,
 					__( 'Settings saved successfully.', 'webchangedetector' )
 				);
 			} else {
