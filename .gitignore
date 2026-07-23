@@ -14,3 +14,4 @@ fix_comments.php_backup
 languages/webchangedetector-de_DE.po~
 .claude-flow/*
 .swarm/*
+dev-tools/

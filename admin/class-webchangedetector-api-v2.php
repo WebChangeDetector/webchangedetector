@@ -948,14 +948,14 @@ class WebChangeDetector_API_V2 {
 			$response_code = (int) wp_remote_retrieve_response_code( $response );
 
 			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
-			if ( 200 !== $response_code ) {
+			if ( $response_code < 200 || $response_code >= 300 ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Responsecode: ' . $response_code, 'api_v2', 'debug' );
 				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
-                    // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($decoded_body, 1), 'api_v2', 'error');
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $decoded_body, 1 ), 'api_v2', 'error' );
 				} else {
-                    // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($body, 1), 'api_v2', 'error');
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $body, 1 ), 'api_v2', 'error' );
 				}
 			}
 		}

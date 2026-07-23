@@ -1572,16 +1572,6 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
-		// Set the check timestamp after all validations pass to prevent retry loops.
-		// Must be AFTER time window/weekday checks so that triggers outside the window
-		// do not block the next valid trigger inside the window.
-		update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-			'Set auto-update check timestamp to prevent retries within 12 hours',
-			'wp_maybe_auto_update',
-			'debug'
-		);
-
 		// Step 8: Handle pre-update screenshots.
 
 		if ( false === $wcd_pre_update_data ) {
@@ -1638,6 +1628,19 @@ class WebChangeDetector_Autoupdates {
 				'. Proceeding with auto-update process.',
 				'wp_maybe_auto_update',
 				'info'
+			);
+
+			// Arm the 12h cooldown only now, when a real run is actually starting the
+			// pre-update batch. Setting it earlier (before the WP-disabled and no-updates
+			// cheap exits) latched the cooldown for passes that started no paid batch,
+			// blocking manual test triggers and legitimate later-in-window runs.
+			// Set BEFORE the paid batch begins so re-entry within 12h is blocked once a
+			// real run starts (the Step-2 processing gate covers re-entry during the run).
+			update_option( WCD_LAST_AUTO_UPDATE_CHECK_TIME, time() );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Set auto-update check timestamp to prevent retries within 12 hours',
+				'wp_maybe_auto_update',
+				'debug'
 			);
 
 			// Start new pre-update screenshots and reschedule wp_maybe_auto_update.
