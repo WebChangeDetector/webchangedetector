@@ -542,7 +542,6 @@ class WebChangeDetector_Admin_Settings {
 					?>
 				</div>
 
-				<hr style="margin: 20px 0; border-color: #e1e5e9;">
 				<?php
 			}
 			?>
