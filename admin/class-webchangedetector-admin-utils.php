@@ -177,6 +177,29 @@ class WebChangeDetector_Admin_Utils {
 	}
 
 	/**
+	 * Build the base HTTP headers sent with every WebChangeDetector API request.
+	 *
+	 * Centralizes the headers shared by the v1 and v2 clients so header changes
+	 * happen in exactly one place. The `x-wcd-source` header identifies the request
+	 * origin for the API (fixed value `wp_plugin` for the customer plugin). Callers
+	 * that need the network-admin header add `x-wcd-network-admin` on top of the
+	 * returned array.
+	 *
+	 * @param string $api_token The API token to authenticate with.
+	 * @return array<string, string> Associative array of HTTP request headers.
+	 */
+	public static function get_api_request_headers( $api_token ) {
+		return array(
+			'Accept'        => 'application/json',
+			'Authorization' => 'Bearer ' . $api_token,
+			'x-wcd-domain'  => self::get_domain_from_site_url(),
+			'x-wcd-wp-id'   => get_current_user_id(),
+			'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
+			'x-wcd-source'  => 'wp_plugin',
+		);
+	}
+
+	/**
 	 * Get post type slug.
 	 *
 	 * Retrieves the slug for a given post type object or name.

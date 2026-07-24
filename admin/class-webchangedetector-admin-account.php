@@ -544,13 +544,7 @@ class WebChangeDetector_Admin_Account {
 		$args = array(
 			'timeout' => WCD_REQUEST_TIMEOUT,
 			'body'    => $post,
-			'headers' => array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			),
+			'headers' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token ),
 		);
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ), 'api_v1', 'debug' );

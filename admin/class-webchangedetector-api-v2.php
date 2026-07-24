@@ -733,13 +733,7 @@ class WebChangeDetector_API_V2 {
 			$base_url = WCD_API_URL_V2;
 		}
 
-		$headers = array(
-			'Accept'        => 'application/json',
-			'Authorization' => 'Bearer ' . $api_token,
-			'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-			'x-wcd-wp-id'   => get_current_user_id(),
-			'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-		);
+		$headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 		if ( WebChangeDetector_Multisite::is_network_context() ) {
 			$headers['x-wcd-network-admin'] = '1';
@@ -840,13 +834,7 @@ class WebChangeDetector_API_V2 {
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
-				$multicall_headers = array(
-					'Accept'        => 'application/json',
-					'Authorization' => 'Bearer ' . $api_token,
-					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-					'x-wcd-wp-id'   => get_current_user_id(),
-					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-				);
+				$multicall_headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 				if ( WebChangeDetector_Multisite::is_network_context() ) {
 					$multicall_headers['x-wcd-network-admin'] = '1';
@@ -920,13 +908,7 @@ class WebChangeDetector_API_V2 {
 				return $results;
 			}
 		} else {
-			$request_headers = array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			);
+			$request_headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 			if ( WebChangeDetector_Multisite::is_network_context() ) {
 				$request_headers['x-wcd-network-admin'] = '1';
