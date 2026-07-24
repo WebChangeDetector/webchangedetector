@@ -518,6 +518,15 @@ class WebChangeDetector_Logs_Controller {
 		// Get auto-update history from options.
 		$update_history = get_option( 'wcd_auto_update_history', array() );
 
+		// Allowed tags for core's per-item upgrader messages: mirrors the
+		// wp_kses allowlist of Automatic_Upgrader_Skin::feedback().
+		$allowed_message_tags = array(
+			'a'      => array( 'href' => true ),
+			'br'     => array(),
+			'em'     => array(),
+			'strong' => array(),
+		);
+
 		?>
 		<div class="action-container">
 			<?php if ( empty( $update_history ) ) : ?>
@@ -727,7 +736,9 @@ class WebChangeDetector_Logs_Controller {
 													)
 												);
 												?>
-												<?php if ( isset( $entry['updates']['core']['error'] ) && $entry['updates']['core']['error'] ) : ?>
+												<?php if ( ! empty( $entry['updates']['core']['messages'] ) && is_array( $entry['updates']['core']['messages'] ) ) : ?>
+													<br><span style="color: #dc3232;"><?php echo wp_kses( implode( '<br>', $entry['updates']['core']['messages'] ), $allowed_message_tags ); ?></span>
+												<?php elseif ( isset( $entry['updates']['core']['error'] ) && $entry['updates']['core']['error'] ) : ?>
 													<br><span style="color: #dc3232;"><?php echo esc_html( $entry['updates']['core']['error'] ); ?></span>
 												<?php endif; ?>
 											</div>
@@ -755,7 +766,9 @@ class WebChangeDetector_Logs_Controller {
 														)
 													);
 													?>
-													<?php if ( isset( $plugin['error'] ) && $plugin['error'] ) : ?>
+													<?php if ( ! empty( $plugin['messages'] ) && is_array( $plugin['messages'] ) ) : ?>
+														<br><span style="color: #dc3232; margin-left: 20px;"><?php echo wp_kses( implode( '<br>', $plugin['messages'] ), $allowed_message_tags ); ?></span>
+													<?php elseif ( isset( $plugin['error'] ) && $plugin['error'] ) : ?>
 														<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $plugin['error'] ); ?></span>
 													<?php endif; ?>
 												</div>
@@ -784,7 +797,9 @@ class WebChangeDetector_Logs_Controller {
 														)
 													);
 													?>
-													<?php if ( isset( $theme['error'] ) && $theme['error'] ) : ?>
+													<?php if ( ! empty( $theme['messages'] ) && is_array( $theme['messages'] ) ) : ?>
+														<br><span style="color: #dc3232; margin-left: 20px;"><?php echo wp_kses( implode( '<br>', $theme['messages'] ), $allowed_message_tags ); ?></span>
+													<?php elseif ( isset( $theme['error'] ) && $theme['error'] ) : ?>
 														<br><span style="color: #dc3232; margin-left: 20px;"><?php echo esc_html( $theme['error'] ); ?></span>
 													<?php endif; ?>
 												</div>

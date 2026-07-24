@@ -215,6 +215,15 @@ class WebChangeDetector {
 		WebChangeDetector_Autoupdate_Guard::register_override();
 
 		/**
+		 * Guard restoring premium update offers dropped from the update
+		 * transients during an Auto Update Check run. Registered on every
+		 * request (wp-cron, webhook, admin) so all transient reads see
+		 * restored offers while a run is active.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-update-offer-guard.php';
+		WebChangeDetector_Update_Offer_Guard::register();
+
+		/**
 		 * Cache clearing across third-party cache plugins (used by the auto-update
 		 * workflow before taking screenshots).
 		 */

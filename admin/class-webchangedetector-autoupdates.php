@@ -386,6 +386,10 @@ class WebChangeDetector_Autoupdates {
 
 		// Clean up scheduled fallback check.
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+
+		// Deactivate the update-offer restore in this request too: the run
+		// option is gone, but the guard caches its lookup per request.
+		WebChangeDetector_Update_Offer_Guard::reset();
 	}
 
 	/**
@@ -481,6 +485,19 @@ class WebChangeDetector_Autoupdates {
 	 * @return array|false Array with update info if updates available, false otherwise.
 	 */
 	private function check_for_available_updates() {
+		// Snapshot the current update offers BEFORE the forced refresh below.
+		// Premium updaters often register on admin_init only, so a non-admin
+		// rebuild silently drops their offers; the Update Offer Guard
+		// re-injects the snapshot on the read side for the whole run window.
+		// At this point neither guard gate is active, so both reads return
+		// the raw transients.
+		$plugin_transient = get_site_transient( 'update_plugins' );
+		$theme_transient  = get_site_transient( 'update_themes' );
+		WebChangeDetector_Update_Offer_Guard::set_snapshot(
+			is_object( $plugin_transient ) && isset( $plugin_transient->response ) && is_array( $plugin_transient->response ) ? $plugin_transient->response : array(),
+			is_object( $theme_transient ) && isset( $theme_transient->response ) && is_array( $theme_transient->response ) ? $theme_transient->response : array()
+		);
+
 		// Force a fresh check for updates.
 		wp_version_check();
 		wp_update_plugins();
@@ -1035,6 +1052,10 @@ class WebChangeDetector_Autoupdates {
 				'batch_id'  => esc_html( $sc_response['batch'] ),
 				'timestamp' => time(),
 				'versions'  => $current_versions,
+				// Update offers snapshotted by check_for_available_updates();
+				// persisted so the Update Offer Guard can restore dropped
+				// offers in the later requests of this run window.
+				'offers'    => WebChangeDetector_Update_Offer_Guard::get_snapshot(),
 			);
 
 			// Save state.
@@ -1874,6 +1895,9 @@ class WebChangeDetector_Autoupdates {
 					);
 					delete_option( WCD_PRE_AUTO_UPDATE );
 					delete_option( WCD_AUTO_UPDATES_RUNNING );
+					// Deactivate the update-offer restore in this request too:
+					// the guard caches its option lookup per request.
+					WebChangeDetector_Update_Offer_Guard::reset();
 					$cleaned_update_state = true;
 					$stuck_processes[]    = 'pre-update (age: ' . $age_in_seconds . 's)';
 				}
@@ -2302,6 +2326,7 @@ class WebChangeDetector_Autoupdates {
 				$has_result = property_exists( $update, 'result' );
 				$error      = $has_result && is_wp_error( $update->result ) ? $update->result->get_error_message() : null;
 				$success    = $has_result && null === $error;
+				$messages   = $success ? array() : $this->extract_failure_messages( $update );
 
 				// Summary counts: a result of false (core: update not attempted) counts as failed,
 				// while the per-entry success flag mirrors the historical parse behavior.
@@ -2319,6 +2344,7 @@ class WebChangeDetector_Autoupdates {
 						'from_version' => $item->current ?? 'unknown',
 						'to_version'   => $item->version ?? 'unknown',
 						'error'        => $error,
+						'messages'     => $messages,
 					);
 					continue;
 				}
@@ -2333,6 +2359,7 @@ class WebChangeDetector_Autoupdates {
 					'to_version'   => $item->new_version ?? 'unknown',
 					'success'      => $success,
 					'error'        => $error,
+					'messages'     => $messages,
 				);
 			}
 		}
@@ -2345,5 +2372,35 @@ class WebChangeDetector_Autoupdates {
 			'updates' => $parsed,
 			'summary' => $summary,
 		);
+	}
+
+	/**
+	 * Extract core's per-item upgrader messages for a failed update.
+	 *
+	 * WP_Automatic_Updater stores the Automatic_Upgrader_Skin messages per
+	 * result item (already wp_kses-filtered to a[href], br, em, strong).
+	 * They carry the real failure reason (e.g. "The plugin is at the latest
+	 * version.") where the WP_Error is often a misleading generic
+	 * fs_unavailable. Capped in count and length so wcd_auto_update_history
+	 * stays small. The LAST messages are kept: the skin appends progress
+	 * feedback first (downloading, unpacking, installing) and the actual
+	 * failure reason last, so keeping the first ones would push it out.
+	 *
+	 * @param object $update Raw per-item update result object.
+	 * @return string[] Up to 5 most recent messages, each truncated to 300 characters.
+	 */
+	private function extract_failure_messages( $update ) {
+		if ( empty( $update->messages ) || ! is_array( $update->messages ) ) {
+			return array();
+		}
+
+		$messages = array();
+		foreach ( array_slice( $update->messages, -5 ) as $message ) {
+			if ( ! is_string( $message ) || '' === trim( $message ) ) {
+				continue;
+			}
+			$messages[] = mb_substr( $message, 0, 300 );
+		}
+		return $messages;
 	}
 }

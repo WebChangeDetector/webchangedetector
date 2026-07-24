@@ -222,17 +222,21 @@ In addition to layout, the browser console log is checked for errors.
 
 == Changelog ==
 = 4.4.0 =
-* Feature: New dashboard with more detail about your checks and recent changes
-* Feature: Select all URLs across all pages at once when choosing what to check
-* Feature: New Screenshot Region setting to take screenshots from the US or EU, or auto-detect the closest region to your website
-* Feature: Optionally activate newly synced URLs automatically for desktop and/or mobile, per group
-* Feature: Detect when WordPress auto updates were disabled by your host or another tool, and optionally re-enable them so Auto Update Checks can run
-* Improvement: More reliable Auto Update Checks in the website's own timezone, with better handling of disabled updates and temporary connection problems
-* Improvement: Support for many more cache plugins and hosts when clearing caches before screenshots
-* Improvement: Fewer background requests between your website and the WebChange Detector service
-* Fix: Auto Update Checks no longer run twice, get stuck, or stay blocked between runs
-* Fix: A temporary connection problem no longer resets the plugin's website connection
-* Fix: Resolved a PHP error on cron runs when the plugin had an API token but setup was not finished
+* Feature: New dashboard with more details on your checks and recent changes
+* Feature: Select all URLs across all pages at once
+* Feature: Screenshot Region setting: US, EU, or auto-detect
+* Feature: Auto-activate newly synced URLs for desktop and/or mobile, per group
+* Feature: Detect and optionally re-enable auto updates disabled by your host or another tool
+* Improvement: More reliable Auto Update Checks in the website's own timezone
+* Improvement: Support for more cache plugins and hosts when clearing caches
+* Improvement: Fewer background requests to the WebChange Detector service
+* Improvement: "Change Detections" are now called "Checks"
+* Improvement: Refreshed card design and removed legacy code
+* Improvement: Update history shows the actual failure reason for failed auto updates
+* Fix: Auto Update Checks no longer run twice, get stuck, or stay blocked
+* Fix: Temporary connection problems no longer reset the website connection
+* Fix: PHP error on cron runs when setup was not finished
+* Fix: Premium plugin and theme updates are no longer skipped during Auto Update Checks
 
 = 4.3.2 =
 * Improvement: Change wording from "manual checks" to "on-demand checks"
