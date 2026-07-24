@@ -225,15 +225,6 @@ class WebChangeDetector_Admin {
 	public $comparison_action_handler;
 
 	/**
-	 * Component manager instance.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      WebChangeDetector_Component_Manager $component_manager Component management.
-	 */
-	public $component_manager;
-
-	/**
 	 * Error handler instance.
 	 *
 	 * @since    1.0.0
@@ -242,14 +233,6 @@ class WebChangeDetector_Admin {
 	 */
 	public $error_handler;
 
-	/**
-	 * Admin notices instance.
-	 *
-	 * @since    1.0.0
-	 * @access   public
-	 * @var      \WebChangeDetector_Admin_Notices
-	 */
-	public $admin_notices;
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -285,11 +268,9 @@ class WebChangeDetector_Admin {
 		$this->account_action_handler    = new WebChangeDetector_Account_Action_Handler( $this );
 		$this->wordpress_action_handler  = new WebChangeDetector_WordPress_Action_Handler( $this );
 		$this->comparison_action_handler = new WebChangeDetector_Comparison_Action_Handler( $this );
-		$this->component_manager         = new WebChangeDetector_Component_Manager();
 
 		// Initialize simplified error handling components.
 		$this->error_handler = new \WebChangeDetector_Error_Handler();
-		$this->admin_notices = new \WebChangeDetector_Admin_Notices();
 
 		// Only register cron job for daily sync if we have an API token.
 		// In network-activated multisite, schedule only on the main site so a
@@ -546,13 +527,15 @@ class WebChangeDetector_Admin {
 		// Ensure we have group data with default values.
 		$group = array_merge(
 			array(
-				'interval_in_h'       => 24,
-				'hour_of_day'         => 0,
-				'selected_urls_count' => 0,
-				'schedule_type'       => 'interval',
-				'schedule_days'       => array(),
-				'quiet_hours_start'   => null,
-				'quiet_hours_end'     => null,
+				'enabled'               => false,
+				'interval_in_h'         => 24,
+				'hour_of_day'           => 0,
+				'selected_urls_count'   => 0,
+				'selected_checks_count' => 0,
+				'schedule_type'         => 'interval',
+				'schedule_days'         => array(),
+				'quiet_hours_start'     => null,
+				'quiet_hours_end'       => null,
 			),
 			$group ?? array()
 		);
@@ -705,17 +688,43 @@ class WebChangeDetector_Admin {
 
 		// Subtract screenshots already taken today.
 		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_checks_count'];
+
+		// Determine the card status. The states mirror the Auto-Update status bar
+		// (admin/partials/components/settings/auto-update-status-bar.php) so both cards speak the
+		// same language, and they mirror the condition the admin JS uses to decide between
+		// "Next monitoring checks in ..." and "No trackings active".
+		// Note: empty() matches the checked() semantics of the "enabled" toggle in
+		// admin/partials/templates/auto-settings.php, so a stored '0' counts as disabled.
+		$monitoring_enabled = ! empty( $group['enabled'] );
+		$has_selected_urls  = (int) $group['selected_urls_count'] > 0;
+
+		if ( ! $monitoring_enabled ) {
+			$status_class = 'wcd-status-disabled';
+			$status_icon  = 'dismiss';
+		} elseif ( ! $has_selected_urls ) {
+			$status_class = 'wcd-status-no-urls';
+			$status_icon  = 'info';
+		} elseif ( ! $date_next_sc ) {
+			$status_class = 'wcd-status-inactive';
+			$status_icon  = 'warning';
+		} else {
+			$status_class = 'wcd-status-scheduled';
+			$status_icon  = 'clock';
+		}
 		?>
 
-		<div class="wcd-settings-card wcd-monitoring-status-card">
+		<div class="wcd-settings-card wcd-monitoring-status-card <?php echo esc_attr( $status_class ); ?>">
 			<div class="wcd-monitoring-status-header">
-				<h3><span class="dashicons dashicons-clock"></span> Monitoring Status</h3>
+				<h3><span class="dashicons dashicons-<?php echo esc_attr( $status_icon ); ?>"></span> <?php esc_html_e( 'Monitoring Status', 'webchangedetector' ); ?></h3>
 			</div>
 			<div class="wcd-monitoring-status-content">
 				<div class="wcd-next-check-container">
 					<div id="txt_next_sc_in" class="wcd-status-label"><?php esc_html_e( 'Next monitoring checks in ', 'webchangedetector' ); ?></div>
 					<div id="next_sc_in" class="wcd-status-value"></div>
-					<div id="next_sc_date" class="wcd-status-date" data-date="<?php echo esc_html( $date_next_sc ); ?>"></div>
+					<?php // data-enabled carries the server-side monitoring state so the JS can still tell "enabled" from "disabled" when the settings form (and its input[name="enabled"]) is hidden by the monitoring_checks_settings allowance. ?>
+					<div id="next_sc_date" class="wcd-status-date"
+						data-date="<?php echo esc_attr( $date_next_sc ); ?>"
+						data-enabled="<?php echo esc_attr( $monitoring_enabled ? '1' : '0' ); ?>"></div>
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">
@@ -723,13 +732,13 @@ class WebChangeDetector_Admin {
 						<span class="wcd-stat-value"><?php echo esc_html( $group['selected_urls_count'] ); ?></span>
 					</div>
 					<div class="wcd-stat-item">
-						<span class="wcd-stat-label">Check Interval</span>
+						<span class="wcd-stat-label"><?php esc_html_e( 'Check Interval', 'webchangedetector' ); ?></span>
 						<span class="wcd-stat-value"><?php echo esc_html( $group['interval_in_h'] ); ?>h</span>
 					</div>
 				</div>
 				<div id="sc_available_until_renew"
-					data-amount_selected_urls="<?php echo esc_html( $group['selected_urls_count'] ); ?>"
-					data-auto_sc_per_url_until_renewal="<?php echo esc_html( $total_sc_current_period ); ?>" style="display: none;"></div>
+					data-amount_selected_urls="<?php echo esc_attr( $group['selected_urls_count'] ); ?>"
+					data-auto_sc_per_url_until_renewal="<?php echo esc_attr( $total_sc_current_period ); ?>" style="display: none;"></div>
 			</div>
 		</div>
 		<?php
@@ -914,66 +923,6 @@ class WebChangeDetector_Admin {
 		}
 
 		return $this->error_handler->log( $message, $context, $severity );
-	}
-
-	/**
-	 * Convenience method for safe API call execution.
-	 *
-	 * Wraps API operations with comprehensive error handling, retry logic, and recovery.
-	 * Uses the integrated error handler for consistent error management.
-	 *
-	 * @since 4.0.0
-	 * @param callable $operation The API operation to execute.
-	 * @param array    $options Optional. Configuration options for error handling.
-	 * @return array Response array with success status and data.
-	 */
-	public function safe_execute( $operation, $options = array() ) {
-		if ( ! $this->error_handler ) {
-			return array(
-				'success' => false,
-				'message' => 'Error handler not available.',
-			);
-		}
-
-		$default_options = array(
-			'category'     => 'admin',
-			'user_message' => 'An error occurred while processing your request.',
-			'context'      => 'Admin Operation',
-		);
-
-		$options = wp_parse_args( $options, $default_options );
-
-		return $this->error_handler->execute_with_error_handling( $operation, array(), $options );
-	}
-
-	/**
-	 * Convenience method for handling API errors.
-	 *
-	 * Provides a simple interface to handle API errors with proper logging and recovery.
-	 * Uses the integrated error handler for consistent error management.
-	 *
-	 * @since 4.0.0
-	 * @param callable $api_call The API call to execute.
-	 * @param array    $options Optional. Configuration options for error handling.
-	 * @return array Response array with success status and data.
-	 */
-	public function handle_api_error( $api_call, $options = array() ) {
-		if ( ! $this->error_handler ) {
-			return array(
-				'success' => false,
-				'message' => 'Error handler not available.',
-			);
-		}
-
-		$default_options = array(
-			'category'     => 'api',
-			'user_message' => 'Failed to communicate with WebChangeDetector service. Please try again.',
-			'context'      => 'API Operation',
-		);
-
-		$options = wp_parse_args( $options, $default_options );
-
-		return $this->error_handler->handle_api_error( $api_call, array(), $options );
 	}
 } // End class WebChangeDetector_Admin.
 

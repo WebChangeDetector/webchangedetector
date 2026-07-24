@@ -85,8 +85,7 @@ class WebChangeDetector_Admin_Dashboard {
 		$first_time_visit = $this->is_first_time_dashboard_visit();
 
 		?>
-		<div class="dashboard">
-			<div class="wcd-modern-dashboard">
+		<div class="wcd-modern-dashboard">
 
 				<!-- Status bar: account billing (account-wide) + usage forecast (this site). -->
 				<div class="wcd-status-bar <?php echo $status_bar['overage'] ? 'wcd-status-bar-overage' : ''; ?>">
@@ -322,9 +321,6 @@ class WebChangeDetector_Admin_Dashboard {
 						</div>
 					</div>
 				</div>
-			</div>
-
-			<div class="clear"></div>
 		</div>
 
 		<?php if ( $first_time_visit && $this->admin->settings_handler->is_allowed( 'wizard_start' ) ) { ?>
@@ -1470,7 +1466,7 @@ class WebChangeDetector_Admin_Dashboard {
 			if ( ! $hide_switch ) {
 				echo '<style>#comp-switch {display: none !important;}</style>';
 			}
-			echo '<div style="padding: 0 20px;">';
+			echo '<div>';
 			if ( ! $whitelabel ) {
 				echo '<style>.public-detection-logo {display: none;}</style>';
 			}

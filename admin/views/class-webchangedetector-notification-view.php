@@ -166,27 +166,4 @@ class WebChangeDetector_Notification_View {
 
 		$this->render_notice( $message, 'error', false );
 	}
-
-	/**
-	 * Render success message for settings saved.
-	 */
-	public function render_settings_saved() {
-		$this->render_notice( __( 'Settings saved.', 'webchangedetector' ), 'success' );
-	}
-
-	/**
-	 * Render action success message.
-	 *
-	 * @param string $action The action that was completed.
-	 * @param string $item   The item that was affected.
-	 */
-	public function render_action_success( $action, $item = '' ) {
-		$message = '<strong>WebChange Detector:</strong> ' . ucfirst( $action );
-		if ( $item ) {
-			$message .= ' ' . esc_html( $item );
-		}
-		$message .= '.';
-
-		$this->render_notice( $message, 'success' );
-	}
 }

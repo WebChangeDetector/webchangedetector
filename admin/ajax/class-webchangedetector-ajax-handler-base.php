@@ -233,6 +233,15 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 	 * Requires manage_network_options capability to prevent sub-site
 	 * admins from accessing other sites' data via crafted requests.
 	 *
+	 * Restore guarantee: AJAX handlers terminate via wp_send_json_*()
+	 * (which dies), so the try/finally callback wrapper
+	 * WebChangeDetector_Multisite::with_blog() cannot span the rest of the
+	 * request without restructuring every handler. Instead, the switch
+	 * registers a shutdown hook that pops the blog switch if it is still
+	 * active. Shutdown callbacks run after wp_send_json_*() / wp_die() and
+	 * after uncaught fatals, so the global blog pointer can never leak out
+	 * of the request.
+	 *
 	 * @since 4.3.0
 	 */
 	protected function maybe_switch_to_blog() {
@@ -278,18 +287,17 @@ abstract class WebChangeDetector_Ajax_Handler_Base {
 				}
 
 				switch_to_blog( $blog_id );
-			}
-		}
-	}
 
-	/**
-	 * Restore blog context after multisite AJAX processing.
-	 *
-	 * @since 4.3.0
-	 */
-	protected function restore_blog_context() {
-		if ( WebChangeDetector_Multisite::is_multisite_active() ) {
-			restore_current_blog();
+				// Guaranteed restore, see the method docblock.
+				add_action(
+					'shutdown',
+					static function () {
+						if ( ms_is_switched() ) {
+							restore_current_blog();
+						}
+					}
+				);
+			}
 		}
 	}
 }

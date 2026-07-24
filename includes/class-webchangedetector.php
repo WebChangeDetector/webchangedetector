@@ -194,21 +194,12 @@ class WebChangeDetector {
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-view-renderer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-notification-view.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-form-view.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-card-view.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-modal-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/views/class-webchangedetector-template-view.php';
 
 		/**
-		 * Component manager for reusable UI components.
-		 */
-		require_once plugin_dir_path( __DIR__ ) . 'admin/partials/class-webchangedetector-component-manager.php';
-
-		/**
-		 * Simplified error handling and admin notices.
+		 * Simplified error handling.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-error-handler.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-admin-notices.php';
 
 		/**
 		 * The class responsible API calls.

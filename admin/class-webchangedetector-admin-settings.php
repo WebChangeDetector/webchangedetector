@@ -880,18 +880,6 @@ class WebChangeDetector_Admin_Settings {
 	}
 
 	/**
-	 * Clear the cached website details.
-	 *
-	 * @since    1.0.0
-	 * @return   void
-	 */
-	public function clear_website_details_cache() {
-		// This method forces a refresh of the static cached website details.
-		// by calling get_website_details with the force_refresh parameter.
-		$this->get_website_details( true );
-	}
-
-	/**
 	 * Get website details from API.
 	 *
 	 * @since    1.0.0

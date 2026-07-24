@@ -195,7 +195,7 @@ class WebChangeDetector_Admin_Screenshots {
 			if ( ! $hide_switch ) {
 				echo '<style>#comp-switch {display: none !important;}</style>';
 			}
-			echo '<div style="padding: 0 20px;">';
+			echo '<div>';
 			if ( ! $whitelabel ) {
 				echo '<style>.public-detection-logo {display: none;}</style>';
 			}

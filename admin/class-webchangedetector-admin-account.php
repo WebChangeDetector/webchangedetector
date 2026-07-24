@@ -30,15 +30,6 @@ class WebChangeDetector_Admin_Account {
 
 
 	/**
-	 * Cached account details.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      array|null    $account_details    Cached account details from API.
-	 */
-	private $account_details;
-
-	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -479,23 +470,6 @@ class WebChangeDetector_Admin_Account {
 	}
 
 	/**
-	 * Check if development mode is enabled.
-	 *
-	 * Determines if the plugin is running in development mode based on
-	 * configuration constants or URL patterns.
-	 *
-	 * @since    1.0.0
-	 * @return   bool    True if in development mode, false otherwise.
-	 */
-	public function is_dev_mode() {
-		// If either .test or dev. can be found in the URL, we're developing - wouldn't work if plugin client domain matches these criteria.
-		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Check if this is the user's first time visiting the dashboard.
 	 *
 	 * Determines whether to show the setup wizard based on user visit history
@@ -613,55 +587,6 @@ class WebChangeDetector_Admin_Account {
 		}
 
 		return $body;
-	}
-
-
-	/**
-	 * Get account details v2.
-	 *
-	 * Fetches account details from the API with caching support.
-	 * Migrated from legacy Wp_Compare class.
-	 *
-	 * @since    1.0.0
-	 * @param    string|null $api_token Optional API token to use for the request.
-	 * @return   array|string|false     Account details array, error message, or false on failure.
-	 */
-	public function get_account_details_v2( $api_token = null ) {
-		// Use cached account details if available and no specific API token is provided.
-		if ( ! empty( $this->account_details ) && empty( $api_token ) ) {
-			return $this->account_details;
-		}
-
-		// Transient cache (skip when custom token provided).
-		$transient_key = 'wcd_account_details';
-		if ( empty( $api_token ) ) {
-			$cached = get_transient( $transient_key );
-			if ( false !== $cached ) {
-				$this->account_details = $cached;
-				return $cached;
-			}
-		}
-
-		$account_details = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2( $api_token );
-
-		if ( ! empty( $account_details['data'] ) ) {
-			$account_details                 = $account_details['data'];
-			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
-
-			// Cache the account details if no specific token was used.
-			if ( empty( $api_token ) ) {
-				$this->account_details = $account_details;
-				set_transient( $transient_key, $account_details, 5 * MINUTE_IN_SECONDS );
-			}
-
-			return $account_details;
-		}
-
-		if ( ! empty( $account_details['message'] ) ) {
-			return $account_details['message'];
-		}
-
-		return false;
 	}
 
 	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller.

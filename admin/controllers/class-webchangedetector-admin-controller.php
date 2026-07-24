@@ -25,20 +25,6 @@ class WebChangeDetector_Admin_Controller {
 	private $admin;
 
 	/**
-	 * The view renderer instance.
-	 *
-	 * @var WebChangeDetector_View_Renderer
-	 */
-	private $view_renderer;
-
-	/**
-	 * The action handler instance.
-	 *
-	 * @var WebChangeDetector_Action_Handler
-	 */
-	private $action_handler;
-
-	/**
 	 * Specialized page controllers.
 	 *
 	 * @var array

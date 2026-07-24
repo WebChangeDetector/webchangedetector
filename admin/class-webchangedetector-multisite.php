@@ -217,17 +217,6 @@ class WebChangeDetector_Multisite {
 		return delete_option( $key );
 	}
 
-	/**
-	 * Check if an option key should be stored network-wide.
-	 *
-	 * @since 4.3.0
-	 * @param string $key The option key.
-	 * @return bool
-	 */
-	public static function is_network_option( $key ) {
-		return in_array( $key, self::NETWORK_OPTIONS, true );
-	}
-
 	// -------------------------------------------------------------------------
 	// Multisite hierarchy helpers — main-site UUID + subsite parent FK
 	// -------------------------------------------------------------------------
@@ -442,37 +431,6 @@ class WebChangeDetector_Multisite {
 
 		self::$sites_cache = $result;
 		return $result;
-	}
-
-	/**
-	 * Get the count of sites in the network.
-	 *
-	 * @since 4.3.0
-	 * @return int
-	 */
-	public static function get_site_count() {
-		if ( ! self::is_multisite_active() ) {
-			return 0;
-		}
-		return (int) get_blog_count();
-	}
-
-	/**
-	 * Check if a specific site has a registered WCD website.
-	 *
-	 * @since 4.3.0
-	 * @param int $blog_id The blog ID.
-	 * @return bool
-	 */
-	public static function is_site_registered( $blog_id ) {
-		switch_to_blog( $blog_id );
-		try {
-			$website_id = get_option( 'webchangedetector_website_id', '' );
-		} finally {
-			restore_current_blog();
-		}
-
-		return ! empty( $website_id );
 	}
 
 	/**

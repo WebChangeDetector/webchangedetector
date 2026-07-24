@@ -46,9 +46,6 @@ class WebChangeDetector_View_Renderer {
 	private function init_view_components() {
 		$this->view_components = array(
 			'notifications' => new WebChangeDetector_Notification_View( $this->admin ),
-			'forms'         => new WebChangeDetector_Form_View( $this->admin ),
-			'cards'         => new WebChangeDetector_Card_View( $this->admin ),
-			'modals'        => new WebChangeDetector_Modal_View( $this->admin ),
 			'templates'     => new WebChangeDetector_Template_View( $this->admin ),
 		);
 	}
@@ -165,24 +162,5 @@ class WebChangeDetector_View_Renderer {
 	 */
 	public function get_component( $component ) {
 		return $this->view_components[ $component ] ?? null;
-	}
-
-	/**
-	 * Render action container wrapper.
-	 *
-	 * @param callable $content_callback The callback to render container content.
-	 * @param array    $data Optional data to pass to the content callback.
-	 */
-	public function render_action_container( $content_callback, $data = array() ) {
-		?>
-		<div class="action-container">
-			<?php
-			if ( is_callable( $content_callback ) ) {
-				call_user_func( $content_callback, $data );
-			}
-			?>
-		</div>
-		<div class="clear"></div>
-		<?php
 	}
 }

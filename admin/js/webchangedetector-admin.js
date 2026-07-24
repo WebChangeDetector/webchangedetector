@@ -928,11 +928,13 @@ function currentlyProcessing() {
 
 
 
-        // Set time until next screenshots
-        let autoEnabled = false;
-        if ($("#auto-enabled").is(':checked') || $('input[name="enabled"]').is(':checked')) {
-            autoEnabled = true;
-        }
+        // Set time until next screenshots.
+        // The rendered toggle wins when it exists. When the monitoring settings form is hidden by the
+        // monitoring_checks_settings allowance there is no toggle, so fall back to the server-rendered
+        // state on #next_sc_date. Missing element or attribute resolves to "disabled".
+        let autoEnabled = $('input[name="enabled"]').length
+            ? $('input[name="enabled"]').is(':checked')
+            : $("#next_sc_date").data("enabled") == 1;
         let txtNextScIn = wcdL10n.noTrackingsActive;
         let nextScIn;
         let nextScDate = $("#next_sc_date").data("date");

@@ -250,16 +250,20 @@ class WebChangeDetector_API_V2 {
 
 	/** Delete urls from group
 	 *
+	 * The API route is POST groups/{id}/remove-urls and expects 'urls' as a
+	 * flat array of url uuids (the urls themselves are not deleted, only
+	 * their membership in the group).
+	 *
 	 * @param string $group_id The group_id.
-	 * @param array  $group_url_ids Ids of group_urls.
+	 * @param array  $url_ids Uuids of the urls to remove from the group.
 	 * @return mixed|string
 	 */
-	public static function delete_group_urls_v2( $group_id, $group_url_ids = array() ) {
+	public static function delete_group_urls_v2( $group_id, $url_ids = array() ) {
 		$args = array(
 			'action' => 'groups/' . $group_id . '/remove-urls',
-			'urls'   => $group_url_ids,
+			'urls'   => $url_ids,
 		);
-		return self::api_v2( $args, 'PUT' );
+		return self::api_v2( $args, 'POST' );
 	}
 
 	/** Take screenshots.
@@ -309,21 +313,29 @@ class WebChangeDetector_API_V2 {
 
 	/** Add urls to group.
 	 *
-	 * @param string $group_id Group uuid.
-	 * @param array  $params Urls and other params.
+	 * The API route is POST groups/{id}/add-urls and expects 'urls' as an
+	 * array of objects, each with an 'id' (url uuid) plus optional per-url
+	 * settings (desktop, mobile, css, js).
+	 *
+	 * @param string       $group_id Group uuid.
+	 * @param array|string $params A single url uuid, an array of url uuids, or an array of url objects.
 	 * @return mixed|string
 	 */
 	public static function add_urls_to_group_v2( $group_id, $params ) {
-
 		if ( ! is_array( $params ) ) {
-			$params[] = $params;
+			$params = array( $params );
+		}
+
+		// Normalize plain uuid entries to the url-object shape the API expects.
+		$urls = array();
+		foreach ( $params as $url ) {
+			$urls[] = is_array( $url ) ? $url : array( 'id' => $url );
 		}
 
 		$args = array(
 			'action' => 'groups/' . $group_id . '/add-urls',
-			'urls'   => $params,
+			'urls'   => $urls,
 		);
-		$args = array_merge( $args, $params );
 		return self::api_v2( $args );
 	}
 
