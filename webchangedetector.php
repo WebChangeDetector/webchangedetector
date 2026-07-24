@@ -13,11 +13,13 @@
  * @author            Mike Miler
  *
  * @wordpress-plugin
- * Plugin Name:       WebChange Detector | Visual Regression Testing | Visual Checks After Updates
+ * Plugin Name:       WebChange Detector
  * Text Domain:       webchangedetector
  * Plugin URI:        https://www.webchangedetector.com
- * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic change detections and get notified on changes of your website.
+ * Description:       Detect changes on your website visually before and after updating your website. You can also run automatic checks and get notified on changes of your website.
  * Version:           4.4.0-beta.2
+ * Requires at least: 5.5
+ * Requires PHP:      7.4
  * GitHub Plugin URI: https://github.com/WebChangeDetector/webchangedetector
  * Primary Branch:    master
  * Author:            Mike Miler

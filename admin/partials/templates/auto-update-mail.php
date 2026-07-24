@@ -106,30 +106,30 @@ defined( 'ABSPATH' ) || exit;
 				<div style="font-size: 18px; padding-top: 20px;"><?php esc_html_e( 'Checks Passed', 'webchangedetector' ); ?></div>
 			<?php else : ?>
 				<div style="padding: 10px;background: red; color: #fff; border-radius: 20px;  font-size: 14px; width: 20px; height: 20px; display: inline-block; font-weight: 900; ">X</div>
-				<div style="font-size: 18px; padding-top: 20px;"><?php esc_html_e( 'We found changes', 'webchangedetector' ); ?><br><?php esc_html_e( 'Please check the change detections.', 'webchangedetector' ); ?></div>
+				<div style="font-size: 18px; padding-top: 20px;"><?php esc_html_e( 'We found changes', 'webchangedetector' ); ?><br><?php esc_html_e( 'Please review the checks.', 'webchangedetector' ); ?></div>
 			<?php endif; ?>
 		</div>
 
 		<div style="margin: 20px 0 10px 0"><strong><?php esc_html_e( 'Checks with differences', 'webchangedetector' ); ?></strong></div>
 		<table>
-			<tr><th><?php esc_html_e( 'URL', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Device', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change in %', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change Detection Page', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'AI Analysis', 'webchangedetector' ); ?></th></tr>
+			<tr><th><?php esc_html_e( 'URL', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Device', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change in %', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Check', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'AI Analysis', 'webchangedetector' ); ?></th></tr>
 			<?php
 			if ( ! empty( $with_difference_rows ) ) {
 				echo $with_difference_rows; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rows are built above with escaped values.
 			} else {
-				echo '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
+				echo '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No checks to show here', 'webchangedetector' ) . '</td>';
 			}
 			?>
 		</table>
 
 		<div style="margin: 20px 0 10px 0"><strong><?php esc_html_e( 'Checks without differences', 'webchangedetector' ); ?></strong></div>
 		<table>
-			<tr><th><?php esc_html_e( 'URL', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Device', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change in %', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change Detection Page', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'AI Analysis', 'webchangedetector' ); ?></th></tr>
+			<tr><th><?php esc_html_e( 'URL', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Device', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Change in %', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'Check', 'webchangedetector' ); ?></th><th><?php esc_html_e( 'AI Analysis', 'webchangedetector' ); ?></th></tr>
 			<?php
 			if ( ! empty( $no_difference_rows ) ) {
 				echo $no_difference_rows; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rows are built above with escaped values.
 			} else {
-				echo '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No change detections to show here', 'webchangedetector' ) . '</td>';
+				echo '<tr><td colspan="5" style="text-align: center;">' . esc_html__( 'No checks to show here', 'webchangedetector' ) . '</td>';
 			}
 			?>
 		</table>
@@ -139,5 +139,5 @@ defined( 'ABSPATH' ) || exit;
 	}
 	?>
 
-	<div style="margin: 20px 0"><?php esc_html_e( 'You can find all change detections and settings for the checks in your wp-admin dashboard of your website.', 'webchangedetector' ); ?><br><br><?php esc_html_e( 'Your WebChange Detector team', 'webchangedetector' ); ?></div>
+	<div style="margin: 20px 0"><?php esc_html_e( 'You can find all checks and settings in your wp-admin dashboard of your website.', 'webchangedetector' ); ?><br><br><?php esc_html_e( 'Your WebChange Detector team', 'webchangedetector' ); ?></div>
 </div>

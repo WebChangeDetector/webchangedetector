@@ -111,7 +111,7 @@ class WebChangeDetector_Admin_WordPress {
 					'unsavedChanges'           => __( 'Changes were not saved. Do you wish to leave the page without saving?', 'webchangedetector' ),
 					'confirmResetAccount'      => __( 'Are you sure you want to reset your account? This cannot be undone.', 'webchangedetector' ),
 					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
-					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s detection settings? This cannot be undone.', 'webchangedetector' ),
+					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s check settings? This cannot be undone.', 'webchangedetector' ),
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
@@ -148,8 +148,8 @@ class WebChangeDetector_Admin_WordPress {
 					'checksInProgress'         => __( 'Checks in progress', 'webchangedetector' ),
 					'showingAll'               => __( 'showing all', 'webchangedetector' ),
 					'withChangesOnly'          => __( 'with changes only', 'webchangedetector' ),
-					'detection'                => __( 'detection', 'webchangedetector' ),
-					'detections'               => __( 'detections', 'webchangedetector' ),
+					'detection'                => __( 'check', 'webchangedetector' ),
+					'detections'               => __( 'checks', 'webchangedetector' ),
 					'exporting'                => __( 'Exporting...', 'webchangedetector' ),
 					'exportFailed'             => __( 'Failed to export logs', 'webchangedetector' ),
 					'exportError'              => __( 'Error occurred while exporting logs. Please try again.', 'webchangedetector' ),
@@ -259,7 +259,7 @@ class WebChangeDetector_Admin_WordPress {
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
 						'enableAutoUpdateDesc'        => __( 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.', 'webchangedetector' ),
 						'scheduleNotificationsTitle'  => __( 'Schedule & Notifications', 'webchangedetector' ),
-						'scheduleNotificationsDesc'   => __( 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive change detection should be. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
+						'scheduleNotificationsDesc'   => __( 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive the checks should be. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
 
 						'urlSelectionTitle'           => __( 'URL Selection Table', 'webchangedetector' ),
 						'urlSelectionDesc'            => __( 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.', 'webchangedetector' ),
@@ -285,16 +285,14 @@ class WebChangeDetector_Admin_WordPress {
 						'selectPagesToMonitorDesc'    => __( 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.', 'webchangedetector' ),
 
 						// Change detection steps.
-						'changeDetectionHistoryTitle' => __( 'Change Detection History', 'webchangedetector' ),
-						'changeDetectionHistoryDesc'  => __( 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector' ),
-						'detectionTableTitle'         => __( 'Detection Table', 'webchangedetector' ),
-						'detectionTableDesc'          => __( 'Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.', 'webchangedetector' ),
+						'changeDetectionHistoryTitle' => __( 'Check History', 'webchangedetector' ),
+						'changeDetectionHistoryDesc'  => __( 'This is your check hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector' ),
 						'filterOptionsTitle'          => __( 'Filter Options', 'webchangedetector' ),
 						'filterOptionsDesc'           => __( 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.', 'webchangedetector' ),
 
 						// AI Rules steps.
 						'aiRulesTitle'                => __( 'AI Rules', 'webchangedetector' ),
-						'aiRulesDesc'                 => __( 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from change detection views by clicking "Ignore in future" on a region.', 'webchangedetector' ),
+						'aiRulesDesc'                 => __( 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from check views by clicking "Ignore in future" on a region.', 'webchangedetector' ),
 						'aiRulesListTitle'            => __( 'Your Rules', 'webchangedetector' ),
 						'aiRulesListDesc'             => __( 'Active rules are applied automatically to future comparisons. You can toggle, change scope, or delete rules from this list.', 'webchangedetector' ),
 
@@ -496,7 +494,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'Dashboard', 'webchangedetector' ), __( 'Dashboard', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init' );
 
 		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
-			add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
+			add_submenu_page( 'webchangedetector', __( 'Checks', 'webchangedetector' ), __( 'Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['manual_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
@@ -532,7 +530,7 @@ class WebChangeDetector_Admin_WordPress {
 
 		// Hidden submenu pages (not visible in menu but accessible via URL).
 		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
-			add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
+			add_submenu_page( null, __( 'Show Check', 'webchangedetector' ), __( 'Show Check', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 			add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 		}
 	}
@@ -563,7 +561,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Sub-site allowances page (multisite only).
 		add_submenu_page( 'webchangedetector', __( 'Sub-Site Allowances', 'webchangedetector' ), __( 'Sub-Site Allowances', 'webchangedetector' ), $capability, 'webchangedetector-allowances', 'wcd_webchangedetector_init' );
 
-		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Checks', 'webchangedetector' ), __( 'Checks', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), $capability, 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
@@ -571,7 +569,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), $capability, 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
 
 		// Hidden submenu pages.
-		add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
+		add_submenu_page( null, __( 'Show Check', 'webchangedetector' ), __( 'Show Check', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 		add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), $capability, 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 	}
 

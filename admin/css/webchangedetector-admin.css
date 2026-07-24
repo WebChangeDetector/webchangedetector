@@ -1195,11 +1195,6 @@ On-Demand Checks
 Dashboard
  *******/
 
-.webchangedetector .dashboard {
-    max-width: 1024px;
-    margin: 0 auto;
-}
-
 .webchangedetector .box-plain {
     padding: 15px 20px;
     background: #fff;

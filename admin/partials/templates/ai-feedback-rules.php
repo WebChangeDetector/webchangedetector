@@ -25,7 +25,7 @@ $rules          = isset( $rules_response['data'] ) ? $rules_response['data'] : a
 	<p>
 		<?php
 		echo wp_kses(
-			__( 'Rules are created from within change detection views. When reviewing AI-detected changes, click <strong>"Ignore in future"</strong> on any region to create a rule for that type of change.', 'webchangedetector' ),
+			__( 'Rules are created from within check views. When reviewing AI-detected changes, click <strong>"Ignore in future"</strong> on any region to create a rule for that type of change.', 'webchangedetector' ),
 			array( 'strong' => array() )
 		);
 		?>

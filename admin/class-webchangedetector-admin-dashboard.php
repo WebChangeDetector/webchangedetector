@@ -302,12 +302,12 @@ class WebChangeDetector_Admin_Dashboard {
 
 					<div class="wcd-card wcd-stat-card wcd-resource-card">
 						<div class="wcd-card-header">
-							<h2><span class="dashicons dashicons-admin-site-alt3 wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?></h2>
+							<h2><span class="dashicons dashicons-admin-site-alt3 wcd-card-header-icon-blue"></span> <?php echo esc_html__( 'Checks', 'webchangedetector' ); ?></h2>
 						</div>
 						<div class="wcd-card-content">
 							<p class="wcd-resource-card-headline"><?php echo esc_html__( 'Review every check in one place.', 'webchangedetector' ); ?></p>
 							<p class="wcd-resource-card-body"><?php echo esc_html__( 'Browse the full history of visual checks for this website, filter by status, and confirm or dismiss detected changes.', 'webchangedetector' ); ?></p>
-							<a href="?page=webchangedetector-change-detections" class="wcd-stat-link"><?php echo esc_html__( 'Open change detections →', 'webchangedetector' ); ?></a>
+							<a href="?page=webchangedetector-change-detections" class="wcd-stat-link"><?php echo esc_html__( 'Open checks →', 'webchangedetector' ); ?></a>
 						</div>
 					</div>
 
@@ -514,8 +514,8 @@ class WebChangeDetector_Admin_Dashboard {
 			<table style="width: 100%">
 				<tr>
 					<td colspan="5" style="text-align: center; background: #fff; height: 50px;">
-						<strong><?php echo esc_html__( 'No change detections (yet).', 'webchangedetector' ); ?></strong><br>
-						<?php echo esc_html__( 'Try different filters to show change detections.', 'webchangedetector' ); ?>
+						<strong><?php echo esc_html__( 'No checks (yet).', 'webchangedetector' ); ?></strong><br>
+						<?php echo esc_html__( 'Try different filters to show checks.', 'webchangedetector' ); ?>
 					</td>
 				</tr>
 			</table>
@@ -1151,7 +1151,13 @@ class WebChangeDetector_Admin_Dashboard {
 						}
 						?>
 					</span>
-					<span class="displaying-num"><?php echo esc_html( $comparisons['meta']['total'] ?? 0 ); ?> <?php echo esc_html__( 'items', 'webchangedetector' ); ?></span>
+					<span class="displaying-num">
+						<?php
+						$comparisons_total = (int) ( $comparisons['meta']['total'] ?? 0 );
+						/* translators: %s: Number of items */
+						printf( esc_html( _n( '%s item', '%s items', $comparisons_total, 'webchangedetector' ) ), esc_html( number_format_i18n( $comparisons_total ) ) );
+						?>
+					</span>
 				</div>
 			</div>
 			<?php
@@ -1168,8 +1174,8 @@ class WebChangeDetector_Admin_Dashboard {
 		if ( empty( $comparisons['data'] ) ) {
 			?>
 			<div class="wcd-empty-state">
-				<strong><?php esc_html_e( 'No Change Detections (yet)', 'webchangedetector' ); ?></strong>
-				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
+				<strong><?php esc_html_e( 'No Checks (yet)', 'webchangedetector' ); ?></strong>
+				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Checks.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
 			return;
@@ -1496,9 +1502,9 @@ class WebChangeDetector_Admin_Dashboard {
 			<p class="notice notice-error" style="padding: 10px;">
 				<?php
 				printf(
-					/* translators: %s: link to change detections page */
-					esc_html__( 'Ooops! There was no change detection selected. Please go to %s and select a change detection to show.', 'webchangedetector' ),
-					'<a href="?page=webchangedetector-change-detections">' . esc_html__( 'Change Detections', 'webchangedetector' ) . '</a>'
+					/* translators: %s: link to checks page */
+					esc_html__( 'Ooops! There was no check selected. Please go to %s and select a check to show.', 'webchangedetector' ),
+					'<a href="?page=webchangedetector-change-detections">' . esc_html__( 'Checks', 'webchangedetector' ) . '</a>'
 				);
 				?>
 			</p>

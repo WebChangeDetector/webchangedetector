@@ -349,7 +349,7 @@ function currentlyProcessing() {
                 above_threshold: !showAll ? 1 : 0
             }, function(data) {
                 // Update count
-                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'detections') : (wcdL10n.detection || 'detection'));
+                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'checks') : (wcdL10n.detection || 'check'));
                 countText += ' (' + (showAll ? (wcdL10n.showingAll || 'showing all') : (wcdL10n.withChangesOnly || 'with changes only')) + ')';
                 $('#detections-count').text(countText);
 
@@ -779,7 +779,7 @@ function currentlyProcessing() {
         // Confirm copy url settings
         $("#copy-url-settings").submit(function () {
             let type = $("#copy-url-settings").data("to_group_type");
-            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.";
+            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " check settings? This cannot be undone.";
             return confirm(msg);
         });
 

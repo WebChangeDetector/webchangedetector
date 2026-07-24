@@ -19,8 +19,7 @@ namespace WebChangeDetector;
  * WebChange Detector Admin Settings Class
  *
  * Manages plugin settings, configuration, and website details.
- * Handles monitoring settings, on-demand check settings, permissions,
- * and tab navigation.
+ * Handles monitoring settings, on-demand check settings, and permissions.
  *
  * @since      1.0.0
  * @package    WebChangeDetector
@@ -1157,66 +1156,6 @@ class WebChangeDetector_Admin_Settings {
 
 		// Shouldn't get here. But if so, we allow.
 		return true;
-	}
-
-	/**
-	 * Display navigation tabs for the plugin.
-	 *
-	 * @since    1.0.0
-	 * @return   void
-	 */
-	public function tabs() {
-		$active_tab = 'webchangedetector';
-
-		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
-			echo esc_html__( 'Something went wrong. Please try again.', 'webchangedetector' );
-		}
-
-		if ( isset( $_GET['page'] ) ) {
-			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
-		}
-		?>
-	<div class="wrap">
-		<h2 class="nav-tab-wrapper">
-			<?php if ( $this->is_allowed( 'dashboard_view' ) ) { ?>
-				<a href="?page=webchangedetector"
-					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> <?php echo esc_html__( 'Dashboard', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
-				<a href="?page=webchangedetector-update-settings"
-					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'On-Demand Checks', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
-				<a href="?page=webchangedetector-auto-settings"
-					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> <?php echo esc_html__( 'Monitoring', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'change_detections_view' ) ) { ?>
-				<a href="?page=webchangedetector-change-detections"
-					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'logs_view' ) ) { ?>
-				<a href="?page=webchangedetector-logs"
-					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Queue', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'settings_view' ) ) { ?>
-				<a href="?page=webchangedetector-settings"
-					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Settings', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-		</h2>
-	</div>
-		<?php
 	}
 
 	/**

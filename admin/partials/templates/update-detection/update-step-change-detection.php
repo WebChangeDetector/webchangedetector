@@ -22,7 +22,7 @@ require 'update-step-tiles.php';
 	<?php wp_nonce_field( 'update_detection_step' ); ?>
 	<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
 	<input type="hidden" name="step" value="post-update">
-	<input class="button" type="submit" value="<?php echo esc_attr__( 'Create Change Detection again', 'webchangedetector' ); ?>">
+	<input class="button" type="submit" value="<?php echo esc_attr__( 'Create Checks again', 'webchangedetector' ); ?>">
 </form>
 
 <?php

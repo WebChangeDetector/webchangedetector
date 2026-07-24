@@ -9,11 +9,21 @@
 #
 # This script NEVER touches the wordpress.org SVN checkout (wp-repo-plugin/).
 #
-# Usage: ./bin/wcd-release.sh <version> [--dry-run] [--yes]
+# Usage: ./bin/wcd-release.sh                   (interactive menu)
+#        ./bin/wcd-release.sh <version> [--dry-run] [--yes]
+#        ./bin/wcd-release.sh --next    [--dry-run] [--yes]
 #
 #   <version>   e.g. 4.4.0 or 4.4.0-beta.1
+#   --next      derive the version from the current "Version:" header by
+#               incrementing its pre-release counter (4.4.0-beta.1 ->
+#               4.4.0-beta.2); mutually exclusive with <version>
 #   --dry-run   validate and report only; changes nothing
 #   --yes       skip the interactive confirmation
+#
+# With no version and no --next the script asks what to release (next
+# pre-release / final / custom). That menu needs a terminal, so it is skipped
+# for --yes and for a non-tty stdin; those stay a usage error, because an
+# unattended run must never have its version guessed for it.
 #
 # Portability note: this runs on macOS (BSD userland). No `grep -P`, and no
 # in-place `sed -i` (BSD requires a backup suffix, GNU forbids an empty one),
@@ -26,21 +36,40 @@ set -eu
 PLUGIN_FILE="webchangedetector.php"
 README_FILE="README.txt"
 VERSION_PATTERN='^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$'
+# Used by --next to decide whether the CURRENT version can be incremented.
+PRERELEASE_PATTERN='^.+-(alpha|beta|rc)\.[0-9]+$'
+STABLE_VERSION_PATTERN='^[0-9]+\.[0-9]+\.[0-9]+$'
 VERSION_LINE_RE='^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*[^[:space:]]'
 STABLE_LINE_RE='^Stable tag:[[:space:]]*[^[:space:]]'
 
 DRY_RUN=0
 ASSUME_YES=0
+USE_NEXT=0
+INTERACTIVE=0
 NEW_VERSION=""
+DERIVED_NOTE=""
 
 usage() {
 	cat <<'USAGE'
-Usage: ./bin/wcd-release.sh <version> [--dry-run] [--yes]
+Usage: ./bin/wcd-release.sh                   (interactive menu)
+       ./bin/wcd-release.sh <version> [--dry-run] [--yes]
+       ./bin/wcd-release.sh --next    [--dry-run] [--yes]
 
+  (no args)   Ask what to release: next pre-release, final release, or a
+              custom version. Needs a terminal; not available with --yes.
   <version>   Semantic version, optionally with a pre-release suffix.
               Examples: 4.4.0, 4.4.0-beta.1, 4.4.0-rc.2
+  --next      Derive the version from the current 'Version:' header by
+              incrementing its pre-release counter (4.4.0-beta.1 ->
+              4.4.0-beta.2, 4.4.0-beta.9 -> 4.4.0-beta.10). The current
+              version must itself be a pre-release; a stable one is rejected
+              because the intended next version would be ambiguous.
+              Cannot be combined with <version>.
   --dry-run   Validate and report only. Changes no files, no git state.
   --yes       Skip the interactive confirmation prompt.
+
+Run it without arguments and pick from the menu. --next and an explicit
+version are the non-interactive forms, for scripting and unattended runs.
 USAGE
 }
 
@@ -49,10 +78,37 @@ die() {
 	exit 1
 }
 
+read_plugin_version() {
+	sed -E -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' "$PLUGIN_FILE" | head -n1
+}
+
+read_stable_tag() {
+	sed -E -n 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/p' "$README_FILE" | head -n1
+}
+
+# Increment the trailing pre-release counter, keeping base version and stage
+# (4.4.0-beta.1 -> 4.4.0-beta.2, 4.5.0-rc.2 -> 4.5.0-rc.3). ${1%.*} is
+# everything before the counter, ${1##*.} the counter itself; 10# forces base 10
+# so a padded counter (beta.08) is not read as octal.
+# The caller must have checked $1 against PRERELEASE_PATTERN.
+derive_next_prerelease() {
+	printf '%s.%s\n' "${1%.*}" "$(( 10#${1##*.} + 1 ))"
+}
+
+# Pre-release stage of a version: 4.4.0-beta.2 -> beta, 4.5.0-rc.1 -> rc.
+# The caller must have checked $1 against PRERELEASE_PATTERN.
+prerelease_stage() {
+	local base="${1%.*}"
+	printf '%s\n' "${base##*-}"
+}
+
 # --- Parse arguments -------------------------------------------------------
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
+		--next)
+			USE_NEXT=1
+			;;
 		--dry-run)
 			DRY_RUN=1
 			;;
@@ -78,9 +134,26 @@ while [ "$#" -gt 0 ]; do
 	shift
 done
 
-if [ -z "$NEW_VERSION" ]; then
+# --next derives the version, so passing one as well is contradictory.
+if [ "$USE_NEXT" -eq 1 ] && [ -n "$NEW_VERSION" ]; then
 	usage >&2
-	exit 1
+	die "--next and an explicit version ('$NEW_VERSION') are mutually exclusive."
+fi
+
+# No version and no --next: ask interactively, but only when a human is
+# actually there to answer. An unattended run (--yes, or stdin redirected from
+# a file/pipe) must never have a version picked for it, so it stays a usage
+# error with an explicit message.
+if [ "$USE_NEXT" -eq 0 ] && [ -z "$NEW_VERSION" ]; then
+	if [ "$ASSUME_YES" -eq 1 ]; then
+		usage >&2
+		die "--yes skips every prompt, so the release menu cannot run. Pass a version explicitly or use --next."
+	fi
+	if [ ! -t 0 ]; then
+		usage >&2
+		die "No version and no --next, and stdin is not a terminal. The release menu needs one. Pass a version explicitly or use --next."
+	fi
+	INTERACTIVE=1
 fi
 
 # --- Preconditions ---------------------------------------------------------
@@ -103,7 +176,166 @@ if [ "$BRANCH" != "dev" ]; then
 	echo "Warning: you are on branch '$BRANCH', not 'dev'."
 fi
 
+# --- Resolve the target version --------------------------------------------
+
+CURRENT_VERSION="$(read_plugin_version)"
+[ -n "$CURRENT_VERSION" ] || die "Could not read the 'Version:' header from $PLUGIN_FILE."
+
+# Read early: the stable-release guard and the final-release warning both need
+# it before the first file is written.
+CURRENT_STABLE_TAG="$(read_stable_tag)"
+
+if [ "$USE_NEXT" -eq 1 ]; then
+	if printf '%s' "$CURRENT_VERSION" | grep -Eq "$PRERELEASE_PATTERN"; then
+		NEW_VERSION="$(derive_next_prerelease "$CURRENT_VERSION")"
+		DERIVED_NOTE=" (derived via --next)"
+	elif printf '%s' "$CURRENT_VERSION" | grep -Eq "$STABLE_VERSION_PATTERN"; then
+		# Deliberately no guess: 4.3.2 could mean 4.3.3-beta.1 or 4.4.0-beta.1.
+		die "current version ${CURRENT_VERSION} is a stable release; --next cannot infer the next pre-release. Pass it explicitly, e.g. ./bin/wcd-release.sh 4.4.0-beta.1"
+	else
+		die "current version '${CURRENT_VERSION}' is not a recognised version; --next cannot derive from it. Pass it explicitly, e.g. ./bin/wcd-release.sh 4.4.0-beta.1"
+	fi
+
+	# Printed before the diff and the confirmation prompt, so no release can be
+	# cut without the derived version having been on screen.
+	echo
+	echo "Next version: ${CURRENT_VERSION} -> ${NEW_VERSION}${DERIVED_NOTE}"
+fi
+
+# --- Interactive release-type menu -----------------------------------------
+#
+# Reached only for a bare invocation on a terminal. It decides WHAT to release
+# and nothing else: every guard below (format, duplicate tag, ordering, stable
+# tag handling) applies to the picked version exactly as it does to an
+# explicitly passed one, and the release plan plus the y/N prompt still confirm
+# the actual diff afterwards.
+
+# Extra warning for a stable target version: this is the number customers see
+# on wordpress.org, and it is the only case that moves 'Stable tag:'. Its gate
+# (further below) is about WHAT is released and WHO is asked, never about how the
+# version was chosen: "Custom version" and a version typed on the command line
+# produce a stable release just as well as the "Final release" menu entry.
+warn_final_release() {
+	echo
+	echo "Careful: ${1} is a FINAL release."
+	echo "  It is the customer-facing version published on wordpress.org."
+	echo "  'Stable tag:' in ${README_FILE} will be updated: ${CURRENT_STABLE_TAG} -> ${1}."
+	echo "  It ends the pre-release cycle, so only continue when the betas are"
+	echo "  tested and the changelog is final."
+}
+
+# Reads a version for the "Custom version" entry. Returns 0 with NEW_VERSION
+# set, or 1 to go back to the menu (empty input). A malformed version is
+# rejected right here and re-prompted, so a typo costs one line instead of the
+# whole run. This is an early usability check only: the format guard below
+# stays the single source of truth and still validates every version, including
+# the ones passed on the command line.
+prompt_custom_version() {
+	local custom=""
+	while true; do
+		printf 'Version to release (empty to go back): '
+		read -r custom || { echo; echo "Aborted. Nothing was changed."; exit 0; }
+		[ -n "$custom" ] || return 1
+		if printf '%s' "$custom" | grep -Eq "$VERSION_PATTERN"; then
+			NEW_VERSION="$custom"
+			DERIVED_NOTE=" (custom version)"
+			return 0
+		fi
+		echo "Invalid version '${custom}'. Expected e.g. 4.4.0 or 4.4.0-beta.1."
+	done
+}
+
+prompt_release_type() {
+	local stage="" next_version="" final_version="" reason="" choice=""
+
+	if printf '%s' "$CURRENT_VERSION" | grep -Eq "$PRERELEASE_PATTERN"; then
+		stage="$(prerelease_stage "$CURRENT_VERSION")"
+		next_version="$(derive_next_prerelease "$CURRENT_VERSION")"
+		# Drop the pre-release suffix: 4.4.0-beta.2 -> 4.4.0.
+		final_version="${CURRENT_VERSION%%-*}"
+	elif printf '%s' "$CURRENT_VERSION" | grep -Eq "$STABLE_VERSION_PATTERN"; then
+		reason=$'The current version is a stable release, so the next pre-release is\nambiguous (4.3.3-beta.1 or 4.4.0-beta.1?). Name the version yourself.'
+	else
+		reason=$'The current version is not a recognised version number, so no next\nversion can be derived from it. Name the version yourself.'
+	fi
+
+	echo
+	echo "Current version: ${CURRENT_VERSION}"
+
+	while true; do
+		echo
+		if [ -n "$reason" ]; then
+			echo "$reason"
+			echo
+		fi
+		echo "What do you want to release?"
+		if [ -n "$stage" ]; then
+			printf '  1) %-17s%s\n' "Next ${stage}" "$next_version"
+			printf '  2) %-17s%s\n' "Final release" "$final_version"
+			echo "  3) Custom version"
+		else
+			echo "  1) Custom version"
+		fi
+		echo "  q) Abort"
+		echo
+		printf 'Choice [1]: '
+
+		choice=""
+		# Ctrl-D (EOF) counts as abort, not as the default choice.
+		read -r choice || { echo; echo "Aborted. Nothing was changed."; exit 0; }
+		[ -n "$choice" ] || choice="1"
+
+		case "$choice" in
+			q|Q)
+				echo "Aborted. Nothing was changed."
+				exit 0
+				;;
+		esac
+
+		if [ -n "$stage" ]; then
+			case "$choice" in
+				1)
+					NEW_VERSION="$next_version"
+					DERIVED_NOTE=" (next ${stage})"
+					return 0
+					;;
+				2)
+					NEW_VERSION="$final_version"
+					DERIVED_NOTE=" (final release)"
+					return 0
+					;;
+				3)
+					if prompt_custom_version; then
+						return 0
+					fi
+					;;
+				*)
+					echo "Please enter 1, 2, 3 or q."
+					;;
+			esac
+		else
+			case "$choice" in
+				1)
+					if prompt_custom_version; then
+						return 0
+					fi
+					;;
+				*)
+					echo "Please enter 1 or q."
+					;;
+			esac
+		fi
+	done
+}
+
+if [ "$INTERACTIVE" -eq 1 ]; then
+	prompt_release_type
+fi
+
 # --- Validate the requested version ----------------------------------------
+#
+# Everything below applies to the derived version exactly as it does to an
+# explicitly passed one: format, duplicate tag (local and origin), ordering.
 
 if ! printf '%s' "$NEW_VERSION" | grep -Eq "$VERSION_PATTERN"; then
 	die "Invalid version '$NEW_VERSION'. Expected e.g. 4.4.0 or 4.4.0-beta.1."
@@ -119,11 +351,6 @@ if [ -n "$(git ls-remote --tags origin "refs/tags/${TAG}" 2>/dev/null)" ]; then
 	die "Tag ${TAG} already exists on origin."
 fi
 
-CURRENT_VERSION="$(
-	sed -E -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' "$PLUGIN_FILE" | head -n1
-)"
-[ -n "$CURRENT_VERSION" ] || die "Could not read the 'Version:' header from $PLUGIN_FILE."
-
 # Use PHP's own comparator so the ordering matches what WordPress will do.
 if ! php -r 'exit(version_compare($argv[1], $argv[2], ">") ? 0 : 1);' "$NEW_VERSION" "$CURRENT_VERSION"; then
 	die "New version ${NEW_VERSION} is not greater than the current version ${CURRENT_VERSION}."
@@ -135,15 +362,31 @@ case "$NEW_VERSION" in
 	*-*) IS_STABLE=0 ;;
 esac
 
-CURRENT_STABLE_TAG="$(
-	sed -E -n 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/p' "$README_FILE" | head -n1
-)"
+# A stable release rewrites 'Stable tag:', so the line has to be readable BEFORE
+# the first file write. Without this guard the plugin header is bumped first and
+# the run then dies inside replace_first_match(), leaving a half-rewritten tree.
+if [ "$IS_STABLE" -eq 1 ] && [ -z "$CURRENT_STABLE_TAG" ]; then
+	die "No readable 'Stable tag:' line in ${README_FILE}, which a stable release has to update. Restore it (format: 'Stable tag: <last stable version>') and run this script again."
+fi
+
+# Warn on WHAT is being released and WHO is being asked, never on how the version
+# was chosen: a custom stable version and one typed on the command line move
+# 'Stable tag:' exactly like the "Final release" menu entry does. So the gate is
+# "the target is stable AND this run is going to prompt a human anyway", which
+# covers every menu route plus an explicit stable version without --yes.
+# --yes and a non-tty stdin are excluded: that run reaches no prompt (with no tty
+# the y/N read below gets EOF and reverts), so there is nobody to read a warning,
+# and it still has the release plan. stdin is the tty tested, not stdout: it is
+# the stream the prompts read from, and it is what the menu gate above checks.
+if [ "$IS_STABLE" -eq 1 ] && [ "$ASSUME_YES" -ne 1 ] && [ -t 0 ]; then
+	warn_final_release "$NEW_VERSION"
+fi
 
 echo
 echo "Release plan"
 echo "  Branch:          ${BRANCH}"
 echo "  Current version: ${CURRENT_VERSION}"
-echo "  New version:     ${NEW_VERSION}"
+echo "  New version:     ${NEW_VERSION}${DERIVED_NOTE}"
 echo "  Tag:             ${TAG}"
 if [ "$IS_STABLE" -eq 1 ]; then
 	echo "  Stable tag:      ${CURRENT_STABLE_TAG} -> ${NEW_VERSION} (stable release)"
@@ -188,9 +431,7 @@ if [ "$IS_STABLE" -eq 1 ]; then
 fi
 
 # Guard against a silently failed rewrite.
-WRITTEN_VERSION="$(
-	sed -E -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' "$PLUGIN_FILE" | head -n1
-)"
+WRITTEN_VERSION="$(read_plugin_version)"
 if [ "$WRITTEN_VERSION" != "$NEW_VERSION" ]; then
 	git checkout -- "$PLUGIN_FILE" "$README_FILE"
 	die "Version rewrite failed (header still reads '${WRITTEN_VERSION}'). Changes reverted."

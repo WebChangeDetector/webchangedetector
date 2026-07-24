@@ -186,7 +186,7 @@ class WebChangeDetector_Card_View {
 			WCD_OPTION_UPDATE_STEP_PRE              => __( 'Take Pre-Update Screenshots', 'webchangedetector' ),
 			WCD_OPTION_UPDATE_STEP_MAKE_UPDATES     => __( 'Make Your Updates', 'webchangedetector' ),
 			WCD_OPTION_UPDATE_STEP_POST             => __( 'Take Post-Update Screenshots', 'webchangedetector' ),
-			WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION => __( 'View Change Detections', 'webchangedetector' ),
+			WCD_OPTION_UPDATE_STEP_CHANGE_DETECTION => __( 'View Checks', 'webchangedetector' ),
 		);
 
 		?>

@@ -209,8 +209,8 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-threshold" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php esc_html_e( 'Change Detection Threshold', 'webchangedetector' ); ?></label>
-					<div class="wcd-description"><?php esc_html_e( 'Ignore changes in Change Detections below the threshold. Use this carefully. If you set it too low, you might miss changes that are important.', 'webchangedetector' ); ?></div>
+					<label class="wcd-form-label"><?php esc_html_e( 'Difference Threshold', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'Ignore changes below the threshold. Use this carefully: if you set it too high, you might miss changes that are important. We recommend leaving it at 0.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control wcd-inline">
 					<?php

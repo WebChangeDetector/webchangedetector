@@ -294,7 +294,7 @@ class WebChangeDetector_Admin_Account {
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
 								<label class="wcd-form-label"><?php esc_html_e( 'Reset API Token', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php esc_html_e( 'With resetting the API Token, auto detections still continue and your settings will be still available when you use the same api token with this website again.', 'webchangedetector' ); ?></div>
+								<div class="wcd-description"><?php esc_html_e( 'With resetting the API Token, your scheduled checks still continue and your settings will be still available when you use the same api token with this website again.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<input type="submit" value="<?php esc_attr_e( 'Reset API Token', 'webchangedetector' ); ?>" class="button button-delete">
