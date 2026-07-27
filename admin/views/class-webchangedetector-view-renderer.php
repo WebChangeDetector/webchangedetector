@@ -51,23 +51,6 @@ class WebChangeDetector_View_Renderer {
 	}
 
 	/**
-	 * Render loading overlay.
-	 *
-	 * @param string $message The loading message.
-	 */
-	public function render_loading_overlay( $message = 'Loading...' ) {
-		?>
-		<div id="wcd-loading-overlay" style="display: none;">
-			<div class="wcd-loading-content">
-				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . '../admin/img/logo-webchangedetector.png' ); ?>" alt="WebChangeDetector Logo" class="wcd-loading-logo">
-				<p class="wcd-loading-text"><?php echo esc_html( $message ); ?></p>
-				<img src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . '../admin/img/loading-bar.gif' ); ?>" alt="Loading..." class="wcd-loading-gif">
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Render the navigation tabs.
 	 *
 	 * @param string $active_tab The currently active tab.

@@ -237,6 +237,8 @@ In addition to layout, the browser console log is checked for errors.
 * Fix: Temporary connection problems no longer reset the website connection
 * Fix: PHP error on cron runs when setup was not finished
 * Fix: Premium plugin and theme updates are no longer skipped during Auto Update Checks
+* Fix: Creating a trial account no longer leaves the plugin with a broken connection
+* Fix: Schedule fields in the monitoring settings are no longer shown while monitoring is off
 
 = 4.3.2 =
 * Improvement: Change wording from "manual checks" to "on-demand checks"

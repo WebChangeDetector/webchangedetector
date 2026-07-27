@@ -17,7 +17,15 @@ namespace WebChangeDetector;
 class WebChangeDetector_Admin {
 
 
-	const API_TOKEN_LENGTH = 10;
+	/**
+	 * Exact length of an API token.
+	 *
+	 * Mirrors the API contract: tokens are issued as exactly 40 alphanumeric
+	 * characters (`User::API_TOKEN_LENGTH` on the API side).
+	 *
+	 * @var int
+	 */
+	const API_TOKEN_LENGTH = 40;
 
 	const VALID_WCD_ACTIONS = array(
 		'reset_api_token',

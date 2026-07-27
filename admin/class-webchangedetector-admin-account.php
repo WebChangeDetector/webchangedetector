@@ -74,13 +74,18 @@ class WebChangeDetector_Admin_Account {
 	 * for account activation purposes.
 	 *
 	 * @since    1.0.0
-	 * @param    array  $postdata     The form data containing user information.
-	 * @param    string $api_token    The API token to save.
+	 * @param    array        $postdata     The form data containing user information.
+	 * @param    string|array $api_token    The API token to save, or an API error response.
 	 * @return   bool                    True if saved successfully, false otherwise.
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-		if ( ! is_string( $api_token ) || strlen( $api_token ) < 10 ) { // API_TOKEN_LENGTH constant from original.
-			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
+		// The token is pasted by the user, so strip stray whitespace before validating and storing it.
+		$api_token = is_string( $api_token ) ? trim( $api_token ) : $api_token;
+
+		// Minimum length, not an exact one: the API issues 40-character tokens today but issued
+		// 80-character ones before 2020-07-21, and those stay valid server-side with no re-issue path.
+		if ( ! is_string( $api_token ) || strlen( $api_token ) < WebChangeDetector_Admin::API_TOKEN_LENGTH || ! ctype_alnum( $api_token ) ) {
+			if ( is_array( $api_token ) && isset( $api_token[0], $api_token[1] ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-error">

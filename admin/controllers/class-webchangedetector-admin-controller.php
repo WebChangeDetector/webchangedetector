@@ -229,7 +229,6 @@ class WebChangeDetector_Admin_Controller {
 	 */
 	private function handle_pre_auth_actions( $wcd_action, $postdata ) {
 		switch ( $wcd_action ) {
-			case 'create_free_account':
 			case 'create_trial_account':
 				return $this->handle_create_free_account( $postdata );
 
@@ -314,11 +313,6 @@ class WebChangeDetector_Admin_Controller {
 
 			case 'change_comparison_status':
 				$result = $this->admin->comparison_action_handler->handle_change_comparison_status( $postdata );
-				break;
-
-			case 'create_trial_account':
-				// This action should be handled in pre-auth actions, not here.
-				// Removing to prevent duplicate calls.
 				break;
 
 			default:
