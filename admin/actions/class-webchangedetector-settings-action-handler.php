@@ -152,6 +152,15 @@ class WebChangeDetector_Settings_Action_Handler {
 			$args['name'] = sanitize_text_field( $data['group_name'] );
 		}
 
+		// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is
+		// always present when the form was rendered; propagate to every sub-site's group.
+		if ( isset( $data['default_desktop'] ) ) {
+			$args['default_desktop'] = '1' === (string) $data['default_desktop'];
+		}
+		if ( isset( $data['default_mobile'] ) ) {
+			$args['default_mobile'] = '1' === (string) $data['default_mobile'];
+		}
+
 		// Merge advanced settings (basic auth, proxy, screenshot delay).
 		$advanced_settings = $this->admin->settings_handler->extract_advanced_settings( $data );
 		$args              = array_merge( $args, $advanced_settings );

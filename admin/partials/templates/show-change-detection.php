@@ -171,7 +171,7 @@ $is_mobile = isset( $compare['device'] ) && 'mobile' === $compare['device'];
 
 		<!-- View toggle buttons -->
 		<div class="wcd-view-toggle">
-			<button type="button" class="wcd-view-btn wcd-view-diff active"><?php esc_html_e( 'Before <-> Change Detection', 'webchangedetector' ); ?></button>
+			<button type="button" class="wcd-view-btn wcd-view-diff active"><?php esc_html_e( 'Before <-> Change', 'webchangedetector' ); ?></button>
 			<button type="button" class="wcd-view-btn wcd-view-after"><?php esc_html_e( 'Before <-> After', 'webchangedetector' ); ?></button>
 		</div>
 
@@ -191,7 +191,7 @@ $is_mobile = isset( $compare['device'] ) && 'mobile' === $compare['device'];
 			</div>
 
 			<?php if ( $has_ai_data ) { ?>
-			<!-- AI overlay layer (positioned on top of slider, visible in Change Detection mode) -->
+			<!-- AI overlay layer (positioned on top of slider, visible in Change mode) -->
 			<div id="wcd_ai_overlay_layer" class="wcd-ai-overlay-layer wcd-ai-overlays-visible"
 				<?php if ( 'verified' === $ai_status && ! empty( $ai_regions ) ) { ?>
 					data-ai-regions="<?php echo esc_attr( wp_json_encode( $ai_regions ) ); ?>"

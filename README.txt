@@ -2,8 +2,8 @@
 Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
-Tested up to: 6.9
-Stable tag: 4.3.2
+Tested up to: 7.0.2
+Stable tag: 4.4.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -65,7 +65,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 * Check browser console logs for new errors to detect errors like a broken contact form.
 * WPML and Polylang support.
 * WP Multisite support.
-* Publicly accessible link to a change detection to share with your agency or developer.
+* Publicly accessible link to a check to share with your agency or developer.
 * Basic Auth support to check websites behind a password.
 * Static IP proxy to whitelist the IP in a firewall which blocks other users.
 
@@ -197,7 +197,7 @@ Yes. We screenshot the rendered front-end, so any builder, theme, or block libra
 
 = Can I share a result with a designer or developer who is not in WordPress? =
 
-Yes. Every change detection has a public share link that opens the comparison view in a browser, no login required.
+Yes. Every check has a public share link that opens the comparison view in a browser, no login required.
 
 = What does the free plan include? =
 
@@ -212,15 +212,37 @@ Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks.
 In addition to layout, the browser console log is checked for errors.
 
 == Screenshots ==
-1. Change detection view: before-screenshot left and after-screenshot right with highlighted changes.
-2. Dashboard: account overview, recent change detections, and quick actions.
+1. Check view: before-screenshot left and after-screenshot right with highlighted changes.
+2. Dashboard: account overview, recent checks, and quick actions.
 3. On-Demand Checks: settings for the auto update checks and on-demand checks. Also run an on-demand visual diff before and after updates or other changes.
 4. Monitoring settings: select pages, intervals and other settings for continuous monitoring.
-5. Change detections list: every result, grouped by source (monitoring, on-demand, auto-update) and filterable by status.
+5. Checks list: every result, grouped by source (monitoring, on-demand, auto-update) and filterable by status.
 6. After On-Demand Checks: see the results immediatelly after the checks ran.
-7. AI rules: train AI to ignore regions of a change detection in future runs to eliminate false-positive alarms.
+7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.4.0 =
+* Feature: New dashboard with more details on your checks and recent changes
+* Feature: Select all URLs across all pages at once
+* Feature: Screenshot Region setting: US, EU, or auto-detect
+* Feature: Auto-activate newly synced URLs for desktop and/or mobile, per group
+* Feature: Detect and optionally re-enable auto updates disabled by your host or another tool
+* Improvement: More reliable Auto Update Checks in the website's own timezone
+* Improvement: Support for more cache plugins and hosts when clearing caches
+* Improvement: Fewer background requests to the WebChange Detector service
+* Improvement: "Change Detections" are now called "Checks"
+* Improvement: Refreshed card design and removed legacy code
+* Improvement: Update history shows the actual failure reason for failed auto updates
+* Fix: Auto Update Checks no longer run twice, get stuck, or stay blocked
+* Fix: Temporary connection problems no longer reset the website connection
+* Fix: PHP error on cron runs when setup was not finished
+* Fix: Premium plugin and theme updates are no longer skipped during Auto Update Checks
+* Fix: Creating a trial account no longer leaves the plugin with a broken connection
+* Fix: Schedule fields in the monitoring settings are no longer shown while monitoring is off
+* Fix: Checks and monitoring settings that no longer exist now show a clear message instead of a blank page
+* Fix: The dashboard now shows the warning when no notification email is set for Auto Update Checks
+* Fix: Alternating row colors in the Auto Update Checks result email are displayed correctly
+
 = 4.3.2 =
 * Improvement: Change wording from "manual checks" to "on-demand checks"
 * Fix: View for mobile change detections
@@ -502,6 +524,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.4.0 =
+Adds a new dashboard, a Screenshot Region setting, and detection when WordPress auto updates were disabled by your host, plus several reliability fixes for Auto Update Checks. Recommended for all users.
 
 = 4.3.0 =
 Adds full WordPress multisite support (network-activated and per-site) plus sub-site allowance management for agencies. Recommended for all users.

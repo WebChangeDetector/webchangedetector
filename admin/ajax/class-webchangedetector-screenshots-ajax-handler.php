@@ -455,7 +455,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 
 		} catch ( \Exception $e ) {
 			$this->send_error_response(
-				__( 'An error occurred while getting change detections.', 'webchangedetector' ),
+				__( 'An error occurred while getting checks.', 'webchangedetector' ),
 				'Exception: ' . $e->getMessage()
 			);
 		}

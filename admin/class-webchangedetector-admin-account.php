@@ -30,15 +30,6 @@ class WebChangeDetector_Admin_Account {
 
 
 	/**
-	 * Cached account details.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      array|null    $account_details    Cached account details from API.
-	 */
-	private $account_details;
-
-	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -83,13 +74,18 @@ class WebChangeDetector_Admin_Account {
 	 * for account activation purposes.
 	 *
 	 * @since    1.0.0
-	 * @param    array  $postdata     The form data containing user information.
-	 * @param    string $api_token    The API token to save.
+	 * @param    array        $postdata     The form data containing user information.
+	 * @param    string|array $api_token    The API token to save, or an API error response.
 	 * @return   bool                    True if saved successfully, false otherwise.
 	 */
 	public function save_api_token( $postdata, $api_token ) {
-		if ( ! is_string( $api_token ) || strlen( $api_token ) < 10 ) { // API_TOKEN_LENGTH constant from original.
-			if ( is_array( $api_token ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
+		// The token is pasted by the user, so strip stray whitespace before validating and storing it.
+		$api_token = is_string( $api_token ) ? trim( $api_token ) : $api_token;
+
+		// Minimum length, not an exact one: the API issues 40-character tokens today but issued
+		// 80-character ones before 2020-07-21, and those stay valid server-side with no re-issue path.
+		if ( ! is_string( $api_token ) || strlen( $api_token ) < WebChangeDetector_Admin::API_TOKEN_LENGTH || ! ctype_alnum( $api_token ) ) {
+			if ( is_array( $api_token ) && isset( $api_token[0], $api_token[1] ) && 'error' === $api_token[0] && ! empty( $api_token[1] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $api_token[1] ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-error">
@@ -294,7 +290,7 @@ class WebChangeDetector_Admin_Account {
 						<div class="wcd-form-row">
 							<div class="wcd-form-label-wrapper">
 								<label class="wcd-form-label"><?php esc_html_e( 'Reset API Token', 'webchangedetector' ); ?></label>
-								<div class="wcd-description"><?php esc_html_e( 'With resetting the API Token, auto detections still continue and your settings will be still available when you use the same api token with this website again.', 'webchangedetector' ); ?></div>
+								<div class="wcd-description"><?php esc_html_e( 'With resetting the API Token, your scheduled checks still continue and your settings will be still available when you use the same api token with this website again.', 'webchangedetector' ); ?></div>
 							</div>
 							<div class="wcd-form-control">
 								<input type="submit" value="<?php esc_attr_e( 'Reset API Token', 'webchangedetector' ); ?>" class="button button-delete">
@@ -479,23 +475,6 @@ class WebChangeDetector_Admin_Account {
 	}
 
 	/**
-	 * Check if development mode is enabled.
-	 *
-	 * Determines if the plugin is running in development mode based on
-	 * configuration constants or URL patterns.
-	 *
-	 * @since    1.0.0
-	 * @return   bool    True if in development mode, false otherwise.
-	 */
-	public function is_dev_mode() {
-		// If either .test or dev. can be found in the URL, we're developing - wouldn't work if plugin client domain matches these criteria.
-		if ( defined( 'WCD_DEV' ) && WCD_DEV === true ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Check if this is the user's first time visiting the dashboard.
 	 *
 	 * Determines whether to show the setup wizard based on user visit history
@@ -570,13 +549,7 @@ class WebChangeDetector_Admin_Account {
 		$args = array(
 			'timeout' => WCD_REQUEST_TIMEOUT,
 			'body'    => $post,
-			'headers' => array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			),
+			'headers' => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token ),
 		);
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API V1 request: ' . $url . ' | Args: ' . wp_json_encode( $args ), 'api_v1', 'debug' );
@@ -613,55 +586,6 @@ class WebChangeDetector_Admin_Account {
 		}
 
 		return $body;
-	}
-
-
-	/**
-	 * Get account details v2.
-	 *
-	 * Fetches account details from the API with caching support.
-	 * Migrated from legacy Wp_Compare class.
-	 *
-	 * @since    1.0.0
-	 * @param    string|null $api_token Optional API token to use for the request.
-	 * @return   array|string|false     Account details array, error message, or false on failure.
-	 */
-	public function get_account_details_v2( $api_token = null ) {
-		// Use cached account details if available and no specific API token is provided.
-		if ( ! empty( $this->account_details ) && empty( $api_token ) ) {
-			return $this->account_details;
-		}
-
-		// Transient cache (skip when custom token provided).
-		$transient_key = 'wcd_account_details';
-		if ( empty( $api_token ) ) {
-			$cached = get_transient( $transient_key );
-			if ( false !== $cached ) {
-				$this->account_details = $cached;
-				return $cached;
-			}
-		}
-
-		$account_details = \WebChangeDetector\WebChangeDetector_API_V2::get_account_v2( $api_token );
-
-		if ( ! empty( $account_details['data'] ) ) {
-			$account_details                 = $account_details['data'];
-			$account_details['checks_limit'] = $account_details['checks_done'] + $account_details['checks_left'];
-
-			// Cache the account details if no specific token was used.
-			if ( empty( $api_token ) ) {
-				$this->account_details = $account_details;
-				set_transient( $transient_key, $account_details, 5 * MINUTE_IN_SECONDS );
-			}
-
-			return $account_details;
-		}
-
-		if ( ! empty( $account_details['message'] ) ) {
-			return $account_details['message'];
-		}
-
-		return false;
 	}
 
 	// Note: Overlay rendering methods removed - initial setup now handled in dashboard controller.

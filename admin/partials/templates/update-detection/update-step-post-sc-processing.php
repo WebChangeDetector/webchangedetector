@@ -108,10 +108,10 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 		</form>
 	</div>
 
-	<!-- Change Detections -->
+	<!-- Checks -->
 	<div class="wcd-card" id="change-detections-container" style="margin-top: 20px;">
 		<div class="wcd-card-header">
-			<h3><?php esc_html_e( 'Change Detections', 'webchangedetector' ); ?></h3>
+			<h3><?php esc_html_e( 'Checks', 'webchangedetector' ); ?></h3>
 		</div>
 		<div class="wcd-card-content">
 			<!-- Filter Toggle -->
@@ -132,7 +132,7 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 				<div id="empty-state" style="text-align: center; padding: 30px 20px; color: #666;">
 					<span class="dashicons dashicons-clock" style="font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin: 0 auto 15px; display: block;"></span>
 					<p style="font-size: 14px; font-weight: 500; margin-bottom: 5px;"><?php esc_html_e( 'No changes detected yet.', 'webchangedetector' ); ?></p>
-					<p style="font-size: 13px; color: #999;"><?php esc_html_e( 'Change detections will appear here as comparisons complete.', 'webchangedetector' ); ?></p>
+					<p style="font-size: 13px; color: #999;"><?php esc_html_e( 'Checks will appear here as comparisons complete.', 'webchangedetector' ); ?></p>
 				</div>
 			</div>
 		</div>

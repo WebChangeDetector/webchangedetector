@@ -200,6 +200,27 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/** Select or deselect one device (desktop|mobile) for ALL urls of a group in a single API call.
+	 *
+	 * The API runs one SQL UPDATE over the group's urls, so this stays fast no matter how many urls
+	 * the group has. Only the given device column changes; the other viewport stays untouched.
+	 *
+	 * @param string $group_id The group id.
+	 * @param string $device   'desktop' or 'mobile'.
+	 * @param int    $enabled  1 to enable that device for every url, 0 to disable.
+	 *
+	 * @return array|string
+	 */
+	public static function select_all_urls_in_group_v2( $group_id, $device, $enabled ) {
+		$args = array(
+			'action'  => 'groups/' . $group_id . '/urls/select-all',
+			'device'  => $device,
+			'enabled' => $enabled,
+		);
+
+		return self::api_v2( $args, 'PUT' );
+	}
+
 	/** Get group details.
 	 *
 	 * @param string $group_id The group id.
@@ -229,16 +250,20 @@ class WebChangeDetector_API_V2 {
 
 	/** Delete urls from group
 	 *
+	 * The API route is POST groups/{id}/remove-urls and expects 'urls' as a
+	 * flat array of url uuids (the urls themselves are not deleted, only
+	 * their membership in the group).
+	 *
 	 * @param string $group_id The group_id.
-	 * @param array  $group_url_ids Ids of group_urls.
+	 * @param array  $url_ids Uuids of the urls to remove from the group.
 	 * @return mixed|string
 	 */
-	public static function delete_group_urls_v2( $group_id, $group_url_ids = array() ) {
+	public static function delete_group_urls_v2( $group_id, $url_ids = array() ) {
 		$args = array(
 			'action' => 'groups/' . $group_id . '/remove-urls',
-			'urls'   => $group_url_ids,
+			'urls'   => $url_ids,
 		);
-		return self::api_v2( $args, 'PUT' );
+		return self::api_v2( $args, 'POST' );
 	}
 
 	/** Take screenshots.
@@ -288,21 +313,29 @@ class WebChangeDetector_API_V2 {
 
 	/** Add urls to group.
 	 *
-	 * @param string $group_id Group uuid.
-	 * @param array  $params Urls and other params.
+	 * The API route is POST groups/{id}/add-urls and expects 'urls' as an
+	 * array of objects, each with an 'id' (url uuid) plus optional per-url
+	 * settings (desktop, mobile, css, js).
+	 *
+	 * @param string       $group_id Group uuid.
+	 * @param array|string $params A single url uuid, an array of url uuids, or an array of url objects.
 	 * @return mixed|string
 	 */
 	public static function add_urls_to_group_v2( $group_id, $params ) {
-
 		if ( ! is_array( $params ) ) {
-			$params[] = $params;
+			$params = array( $params );
+		}
+
+		// Normalize plain uuid entries to the url-object shape the API expects.
+		$urls = array();
+		foreach ( $params as $url ) {
+			$urls[] = is_array( $url ) ? $url : array( 'id' => $url );
 		}
 
 		$args = array(
 			'action' => 'groups/' . $group_id . '/add-urls',
-			'urls'   => $params,
+			'urls'   => $urls,
 		);
-		$args = array_merge( $args, $params );
 		return self::api_v2( $args );
 	}
 
@@ -700,13 +733,7 @@ class WebChangeDetector_API_V2 {
 			$base_url = WCD_API_URL_V2;
 		}
 
-		$headers = array(
-			'Accept'        => 'application/json',
-			'Authorization' => 'Bearer ' . $api_token,
-			'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-			'x-wcd-wp-id'   => get_current_user_id(),
-			'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-		);
+		$headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 		if ( WebChangeDetector_Multisite::is_network_context() ) {
 			$headers['x-wcd-network-admin'] = '1';
@@ -807,13 +834,7 @@ class WebChangeDetector_API_V2 {
 		if ( $multicall ) {
 			$args = array();
 			foreach ( $post[ $multicall ] as $multicall_data ) {
-				$multicall_headers = array(
-					'Accept'        => 'application/json',
-					'Authorization' => 'Bearer ' . $api_token,
-					'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-					'x-wcd-wp-id'   => get_current_user_id(),
-					'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-				);
+				$multicall_headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 				if ( WebChangeDetector_Multisite::is_network_context() ) {
 					$multicall_headers['x-wcd-network-admin'] = '1';
@@ -887,13 +908,7 @@ class WebChangeDetector_API_V2 {
 				return $results;
 			}
 		} else {
-			$request_headers = array(
-				'Accept'        => 'application/json',
-				'Authorization' => 'Bearer ' . $api_token,
-				'x-wcd-domain'  => WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
-				'x-wcd-wp-id'   => get_current_user_id(),
-				'x-wcd-plugin'  => 'webchangedetector-official/' . WEBCHANGEDETECTOR_VERSION,
-			);
+			$request_headers = WebChangeDetector_Admin_Utils::get_api_request_headers( $api_token );
 
 			if ( WebChangeDetector_Multisite::is_network_context() ) {
 				$request_headers['x-wcd-network-admin'] = '1';
@@ -927,14 +942,14 @@ class WebChangeDetector_API_V2 {
 			$response_code = (int) wp_remote_retrieve_response_code( $response );
 
 			$decoded_body = json_decode( $body, (bool) JSON_OBJECT_AS_ARRAY );
-			if ( 200 !== $response_code ) {
+			if ( $response_code < 200 || $response_code >= 300 ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Responsecode: ' . $response_code, 'api_v2', 'debug' );
 				if ( ! empty( $decoded_body ) && is_array( $decoded_body ) ) {
-                    // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($decoded_body, 1), 'api_v2', 'error');
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $decoded_body, 1 ), 'api_v2', 'error' );
 				} else {
-                    // phpcs:ignore
-                    \WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(print_r($body, 1), 'api_v2', 'error');
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( print_r( $body, 1 ), 'api_v2', 'error' );
 				}
 			}
 		}
@@ -956,6 +971,13 @@ class WebChangeDetector_API_V2 {
 
 		if ( WCD_HTTP_UNAUTHORIZED === $response_code ) {
 			return 'unauthorized';
+		}
+
+		// Positive not-found (stale/deleted resource id). Returned as a terminal string like
+		// the other failure strings so consumers can distinguish it from transient errors
+		// (5xx/429 keep returning the decoded Laravel error body).
+		if ( WCD_HTTP_NOT_FOUND === $response_code ) {
+			return 'not found';
 		}
 
 		// if parsing JSON into $decoded_body was without error.

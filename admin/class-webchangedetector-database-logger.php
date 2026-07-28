@@ -389,15 +389,6 @@ class WebChangeDetector_Database_Logger {
 	}
 
 	/**
-	 * Check if debug logging is enabled.
-	 *
-	 * @return bool Whether debug logging is enabled.
-	 */
-	public function is_debug_enabled() {
-		return $this->debug_enabled;
-	}
-
-	/**
 	 * Get client IP address.
 	 *
 	 * @return string Client IP address.

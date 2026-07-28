@@ -19,8 +19,7 @@ namespace WebChangeDetector;
  * WebChange Detector Admin Settings Class
  *
  * Manages plugin settings, configuration, and website details.
- * Handles monitoring settings, on-demand check settings, permissions,
- * and tab navigation.
+ * Handles monitoring settings, on-demand check settings, and permissions.
  *
  * @since      1.0.0
  * @package    WebChangeDetector
@@ -62,7 +61,7 @@ class WebChangeDetector_Admin_Settings {
 	/**
 	 * Extract advanced screenshot settings from POST data.
 	 *
-	 * Handles basic auth, proxy, and screenshot delay fields.
+	 * Handles basic auth, proxy, screenshot delay, and screenshot region fields.
 	 *
 	 * @since    4.1.0
 	 * @param    array $postdata    The POST data.
@@ -101,6 +100,14 @@ class WebChangeDetector_Admin_Settings {
 			$args['screenshot_delay'] = '' === $delay ? null : intval( $delay );
 		}
 
+		// Screenshot Region. Constrain to the allowed values; 'auto' lets the API
+		// geolocate and resolve to a concrete 'us'/'eu'. Default to 'auto' for any
+		// unexpected value so the API never receives junk.
+		if ( isset( $postdata['screenshot_region'] ) ) {
+			$region                    = sanitize_text_field( $postdata['screenshot_region'] );
+			$args['screenshot_region'] = in_array( $region, array( 'us', 'eu', 'auto' ), true ) ? $region : 'auto';
+		}
+
 		return $args;
 	}
 
@@ -110,11 +117,19 @@ class WebChangeDetector_Admin_Settings {
 	 * When settings are saved on the monitoring group, they get synced
 	 * to the on-demand check group and vice versa.
 	 *
+	 * Note: screenshot_region is intentionally NOT synced here. The API mirrors
+	 * the region to the sibling group server-side (GroupObserver) when it is saved
+	 * on the primary group, so forwarding it from the client would just make the
+	 * API dispatch the resolve job twice per 'auto' save.
+	 *
 	 * @since    4.1.0
 	 * @param    array  $settings            The settings to sync.
 	 * @param    string $current_group_uuid   The UUID of the group being saved.
 	 */
 	private function sync_to_sibling_group( $settings, $current_group_uuid ) {
+		// The API owns screenshot_region sibling-sync server-side; never forward it.
+		unset( $settings['screenshot_region'] );
+
 		if ( empty( $settings ) ) {
 			return;
 		}
@@ -144,18 +159,41 @@ class WebChangeDetector_Admin_Settings {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in save_generic_settings.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . wp_json_encode( $_POST ), 'monitoring_settings', 'debug' );
 
-		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
+		// Check if monitoring group UUID exists.
+		if ( empty( $this->admin->monitoring_group_uuid ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error' );
+			return array(
+				'success' => false,
+				'message' => __( 'Monitoring group UUID is not set. Please contact support.', 'webchangedetector' ),
+			);
+		}
+
+		// api_v2() returns plain strings on failure (e.g. 'not found' on HTTP 404), so shape-check
+		// before use: every fallback below reads $monitoring_settings unguarded.
+		$group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid );
+		if ( ! is_array( $group_response ) || ! isset( $group_response['data'] ) || ! is_array( $group_response['data'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Could not load monitoring group: ' . wp_json_encode( $group_response ), 'monitoring_settings', 'error' );
+			return array(
+				'success' => false,
+				'message' => __( 'Could not load the current monitoring settings. Please try again later.', 'webchangedetector' ),
+			);
+		}
+		$monitoring_settings = $group_response['data'];
 
 		$args = array(
-			'monitoring'    => true,
-			'hour_of_day'   => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
-			'interval_in_h' => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
-			'enabled'       => isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ),
-			'alert_emails'  => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
-			'name'          => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
-			'threshold'     => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
-			'css'           => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
-			'js'            => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
+			'monitoring'      => true,
+			'hour_of_day'     => isset( $group_data['hour_of_day'] ) ? sanitize_key( $group_data['hour_of_day'] ) : $monitoring_settings['hour_of_day'],
+			'interval_in_h'   => isset( $group_data['interval_in_h'] ) ? sanitize_text_field( $group_data['interval_in_h'] ) : $monitoring_settings['interval_in_h'],
+			'enabled'         => isset( $group_data['enabled'] ) && ( 'on' === $group_data['enabled'] || '1' === $group_data['enabled'] ),
+			'alert_emails'    => isset( $group_data['alert_emails'] ) ? explode( ',', sanitize_textarea_field( $group_data['alert_emails'] ) ) : $monitoring_settings['alert_emails'],
+			'name'            => isset( $group_data['group_name'] ) ? sanitize_text_field( $group_data['group_name'] ) : $monitoring_settings['name'],
+			'threshold'       => isset( $group_data['threshold'] ) ? sanitize_text_field( $group_data['threshold'] ) : $monitoring_settings['threshold'],
+			'css'             => isset( $group_data['css'] ) ? sanitize_textarea_field( $group_data['css'] ) : $monitoring_settings['css'],
+			'js'              => isset( $group_data['js'] ) ? $group_data['js'] : ( $monitoring_settings['js'] ?? '' ),
+			// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is
+			// always present; fall back to the current group value if missing (e.g. legacy form).
+			'default_desktop' => isset( $group_data['default_desktop'] ) ? ( '1' === (string) $group_data['default_desktop'] ) : ( $monitoring_settings['default_desktop'] ?? false ),
+			'default_mobile'  => isset( $group_data['default_mobile'] ) ? ( '1' === (string) $group_data['default_mobile'] ) : ( $monitoring_settings['default_mobile'] ?? false ),
 		);
 
 		// Schedule type.
@@ -194,14 +232,6 @@ class WebChangeDetector_Admin_Settings {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . wp_json_encode( $args ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug' );
 
-		// Check if monitoring group UUID exists.
-		if ( empty( $this->admin->monitoring_group_uuid ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error' );
-			return array(
-				'success' => false,
-				'message' => __( 'Monitoring group UUID is not set. Please contact support.', 'webchangedetector' ),
-			);
-		}
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->monitoring_group_uuid, $args );
 
 		// Debug: Log the API response.
@@ -295,6 +325,21 @@ class WebChangeDetector_Admin_Settings {
 			);
 		}
 
+		// Local-only override toggle: re-enable WP auto updates when another tool
+		// disabled them. Rendered with the hidden-0 + checkbox-1 pattern, so the key
+		// is present whenever the form offered the toggle. This is a per-site
+		// wp_option and intentionally not part of the API payload, so it is saved
+		// immediately and not gated on the API response below.
+		if ( isset( $postdata['wcd_force_enable_wp_updates'] ) ) {
+			$wcd_force_enable_wp_updates = '1' === (string) $postdata['wcd_force_enable_wp_updates'];
+			update_option( WebChangeDetector_Autoupdate_Guard::OPTION, $wcd_force_enable_wp_updates );
+
+			// Sync the filter within this request: the settings page renders right
+			// after this POST (no redirect), and register_override() ran at plugin
+			// load with the old option value.
+			WebChangeDetector_Autoupdate_Guard::sync_override( $wcd_force_enable_wp_updates );
+		}
+
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 
@@ -304,7 +349,7 @@ class WebChangeDetector_Admin_Settings {
 		// Force refresh website details cache after saving.
 		$this->get_website_details( true );
 
-		do_action( 'wcd_save_update_group_settings' );
+		do_action( 'wcd_save_update_group_settings', $auto_update_settings );
 
 		// Update group settings in API.
 		$args = array(
@@ -319,6 +364,15 @@ class WebChangeDetector_Admin_Settings {
 			// Stored verbatim — see settings-action-handler::handle_save_group_settings
 			// for the security rationale (capability gate, no server-side execution).
 			$args['js'] = $postdata['js'];
+		}
+
+		// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is
+		// always present when the form was rendered.
+		if ( isset( $postdata['default_desktop'] ) ) {
+			$args['default_desktop'] = '1' === (string) $postdata['default_desktop'];
+		}
+		if ( isset( $postdata['default_mobile'] ) ) {
+			$args['default_mobile'] = '1' === (string) $postdata['default_mobile'];
 		}
 
 		// Merge advanced settings (basic auth, proxy, screenshot delay).
@@ -499,7 +553,6 @@ class WebChangeDetector_Admin_Settings {
 					?>
 				</div>
 
-				<hr style="margin: 20px 0; border-color: #e1e5e9;">
 				<?php
 			}
 			?>
@@ -837,18 +890,6 @@ class WebChangeDetector_Admin_Settings {
 	}
 
 	/**
-	 * Clear the cached website details.
-	 *
-	 * @since    1.0.0
-	 * @return   void
-	 */
-	public function clear_website_details_cache() {
-		// This method forces a refresh of the static cached website details.
-		// by calling get_website_details with the force_refresh parameter.
-		$this->get_website_details( true );
-	}
-
-	/**
 	 * Get website details from API.
 	 *
 	 * @since    1.0.0
@@ -889,10 +930,23 @@ class WebChangeDetector_Admin_Settings {
 						delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 						$saved_website_id = null;
 					}
-				} else {
-					// Failed to get website by ID, delete the saved ID.
+				} elseif ( 'not found' === $website_response ) {
+					// The API positively says this website no longer exists (HTTP 404,
+					// mapped to the terminal 'not found' string by api_v2()), so the
+					// stored id is stale: delete it and re-resolve below.
 					delete_option( WCD_WP_OPTION_KEY_WEBSITE_ID );
 					$saved_website_id = null;
+				} else {
+					// Any other failure is treated as transient: api_v2() returns plain
+					// strings ('', 'unauthorized', 'update plugin') for timeouts and auth
+					// hiccups and decoded Laravel error bodies for 5xx/429. Keep the stored
+					// website id; a temporary API problem must not destroy the site's
+					// configuration.
+					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+						'Could not fetch website by id (transient API error). Keeping stored website id.',
+						'get_website_details',
+						'warning'
+					);
 				}
 			}
 
@@ -1100,66 +1154,6 @@ class WebChangeDetector_Admin_Settings {
 
 		// Shouldn't get here. But if so, we allow.
 		return true;
-	}
-
-	/**
-	 * Display navigation tabs for the plugin.
-	 *
-	 * @since    1.0.0
-	 * @return   void
-	 */
-	public function tabs() {
-		$active_tab = 'webchangedetector';
-
-		if ( ! empty( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( sanitize_key( $_GET['_wpnonce'] ) ) ) ) {
-			echo esc_html__( 'Something went wrong. Please try again.', 'webchangedetector' );
-		}
-
-		if ( isset( $_GET['page'] ) ) {
-			$active_tab = sanitize_text_field( wp_unslash( $_GET['page'] ) );
-		}
-		?>
-	<div class="wrap">
-		<h2 class="nav-tab-wrapper">
-			<?php if ( $this->is_allowed( 'dashboard_view' ) ) { ?>
-				<a href="?page=webchangedetector"
-					class="nav-tab <?php echo 'webchangedetector' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'dashboard' ); ?> <?php echo esc_html__( 'Dashboard', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'manual_checks_view' ) ) { ?>
-				<a href="?page=webchangedetector-update-settings"
-					class="nav-tab <?php echo 'webchangedetector-update-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'update-group' ); ?> <?php echo esc_html__( 'On-Demand Checks', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'monitoring_checks_view' ) ) { ?>
-				<a href="?page=webchangedetector-auto-settings"
-					class="nav-tab <?php echo 'webchangedetector-auto-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'auto-group' ); ?> <?php echo esc_html__( 'Monitoring', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'change_detections_view' ) ) { ?>
-				<a href="?page=webchangedetector-change-detections"
-					class="nav-tab <?php echo 'webchangedetector-change-detections' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'change-detections' ); ?> <?php echo esc_html__( 'Change Detections', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'logs_view' ) ) { ?>
-				<a href="?page=webchangedetector-logs"
-					class="nav-tab <?php echo 'webchangedetector-logs' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'logs' ); ?> <?php echo esc_html__( 'Queue', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-			<?php if ( $this->is_allowed( 'settings_view' ) ) { ?>
-				<a href="?page=webchangedetector-settings"
-					class="nav-tab <?php echo 'webchangedetector-settings' === $active_tab ? 'nav-tab-active' : ''; ?>">
-					<?php \WebChangeDetector\WebChangeDetector_Admin_Utils::get_device_icon( 'settings' ); ?> <?php echo esc_html__( 'Settings', 'webchangedetector' ); ?>
-				</a>
-			<?php } ?>
-		</h2>
-	</div>
-		<?php
 	}
 
 	/**

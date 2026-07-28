@@ -165,8 +165,8 @@ class WebChangeDetector_Admin_Screenshots {
 			// Check if API response is valid.
 			if ( empty( $api_response ) || ! isset( $api_response['data'] ) ) {
 				echo '<p class="notice notice-error" style="padding: 10px;">' .
-					esc_html__( 'Sorry, we couldn\'t find this change detection or you don\'t have permission to view it.', 'webchangedetector' ) .
-					' <a href="?page=webchangedetector-change-detections">' . esc_html__( 'Go back to Change Detections', 'webchangedetector' ) . '</a></p>';
+					esc_html__( 'Sorry, we couldn\'t find this check or you don\'t have permission to view it.', 'webchangedetector' ) .
+					' <a href="?page=webchangedetector-change-detections">' . esc_html__( 'Go back to Checks', 'webchangedetector' ) . '</a></p>';
 				return;
 			}
 
@@ -195,7 +195,7 @@ class WebChangeDetector_Admin_Screenshots {
 			if ( ! $hide_switch ) {
 				echo '<style>#comp-switch {display: none !important;}</style>';
 			}
-			echo '<div style="padding: 0 20px;">';
+			echo '<div>';
 			if ( ! $whitelabel ) {
 				echo '<style>.public-detection-logo {display: none;}</style>';
 			}
@@ -226,10 +226,17 @@ class WebChangeDetector_Admin_Screenshots {
 			echo '</div>';
 
 		} else {
-			echo '<p class="notice notice-error" style="padding: 10px;">' .
-				esc_html__( 'Ooops! There was no change detection selected. Please go to', 'webchangedetector' ) . ' ' .
-				'<a href="?page=webchangedetector-change-detections">' . esc_html__( 'Change Detections', 'webchangedetector' ) . '</a> ' .
-				esc_html__( 'and select a change detection to show.', 'webchangedetector' ) . '</p>';
+			?>
+			<p class="notice notice-error" style="padding: 10px;">
+				<?php
+				printf(
+					/* translators: %s: link to checks page */
+					esc_html__( 'Ooops! There was no check selected. Please go to %s and select a check to show.', 'webchangedetector' ),
+					'<a href="?page=webchangedetector-change-detections">' . esc_html__( 'Checks', 'webchangedetector' ) . '</a>'
+				);
+				?>
+			</p>
+			<?php
 		}
 	}
 

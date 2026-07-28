@@ -64,7 +64,7 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 				'fields'      => array(
 					'manual_checks_view'     => __( 'On-demand checks view', 'webchangedetector' ),
 					'monitoring_checks_view' => __( 'Monitoring checks view', 'webchangedetector' ),
-					'change_detections_view' => __( 'Change Detections view', 'webchangedetector' ),
+					'change_detections_view' => __( 'Checks view', 'webchangedetector' ),
 					'ai_rules_view'          => __( 'AI Rules view', 'webchangedetector' ),
 					'settings_view'          => __( 'Settings view', 'webchangedetector' ),
 					'logs_view'              => __( 'Queue view', 'webchangedetector' ),

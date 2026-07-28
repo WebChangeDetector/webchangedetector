@@ -411,7 +411,7 @@
                     element: '.wcd-form-row.wcd-auto-update-setting-from',
                     popover: {
                         title: this.getTranslation('scheduleNotificationsTitle', 'Schedule & Notifications'),
-                        description: this.getTranslation('scheduleNotificationsDesc', 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive change detection should be. The descriptions next to each field explain the individual options.'),
+                        description: this.getTranslation('scheduleNotificationsDesc', 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive the checks should be. The descriptions next to each field explain the individual options.'),
                         side: 'left',
                         align: 'start'
                     }
@@ -556,8 +556,8 @@
                 {
                     element: '.webchangedetector .wizard-change-detections',
                     popover: {
-                        title: this.getTranslation('changeDetectionHistoryTitle', 'Change Detection History'),
-                        description: this.getTranslation('changeDetectionHistoryDesc', 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.'),
+                        title: this.getTranslation('changeDetectionHistoryTitle', 'Check History'),
+                        description: this.getTranslation('changeDetectionHistoryDesc', 'This is your check hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.'),
                         side: 'bottom',
                         align: 'start'
                     }
@@ -590,7 +590,7 @@
                     element: '.wcd-ai-rules-info',
                     popover: {
                         title: this.getTranslation('aiRulesTitle', 'AI Rules'),
-                        description: this.getTranslation('aiRulesDesc', 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from change detection views by clicking "Ignore in future" on a region.'),
+                        description: this.getTranslation('aiRulesDesc', 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from check views by clicking "Ignore in future" on a region.'),
                         side: 'bottom',
                         align: 'start'
                     }

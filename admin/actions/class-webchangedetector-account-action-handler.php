@@ -2,7 +2,7 @@
 /**
  * Account Action Handler for WebChangeDetector
  *
- * Handles trial account creation and related setup tasks.
+ * Handles trial account creation.
  *
  * @package    WebChangeDetector
  * @subpackage WebChangeDetector/admin/actions
@@ -14,7 +14,8 @@ namespace WebChangeDetector;
 /**
  * Account Action Handler Class.
  *
- * Focused handler for trial account creation and initial website setup.
+ * Focused handler for trial account creation. Website and group provisioning
+ * happens post-activation in the admin controller.
  */
 class WebChangeDetector_Account_Action_Handler {
 
@@ -50,21 +51,21 @@ class WebChangeDetector_Account_Action_Handler {
 			if ( empty( $email ) || ! is_email( $email ) ) {
 				return array(
 					'success' => false,
-					'message' => 'Valid email address is required.',
+					'message' => __( 'Valid email address is required.', 'webchangedetector' ),
 				);
 			}
 
 			if ( empty( $name_first ) || empty( $name_last ) ) {
 				return array(
 					'success' => false,
-					'message' => 'First and last name are required.',
+					'message' => __( 'First and last name are required.', 'webchangedetector' ),
 				);
 			}
 
 			if ( empty( $password ) || strlen( $password ) < 6 ) {
 				return array(
 					'success' => false,
-					'message' => 'Password must be at least 6 characters long.',
+					'message' => __( 'Password must be at least 6 characters long.', 'webchangedetector' ),
 				);
 			}
 
@@ -79,9 +80,15 @@ class WebChangeDetector_Account_Action_Handler {
 			// Create trial account via API.
 			$result = $this->admin->account_handler->create_trial_account( $account_data );
 
-			// Check if API call was successful.
-			// API can return either an array with data or error strings like 'unauthorized', 'activate account', etc.
-			if ( is_string( $result ) ) {
+			// Normalize first: api_v1() hands back the raw response body, so a single whitespace
+			// byte added by a proxy, WAF or output buffer would fail the length check below and
+			// discard a token the API already created and mailed out. The user cannot retry then,
+			// because the second attempt is rejected with "email already exists".
+			$result = is_string( $result ) ? trim( $result ) : $result;
+
+			// Success: the API returns the bare API token (40-char alphanumeric string) as the
+			// response body. Anything else (error strings, arrays, HTML) must never be stored.
+			if ( is_string( $result ) && WebChangeDetector_Admin::API_TOKEN_LENGTH === strlen( $result ) && ctype_alnum( $result ) ) {
 				// Store account email.
 				WebChangeDetector_Multisite::set_shared_option( WCD_WP_OPTION_KEY_ACCOUNT_EMAIL, $email );
 
@@ -91,93 +98,41 @@ class WebChangeDetector_Account_Action_Handler {
 				// Set flag that initial setup is needed.
 				update_option( WCD_WP_OPTION_KEY_INITIAL_SETUP_NEEDED, true );
 
-				// Setup website and groups.
-				$setup_result = $this->setup_website_and_groups();
+				// Website and groups are provisioned after email activation on the first
+				// authenticated page load (admin controller); pre-activation API calls would 403.
 
 				return array(
-					'success'      => true,
-					'message'      => 'Trial account created successfully! Check your email for activation.',
-					'result'       => $result,
-					'setup_result' => $setup_result,
-				);
-			} else {
-				// Handle error responses.
-				$error_message = 'Failed to create trial account.';
-
-				if ( is_string( $result ) ) {
-					switch ( $result ) {
-						case 'unauthorized':
-							$error_message = 'Unauthorized request. Please try again.';
-							break;
-						case 'activate account':
-						case 'ActivateAccount':
-							$error_message = 'Account created but needs activation. Check your email.';
-							break;
-						case 'update plugin':
-							$error_message = 'Plugin update required. Please update the plugin.';
-							break;
-						default:
-							$error_message = $result;
-							break;
-					}
-				} elseif ( is_array( $result ) && ! empty( $result['message'] ) ) {
-					$error_message = $result['message'];
-				} elseif ( is_array( $result ) && ! empty( $result['error'] ) ) {
-					$error_message = $result['error'];
-				}
-
-				return array(
-					'success' => false,
-					'message' => $error_message,
+					'success' => true,
+					'message' => __( 'Trial account created successfully! Check your email for activation.', 'webchangedetector' ),
 				);
 			}
-		} catch ( \Exception $e ) {
+
+			// Handle error responses.
+			$error_message = __( 'Failed to create trial account.', 'webchangedetector' );
+
+			if ( is_array( $result ) && isset( $result[0], $result[1] ) && 'error' === $result[0] && is_string( $result[1] ) ) {
+				// API error shape: ["error", "<message>"], e.g. email already exists.
+				$error_message = $result[1];
+			} elseif ( is_array( $result ) && ! empty( $result['message'] ) && is_string( $result['message'] ) ) {
+				$error_message = $result['message'];
+			} elseif ( is_array( $result ) && ! empty( $result['error'] ) && is_string( $result['error'] ) ) {
+				$error_message = $result['error'];
+			} elseif ( is_string( $result ) && '' !== $result ) {
+				$error_message = $result;
+			}
+
 			return array(
 				'success' => false,
-				'message' => 'Error creating trial account: ' . $e->getMessage(),
+				'message' => $error_message,
 			);
-		}
-	}
-
-	/**
-	 * Setup website and groups after successful token validation.
-	 *
-	 * @return array Setup result.
-	 */
-	private function setup_website_and_groups() {
-		try {
-			// Check if groups already exist.
-			$existing_groups = get_option( WCD_WEBSITE_GROUPS );
-
-			if ( ! empty( $existing_groups ) &&
-			! empty( $existing_groups[ WCD_AUTO_DETECTION_GROUP ] ) &&
-			! empty( $existing_groups[ WCD_MANUAL_DETECTION_GROUP ] ) ) {
-				return array(
-					'success' => true,
-					'message' => 'Website and groups already configured.',
-				);
-			}
-
-			// Create website and groups.
-			$creation_result = $this->admin->create_website_and_groups();
-
-			if ( empty( $creation_result['error'] ) ) {
-				return array(
-					'success' => true,
-					'message' => 'Website and groups created successfully.',
-					'result'  => $creation_result,
-				);
-			} else {
-				return array(
-					'success' => false,
-					'message' => 'Failed to create website and groups: ' . $creation_result['error'],
-					'result'  => $creation_result,
-				);
-			}
 		} catch ( \Exception $e ) {
 			return array(
 				'success' => false,
-				'message' => 'Error setting up website and groups: ' . $e->getMessage(),
+				'message' => sprintf(
+					/* translators: %s: error message. */
+					__( 'Error creating trial account: %s', 'webchangedetector' ),
+					$e->getMessage()
+				),
 			);
 		}
 	}

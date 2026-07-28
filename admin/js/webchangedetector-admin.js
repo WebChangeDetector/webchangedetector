@@ -349,7 +349,7 @@ function currentlyProcessing() {
                 above_threshold: !showAll ? 1 : 0
             }, function(data) {
                 // Update count
-                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'detections') : (wcdL10n.detection || 'detection'));
+                var countText = data.total_count + ' ' + (data.total_count !== 1 ? (wcdL10n.detections || 'checks') : (wcdL10n.detection || 'check'));
                 countText += ' (' + (showAll ? (wcdL10n.showingAll || 'showing all') : (wcdL10n.withChangesOnly || 'with changes only')) + ')';
                 $('#detections-count').text(countText);
 
@@ -779,7 +779,7 @@ function currentlyProcessing() {
         // Confirm copy url settings
         $("#copy-url-settings").submit(function () {
             let type = $("#copy-url-settings").data("to_group_type");
-            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " detection settings? This cannot be undone.";
+            var msg = wcdL10n.confirmOverwriteSettings ? wcdL10n.confirmOverwriteSettings.replace('%s', type) : "Are you sure you want to overwrite the " + type + " check settings? This cannot be undone.";
             return confirm(msg);
         });
 
@@ -928,11 +928,13 @@ function currentlyProcessing() {
 
 
 
-        // Set time until next screenshots
-        let autoEnabled = false;
-        if ($("#auto-enabled").is(':checked') || $('input[name="enabled"]').is(':checked')) {
-            autoEnabled = true;
-        }
+        // Set time until next screenshots.
+        // The rendered toggle wins when it exists. When the monitoring settings form is hidden by the
+        // monitoring_checks_settings allowance there is no toggle, so fall back to the server-rendered
+        // state on #next_sc_date. Missing element or attribute resolves to "disabled".
+        let autoEnabled = $('input[name="enabled"]').length
+            ? $('input[name="enabled"]').is(':checked')
+            : $("#next_sc_date").data("enabled") == 1;
         let txtNextScIn = wcdL10n.noTrackingsActive;
         let nextScIn;
         let nextScDate = $("#next_sc_date").data("date");
@@ -1250,74 +1252,7 @@ function currentlyProcessing() {
         initComparisonStatusButtons($(document));
 
         initBatchComparisonsPagination();
-
-        // Load dashboard usage statistics asynchronously
-        loadDashboardUsageStats();
     });
-
-    // Function to load dashboard usage statistics via AJAX
-    function loadDashboardUsageStats() {
-        // Only load if we're on the dashboard page and the elements exist
-        if ($('#wcd-monitoring-stats, #wcd-auto-update-stats').length === 0) {
-            return;
-        }
-
-        $.ajax({
-            url: wcdAjaxData.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'get_dashboard_usage_stats',
-                nonce: wcdAjaxData.nonce
-            },
-            success: function (response) {
-                
-                if (response.success && response.data) {
-                    const data = response.data.data;
-
-                    // Update monitoring stats
-                    const monitoringElement = $('#wcd-monitoring-stats');
-                    if (monitoringElement.length > 0) {
-                        if (data.amount_auto_detection > 0) {
-                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.amount_auto_detection + ' checks / month)');
-                        } else {
-                            monitoringElement.html('<strong>Monitoring: </strong><span style="color: red; font-weight: 900">Off</span>');
-                        }
-                    }
-
-                    // Update auto-update stats
-                    const autoUpdateElement = $('#wcd-auto-update-stats');
-                    if (autoUpdateElement.length > 0) {
-                        if (data.max_auto_update_checks > 0 && data.auto_update_settings.auto_update_checks_enabled) {
-                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: green; font-weight: 900;">On</span> (≈ ' + data.max_auto_update_checks + ' checks / month)');
-                        } else {
-                            autoUpdateElement.html('<strong>Auto update checks: </strong><span style="color: red; font-weight: 900">Off</span>');
-                        }
-                    }
-
-                    // Update usage warning
-                    const warningElement = $('#wcd-usage-warning');
-                    if (warningElement.length > 0 && data.checks_needed > data.checks_available) {
-                        const shortfall = Math.round(data.checks_needed - data.checks_available);
-                        let warningHtml = '<span class="notice notice-warning" style="display:block; padding: 10px;">' +
-                            '<span class="dashicons dashicons-warning"></span>' +
-                            '<strong>You might run out of checks before renewal day. </strong><br>' +
-                            'Current settings require up to ' + shortfall + ' more checks. <br>';
-
-                        // Add upgrade link if not a subaccount (we'll assume it's available)
-                        // Note: We can't access PHP variables here, so this would need to be passed differently
-                        // For now, we'll include it and it will only show if the upgrade URL is available
-                        warningHtml += '</span>';
-                        warningElement.html(warningHtml);
-                    }
-                }
-            },
-            error: function () {
-                // Show error state
-                $('#wcd-monitoring-stats').html('<strong>Monitoring: </strong><span style="color: #666;">Error loading stats</span>');
-                $('#wcd-auto-update-stats').html('<strong>Auto update checks: </strong><span style="color: #666;">Error loading stats</span>');
-            }
-        });
-    }
 })(jQuery);
 
 // CSV Export functionality for logs page.
@@ -1480,26 +1415,39 @@ function sync_urls(force = 0) {
     });
 }
 
+// Counts the select-all requests so an out-of-order response can't write a stale count.
+var wcdSelectAllRequestId = 0;
+
+// All URL selection checkboxes, locked while a select-all request is in flight.
+var wcdUrlCheckboxes = '#select-desktop, #select-mobile, .checkbox-desktop input[type="checkbox"], .checkbox-mobile input[type="checkbox"]';
+
 function postUrl(postId) {
     let groupId = document.getElementsByName('group_id')[0]
     let data;
-    if (postId.startsWith('select')) {
+    let isSelectAll = postId.startsWith('select');
+    let requestId = 0;
+
+    if (isSelectAll) {
         const selectAllCheckbox = jQuery('#' + postId);
         //const type = selectAllCheckbox.data('type');
         const screensize = selectAllCheckbox.data('screensize');
 
+        // One API call toggles the whole device column server-side (single SQL UPDATE), instead of
+        // posting every URL id. mmToggle() (called before postUrl) already synced the visible boxes.
         data = {
-            action: 'post_url',
+            action: 'select_all_urls',
             nonce: jQuery(selectAllCheckbox).data('nonce'),
             group_id: groupId.value,
+            device: screensize,
+            enabled: selectAllCheckbox.is(':checked') ? 1 : 0,
         }
 
-        let posts = jQuery("td.checkbox-" + screensize + " input[type='checkbox']");
+        requestId = ++wcdSelectAllRequestId;
 
-        jQuery(posts).each(function () {
-            data = { ...data, [screensize + "-" + jQuery(this).data('url_id')]: this.checked ? 1 : 0 };
-        });
-
+        // Lock the checkboxes until the request settles: two concurrent select-all requests can be
+        // processed in either order, so a response could predate the other column's update. It also
+        // keeps an individual row toggle from racing the group-wide count, and shows the round trip.
+        jQuery(wcdUrlCheckboxes).prop('disabled', true);
     } else {
         let desktop = document.getElementById("desktop-" + postId);
         let mobile = document.getElementById("mobile-" + postId);
@@ -1511,12 +1459,24 @@ function postUrl(postId) {
             ['desktop-' + postId]: desktop.checked ? 1 : 0,
             ['mobile-' + postId]: mobile.checked ? 1 : 0,
         }
+
+        // A single row toggle changes exactly one visible row, so the local delta is correct.
+        wcdUpdateManualChecksUI();
     }
 
-    wcdUpdateManualChecksUI();
-
     jQuery.post(wcdAjaxData.ajax_url, data, function (response) {
-        // TODO confirm saving.
+        // Select-all changes every URL of the group, also on other pages and outside the current
+        // filter, so only the server knows the new total.
+        if (isSelectAll && requestId === wcdSelectAllRequestId
+            && response && response.success && response.data && response.data.data
+            && typeof response.data.data.selected_urls_count !== 'undefined') {
+            wcdApplySelectedUrlsCount(parseInt(response.data.data.selected_urls_count) || 0);
+        }
+    }).always(function () {
+        // always(), so a failed request can never leave the checkboxes disabled.
+        if (isSelectAll) {
+            jQuery(wcdUrlCheckboxes).prop('disabled', false);
+        }
     });
 }
 
@@ -1537,6 +1497,48 @@ function mmMarkRows(postId) {
     }
     // red
     row.style.background = "#dc323247";
+}
+
+/**
+ * Counts the currently selected URL rows on the page.
+ *
+ * A row counts as "selected" if at least one device (desktop or mobile) checkbox is checked.
+ *
+ * @return {int} Number of selected rows on the current page.
+ */
+function wcdCountSelectedPageRows() {
+    var selectedRows = 0;
+    jQuery('.live-filter-row').each(function () {
+        var rowId = jQuery(this).attr('id');
+        var desktopChecked = jQuery('#desktop-' + rowId).is(':checked');
+        var mobileChecked = jQuery('#mobile-' + rowId).is(':checked');
+        if (desktopChecked || mobileChecked) {
+            selectedRows++;
+        }
+    });
+    return selectedRows;
+}
+
+/**
+ * Applies a group-wide selected URLs count coming from the server.
+ *
+ * Re-baselines the card so the delta model of wcdUpdateManualChecksUI() yields exactly this count,
+ * and all notice / class / icon / label / button toggling stays in that one function.
+ *
+ * @param {int} count Group-wide number of selected URLs.
+ */
+function wcdApplySelectedUrlsCount(count) {
+    // Also rendered on the monitoring page, where there is no on-demand card.
+    jQuery('.wcd-selected-urls-total').text(count);
+
+    var card = jQuery('.wcd-manual-checks-card');
+    if (!card.length) {
+        return;
+    }
+
+    card.data('initial-count', count);
+    card.data('initial-page-rows', wcdCountSelectedPageRows());
+    wcdUpdateManualChecksUI();
 }
 
 /**
@@ -1570,15 +1572,7 @@ function wcdUpdateManualChecksUI() {
     }
 
     // Count currently selected rows on page.
-    var currentPageRows = 0;
-    jQuery('.live-filter-row').each(function () {
-        var rowId = jQuery(this).attr('id');
-        var desktopChecked = jQuery('#desktop-' + rowId).is(':checked');
-        var mobileChecked = jQuery('#mobile-' + rowId).is(':checked');
-        if (desktopChecked || mobileChecked) {
-            currentPageRows++;
-        }
-    });
+    var currentPageRows = wcdCountSelectedPageRows();
 
     var currentTotal = initialServerCount - card.data('initial-page-rows') + currentPageRows;
     if (currentTotal < 0) {
@@ -2537,12 +2531,19 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Schedule fields visibility (monitoring tab).
+    // Schedule fields visibility (monitoring tab). Accepts the checked
+    // .wcd-schedule-type radio (element or jQuery set); an empty set falls
+    // back to 'interval', which hides both schedule rows.
     function toggleScheduleFields(radioEl) {
-        var type = $(radioEl).val();
-        $('.wcd-schedule-weekly-fields').toggle(type === 'weekly');
-        $('.wcd-schedule-monthly-fields').toggle(type === 'monthly');
+        var type = $(radioEl).val() || 'interval';
+        // A schedule row may only become visible while monitoring is enabled,
+        // otherwise it would re-appear next to the hidden .monitoring-setting rows.
+        var monitoringEnabled = $('.wcd-monitoring-enabled input[name="enabled"]').is(':checked');
+        $('.wcd-schedule-weekly-fields').toggle(monitoringEnabled && type === 'weekly');
+        $('.wcd-schedule-monthly-fields').toggle(monitoringEnabled && type === 'monthly');
         // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
+        // This stays independent of the monitoring toggle: the checkboxes of the
+        // non-selected schedule type must never be submitted.
         $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'weekly');
         $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', type !== 'monthly');
     }
@@ -2573,12 +2574,10 @@ jQuery(document).ready(function($) {
                     initOrRefreshCodeEditor($('.wcd-monitoring-js .wcd-js-textarea')[0], 'codeEditorJs');
                 });
 
-                // Respect schedule type visibility when enabling monitoring.
-                var checkedType = $('input[name="schedule_type"]:checked').val() || 'interval';
-                $('.wcd-schedule-weekly-fields').toggle(checkedType === 'weekly');
-                $('.wcd-schedule-monthly-fields').toggle(checkedType === 'monthly');
-                $('.wcd-schedule-weekly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'weekly');
-                $('.wcd-schedule-monthly-fields input[name="schedule_days[]"]').prop('disabled', checkedType !== 'monthly');
+                // Respect schedule type visibility when enabling monitoring:
+                // slideDown() above reveals every .monitoring-setting row, so the
+                // schedule row that doesn't match the checked type is hidden again.
+                toggleScheduleFields($('.wcd-schedule-type:checked'));
             } else {
                 $('.monitoring-setting').slideUp();
             }
@@ -2589,10 +2588,10 @@ jQuery(document).ready(function($) {
             toggleScheduleFields(this);
         });
 
-        // On page load, apply schedule visibility to the checked radio.
-        $('.wcd-schedule-type:checked').each(function () {
-            toggleScheduleFields(this);
-        });
+        // On page load, apply schedule visibility to the checked radio. Passing
+        // the (possibly empty) set directly keeps the disabled-state invariant
+        // even when no radio is checked, e.g. an empty or unknown schedule_type.
+        toggleScheduleFields($('.wcd-schedule-type:checked'));
     });
 })(jQuery);
 

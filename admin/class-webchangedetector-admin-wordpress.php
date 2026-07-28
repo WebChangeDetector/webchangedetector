@@ -79,6 +79,7 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_styles() {
 		wp_enqueue_style( 'jquery-ui-accordion' );
 		wp_enqueue_style( $this->plugin_name, WCD_PLUGIN_URL . 'admin/css/webchangedetector-admin.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name . '-dashboard', WCD_PLUGIN_URL . 'admin/css/webchangedetector-dashboard.css', array( $this->plugin_name ), $this->version, 'all' );
 		wp_enqueue_style( 'twentytwenty-css', WCD_PLUGIN_URL . 'admin/css/twentytwenty.css', array(), $this->version, 'all' );
 		wp_enqueue_style( 'wp-codemirror' );
 		wp_enqueue_style( 'codemirror-darcula', WCD_PLUGIN_URL . 'admin/css/darcula.css', array(), $this->version, 'all' );
@@ -96,6 +97,7 @@ class WebChangeDetector_Admin_WordPress {
 	public function enqueue_scripts( $hook_suffix ) {
 		if ( strpos( $hook_suffix, 'webchangedetector' ) !== false ) {
 			wp_enqueue_script( $this->plugin_name, WCD_PLUGIN_URL . 'admin/js/webchangedetector-admin.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( $this->plugin_name . '-dashboard', WCD_PLUGIN_URL . 'admin/js/webchangedetector-dashboard.js', array( 'jquery', $this->plugin_name ), $this->version, false );
 
 			// WordPress timezone data for JavaScript.
 			$wp_tz_offset    = wp_timezone()->getOffset( new \DateTime( 'now', new \DateTimeZone( 'UTC' ) ) );
@@ -109,7 +111,7 @@ class WebChangeDetector_Admin_WordPress {
 					'unsavedChanges'           => __( 'Changes were not saved. Do you wish to leave the page without saving?', 'webchangedetector' ),
 					'confirmResetAccount'      => __( 'Are you sure you want to reset your account? This cannot be undone.', 'webchangedetector' ),
 					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
-					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s detection settings? This cannot be undone.', 'webchangedetector' ),
+					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s check settings? This cannot be undone.', 'webchangedetector' ),
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
@@ -146,8 +148,8 @@ class WebChangeDetector_Admin_WordPress {
 					'checksInProgress'         => __( 'Checks in progress', 'webchangedetector' ),
 					'showingAll'               => __( 'showing all', 'webchangedetector' ),
 					'withChangesOnly'          => __( 'with changes only', 'webchangedetector' ),
-					'detection'                => __( 'detection', 'webchangedetector' ),
-					'detections'               => __( 'detections', 'webchangedetector' ),
+					'detection'                => __( 'check', 'webchangedetector' ),
+					'detections'               => __( 'checks', 'webchangedetector' ),
 					'exporting'                => __( 'Exporting...', 'webchangedetector' ),
 					'exportFailed'             => __( 'Failed to export logs', 'webchangedetector' ),
 					'exportError'              => __( 'Error occurred while exporting logs. Please try again.', 'webchangedetector' ),
@@ -257,7 +259,7 @@ class WebChangeDetector_Admin_WordPress {
 						'enableAutoUpdateTitle'       => __( 'Enable Auto Update Checks', 'webchangedetector' ),
 						'enableAutoUpdateDesc'        => __( 'Please turn this ON to enable automatic checks during WordPress auto-updates. This is required to continue the wizard. You can always turn it off later if you don\'t want to use it.', 'webchangedetector' ),
 						'scheduleNotificationsTitle'  => __( 'Schedule & Notifications', 'webchangedetector' ),
-						'scheduleNotificationsDesc'   => __( 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive change detection should be. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
+						'scheduleNotificationsDesc'   => __( 'Configure when WordPress runs auto-updates (timeframe and weekdays), who gets notified by email, and how sensitive the checks should be. The descriptions next to each field explain the individual options.', 'webchangedetector' ),
 
 						'urlSelectionTitle'           => __( 'URL Selection Table', 'webchangedetector' ),
 						'urlSelectionDesc'            => __( 'Select which pages to monitor. Toggle Desktop/Mobile options for each URL. Pro tip: Start with your most important pages like homepage, contact, and key product pages.', 'webchangedetector' ),
@@ -283,16 +285,14 @@ class WebChangeDetector_Admin_WordPress {
 						'selectPagesToMonitorDesc'    => __( 'Choose which pages to monitor automatically. Select your most critical pages - homepage, checkout, contact forms, and high-traffic content.', 'webchangedetector' ),
 
 						// Change detection steps.
-						'changeDetectionHistoryTitle' => __( 'Change Detection History', 'webchangedetector' ),
-						'changeDetectionHistoryDesc'  => __( 'This is your change detection hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector' ),
-						'detectionTableTitle'         => __( 'Detection Table', 'webchangedetector' ),
-						'detectionTableDesc'          => __( 'Each row shows a detected change. Click on any row to see before/after screenshots with differences highlighted. The filters above help you find specific changes.', 'webchangedetector' ),
+						'changeDetectionHistoryTitle' => __( 'Check History', 'webchangedetector' ),
+						'changeDetectionHistoryDesc'  => __( 'This is your check hub. View all detected changes with visual comparisons showing exactly what changed, when, and by how much.', 'webchangedetector' ),
 						'filterOptionsTitle'          => __( 'Filter Options', 'webchangedetector' ),
 						'filterOptionsDesc'           => __( 'Use these filters to find specific changes by date, check type, status, or to show only changes with differences.', 'webchangedetector' ),
 
 						// AI Rules steps.
 						'aiRulesTitle'                => __( 'AI Rules', 'webchangedetector' ),
-						'aiRulesDesc'                 => __( 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from change detection views by clicking "Ignore in future" on a region.', 'webchangedetector' ),
+						'aiRulesDesc'                 => __( 'AI Rules teach the system which changes are safe to ignore. Rules are created directly from check views by clicking "Ignore in future" on a region.', 'webchangedetector' ),
 						'aiRulesListTitle'            => __( 'Your Rules', 'webchangedetector' ),
 						'aiRulesListDesc'             => __( 'Active rules are applied automatically to future comparisons. You can toggle, change scope, or delete rules from this list.', 'webchangedetector' ),
 
@@ -494,7 +494,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'Dashboard', 'webchangedetector' ), __( 'Dashboard', 'webchangedetector' ), 'manage_options', 'webchangedetector', 'wcd_webchangedetector_init' );
 
 		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
-			add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
+			add_submenu_page( 'webchangedetector', __( 'Checks', 'webchangedetector' ), __( 'Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		}
 		if ( $bypass || ( is_array( $allowances ) && $allowances['manual_checks_view'] ) ) {
 			add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), 'manage_options', 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
@@ -530,7 +530,7 @@ class WebChangeDetector_Admin_WordPress {
 
 		// Hidden submenu pages (not visible in menu but accessible via URL).
 		if ( $bypass || ( is_array( $allowances ) && $allowances['change_detections_view'] ) ) {
-			add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
+			add_submenu_page( null, __( 'Show Check', 'webchangedetector' ), __( 'Show Check', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 			add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), 'manage_options', 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 		}
 	}
@@ -561,7 +561,7 @@ class WebChangeDetector_Admin_WordPress {
 		// Sub-site allowances page (multisite only).
 		add_submenu_page( 'webchangedetector', __( 'Sub-Site Allowances', 'webchangedetector' ), __( 'Sub-Site Allowances', 'webchangedetector' ), $capability, 'webchangedetector-allowances', 'wcd_webchangedetector_init' );
 
-		add_submenu_page( 'webchangedetector', __( 'Change Detections', 'webchangedetector' ), __( 'Change Detections', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
+		add_submenu_page( 'webchangedetector', __( 'Checks', 'webchangedetector' ), __( 'Checks', 'webchangedetector' ), $capability, 'webchangedetector-change-detections', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'On-Demand Checks', 'webchangedetector' ), __( 'On-Demand Checks', 'webchangedetector' ), $capability, 'webchangedetector-update-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Monitoring', 'webchangedetector' ), __( 'Monitoring', 'webchangedetector' ), $capability, 'webchangedetector-auto-settings', 'wcd_webchangedetector_init' );
 		add_submenu_page( 'webchangedetector', __( 'Logs', 'webchangedetector' ), __( 'Logs', 'webchangedetector' ), $capability, 'webchangedetector-logs', 'wcd_webchangedetector_init' );
@@ -569,7 +569,7 @@ class WebChangeDetector_Admin_WordPress {
 		add_submenu_page( 'webchangedetector', __( 'AI Rules', 'webchangedetector' ), __( 'AI Rules', 'webchangedetector' ), $capability, 'webchangedetector-ai-rules', 'wcd_webchangedetector_init' );
 
 		// Hidden submenu pages.
-		add_submenu_page( null, __( 'Show Detection', 'webchangedetector' ), __( 'Show Detection', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
+		add_submenu_page( null, __( 'Show Check', 'webchangedetector' ), __( 'Show Check', 'webchangedetector' ), $capability, 'webchangedetector-show-detection', 'wcd_webchangedetector_init' );
 		add_submenu_page( null, __( 'Show Screenshot', 'webchangedetector' ), __( 'Show Screenshot', 'webchangedetector' ), $capability, 'webchangedetector-show-screenshot', 'wcd_webchangedetector_init' );
 	}
 
@@ -1113,117 +1113,6 @@ class WebChangeDetector_Admin_WordPress {
 	}
 
 	/**
-	 * Get posts by post type.
-	 *
-	 * @since    1.0.0
-	 * @param    string $posttype    The post type.
-	 * @return   int[]|WP_Post[]
-	 */
-	public function get_posts( $posttype ) {
-		$args           = array(
-			'post_type'        => $posttype,
-			'post_status'      => array( 'publish', 'inherit' ),
-			'numberposts'      => -1,
-			'order'            => 'ASC',
-			'orderby'          => 'title',
-			'suppress_filters' => false, // need this for wpml to work.
-		);
-		$wpml_languages = $this->get_wpml_languages();
-
-		if ( ! $wpml_languages ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No WPML languages found, getting posts without WPML.', 'get_posts', 'debug' );
-			$posts = get_posts( $args );
-		} else {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'WPML languages found, getting posts with WPML.', 'get_posts', 'debug' );
-			$posts = array();
-			foreach ( $wpml_languages['languages'] as $language_code ) {
-				do_action( 'wpml_switch_language', $language_code );
-				$posts = array_merge( $posts, get_posts( $args ) );
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Posts: ' . wp_json_encode( $posts ), 'get_posts', 'debug' );
-			}
-			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
-		}
-
-		return $this->filter_unique_posts_by_id( $posts );
-	}
-
-	/**
-	 * Filter duplicate post IDs.
-	 *
-	 * @since    1.0.0
-	 * @param    array $posts    The posts array.
-	 * @return   array
-	 */
-	public function filter_unique_posts_by_id( $posts ) {
-		$unique_posts = array();
-		$post_ids     = array();
-
-		foreach ( $posts as $post ) {
-			unset( $post->post_content ); // Don't need to send too much unnecessary data.
-			if ( ! in_array( $post->ID, $post_ids, true ) ) {
-				$post_ids[]     = $post->ID;
-				$unique_posts[] = $post;
-			}
-		}
-
-		return $unique_posts;
-	}
-
-	/**
-	 * Filter duplicate terms.
-	 *
-	 * @since    1.0.0
-	 * @param    array $terms    The terms array.
-	 * @return   array
-	 */
-	public function filter_unique_terms_by_id( $terms ) {
-		$unique_terms = array();
-		$term_ids     = array();
-
-		foreach ( $terms as $term ) {
-			if ( ! in_array( $term->term_id, $term_ids, true ) ) {
-				$term_ids[]     = $term->term_id;
-				$unique_terms[] = $term;
-			}
-		}
-
-		return $unique_terms;
-	}
-
-	/**
-	 * Get terms by taxonomy.
-	 *
-	 * @since    1.0.0
-	 * @param    string $taxonomy    The taxonomy.
-	 * @return   array|int[]|string|string[]|WP_Error|WP_Term[]
-	 */
-	public function get_terms( $taxonomy ) {
-		$args = array(
-			'number'           => '0',
-			'taxonomy'         => $taxonomy,
-			'hide_empty'       => false,
-			'suppress_filters' => false, // need this for wpml to work.
-		);
-
-		// Get terms for all languages if WPML is enabled.
-		$wpml_languages = $this->get_wpml_languages();
-
-		// If we don't have languages, we can return the terms.
-		if ( ! $wpml_languages ) {
-			$terms = get_terms( $args );
-		} else {
-			// With languages, we loop through them and return all of them.
-			$terms = array();
-			foreach ( $wpml_languages['languages'] as $language_code ) {
-				do_action( 'wpml_switch_language', $language_code );
-				$terms = array_merge( $terms, get_terms( $args ) );
-			}
-			do_action( 'wpml_switch_language', $wpml_languages['current_language'] );
-		}
-		return $this->filter_unique_terms_by_id( $terms );
-	}
-
-	/**
 	 * Check if WPML is active and return all languages and the active one.
 	 *
 	 * @since    1.0.0
@@ -1711,265 +1600,5 @@ class WebChangeDetector_Admin_WordPress {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response Start URL sync: ' . wp_json_encode( $response_start_url_sync ), 'sync_posts', 'debug' );
 
 		return date_i18n( 'd/m/Y H:i' );
-	}
-
-	/**
-	 * Get WordPress post types via REST API.
-	 *
-	 * Retrieves available post types, taxonomies, and WPML languages from a WordPress site
-	 * using the WordPress REST API.
-	 *
-	 * @since    1.0.0
-	 * @param    string $domain    The domain to get post types from.
-	 * @return   array|string    Array of post types and taxonomies, or error message.
-	 */
-	public function get_wp_post_types( $domain ) {
-		( 'Starting get_wp_post_types' );
-		$scheme = $this->is_website_https( $domain ) ? 'https://' : 'http://';
-
-		// Check for WPML & if api is reachable.
-		$response = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/' );
-
-		$status = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $status ) {
-			return __( 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website', 'webchangedetector' );
-		}
-		$body       = wp_remote_retrieve_body( $response );
-		$api_routes = json_decode( $body, true );
-
-		$return = array(); // init.
-
-		// Get Post Types.
-		$response     = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/types' );
-		$status_types = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $status_types ) {
-			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
-		}
-		$body       = wp_remote_retrieve_body( $response );
-		$post_types = json_decode( $body, true );
-
-		// Get Taxonomies.
-		$response = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/taxonomies' );
-
-		$status_taxonomies = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $status_taxonomies ) {
-			return 'We couldn\'t reach the WP Api. Please make sure it is enabled on the WP website';
-		}
-		$body       = wp_remote_retrieve_body( $response );
-		$taxonomies = json_decode( $body, true );
-
-		$return_post_types = array();
-		$return_taxonomies = array();
-
-		// Prepare return post_types.
-		foreach ( $post_types as $post_type ) {
-			$return_post_types[] = array(
-				'name' => $post_type['name'],
-				'slug' => $post_type['rest_base'],
-			);
-		}
-
-		// Prepare return taxonomies.
-		foreach ( $taxonomies as $taxonomy ) {
-			$return_taxonomies[] = array(
-				'name' => $taxonomy['name'],
-				'slug' => $taxonomy['rest_base'],
-			);
-		}
-
-		// Get it together.
-		$return[] = array(
-			'url_type_slug' => 'types',
-			'url_type_name' => 'Post Types',
-			'url_types'     => $return_post_types,
-		);
-
-		$return[] = array(
-			'url_type_slug' => 'taxonomies',
-			'url_type_name' => 'Taxonomies',
-			'url_types'     => $return_taxonomies,
-		);
-
-		// Check for WPML languages.
-		$wpml_language_codes = array();
-		if ( ! empty( $api_routes['routes']['/wp/v2']['endpoints'][0]['args']['wpml_language']['enum'] ) ) {
-			$wpml_language_codes = $api_routes['routes']['/wp/v2']['endpoints'][0]['args']['wpml_language']['enum'];
-		}
-
-		// Prepare languages.
-		if ( $wpml_language_codes ) {
-			foreach ( $wpml_language_codes as $wpml_language_code ) {
-				$return_wpml_languages[] = array(
-					'name' => strtoupper( $wpml_language_code ),
-					'slug' => $wpml_language_code,
-				);
-			}
-
-			if ( ! empty( $return_wpml_languages ) ) {
-				$return[] = array(
-					'url_type_slug' => 'wpml_language',
-					'url_type_name' => 'Languages',
-					'url_types'     => $return_wpml_languages,
-				);
-			}
-		}
-		return $return;
-	}
-
-	/**
-	 * Get WordPress URLs via REST API.
-	 *
-	 * Retrieves URLs from a WordPress site using the WordPress REST API.
-	 * Groups URLs by post type and taxonomy and includes metadata.
-	 *
-	 * @since    1.0.0
-	 * @param    string $domain     The domain to get URLs from.
-	 * @param    array  $url_types  The URL types to retrieve (optional).
-	 * @return   array|string|false Array of URLs grouped by type, error message, or false on failure.
-	 */
-	public function get_wp_urls( $domain, $url_types = false ) {
-		if ( ! $domain ) {
-			return 'domain invalid';
-		}
-
-		$scheme = $this->is_website_https( $domain ) ? 'https://' : 'http://';
-
-		if ( ! $url_types ) {
-			$url_types = array(
-				array(
-					'url_type_slug'  => 'types',
-					'url_type_name'  => 'Post Types',
-					'post_type_slug' => 'pages',
-					'post_type_name' => 'Pages',
-				),
-				array(
-					'url_type_slug'  => 'types',
-					'url_type_name'  => 'Post Types',
-					'post_type_slug' => 'posts',
-					'post_type_name' => 'Posts',
-				),
-			);
-		}
-
-		// Check if we have different languages with wpml.
-		$languages = array();
-		foreach ( $url_types as $key => $url_type ) {
-			if ( 'wpml_language' === $url_type['url_type_slug'] ) {
-				$languages[] = $url_type['post_type_slug'];
-				unset( $url_types[ $key ] );
-			}
-		}
-		if ( empty( $languages ) ) {
-			$languages = array( false );
-		}
-
-		$urls             = array();
-		$frontpage_has_id = false;
-
-		// Loop for every language.
-		foreach ( $languages as $language ) {
-			// Loop for url_types like post_type or taxonomy.
-			foreach ( $url_types as $url_type ) {
-				$pages_added = 0;
-				$offset      = 0;
-
-				// Loop through the post_types / taxonomies.
-				switch ( $url_type['url_type_slug'] ) {
-					case 'taxonomies':
-						$is_taxonomie = true;
-						$args         = array(
-							'per_page' => '100',
-							'_fields'  => 'id,link,name',
-							'order'    => 'asc',
-						);
-						break;
-
-					default:
-						$is_taxonomie = false;
-						$args         = array(
-							'per_page' => '100',
-							'_fields'  => 'id,link,title',
-							'orderby'  => 'parent',
-							'order'    => 'asc',
-						);
-				}
-				// add wmpl language to the args.
-				if ( $language ) {
-					$args['wpml_language'] = $language;
-				}
-
-				do {
-					$args['offset'] = $offset;
-					$response       = wp_remote_get( $scheme . $domain . '/wp-json/wp/v2/' . $url_type['post_type_slug'] . '/?' . http_build_query( $args ) );
-					$status_code    = wp_remote_retrieve_response_code( $response );
-					$type_urls      = wp_remote_retrieve_body( $response );
-					$type_urls      = json_decode( $type_urls );
-
-					if ( 200 === $status_code ) {
-						foreach ( $type_urls as $type_url ) {
-							$clean_link = str_replace( array( 'http://', 'https://' ), '', $type_url->link );
-
-							$chunk_key = (int) ( $pages_added / 1000 );
-
-							$urls[ $chunk_key ][ $url_type['url_type_slug'] . '%%' . $url_type['post_type_name'] ][] = array(
-								'url'        => $clean_link,
-								'html_title' => $is_taxonomie ? $type_url->name : $type_url->title->rendered,
-							);
-
-							if ( in_array( $clean_link, array( $domain, $domain . '/', 'www.' . $domain, 'www.' . $domain . '/' ), true ) ) {
-								$frontpage_has_id = true;
-							}
-						}
-					}
-
-					if ( is_iterable( $type_urls ) ) {
-						$pages_added += count( $type_urls ) ?? 0;
-					}
-
-					$offset += 100;
-				} while ( $pages_added === $offset );
-			}
-		}
-
-		if ( ! $frontpage_has_id && count( $urls ) ) {
-			$urls[]['frontpage%%Frontpage'][] = array(
-				'url'        => str_replace( array( 'http://', 'https://' ), '', $domain . '/' ),
-				'html_title' => 'Home',
-			);
-		}
-
-		if ( count( $urls ) ) {
-			return $urls;
-		}
-		return false;
-	}
-
-	/**
-	 * Check if website uses HTTPS.
-	 *
-	 * Tests if a website is accessible via HTTPS by making a request
-	 * and checking the response status. Uses static caching for performance.
-	 *
-	 * @since    1.0.0
-	 * @param    string $url The URL to test for HTTPS support.
-	 * @return   bool        True if HTTPS is supported, false otherwise.
-	 */
-	public function is_website_https( $url ) {
-		static $scheme;
-
-		if ( isset( $scheme ) ) {
-			return $scheme;
-		}
-
-		$url      = str_replace( array( 'http://', 'https://' ), '', $url );
-		$response = wp_remote_get( 'https://' . $url );
-		$status   = wp_remote_retrieve_response_code( $response );
-
-		if ( 200 === $status ) {
-			$scheme = true;
-		} else {
-			$scheme = false;
-		}
-		return $scheme;
 	}
 }

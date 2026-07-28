@@ -528,11 +528,6 @@
     background: inherit !important;
 }
 
-.webchangedetector .box-half {
-    width: calc(50% - 10px);
-    float: left;
-}
-
 .webchangedetector .box-one-third {
     width: calc(33.33% - 10px);
     float: left;
@@ -543,12 +538,8 @@
     float: left;
 }
 
-.webchangedetector .box-half:last-child {
-    margin-left: 10px;
-}
-
-.webchangedetector .box-half:after {
-    clear: both;
+.webchangedetector .button[disabled]:hover {
+    cursor: not-allowed !important;
 }
 
 .webchangedetector .button-delete {
@@ -1195,77 +1186,12 @@ On-Demand Checks
 Dashboard
  *******/
 
-.webchangedetector .dashboard {
-    max-width: 1024px;
-    margin: 0 auto;
-}
-
 .webchangedetector .box-plain {
     padding: 15px 20px;
     background: #fff;
     border: 1px solid #ddd;
     display: block;
     margin-bottom: 3px;
-}
-
-.webchangedetector .dashboard .box {
-    padding: 15px 20px;
-    background: #f8f8f8;
-    border: 1px solid #ddd;
-    display: block;
-    border-left: 5px solid #ddd;
-    margin-bottom: 3px;
-}
-
-.webchangedetector .dashboard .box.featured {
-    border-left: 5px solid #389f38;
-    background: #fcfcfc;
-}
-
-.webchangedetector .dashboard .box.featured:hover {
-    background: rgba(39, 110, 204, 0.8);
-    color: #fff;
-}
-
-.webchangedetector .dashboard .box.last {
-    margin-right: 0;
-}
-
-.webchangedetector .dashboard .box:hover {
-    background: #eee;
-    border-left: 5px solid #276ECC;
-}
-
-.webchangedetector .dashboard .box-half {
-    border: 1px solid #276ECC;
-    margin: 10px 0;
-    width: calc(50% - 44px);
-    float: left;
-    padding: 0 20px;
-}
-
-.webchangedetector .dashboard .box-half.credit {
-    float: right;
-    padding-bottom: 20px;
-}
-
-.webchangedetector .dashboard .box-half.usages {
-    background: rgb(246, 250, 254);
-}
-
-.webchangedetector .box-half.no-border {
-    border: none;
-}
-
-.webchangedetector .dashboard .box-half.last {
-    margin-right: 0;
-}
-
-.webchangedetector .dashboard .box-half hr {
-    margin-top: 5px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    border-bottom: 0;
 }
 
 /********
@@ -1609,51 +1535,15 @@ Settings
     }
 }
 
-/* Loading Overlay */
-#wcd-loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.wcd-loading-content {
-    text-align: center;
-    padding: 40px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border: 2px solid #276ECC;
-}
-
-.wcd-loading-logo {
-    max-width: 200px;
-    height: auto;
-    margin-bottom: 20px;
-}
-
-.wcd-loading-text {
-    font-size: 18px;
-    color: #333;
-    margin: 20px 0;
-    font-weight: 500;
-}
-
-.wcd-loading-gif {
-    max-width: 150px;
-    height: auto;
-}
-
 /* Modern monitoring status card */
+/* Keep the margin at 0,2,0 so the .wcd-status-cards-container grid resets can still win. */
 .webchangedetector .wcd-monitoring-status-card {
     margin-bottom: 20px;
-    border-left: 4px solid #0073aa;
+}
+
+/* Border only: raised to 0,3,0 so it survives the .wcd-settings-card:hover rule. */
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card {
+    border: 2px solid #0073aa;
 }
 
 .webchangedetector .wcd-monitoring-status-header h3 {
@@ -1809,7 +1699,6 @@ Settings
 .webchangedetector textarea {
     border: 1px solid #dcdcde;
     border-radius: 4px;
-    padding: 8px 12px;
     font-size: 14px;
     background: #fff;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1881,7 +1770,6 @@ Settings
     color: #fff !important;
     border: none !important;
     border-radius: 6px !important;
-    padding: 8px 16px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     cursor: pointer !important;
@@ -1896,20 +1784,6 @@ Settings
     color: #fff !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 8px rgba(0, 115, 170, 0.3) !important;
-}
-
-/* Modern dashboard styling compatibility */
-.webchangedetector .dashboard .box {
-    background: #fff;
-    border: 1px solid #e1e5e9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.webchangedetector .dashboard .box:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
 }
 
 /* Ensure proper spacing for modern design */
@@ -2082,8 +1956,8 @@ Settings
 }
 
 /* Start checks card styling */
-.webchangedetector .wcd-start-checks-card {
-    border-left: 4px solid #00a32a;
+.webchangedetector .wcd-settings-card.wcd-start-checks-card {
+    border: 2px solid #00a32a;
     background: linear-gradient(135deg, #f8fff8 0%, #f0fff0 100%);
 }
 
@@ -2112,8 +1986,8 @@ Settings
 }
 
 /* Cancel card styling */
-.webchangedetector .wcd-cancel-card {
-    border-left: 4px solid #d63638;
+.webchangedetector .wcd-settings-card.wcd-cancel-card {
+    border: 2px solid #d63638;
     background: linear-gradient(135deg, #fff8f8 0%, #fff0f0 100%);
     margin-top: 30px;
 }
@@ -2126,14 +2000,6 @@ Settings
     background: #d63638 !important;
     border-color: #d63638 !important;
     color: #fff !important;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 6px;
-    text-decoration: none;
 }
 
 .webchangedetector .wcd-cancel-btn:hover {
@@ -2141,10 +2007,6 @@ Settings
     border-color: #b32d2e !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(214, 54, 56, 0.3);
-}
-
-.webchangedetector .wcd-cancel-btn .dashicons {
-    font-size: 18px;
 }
 
 /* Workflow steps styling */
@@ -2265,8 +2127,8 @@ Settings
 }
 
 /* Success card styling */
-.webchangedetector .wcd-success-card {
-    border-left: 4px solid #00a32a;
+.webchangedetector .wcd-settings-card.wcd-success-card {
+    border: 2px solid #00a32a;
     background: linear-gradient(135deg, #f8fff8 0%, #f0fff0 100%);
 }
 
@@ -2284,8 +2146,8 @@ Settings
 }
 
 /* Action card styling */
-.webchangedetector .wcd-action-card {
-    border-left: 4px solid #0073aa;
+.webchangedetector .wcd-settings-card.wcd-action-card {
+    border: 2px solid #0073aa;
     background: linear-gradient(135deg, #f8faff 0%, #f0f6ff 100%);
 }
 
@@ -2296,12 +2158,6 @@ Settings
 .webchangedetector .wcd-action-btn {
     background: #0073aa;
     border-color: #0073aa;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .webchangedetector .wcd-action-btn:hover {
@@ -2311,13 +2167,9 @@ Settings
     box-shadow: 0 4px 8px rgba(0, 115, 170, 0.3);
 }
 
-.webchangedetector .wcd-action-btn .dashicons {
-    font-size: 18px;
-}
-
 /* Warning card styling */
-.webchangedetector .wcd-warning-card {
-    border-left: 4px solid #f56e28;
+.webchangedetector .wcd-settings-card.wcd-warning-card {
+    border: 2px solid #f56e28;
     background: linear-gradient(135deg, #fffaf7 0%, #fff5ed 100%);
 }
 
@@ -2806,245 +2658,6 @@ Settings
     font-size: 16px;
 }
 
-/* Loading Overlay for Account Setup */
-.webchangedetector #wcd-loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.webchangedetector .wcd-loading-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 40px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    max-width: 400px;
-    width: 90%;
-}
-
-.webchangedetector .wcd-loading-logo {
-    width: 80px;
-    height: auto;
-    margin-bottom: 20px;
-}
-
-.webchangedetector .wcd-loading-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 20px 0;
-}
-
-.webchangedetector .wcd-loading-gif {
-    width: 200px;
-    height: auto;
-    opacity: 0.8;
-}
-
-/* ==========================================================================
-   Browser Console Styles
-   ========================================================================== */
-
-/* Console Changes Container */
-.webchangedetector #console-section {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin: 10px 0;
-}
-
-.webchangedetector .console-added,
-.webchangedetector .console-removed {
-    margin-bottom: 15px;
-}
-
-.webchangedetector .console-added h4 {
-    color: #d63638;
-    padding: 10px 0 0 10px;
-    font-size: 14px;
-}
-
-.webchangedetector .console-removed h4 {
-    color: #00a32a;
-    padding: 10px 0 0 10px;
-    font-size: 14px;
-}
-
-/* Console Entries */
-.webchangedetector .console-entry {
-    background: white;
-    border-left: 4px solid #ddd;
-    padding: 8px 12px;
-    margin: 5px 0;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 13px;
-    line-height: 1.4;
-    border-radius: 0 4px 4px 0;
-}
-
-.webchangedetector .console-entry.added {
-    border-left-color: #d63638;
-    background: #fff5f5;
-}
-
-.webchangedetector .console-entry.removed {
-    border-left-color: #00a32a;
-    background: #f0fff4;
-}
-
-.webchangedetector .console-message {
-    color: #2c3e50;
-    word-break: break-word;
-    display: block;
-}
-
-.webchangedetector .console-more {
-    font-style: italic;
-    color: #666;
-    margin: 5px 0;
-    font-size: 12px;
-}
-
-/* No Changes State */
-.webchangedetector .console-no-changes {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-}
-
-.webchangedetector .console-status {
-    font-weight: bold;
-    color: #00a32a;
-    font-size: 14px;
-}
-
-/* Console Restricted/Preview Styles */
-.webchangedetector .console-restricted {
-    background: #f0f6fc;
-    border: 1px solid #c6d7eb;
-    border-radius: 4px;
-    padding: 20px;
-    text-align: center;
-}
-
-.webchangedetector .console-restricted p {
-    margin: 0 0 15px 0;
-    font-size: 14px;
-    color: #3c434a;
-}
-
-.webchangedetector .console-preview {
-    opacity: 0.6;
-    margin: 15px 0;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.webchangedetector .console-preview .console-entry {
-    text-align: left;
-    margin: 8px 0;
-}
-
-.webchangedetector .console-restricted .button {
-    background: #2271b1;
-    border-color: #2271b1;
-    color: white;
-    text-decoration: none;
-    padding: 8px 16px;
-    border-radius: 3px;
-    font-size: 13px;
-    line-height: 1.4;
-    display: inline-block;
-    margin-top: 10px;
-}
-
-.webchangedetector .console-restricted .button:hover {
-    background: #135e96;
-    border-color: #135e96;
-    color: white;
-}
-
-/* Console Indicator Badge in Tables */
-.webchangedetector .console-indicator-badge {
-    display: inline-flex !important;
-    align-items: center !important;
-    background: #2271b1 !important;
-    color: white !important;
-    padding: 4px 8px !important;
-    border-radius: 12px !important;
-    font-size: 11px !important;
-    margin: 0 5px !important;
-    vertical-align: middle !important;
-    white-space: nowrap !important;
-}
-
-.webchangedetector .console-indicator-badge .dashicons {
-    font-size: 14px !important;
-    margin-right: 4px !important;
-    width: 14px !important;
-    height: 14px !important;
-    line-height: 1 !important;
-}
-
-.webchangedetector .console-count {
-    font-weight: bold !important;
-    margin-right: 4px !important;
-}
-
-.webchangedetector .console-text {
-    font-size: 10px !important;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .webchangedetector .console-changes-container {
-        padding: 10px;
-        margin: 5px 0;
-    }
-
-    .webchangedetector .console-entry {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-
-    .webchangedetector .console-indicator-badge {
-        font-size: 10px !important;
-        padding: 3px 6px !important;
-    }
-
-    .webchangedetector .console-indicator-badge .dashicons {
-        font-size: 12px !important;
-        width: 12px !important;
-        height: 12px !important;
-    }
-
-    .webchangedetector .console-text {
-        display: none;
-        /* Hide text on small screens, keep only icon and count */
-    }
-}
-
-/* Integration with existing accordion styles */
-.webchangedetector .mm_accordion_content .console-changes-container {
-    margin: 0;
-    border-radius: 0;
-}
-
-.webchangedetector .mm_accordion_content .console-changes-container h4 {
-    margin-left: 10px;
-    margin-top: 10px;
-}
-
 /* Failed Checks Accordion Styles */
 .webchangedetector .wcd-failed-checks-accordion {
     background: #fff;
@@ -3302,14 +2915,14 @@ Settings
     background: rgba(220, 38, 38, 0.08);
     padding: 2px 6px;
     border-radius: 4px;
-    border-left: 2px solid #dc2626;
+    border: 2px solid #dc2626;
 }
 
 .wcd-console-removed .wcd-console-message {
     background: rgba(22, 163, 74, 0.08);
     padding: 2px 6px;
     border-radius: 4px;
-    border-left: 2px solid #16a34a;
+    border: 2px solid #16a34a;
     text-decoration: line-through;
     opacity: 0.7;
 }
@@ -4087,46 +3700,52 @@ Settings
     margin-bottom: 0;
 }
 
-/* Status-specific left border colors for Auto-Update card */
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-running {
-    border-left-color: #28a745;
+/* Status-specific border colors for monitoring status cards.
+   Deliberately NOT scoped to .wcd-status-cards-container: the monitoring settings page renders a
+   standalone card outside that grid (admin/class-webchangedetector-admin.php, print_monitoring_status_bar).
+   Specificity 0,4,0 beats both .webchangedetector .wcd-settings-card:hover and the neutral
+   .webchangedetector .wcd-settings-card.wcd-monitoring-status-card base border (both 0,3,0).
+   These rules carry the status colour ONLY, so raising their specificity cannot shadow a
+   lower-specificity layout reset (e.g. the .wcd-status-cards-container margin resets above). */
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-running {
+    border-color: #28a745;
 }
 
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-scheduled {
-    border-left-color: #28a745;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-scheduled {
+    border-color: #28a745;
 }
 
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-waiting {
-    border-left-color: #ffc107;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-complete {
+    border-color: #28a745;
 }
 
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-inactive {
-    border-left-color: #dc3545;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-inactive {
+    border-color: #dc3545;
 }
 
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-disabled {
-    border-left-color: #dc3545;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-disabled {
+    border-color: #dc3545;
 }
 
-.wcd-status-cards-container .wcd-monitoring-status-card.wcd-status-no-urls {
-    border-left-color: #ffc107;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-status-no-urls {
+    border-color: #ffc107;
 }
 
-/* On-demand checks card styling (CSS class kept for backwards compatibility) */
-.wcd-status-cards-container .wcd-manual-checks-card {
-    border-left-color: #0073aa;
+/* On-demand checks card styling (CSS class kept for backwards compatibility).
+   The blue sits at the same 0,4,0 as the generic status rules above and later in the file, so it
+   wins for wcd-status-ready. The amber below adds .wcd-status-no-urls on top (0,5,0), so a card
+   without URLs stays amber by specificity, not merely by source order. Both name the base classes
+   so the 2px width from the neutral base border applies. */
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-manual-checks-card {
+    border-color: #0073aa;
 }
 
-.wcd-status-cards-container .wcd-manual-checks-card.wcd-status-no-urls {
-    border-left-color: #ffc107;
+.webchangedetector .wcd-settings-card.wcd-monitoring-status-card.wcd-manual-checks-card.wcd-status-no-urls {
+    border-color: #ffc107;
 }
 
 .wcd-manual-checks-card .wcd-mc-start-btn {
     margin-top: 8px;
-}
-
-.wcd-manual-checks-card .wcd-mc-start-btn .dashicons {
-    vertical-align: middle;
 }
 
 /* Spinning animation for loading states */
@@ -4665,16 +4284,16 @@ Settings
     border-color: #72aee6;
 }
 
-.webchangedetector .wcd-ai-category-all_good {
-    border-left: 3px solid #16a34a;
+.webchangedetector .wcd-ai-region-card.wcd-ai-category-all_good {
+    border: 2px solid #16a34a;
 }
 
-.webchangedetector .wcd-ai-category-not_sure {
-    border-left: 3px solid #d97706;
+.webchangedetector .wcd-ai-region-card.wcd-ai-category-not_sure {
+    border: 2px solid #d97706;
 }
 
-.webchangedetector .wcd-ai-category-alert {
-    border-left: 3px solid #dc2626;
+.webchangedetector .wcd-ai-region-card.wcd-ai-category-alert {
+    border: 2px solid #dc2626;
 }
 
 .webchangedetector .wcd-ai-region-number {
@@ -5328,7 +4947,7 @@ Settings
 }
 
 .status-item.queue-status {
-	border-left: 3px solid #6c757d;
+	border: 2px solid #6c757d;
 	text-transform: none;
 	letter-spacing: normal;
 	font-size: inherit;
@@ -5337,20 +4956,19 @@ Settings
 }
 
 .status-item.processing-status {
-	border-left: 3px solid #0073aa;
+	border: 2px solid #0073aa;
 }
 
 .status-item.done-status {
-	border-left: 3px solid #00a32a;
+	border: 2px solid #00a32a;
 }
 
 .status-item.failed-status {
-	border-left: 3px solid #dc3232;
+	border: 2px solid #dc3232;
 }
 
 .status-item.failed-status.has-failures {
 	background: #fef2f2;
-	border-color: #dc3232;
 	cursor: pointer;
 }
 
@@ -5792,6 +5410,13 @@ Settings
     background: transparent;
     line-height: 22px;
     color: #555;
+    border: none !important;
+}
+
+.webchangedetector .wcd-checkbox-dropdown-search:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .webchangedetector .wcd-checkbox-dropdown-option.wcd-hidden {

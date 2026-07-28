@@ -400,7 +400,7 @@ class WebChangeDetector_Change_Detections_Controller {
 										<?php esc_html_e( 'Visual Changes', 'webchangedetector' ); ?>
 									</div>
 									<select name="difference_only" class="wcd-filter-select">
-										<option value="0" <?php echo empty( $filters['difference_only'] ) || '0' === $filters['difference_only'] ? 'selected' : ''; ?>><?php esc_html_e( 'All detections', 'webchangedetector' ); ?></option>
+										<option value="0" <?php echo empty( $filters['difference_only'] ) || '0' === $filters['difference_only'] ? 'selected' : ''; ?>><?php esc_html_e( 'All results', 'webchangedetector' ); ?></option>
 										<option value="1" <?php selected( $filters['difference_only'], '1' ); ?>><?php esc_html_e( 'With changes only', 'webchangedetector' ); ?></option>
 									</select>
 								</div>
@@ -518,8 +518,8 @@ class WebChangeDetector_Change_Detections_Controller {
 		if ( empty( $comparisons['data'] ) ) {
 			?>
 			<div class="wcd-empty-state">
-				<strong><?php esc_html_e( 'No Change Detections (yet)', 'webchangedetector' ); ?></strong>
-				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Change Detections.', 'webchangedetector' ); ?></p>
+				<strong><?php esc_html_e( 'No Checks (yet)', 'webchangedetector' ); ?></strong>
+				<p><?php esc_html_e( 'Start monitoring webpages or start On-Demand Checks. Try different filters if there should be Checks.', 'webchangedetector' ); ?></p>
 			</div>
 			<?php
 			return;
@@ -575,7 +575,13 @@ class WebChangeDetector_Change_Detections_Controller {
 		?>
 		<div class="tablenav">
 			<div class="tablenav-pages">
-				<span class="displaying-num"><?php echo esc_html( $meta['total'] ?? 0 ); ?> <?php esc_html_e( 'items', 'webchangedetector' ); ?></span>
+				<span class="displaying-num">
+					<?php
+					$meta_total = (int) ( $meta['total'] ?? 0 );
+					/* translators: %s: Number of items */
+					printf( esc_html( _n( '%s item', '%s items', $meta_total, 'webchangedetector' ) ), esc_html( number_format_i18n( $meta_total ) ) );
+					?>
+				</span>
 				<span class="pagination-links">
 					<?php
 					foreach ( $meta['links'] as $link ) {

@@ -1,0 +1,26 @@
+.git
+.gitignore
+.distignore
+.github
+.claude
+build
+*.zip
+
+.DS_Store
+.idea
+.vscode
+
+# Dev-only tooling: never shipped
+composer.json
+composer.lock
+phpcs.xml.dist
+.eslintrc.js
+.wp-env.json
+bin
+dev-tools
+tests
+
+# ANCHORED on purpose. This excludes only the dev phpcs/composer vendor dir at
+# the repo root. An unanchored "vendor" would ALSO strip admin/vendor/flatpickr,
+# which is a runtime dependency of the date picker UI.
+/vendor
