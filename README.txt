@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
 Tested up to: 7.0.2
-Stable tag: 4.4.0
+Stable tag: 4.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -239,6 +239,9 @@ In addition to layout, the browser console log is checked for errors.
 * Fix: Premium plugin and theme updates are no longer skipped during Auto Update Checks
 * Fix: Creating a trial account no longer leaves the plugin with a broken connection
 * Fix: Schedule fields in the monitoring settings are no longer shown while monitoring is off
+* Fix: Checks and monitoring settings that no longer exist now show a clear message instead of a blank page
+* Fix: The dashboard now shows the warning when no notification email is set for Auto Update Checks
+* Fix: Alternating row colors in the Auto Update Checks result email are displayed correctly
 
 = 4.3.2 =
 * Improvement: Change wording from "manual checks" to "on-demand checks"

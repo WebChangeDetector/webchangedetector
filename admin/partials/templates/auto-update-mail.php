@@ -25,8 +25,7 @@ defined( 'ABSPATH' ) || exit;
 		padding: 10px;
 		border-top: 1px solid #aaa;
 	}
-	tr:nth-child(odd),
-	{
+	tr:nth-child(odd) {
 		background: #F0F0F1;
 	}
 	th {

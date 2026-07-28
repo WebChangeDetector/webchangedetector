@@ -401,12 +401,14 @@ class WebChangeDetector_Admin_Dashboard {
 		// Worst-case monthly estimate: checks per run × active days × ~4 weeks.
 		$checks_per_run = intval( $manual_group['selected_checks_count'] ?? 0 );
 		$au_max_monthly = $au_enabled ? $checks_per_run * count( $active_days ) * 4 : 0;
-		$au_emails      = $au_settings['auto_update_checks_emails'] ?? '';
-		$auto_update    = array(
+		// Emails are stored as an array on every save path but seeded as a string by the defaults.
+		$au_emails_raw = $au_settings['auto_update_checks_emails'] ?? '';
+		$au_emails     = is_array( $au_emails_raw ) ? implode( ',', $au_emails_raw ) : (string) $au_emails_raw;
+		$auto_update   = array(
 			'enabled'            => $au_enabled,
 			'active_days'        => $active_days,
 			'max_monthly_checks' => $au_max_monthly,
-			'missing_email'      => $au_enabled && ( '' === trim( (string) $au_emails ) ),
+			'missing_email'      => $au_enabled && ( '' === trim( $au_emails ) ),
 		);
 
 		// On-Demand (this site) — uses the same manual detection group.
@@ -1441,7 +1443,17 @@ class WebChangeDetector_Admin_Dashboard {
 		}
 
 		if ( isset( $token ) ) {
-			$compare = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token )['data'];
+			$api_response = \WebChangeDetector\WebChangeDetector_API_V2::get_comparison_v2( $token );
+
+			// Check if API response is valid.
+			if ( empty( $api_response ) || ! isset( $api_response['data'] ) ) {
+				echo '<p class="notice notice-error">' .
+					esc_html__( 'Sorry, we couldn\'t find this check or you don\'t have permission to view it.', 'webchangedetector' ) .
+					' <a href="?page=webchangedetector-change-detections">' . esc_html__( 'Go back to Checks', 'webchangedetector' ) . '</a></p>';
+				return;
+			}
+
+			$compare = $api_response['data'];
 
 			$all_tokens = array();
 			if ( ! empty( $postdata['all_tokens'] ) ) {

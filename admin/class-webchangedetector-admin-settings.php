@@ -159,7 +159,26 @@ class WebChangeDetector_Admin_Settings {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in save_generic_settings.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Full $_POST data: ' . wp_json_encode( $_POST ), 'monitoring_settings', 'debug' );
 
-		$monitoring_settings = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid )['data'];
+		// Check if monitoring group UUID exists.
+		if ( empty( $this->admin->monitoring_group_uuid ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error' );
+			return array(
+				'success' => false,
+				'message' => __( 'Monitoring group UUID is not set. Please contact support.', 'webchangedetector' ),
+			);
+		}
+
+		// api_v2() returns plain strings on failure (e.g. 'not found' on HTTP 404), so shape-check
+		// before use: every fallback below reads $monitoring_settings unguarded.
+		$group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $this->admin->monitoring_group_uuid );
+		if ( ! is_array( $group_response ) || ! isset( $group_response['data'] ) || ! is_array( $group_response['data'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Could not load monitoring group: ' . wp_json_encode( $group_response ), 'monitoring_settings', 'error' );
+			return array(
+				'success' => false,
+				'message' => __( 'Could not load the current monitoring settings. Please try again later.', 'webchangedetector' ),
+			);
+		}
+		$monitoring_settings = $group_response['data'];
 
 		$args = array(
 			'monitoring'      => true,
@@ -213,14 +232,6 @@ class WebChangeDetector_Admin_Settings {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API update args: ' . wp_json_encode( $args ), 'monitoring_settings', 'debug' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Monitoring group UUID: ' . $this->admin->monitoring_group_uuid, 'monitoring_settings', 'debug' );
 
-		// Check if monitoring group UUID exists.
-		if ( empty( $this->admin->monitoring_group_uuid ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'ERROR: Monitoring group UUID is empty!', 'monitoring_settings', 'error' );
-			return array(
-				'success' => false,
-				'message' => __( 'Monitoring group UUID is not set. Please contact support.', 'webchangedetector' ),
-			);
-		}
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->monitoring_group_uuid, $args );
 
 		// Debug: Log the API response.
