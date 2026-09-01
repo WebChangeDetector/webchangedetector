@@ -340,6 +340,19 @@ class WebChangeDetector_Admin_Settings {
 			WebChangeDetector_Autoupdate_Guard::sync_override( $wcd_force_enable_wp_updates );
 		}
 
+		// Core security updates toggle: local-only wp_option (default ON when unset),
+		// rendered with the hidden-0 + checkbox-1 pattern, so the key is present
+		// whenever the form offered the row. When the field is absent (subsite form,
+		// all-sites bulk, old cached form), the option stays untouched so the
+		// default-true semantics survive.
+		// Stored as string '1'/'0', NEVER as boolean false: with no option row yet
+		// (the default-ON state), update_option() compares the new value against
+		// get_option()'s false and early-returns before add_option(), so a boolean
+		// false opt-out would never persist.
+		if ( isset( $postdata['wcd_allow_core_security_updates'] ) ) {
+			update_option( WebChangeDetector_Autoupdates::OPTION_ALLOW_CORE_SECURITY, '1' === (string) $postdata['wcd_allow_core_security_updates'] ? '1' : '0' );
+		}
+
 		// Debug: Log what auto update settings we extracted.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Auto update settings extracted: ' . wp_json_encode( $auto_update_settings ), 'manual_check_group_settings', 'debug' );
 

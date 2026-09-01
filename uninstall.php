@@ -57,6 +57,7 @@ function wcd_uninstall_site_cleanup() {
 		'wcd_auto_update_history',
 		'wcd_auto_update_participate',
 		'wcd_auto_update_force_enable',
+		'wcd_allow_core_security_updates',
 		'wcd_multisite_parent_synced_for',
 		'wcd_manual_checks_batch',
 		'wcd_manual_checks_pre_batch',

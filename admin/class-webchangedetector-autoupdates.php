@@ -25,6 +25,21 @@ class WebChangeDetector_Autoupdates {
 	 */
 	private string $lock_name = 'auto_updater.lock';
 
+	/** Option name for the "always allow WordPress core security updates" toggle.
+	 *
+	 * Local-only wp_option, default ON when unset (get_option default true).
+	 */
+	const OPTION_ALLOW_CORE_SECURITY = 'wcd_allow_core_security_updates';
+
+	/** Whether THIS request armed the core-security bypass filters.
+	 *
+	 * Read by automatic_updates_complete() (same instance, same request) to
+	 * record the restricted core install without starting the WCD pipeline.
+	 *
+	 * @var bool
+	 */
+	private bool $core_security_bypass = false;
+
 	/** Group ID for on-demand checks (property name kept for backwards compatibility).
 	 *
 	 * Initialized to '' so the constructor's early return (missing groups option,
@@ -207,6 +222,17 @@ class WebChangeDetector_Autoupdates {
 				'automatic_updates_complete',
 				'debug'
 			);
+			return;
+		}
+
+		// Core security bypass: THIS request installed a minor core security release
+		// without WCD checks (no pre batch exists). Record it in the history and stop:
+		// core sends its own result email, and no WCD pipeline (post batch, mail,
+		// cooldown) is involved.
+		if ( $this->core_security_bypass ) {
+			if ( ! empty( $update_results ) ) {
+				$this->save_update_results( $update_results, null, 'security_update' );
+			}
 			return;
 		}
 
@@ -510,43 +536,17 @@ class WebChangeDetector_Autoupdates {
 			'total'   => 0,
 		);
 
-		// Check for core updates. Count only offers WordPress installs automatically
-		// ('autoupdate' response, mirroring find_core_auto_update()). 'upgrade' offers
-		// (e.g. a pending major release) are manual-only and would start a pointless
-		// cycle for weeks while the offer is up.
-		$core_updates = get_site_transient( 'update_core' );
-		if ( $core_updates && ! empty( $core_updates->updates ) ) {
-			foreach ( $core_updates->updates as $update ) {
-				if ( 'autoupdate' !== $update->response ) {
-					continue;
-				}
-
-				// Mirror core's full decision via Core_Upgrader::should_update_to_version():
-				// static and side-effect-free (reads WP_AUTO_UPDATE_CORE, the auto_update_core_*
-				// options, the critical-failure lockout and the allow_*_auto_core_updates filters).
-				// It covers cases the 'autoupdate' offer alone does not, e.g. WP_AUTO_UPDATE_CORE
-				// set to false or disabled minor updates. Core only loads the upgrader classes in
-				// its own priority-10 cron callback, after our priority-5 callback runs, so we
-				// load them ourselves (core re-requires the same file moments later).
-				require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-				if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-						'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
-						'check_for_available_updates',
-						'debug'
-					);
-					continue;
-				}
-
-				$has_updates['core'] = true;
-				++$has_updates['total'];
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-					'Core auto-update available: ' . $update->version,
-					'check_for_available_updates',
-					'debug'
-				);
-				break;
-			}
+		// Check for core updates. The forced wp_version_check() above refreshed the
+		// update_core transient, so the helper reads fresh data.
+		$core_offer = $this->get_core_autoupdate_offer();
+		if ( $core_offer ) {
+			$has_updates['core'] = true;
+			++$has_updates['total'];
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Core auto-update available: ' . $core_offer->version,
+				'check_for_available_updates',
+				'debug'
+			);
 		}
 
 		// Check for plugin updates (only those WordPress will actually auto-install).
@@ -599,6 +599,171 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Find the pending core 'autoupdate' offer WordPress would install automatically.
+	 *
+	 * Side-effect-free: reads the update_core transient WITHOUT forcing a refresh.
+	 * Callers must ensure the transient is fresh (check_for_available_updates() runs
+	 * wp_version_check() first; the security bypass runs inside the same request
+	 * that wp_version_check() fired wp_maybe_auto_update from).
+	 *
+	 * Only 'autoupdate' offers count (mirroring find_core_auto_update()); 'upgrade'
+	 * offers (e.g. a pending major release) are manual-only.
+	 *
+	 * @return object|false The core update offer object, or false if none.
+	 */
+	private function get_core_autoupdate_offer() {
+		$core_updates = get_site_transient( 'update_core' );
+		if ( ! $core_updates || empty( $core_updates->updates ) ) {
+			return false;
+		}
+
+		foreach ( $core_updates->updates as $update ) {
+			if ( 'autoupdate' !== $update->response ) {
+				continue;
+			}
+
+			// Mirror core's full decision via Core_Upgrader::should_update_to_version():
+			// static and side-effect-free (reads WP_AUTO_UPDATE_CORE, the auto_update_core_*
+			// options, the critical-failure lockout and the allow_*_auto_core_updates filters).
+			// It covers cases the 'autoupdate' offer alone does not, e.g. WP_AUTO_UPDATE_CORE
+			// set to false or disabled minor updates. Core only loads the upgrader classes in
+			// its own priority-10 cron callback, after our priority-5 callback runs, so we
+			// load them ourselves (core re-requires the same file moments later).
+			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+			if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
+					'check_for_available_updates',
+					'debug'
+				);
+				continue;
+			}
+
+			return $update;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check whether a core update offer stays within the currently installed major.minor branch.
+	 *
+	 * A minor-branch offer (e.g. 6.8.2 while 6.8.1 is installed) is a security/maintenance
+	 * release. Without this check, a pending MAJOR 'autoupdate' offer (WP_AUTO_UPDATE_CORE
+	 * = true setups) would make the bypass skip the lock for weeks while the armed filters
+	 * block the major install, so nothing would ever be installed in those passes.
+	 *
+	 * @param object $offer Core update offer object from the update_core transient.
+	 * @return bool True when the offered version is in the installed major.minor branch.
+	 */
+	private function is_minor_core_offer( $offer ) {
+		if ( empty( $offer->version ) ) {
+			return false;
+		}
+
+		// wp_get_wp_version() exists since WP 6.7; the plugin supports 5.5+.
+		$installed = function_exists( 'wp_get_wp_version' ) ? wp_get_wp_version() : $GLOBALS['wp_version'];
+
+		$installed_branch = implode( '.', array_slice( explode( '.', $installed ), 0, 2 ) );
+		$offer_branch     = implode( '.', array_slice( explode( '.', (string) $offer->version ), 0, 2 ) );
+
+		return $installed_branch === $offer_branch;
+	}
+
+	/**
+	 * Check whether the "always allow WordPress core security updates" option is enabled.
+	 *
+	 * Default ON when the option row does not exist (existing and new installs);
+	 * a saved "off" is stored as '' and stays off.
+	 *
+	 * @return bool True when core security updates may bypass the WCD gates.
+	 */
+	private function is_core_security_bypass_enabled() {
+		return (bool) get_option( self::OPTION_ALLOW_CORE_SECURITY, true );
+	}
+
+	/**
+	 * Arm the one-request filters for a restricted core-security-only update pass.
+	 *
+	 * Registered at priority 5 of wp_maybe_auto_update, consumed by core's
+	 * priority-10 callback in the SAME request; nothing is persisted. Plugins,
+	 * themes, major/dev core and non-core translations are blocked, so core's
+	 * WP_Automatic_Updater::run() installs only the minor core update and its
+	 * core-type language packs.
+	 *
+	 * @return void
+	 */
+	private function arm_core_security_filters() {
+		add_filter( 'auto_update_plugin', '__return_false', PHP_INT_MAX );
+		add_filter( 'auto_update_theme', '__return_false', PHP_INT_MAX );
+		add_filter( 'allow_major_auto_core_updates', '__return_false', PHP_INT_MAX );
+		add_filter( 'allow_dev_auto_core_updates', '__return_false', PHP_INT_MAX );
+		add_filter( 'auto_update_translation', array( $this, 'filter_translation_core_only' ), PHP_INT_MAX, 2 );
+	}
+
+	/**
+	 * Filter callback: allow only core-type translation updates.
+	 *
+	 * Translation offers carry a type of core, plugin or theme. During a
+	 * core-security bypass pass only the core language pack may install.
+	 *
+	 * @param bool|mixed $update Whether to update the translation.
+	 * @param object     $item   Translation update offer item.
+	 * @return bool|mixed False for non-core translations, the incoming value otherwise.
+	 */
+	public function filter_translation_core_only( $update, $item ) {
+		return ( isset( $item->type ) && 'core' === $item->type ) ? $update : false;
+	}
+
+	/**
+	 * Let a pending minor core security update through a blocking gate, without WCD checks.
+	 *
+	 * Called at the gate points of wp_maybe_auto_update() (cooldown, weekday, time
+	 * window) right before they would set the backdated lock. When all conditions
+	 * hold, the lock is NOT set and the one-request filters are armed instead, so
+	 * core's priority-10 callback runs a restricted core-only pass.
+	 *
+	 * Conditions: option enabled; NO active WCD run state (WCD_PRE_AUTO_UPDATE,
+	 * WCD_POST_AUTO_UPDATE, WCD_AUTO_UPDATES_RUNNING all empty, so a WCD-managed
+	 * run, including the pre option's 'done' phase, is never interfered with);
+	 * a minor-branch core 'autoupdate' offer is pending.
+	 *
+	 * Deliberately touches neither the lock (a backdated lock from an earlier
+	 * blocked pass is stale for core's create_lock() after 60 seconds) nor
+	 * WCD_LAST_AUTO_UPDATE_CHECK_TIME (the cooldown protects paid batches; the
+	 * bypass starts none).
+	 *
+	 * @param string $reason Gate name for logging (e.g. 'cooldown', 'weekday', 'time_window').
+	 * @return bool True when the bypass was armed and the caller must return without locking.
+	 */
+	private function maybe_bypass_for_core_security( $reason ) {
+		if ( ! $this->is_core_security_bypass_enabled() ) {
+			return false;
+		}
+
+		if ( get_option( WCD_PRE_AUTO_UPDATE ) || get_option( WCD_POST_AUTO_UPDATE ) || get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
+			return false;
+		}
+
+		$offer = $this->get_core_autoupdate_offer();
+		if ( ! $offer || ! $this->is_minor_core_offer( $offer ) ) {
+			return false;
+		}
+
+		$this->arm_core_security_filters();
+		set_transient( 'wcd_core_security_bypass', time(), MINUTE_IN_SECONDS );
+		$this->core_security_bypass = true;
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Core security bypass armed at gate "' . $reason . '": letting core install minor update ' . $offer->version . ' without WCD checks.',
+			'wp_maybe_auto_update',
+			'info'
+		);
+
+		return true;
 	}
 
 	/**
@@ -1535,6 +1700,13 @@ class WebChangeDetector_Autoupdates {
 	public function wp_maybe_auto_update() {
 		// Step 1: Check for concurrent execution.
 		if ( $this->should_skip_concurrent_execution() ) {
+			// A parallel request may have armed the core-security bypass and skipped the
+			// lock. If core's priority-10 callback of THIS request wins create_lock()
+			// against that request, it would run UNRESTRICTED outside the window, so
+			// re-arm the one-request filters here before returning.
+			if ( $this->is_core_security_bypass_enabled() && get_transient( 'wcd_core_security_bypass' ) ) {
+				$this->arm_core_security_filters();
+			}
 			return;
 		}
 
@@ -1571,6 +1743,9 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 3: Check cooldown period.
 		if ( $this->is_within_cooldown_period() ) {
+			if ( $this->maybe_bypass_for_core_security( 'cooldown' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
@@ -1583,12 +1758,18 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 5: Check if updates are allowed today.
 		if ( ! $this->is_allowed_today( $auto_update_settings ) ) {
+			if ( $this->maybe_bypass_for_core_security( 'weekday' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
 
 		// Step 6: Check if current time is within allowed window.
 		if ( ! $this->is_within_time_window( $auto_update_settings ) ) {
+			if ( $this->maybe_bypass_for_core_security( 'time_window' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
@@ -2171,9 +2352,10 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @param array       $update_results The update results from WordPress.
 	 * @param string|null $batch_id_post_update The batch ID for the post-update process.
+	 * @param string|null $context Optional context marker for the history entry (e.g. 'security_update').
 	 * @return void
 	 */
-	private function save_update_results( $update_results, $batch_id_post_update = null ) {
+	private function save_update_results( $update_results, $batch_id_post_update = null, $context = null ) {
 		try {
 			// Log the raw update results for debugging.
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
@@ -2198,6 +2380,11 @@ class WebChangeDetector_Autoupdates {
 				'updates'   => $results['updates'],
 				'summary'   => $results['summary'],
 			);
+
+			// Mark special runs (e.g. a core security update installed without checks).
+			if ( null !== $context ) {
+				$new_entry['context'] = $context;
+			}
 
 			// Add new entry to beginning of array.
 			array_unshift( $history, $new_entry );

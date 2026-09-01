@@ -593,7 +593,12 @@ class WebChangeDetector_Logs_Controller {
 											}
 											?>
 										</div>
-										
+										<?php if ( ! $is_error && 'security_update' === ( $entry['context'] ?? '' ) ) : ?>
+											<div class="accordion-batch-title-tile">
+												<?php esc_html_e( 'Security update: installed without checks', 'webchangedetector' ); ?>
+											</div>
+										<?php endif; ?>
+
 									</div>
 									<div style="clear: both;"></div>
 								</h3>

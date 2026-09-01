@@ -213,6 +213,22 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
+			<?php if ( ! $is_multisite_subsite && ! $this->admin->is_all_sites_mode ) : ?>
+				<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-core-security" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label"><?php esc_html_e( 'WordPress Security Updates', 'webchangedetector' ); ?></label>
+						<div class="wcd-description"><?php esc_html_e( 'Install WordPress security releases (minor core updates) immediately, even outside the timeframe above. These updates are installed without Auto Update Checks. Plugin, theme and major WordPress updates still wait for the next timeframe.', 'webchangedetector' ); ?></div>
+					</div>
+					<div class="wcd-form-control">
+						<label>
+							<input type="hidden" name="wcd_allow_core_security_updates" value="0" />
+							<input type="checkbox" name="wcd_allow_core_security_updates" value="1" <?php checked( (bool) get_option( \WebChangeDetector\WebChangeDetector_Autoupdates::OPTION_ALLOW_CORE_SECURITY, true ) ); ?> />
+							<?php esc_html_e( 'Always allow WordPress core security updates', 'webchangedetector' ); ?>
+						</label>
+					</div>
+				</div>
+			<?php endif; ?>
+
 			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Notifications', 'webchangedetector' ); ?></label>
