@@ -8,6 +8,11 @@
  * @package    WebChangeDetector
  */
 
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $batch_id = get_option( 'wcd_manual_checks_post_batch' );
 if ( ! $batch_id ) {
 	$batch_id = get_option( 'wcd_manual_checks_batch' );
@@ -90,23 +95,10 @@ $started_at = get_option( 'wcd_manual_checks_started_at', '' );
 		</div>
 	</div>
 
-	<!-- Navigation Buttons -->
-	<div id="change-detection-actions" style="text-align: center; margin-top: 20px;">
-		<form method="post" style="display: inline; margin-right: 10px;">
-			<input type="hidden" name="wcd_action" value="update_detection_step">
-			<?php wp_nonce_field( 'update_detection_step' ); ?>
-			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
-			<input type="hidden" name="step" value="settings">
-			<input class="button" type="submit" value="<?php echo esc_attr__( '< Back to settings', 'webchangedetector' ); ?>" disabled>
-		</form>
-		<form method="post" style="display: inline;">
-			<input type="hidden" name="wcd_action" value="update_detection_step">
-			<?php wp_nonce_field( 'update_detection_step' ); ?>
-			<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
-			<input type="hidden" name="step" value="post-update">
-			<input class="button" type="submit" value="<?php echo esc_attr__( 'Re-run checks', 'webchangedetector' ); ?>" disabled>
-		</form>
-	</div>
+	<?php
+	$actions_disabled = true;
+	require __DIR__ . '/update-step-next-actions.php';
+	?>
 
 	<!-- Checks -->
 	<div class="wcd-card" id="change-detections-container" style="margin-top: 20px;">

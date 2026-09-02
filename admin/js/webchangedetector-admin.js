@@ -290,7 +290,8 @@ function currentlyProcessing() {
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
 
                     // Enable navigation buttons for both phases
-                    $('#change-detection-actions .button, #change-detection-actions .et_pb_button').prop('disabled', false);
+                    $('#change-detection-actions .button').prop('disabled', false);
+                    $('#change-detection-actions').removeClass('wcd-disabled');
                     $('#pre-sc-navigation-actions .button').prop('disabled', false);
                     $('#pre-sc-navigation-actions').show();
 
@@ -314,7 +315,8 @@ function currentlyProcessing() {
                     $('#update-currently-processing-description').html('<strong>No items to process</strong>');
 
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
-                    $('#change-detection-actions .button, #change-detection-actions .et_pb_button').prop('disabled', false);
+                    $('#change-detection-actions .button').prop('disabled', false);
+                    $('#change-detection-actions').removeClass('wcd-disabled');
                     $('#pre-sc-navigation-actions .button').prop('disabled', false);
                     $('#pre-sc-navigation-actions').show();
 
