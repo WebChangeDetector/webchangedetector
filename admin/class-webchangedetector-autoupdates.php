@@ -27,7 +27,10 @@ class WebChangeDetector_Autoupdates {
 
 	/** Option name for the "always allow WordPress core security updates" toggle.
 	 *
-	 * Local-only wp_option, default ON when unset (get_option default true).
+	 * Write-through mirror of the API value auto_update_settings.allow_core_security_updates:
+	 * the settings save writes both, the hourly sync mirrors dashboard changes back into
+	 * the option. Readers use only the option (offline-safe in wp-cron). Default ON when
+	 * unset (get_option default true).
 	 */
 	const OPTION_ALLOW_CORE_SECURITY = 'wcd_allow_core_security_updates';
 
@@ -1986,6 +1989,19 @@ class WebChangeDetector_Autoupdates {
 				// Refresh the settings cache from the already-fetched details; previously
 				// this was a second forced API call for the same data.
 				self::cache_auto_update_settings( $api_auto_update_settings );
+
+				// Mirror the dashboard-controlled core-security toggle into the local
+				// wp_option (write-through mirror: is_core_security_bypass_enabled()
+				// keeps reading only the option, so wp-cron works offline). A response
+				// without the key means an older API: leave the option untouched.
+				// Truthiness on purpose, never a strict boolean check: V1-written
+				// rows can carry string values ('1'/'0') instead of booleans.
+				if ( array_key_exists( 'allow_core_security_updates', $api_auto_update_settings ) ) {
+					$api_allow_core = ! empty( $api_auto_update_settings['allow_core_security_updates'] ) ? '1' : '0';
+					if ( (string) get_option( self::OPTION_ALLOW_CORE_SECURITY, '1' ) !== $api_allow_core ) {
+						update_option( self::OPTION_ALLOW_CORE_SECURITY, $api_allow_core );
+					}
+				}
 
 				// Update the schedule using existing method (this reschedules the crons).
 				// The wcd_save_update_group_settings method already handles everything:.

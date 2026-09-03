@@ -340,17 +340,26 @@ class WebChangeDetector_Admin_Settings {
 			WebChangeDetector_Autoupdate_Guard::sync_override( $wcd_force_enable_wp_updates );
 		}
 
-		// Core security updates toggle: local-only wp_option (default ON when unset),
-		// rendered with the hidden-0 + checkbox-1 pattern, so the key is present
-		// whenever the form offered the row. When the field is absent (subsite form,
-		// all-sites bulk, old cached form), the option stays untouched so the
+		// Core security updates toggle (default ON when unset), rendered with the
+		// hidden-0 + checkbox-1 pattern, so the key is present whenever the form
+		// offered the row. When the field is absent (subsite form, all-sites bulk,
+		// old cached form), the option stays untouched and the key is not sent to
+		// the API (its merge-on-write PUT leaves unsent keys unchanged), so the
 		// default-true semantics survive.
+		// The wp_option is a write-through mirror of the API value in
+		// auto_update_settings.allow_core_security_updates: the local write stays
+		// immediate (is_core_security_bypass_enabled() reads only the option, so
+		// wp-cron works offline), and the value also rides the website PUT below
+		// so the dashboard sees it. The hourly sync mirrors dashboard changes
+		// back into the option.
 		// Stored as string '1'/'0', NEVER as boolean false: with no option row yet
 		// (the default-ON state), update_option() compares the new value against
 		// get_option()'s false and early-returns before add_option(), so a boolean
 		// false opt-out would never persist.
 		if ( isset( $postdata['wcd_allow_core_security_updates'] ) ) {
-			update_option( WebChangeDetector_Autoupdates::OPTION_ALLOW_CORE_SECURITY, '1' === (string) $postdata['wcd_allow_core_security_updates'] ? '1' : '0' );
+			$allow_core_security = '1' === (string) $postdata['wcd_allow_core_security_updates'] ? '1' : '0';
+			update_option( WebChangeDetector_Autoupdates::OPTION_ALLOW_CORE_SECURITY, $allow_core_security );
+			$auto_update_settings['allow_core_security_updates'] = $allow_core_security;
 		}
 
 		// Debug: Log what auto update settings we extracted.
@@ -377,6 +386,14 @@ class WebChangeDetector_Admin_Settings {
 			// Stored verbatim — see settings-action-handler::handle_save_group_settings
 			// for the security rationale (capability gate, no server-side execution).
 			$args['js'] = $postdata['js'];
+		}
+
+		// Alert emails of the on-demand group (independent of the monitoring group's list
+		// and of the website-level auto_update_checks_emails). isset, not ! empty: an
+		// emptied field must still be sent (as [''], which the API normalises to []) so
+		// the user can clear the list.
+		if ( isset( $postdata['alert_emails'] ) ) {
+			$args['alert_emails'] = explode( ',', sanitize_textarea_field( $postdata['alert_emails'] ) );
 		}
 
 		// New-URL activation defaults (per group). Hidden 0 + checkbox 1 means the value is

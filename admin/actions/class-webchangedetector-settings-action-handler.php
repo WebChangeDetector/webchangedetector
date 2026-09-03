@@ -109,9 +109,6 @@ class WebChangeDetector_Settings_Action_Handler {
 			}
 			$args['enabled']    = isset( $data['enabled'] ) && ( 'on' === $data['enabled'] || '1' === $data['enabled'] );
 			$args['monitoring'] = true;
-			if ( isset( $data['alert_emails'] ) ) {
-				$args['alert_emails'] = explode( ',', sanitize_textarea_field( $data['alert_emails'] ) );
-			}
 			if ( isset( $data['schedule_type'] ) ) {
 				$args['schedule_type'] = sanitize_text_field( $data['schedule_type'] );
 			}
@@ -135,6 +132,11 @@ class WebChangeDetector_Settings_Action_Handler {
 		// Common settings for both group types.
 		if ( isset( $data['threshold'] ) ) {
 			$args['threshold'] = sanitize_text_field( $data['threshold'] );
+		}
+		// Both group types own an alert_emails list (isset: an emptied field is sent as ['']
+		// so the API clears it).
+		if ( isset( $data['alert_emails'] ) ) {
+			$args['alert_emails'] = explode( ',', sanitize_textarea_field( $data['alert_emails'] ) );
 		}
 		if ( isset( $data['css'] ) ) {
 			$args['css'] = sanitize_textarea_field( $data['css'] );

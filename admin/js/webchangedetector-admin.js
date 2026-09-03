@@ -2614,6 +2614,12 @@ function wcdValidateFormGroupSettings() {
             return false;
         }
     }
+    // The on-demand group's alert_emails row sits outside the auto-update block,
+    // so it is validated regardless of the auto-update toggle.
+    if (typeof window['validate_alert_emails'] === 'function' &&
+        !window['validate_alert_emails']()) {
+        return false;
+    }
     return true;
 }
 
