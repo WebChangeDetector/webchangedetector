@@ -594,6 +594,55 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'PUT' );
 	}
 
+	/** Send the WordPress update results of a batch to the API.
+	 *
+	 * Full replace, idempotent and accepted in any batch state. The payload must be the
+	 * normalized contract shape produced by WebChangeDetector_Update_Results::build_api_payload():
+	 * `updates` (with the `core`, `plugins` and `themes` keys always present), `summary` and
+	 * `timestamp`. It is sent as a JSON body because form encoding would drop `core: null`,
+	 * the empty arrays of an idle run and turn the per-item `success` booleans into "1"/"0".
+	 *
+	 * @param string $batch_id The batch uuid.
+	 * @param array  $payload  The update-results payload.
+	 * @return string|false 'sent' when the API stored the results, 'terminal' when the failure
+	 *                      cannot be fixed by retrying, false on a transient failure worth
+	 *                      retrying. Callers must keep 'sent' and 'terminal' apart: both end the
+	 *                      retry loop, but only 'sent' means the API can send the result mail.
+	 */
+	public static function update_batch_update_results_v2( $batch_id, array $payload ) {
+		$args = array_merge(
+			array( 'action' => 'batches/' . $batch_id . '/update-results' ),
+			$payload
+		);
+
+		$response = self::api_v2( $args, 'PUT', false, null, true );
+
+		if ( is_array( $response ) && isset( $response['data'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sent update results for batch ' . $batch_id, 'update_batch_update_results_v2', 'debug' );
+			return 'sent';
+		}
+
+		$terminal_errors = array( 'unauthorized', 'No API token found', 'update plugin', 'not found' );
+		if ( is_string( $response ) && in_array( $response, $terminal_errors, true ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Terminal API error while sending update results for batch ' . $batch_id . ': ' . $response . '. Not retrying.', 'update_batch_update_results_v2', 'error' );
+			return 'terminal';
+		}
+
+		// A rejected payload (422) is terminal too: repeating it would only produce the same
+		// validation error on every poll tick. api_v2() passes a 422 through as the decoded
+		// Laravel body ({ message, errors }) instead of a terminal string, because other
+		// callers read that body (e.g. the account setup notice in
+		// WebChangeDetector_Admin_Controller and the comparison-status AJAX handler), so it
+		// is recognized here by its shape rather than turned into a string globally.
+		if ( is_array( $response ) && isset( $response['errors'] ) && is_array( $response['errors'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'The API rejected the update results for batch ' . $batch_id . ': ' . wp_json_encode( $response['errors'] ) . '. Not retrying.', 'update_batch_update_results_v2', 'error' );
+			return 'terminal';
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Failed to send update results for batch ' . $batch_id . '. Response: ' . wp_json_encode( $response ), 'update_batch_update_results_v2', 'warning' );
+		return false;
+	}
+
 	/** Update comparison.
 	 *
 	 * @param string $id The comparison id.
@@ -801,9 +850,13 @@ class WebChangeDetector_API_V2 {
 	 * @param string $method The request method.
 	 * @param bool   $is_web Call web interface.
 	 * @param string $custom_api_token Optional custom API token to use instead of default.
+	 * @param bool   $json_body Send the params as a JSON body instead of form-encoded ones.
+	 *                          Required whenever the payload contains nested arrays, booleans,
+	 *                          nulls or empty arrays: form encoding drops null and empty arrays
+	 *                          and turns booleans into "1"/"0". Ignored for multi calls.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null ) {
+	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null, $json_body = false ) {
 		$api_token = $custom_api_token ? $custom_api_token : WebChangeDetector_Multisite::get_api_token();
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
@@ -914,9 +967,13 @@ class WebChangeDetector_API_V2 {
 				$request_headers['x-wcd-network-admin'] = '1';
 			}
 
+			if ( $json_body ) {
+				$request_headers['Content-Type'] = 'application/json';
+			}
+
 			$args = array(
 				'timeout' => WCD_REQUEST_TIMEOUT,
-				'body'    => $post,
+				'body'    => $json_body ? wp_json_encode( $post ) : $post,
 				'method'  => $method,
 				'headers' => $request_headers,
 			);

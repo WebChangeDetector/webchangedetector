@@ -162,6 +162,7 @@ class WebChangeDetector_WordPress_Action_Handler {
 			delete_option( 'wcd_manual_checks_post_batch' );
 			delete_option( 'wcd_manual_checks_status' );
 			delete_option( 'wcd_manual_checks_started_at' );
+			delete_option( 'wcd_manual_checks_versions' );
 
 			return array(
 				'success'      => true,
