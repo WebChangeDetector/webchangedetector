@@ -133,7 +133,7 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				<div class="notice notice-warning inline wcd-multisite-main-notice">
 					<p>
 						<span class="dashicons dashicons-info"></span>
-						<?php esc_html_e( 'The schedule and notification email settings on this page apply network-wide — they are inherited by every subsite. Each subsite admin can still decide via their own auto-update toggle whether the subsite participates in the network-wide checks.', 'webchangedetector' ); ?>
+						<?php esc_html_e( 'The Auto Update Check schedule and its notification email apply network-wide and are inherited by every subsite. Each subsite admin can still decide via their own auto-update toggle whether the subsite participates in the network-wide checks. The alert emails for On-Demand Checks below are saved for this site only.', 'webchangedetector' ); ?>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -213,6 +213,22 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 				</div>
 			</div>
 
+			<?php if ( ! $is_multisite_subsite && ! $this->admin->is_all_sites_mode ) : ?>
+				<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-core-security" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
+					<div class="wcd-form-label-wrapper">
+						<label class="wcd-form-label"><?php esc_html_e( 'WordPress Security Updates', 'webchangedetector' ); ?></label>
+						<div class="wcd-description"><?php esc_html_e( 'Install WordPress security releases (minor core updates) immediately, even outside the timeframe above. These updates are installed without Auto Update Checks. Plugin, theme and major WordPress updates still wait for the next timeframe. This setting is also configurable in your WebChange Detector dashboard.', 'webchangedetector' ); ?></div>
+					</div>
+					<div class="wcd-form-control">
+						<label>
+							<input type="hidden" name="wcd_allow_core_security_updates" value="0" />
+							<input type="checkbox" name="wcd_allow_core_security_updates" value="1" <?php checked( (bool) get_option( \WebChangeDetector\WebChangeDetector_Autoupdates::OPTION_ALLOW_CORE_SECURITY, true ) ); ?> />
+							<?php esc_html_e( 'Always allow WordPress core security updates', 'webchangedetector' ); ?>
+						</label>
+					</div>
+				</div>
+			<?php endif; ?>
+
 			<div class="wcd-form-row auto-update-setting wcd-auto-update-setting-emails" style="<?php echo esc_attr( $schedule_hidden_style ); ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Notifications', 'webchangedetector' ); ?></label>
@@ -250,6 +266,26 @@ if ( ! empty( $this->admin->website_details['allowances']['manual_checks_setting
 			<?php if ( $is_multisite_subsite ) : ?>
 				</fieldset>
 			<?php endif; ?>
+
+			<div class="wcd-form-row wcd-auto-update-setting-alert-emails">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label"><?php esc_html_e( 'Alert emails for On-Demand Checks', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'WebChange Detector sends an alert email to these addresses when an On-Demand Check detects a change. Leave empty to disable.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<?php
+					// Email Input Component. This is the on-demand GROUP's alert_emails
+					// (API group setting), not the website-level auto_update_checks_emails above.
+					$email_value     = $group_and_urls['alert_emails'] ?? '';
+					$field_name      = 'alert_emails';
+					$label           = ''; // Empty label since it's already in the form structure.
+					$description     = ''; // Empty description since it's already in the form structure.
+					$multiple        = true;
+					$show_validation = true;
+					include WCD_PLUGIN_DIR . 'admin/partials/components/forms/email-input.php';
+					?>
+				</div>
+			</div>
 
 			<div class="wcd-form-row wcd-auto-update-setting-threshold">
 				<div class="wcd-form-label-wrapper">

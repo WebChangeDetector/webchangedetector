@@ -230,6 +230,12 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-cache-clearer.php';
 
 		/**
+		 * Builds the update-results payload sent to the API for auto update and
+		 * on-demand check batches.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-update-results.php';
+
+		/**
 		 * The class responsible for auto-update-checks
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';

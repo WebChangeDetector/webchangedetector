@@ -2,8 +2,8 @@
 Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
-Tested up to: 7.0.2
-Stable tag: 4.4.0
+Tested up to: 7.1
+Stable tag: 4.5.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -221,6 +221,16 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.5.1 =
+* Feature: Install WordPress security releases immediately, even outside the Auto Update Check timeframe (on by default; plugin, theme and major WordPress updates still wait for the next scheduled check)
+* Feature: Alert emails for On-Demand Checks can now be set in the On-Demand Check settings
+* Improvement: The Auto Update Check result email is now sent by the WebChange Detector service instead of your website, so delivery no longer depends on your site's mail setup
+* Improvement: On-Demand Checks now send the plugins, themes and WordPress versions that changed between the pre-update and post-update screenshots to the WebChange Detector service
+* Improvement: Clearer next steps after an On-Demand Check: "Start a new check" or "Check again"
+* Improvement: Security updates installed without checks are marked as such in the update history
+* Fix: Quotes and special characters in AI analysis descriptions are no longer shown as HTML codes
+* Fix: The activation link in the trial signup email now uses https when your site runs on https
+
 = 4.4.0 =
 * Feature: New dashboard with more details on your checks and recent changes
 * Feature: Select all URLs across all pages at once
@@ -524,6 +534,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.5.1 =
+Installs WordPress security releases immediately even outside your Auto Update Check timeframe, adds alert emails for On-Demand Checks, and moves the Auto Update Check result email to the WebChange Detector service for more reliable delivery. Recommended for all users.
 
 = 4.4.0 =
 Adds a new dashboard, a Screenshot Region setting, and detection when WordPress auto updates were disabled by your host, plus several reliability fixes for Auto Update Checks. Recommended for all users.

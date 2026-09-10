@@ -78,6 +78,9 @@ class WebChangeDetector_Screenshot_Action_Handler {
 				// Update step tracking for on-demand checks.
 				$this->update_step_tracking( $sc_type );
 
+				// Snapshot resp. report the installed versions of this on-demand check.
+				$this->handle_update_results( $sc_type, $results['batch'] );
+
 				return array(
 					'success'  => true,
 					'message'  => 'Screenshots initiated successfully.',
@@ -121,6 +124,53 @@ class WebChangeDetector_Screenshot_Action_Handler {
 			default:
 				return $this->admin->manual_group_uuid;
 		}
+	}
+
+	/**
+	 * Capture the installed versions of an On-Demand Check and report what changed.
+	 *
+	 * The pre batch snapshots the installed core, plugin and theme versions; the post batch
+	 * diffs that snapshot against the versions on disk and sends the result to the API, which
+	 * stores it with the batch (On-Demand Check batches never trigger a mail). Fire once: this
+	 * runs in an admin request, there is no cron to retry in, so a failed send is only logged.
+	 *
+	 * @param string $sc_type  The screenshot type. Only 'pre' and 'post' are relevant.
+	 * @param string $batch_id The batch uuid returned by the API.
+	 * @return void
+	 */
+	private function handle_update_results( $sc_type, $batch_id ) {
+		if ( 'pre' === $sc_type ) {
+			update_option( 'wcd_manual_checks_versions', WebChangeDetector_Update_Results::capture_current_versions(), false );
+			return;
+		}
+
+		if ( 'post' !== $sc_type ) {
+			return;
+		}
+
+		// The snapshot is kept on purpose: "Fixed something? Check again" sends the user back
+		// to the post-update step and takes another post batch against the SAME pre batch, so
+		// every repeat has to diff against the same snapshot. It is cleared when a new run
+		// starts (handle_start_manual_checks()), overwritten by the next pre batch, and
+		// removed on uninstall.
+		$pre_versions = get_option( 'wcd_manual_checks_versions' );
+
+		if ( empty( $pre_versions ) || ! is_array( $pre_versions ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No pre-check version snapshot found. Skipping the update results for batch ' . $batch_id . '.', 'handle_update_results', 'debug' );
+			return;
+		}
+
+		$updates = WebChangeDetector_Update_Results::diff_captured_versions(
+			$pre_versions,
+			WebChangeDetector_Update_Results::capture_current_versions()
+		);
+
+		WebChangeDetector_API_V2::update_batch_update_results_v2(
+			$batch_id,
+			WebChangeDetector_Update_Results::build_api_payload(
+				WebChangeDetector_Update_Results::build_entry_from_diff( $updates )
+			)
+		);
 	}
 
 	/**

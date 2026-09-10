@@ -5,30 +5,21 @@
  *   @package    webchangedetector
  */
 
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Include on-demand check tiles
  */
 require 'update-step-tiles.php';
-?>
-<form method="post" style="display: inline; margin-right: 10px;">
-	<input type="hidden" name="wcd_action" value="update_detection_step">
-	<?php wp_nonce_field( 'update_detection_step' ); ?>
-	<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
-	<input type="hidden" name="step" value="settings">
-	<input class="button button-primary" type="submit" value="<?php echo esc_attr__( '< Back to settings', 'webchangedetector' ); ?>">
-</form>
-<form method="post" style="display: inline">
-	<input type="hidden" name="wcd_action" value="update_detection_step">
-	<?php wp_nonce_field( 'update_detection_step' ); ?>
-	<?php \WebChangeDetector\WebChangeDetector_Multisite::render_blog_context_field(); ?>
-	<input type="hidden" name="step" value="post-update">
-	<input class="button" type="submit" value="<?php echo esc_attr__( 'Create Checks again', 'webchangedetector' ); ?>">
-</form>
 
-<?php
-	$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2();
-	$batch   = array_slice( $batches['data'], 0, 1 );
+$actions_disabled = false;
+require __DIR__ . '/update-step-next-actions.php';
 
-	// Pass only batch data to create accordion containers, content will be loaded via AJAX.
-	$wcd->dashboard_handler->compare_view_v2( $batch );
-?>
+$batches = \WebChangeDetector\WebChangeDetector_API_V2::get_batches_v2();
+$batch   = array_slice( $batches['data'], 0, 1 );
+
+// Pass only batch data to create accordion containers, content will be loaded via AJAX.
+$wcd->dashboard_handler->compare_view_v2( $batch );

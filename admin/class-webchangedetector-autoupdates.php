@@ -25,6 +25,24 @@ class WebChangeDetector_Autoupdates {
 	 */
 	private string $lock_name = 'auto_updater.lock';
 
+	/** Option name for the "always allow WordPress core security updates" toggle.
+	 *
+	 * Write-through mirror of the API value auto_update_settings.allow_core_security_updates:
+	 * the settings save writes both, the hourly sync mirrors dashboard changes back into
+	 * the option. Readers use only the option (offline-safe in wp-cron). Default ON when
+	 * unset (get_option default true).
+	 */
+	const OPTION_ALLOW_CORE_SECURITY = 'wcd_allow_core_security_updates';
+
+	/** Whether THIS request armed the core-security bypass filters.
+	 *
+	 * Read by automatic_updates_complete() (same instance, same request) to
+	 * record the restricted core install without starting the WCD pipeline.
+	 *
+	 * @var bool
+	 */
+	private bool $core_security_bypass = false;
+
 	/** Group ID for on-demand checks (property name kept for backwards compatibility).
 	 *
 	 * Initialized to '' so the constructor's early return (missing groups option,
@@ -210,6 +228,17 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Core security bypass: THIS request installed a minor core security release
+		// without WCD checks (no pre batch exists). Record it in the history and stop:
+		// core sends its own result email, and no WCD pipeline (post batch, mail,
+		// cooldown) is involved.
+		if ( $this->core_security_bypass ) {
+			if ( ! empty( $update_results ) ) {
+				$this->save_update_results( $update_results, null, 'security_update' );
+			}
+			return;
+		}
+
 		// We don't do anything here if wcd checks are disabled, or we don't have pre_auto_update option.
 		$auto_update_settings = self::get_auto_update_settings();
 		if ( ! array_key_exists( 'auto_update_checks_enabled', $auto_update_settings ) ) {
@@ -272,11 +301,31 @@ class WebChangeDetector_Autoupdates {
 			return;
 		}
 
+		// Build the entry once: the local history only keeps runs that actually updated
+		// something, while the API always receives one, an idle run included. Parsing runs
+		// over data WordPress' upgrader produced, so it is guarded: the option write below
+		// must happen under all circumstances. The post batch is already running on the API,
+		// and without the option there is no poll, no cleanup and no webhook teardown until
+		// the hourly stuck sweeper picks the run up two hours later.
+		$update_entry = null;
+		try {
+			$update_entry = $this->build_update_history_entry( $update_results, $response['batch'] );
+		} catch ( \Throwable $e ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Failed to build the update results entry: ' . $e->getMessage() . '. Continuing the post-update run without them.',
+				'automatic_updates_complete',
+				'error'
+			);
+		}
+
+		$post_update_data['update_results'] = $update_entry;
+		$post_update_data['results_synced'] = false;
+
 		update_option( WCD_POST_AUTO_UPDATE, $post_update_data, false );
 
 		// Save the update results to options for display in frontend (only if we have results).
-		if ( ! empty( $update_results ) && ! empty( $response['batch'] ) ) {
-			$this->save_update_results( $update_results, $response['batch'] );
+		if ( ! empty( $update_results ) && ! empty( $response['batch'] ) && null !== $update_entry ) {
+			$this->store_history_entry( $update_entry );
 		}
 
 		// Schedule the cron to check post-update queue status.
@@ -287,7 +336,7 @@ class WebChangeDetector_Autoupdates {
 			'debug'
 		);
 
-		// Add the batch id to the comparison batches. This is used to send the mail and for showing "Auto Update Checks" in the change detection page.
+		// Add the batch id to the comparison batches. This is used for showing "Auto Update Checks" in the change detection page.
 		$comparison_batches = get_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES );
 		if ( ! is_array( $comparison_batches ) ) {
 			$comparison_batches = array();
@@ -307,6 +356,8 @@ class WebChangeDetector_Autoupdates {
 			update_option( WCD_AUTO_UPDATE_COMPARISON_BATCHES, $comparison_batches, false );
 		}
 
+		// Runs the first attempt to send the update results to the API and then checks the
+		// post-update queues; both are repeated on every poll tick until they are done.
 		$this->wcd_cron_check_post_queues();
 	}
 
@@ -321,12 +372,20 @@ class WebChangeDetector_Autoupdates {
 		// Note: Stuck process cleanup is now handled centrally in hourly sync.
 		// We just check if the option exists to proceed with queue checking.
 
-		// Check if we still have the post_sc_option. If not, we already sent the mail.
+		// Check if we still have the post_sc_option. If not, the run is already finished.
 		if ( ! $post_sc_option ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No post_sc_option found. So we already sent the mail.', 'wcd_cron_check_post_queues', 'debug' );
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No post_sc_option found. So the run is already cleaned up.', 'wcd_cron_check_post_queues', 'debug' );
 			return;
 		}
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Checking if post-update screenshots are done: ' . wp_json_encode( $post_sc_option ), 'wcd_cron_check_post_queues', 'debug' );
+
+		// Retry the update-results PUT until it is settled. The API needs it to send the
+		// Auto Update Check result mail. The returned option carries the current
+		// results_synced flag, which the cleanup branches below report on.
+		$post_sc_option = $this->sync_update_results( $post_sc_option );
+
+		// Only the batch id is logged: the option now also carries the full update results,
+		// which would bloat the debug log on every poll tick.
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Checking if post-update screenshots are done for batch ' . ( $post_sc_option['batch_id'] ?? 'unknown' ), 'wcd_cron_check_post_queues', 'debug' );
 		$response = \WebChangeDetector\WebChangeDetector_API_V2::get_queues_v2( $post_sc_option['batch_id'], 'open,processing' );
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Response: ' . wp_json_encode( $response ), 'wcd_cron_check_post_queues', 'debug' );
 
@@ -336,6 +395,7 @@ class WebChangeDetector_Autoupdates {
 			if ( is_string( $response ) && in_array( $response, $terminal_errors, true ) ) {
 				// Terminal error: retrying cannot succeed, so clean up the run right away. No mail.
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Terminal API error while checking post-update queues: ' . $response . '. Cleaning up the auto-update run.', 'wcd_cron_check_post_queues', 'error' );
+				$this->log_unsynced_update_results( $post_sc_option );
 				$this->cleanup_auto_update_run();
 				return;
 			}
@@ -353,11 +413,24 @@ class WebChangeDetector_Autoupdates {
 			$this->reschedule( 'wcd_cron_check_post_queues' );
 		} else {
 
-			// Send the mail. The cleanup below must always run, even if the mail fails.
-			try {
-				$this->send_change_detection_mail( $post_sc_option );
-			} catch ( \Throwable $e ) {
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Failed to send change detection mail: ' . $e->getMessage(), 'wcd_cron_check_post_queues', 'error' );
+			// The batch is finished, but the update results are the only thing that makes the
+			// API send the result mail, and this option is the only thing keeping their retry
+			// alive: cleaning up now would end the run for good with no mail and no way back,
+			// because the stuck sweeper only sees runs whose option still exists. So keep
+			// polling while the PUT is unsettled. A terminal failure sets results_sync_terminal
+			// and falls through to the cleanup below, so the loop cannot spin on an unfixable
+			// error, and the hourly 2h stuck sweeper bounds the remaining transient-only case.
+			if ( empty( $post_sc_option['results_synced'] ) && empty( $post_sc_option['results_sync_terminal'] ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Post-update screenshots are done, but the update results have not reached the API yet. Retrying in 30 seconds.', 'wcd_cron_check_post_queues', 'debug' );
+				$this->reschedule( 'wcd_cron_check_post_queues' );
+				return;
+			}
+
+			// The result mail is sent by the API once the batch is finished; the plugin only
+			// has to make sure the update results reached it (see sync_update_results()).
+			// Without them the API sends nothing, so the run must not claim a mail went out.
+			if ( $this->log_unsynced_update_results( $post_sc_option ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Post-update screenshots are done. The result mail is sent by the API.', 'wcd_cron_check_post_queues', 'debug' );
 			}
 
 			// Cleanup wp_options, cron webhook and scheduled fallback check.
@@ -510,43 +583,17 @@ class WebChangeDetector_Autoupdates {
 			'total'   => 0,
 		);
 
-		// Check for core updates. Count only offers WordPress installs automatically
-		// ('autoupdate' response, mirroring find_core_auto_update()). 'upgrade' offers
-		// (e.g. a pending major release) are manual-only and would start a pointless
-		// cycle for weeks while the offer is up.
-		$core_updates = get_site_transient( 'update_core' );
-		if ( $core_updates && ! empty( $core_updates->updates ) ) {
-			foreach ( $core_updates->updates as $update ) {
-				if ( 'autoupdate' !== $update->response ) {
-					continue;
-				}
-
-				// Mirror core's full decision via Core_Upgrader::should_update_to_version():
-				// static and side-effect-free (reads WP_AUTO_UPDATE_CORE, the auto_update_core_*
-				// options, the critical-failure lockout and the allow_*_auto_core_updates filters).
-				// It covers cases the 'autoupdate' offer alone does not, e.g. WP_AUTO_UPDATE_CORE
-				// set to false or disabled minor updates. Core only loads the upgrader classes in
-				// its own priority-10 cron callback, after our priority-5 callback runs, so we
-				// load them ourselves (core re-requires the same file moments later).
-				require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-				if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
-					\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-						'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
-						'check_for_available_updates',
-						'debug'
-					);
-					continue;
-				}
-
-				$has_updates['core'] = true;
-				++$has_updates['total'];
-				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-					'Core auto-update available: ' . $update->version,
-					'check_for_available_updates',
-					'debug'
-				);
-				break;
-			}
+		// Check for core updates. The forced wp_version_check() above refreshed the
+		// update_core transient, so the helper reads fresh data.
+		$core_offer = $this->get_core_autoupdate_offer();
+		if ( $core_offer ) {
+			$has_updates['core'] = true;
+			++$has_updates['total'];
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Core auto-update available: ' . $core_offer->version,
+				'check_for_available_updates',
+				'debug'
+			);
 		}
 
 		// Check for plugin updates (only those WordPress will actually auto-install).
@@ -599,6 +646,171 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Find the pending core 'autoupdate' offer WordPress would install automatically.
+	 *
+	 * Side-effect-free: reads the update_core transient WITHOUT forcing a refresh.
+	 * Callers must ensure the transient is fresh (check_for_available_updates() runs
+	 * wp_version_check() first; the security bypass runs inside the same request
+	 * that wp_version_check() fired wp_maybe_auto_update from).
+	 *
+	 * Only 'autoupdate' offers count (mirroring find_core_auto_update()); 'upgrade'
+	 * offers (e.g. a pending major release) are manual-only.
+	 *
+	 * @return object|false The core update offer object, or false if none.
+	 */
+	private function get_core_autoupdate_offer() {
+		$core_updates = get_site_transient( 'update_core' );
+		if ( ! $core_updates || empty( $core_updates->updates ) ) {
+			return false;
+		}
+
+		foreach ( $core_updates->updates as $update ) {
+			if ( 'autoupdate' !== $update->response ) {
+				continue;
+			}
+
+			// Mirror core's full decision via Core_Upgrader::should_update_to_version():
+			// static and side-effect-free (reads WP_AUTO_UPDATE_CORE, the auto_update_core_*
+			// options, the critical-failure lockout and the allow_*_auto_core_updates filters).
+			// It covers cases the 'autoupdate' offer alone does not, e.g. WP_AUTO_UPDATE_CORE
+			// set to false or disabled minor updates. Core only loads the upgrader classes in
+			// its own priority-10 cron callback, after our priority-5 callback runs, so we
+			// load them ourselves (core re-requires the same file moments later).
+			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+			if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
+				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+					'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
+					'check_for_available_updates',
+					'debug'
+				);
+				continue;
+			}
+
+			return $update;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check whether a core update offer stays within the currently installed major.minor branch.
+	 *
+	 * A minor-branch offer (e.g. 6.8.2 while 6.8.1 is installed) is a security/maintenance
+	 * release. Without this check, a pending MAJOR 'autoupdate' offer (WP_AUTO_UPDATE_CORE
+	 * = true setups) would make the bypass skip the lock for weeks while the armed filters
+	 * block the major install, so nothing would ever be installed in those passes.
+	 *
+	 * @param object $offer Core update offer object from the update_core transient.
+	 * @return bool True when the offered version is in the installed major.minor branch.
+	 */
+	private function is_minor_core_offer( $offer ) {
+		if ( empty( $offer->version ) ) {
+			return false;
+		}
+
+		// wp_get_wp_version() exists since WP 6.7; the plugin supports 5.5+.
+		$installed = function_exists( 'wp_get_wp_version' ) ? wp_get_wp_version() : $GLOBALS['wp_version'];
+
+		$installed_branch = implode( '.', array_slice( explode( '.', $installed ), 0, 2 ) );
+		$offer_branch     = implode( '.', array_slice( explode( '.', (string) $offer->version ), 0, 2 ) );
+
+		return $installed_branch === $offer_branch;
+	}
+
+	/**
+	 * Check whether the "always allow WordPress core security updates" option is enabled.
+	 *
+	 * Default ON when the option row does not exist (existing and new installs);
+	 * a saved "off" is stored as '' and stays off.
+	 *
+	 * @return bool True when core security updates may bypass the WCD gates.
+	 */
+	private function is_core_security_bypass_enabled() {
+		return (bool) get_option( self::OPTION_ALLOW_CORE_SECURITY, true );
+	}
+
+	/**
+	 * Arm the one-request filters for a restricted core-security-only update pass.
+	 *
+	 * Registered at priority 5 of wp_maybe_auto_update, consumed by core's
+	 * priority-10 callback in the SAME request; nothing is persisted. Plugins,
+	 * themes, major/dev core and non-core translations are blocked, so core's
+	 * WP_Automatic_Updater::run() installs only the minor core update and its
+	 * core-type language packs.
+	 *
+	 * @return void
+	 */
+	private function arm_core_security_filters() {
+		add_filter( 'auto_update_plugin', '__return_false', PHP_INT_MAX );
+		add_filter( 'auto_update_theme', '__return_false', PHP_INT_MAX );
+		add_filter( 'allow_major_auto_core_updates', '__return_false', PHP_INT_MAX );
+		add_filter( 'allow_dev_auto_core_updates', '__return_false', PHP_INT_MAX );
+		add_filter( 'auto_update_translation', array( $this, 'filter_translation_core_only' ), PHP_INT_MAX, 2 );
+	}
+
+	/**
+	 * Filter callback: allow only core-type translation updates.
+	 *
+	 * Translation offers carry a type of core, plugin or theme. During a
+	 * core-security bypass pass only the core language pack may install.
+	 *
+	 * @param bool|mixed $update Whether to update the translation.
+	 * @param object     $item   Translation update offer item.
+	 * @return bool|mixed False for non-core translations, the incoming value otherwise.
+	 */
+	public function filter_translation_core_only( $update, $item ) {
+		return ( isset( $item->type ) && 'core' === $item->type ) ? $update : false;
+	}
+
+	/**
+	 * Let a pending minor core security update through a blocking gate, without WCD checks.
+	 *
+	 * Called at the gate points of wp_maybe_auto_update() (cooldown, weekday, time
+	 * window) right before they would set the backdated lock. When all conditions
+	 * hold, the lock is NOT set and the one-request filters are armed instead, so
+	 * core's priority-10 callback runs a restricted core-only pass.
+	 *
+	 * Conditions: option enabled; NO active WCD run state (WCD_PRE_AUTO_UPDATE,
+	 * WCD_POST_AUTO_UPDATE, WCD_AUTO_UPDATES_RUNNING all empty, so a WCD-managed
+	 * run, including the pre option's 'done' phase, is never interfered with);
+	 * a minor-branch core 'autoupdate' offer is pending.
+	 *
+	 * Deliberately touches neither the lock (a backdated lock from an earlier
+	 * blocked pass is stale for core's create_lock() after 60 seconds) nor
+	 * WCD_LAST_AUTO_UPDATE_CHECK_TIME (the cooldown protects paid batches; the
+	 * bypass starts none).
+	 *
+	 * @param string $reason Gate name for logging (e.g. 'cooldown', 'weekday', 'time_window').
+	 * @return bool True when the bypass was armed and the caller must return without locking.
+	 */
+	private function maybe_bypass_for_core_security( $reason ) {
+		if ( ! $this->is_core_security_bypass_enabled() ) {
+			return false;
+		}
+
+		if ( get_option( WCD_PRE_AUTO_UPDATE ) || get_option( WCD_POST_AUTO_UPDATE ) || get_option( WCD_AUTO_UPDATES_RUNNING ) ) {
+			return false;
+		}
+
+		$offer = $this->get_core_autoupdate_offer();
+		if ( ! $offer || ! $this->is_minor_core_offer( $offer ) ) {
+			return false;
+		}
+
+		$this->arm_core_security_filters();
+		set_transient( 'wcd_core_security_bypass', time(), MINUTE_IN_SECONDS );
+		$this->core_security_bypass = true;
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Core security bypass armed at gate "' . $reason . '": letting core install minor update ' . $offer->version . ' without WCD checks.',
+			'wp_maybe_auto_update',
+			'info'
+		);
+
+		return true;
 	}
 
 	/**
@@ -1045,7 +1257,7 @@ class WebChangeDetector_Autoupdates {
 			}
 
 			// Capture current plugin and theme versions before updates.
-			$current_versions = $this->capture_current_versions();
+			$current_versions = WebChangeDetector_Update_Results::capture_current_versions();
 
 			$option_data = array(
 				'status'    => 'processing',
@@ -1089,47 +1301,6 @@ class WebChangeDetector_Autoupdates {
 			delete_option( WCD_AUTO_UPDATES_RUNNING );
 			return false;
 		}
-	}
-
-	/**
-	 * Capture current versions of all plugins and themes before updates.
-	 *
-	 * @return array Array containing current plugin and theme versions.
-	 */
-	private function capture_current_versions() {
-		$versions = array(
-			'plugins' => array(),
-			'themes'  => array(),
-		);
-
-		// Ensure get_plugins function is available.
-		if ( ! function_exists( 'get_plugins' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		// Capture all plugin versions.
-		if ( function_exists( 'get_plugins' ) ) {
-			$all_plugins = get_plugins();
-			foreach ( $all_plugins as $plugin_file => $plugin_data ) {
-				if ( isset( $plugin_data['Version'] ) ) {
-					$versions['plugins'][ $plugin_file ] = $plugin_data['Version'];
-				}
-			}
-		}
-
-		// Capture all theme versions.
-		$all_themes = wp_get_themes();
-		foreach ( $all_themes as $theme_slug => $theme ) {
-			$versions['themes'][ $theme_slug ] = $theme->get( 'Version' );
-		}
-
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-			'Captured ' . count( $versions['plugins'] ) . ' plugin versions and ' . count( $versions['themes'] ) . ' theme versions before updates',
-			'capture_current_versions',
-			'debug'
-		);
-
-		return $versions;
 	}
 
 	/**
@@ -1535,6 +1706,13 @@ class WebChangeDetector_Autoupdates {
 	public function wp_maybe_auto_update() {
 		// Step 1: Check for concurrent execution.
 		if ( $this->should_skip_concurrent_execution() ) {
+			// A parallel request may have armed the core-security bypass and skipped the
+			// lock. If core's priority-10 callback of THIS request wins create_lock()
+			// against that request, it would run UNRESTRICTED outside the window, so
+			// re-arm the one-request filters here before returning.
+			if ( $this->is_core_security_bypass_enabled() && get_transient( 'wcd_core_security_bypass' ) ) {
+				$this->arm_core_security_filters();
+			}
 			return;
 		}
 
@@ -1571,6 +1749,9 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 3: Check cooldown period.
 		if ( $this->is_within_cooldown_period() ) {
+			if ( $this->maybe_bypass_for_core_security( 'cooldown' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
@@ -1583,12 +1764,18 @@ class WebChangeDetector_Autoupdates {
 
 		// Step 5: Check if updates are allowed today.
 		if ( ! $this->is_allowed_today( $auto_update_settings ) ) {
+			if ( $this->maybe_bypass_for_core_security( 'weekday' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
 
 		// Step 6: Check if current time is within allowed window.
 		if ( ! $this->is_within_time_window( $auto_update_settings ) ) {
+			if ( $this->maybe_bypass_for_core_security( 'time_window' ) ) {
+				return; // No lock: core's priority-10 callback runs the restricted pass.
+			}
 			$this->set_lock_if_not_updating();
 			return;
 		}
@@ -1675,54 +1862,6 @@ class WebChangeDetector_Autoupdates {
 		delete_transient( 'wcd_update_check_running' );
 	}
 
-	/** Send the change detection mail.
-	 *
-	 * Assembles the data, renders the mail body from the auto-update-mail partial
-	 * and sends it via wp_mail().
-	 *
-	 * @param array $post_sc_option Data about the post sc.
-	 * @return void
-	 */
-	public function send_change_detection_mail( $post_sc_option ) {
-		// If we don't have open or processing queues of the batch anymore, we can check for comparisons.
-		$comparisons = \WebChangeDetector\WebChangeDetector_API_V2::get_comparisons_v2( array( 'batches' => $post_sc_option['batch_id'] ) );
-
-		// Validate the response before using it. api_v2() returns plain strings on failure.
-		if ( ! is_array( $comparisons ) || ! isset( $comparisons['data'] ) || ! is_array( $comparisons['data'] ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Invalid API response for comparisons. Skipping the change detection mail. Results are still available in the app.', 'send_change_detection_mail', 'error' );
-			return;
-		}
-
-		$auto_update_settings = self::get_auto_update_settings();
-		$to                   = '';
-		if ( ! empty( $auto_update_settings['auto_update_checks_emails'] ) ) {
-			$emails = $auto_update_settings['auto_update_checks_emails'];
-			$to     = is_array( $emails ) ? implode( ',', $emails ) : $emails;
-		}
-
-		if ( empty( $to ) ) {
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'No notification emails configured, skipping mail', 'send_change_detection_mail', 'debug' );
-			return;
-		}
-
-		$comparison_rows  = $comparisons['data'];
-		$batch_ai_summary = $comparison_rows[0]['batch']['ai_summary']['summary'] ?? '';
-
-		// finally guarantees the output buffer is closed even when the include throws
-		// (the caller catches the Throwable; a leaked buffer would swallow later output).
-		ob_start();
-		try {
-			include WCD_PLUGIN_DIR . 'admin/partials/templates/auto-update-mail.php';
-		} finally {
-			$mail_body = ob_get_clean();
-		}
-
-		$subject = '[' . get_bloginfo( 'name' ) . '] Auto Update Checks by WebChange Detector';
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Sending Mail with differences', 'send_change_detection_mail', 'debug' );
-		wp_mail( $to, $subject, $mail_body, $headers );
-	}
-
 	/** Get the auto-update settings.
 	 *
 	 * @param bool $force_refresh Force refresh from API, bypassing the cache.
@@ -1805,6 +1944,19 @@ class WebChangeDetector_Autoupdates {
 				// Refresh the settings cache from the already-fetched details; previously
 				// this was a second forced API call for the same data.
 				self::cache_auto_update_settings( $api_auto_update_settings );
+
+				// Mirror the dashboard-controlled core-security toggle into the local
+				// wp_option (write-through mirror: is_core_security_bypass_enabled()
+				// keeps reading only the option, so wp-cron works offline). A response
+				// without the key means an older API: leave the option untouched.
+				// Truthiness on purpose, never a strict boolean check: V1-written
+				// rows can carry string values ('1'/'0') instead of booleans.
+				if ( array_key_exists( 'allow_core_security_updates', $api_auto_update_settings ) ) {
+					$api_allow_core = ! empty( $api_auto_update_settings['allow_core_security_updates'] ) ? '1' : '0';
+					if ( (string) get_option( self::OPTION_ALLOW_CORE_SECURITY, '1' ) !== $api_allow_core ) {
+						update_option( self::OPTION_ALLOW_CORE_SECURITY, $api_allow_core );
+					}
+				}
 
 				// Update the schedule using existing method (this reschedules the crons).
 				// The wcd_save_update_group_settings method already handles everything:.
@@ -1926,6 +2078,9 @@ class WebChangeDetector_Autoupdates {
 						'check_and_clean_all_stuck_processes',
 						'warning'
 					);
+					// This is where a run whose update-results PUT kept failing transiently ends, so
+					// the missing result mail is reported here just like in the poll's cleanup branches.
+					$this->log_unsynced_update_results( $post_update_data );
 					delete_option( WCD_POST_AUTO_UPDATE );
 					$cleaned_update_state = true;
 					$stuck_processes[]    = 'post-update (age: ' . $age_in_seconds . 's)';
@@ -2171,48 +2326,12 @@ class WebChangeDetector_Autoupdates {
 	 *
 	 * @param array       $update_results The update results from WordPress.
 	 * @param string|null $batch_id_post_update The batch ID for the post-update process.
+	 * @param string|null $context Optional context marker for the history entry (e.g. 'security_update').
 	 * @return void
 	 */
-	private function save_update_results( $update_results, $batch_id_post_update = null ) {
+	private function save_update_results( $update_results, $batch_id_post_update = null, $context = null ) {
 		try {
-			// Log the raw update results for debugging.
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Raw update results structure: ' . wp_json_encode( $update_results ),
-				'save_update_results',
-				'debug'
-			);
-
-			// Get existing history or initialize empty array.
-			$history = get_option( 'wcd_auto_update_history', array() );
-			if ( ! is_array( $history ) ) {
-				$history = array();
-			}
-
-			// Parse results and summary in a single pass.
-			$results = $this->parse_update_results( $update_results );
-
-			// Create new entry with parsed results.
-			$new_entry = array(
-				'timestamp' => time(),
-				'batch_id'  => $batch_id_post_update,
-				'updates'   => $results['updates'],
-				'summary'   => $results['summary'],
-			);
-
-			// Add new entry to beginning of array.
-			array_unshift( $history, $new_entry );
-
-			// Keep only last 30 entries to prevent option bloat.
-			$history = array_slice( $history, 0, 30 );
-
-			// Save updated history.
-			update_option( 'wcd_auto_update_history', $history, false );
-
-			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Successfully saved auto-update results. Total history entries: ' . count( $history ),
-				'save_update_results',
-				'debug'
-			);
+			$this->store_history_entry( $this->build_update_history_entry( $update_results, $batch_id_post_update, $context ) );
 		} catch ( \Exception $e ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 				'Error saving auto-update results: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString(),
@@ -2220,6 +2339,171 @@ class WebChangeDetector_Autoupdates {
 				'error'
 			);
 		}
+	}
+
+	/**
+	 * Build a single auto-update history entry from raw WordPress update results.
+	 *
+	 * The same entry feeds the local history and, stripped of its local-only keys, the
+	 * update-results sent to the API (see WebChangeDetector_Update_Results::build_api_payload()).
+	 *
+	 * @param array       $update_results The update results from WordPress.
+	 * @param string|null $batch_id_post_update The batch ID for the post-update process.
+	 * @param string|null $context Optional context marker for the history entry (e.g. 'security_update').
+	 * @return array The history entry.
+	 */
+	private function build_update_history_entry( $update_results, $batch_id_post_update = null, $context = null ) {
+		// Log the raw update results for debugging.
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Raw update results structure: ' . wp_json_encode( $update_results ),
+			'build_update_history_entry',
+			'debug'
+		);
+
+		// Parse results and summary in a single pass.
+		$results = $this->parse_update_results( $update_results );
+
+		// Create new entry with parsed results.
+		$new_entry = array(
+			'timestamp' => time(),
+			'batch_id'  => $batch_id_post_update,
+			'updates'   => $results['updates'],
+			'summary'   => $results['summary'],
+		);
+
+		// Mark special runs (e.g. a core security update installed without checks).
+		if ( null !== $context ) {
+			$new_entry['context'] = $context;
+		}
+
+		return $new_entry;
+	}
+
+	/**
+	 * Prepend an entry to the local auto-update history option.
+	 *
+	 * @param array $new_entry The history entry to store.
+	 * @return void
+	 */
+	private function store_history_entry( array $new_entry ) {
+		// Get existing history or initialize empty array.
+		$history = get_option( 'wcd_auto_update_history', array() );
+		if ( ! is_array( $history ) ) {
+			$history = array();
+		}
+
+		// Add new entry to beginning of array.
+		array_unshift( $history, $new_entry );
+
+		// Keep only last 30 entries to prevent option bloat.
+		$history = array_slice( $history, 0, 30 );
+
+		// Save updated history.
+		update_option( 'wcd_auto_update_history', $history, false );
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Successfully saved auto-update results. Total history entries: ' . count( $history ),
+			'store_history_entry',
+			'debug'
+		);
+	}
+
+	/**
+	 * Send the update results of the post-update batch to the API.
+	 *
+	 * Sent for EVERY auto-update run, including an idle one without any update, because the
+	 * PUT is what tells the API that this plugin no longer mails the result itself. Retried
+	 * on every post-queue poll tick until it is settled, and the poll keeps rescheduling for
+	 * it even after the batch is done; the hourly 2h stuck sweeper bounds that loop (never
+	 * add a local retry counter).
+	 *
+	 * Settled means one of two things, and they are kept apart on purpose: `results_synced`
+	 * says the API stored the results, so the result mail goes out, while `results_sync_terminal`
+	 * only stops the retries after a failure retrying cannot fix. Both end the loop, but only
+	 * `results_synced` may ever be read as "a mail is sent" (see log_unsynced_update_results()).
+	 *
+	 * @param array $post_sc_option The post-update option data.
+	 * @return mixed The option data, with the flag the PUT settled on, or passed through unchanged.
+	 */
+	private function sync_update_results( $post_sc_option ) {
+		if ( ! is_array( $post_sc_option ) || empty( $post_sc_option['batch_id'] ) ) {
+			return $post_sc_option;
+		}
+
+		if ( ! empty( $post_sc_option['results_synced'] ) || ! empty( $post_sc_option['results_sync_terminal'] ) ) {
+			return $post_sc_option;
+		}
+
+		$entry = isset( $post_sc_option['update_results'] ) && is_array( $post_sc_option['update_results'] )
+			? $post_sc_option['update_results']
+			: array();
+
+		// An empty entry is still sent as an idle payload instead of being skipped. The
+		// option carries no update results when it was written by a plugin version that did
+		// not know the key yet, which is exactly what happens when the very same auto-update
+		// run upgraded WCD itself: the option comes from the old code, this poll tick already
+		// runs the new one. What was installed cannot be reconstructed here, but the PUT is
+		// the signal that stops the API from suppressing the result mail for this batch, so
+		// sending an idle payload still gets the mail with the comparison tables out. Without
+		// it the run would end in silence: the API skips ChangeDetected for auto_update
+		// batches and the plugin no longer mails by itself.
+		if ( empty( $entry ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'No update results stored for batch ' . $post_sc_option['batch_id'] . '. Sending an empty payload so the API still sends the result mail. Expected right after WCD updated itself; otherwise look for an earlier entry-build error.',
+				'sync_update_results',
+				'warning'
+			);
+		}
+
+		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_batch_update_results_v2(
+			$post_sc_option['batch_id'],
+			WebChangeDetector_Update_Results::build_api_payload( $entry )
+		);
+
+		if ( 'sent' === $result ) {
+			$post_sc_option['results_synced'] = true;
+			update_option( WCD_POST_AUTO_UPDATE, $post_sc_option, false );
+
+			return $post_sc_option;
+		}
+
+		// A terminal failure ends the retries without ever counting as synced: the API never got
+		// the results, so no result mail goes out for this run and the cleanup branches have to
+		// keep warning about it.
+		if ( 'terminal' === $result ) {
+			$post_sc_option['results_sync_terminal'] = true;
+			update_option( WCD_POST_AUTO_UPDATE, $post_sc_option, false );
+		}
+
+		return $post_sc_option;
+	}
+
+	/**
+	 * Warn when an auto-update run is cleaned up before its update results reached the API.
+	 *
+	 * The API sends the result mail only once it has the update results, so a run that ends
+	 * without them ends without a mail. Logged so support can tell that case apart from a
+	 * mail lost somewhere downstream. Called from every branch that ends a post-update run:
+	 * both cleanup branches of the poll and the stuck sweeper.
+	 *
+	 * Only `results_synced` counts here. `results_sync_terminal` also stops the retries, but
+	 * the API never received anything in that case, so it must never satisfy this check.
+	 *
+	 * @param array $post_sc_option The post-update option data.
+	 * @return bool True when the results are synced, false when the run ends without a mail.
+	 */
+	private function log_unsynced_update_results( $post_sc_option ) {
+		if ( is_array( $post_sc_option ) && ! empty( $post_sc_option['results_synced'] ) ) {
+			return true;
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'The update results never reached the API for batch ' . ( is_array( $post_sc_option ) ? ( $post_sc_option['batch_id'] ?? 'unknown' ) : 'unknown' ) . '. No result mail is sent for this auto-update run.',
+			'log_unsynced_update_results',
+			'warning'
+		);
+
+		return false;
 	}
 
 	/**

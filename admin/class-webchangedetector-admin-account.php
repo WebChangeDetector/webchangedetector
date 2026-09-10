@@ -60,6 +60,7 @@ class WebChangeDetector_Admin_Account {
 				'domain'            => \WebChangeDetector\WebChangeDetector_Admin_Utils::get_domain_from_site_url(),
 				'validation_string' => $validation_string,
 				'cms'               => 'wordpress',
+				'scheme'            => is_ssl() ? 'https' : 'http',
 			),
 			$postdata
 		);

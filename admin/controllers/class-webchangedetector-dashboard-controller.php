@@ -119,60 +119,13 @@ class WebChangeDetector_Dashboard_Controller {
 				echo '<div class="notice notice-success"><p><strong>WebChange Detector: </strong>' . esc_html( $post_type_name ) . ' added.</p></div>';
 				break;
 
-			case 'update_detection_step':
-				update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $postdata['step'] ) );
-				break;
-
-			case 'take_screenshots':
-				$this->handle_take_screenshots_action( $postdata );
-				break;
-
 			case 'save_group_settings':
 				$this->handle_save_group_settings_action( $postdata );
-				break;
-
-			case 'start_manual_checks':
-				$this->handle_start_manual_checks_action( $postdata );
 				break;
 
 			case 'save_admin_bar_setting':
 				$this->handle_save_admin_bar_setting();
 				break;
-		}
-	}
-
-	/**
-	 * Handle take screenshots action.
-	 *
-	 * @param array $postdata The POST data.
-	 */
-	private function handle_take_screenshots_action( $postdata ) {
-		$sc_type = sanitize_text_field( $postdata['sc_type'] );
-
-		if ( ! in_array( $sc_type, WebChangeDetector_Admin::VALID_SC_TYPES, true ) ) {
-			echo '<div class="error notice"><p>Wrong Screenshot type.</p></div>';
-			return false;
-		}
-
-		$results = \WebChangeDetector\WebChangeDetector_API_V2::take_screenshot_v2( $this->admin->manual_group_uuid, $sc_type );
-		if ( isset( $results['batch'] ) ) {
-			update_option( 'wcd_manual_checks_batch', $results['batch'] );
-
-			// Store batch ID by screenshot type for phase-aware tracking.
-			$batch_type_key = ( 'pre' === $sc_type ) ? 'wcd_manual_checks_pre_batch' : 'wcd_manual_checks_post_batch';
-			update_option( $batch_type_key, $results['batch'] );
-
-			// Store workflow status and start time.
-			update_option( 'wcd_manual_checks_status', $sc_type );
-			update_option( 'wcd_manual_checks_started_at', time() );
-
-			if ( 'pre' === $sc_type ) {
-				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_PRE_STARTED );
-			} elseif ( 'post' === $sc_type ) {
-				update_option( WCD_OPTION_UPDATE_STEP_KEY, WCD_OPTION_UPDATE_STEP_POST_STARTED );
-			}
-		} else {
-			echo '<div class="error notice"><p>' . esc_html( $results['message'] ) . '</p></div>';
 		}
 	}
 
@@ -186,18 +139,6 @@ class WebChangeDetector_Dashboard_Controller {
 			$this->admin->settings_handler->update_monitoring_settings( $postdata );
 		} else {
 			$this->admin->settings_handler->update_manual_check_group_settings( $postdata );
-		}
-	}
-
-	/**
-	 * Handle start on-demand checks action (method name kept for backwards compatibility).
-	 *
-	 * @param array $postdata The POST data.
-	 */
-	private function handle_start_manual_checks_action( $postdata ) {
-		// Update step in update detection.
-		if ( ! empty( $postdata['step'] ) ) {
-			update_option( WCD_OPTION_UPDATE_STEP_KEY, sanitize_text_field( $postdata['step'] ) );
 		}
 	}
 

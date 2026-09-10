@@ -290,7 +290,8 @@ function currentlyProcessing() {
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
 
                     // Enable navigation buttons for both phases
-                    $('#change-detection-actions .button, #change-detection-actions .et_pb_button').prop('disabled', false);
+                    $('#change-detection-actions .button').prop('disabled', false);
+                    $('#change-detection-actions').removeClass('wcd-disabled');
                     $('#pre-sc-navigation-actions .button').prop('disabled', false);
                     $('#pre-sc-navigation-actions').show();
 
@@ -314,7 +315,8 @@ function currentlyProcessing() {
                     $('#update-currently-processing-description').html('<strong>No items to process</strong>');
 
                     $('#frm-cancel-update-detection .cancel_button, .wcd-cancel-button').prop('disabled', false);
-                    $('#change-detection-actions .button, #change-detection-actions .et_pb_button').prop('disabled', false);
+                    $('#change-detection-actions .button').prop('disabled', false);
+                    $('#change-detection-actions').removeClass('wcd-disabled');
                     $('#pre-sc-navigation-actions .button').prop('disabled', false);
                     $('#pre-sc-navigation-actions').show();
 
@@ -2611,6 +2613,12 @@ function wcdValidateFormGroupSettings() {
             !window['validate_auto_update_checks_emails']()) {
             return false;
         }
+    }
+    // The on-demand group's alert_emails row sits outside the auto-update block,
+    // so it is validated regardless of the auto-update toggle.
+    if (typeof window['validate_alert_emails'] === 'function' &&
+        !window['validate_alert_emails']()) {
+        return false;
     }
     return true;
 }

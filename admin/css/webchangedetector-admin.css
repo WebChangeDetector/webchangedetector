@@ -5134,7 +5134,7 @@ Settings
 .wcd-post-processing .wcd-card {
 	background: #fff;
 	border: 1px solid #e0e0e0;
-	border-radius: 8px;
+	border-radius: 12px;
 	overflow: hidden;
 }
 
@@ -5690,4 +5690,69 @@ Settings
 
 .webchangedetector fieldset.wcd-multisite-inherited-fieldset > .wcd-form-row {
     opacity: 0.6;
+}
+
+/* ==========================================================================
+   On-Demand Checks Wizard: Final-Step Next Actions (#change-detection-actions)
+   Two cards ("Start a new check" / "Check again") with an "OR" separator.
+   ========================================================================== */
+.webchangedetector .wcd-next-actions {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: stretch;
+    margin-top: 20px;
+}
+
+.webchangedetector .wcd-or-separator {
+    align-self: center;
+    color: #646970;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.webchangedetector .wcd-next-step-card {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.webchangedetector .wcd-next-step-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.webchangedetector .wcd-next-step-card h3 .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    vertical-align: text-bottom;
+}
+
+.webchangedetector .wcd-next-step-card p {
+    color: #646970;
+    font-size: 13px;
+    margin: 0 0 16px 0;
+}
+
+/* Primary highlight. Full 2px border on purpose: the base card border is
+   only 1px, so a colour-only override would keep 1px. Placed after the
+   :hover rule (equal specificity, 0,3,0) so hover does not grey it out. */
+.webchangedetector .wcd-settings-card.wcd-next-step-card-primary {
+    border: 2px solid #2271b1;
+}
+
+.webchangedetector .wcd-next-actions.wcd-disabled .wcd-settings-card {
+    opacity: 0.6;
+}
+
+@media (max-width: 782px) {
+    .webchangedetector .wcd-next-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .webchangedetector .wcd-or-separator {
+        justify-self: center;
+    }
 }

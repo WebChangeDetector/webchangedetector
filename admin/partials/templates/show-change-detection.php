@@ -283,9 +283,9 @@ $is_mobile = isset( $compare['device'] ) && 'mobile' === $compare['device'];
 						<?php
 						foreach ( $ai_result['regions'] as $index => $region ) {
 							$region_num   = $index + 1;
-							$category     = esc_attr( $region['category'] ?? 'not_sure' );
-							$description  = esc_html( $region['description'] ?? '' );
-							$reason       = esc_html( $region['reason'] ?? '' );
+							$category     = $region['category'] ?? 'not_sure';
+							$description  = $region['description'] ?? '';
+							$reason       = $region['reason'] ?? '';
 							$region_id    = isset( $region['region_id'] ) ? intval( $region['region_id'] ) : $index;
 							$matched_rule = ! empty( $region['matched_feedback_rule'] ) ? $region['matched_feedback_rule'] : '';
 							?>
