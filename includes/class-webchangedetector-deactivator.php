@@ -38,6 +38,11 @@ class WebChangeDetector_Deactivator {
 		wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
 		wp_clear_scheduled_hook( 'wcd_cron_check_post_queues' );
 
+		// Trigger-based monitoring: cron event, pending posts and cached flags.
+		if ( class_exists( '\WebChangeDetector\WebChangeDetector_Monitoring_Trigger' ) ) {
+			\WebChangeDetector\WebChangeDetector_Monitoring_Trigger::clear();
+		}
+
 		// Clean up auto-update state options to prevent stuck state on reactivation.
 		// These constants might not be defined, so we use the actual option names.
 		delete_option( 'wcd_pre_auto_update' );

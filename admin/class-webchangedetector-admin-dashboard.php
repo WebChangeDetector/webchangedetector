@@ -189,7 +189,9 @@ class WebChangeDetector_Admin_Dashboard {
 								</div>
 								<ul class="wcd-stat-list">
 									<?php if ( $monitoring['enabled'] ) : ?>
-										<li><span class="dashicons dashicons-chart-line"></span> <?php echo esc_html( sprintf( /* translators: %s: estimated monthly checks. */ __( '~%s checks / month', 'webchangedetector' ), number_format_i18n( $monitoring['monthly_checks'] ) ) ); ?></li>
+										<?php if ( ! $monitoring['on_save_only'] ) : ?>
+											<li><span class="dashicons dashicons-chart-line"></span> <?php echo esc_html( sprintf( /* translators: %s: estimated monthly checks. */ __( '~%s checks / month', 'webchangedetector' ), number_format_i18n( $monitoring['monthly_checks'] ) ) ); ?></li>
+										<?php endif; ?>
 										<?php if ( $monitoring['on_save_only'] ) : ?>
 											<li><span class="dashicons dashicons-update"></span> <?php esc_html_e( 'When a page is saved', 'webchangedetector' ); ?></li>
 										<?php elseif ( $monitoring['interval_h'] ) : ?>

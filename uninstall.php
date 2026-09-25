@@ -77,6 +77,7 @@ function wcd_uninstall_site_cleanup() {
 		'wcd_auto_update_triggered_time',
 		'auto_updater.lock',
 		'wcd_disable_admin_bar_menu',
+		'wcd_pending_monitoring_triggers',
 	);
 
 	// Drop database tables.
@@ -98,6 +99,11 @@ function wcd_uninstall_site_cleanup() {
 	wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
 	wp_clear_scheduled_hook( 'wcd_cron_check_post_queues' );
 	wp_clear_scheduled_hook( 'wcd_daily_sync_event' );
+	wp_clear_scheduled_hook( 'wcd_send_monitoring_triggers' );
+
+	// Trigger-based monitoring caches.
+	delete_transient( 'wcd_monitoring_trigger_post_save' );
+	delete_transient( 'wcd_monitoring_trigger_storm' );
 }
 
 // Handle multisite cleanup.
