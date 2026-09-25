@@ -553,8 +553,13 @@ class WebChangeDetector_Admin {
 
 		$amount_sc_per_day = 0;
 
+		// Schedule "Never": no scheduled runs, checks only start when a page is saved.
+		$schedule_off = 'off' === $group['schedule_type'];
+
 		// Check for intervals >= 1h.
-		if ( $group['interval_in_h'] >= 1 ) {
+		if ( $schedule_off ) {
+			$date_next_sc = false;
+		} elseif ( $group['interval_in_h'] >= 1 ) {
 			$next_possible_sc  = gmmktime( gmdate( 'H' ) + 1, 0, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
 			$amount_sc_per_day = ( 24 / $group['interval_in_h'] );
 			$possible_hours    = array();
@@ -585,7 +590,7 @@ class WebChangeDetector_Admin {
 		}
 
 		// Check for 30 min intervals.
-		if ( 0.5 === $group['interval_in_h'] ) {
+		if ( ! $schedule_off && 0.5 === $group['interval_in_h'] ) {
 			$amount_sc_per_day = 48;
 			if ( gmdate( 'i' ) < 30 ) {
 				$date_next_sc = gmmktime( gmdate( 'H' ), 30, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -594,7 +599,7 @@ class WebChangeDetector_Admin {
 			}
 		}
 		// Check for 15 min intervals.
-		if ( 0.25 === $group['interval_in_h'] ) {
+		if ( ! $schedule_off && 0.25 === $group['interval_in_h'] ) {
 			$amount_sc_per_day = 96;
 			if ( gmdate( 'i' ) < 15 ) {
 				$date_next_sc = gmmktime( gmdate( 'H' ), 15, 0, gmdate( 'm' ), gmdate( 'd' ), gmdate( 'Y' ) );
@@ -697,6 +702,11 @@ class WebChangeDetector_Admin {
 		// Subtract screenshots already taken today.
 		$total_sc_current_period = $amount_group_sc_per_day - $skip_sc_count_today * $group['selected_checks_count'];
 
+		// Checks on page save cannot be estimated in advance.
+		if ( $schedule_off ) {
+			$total_sc_current_period = 0;
+		}
+
 		// Determine the card status. The states mirror the Auto-Update status bar
 		// (admin/partials/components/settings/auto-update-status-bar.php) so both cards speak the
 		// same language, and they mirror the condition the admin JS uses to decide between
@@ -712,6 +722,9 @@ class WebChangeDetector_Admin {
 		} elseif ( ! $has_selected_urls ) {
 			$status_class = 'wcd-status-no-urls';
 			$status_icon  = 'info';
+		} elseif ( $schedule_off ) {
+			$status_class = 'wcd-status-scheduled';
+			$status_icon  = 'update';
 		} elseif ( ! $date_next_sc ) {
 			$status_class = 'wcd-status-inactive';
 			$status_icon  = 'warning';
@@ -732,7 +745,8 @@ class WebChangeDetector_Admin {
 					<?php // data-enabled carries the server-side monitoring state so the JS can still tell "enabled" from "disabled" when the settings form (and its input[name="enabled"]) is hidden by the monitoring_checks_settings allowance. ?>
 					<div id="next_sc_date" class="wcd-status-date"
 						data-date="<?php echo esc_attr( $date_next_sc ); ?>"
-						data-enabled="<?php echo esc_attr( $monitoring_enabled ? '1' : '0' ); ?>"></div>
+						data-enabled="<?php echo esc_attr( $monitoring_enabled ? '1' : '0' ); ?>"
+						data-trigger-only="<?php echo esc_attr( $schedule_off ? '1' : '0' ); ?>"></div>
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">
@@ -741,7 +755,15 @@ class WebChangeDetector_Admin {
 					</div>
 					<div class="wcd-stat-item">
 						<span class="wcd-stat-label"><?php esc_html_e( 'Check Interval', 'webchangedetector' ); ?></span>
-						<span class="wcd-stat-value"><?php echo esc_html( $group['interval_in_h'] ); ?>h</span>
+						<span class="wcd-stat-value">
+							<?php
+							if ( $schedule_off ) {
+								esc_html_e( 'On page save', 'webchangedetector' );
+							} else {
+								echo esc_html( $group['interval_in_h'] ) . 'h';
+							}
+							?>
+						</span>
 					</div>
 				</div>
 				<div id="sc_available_until_renew"
@@ -867,7 +889,13 @@ class WebChangeDetector_Admin {
 
 		$group_response = \WebChangeDetector\WebChangeDetector_API_V2::get_group_v2( $group_uuid );
 		$group_and_urls = $group_response['data'] ?? array();
-		$urls           = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
+
+		// Refresh the cached trigger flag the post-save hook reads (no API call on save).
+		if ( $group_uuid === $this->monitoring_group_uuid && ! empty( $group_and_urls ) && is_array( $group_and_urls ) ) {
+			\WebChangeDetector\WebChangeDetector_Monitoring_Trigger::remember_group_settings( $group_and_urls );
+		}
+
+		$urls = \WebChangeDetector\WebChangeDetector_API_V2::get_group_urls_v2( $group_uuid, $url_filter );
 
 		// Check if URLs response is valid and has expected structure.
 		if ( empty( $urls ) || ! isset( $urls['data'] ) ) {

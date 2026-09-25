@@ -867,7 +867,13 @@ function currentlyProcessing() {
             }
 
             var interval = parseFloat(intervalSelect.val());
-            var monitoringEnabled = $("input[name='enabled']").is(":checked");
+            // The hour row only applies to a running schedule ("Never" = triggers only).
+            var monitoringEnabled = $("input[name='enabled']").is(":checked")
+                && $(".wcd-schedule-type:checked").val() !== 'off';
+
+            if (!monitoringEnabled) {
+                hourRow.hide();
+            }
 
             // For intervals <= 1h, show the interval text instead of the dropdown.
             if (interval <= 1) {
@@ -914,6 +920,9 @@ function currentlyProcessing() {
                 hourSelect.append(option);
             }
         }
+
+        // Exposed for toggleScheduleFields(), which lives in another closure.
+        window.wcdUpdateHourOfDayDropdown = updateHourOfDayDropdown;
 
         // Initialize hour_of_day dropdown on page load.
         updateHourOfDayDropdown();
@@ -964,6 +973,10 @@ function currentlyProcessing() {
 
             $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + wpTzDisplay + ")");
             $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
+        }
+        // Schedule "Never": there is no next run, checks start when a page is saved.
+        if (autoEnabled && amountSelectedTotal > 0 && $("#next_sc_date").data("trigger-only") == 1) {
+            txtNextScIn = wcdL10n.checksOnPageSave;
         }
         $("#next_sc_in").html(txtNextScIn);
 
@@ -2543,6 +2556,13 @@ jQuery(document).ready(function($) {
         var monitoringEnabled = $('.wcd-monitoring-enabled input[name="enabled"]').is(':checked');
         $('.wcd-schedule-weekly-fields').toggle(monitoringEnabled && type === 'weekly');
         $('.wcd-schedule-monthly-fields').toggle(monitoringEnabled && type === 'monthly');
+        // "Never": no scheduled runs, so interval, hour and quiet hours do not apply.
+        $('.wcd-monitoring-interval, .wcd-monitoring-quiet-hours').toggle(monitoringEnabled && type !== 'off');
+        if (type === 'off') {
+            $('.wcd-monitoring-hour-of-day').hide();
+        } else if (typeof window.wcdUpdateHourOfDayDropdown === 'function') {
+            window.wcdUpdateHourOfDayDropdown();
+        }
         // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
         // This stays independent of the monitoring toggle: the checkboxes of the
         // non-selected schedule type must never be submitted.
@@ -2627,6 +2647,13 @@ function wcdValidateFormAutoSettings() {
     // Only validate if monitoring is enabled.
     var monitoringEnabled = document.querySelector('input[name="enabled"]');
     if (monitoringEnabled && monitoringEnabled.checked) {
+        // With the schedule off, the monitoring only runs through "Check when a page is saved".
+        var scheduleOff = document.querySelector('.wcd-schedule-type[value="off"]');
+        var triggerPostSave = document.querySelector('input[type="checkbox"][name="trigger_post_save"]');
+        if (scheduleOff && scheduleOff.checked && triggerPostSave && !triggerPostSave.checked) {
+            alert(wcdL10n.scheduleOffNeedsTrigger);
+            return false;
+        }
         if (typeof window['validate_alert_emails'] === 'function' &&
             !window['validate_alert_emails']()) {
             return false;

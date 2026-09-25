@@ -286,6 +286,31 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
+	/**
+	 * Report changed pages for trigger-based monitoring.
+	 *
+	 * The API checks them after a short wait and merges repeated reports of the same page.
+	 *
+	 * @param string      $group_id The monitoring group UUID.
+	 * @param string      $type     Trigger type, e.g. 'post_save'.
+	 * @param array       $urls     List of arrays with 'url' and optional 'title', 'post_id'.
+	 * @param string|null $editor   Optional display name of the editor.
+	 * @return mixed|string
+	 */
+	public static function trigger_monitoring_check_v2( $group_id, $type, $urls, $editor = null ) {
+		$args = array(
+			'action'   => 'monitoring/trigger',
+			'group_id' => $group_id,
+			'type'     => $type,
+			'urls'     => array_values( $urls ),
+		);
+		if ( ! empty( $editor ) ) {
+			$args['editor'] = $editor;
+		}
+
+		return self::api_v2( $args, 'POST', false, null, true );
+	}
+
 	/** Add url.
 	 *
 	 * @param string $url Url to add.

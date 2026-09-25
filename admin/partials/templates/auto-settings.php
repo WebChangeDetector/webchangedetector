@@ -49,7 +49,22 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 				</div>
 			</div>
 
-			<div class="wcd-form-row monitoring-setting wcd-monitoring-interval" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+			<?php
+			// Prepare schedule data.
+			$current_schedule_type = $group_and_urls['schedule_type'] ?? 'interval';
+			$current_schedule_days = $group_and_urls['schedule_days'] ?? array();
+			if ( is_string( $current_schedule_days ) ) {
+				$current_schedule_days = json_decode( $current_schedule_days, true ) ?? array();
+			}
+			if ( ! is_array( $current_schedule_days ) ) {
+				$current_schedule_days = array();
+			}
+			// With the schedule off, interval, hour and quiet hours do not apply (triggers only).
+			$show_schedule_rows = $enabled && 'off' !== $current_schedule_type;
+			$trigger_post_save  = \WebChangeDetector\WebChangeDetector_Monitoring_Trigger::has_post_save_trigger( $group_and_urls );
+			?>
+
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-interval" style="<?php echo $show_schedule_rows ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Interval in Hours', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'This is the interval in which the checks are done.', 'webchangedetector' ); ?></div>
@@ -71,7 +86,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 				</div>
 			</div>
 
-			<div class="wcd-form-row monitoring-setting wcd-monitoring-hour-of-day" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-hour-of-day" style="<?php echo $show_schedule_rows ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Hour of the Day', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Set the hour on which the monitoring checks should be done.', 'webchangedetector' ); ?></div>
@@ -88,18 +103,6 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 					<div class="local-timezone"></div>
 				</div>
 			</div>
-
-			<?php
-			// Prepare schedule data.
-			$current_schedule_type = $group_and_urls['schedule_type'] ?? 'interval';
-			$current_schedule_days = $group_and_urls['schedule_days'] ?? array();
-			if ( is_string( $current_schedule_days ) ) {
-				$current_schedule_days = json_decode( $current_schedule_days, true ) ?? array();
-			}
-			if ( ! is_array( $current_schedule_days ) ) {
-				$current_schedule_days = array();
-			}
-			?>
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-schedule-type" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
@@ -119,6 +122,10 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 						<label class="wcd-schedule-type-option">
 							<input type="radio" name="schedule_type" value="monthly" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'monthly' ); ?>>
 							<?php esc_html_e( 'Specific days in month', 'webchangedetector' ); ?>
+						</label>
+						<label class="wcd-schedule-type-option">
+							<input type="radio" name="schedule_type" value="off" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'off' ); ?>>
+							<?php esc_html_e( 'Never (only when a page is saved)', 'webchangedetector' ); ?>
 						</label>
 					</div>
 				</div>
@@ -176,7 +183,21 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 				</div>
 			</div>
 
-			<div class="wcd-form-row monitoring-setting wcd-monitoring-quiet-hours" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-trigger-post-save" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
+				<div class="wcd-form-label-wrapper">
+					<label class="wcd-form-label" for="wcd-trigger-post-save"><?php esc_html_e( 'Check when a page is saved', 'webchangedetector' ); ?></label>
+					<div class="wcd-description"><?php esc_html_e( 'A few minutes after a published page or post is saved with changed content, only this page is checked and compared with its last monitoring screenshot. Several saves in a row are checked once. Each check counts against your checks.', 'webchangedetector' ); ?></div>
+				</div>
+				<div class="wcd-form-control">
+					<input type="hidden" name="trigger_post_save" value="0">
+					<label>
+						<input type="checkbox" id="wcd-trigger-post-save" name="trigger_post_save" value="1" <?php checked( $trigger_post_save ); ?>>
+						<?php esc_html_e( 'Enabled', 'webchangedetector' ); ?>
+					</label>
+				</div>
+			</div>
+
+			<div class="wcd-form-row monitoring-setting wcd-monitoring-quiet-hours" style="<?php echo $show_schedule_rows ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
 					<label class="wcd-form-label"><?php esc_html_e( 'Quiet Hours', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'No checks will be performed during this time.', 'webchangedetector' ); ?></div>

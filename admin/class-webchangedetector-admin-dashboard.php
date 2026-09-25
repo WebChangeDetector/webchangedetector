@@ -190,7 +190,9 @@ class WebChangeDetector_Admin_Dashboard {
 								<ul class="wcd-stat-list">
 									<?php if ( $monitoring['enabled'] ) : ?>
 										<li><span class="dashicons dashicons-chart-line"></span> <?php echo esc_html( sprintf( /* translators: %s: estimated monthly checks. */ __( '~%s checks / month', 'webchangedetector' ), number_format_i18n( $monitoring['monthly_checks'] ) ) ); ?></li>
-										<?php if ( $monitoring['interval_h'] ) : ?>
+										<?php if ( $monitoring['on_save_only'] ) : ?>
+											<li><span class="dashicons dashicons-update"></span> <?php esc_html_e( 'When a page is saved', 'webchangedetector' ); ?></li>
+										<?php elseif ( $monitoring['interval_h'] ) : ?>
 											<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html( sprintf( /* translators: %s: interval in hours. */ __( 'Every %s h', 'webchangedetector' ), $monitoring['interval_h'] ) ); ?></li>
 										<?php endif; ?>
 									<?php else : ?>
@@ -376,6 +378,7 @@ class WebChangeDetector_Admin_Dashboard {
 			'urls'           => intval( $monitoring_group['selected_urls_count'] ?? 0 ),
 			'monthly_checks' => $monitoring_checks,
 			'interval_h'     => $monitoring_group['interval_in_h'] ?? 0,
+			'on_save_only'   => 'off' === ( $monitoring_group['schedule_type'] ?? 'interval' ),
 		);
 
 		// Auto Update Checks (this site). Schedule lives in the auto-update settings.
