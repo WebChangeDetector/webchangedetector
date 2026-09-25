@@ -106,7 +106,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 
 			<div class="wcd-form-row monitoring-setting wcd-monitoring-schedule-type" style="<?php echo $enabled ? '' : 'display: none;'; ?>">
 				<div class="wcd-form-label-wrapper">
-					<label class="wcd-form-label"><?php esc_html_e( 'Run on', 'webchangedetector' ); ?></label>
+					<label class="wcd-form-label"><?php esc_html_e( 'Run in intervals', 'webchangedetector' ); ?></label>
 					<div class="wcd-description"><?php esc_html_e( 'Choose when monitoring checks should run.', 'webchangedetector' ); ?></div>
 				</div>
 				<div class="wcd-form-control">
@@ -125,7 +125,7 @@ if ( ! empty( $this->admin->website_details['allowances']['monitoring_checks_set
 						</label>
 						<label class="wcd-schedule-type-option">
 							<input type="radio" name="schedule_type" value="off" class="wcd-schedule-type" <?php checked( $current_schedule_type, 'off' ); ?>>
-							<?php esc_html_e( 'Never (only when a page is saved)', 'webchangedetector' ); ?>
+							<?php esc_html_e( 'Never', 'webchangedetector' ); ?>
 						</label>
 					</div>
 				</div>
