@@ -308,7 +308,7 @@ class WebChangeDetector {
 			$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
 			$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
 
-			// Trigger-based monitoring: report saved posts, sent in one request per cron tick.
+			// Trigger-based monitoring: report saved posts at the end of the saving request (cron only retries).
 			$monitoring_trigger = new WebChangeDetector_Monitoring_Trigger( $plugin_admin );
 			$this->loader->add_action( 'wp_after_insert_post', $monitoring_trigger, 'on_after_insert_post', 10, 4 );
 			$this->loader->add_action( 'added_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );

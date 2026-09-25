@@ -295,9 +295,10 @@ class WebChangeDetector_API_V2 {
 	 * @param string      $type     Trigger type, e.g. 'post_save'.
 	 * @param array       $urls     List of arrays with 'url' and optional 'title', 'post_id'.
 	 * @param string|null $editor   Optional display name of the editor.
+	 * @param int|null    $timeout  Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
 	 * @return mixed|string
 	 */
-	public static function trigger_monitoring_check_v2( $group_id, $type, $urls, $editor = null ) {
+	public static function trigger_monitoring_check_v2( $group_id, $type, $urls, $editor = null, $timeout = null ) {
 		$args = array(
 			'action'   => 'monitoring/trigger',
 			'group_id' => $group_id,
@@ -308,7 +309,7 @@ class WebChangeDetector_API_V2 {
 			$args['editor'] = $editor;
 		}
 
-		return self::api_v2( $args, 'POST', false, null, true );
+		return self::api_v2( $args, 'POST', false, null, true, $timeout );
 	}
 
 	/** Add url.
@@ -871,17 +872,19 @@ class WebChangeDetector_API_V2 {
 
 	/** Call the WCD api.
 	 *
-	 * @param array  $post All params for the request.
-	 * @param string $method The request method.
-	 * @param bool   $is_web Call web interface.
-	 * @param string $custom_api_token Optional custom API token to use instead of default.
-	 * @param bool   $json_body Send the params as a JSON body instead of form-encoded ones.
-	 *                          Required whenever the payload contains nested arrays, booleans,
-	 *                          nulls or empty arrays: form encoding drops null and empty arrays
-	 *                          and turns booleans into "1"/"0". Ignored for multi calls.
+	 * @param array    $post All params for the request.
+	 * @param string   $method The request method.
+	 * @param bool     $is_web Call web interface.
+	 * @param string   $custom_api_token Optional custom API token to use instead of default.
+	 * @param bool     $json_body Send the params as a JSON body instead of form-encoded ones.
+	 *                            Required whenever the payload contains nested arrays, booleans,
+	 *                            nulls or empty arrays: form encoding drops null and empty arrays
+	 *                            and turns booleans into "1"/"0". Ignored for multi calls.
+	 * @param int|null $timeout Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
+	 *                          Ignored for multi calls.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null, $json_body = false ) {
+	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null, $json_body = false, $timeout = null ) {
 		$api_token = $custom_api_token ? $custom_api_token : WebChangeDetector_Multisite::get_api_token();
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
@@ -997,7 +1000,7 @@ class WebChangeDetector_API_V2 {
 			}
 
 			$args = array(
-				'timeout' => WCD_REQUEST_TIMEOUT,
+				'timeout' => $timeout ? (int) $timeout : WCD_REQUEST_TIMEOUT,
 				'body'    => $json_body ? wp_json_encode( $post ) : $post,
 				'method'  => $method,
 				'headers' => $request_headers,

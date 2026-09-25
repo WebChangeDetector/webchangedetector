@@ -14,20 +14,24 @@ defined( 'ABSPATH' ) || exit;
  * Starts a monitoring check for a post after it was saved (FEAT-111).
  *
  * A person saving a published post with a real change puts the post into a small
- * pending list and schedules one cron event. The cron event sends all pending posts
- * in one request to POST /v2/monitoring/trigger. The API waits a few minutes
- * (page caches) and merges further saves of the same page into one check, so the
- * plugin does not debounce on its own. Reports that fail for a temporary reason
- * (rate limit, server error, network) are retried a few times.
+ * pending list. At the end of the same request (late `shutdown` callback) all
+ * pending posts are sent in one request to POST /v2/monitoring/trigger, so a bulk
+ * edit is still one API request. The browser response is flushed first where the
+ * server supports it (PHP-FPM, LiteSpeed), so the save is not slowed down; without
+ * that, the send uses a short timeout. The API waits a few minutes (page caches) and
+ * merges further saves of the same page into one check, so the plugin does not
+ * debounce on its own. Reports that fail for a temporary reason (rate limit, server
+ * error, network) are retried a few times via WP-Cron (CRON_HOOK), which is only
+ * used for retries: WP-Cron needs site traffic, a first send must not wait for it.
  *
  * A "real change" is a changed title, content or excerpt, or a changed page builder
  * layout / featured image (post meta, see META_KEYS). Saves without a logged-in
  * user (cron, WP-CLI, imports, scheduled jobs of other plugins) do not trigger by
  * default, so bulk syncs cannot use up checks; both are filterable.
  *
- * The save path makes no API call. Whether the monitoring group reacts to saved
- * posts is cached in a transient; the cron event refreshes it when it expired and
- * the settings page refreshes it whenever the group is loaded or saved.
+ * The save hooks make no API call. Whether the monitoring group reacts to saved
+ * posts is cached in a transient; the send refreshes it when it expired and the
+ * settings page refreshes it whenever the group is loaded or saved.
  */
 class WebChangeDetector_Monitoring_Trigger {
 
@@ -39,7 +43,7 @@ class WebChangeDetector_Monitoring_Trigger {
 	const TYPE_POST_SAVE = 'post_save';
 
 	/**
-	 * Cron hook that sends the pending posts.
+	 * Cron hook that retries pending posts after a failed send.
 	 *
 	 * @var string
 	 */
@@ -104,11 +108,12 @@ class WebChangeDetector_Monitoring_Trigger {
 	const DISABLED_TTL = 30 * MINUTE_IN_SECONDS;
 
 	/**
-	 * Seconds between the save and the cron event, so a burst of saves is sent in one request.
+	 * Request timeout in seconds for a send that blocks the browser response (the
+	 * response could not be flushed first). Same as the WordPress HTTP API default.
 	 *
 	 * @var int
 	 */
-	const SEND_DELAY = 10;
+	const BLOCKING_TIMEOUT = 5;
 
 	/**
 	 * Seconds before a failed report is sent again.
@@ -150,6 +155,13 @@ class WebChangeDetector_Monitoring_Trigger {
 	 * @var WebChangeDetector_Admin
 	 */
 	private $admin;
+
+	/**
+	 * Whether the shutdown send is registered for this request.
+	 *
+	 * @var bool
+	 */
+	private $send_registered = false;
 
 	/**
 	 * Constructor.
@@ -263,15 +275,23 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
-	 * Put the post into the pending list and schedule the send event.
+	 * Put the post into the pending list and register the send at the end of the request.
 	 *
 	 * @param int $post_id Post ID.
 	 * @return void
 	 */
 	private function enqueue( $post_id ) {
+		// Registered first, so a save of an already pending post (stale entry or waiting
+		// retry) still sends the pending list at the end of this request.
+		if ( ! $this->send_registered ) {
+			// Late priority: other shutdown output (e.g. Query Monitor) is done before the flush.
+			add_action( 'shutdown', array( $this, 'send_on_shutdown' ), PHP_INT_MAX );
+			$this->send_registered = true;
+		}
+
 		$pending = self::get_pending();
 
-		// Already waiting: the API merges repeated saves anyway, nothing to add.
+		// Already waiting: the API merges repeated saves anyway, nothing to add to the list.
 		if ( isset( $pending[ $post_id ] ) ) {
 			return;
 		}
@@ -295,10 +315,23 @@ class WebChangeDetector_Monitoring_Trigger {
 			'attempts' => 0,
 		);
 		update_option( self::OPTION_PENDING, $pending, false );
+	}
 
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_single_event( time() + self::SEND_DELAY, self::CRON_HOOK );
+	/**
+	 * Hook: shutdown. Finish the browser response where possible, then send the pending posts.
+	 *
+	 * @return void
+	 */
+	public function send_on_shutdown() {
+		$flushed = false;
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			$flushed = fastcgi_finish_request();
+		} elseif ( function_exists( 'litespeed_finish_request' ) ) {
+			$flushed = litespeed_finish_request();
 		}
+
+		// Without a flush the browser waits for this request: keep it short.
+		$this->send_pending( $flushed ? null : self::BLOCKING_TIMEOUT );
 	}
 
 	/**
@@ -349,11 +382,12 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
-	 * Cron: send the pending posts to the API.
+	 * Send the pending posts to the API (end of the saving request, or a cron retry).
 	 *
+	 * @param int|null $timeout Request timeout in seconds, null for the default.
 	 * @return void
 	 */
-	public function send_pending() {
+	public function send_pending( $timeout = null ) {
 		$pending = self::get_pending();
 		delete_option( self::OPTION_PENDING );
 
@@ -397,7 +431,7 @@ class WebChangeDetector_Monitoring_Trigger {
 
 		foreach ( array_chunk( $items, self::MAX_URLS_PER_REQUEST, true ) as $chunk ) {
 			$chunk_pending = array_intersect_key( $pending, $chunk );
-			$response      = WebChangeDetector_API_V2::trigger_monitoring_check_v2( $group_uuid, self::TYPE_POST_SAVE, array_values( $chunk ), self::editor_name( $chunk_pending ) );
+			$response      = WebChangeDetector_API_V2::trigger_monitoring_check_v2( $group_uuid, self::TYPE_POST_SAVE, array_values( $chunk ), self::editor_name( $chunk_pending ), $timeout );
 
 			if ( is_array( $response ) && isset( $response['data']['accepted'] ) ) {
 				WebChangeDetector_Admin_Utils::log_error( 'Monitoring trigger response: ' . wp_json_encode( $response ), 'monitoring_trigger', 'debug' );
