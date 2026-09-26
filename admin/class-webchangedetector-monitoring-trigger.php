@@ -32,6 +32,12 @@ defined( 'ABSPATH' ) || exit;
  * The save hooks make no API call. Whether the monitoring group reacts to saved
  * posts is cached in a transient; the send refreshes it when it expired and the
  * settings page refreshes it whenever the group is loaded or saved.
+ *
+ * Autosaves (block editor, classic editor, page builder drafts) never start a check.
+ * They only push back the check of a page that is already waiting, via POST
+ * /v2/monitoring/trigger/extend, so the check runs after the editing session is
+ * quiet. At most one extension per post is sent per EXTEND_THROTTLE; failed
+ * extensions are dropped, never retried.
  */
 class WebChangeDetector_Monitoring_Trigger {
 
@@ -69,6 +75,22 @@ class WebChangeDetector_Monitoring_Trigger {
 	 * @var string
 	 */
 	const TRANSIENT_STORM = 'wcd_monitoring_trigger_storm';
+
+	/**
+	 * Transient holding the posts an extension was queued for recently (post ID => time).
+	 *
+	 * @var string
+	 */
+	const TRANSIENT_EXTENDED = 'wcd_monitoring_trigger_extended';
+
+	/**
+	 * Minimum seconds between two extensions of the same post.
+	 *
+	 * The API adds this to its wait, so at least its regular wait stays quiet.
+	 *
+	 * @var int
+	 */
+	const EXTEND_THROTTLE = 2 * MINUTE_IN_SECONDS;
 
 	/**
 	 * Maximum posts queued per storm window (bulk edits by a person).
@@ -150,6 +172,18 @@ class WebChangeDetector_Monitoring_Trigger {
 	);
 
 	/**
+	 * Post meta keys of page builder drafts (an unpublished edit of a live page). A change
+	 * counts as an autosave, never as a save, so these keys must never go into META_KEYS.
+	 * Filterable via `wcd_monitoring_trigger_draft_meta_keys`.
+	 *
+	 * @var string[]
+	 */
+	const DRAFT_META_KEYS = array(
+		'_fl_builder_draft',
+		'_fl_builder_draft_settings',
+	);
+
+	/**
 	 * The admin instance (for the monitoring group UUID).
 	 *
 	 * @var WebChangeDetector_Admin
@@ -173,7 +207,8 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
-	 * Hook: wp_after_insert_post. Queue the post when a published post really changed.
+	 * Hook: wp_after_insert_post. Queue the post when a published post really changed,
+	 * or an extension when this is an autosave of a published post.
 	 *
 	 * @param int           $post_id     Post ID.
 	 * @param \WP_Post      $post        Post object after the save.
@@ -182,6 +217,13 @@ class WebChangeDetector_Monitoring_Trigger {
 	 * @return void
 	 */
 	public function on_after_insert_post( $post_id, $post, $update, $post_before ) {
+		// Every autosave passes here (also the first REST autosave, which is a new post).
+		$parent_id = $post instanceof \WP_Post ? wp_is_post_autosave( $post ) : false;
+		if ( $parent_id ) {
+			$this->on_autosave( $parent_id );
+			return;
+		}
+
 		if ( ! $update || ! $post instanceof \WP_Post || ! $post_before instanceof \WP_Post ) {
 			return; // A new post has no URL in the monitoring group yet.
 		}
@@ -240,6 +282,76 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
+	 * Hook: updated_post_meta. A changed page builder draft counts as an autosave.
+	 *
+	 * Not on added_post_meta: opening the builder fills an empty draft with the live
+	 * layout, which is no edit.
+	 *
+	 * @param int    $meta_id   Meta ID.
+	 * @param int    $post_id   Post ID.
+	 * @param string $meta_key  Meta key.
+	 * @return void
+	 */
+	public function on_draft_meta_change( $meta_id, $post_id, $meta_key ) {
+		/**
+		 * Filters the page builder draft meta keys whose change counts as an autosave.
+		 *
+		 * @param string[] $keys Meta keys.
+		 */
+		$keys = (array) apply_filters( 'wcd_monitoring_trigger_draft_meta_keys', self::DRAFT_META_KEYS );
+		if ( in_array( $meta_key, $keys, true ) ) {
+			$this->on_autosave( (int) $post_id );
+		}
+	}
+
+	/**
+	 * An autosave of a published post: queue an extension of its waiting check.
+	 *
+	 * Never starts a check. Sent at most once per EXTEND_THROTTLE per post.
+	 *
+	 * @param int $post_id ID of the autosaved (parent) post.
+	 * @return void
+	 */
+	private function on_autosave( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post instanceof \WP_Post || ! $this->is_monitorable( $post_id, $post ) || self::is_automated_save() ) {
+			return;
+		}
+
+		if ( self::take_extend_slot( $post_id ) ) {
+			$this->enqueue( $post_id, true );
+		}
+	}
+
+	/**
+	 * Whether an extension may be queued for the post now; if so, remembers it.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	private static function take_extend_slot( $post_id ) {
+		$now      = time();
+		$extended = get_transient( self::TRANSIENT_EXTENDED );
+		$extended = is_array( $extended ) ? $extended : array();
+
+		// The transient lives as long as its newest entry, so older entries expire here.
+		$extended = array_filter(
+			$extended,
+			function ( $time ) use ( $now ) {
+				return $now - (int) $time < self::EXTEND_THROTTLE;
+			}
+		);
+		if ( isset( $extended[ $post_id ] ) ) {
+			return false;
+		}
+
+		$extended[ $post_id ] = $now;
+		set_transient( self::TRANSIENT_EXTENDED, $extended, self::EXTEND_THROTTLE );
+
+		return true;
+	}
+
+	/**
 	 * Checks shared by both save paths: a live, public, non-revision post while the
 	 * group is not known to reject saved posts.
 	 *
@@ -277,10 +389,14 @@ class WebChangeDetector_Monitoring_Trigger {
 	/**
 	 * Put the post into the pending list and register the send at the end of the request.
 	 *
-	 * @param int $post_id Post ID.
+	 * A pending save wins over an extension; a save replaces a pending extension.
+	 * Only saves count against the storm cap.
+	 *
+	 * @param int  $post_id Post ID.
+	 * @param bool $extend  True for an extension (autosave), false for a save.
 	 * @return void
 	 */
-	private function enqueue( $post_id ) {
+	private function enqueue( $post_id, $extend = false ) {
 		// Registered first, so a save of an already pending post (stale entry or waiting
 		// retry) still sends the pending list at the end of this request.
 		if ( ! $this->send_registered ) {
@@ -292,11 +408,29 @@ class WebChangeDetector_Monitoring_Trigger {
 		$pending = self::get_pending();
 
 		// Already waiting: the API merges repeated saves anyway, nothing to add to the list.
-		if ( isset( $pending[ $post_id ] ) ) {
+		// Only a save replaces a pending extension.
+		if ( isset( $pending[ $post_id ] ) && ( $extend || ! $pending[ $post_id ]['extend'] ) ) {
 			return;
 		}
 
-		// Storm cap in a fixed window: a bulk edit must not queue hundreds of posts.
+		if ( ! $extend && ! self::take_storm_slot() ) {
+			return;
+		}
+
+		$pending[ $post_id ] = array(
+			'editor'   => get_current_user_id(),
+			'attempts' => 0,
+			'extend'   => (bool) $extend,
+		);
+		update_option( self::OPTION_PENDING, $pending, false );
+	}
+
+	/**
+	 * Storm cap in a fixed window: a bulk edit must not queue hundreds of posts.
+	 *
+	 * @return bool Whether the save may be queued (counted when true).
+	 */
+	private static function take_storm_slot() {
 		$storm = get_transient( self::TRANSIENT_STORM );
 		if ( ! is_array( $storm ) || ! isset( $storm['start'], $storm['count'] ) || time() - (int) $storm['start'] >= self::STORM_WINDOW ) {
 			$storm = array(
@@ -305,16 +439,12 @@ class WebChangeDetector_Monitoring_Trigger {
 			);
 		}
 		if ( $storm['count'] >= self::STORM_MAX ) {
-			return;
+			return false;
 		}
 		++$storm['count'];
 		set_transient( self::TRANSIENT_STORM, $storm, self::STORM_WINDOW );
 
-		$pending[ $post_id ] = array(
-			'editor'   => get_current_user_id(),
-			'attempts' => 0,
-		);
-		update_option( self::OPTION_PENDING, $pending, false );
+		return true;
 	}
 
 	/**
@@ -335,7 +465,9 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
-	 * The pending list, normalized to post ID => array( 'editor' => int, 'attempts' => int ).
+	 * The pending list, normalized to post ID => array( 'editor' => int, 'attempts' => int, 'extend' => bool ).
+	 *
+	 * Entries without 'extend' (older builds) are saves.
 	 *
 	 * @return array
 	 */
@@ -351,10 +483,12 @@ class WebChangeDetector_Monitoring_Trigger {
 				? array(
 					'editor'   => (int) ( $entry['editor'] ?? 0 ),
 					'attempts' => (int) ( $entry['attempts'] ?? 0 ),
+					'extend'   => ! empty( $entry['extend'] ),
 				)
 				: array(
 					'editor'   => (int) $entry,
 					'attempts' => 0,
+					'extend'   => false,
 				);
 		}
 
@@ -400,17 +534,37 @@ class WebChangeDetector_Monitoring_Trigger {
 			return;
 		}
 
+		$saves      = array_filter(
+			$pending,
+			function ( $entry ) {
+				return ! $entry['extend'];
+			}
+		);
+		$extensions = array_diff_key( $pending, $saves );
+
 		$enabled = $this->is_enabled( $group_uuid );
 		if ( null === $enabled ) {
-			$this->retry( $pending ); // The group could not be loaded: try again later.
+			$this->retry( $saves ); // The group could not be loaded: try again later. Extensions are dropped.
 			return;
 		}
 		if ( ! $enabled ) {
 			return;
 		}
 
+		if ( $this->send_saves( $group_uuid, $saves, $timeout ) ) {
+			$this->send_extensions( $group_uuid, $extensions, $timeout );
+		}
+	}
+
+	/**
+	 * The request items for pending posts that are still live: post ID => url, title, post ID.
+	 *
+	 * @param array $entries Pending entries (post ID => entry).
+	 * @return array
+	 */
+	private function build_items( $entries ) {
 		$items = array();
-		foreach ( $pending as $post_id => $entry ) {
+		foreach ( array_keys( $entries ) as $post_id ) {
 			$post = get_post( $post_id );
 			if ( ! $post || 'publish' !== $post->post_status ) {
 				continue;
@@ -429,8 +583,20 @@ class WebChangeDetector_Monitoring_Trigger {
 			);
 		}
 
-		foreach ( array_chunk( $items, self::MAX_URLS_PER_REQUEST, true ) as $chunk ) {
-			$chunk_pending = array_intersect_key( $pending, $chunk );
+		return $items;
+	}
+
+	/**
+	 * Report saved posts (POST /v2/monitoring/trigger); temporary failures are retried.
+	 *
+	 * @param string   $group_uuid The monitoring group UUID.
+	 * @param array    $entries    Pending save entries (post ID => entry).
+	 * @param int|null $timeout    Request timeout in seconds, null for the default.
+	 * @return bool False when the group no longer accepts saved posts.
+	 */
+	private function send_saves( $group_uuid, $entries, $timeout ) {
+		foreach ( array_chunk( $this->build_items( $entries ), self::MAX_URLS_PER_REQUEST, true ) as $chunk ) {
+			$chunk_pending = array_intersect_key( $entries, $chunk );
 			$response      = WebChangeDetector_API_V2::trigger_monitoring_check_v2( $group_uuid, self::TYPE_POST_SAVE, array_values( $chunk ), self::editor_name( $chunk_pending ), $timeout );
 
 			if ( is_array( $response ) && isset( $response['data']['accepted'] ) ) {
@@ -438,10 +604,8 @@ class WebChangeDetector_Monitoring_Trigger {
 				continue;
 			}
 
-			if ( is_array( $response ) && isset( $response['reason'] ) && 'trigger_not_enabled' === $response['reason'] ) {
-				// Switched off elsewhere (e.g. in the web app): stop sending until the settings change.
-				set_transient( self::TRANSIENT_ENABLED, '0', self::DISABLED_TTL );
-				return;
+			if ( self::handle_trigger_not_enabled( $response ) ) {
+				return false;
 			}
 
 			WebChangeDetector_Admin_Utils::log_error( 'Monitoring trigger failed: ' . wp_json_encode( $response ), 'monitoring_trigger', 'error' );
@@ -453,10 +617,58 @@ class WebChangeDetector_Monitoring_Trigger {
 				$this->retry( $chunk_pending );
 			}
 		}
+
+		return true;
 	}
 
 	/**
-	 * Put posts back into the pending list for another attempt, unless they failed too often.
+	 * Push back the waiting checks of autosaved posts (POST /v2/monitoring/trigger/extend).
+	 *
+	 * Best effort: every failure (page not waiting, older API without the route, rate
+	 * limit, network) is logged at debug level and dropped, never retried.
+	 *
+	 * @param string   $group_uuid The monitoring group UUID.
+	 * @param array    $entries    Pending extension entries (post ID => entry).
+	 * @param int|null $timeout    Request timeout in seconds, null for the default.
+	 * @return void
+	 */
+	private function send_extensions( $group_uuid, $entries, $timeout ) {
+		foreach ( array_chunk( $this->build_items( $entries ), self::MAX_URLS_PER_REQUEST ) as $chunk ) {
+			$urls = array();
+			foreach ( $chunk as $item ) {
+				$urls[] = array( 'url' => $item['url'] );
+			}
+
+			$response = WebChangeDetector_API_V2::extend_monitoring_trigger_v2( $group_uuid, $urls, $timeout );
+			if ( self::handle_trigger_not_enabled( $response ) ) {
+				return;
+			}
+
+			WebChangeDetector_Admin_Utils::log_error( 'Monitoring trigger extension response: ' . wp_json_encode( $response ), 'monitoring_trigger', 'debug' );
+		}
+	}
+
+	/**
+	 * When the API says the group does not accept saved posts (switched off elsewhere, e.g. in
+	 * the web app), stop sending until the settings change.
+	 *
+	 * @param mixed $response API response.
+	 * @return bool Whether the response was that rejection.
+	 */
+	private static function handle_trigger_not_enabled( $response ) {
+		if ( ! is_array( $response ) || ! isset( $response['reason'] ) || 'trigger_not_enabled' !== $response['reason'] ) {
+			return false;
+		}
+
+		set_transient( self::TRANSIENT_ENABLED, '0', self::DISABLED_TTL );
+
+		return true;
+	}
+
+	/**
+	 * Put saved posts back into the pending list for another attempt, unless they failed too often.
+	 *
+	 * A retried save replaces an extension queued for the same post in the meantime.
 	 *
 	 * @param array $entries Pending entries (post ID => editor and attempts).
 	 * @return void
@@ -464,12 +676,13 @@ class WebChangeDetector_Monitoring_Trigger {
 	private function retry( $entries ) {
 		$pending = self::get_pending();
 		foreach ( $entries as $post_id => $entry ) {
-			if ( isset( $pending[ $post_id ] ) || $entry['attempts'] + 1 >= self::MAX_ATTEMPTS ) {
+			if ( ( isset( $pending[ $post_id ] ) && ! $pending[ $post_id ]['extend'] ) || $entry['attempts'] + 1 >= self::MAX_ATTEMPTS ) {
 				continue;
 			}
 			$pending[ $post_id ] = array(
 				'editor'   => $entry['editor'],
 				'attempts' => $entry['attempts'] + 1,
+				'extend'   => false,
 			);
 		}
 
@@ -568,6 +781,7 @@ class WebChangeDetector_Monitoring_Trigger {
 		delete_option( self::OPTION_PENDING );
 		delete_transient( self::TRANSIENT_ENABLED );
 		delete_transient( self::TRANSIENT_STORM );
+		delete_transient( self::TRANSIENT_EXTENDED );
 	}
 
 	/**

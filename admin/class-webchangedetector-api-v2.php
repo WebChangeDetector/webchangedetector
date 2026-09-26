@@ -312,6 +312,29 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args, 'POST', false, null, true, $timeout );
 	}
 
+	/**
+	 * Push back the waiting trigger checks of autosaved pages (trigger-based monitoring).
+	 *
+	 * Only pages already waiting for a check are extended; the API never starts a check
+	 * here and answers other pages as ignored ('not_waiting'). An API without this route
+	 * answers 'not found'.
+	 *
+	 * @param string   $group_id The monitoring group UUID.
+	 * @param array    $urls     List of arrays with only 'url'.
+	 * @param int|null $timeout  Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
+	 * @return mixed|string
+	 */
+	public static function extend_monitoring_trigger_v2( $group_id, $urls, $timeout = null ) {
+		$args = array(
+			'action'   => 'monitoring/trigger/extend',
+			'group_id' => $group_id,
+			'type'     => WebChangeDetector_Monitoring_Trigger::TYPE_POST_SAVE,
+			'urls'     => array_values( $urls ),
+		);
+
+		return self::api_v2( $args, 'POST', false, null, true, $timeout );
+	}
+
 	/** Add url.
 	 *
 	 * @param string $url Url to add.

@@ -313,6 +313,7 @@ class WebChangeDetector {
 			$this->loader->add_action( 'wp_after_insert_post', $monitoring_trigger, 'on_after_insert_post', 10, 4 );
 			$this->loader->add_action( 'added_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
 			$this->loader->add_action( 'updated_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
+			$this->loader->add_action( 'updated_post_meta', $monitoring_trigger, 'on_draft_meta_change', 10, 3 );
 			$this->loader->add_action( 'deleted_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
 			$this->loader->add_action( WebChangeDetector_Monitoring_Trigger::CRON_HOOK, $monitoring_trigger, 'send_pending' );
 
