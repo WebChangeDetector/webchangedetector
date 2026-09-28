@@ -34,6 +34,15 @@ class WebChangeDetector_Autoupdates {
 	 */
 	const OPTION_ALLOW_CORE_SECURITY = 'wcd_allow_core_security_updates';
 
+	/** Maximum number of 60 second retries while the site still answers with the maintenance page.
+	 *
+	 * Ten attempts cover the 10 minute window a single `.maintenance` file is honoured for,
+	 * so past the cap that one file can no longer be the reason for a 503 response. The cap
+	 * is not redundant with that window: every later upgrader run re-creates the file with a
+	 * fresh timestamp, so the window alone does not terminate the loop.
+	 */
+	const MAINTENANCE_RETRY_LIMIT = 10;
+
 	/** Whether THIS request armed the core-security bypass filters.
 	 *
 	 * Read by automatic_updates_complete() (same instance, same request) to
@@ -93,6 +102,7 @@ class WebChangeDetector_Autoupdates {
 				'wcd_wp_version_check',
 				'wcd_cron_check_post_queues',
 				'wp_maybe_auto_update', // Single-event reschedules we added.
+				'wcd_retry_post_update_screenshots', // Deferred post-update trigger; on a subsite it has no callback.
 			);
 			foreach ( $orphan_hooks as $hook ) {
 				if ( wp_next_scheduled( $hook ) ) {
@@ -119,6 +129,9 @@ class WebChangeDetector_Autoupdates {
 
 			// Fallback for when no updates are available.
 			add_action( 'wcd_check_update_completion', array( $this, 'check_update_completion' ) );
+
+			// Deferred post-update trigger while WordPress is still in maintenance mode.
+			add_action( 'wcd_retry_post_update_screenshots', array( $this, 'retry_post_update_screenshots' ) );
 
 			// Post updates.
 			add_action( 'wcd_cron_check_post_queues', array( $this, 'wcd_cron_check_post_queues' ) );
@@ -149,6 +162,9 @@ class WebChangeDetector_Autoupdates {
 			}
 			if ( wp_next_scheduled( 'wcd_check_update_completion' ) ) {
 				wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+			}
+			if ( wp_next_scheduled( 'wcd_retry_post_update_screenshots' ) ) {
+				wp_clear_scheduled_hook( 'wcd_retry_post_update_screenshots' );
 			}
 			if ( wp_next_scheduled( 'wcd_wp_version_check' ) ) {
 				wp_clear_scheduled_hook( 'wcd_wp_version_check' );
@@ -208,8 +224,10 @@ class WebChangeDetector_Autoupdates {
 	public function automatic_updates_complete( $update_results = array() ) {
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Automatic Updates Complete. Running post-update stuff.', 'automatic_updates_complete', 'debug' );
 
-		// Remove the backup complete checker.
+		// Remove the backup complete checker and any pending maintenance retry: this request
+		// is the trigger now, and the maintenance guard below schedules a fresh one if needed.
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+		wp_clear_scheduled_hook( 'wcd_retry_post_update_screenshots' );
 
 		// Auto updates are done. So we ALWAYS remove the option, regardless of other conditions.
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
@@ -249,6 +267,12 @@ class WebChangeDetector_Autoupdates {
 		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
 		if ( ! $pre_update_data ) {
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'Skipping after update stuff as we don\'t have pre-update checks. This could happen if they were cleaned up due to timeout.', 'automatic_updates_complete', 'debug' );
+			return;
+		}
+
+		// WordPress must be out of maintenance mode before the post batch starts, or the
+		// screenshot service captures the 503 maintenance page as the "after" screenshot.
+		if ( $this->defer_post_update_for_maintenance( $pre_update_data, $update_results ) ) {
 			return;
 		}
 
@@ -362,6 +386,195 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
+	 * Whether an outside visitor would currently get WordPress' HTTP 503 maintenance page.
+	 *
+	 * Deliberately NOT `wp_is_maintenance_mode()`. That function answers "may THIS process
+	 * operate", and it answers it per process: WP-CLI registers an unconditional
+	 * `enable_maintenance_mode` filter returning false (`WP_CLI\Runner`, "Always permit
+	 * operations against WordPress, regardless of maintenance mode"), which core applies inside
+	 * `wp_is_maintenance_mode()`. So under a CLI cron runner that function reports "no
+	 * maintenance" while every ordinary web request, the screenshot service included, is still
+	 * answered with the 503 page. Managed hosting with `DISABLE_WP_CRON` plus a system cron is
+	 * exactly where the agency mass updates behind this guard run, so relying on the filtered
+	 * answer would disable the guard for its main audience.
+	 *
+	 * The question this guard has to answer is what an outside visitor gets, and only the
+	 * `.maintenance` file and its age decide that. No filter can switch the file off, so this
+	 * reproduces core's own file logic unfiltered. The per-process escape hatches in
+	 * `wp_is_maintenance_mode()` (`wp_installing()`, the `wp_scrape_key` branch, the filter) are
+	 * omitted on purpose: they describe the current process, never the visitor's.
+	 *
+	 * The 10 minute cutoff is core's own value from `wp_is_maintenance_mode()`
+	 * (wp-includes/load.php), not a tunable of ours: past it WordPress stops honouring the file
+	 * and serves normally again. Do not "tune" it.
+	 *
+	 * @return bool True while the site answers requests with the maintenance page.
+	 */
+	private function is_site_in_maintenance() {
+		$maintenance_file = ABSPATH . '.maintenance';
+
+		if ( ! file_exists( $maintenance_file ) ) {
+			return false;
+		}
+
+		$upgrading = null;
+
+		// include, not require: the upgrader can delete the file between the check above and
+		// this read, and that race must never fatal the cron request that owns the post batch.
+		include $maintenance_file;
+
+		// is_numeric, not is_int: core compares the timestamp loosely, so a third-party writer
+		// using a numeric string still puts the site into maintenance. Treating that as "no
+		// maintenance" would fire the batch into a live 503, the exact failure this prevents.
+		if ( ! is_numeric( $upgrading ) ) {
+			return false;
+		}
+
+		return ( time() - (int) $upgrading ) < 10 * MINUTE_IN_SECONDS;
+	}
+
+	/**
+	 * Defer the post-update screenshots while WordPress is still in maintenance mode.
+	 *
+	 * `WP_Upgrader::maintenance_mode( false )` returns without deleting `ABSPATH . '.maintenance'`
+	 * when the filesystem is not accessible (wp-admin/includes/class-wp-upgrader.php), and
+	 * WordPress keeps honouring that file for 10 minutes after the timestamp stored in it
+	 * (wp-includes/load.php). Until then it answers every request, the screenshot service
+	 * included, with the HTTP 503 maintenance page. Starting the post batch in that state
+	 * captures that page as the "after" screenshot and makes the API treat the whole group as
+	 * an unreachable site. Detection runs through self::is_site_in_maintenance(), which reads
+	 * the file directly; see that method for why `wp_is_maintenance_mode()` is the wrong
+	 * instrument here.
+	 *
+	 * Reschedules instead of sleeping: this runs at the end of a WP-Cron request that has just
+	 * spent minutes installing updates, so blocking it risks the PHP time limit killing the
+	 * request, which would lose the post batch entirely.
+	 *
+	 * The attempt counter and the update results ride along in the run's own
+	 * `WCD_PRE_AUTO_UPDATE` option: no new permanent option, not autoloaded, and
+	 * `start_pre_update_screenshots()` replaces that option wholesale, so a stale counter can
+	 * never leak into the next run. After self::MAINTENANCE_RETRY_LIMIT deferrals the batch
+	 * starts regardless: a captured maintenance page is recoverable, a missing post batch is not.
+	 *
+	 * How often the retry actually iterates depends on the cron runtime, and both shapes are
+	 * correct. Under the default HTTP cron it is a ONE-SHOT deferral and the counter typically
+	 * stays at 1 (a second upgrader pass re-creating `.maintenance` inside the window produces a
+	 * second deferral): `wp_maintenance()` runs at `wp-settings.php:79` and `wp-cron.php`
+	 * bootstraps through `wp-load.php`, so while maintenance blocks requests wp-cron.php dies at
+	 * the same 503, and the overdue event fires once, on the first request that bootstraps after
+	 * the maintenance window ends. Under a CLI cron runner (`DISABLE_WP_CRON` plus a system cron
+	 * calling WP-CLI) the 60 second retries can iterate, when the system cron runs WP-CLI at
+	 * least once a minute, because a CLI process is never blocked by the maintenance page; at a
+	 * 5 or 15 minute interval the file window expires before the cap and it is effectively
+	 * one-shot there too.
+	 *
+	 * The cap is therefore load-bearing, and it is the one local retry counter this auto-update
+	 * path allows: the 10 minute window of a single `.maintenance` file does NOT bound the loop,
+	 * because every later upgrader run re-creates the file with a fresh timestamp
+	 * (wp-admin/includes/class-wp-upgrader.php). Without the cap the loop would run until the
+	 * hourly 2h stuck sweeper deletes the pre option and drops the batch.
+	 *
+	 * @param array $pre_update_data Current WCD_PRE_AUTO_UPDATE option value; carries the attempt counter.
+	 * @param array $update_results  Raw update results from WordPress, replayed on the retry.
+	 * @return bool True when the run was deferred and the caller must return.
+	 */
+	private function defer_post_update_for_maintenance( $pre_update_data, $update_results ) {
+		if ( ! $this->is_site_in_maintenance() ) {
+			return false;
+		}
+
+		$pre_update_data = is_array( $pre_update_data ) ? $pre_update_data : array();
+		$attempts        = isset( $pre_update_data['maintenance_retries'] ) ? (int) $pre_update_data['maintenance_retries'] : 0;
+
+		if ( $attempts >= self::MAINTENANCE_RETRY_LIMIT ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'WordPress is still in maintenance mode after ' . $attempts . ' retries. Starting the post-update screenshots anyway; they may capture the maintenance page.',
+				'automatic_updates_complete',
+				'error'
+			);
+			return false;
+		}
+
+		++$attempts;
+		$pre_update_data['maintenance_retries']        = $attempts;
+		$pre_update_data['maintenance_update_results'] = $update_results;
+		// Checked like the schedule write below, and for the same reason: without the recorded
+		// counter the retry callback reads its own event as stale and returns, parking the batch
+		// until the 2h sweeper. A false here really is a failed write, not the usual
+		// "value unchanged" case, because the counter is incremented on every pass.
+		if ( ! update_option( WCD_PRE_AUTO_UPDATE, $pre_update_data, false ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Could not record the deferred post-update run. Starting the post-update screenshots now; they may capture the maintenance page.',
+				'automatic_updates_complete',
+				'error'
+			);
+			return false;
+		}
+
+		wp_clear_scheduled_hook( 'wcd_retry_post_update_screenshots' );
+
+		// A refused event would drop the post batch for good: the completion fallback and
+		// WCD_AUTO_UPDATES_RUNNING are already gone by now, so nothing would trigger this run
+		// again. wp_schedule_single_event() returns false when a cron replacement plugin
+		// short-circuits `pre_schedule_event` or the `cron` option write fails; start the batch
+		// right away instead, a captured maintenance page beats no batch at all.
+		if ( true !== wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'wcd_retry_post_update_screenshots' ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Could not schedule the deferred post-update retry. Starting the post-update screenshots now; they may capture the maintenance page.',
+				'automatic_updates_complete',
+				'error'
+			);
+			return false;
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'WordPress is still in maintenance mode. Deferring the post-update screenshots, retry ' . $attempts . ' of ' . self::MAINTENANCE_RETRY_LIMIT . ' in 60 seconds.',
+			'automatic_updates_complete',
+			'warning'
+		);
+
+		return true;
+	}
+
+	/**
+	 * Cron callback for the deferred post-update trigger.
+	 *
+	 * Replays `automatic_updates_complete()` with the update results captured when the run was
+	 * deferred, so the update history and the API result mail still list what WordPress
+	 * installed. Re-entry is safe: the maintenance branch returns before `WCD_POST_AUTO_UPDATE`
+	 * is written, so the duplicate-batch guard at the top of that method cannot block the
+	 * retry it scheduled itself.
+	 *
+	 * Self-guarded on `maintenance_retries`, so it only ever replays a run THIS guard deferred.
+	 * A retry event can outlive its run: the hourly 2h stuck sweeper and
+	 * `WebChangeDetector_Deactivator::deactivate()` drop the run state without clearing this
+	 * hook. Replaying a stale event inside a LATER run's update phase would delete that run's
+	 * `WCD_AUTO_UPDATES_RUNNING` flag and core's live `auto_updater.lock` and kill its
+	 * completion fallback.
+	 *
+	 * @return void
+	 */
+	public function retry_post_update_screenshots() {
+		$pre_update_data = get_option( WCD_PRE_AUTO_UPDATE );
+
+		if ( ! is_array( $pre_update_data ) || ! isset( $pre_update_data['maintenance_retries'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+				'Deferred post-update retry fired without a deferred run. Ignoring the stale event.',
+				'retry_post_update_screenshots',
+				'debug'
+			);
+			return;
+		}
+
+		$update_results = array();
+		if ( ! empty( $pre_update_data['maintenance_update_results'] ) && is_array( $pre_update_data['maintenance_update_results'] ) ) {
+			$update_results = $pre_update_data['maintenance_update_results'];
+		}
+
+		$this->automatic_updates_complete( $update_results );
+	}
+
+	/**
 	 * Cron for checking post_sc to be finished
 	 *
 	 * @return void
@@ -457,8 +670,9 @@ class WebChangeDetector_Autoupdates {
 		delete_option( WCD_AUTO_UPDATES_RUNNING );
 		delete_option( WCD_AUTO_UPDATE_TRIGGERED_TIME );
 
-		// Clean up scheduled fallback check.
+		// Clean up scheduled fallback check and any pending maintenance retry.
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+		wp_clear_scheduled_hook( 'wcd_retry_post_update_screenshots' );
 
 		// Deactivate the update-offer restore in this request too: the run
 		// option is gone, but the guard caches its lookup per request.
@@ -1425,8 +1639,11 @@ class WebChangeDetector_Autoupdates {
 	 * This is a fallback for when automatic_updates_complete doesn't fire (no updates available).
 	 */
 	private function schedule_update_completion_check() {
-		// Schedule check in 2 minutes to see if updates are done.
+		// Schedule check in 2 minutes to see if updates are done. A retry event left over from
+		// an earlier run must go too: it would fire into this run's update phase and delete its
+		// running flag and core's live auto_updater lock.
 		wp_clear_scheduled_hook( 'wcd_check_update_completion' );
+		wp_clear_scheduled_hook( 'wcd_retry_post_update_screenshots' );
 		wp_schedule_single_event( time() + 120, 'wcd_check_update_completion' );
 
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
