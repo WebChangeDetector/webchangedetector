@@ -800,6 +800,35 @@ function currentlyProcessing() {
             return confirm(wcdL10n.confirmCancelChecks);
         });
 
+        // Run monitoring now (whole monitoring group). Stays disabled after a started run.
+        $(document).on('click', '.wcd-monitoring-run-now', function () {
+            var button = $(this);
+            var result = button.siblings('.wcd-monitoring-run-result');
+            var count = String(parseInt(button.data('checks-count'), 10) || 0);
+            var msg = (wcdL10n.confirmRunMonitoringNow || 'Run monitoring now for all selected URLs? This uses up to %s checks.').replace('%s', count);
+            if (!confirm(msg)) {
+                return;
+            }
+
+            button.prop('disabled', true);
+            result.removeClass('wcd-status-info wcd-error-message').text('');
+
+            $.post(wcdAjaxData.ajax_url, {
+                action: 'wcd_run_monitoring_now',
+                nonce: wcdAjaxData.nonce
+            }, null, 'json').done(function (response) {
+                var message = response && response.data && response.data.message ? response.data.message : (wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
+                var success = !!(response && response.success);
+                result.addClass(success ? 'wcd-status-info' : 'wcd-error-message').text(message);
+                if (!success) {
+                    button.prop('disabled', false);
+                }
+            }).fail(function () {
+                result.addClass('wcd-error-message').text(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
+                button.prop('disabled', false);
+            });
+        });
+
         // Change bg color of comparison percentages
         var diffTile = $(".comparison-diff-tile");
         var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
