@@ -286,6 +286,55 @@ class WebChangeDetector_API_V2 {
 		return self::api_v2( $args );
 	}
 
+	/**
+	 * Report changed pages for trigger-based monitoring.
+	 *
+	 * The API checks them after a short wait and merges repeated reports of the same page.
+	 *
+	 * @param string      $group_id The monitoring group UUID.
+	 * @param string      $type     Trigger type, e.g. 'post_save'.
+	 * @param array       $urls     List of arrays with 'url' and optional 'title', 'post_id'.
+	 * @param string|null $editor   Optional display name of the editor.
+	 * @param int|null    $timeout  Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
+	 * @return mixed|string
+	 */
+	public static function trigger_monitoring_check_v2( $group_id, $type, $urls, $editor = null, $timeout = null ) {
+		$args = array(
+			'action'   => 'monitoring/trigger',
+			'group_id' => $group_id,
+			'type'     => $type,
+			'urls'     => array_values( $urls ),
+		);
+		if ( ! empty( $editor ) ) {
+			$args['editor'] = $editor;
+		}
+
+		return self::api_v2( $args, 'POST', false, null, true, $timeout );
+	}
+
+	/**
+	 * Push back the waiting trigger checks of autosaved pages (trigger-based monitoring).
+	 *
+	 * Only pages already waiting for a check are extended; the API never starts a check
+	 * here and answers other pages as ignored ('not_waiting'). An API without this route
+	 * answers 'not found'.
+	 *
+	 * @param string   $group_id The monitoring group UUID.
+	 * @param array    $urls     List of arrays with only 'url'.
+	 * @param int|null $timeout  Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
+	 * @return mixed|string
+	 */
+	public static function extend_monitoring_trigger_v2( $group_id, $urls, $timeout = null ) {
+		$args = array(
+			'action'   => 'monitoring/trigger/extend',
+			'group_id' => $group_id,
+			'type'     => WebChangeDetector_Monitoring_Trigger::TYPE_POST_SAVE,
+			'urls'     => array_values( $urls ),
+		);
+
+		return self::api_v2( $args, 'POST', false, null, true, $timeout );
+	}
+
 	/** Add url.
 	 *
 	 * @param string $url Url to add.
@@ -846,17 +895,19 @@ class WebChangeDetector_API_V2 {
 
 	/** Call the WCD api.
 	 *
-	 * @param array  $post All params for the request.
-	 * @param string $method The request method.
-	 * @param bool   $is_web Call web interface.
-	 * @param string $custom_api_token Optional custom API token to use instead of default.
-	 * @param bool   $json_body Send the params as a JSON body instead of form-encoded ones.
-	 *                          Required whenever the payload contains nested arrays, booleans,
-	 *                          nulls or empty arrays: form encoding drops null and empty arrays
-	 *                          and turns booleans into "1"/"0". Ignored for multi calls.
+	 * @param array    $post All params for the request.
+	 * @param string   $method The request method.
+	 * @param bool     $is_web Call web interface.
+	 * @param string   $custom_api_token Optional custom API token to use instead of default.
+	 * @param bool     $json_body Send the params as a JSON body instead of form-encoded ones.
+	 *                            Required whenever the payload contains nested arrays, booleans,
+	 *                            nulls or empty arrays: form encoding drops null and empty arrays
+	 *                            and turns booleans into "1"/"0". Ignored for multi calls.
+	 * @param int|null $timeout Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
+	 *                          Ignored for multi calls.
 	 * @return mixed|string
 	 */
-	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null, $json_body = false ) {
+	private static function api_v2( $post, $method = 'POST', $is_web = false, $custom_api_token = null, $json_body = false, $timeout = null ) {
 		$api_token = $custom_api_token ? $custom_api_token : WebChangeDetector_Multisite::get_api_token();
 
 		$url     = 'https://api.webchangedetector.com/api/v2/'; // init for production.
@@ -972,7 +1023,7 @@ class WebChangeDetector_API_V2 {
 			}
 
 			$args = array(
-				'timeout' => WCD_REQUEST_TIMEOUT,
+				'timeout' => $timeout ? (int) $timeout : WCD_REQUEST_TIMEOUT,
 				'body'    => $json_body ? wp_json_encode( $post ) : $post,
 				'method'  => $method,
 				'headers' => $request_headers,

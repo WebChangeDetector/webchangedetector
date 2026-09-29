@@ -116,6 +116,8 @@ class WebChangeDetector_Admin_WordPress {
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
 					'nextMonitoringChecks'     => __( 'Next monitoring checks in ', 'webchangedetector' ),
+					'checksOnPageSave'         => __( 'Checks run when a page is saved', 'webchangedetector' ),
+					'scheduleOffNeedsTrigger'  => __( 'With the schedule set to "Never", enable "Check when a page is saved" or disable the monitoring.', 'webchangedetector' ),
 					'notTracking'              => __( 'Not Tracking', 'webchangedetector' ),
 					'somethingWentWrong'       => __( 'Something went wrong. Please try again.', 'webchangedetector' ),
 					'unexpectedResponse'       => __( 'Unexpected response from server. Please try again.', 'webchangedetector' ),

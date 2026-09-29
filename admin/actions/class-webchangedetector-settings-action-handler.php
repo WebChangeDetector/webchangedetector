@@ -112,6 +112,9 @@ class WebChangeDetector_Settings_Action_Handler {
 			if ( isset( $data['schedule_type'] ) ) {
 				$args['schedule_type'] = sanitize_text_field( $data['schedule_type'] );
 			}
+			if ( isset( $data['trigger_post_save'] ) ) {
+				$args['triggers'] = \WebChangeDetector\WebChangeDetector_Monitoring_Trigger::triggers_for_api( '1' === (string) $data['trigger_post_save'] );
+			}
 			if ( isset( $data['schedule_days'] ) && is_array( $data['schedule_days'] ) ) {
 				$args['schedule_days'] = array_map(
 					function ( $day ) {
@@ -530,10 +533,18 @@ class WebChangeDetector_Settings_Action_Handler {
 
 		// Validate schedule type.
 		if ( ! empty( $data['schedule_type'] ) ) {
-			$valid_types = array( 'interval', 'weekly', 'monthly' );
+			$valid_types = array( 'interval', 'weekly', 'monthly', 'off' );
 			if ( ! in_array( $data['schedule_type'], $valid_types, true ) ) {
 				$errors[] = 'Invalid schedule type.';
 			}
+		}
+
+		// With the schedule off, an enabled monitoring only runs through its trigger.
+		$is_enabled = isset( $data['enabled'] ) && ( 'on' === $data['enabled'] || '1' === $data['enabled'] );
+		$has_off    = isset( $data['schedule_type'] ) && 'off' === $data['schedule_type'];
+		$has_save   = isset( $data['trigger_post_save'] ) && '1' === (string) $data['trigger_post_save'];
+		if ( $is_enabled && $has_off && ! $has_save ) {
+			$errors[] = __( 'With the schedule set to "Never", enable "Check when a page is saved" or disable the monitoring.', 'webchangedetector' );
 		}
 
 		// Validate schedule days.
