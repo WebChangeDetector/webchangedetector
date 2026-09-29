@@ -46,7 +46,7 @@ class WebChangeDetector_Public {
 	 */
 	public function enqueue_styles() {
 		// Only load CSS if admin bar is showing (user is logged in and bar is enabled).
-		if ( ! is_admin_bar_showing() ) {
+		if ( ! is_admin_bar_showing() || WebChangeDetector_Admin_Utils::is_plugin_ui_hidden() ) {
 			return;
 		}
 
