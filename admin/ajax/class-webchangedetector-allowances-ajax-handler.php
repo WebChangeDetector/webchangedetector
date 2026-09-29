@@ -29,6 +29,7 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 	 * @var array
 	 */
 	const ALLOWANCE_FIELDS = array(
+		'plugin_view',
 		'manual_checks_view',
 		'monitoring_checks_view',
 		'change_detections_view',
@@ -58,6 +59,13 @@ class WebChangeDetector_Allowances_Ajax_Handler extends WebChangeDetector_Ajax_H
 	 */
 	public static function get_sections() {
 		return array(
+			array(
+				'title'       => __( 'Plugin visibility', 'webchangedetector' ),
+				'description' => __( 'Hiding the plugin removes its menu and admin bar entry for the admins of this site. URL sync, auto updates and checks keep running.', 'webchangedetector' ),
+				'fields'      => array(
+					'plugin_view' => __( 'Show plugin in WP admin (menu + admin bar)', 'webchangedetector' ),
+				),
+			),
 			array(
 				'title'       => __( 'Tabs in WP Plugin', 'webchangedetector' ),
 				'description' => __( 'Select which tabs should be enabled at the WP website.', 'webchangedetector' ),

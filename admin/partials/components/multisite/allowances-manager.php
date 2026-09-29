@@ -20,7 +20,10 @@ namespace WebChangeDetector;
 
 defined( 'ABSPATH' ) || exit;
 
-$allowances        = $allowances ?? array();
+$allowances = $allowances ?? array();
+// Websites stored before plugin_view existed lack the key: absent means visible. Without
+// this seed the unchecked toggle would hide the plugin on the next save.
+$allowances       += array( 'plugin_view' => true );
 $is_all_sites_mode = $is_all_sites_mode ?? false;
 $website_uuid      = $website_uuid ?? '';
 $wcd_blog_id       = $wcd_blog_id ?? 0;

@@ -448,4 +448,31 @@ class WebChangeDetector_Admin_Utils {
 		}
 		return round( $difference_percent, 2 );
 	}
+
+	/**
+	 * Whether the plugin UI (admin menu, admin bar entry, WCD CSS) is hidden on this site.
+	 *
+	 * Headless mode (FEAT-50) is driven by the per-site allowance `plugin_view`. Only an
+	 * explicit falsy value hides the UI; a missing option or a missing key (every website
+	 * stored before the key existed) means visible. URL sync, auto updates and trigger
+	 * monitoring are not affected.
+	 *
+	 * Reads only the cached `wcd_allowances` option, never the API. Call it only inside
+	 * hook callbacks, never at hook registration: the multisite bypass calls
+	 * is_super_admin(), which is not available before pluggable.php is loaded.
+	 *
+	 * @return bool True when the plugin UI must not be rendered.
+	 */
+	public static function is_plugin_ui_hidden() {
+		if ( defined( 'WCD_FORCE_SHOW_UI' ) && WCD_FORCE_SHOW_UI ) {
+			return false; // wp-config escape hatch.
+		}
+		if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+			return false; // Super admin on a network-activated install keeps access.
+		}
+		$allowances = get_option( WCD_ALLOWANCES );
+		return is_array( $allowances )
+			&& array_key_exists( 'plugin_view', $allowances )
+			&& empty( $allowances['plugin_view'] );
+	}
 }

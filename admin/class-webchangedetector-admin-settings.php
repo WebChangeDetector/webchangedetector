@@ -1120,7 +1120,46 @@ class WebChangeDetector_Admin_Settings {
 			}
 		}
 
+		// Must stay after the is_allowed() call above: without render context it
+		// rewrites the allowances option with the defaults.
+		$this->sync_plugin_view_allowance( $website_details );
+
 		return $website_details ?? false;
+	}
+
+	/**
+	 * Mirror the API `plugin_view` allowance into the cached allowances option.
+	 *
+	 * Headless mode (FEAT-50) hides the menu, so the render path that normally caches the
+	 * allowances never runs on a hidden site. This keeps hide and un-hide working from
+	 * every get_website_details() caller (hourly schedule sync, daily sync, post saves).
+	 * Only the `plugin_view` key is written: the rest of the option carries render-path
+	 * adjustments (e.g. `upgrade_account` off for subaccounts) that the raw API values
+	 * would undo. An absent API key means visible.
+	 *
+	 * The website id check skips details that belong to another site: after a transient
+	 * API error, the static cache in get_website_details() still holds the previous
+	 * site's data inside the multisite daily sync loop.
+	 *
+	 * @param array|null $website_details Website details as returned by the API.
+	 * @return void
+	 */
+	private function sync_plugin_view_allowance( $website_details ) {
+		if ( ! is_array( $website_details ) || ! is_array( $website_details['allowances'] ?? null ) ) {
+			return;
+		}
+		if ( empty( $website_details['id'] ) || get_option( WCD_WP_OPTION_KEY_WEBSITE_ID ) !== $website_details['id'] ) {
+			return;
+		}
+
+		$cached = get_option( WCD_ALLOWANCES );
+		if ( is_array( $cached ) ) {
+			$cached['plugin_view'] = (bool) ( $website_details['allowances']['plugin_view'] ?? true );
+		} else {
+			$cached = $website_details['allowances'];
+		}
+
+		update_option( WCD_ALLOWANCES, $cached ); // No DB write when unchanged.
 	}
 
 	/**
@@ -1177,6 +1216,7 @@ class WebChangeDetector_Admin_Settings {
 				'upgrade_account'            => true,
 				'wizard_start'               => true,
 				'only_frontpage'             => false,
+				'plugin_view'                => true,
 			);
 		}
 
