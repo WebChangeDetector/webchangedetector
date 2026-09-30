@@ -337,6 +337,23 @@ class WebChangeDetector_API_V2 {
 	}
 
 	/**
+	 * Get the running monitoring batch of a monitoring group.
+	 *
+	 * Answers `data: [{group_id, batch_id|null}]`; a missing entry means not running.
+	 * An API without this route answers 'not found'.
+	 *
+	 * @param string $group_id The monitoring group UUID.
+	 * @return mixed|string
+	 */
+	public static function get_running_monitoring_v2( $group_id ) {
+		$args = array(
+			'action' => 'monitoring/running?' . build_query( array( 'group_ids' => $group_id ) ),
+		);
+
+		return self::api_v2( $args, 'GET' );
+	}
+
+	/**
 	 * Push back the waiting trigger checks of autosaved pages (trigger-based monitoring).
 	 *
 	 * Only pages already waiting for a check are extended; the API never starts a check

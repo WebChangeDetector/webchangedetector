@@ -747,13 +747,11 @@ class WebChangeDetector_Admin {
 						data-date="<?php echo esc_attr( $date_next_sc ); ?>"
 						data-enabled="<?php echo esc_attr( $monitoring_enabled ? '1' : '0' ); ?>"
 						data-trigger-only="<?php echo esc_attr( $schedule_off ? '1' : '0' ); ?>"></div>
-					<?php if ( $monitoring_enabled && $has_selected_urls && $this->settings_handler->is_allowed( 'monitoring_checks_settings' ) ) : ?>
-						<button type="button" class="button button-primary wcd-mc-start-btn wcd-monitoring-run-now"
-							data-checks-count="<?php echo esc_attr( (int) $group['selected_checks_count'] ); ?>">
-							<span class="dashicons dashicons-controls-play"></span> <?php esc_html_e( 'Run monitoring now', 'webchangedetector' ); ?>
-						</button>
-						<div class="wcd-monitoring-run-result" aria-live="polite"></div>
-					<?php endif; ?>
+					<?php
+					if ( $monitoring_enabled && $has_selected_urls && $this->settings_handler->is_allowed( 'monitoring_checks_settings' ) ) {
+						$this->print_run_monitoring_now_button( $group );
+					}
+					?>
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">
@@ -778,6 +776,39 @@ class WebChangeDetector_Admin {
 					data-auto_sc_per_url_until_renewal="<?php echo esc_attr( $total_sc_current_period ); ?>" style="display: none;"></div>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Print the "Run monitoring now" button with its result line.
+	 *
+	 * While a monitoring batch of the group runs, the button renders as a non-clickable
+	 * "Monitoring running…" status (class + aria-disabled, not `disabled`, so it keeps the
+	 * primary look); the admin JS polls until the run is over and swaps the labels back.
+	 *
+	 * @param array $group The monitoring group details.
+	 * @return void
+	 */
+	private function print_run_monitoring_now_button( $group ) {
+		$running_batch_id = WebChangeDetector_Monitoring_Trigger::get_running_batch_id( $group['id'] ?? '' );
+		$running          = ! empty( $running_batch_id );
+		$checks_url       = $this->settings_handler->is_allowed( 'change_detections_view' )
+			? WebChangeDetector_Multisite::get_form_action_url( 'webchangedetector-change-detections' )
+			: '';
+		?>
+		<button type="button" class="button button-primary wcd-mc-start-btn wcd-monitoring-run-now<?php echo $running ? ' wcd-is-running' : ''; ?>"
+			data-checks-count="<?php echo esc_attr( (int) $group['selected_checks_count'] ); ?>"
+			<?php if ( $checks_url ) : ?>
+				data-checks-url="<?php echo esc_url( $checks_url ); ?>"
+			<?php endif; ?>
+			<?php if ( $running ) : ?>
+				aria-disabled="true"
+			<?php endif; ?>
+			>
+			<span class="wcd-run-now-label"><span class="dashicons dashicons-controls-play"></span> <?php esc_html_e( 'Run monitoring now', 'webchangedetector' ); ?></span>
+			<span class="wcd-running-label"><span class="dashicons dashicons-update spin"></span> <?php esc_html_e( 'Monitoring running…', 'webchangedetector' ); ?></span>
+		</button>
+		<div class="wcd-monitoring-run-result" aria-live="polite"></div>
 		<?php
 	}
 

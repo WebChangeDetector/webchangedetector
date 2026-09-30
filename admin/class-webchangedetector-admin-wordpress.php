@@ -120,6 +120,7 @@ class WebChangeDetector_Admin_WordPress {
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
 					/* translators: %s: Maximum number of checks the monitoring run can use */
 					'confirmRunMonitoringNow'  => __( 'Run monitoring now for all selected URLs? This uses up to %s checks.', 'webchangedetector' ),
+					'viewChecks'               => __( 'View checks', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
 					'nextMonitoringChecks'     => __( 'Next monitoring checks in ', 'webchangedetector' ),
