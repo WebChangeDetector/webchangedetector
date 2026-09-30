@@ -730,6 +730,43 @@ class WebChangeDetector_Monitoring_Trigger {
 	}
 
 	/**
+	 * The running monitoring batch of a monitoring group.
+	 *
+	 * '' means not running: no group id (no API call), 'not found' from an API without the
+	 * route (old behavior), `data` that is not a list, no entry for the group, or a null or
+	 * non-uuid `batch_id`. Null means the request failed and the state is unknown: any other
+	 * non-array answer (failure strings) or an array without `data` (decoded 5xx/429/422 body).
+	 *
+	 * @param string $group_id The monitoring group UUID.
+	 * @return string|null Batch UUID, '' when not running, null on failure.
+	 */
+	public static function get_running_batch_id( $group_id ) {
+		if ( empty( $group_id ) ) {
+			return '';
+		}
+
+		$response = WebChangeDetector_API_V2::get_running_monitoring_v2( $group_id );
+		if ( 'not found' === $response ) {
+			return '';
+		}
+		if ( ! is_array( $response ) || ! array_key_exists( 'data', $response ) ) {
+			return null;
+		}
+		if ( ! is_array( $response['data'] ) ) {
+			return '';
+		}
+
+		foreach ( $response['data'] as $entry ) {
+			if ( is_array( $entry ) && ( $entry['group_id'] ?? null ) === $group_id ) {
+				$batch_id = $entry['batch_id'] ?? null;
+				return is_string( $batch_id ) && wp_is_uuid( $batch_id ) ? $batch_id : '';
+			}
+		}
+
+		return '';
+	}
+
+	/**
 	 * Whether the monitoring group accepts saved posts, refreshing the cached flag from the API if needed.
 	 *
 	 * @param string $group_uuid The monitoring group UUID.

@@ -3750,8 +3750,24 @@ Settings
     margin-top: 8px;
 }
 
+/* "Run monitoring now" button: while the group runs it shows the "Monitoring running…" label as a
+   non-clickable status (aria-disabled, not disabled, so it keeps the primary look). */
+.wcd-monitoring-run-now .wcd-running-label,
+.wcd-monitoring-run-now.wcd-is-running .wcd-run-now-label {
+    display: none;
+}
+
+.wcd-monitoring-run-now.wcd-is-running .wcd-running-label {
+    display: inline;
+}
+
+.wcd-monitoring-run-now.wcd-is-running {
+    cursor: default;
+}
+
 /* Spinning animation for loading states */
-.wcd-status-card .dashicons.spin {
+.wcd-status-card .dashicons.spin,
+.wcd-monitoring-run-now .dashicons.spin {
     animation: wcd-spin 2s linear infinite;
 }
 

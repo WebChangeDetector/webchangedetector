@@ -704,6 +704,101 @@ function currentlyProcessing() {
         return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
     }
 
+    /*
+     * "Run monitoring now" live status (FEAT-119). One poll chain per page: it runs while the
+     * monitoring group is running, and while the batch started with the button on this page
+     * is not finished yet, but at most 15 minutes after the group was last seen running.
+     * "Finished" comes from the batch's finished_at (server side), never from the running flag.
+     */
+    var WCD_RUN_NOW_POLL_MS = 10000;
+    var WCD_RUN_NOW_GIVE_UP_MS = 15 * 60 * 1000;
+    // seq changes with every button run, so an answer to an older poll is dropped.
+    var wcdRunNow = { timer: null, batchId: '', lastRunningAt: 0, seq: 0 };
+
+    function wcdSetRunNowRunning(button, running) {
+        button.toggleClass('wcd-is-running', running);
+        if (running) {
+            button.attr('aria-disabled', 'true');
+        } else {
+            button.removeAttr('aria-disabled');
+        }
+    }
+
+    // batchId: the batch started with the button on this page, '' for a run started elsewhere.
+    function wcdStartRunNowPoll(button, batchId) {
+        wcdRunNow.seq++;
+        wcdRunNow.batchId = batchId;
+        wcdRunNow.lastRunningAt = Date.now();
+        wcdSetRunNowRunning(button, true);
+        wcdScheduleRunNowPoll(button);
+    }
+
+    function wcdScheduleRunNowPoll(button) {
+        clearTimeout(wcdRunNow.timer);
+        wcdRunNow.timer = setTimeout(function () {
+            wcdPollRunNowStatus(button);
+        }, WCD_RUN_NOW_POLL_MS);
+    }
+
+    // running: the answer's running flag, or null when the request failed.
+    function wcdContinueRunNowPoll(button, running) {
+        var waiting = Date.now() - wcdRunNow.lastRunningAt < WCD_RUN_NOW_GIVE_UP_MS;
+        if (running || ((wcdRunNow.batchId || running === null) && waiting)) {
+            wcdScheduleRunNowPoll(button);
+            return;
+        }
+        wcdRunNow.batchId = '';
+    }
+
+    function wcdShowRunNowFinished(button, message, batchId) {
+        var result = button.siblings('.wcd-monitoring-run-result');
+        var checksUrl = button.data('checks-url');
+        result.removeClass('wcd-error-message').addClass('wcd-status-info').text(message);
+        if (checksUrl) {
+            result.append(' ').append(
+                $('<a>')
+                    .attr('href', checksUrl + '&batch_id=' + encodeURIComponent(batchId))
+                    .text(wcdL10n.viewChecks || 'View checks')
+            );
+        }
+    }
+
+    function wcdPollRunNowStatus(button) {
+        var batchId = wcdRunNow.batchId;
+        var seq = wcdRunNow.seq;
+        var data = {
+            action: 'wcd_get_monitoring_run_status',
+            nonce: wcdAjaxData.nonce
+        };
+        if (batchId) {
+            data.batch_id = batchId;
+        }
+
+        $.post(wcdAjaxData.ajax_url, data, null, 'json').done(function (response) {
+            if (seq !== wcdRunNow.seq) {
+                return;
+            }
+            var status = response && response.success && response.data ? response.data.data : null;
+            if (!status) {
+                wcdContinueRunNowPoll(button, null);
+                return;
+            }
+            if (status.running) {
+                wcdRunNow.lastRunningAt = Date.now();
+            }
+            wcdSetRunNowRunning(button, !!status.running);
+            if (status.done && batchId) {
+                wcdShowRunNowFinished(button, status.message, batchId);
+                wcdRunNow.batchId = '';
+            }
+            wcdContinueRunNowPoll(button, !!status.running);
+        }).fail(function () {
+            if (seq === wcdRunNow.seq) {
+                wcdContinueRunNowPoll(button, null);
+            }
+        });
+    }
+
     $(document).ready(function () {
 
         // Filter URL tables
@@ -800,9 +895,17 @@ function currentlyProcessing() {
             return confirm(wcdL10n.confirmCancelChecks);
         });
 
-        // Run monitoring now (whole monitoring group). Stays disabled after a started run.
+        // Run monitoring now (whole monitoring group). Shows "Monitoring running…" while the
+        // group runs; a page opened during a run polls without a batch (no finish message).
+        $('.wcd-monitoring-run-now.wcd-is-running').each(function () {
+            wcdStartRunNowPoll($(this), '');
+        });
+
         $(document).on('click', '.wcd-monitoring-run-now', function () {
             var button = $(this);
+            if (button.hasClass('wcd-is-running')) {
+                return;
+            }
             var result = button.siblings('.wcd-monitoring-run-result');
             var count = String(parseInt(button.data('checks-count'), 10) || 0);
             var msg = (wcdL10n.confirmRunMonitoringNow || 'Run monitoring now for all selected URLs? This uses up to %s checks.').replace('%s', count);
@@ -820,8 +923,13 @@ function currentlyProcessing() {
                 var message = response && response.data && response.data.message ? response.data.message : (wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
                 var success = !!(response && response.success);
                 result.addClass(success ? 'wcd-status-info' : 'wcd-error-message').text(message);
-                if (!success) {
-                    button.prop('disabled', false);
+                button.prop('disabled', false);
+                if (success) {
+                    wcdStartRunNowPoll(button, (response.data.data && response.data.data.batch_id) || '');
+                } else {
+                    // A run started after the page render (e.g. already_running): show it.
+                    // The answer only continues polling while running (one chain, see above).
+                    wcdPollRunNowStatus(button);
                 }
             }).fail(function () {
                 result.addClass('wcd-error-message').text(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
