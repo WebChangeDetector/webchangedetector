@@ -1109,11 +1109,11 @@ function currentlyProcessing() {
             txtNextScIn += h + hourLabel + m + minuteLabel;
 
             $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + wpTzDisplay + ")");
-            $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
+            $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks || 'Next monitoring checks in ');
         }
         // Schedule "Never": there is no next run, checks start when a page is saved.
         if (autoEnabled && amountSelectedTotal > 0 && $("#next_sc_date").data("trigger-only") == 1) {
-            txtNextScIn = wcdL10n.checksOnPageSave;
+            txtNextScIn = wcdL10n.checksOnPageSave || 'Checks run when a page is saved';
         }
         $("#next_sc_in").html(txtNextScIn);
 
@@ -2788,7 +2788,7 @@ function wcdValidateFormAutoSettings() {
         var scheduleOff = document.querySelector('.wcd-schedule-type[value="off"]');
         var triggerPostSave = document.querySelector('input[type="checkbox"][name="trigger_post_save"]');
         if (scheduleOff && scheduleOff.checked && triggerPostSave && !triggerPostSave.checked) {
-            alert(wcdL10n.scheduleOffNeedsTrigger);
+            alert(wcdL10n.scheduleOffNeedsTrigger || 'With the schedule set to "Never", enable "Check when a page is saved" or disable the monitoring.');
             return false;
         }
         if (typeof window['validate_alert_emails'] === 'function' &&

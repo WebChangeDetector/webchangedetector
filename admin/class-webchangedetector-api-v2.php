@@ -223,14 +223,15 @@ class WebChangeDetector_API_V2 {
 
 	/** Get group details.
 	 *
-	 * @param string $group_id The group id.
+	 * @param string   $group_id The group id.
+	 * @param int|null $timeout  Optional request timeout in seconds, null for WCD_REQUEST_TIMEOUT.
 	 * @return mixed|string
 	 */
-	public static function get_group_v2( $group_id ) {
+	public static function get_group_v2( $group_id, $timeout = null ) {
 		$args = array(
 			'action' => 'groups/' . $group_id,
 		);
-		return self::api_v2( $args, 'GET' );
+		return self::api_v2( $args, 'GET', false, null, false, $timeout );
 	}
 
 	/** Get urls of a group.

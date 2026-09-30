@@ -105,6 +105,7 @@ function wcd_uninstall_site_cleanup() {
 	delete_transient( 'wcd_monitoring_trigger_post_save' );
 	delete_transient( 'wcd_monitoring_trigger_storm' );
 	delete_transient( 'wcd_monitoring_trigger_extended' );
+	delete_transient( 'wcd_monitoring_trigger_unknown' );
 }
 
 // Handle multisite cleanup.

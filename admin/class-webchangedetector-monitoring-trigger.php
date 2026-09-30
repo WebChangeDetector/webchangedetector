@@ -84,6 +84,24 @@ class WebChangeDetector_Monitoring_Trigger {
 	const TRANSIENT_EXTENDED = 'wcd_monitoring_trigger_extended';
 
 	/**
+	 * Transient set when loading the group failed, so the next saves skip the refresh.
+	 *
+	 * @var string
+	 */
+	const TRANSIENT_UNKNOWN = 'wcd_monitoring_trigger_unknown';
+
+	/**
+	 * How long a failed group load is remembered before the next refresh.
+	 *
+	 * Keeps a slow or unreachable API from delaying every save; shorter than RETRY_DELAY,
+	 * so the retry of a single failure refreshes again. A failure never caches '0': that
+	 * would switch the trigger off for customers who enabled it.
+	 *
+	 * @var int
+	 */
+	const UNKNOWN_TTL = 2 * MINUTE_IN_SECONDS;
+
+	/**
 	 * Minimum seconds between two extensions of the same post.
 	 *
 	 * The API adds this to its wait, so at least its regular wait stays quiet.
@@ -542,9 +560,11 @@ class WebChangeDetector_Monitoring_Trigger {
 		);
 		$extensions = array_diff_key( $pending, $saves );
 
-		$enabled = $this->is_enabled( $group_uuid );
+		// A group load failed within UNKNOWN_TTL: no API call now, and no attempt is counted.
+		$skip    = null === self::is_enabled_cached() && false !== get_transient( self::TRANSIENT_UNKNOWN );
+		$enabled = $skip ? null : $this->is_enabled( $group_uuid, $timeout );
 		if ( null === $enabled ) {
-			$this->retry( $saves ); // The group could not be loaded: try again later. Extensions are dropped.
+			$this->retry( $saves, ! $skip ); // The group could not be loaded: try again later. Extensions are dropped.
 			return;
 		}
 		if ( ! $enabled ) {
@@ -671,17 +691,19 @@ class WebChangeDetector_Monitoring_Trigger {
 	 * A retried save replaces an extension queued for the same post in the meantime.
 	 *
 	 * @param array $entries Pending entries (post ID => editor and attempts).
+	 * @param bool  $count   Whether a real send or group load failed (counts as an attempt).
 	 * @return void
 	 */
-	private function retry( $entries ) {
+	private function retry( $entries, $count = true ) {
 		$pending = self::get_pending();
 		foreach ( $entries as $post_id => $entry ) {
-			if ( ( isset( $pending[ $post_id ] ) && ! $pending[ $post_id ]['extend'] ) || $entry['attempts'] + 1 >= self::MAX_ATTEMPTS ) {
+			$attempts = $entry['attempts'] + ( $count ? 1 : 0 );
+			if ( ( isset( $pending[ $post_id ] ) && ! $pending[ $post_id ]['extend'] ) || $attempts >= self::MAX_ATTEMPTS ) {
 				continue;
 			}
 			$pending[ $post_id ] = array(
 				'editor'   => $entry['editor'],
-				'attempts' => $entry['attempts'] + 1,
+				'attempts' => $attempts,
 				'extend'   => false,
 			);
 		}
@@ -769,20 +791,22 @@ class WebChangeDetector_Monitoring_Trigger {
 	/**
 	 * Whether the monitoring group accepts saved posts, refreshing the cached flag from the API if needed.
 	 *
-	 * @param string $group_uuid The monitoring group UUID.
+	 * @param string   $group_uuid The monitoring group UUID.
+	 * @param int|null $timeout    Request timeout in seconds, null for the default.
 	 * @return bool|null Null when the group could not be loaded.
 	 */
-	private function is_enabled( $group_uuid ) {
+	private function is_enabled( $group_uuid, $timeout = null ) {
 		$cached = self::is_enabled_cached();
 		if ( null !== $cached ) {
 			return $cached;
 		}
 
-		$response = WebChangeDetector_API_V2::get_group_v2( $group_uuid );
+		$response = WebChangeDetector_API_V2::get_group_v2( $group_uuid, $timeout );
 		if ( 'not found' === $response ) {
 			return false;
 		}
 		if ( ! is_array( $response ) || empty( $response['data'] ) || ! is_array( $response['data'] ) ) {
+			set_transient( self::TRANSIENT_UNKNOWN, '1', self::UNKNOWN_TTL );
 			return null;
 		}
 
@@ -830,6 +854,7 @@ class WebChangeDetector_Monitoring_Trigger {
 		delete_transient( self::TRANSIENT_ENABLED );
 		delete_transient( self::TRANSIENT_STORM );
 		delete_transient( self::TRANSIENT_EXTENDED );
+		delete_transient( self::TRANSIENT_UNKNOWN );
 	}
 
 	/**
