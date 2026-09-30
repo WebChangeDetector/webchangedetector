@@ -221,6 +221,18 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.6.0 =
+* Feature: Check when a page is saved: a few minutes after a logged-in person saves a published page or post with changed content, WebChange Detector checks only that page against its last monitoring screenshot. Opt-in in the Monitoring settings, uses checks, requires WordPress 5.6 or newer. Automated saves (WP-Cron, WP-CLI, imports) never start a check, bulk edits are capped, and saving is never slowed down by the WebChange Detector service
+* Feature: New Monitoring schedule option "Never", so checks run only when a page is saved
+* Feature: "Run monitoring now" button on the Monitoring status card checks every selected URL once, right away (uses checks)
+* Feature: The Monitoring status card shows "Monitoring running…" while a monitoring run is in progress, and a summary with a link to the checks when a run you started has finished
+* Feature: Agencies can hide the plugin menu and admin bar entry from the WebChange Detector dashboard; URL sync, Auto Update Checks and Monitoring keep running. Network super admins always keep access, the plugin shows up again when the site is no longer connected, and define( 'WCD_FORCE_SHOW_UI', true ); in wp-config.php brings it back at any time
+* Improvement: Page builder layouts (Elementor, Bricks, Beaver Builder, Oxygen) and a changed featured image count as a change when a page is saved
+* Improvement: While you keep editing a page, the check waits until you stop, so intermediate states are not checked
+* Improvement: The Monitoring schedule setting "Run on" is now called "Run in intervals"
+* Fix: Monitoring settings that the WebChange Detector service rejects now show an error instead of a success message
+* Fix: Auto Update Checks wait for WordPress maintenance mode to end before taking the after-update screenshots, so the maintenance page is no longer captured by mistake
+
 = 4.5.1 =
 * Feature: Install WordPress security releases immediately, even outside the Auto Update Check timeframe (on by default; plugin, theme and major WordPress updates still wait for the next scheduled check)
 * Feature: Alert emails for On-Demand Checks can now be set in the On-Demand Check settings
@@ -534,6 +546,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.6.0 =
+Adds Monitoring checks when a page is saved, a "Run monitoring now" button with a live running status, and an option for agencies to hide the plugin UI. Auto Update Checks now wait for WordPress maintenance mode to end. Recommended for all users.
 
 = 4.5.1 =
 Installs WordPress security releases immediately even outside your Auto Update Check timeframe, adds alert emails for On-Demand Checks, and moves the Auto Update Check result email to the WebChange Detector service for more reliable delivery. Recommended for all users.
