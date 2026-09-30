@@ -23,6 +23,9 @@ defined( 'ABSPATH' ) || exit;
 $default_allowances_values = isset( $default_allowances_values ) && is_array( $default_allowances_values )
 	? $default_allowances_values
 	: array();
+// Defaults saved before plugin_view existed lack the key: absent means visible. Without
+// this seed the unchecked toggle would hide the plugin on every newly registered site.
+$default_allowances_values += array( 'plugin_view' => true );
 
 $default_sections = WebChangeDetector_Allowances_Ajax_Handler::get_sections();
 ?>

@@ -74,6 +74,8 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 		add_action( 'wp_ajax_get_new_change_detections', array( $this, 'ajax_get_new_change_detections' ) );
 		add_action( 'wp_ajax_get_completed_pre_screenshots', array( $this, 'ajax_get_completed_pre_screenshots' ) );
 		add_action( 'wp_ajax_get_failed_queues_json', array( $this, 'ajax_get_failed_queues_json' ) );
+		add_action( 'wp_ajax_wcd_run_monitoring_now', array( $this, 'ajax_run_monitoring_now' ) );
+		add_action( 'wp_ajax_wcd_get_monitoring_run_status', array( $this, 'ajax_get_monitoring_run_status' ) );
 	}
 
 	/**
@@ -583,5 +585,220 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				'Exception: ' . $e->getMessage()
 			);
 		}
+	}
+
+	/**
+	 * Handle "Run monitoring now" AJAX request.
+	 *
+	 * Starts a monitoring check for every active URL of the site's monitoring group.
+	 * The group is read after the blog switch, never from the cached admin property,
+	 * which still holds the group of the blog the request started on.
+	 */
+	public function ajax_run_monitoring_now() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		$group_id = $this->get_request_monitoring_group( 'Run monitoring now' );
+		if ( null === $group_id ) {
+			return;
+		}
+		if ( empty( $group_id ) ) {
+			$this->send_error_response(
+				__( 'Monitoring is not enabled for this website.', 'webchangedetector' ),
+				'Run monitoring now: no monitoring group stored'
+			);
+			return;
+		}
+
+		$response = \WebChangeDetector\WebChangeDetector_API_V2::run_monitoring_now_v2(
+			$group_id,
+			WebChangeDetector_Monitoring_Trigger::user_display_name( get_current_user_id() )
+		);
+
+		if ( is_array( $response ) && ! empty( $response['data']['batch_id'] ) ) {
+			$accepted = is_array( $response['data']['accepted'] ?? null ) ? count( $response['data']['accepted'] ) : 0;
+			$this->send_success_response(
+				array( 'batch_id' => $response['data']['batch_id'] ),
+				sprintf(
+					/* translators: %d: number of URLs the monitoring check was started for */
+					_n( 'Monitoring check started for %d URL.', 'Monitoring check started for %d URLs.', $accepted, 'webchangedetector' ),
+					$accepted
+				)
+			);
+			return;
+		}
+
+		$this->send_error_response( $this->get_run_monitoring_now_error( $response ), 'Run monitoring now rejected' );
+	}
+
+	/**
+	 * The monitoring group of the site a "Run monitoring now" request is for.
+	 *
+	 * Call after security_check(): rejects all-sites mode and a denied
+	 * monitoring_checks_settings allowance, then reads the group after the blog switch,
+	 * never from the cached admin property (it holds the group of the starting blog).
+	 *
+	 * @param    string $context Log prefix of the calling handler.
+	 * @return   string|null Group UUID ('' when none is stored), null when an error was sent.
+	 */
+	private function get_request_monitoring_group( $context ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in security_check().
+		$blog_id = isset( $_POST['wcd_blog_id'] ) ? sanitize_text_field( wp_unslash( $_POST['wcd_blog_id'] ) ) : '';
+		if ( 'all' === $blog_id ) {
+			$this->send_error_response(
+				__( 'Please select a single website to run monitoring.', 'webchangedetector' ),
+				$context . ' rejected in all-sites mode'
+			);
+			return null;
+		}
+
+		if ( ! $this->is_monitoring_settings_allowed() ) {
+			$this->send_error_response(
+				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
+				$context . ' denied by monitoring_checks_settings allowance',
+				403
+			);
+			return null;
+		}
+
+		$website_groups = get_option( WCD_WEBSITE_GROUPS );
+
+		return is_array( $website_groups ) ? (string) ( $website_groups[ WCD_AUTO_DETECTION_GROUP ] ?? '' ) : '';
+	}
+
+	/**
+	 * Map a rejected "Run monitoring now" API response to a fixed user message.
+	 *
+	 * Keys on the top-level `reason` only and never echoes the API message. The post_save
+	 * handling (disabled transient) is deliberately not touched here: a manual run is not a
+	 * saved post, so a 'trigger_not_enabled' answer must not pause trigger-based monitoring.
+	 *
+	 * @param    mixed $response The API response.
+	 * @return   string Translated error message.
+	 */
+	private function get_run_monitoring_now_error( $response ) {
+		if ( is_array( $response ) && isset( $response['data'] ) && is_array( $response['data'] ) ) {
+			return __( 'There are no active URLs to check.', 'webchangedetector' );
+		}
+
+		$messages = array(
+			'already_running'     => __( 'A monitoring check is already running for this website.', 'webchangedetector' ),
+			'not_enough_credits'  => __( 'Not enough checks left in your plan.', 'webchangedetector' ),
+			'trigger_not_enabled' => __( 'Monitoring is not enabled for this website.', 'webchangedetector' ),
+			'unsupported'         => __( 'None of the selected URLs can be checked.', 'webchangedetector' ),
+		);
+
+		$reason = is_array( $response ) && is_string( $response['reason'] ?? null ) ? $response['reason'] : '';
+		if ( isset( $messages[ $reason ] ) ) {
+			return $messages[ $reason ];
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Run monitoring now failed. Response: ' . wp_json_encode( $response ),
+			'monitoring_trigger',
+			'error'
+		);
+
+		return __( 'The monitoring check could not be started. Please try again later.', 'webchangedetector' );
+	}
+
+	/**
+	 * Handle the "Run monitoring now" status poll.
+	 *
+	 * Answers whether a monitoring batch of the site's monitoring group is running and, for
+	 * the batch the page started with the button (optional `batch_id`), whether it is done
+	 * plus its finish message. "Done" comes from the batch's `finished_at` only, never from
+	 * the running flag, because `finished_at` is set minutes after the queue rows close.
+	 */
+	public function ajax_get_monitoring_run_status() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		$group_id = $this->get_request_monitoring_group( 'Monitoring run status' );
+		if ( null === $group_id ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in security_check().
+		$batch_id         = isset( $_POST['batch_id'] ) ? sanitize_text_field( wp_unslash( $_POST['batch_id'] ) ) : '';
+		$running_batch_id = WebChangeDetector_Monitoring_Trigger::get_running_batch_id( $group_id );
+		if ( null === $running_batch_id ) {
+			$this->send_error_response(
+				__( 'Something went wrong. Please try again.', 'webchangedetector' ),
+				'Monitoring run status: running request failed'
+			);
+			return;
+		}
+
+		$message = '';
+		if ( wp_is_uuid( $batch_id ) && $batch_id !== $running_batch_id ) {
+			$message = $this->get_monitoring_finished_message( $batch_id );
+		}
+
+		$this->send_success_response(
+			array(
+				'running' => '' !== $running_batch_id,
+				'done'    => '' !== $message,
+				'message' => $message,
+			)
+		);
+	}
+
+	/**
+	 * The finish message of a monitoring batch, or '' while it is not finished (or unreadable).
+	 *
+	 * N = new + to_fix comparisons, M = failed queues; the failed part only when M > 0.
+	 * The wording matches the web app.
+	 *
+	 * @param    string $batch_id The batch UUID.
+	 * @return   string Translated message, '' when not finished.
+	 */
+	private function get_monitoring_finished_message( $batch_id ) {
+		$response = \WebChangeDetector\WebChangeDetector_API_V2::get_batch_v2( $batch_id );
+		$batch    = is_array( $response ) && isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : array();
+		if ( empty( $batch['finished_at'] ) ) {
+			return '';
+		}
+
+		$changes = (int) ( $batch['comparisons_count']['new'] ?? 0 ) + (int) ( $batch['comparisons_count']['to_fix'] ?? 0 );
+		$failed  = (int) ( $batch['queues_count']['failed'] ?? 0 );
+
+		if ( 0 === $failed ) {
+			/* translators: %d: number of changes found by the monitoring run */
+			return sprintf( _n( 'Monitoring finished: %d change', 'Monitoring finished: %d changes', $changes, 'webchangedetector' ), $changes );
+		}
+
+		return sprintf(
+			/* translators: 1: number of changes (e.g. "3 changes"), 2: number of failed checks (e.g. "1 failed") */
+			__( 'Monitoring finished: %1$s, %2$s', 'webchangedetector' ),
+			/* translators: %d: number of changes found by the monitoring run */
+			sprintf( _n( '%d change', '%d changes', $changes, 'webchangedetector' ), $changes ),
+			/* translators: %d: number of checks of the monitoring run that failed */
+			sprintf( _n( '%d failed', '%d failed', $failed, 'webchangedetector' ), $failed )
+		);
+	}
+
+	/**
+	 * Whether the current site allows changing and running monitoring checks.
+	 *
+	 * Reads the allowances cached by the page render (the option of the switched blog).
+	 * is_allowed() cannot be used here: in AJAX the admin's website details are not
+	 * loaded, so it would fall back to its defaults and overwrite the cached option.
+	 * An absent option or key means the old behavior: allowed.
+	 *
+	 * @return   bool
+	 */
+	private function is_monitoring_settings_allowed() {
+		if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+			return true;
+		}
+
+		$allowances = get_option( WCD_ALLOWANCES );
+
+		return ! is_array( $allowances )
+			|| ! array_key_exists( 'monitoring_checks_settings', $allowances )
+			|| ! empty( $allowances['monitoring_checks_settings'] );
 	}
 }

@@ -1777,9 +1777,9 @@ Settings
     text-decoration: none !important;
 }
 
-.webchangedetector .button:not([disabled]):hover,
-.webchangedetector input[type="submit"]:not([disabled]):hover,
-.webchangedetector input[type="button"]:not([disabled]):hover {
+.webchangedetector .button:not([disabled]):not([aria-disabled="true"]):hover,
+.webchangedetector input[type="submit"]:not([disabled]):not([aria-disabled="true"]):hover,
+.webchangedetector input[type="button"]:not([disabled]):not([aria-disabled="true"]):hover {
     background: #005a87 !important;
     color: #fff !important;
     transform: translateY(-1px) !important;
@@ -3744,12 +3744,44 @@ Settings
     border-color: #ffc107;
 }
 
-.wcd-manual-checks-card .wcd-mc-start-btn {
+.wcd-manual-checks-card .wcd-mc-start-btn,
+.wcd-monitoring-status-card .wcd-mc-start-btn,
+.wcd-monitoring-status-card .wcd-monitoring-run-result:not(:empty) {
     margin-top: 8px;
 }
 
+/* "Run monitoring now" button: while the group runs it shows the "Monitoring running…" label as a
+   non-clickable status (class + aria-disabled, not disabled). */
+.wcd-monitoring-run-now .wcd-running-label,
+.wcd-monitoring-run-now.wcd-is-running .wcd-run-now-label {
+    display: none;
+}
+
+.wcd-monitoring-run-now.wcd-is-running .wcd-running-label {
+    display: inline;
+}
+
+/* Core buttons.css greys the text of ".button[aria-disabled="true"]" with !important (0,3,0), which
+   beats the white of the plugin's ".webchangedetector .button" (0,2,0). The running state is a
+   status, not a disabled control: keep the white text, and override that same plugin rule's
+   "cursor: pointer !important". The hover lift is excluded in the shared hover rule via
+   :not([aria-disabled="true"]). */
+.button.button-primary.wcd-monitoring-run-now.wcd-is-running {
+    color: #fff !important;
+    cursor: default !important;
+}
+
+/* Core sets ".button .dashicons" to line-height 1.9 + vertical-align top, which puts the glyph
+   below the center of its 20px box, so the rotation orbits. Center the glyph in its box and the
+   box on the text line. */
+.button.wcd-monitoring-run-now .dashicons.spin {
+    line-height: 1;
+    vertical-align: middle;
+}
+
 /* Spinning animation for loading states */
-.wcd-status-card .dashicons.spin {
+.wcd-status-card .dashicons.spin,
+.wcd-monitoring-run-now .dashicons.spin {
     animation: wcd-spin 2s linear infinite;
 }
 

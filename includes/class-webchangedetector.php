@@ -236,6 +236,11 @@ class WebChangeDetector {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-update-results.php';
 
 		/**
+		 * Reports saved posts to the API for trigger-based monitoring.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-monitoring-trigger.php';
+
+		/**
 		 * The class responsible for auto-update-checks
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-webchangedetector-autoupdates.php';
@@ -302,6 +307,15 @@ class WebChangeDetector {
 			// Post sync hooks.
 			$this->loader->add_action( 'post_updated', $plugin_wordpress, 'update_post', 9999, 3 );
 			$this->loader->add_action( 'save_post', $plugin_wordpress, 'wcd_sync_post_after_save', 10, 3 );
+
+			// Trigger-based monitoring: report saved posts at the end of the saving request (cron only retries).
+			$monitoring_trigger = new WebChangeDetector_Monitoring_Trigger( $plugin_admin );
+			$this->loader->add_action( 'wp_after_insert_post', $monitoring_trigger, 'on_after_insert_post', 10, 4 );
+			$this->loader->add_action( 'added_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
+			$this->loader->add_action( 'updated_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
+			$this->loader->add_action( 'updated_post_meta', $monitoring_trigger, 'on_draft_meta_change', 10, 3 );
+			$this->loader->add_action( 'deleted_post_meta', $monitoring_trigger, 'on_post_meta_change', 10, 3 );
+			$this->loader->add_action( WebChangeDetector_Monitoring_Trigger::CRON_HOOK, $monitoring_trigger, 'send_pending' );
 
 			// Add async sync cron handlers.
 			$this->loader->add_action( 'wcd_async_single_post_sync', $plugin_wordpress, 'async_single_post_sync_handler', 10, 1 );

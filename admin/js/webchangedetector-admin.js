@@ -704,6 +704,101 @@ function currentlyProcessing() {
         return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
     }
 
+    /*
+     * "Run monitoring now" live status (FEAT-119). One poll chain per page: it runs while the
+     * monitoring group is running, and while the batch started with the button on this page
+     * is not finished yet, but at most 15 minutes after the group was last seen running.
+     * "Finished" comes from the batch's finished_at (server side), never from the running flag.
+     */
+    var WCD_RUN_NOW_POLL_MS = 10000;
+    var WCD_RUN_NOW_GIVE_UP_MS = 15 * 60 * 1000;
+    // seq changes with every button run, so an answer to an older poll is dropped.
+    var wcdRunNow = { timer: null, batchId: '', lastRunningAt: 0, seq: 0 };
+
+    function wcdSetRunNowRunning(button, running) {
+        button.toggleClass('wcd-is-running', running);
+        if (running) {
+            button.attr('aria-disabled', 'true');
+        } else {
+            button.removeAttr('aria-disabled');
+        }
+    }
+
+    // batchId: the batch started with the button on this page, '' for a run started elsewhere.
+    function wcdStartRunNowPoll(button, batchId) {
+        wcdRunNow.seq++;
+        wcdRunNow.batchId = batchId;
+        wcdRunNow.lastRunningAt = Date.now();
+        wcdSetRunNowRunning(button, true);
+        wcdScheduleRunNowPoll(button);
+    }
+
+    function wcdScheduleRunNowPoll(button) {
+        clearTimeout(wcdRunNow.timer);
+        wcdRunNow.timer = setTimeout(function () {
+            wcdPollRunNowStatus(button);
+        }, WCD_RUN_NOW_POLL_MS);
+    }
+
+    // running: the answer's running flag, or null when the request failed.
+    function wcdContinueRunNowPoll(button, running) {
+        var waiting = Date.now() - wcdRunNow.lastRunningAt < WCD_RUN_NOW_GIVE_UP_MS;
+        if (running || ((wcdRunNow.batchId || running === null) && waiting)) {
+            wcdScheduleRunNowPoll(button);
+            return;
+        }
+        wcdRunNow.batchId = '';
+    }
+
+    function wcdShowRunNowFinished(button, message, batchId) {
+        var result = button.siblings('.wcd-monitoring-run-result');
+        var checksUrl = button.data('checks-url');
+        result.removeClass('wcd-error-message').addClass('wcd-status-info').text(message);
+        if (checksUrl) {
+            result.append(' ').append(
+                $('<a>')
+                    .attr('href', checksUrl + '&batch_id=' + encodeURIComponent(batchId))
+                    .text(wcdL10n.viewChecks || 'View checks')
+            );
+        }
+    }
+
+    function wcdPollRunNowStatus(button) {
+        var batchId = wcdRunNow.batchId;
+        var seq = wcdRunNow.seq;
+        var data = {
+            action: 'wcd_get_monitoring_run_status',
+            nonce: wcdAjaxData.nonce
+        };
+        if (batchId) {
+            data.batch_id = batchId;
+        }
+
+        $.post(wcdAjaxData.ajax_url, data, null, 'json').done(function (response) {
+            if (seq !== wcdRunNow.seq) {
+                return;
+            }
+            var status = response && response.success && response.data ? response.data.data : null;
+            if (!status) {
+                wcdContinueRunNowPoll(button, null);
+                return;
+            }
+            if (status.running) {
+                wcdRunNow.lastRunningAt = Date.now();
+            }
+            wcdSetRunNowRunning(button, !!status.running);
+            if (status.done && batchId) {
+                wcdShowRunNowFinished(button, status.message, batchId);
+                wcdRunNow.batchId = '';
+            }
+            wcdContinueRunNowPoll(button, !!status.running);
+        }).fail(function () {
+            if (seq === wcdRunNow.seq) {
+                wcdContinueRunNowPoll(button, null);
+            }
+        });
+    }
+
     $(document).ready(function () {
 
         // Filter URL tables
@@ -800,6 +895,48 @@ function currentlyProcessing() {
             return confirm(wcdL10n.confirmCancelChecks);
         });
 
+        // Run monitoring now (whole monitoring group). Shows "Monitoring running…" while the
+        // group runs; a page opened during a run polls without a batch (no finish message).
+        $('.wcd-monitoring-run-now.wcd-is-running').each(function () {
+            wcdStartRunNowPoll($(this), '');
+        });
+
+        $(document).on('click', '.wcd-monitoring-run-now', function () {
+            var button = $(this);
+            if (button.hasClass('wcd-is-running')) {
+                return;
+            }
+            var result = button.siblings('.wcd-monitoring-run-result');
+            var count = String(parseInt(button.data('checks-count'), 10) || 0);
+            var msg = (wcdL10n.confirmRunMonitoringNow || 'Run monitoring now for all selected URLs? This uses up to %s checks.').replace('%s', count);
+            if (!confirm(msg)) {
+                return;
+            }
+
+            button.prop('disabled', true);
+            result.removeClass('wcd-status-info wcd-error-message').text('');
+
+            $.post(wcdAjaxData.ajax_url, {
+                action: 'wcd_run_monitoring_now',
+                nonce: wcdAjaxData.nonce
+            }, null, 'json').done(function (response) {
+                var message = response && response.data && response.data.message ? response.data.message : (wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
+                var success = !!(response && response.success);
+                result.addClass(success ? 'wcd-status-info' : 'wcd-error-message').text(message);
+                button.prop('disabled', false);
+                if (success) {
+                    wcdStartRunNowPoll(button, (response.data.data && response.data.data.batch_id) || '');
+                } else {
+                    // A run started after the page render (e.g. already_running): show it.
+                    // The answer only continues polling while running (one chain, see above).
+                    wcdPollRunNowStatus(button);
+                }
+            }).fail(function () {
+                result.addClass('wcd-error-message').text(wcdL10n.somethingWentWrong || 'Something went wrong. Please try again.');
+                button.prop('disabled', false);
+            });
+        });
+
         // Change bg color of comparison percentages
         var diffTile = $(".comparison-diff-tile");
         var bgColor = getDifferenceBgColor(diffTile.data("diff_percent"));
@@ -867,7 +1004,13 @@ function currentlyProcessing() {
             }
 
             var interval = parseFloat(intervalSelect.val());
-            var monitoringEnabled = $("input[name='enabled']").is(":checked");
+            // The hour row only applies to a running schedule ("Never" = triggers only).
+            var monitoringEnabled = $("input[name='enabled']").is(":checked")
+                && $(".wcd-schedule-type:checked").val() !== 'off';
+
+            if (!monitoringEnabled) {
+                hourRow.hide();
+            }
 
             // For intervals <= 1h, show the interval text instead of the dropdown.
             if (interval <= 1) {
@@ -914,6 +1057,9 @@ function currentlyProcessing() {
                 hourSelect.append(option);
             }
         }
+
+        // Exposed for toggleScheduleFields(), which lives in another closure.
+        window.wcdUpdateHourOfDayDropdown = updateHourOfDayDropdown;
 
         // Initialize hour_of_day dropdown on page load.
         updateHourOfDayDropdown();
@@ -963,7 +1109,11 @@ function currentlyProcessing() {
             txtNextScIn += h + hourLabel + m + minuteLabel;
 
             $("#next_sc_date").html(getLocalDateTime(nextScDate) + " (" + wpTzDisplay + ")");
-            $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks);
+            $("#txt_next_sc_in").html(wcdL10n.nextMonitoringChecks || 'Next monitoring checks in ');
+        }
+        // Schedule "Never": there is no next run, checks start when a page is saved.
+        if (autoEnabled && amountSelectedTotal > 0 && $("#next_sc_date").data("trigger-only") == 1) {
+            txtNextScIn = wcdL10n.checksOnPageSave || 'Checks run when a page is saved';
         }
         $("#next_sc_in").html(txtNextScIn);
 
@@ -2543,6 +2693,13 @@ jQuery(document).ready(function($) {
         var monitoringEnabled = $('.wcd-monitoring-enabled input[name="enabled"]').is(':checked');
         $('.wcd-schedule-weekly-fields').toggle(monitoringEnabled && type === 'weekly');
         $('.wcd-schedule-monthly-fields').toggle(monitoringEnabled && type === 'monthly');
+        // "Never": no scheduled runs, so interval, hour and quiet hours do not apply.
+        $('.wcd-monitoring-interval, .wcd-monitoring-quiet-hours').toggle(monitoringEnabled && type !== 'off');
+        if (type === 'off') {
+            $('.wcd-monitoring-hour-of-day').hide();
+        } else if (typeof window.wcdUpdateHourOfDayDropdown === 'function') {
+            window.wcdUpdateHourOfDayDropdown();
+        }
         // Disable hidden checkboxes so they don't submit duplicate schedule_days[].
         // This stays independent of the monitoring toggle: the checkboxes of the
         // non-selected schedule type must never be submitted.
@@ -2627,6 +2784,13 @@ function wcdValidateFormAutoSettings() {
     // Only validate if monitoring is enabled.
     var monitoringEnabled = document.querySelector('input[name="enabled"]');
     if (monitoringEnabled && monitoringEnabled.checked) {
+        // With the schedule off, the monitoring only runs through "Check when a page is saved".
+        var scheduleOff = document.querySelector('.wcd-schedule-type[value="off"]');
+        var triggerPostSave = document.querySelector('input[type="checkbox"][name="trigger_post_save"]');
+        if (scheduleOff && scheduleOff.checked && triggerPostSave && !triggerPostSave.checked) {
+            alert(wcdL10n.scheduleOffNeedsTrigger || 'With the schedule set to "Never", enable "Check when a page is saved" or disable the monitoring.');
+            return false;
+        }
         if (typeof window['validate_alert_emails'] === 'function' &&
             !window['validate_alert_emails']()) {
             return false;

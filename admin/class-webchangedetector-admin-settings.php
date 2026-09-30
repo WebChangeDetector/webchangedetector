@@ -201,6 +201,12 @@ class WebChangeDetector_Admin_Settings {
 			$args['schedule_type'] = sanitize_text_field( $group_data['schedule_type'] );
 		}
 
+		// Trigger-based monitoring. The form always sends trigger_post_save (hidden 0 + checkbox 1);
+		// without it (legacy form) the group's triggers stay untouched.
+		if ( isset( $group_data['trigger_post_save'] ) ) {
+			$args['triggers'] = \WebChangeDetector\WebChangeDetector_Monitoring_Trigger::triggers_for_api( '1' === (string) $group_data['trigger_post_save'] );
+		}
+
 		// Schedule days.
 		if ( isset( $group_data['schedule_days'] ) && is_array( $group_data['schedule_days'] ) ) {
 			$args['schedule_days'] = array_map(
@@ -234,16 +240,24 @@ class WebChangeDetector_Admin_Settings {
 
 		$result = \WebChangeDetector\WebChangeDetector_API_V2::update_group_v2( $this->admin->monitoring_group_uuid, $args );
 
+		// Keep the save path's "group accepts saved posts" flag in sync with what was just stored.
+		if ( is_array( $result ) && isset( $result['data'] ) && is_array( $result['data'] ) ) {
+			\WebChangeDetector\WebChangeDetector_Monitoring_Trigger::remember_group_settings( $result['data'] );
+		}
+
 		// Debug: Log the API response.
 		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error( 'API response: ' . wp_json_encode( $result ), 'monitoring_settings', 'debug' );
 
+		// A validation error (HTTP 422) comes back as a decoded array with `errors`, not as a string.
+		$rejected = is_array( $result ) && isset( $result['errors'] );
+
 		// Sync advanced settings to the sibling (manual) group.
-		if ( $result && ! is_string( $result ) ) {
+		if ( $result && ! is_string( $result ) && ! $rejected ) {
 			$this->sync_to_sibling_group( $advanced_settings, $this->admin->monitoring_group_uuid );
 		}
 
 		// Return standardized response format.
-		if ( $result && ! is_string( $result ) ) {
+		if ( $result && ! is_string( $result ) && ! $rejected ) {
 			return array(
 				'success' => true,
 				'message' => __( 'Monitoring settings saved successfully.', 'webchangedetector' ),
@@ -253,6 +267,8 @@ class WebChangeDetector_Admin_Settings {
 			$error_msg = __( 'Failed to save monitoring settings.', 'webchangedetector' );
 			if ( is_string( $result ) ) {
 				$error_msg .= ' ' . __( 'Error:', 'webchangedetector' ) . ' ' . $result;
+			} elseif ( $rejected && ! empty( $result['message'] ) && is_string( $result['message'] ) ) {
+				$error_msg .= ' ' . __( 'Error:', 'webchangedetector' ) . ' ' . $result['message'];
 			}
 			return array(
 				'success' => false,
@@ -1104,7 +1120,46 @@ class WebChangeDetector_Admin_Settings {
 			}
 		}
 
+		// Must stay after the is_allowed() call above: without render context it
+		// rewrites the allowances option with the defaults.
+		$this->sync_plugin_view_allowance( $website_details );
+
 		return $website_details ?? false;
+	}
+
+	/**
+	 * Mirror the API `plugin_view` allowance into the cached allowances option.
+	 *
+	 * Headless mode (FEAT-50) hides the menu, so the render path that normally caches the
+	 * allowances never runs on a hidden site. This keeps hide and un-hide working from
+	 * every get_website_details() caller (hourly schedule sync, daily sync, post saves).
+	 * Only the `plugin_view` key is written: the rest of the option carries render-path
+	 * adjustments (e.g. `upgrade_account` off for subaccounts) that the raw API values
+	 * would undo. An absent API key means visible.
+	 *
+	 * The website id check skips details that belong to another site: after a transient
+	 * API error, the static cache in get_website_details() still holds the previous
+	 * site's data inside the multisite daily sync loop.
+	 *
+	 * @param array|null $website_details Website details as returned by the API.
+	 * @return void
+	 */
+	private function sync_plugin_view_allowance( $website_details ) {
+		if ( ! is_array( $website_details ) || ! is_array( $website_details['allowances'] ?? null ) ) {
+			return;
+		}
+		if ( empty( $website_details['id'] ) || get_option( WCD_WP_OPTION_KEY_WEBSITE_ID ) !== $website_details['id'] ) {
+			return;
+		}
+
+		$cached = get_option( WCD_ALLOWANCES );
+		if ( is_array( $cached ) ) {
+			$cached['plugin_view'] = (bool) ( $website_details['allowances']['plugin_view'] ?? true );
+		} else {
+			$cached = $website_details['allowances'];
+		}
+
+		update_option( WCD_ALLOWANCES, $cached ); // No DB write when unchanged.
 	}
 
 	/**
@@ -1161,6 +1216,7 @@ class WebChangeDetector_Admin_Settings {
 				'upgrade_account'            => true,
 				'wizard_start'               => true,
 				'only_frontpage'             => false,
+				'plugin_view'                => true,
 			);
 		}
 

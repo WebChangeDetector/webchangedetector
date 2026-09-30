@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
 Tested up to: 7.1
-Stable tag: 4.5.1
+Stable tag: 4.6.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -35,6 +35,7 @@ It is the fastest way to catch layout breakage that traditional testing like PHP
 * Block library or page-builder breakage (Gutenberg, Elementor, Divi, Beaver Builder, Bricks)
 * Mobile-only layout issues that you would never see on desktop
 * Scheduled monitoring checks from every 15 minutes up to once per month
+* Monitoring checks right after a page is saved, so a broken edit shows up within minutes instead of at the next scheduled run
 * Quiet times when monitoring gets skipped to save check credits
 
 ### Three ways to detect changes
@@ -48,7 +49,7 @@ This mode hooks directly into the WordPress auto-update system. Right before Wor
 Run a check on demand right before and right after any change you make: a deploy, a plugin install, a CSS tweak, a theme switch, a hosting migration. On-demand checks are perfect for teams that already have an update workflow in tools like **MainWP, ManageWP, WP Umbrella, InfiniteWP, or WP Remote**. Use those tools to push your updates, and use WebChange Detector to verify visually that nothing broke. The plugin captures the pre-state, you push your changes, you trigger the post-state, and you get a side-by-side diff.
 
 **3. Monitoring: continuous visual surveillance with alerts.**
-Schedule recurring checks at fixed intervals. The plugin captures and compares your selected pages on schedule, and emails you the moment a difference appears. Monitoring catches changes that nobody on your team pushed: hacks, defacement, expired SSL, third-party-script breakage, broken CDN assets, accidental edits, server-side issues, theme regressions, vendor outages. It is your "site is silently broken" alarm.
+Schedule recurring checks at fixed intervals. Or let a save trigger it: a few minutes after someone edits a published page, WebChange Detector checks exactly that page. A "Run monitoring now" button starts a full check right away, for example after a deploy. The plugin captures and compares your selected pages on schedule, and emails you the moment a difference appears. Monitoring catches changes that nobody on your team pushed: hacks, defacement, expired SSL, third-party-script breakage, broken CDN assets, accidental edits, server-side issues, theme regressions, vendor outages. It is your "site is silently broken" alarm.
 
 You can mix all three. A typical agency setup: auto-update checks on every client site so nothing breaks silently during automated WordPress updates, monitoring at 24h intervals on the same selection, and on-demand checks fired from the agency's MainWP or ManageWP dashboard before scheduled maintenance windows.
 
@@ -75,7 +76,7 @@ You can mix all three. A typical agency setup: auto-update checks on every clien
 * **Works on staging, password-protected, and firewalled sites.** Basic-auth credentials and an optional static IP for firewall whitelisting come built in. Most visual-regression plugins refuse to run on anything that is not public.
 * **Free plan with 10 monthly checks.** On-demand checks, auto-update checks, and the API are all included; no paywall on the core workflow.
 * **AI-powered noise filtering.** Sliders, counters and other randomized content are filtered out automatically so you stop drowning in false positives.
-* **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features.
+* **Built for multisite.** Network-activated or per-site, with sub-site allowances so agencies can hand each client a controlled slice of features, and agencies can hide the plugin from a client's WP admin entirely while updates and checks keep running.
 * **WPML and Polylang ready.** Each language version is synced and checked separately.
 * **Share results without giving WP access.** Every comparison has a public link you can paste into Slack or send to a designer.
 * **Desktop and/or mobile in every check.** Choose which screen size(s) you want to check per site.
@@ -205,7 +206,7 @@ Yes. Every check has a public share link that opens the comparison view in a bro
 
 = Can I trigger checks from a deploy pipeline? =
 
-Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks. 
+Yes. The REST API covers websites, groups, comparisons, AI rules, and webhooks. One API call starts a monitoring run of all monitored pages, ideal as the last step of a deploy script. 
 
 = What is monitored besides visual changes? =
 
@@ -221,6 +222,18 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.6.0 =
+* Feature: Check when a page is saved: a few minutes after a logged-in person saves a published page or post with changed content, WebChange Detector checks only that page against its last monitoring screenshot. Opt-in in the Monitoring settings, uses checks, requires WordPress 5.6 or newer. Automated saves (WP-Cron, WP-CLI, imports) never start a check, bulk edits are capped, and saving is never slowed down by the WebChange Detector service
+* Feature: New Monitoring schedule option "Never", so checks run only when a page is saved
+* Feature: "Run monitoring now" button on the Monitoring status card checks every selected URL once, right away (uses checks)
+* Feature: The Monitoring status card shows "Monitoring running…" while a monitoring run is in progress, and a summary with a link to the checks when a run you started has finished
+* Feature: Agencies can hide the plugin menu and admin bar entry from the WebChange Detector dashboard; URL sync, Auto Update Checks and Monitoring keep running. Network super admins always keep access, the plugin shows up again when the site is no longer connected, and define( 'WCD_FORCE_SHOW_UI', true ); in wp-config.php brings it back at any time
+* Improvement: Page builder layouts (Elementor, Bricks, Beaver Builder, Oxygen) and a changed featured image count as a change when a page is saved
+* Improvement: While you keep editing a page, the check waits until you stop, so intermediate states are not checked
+* Improvement: The Monitoring schedule setting "Run on" is now called "Run in intervals"
+* Fix: Monitoring settings that the WebChange Detector service rejects now show an error instead of a success message
+* Fix: Auto Update Checks wait for WordPress maintenance mode to end before taking the after-update screenshots, so the maintenance page is no longer captured by mistake
+
 = 4.5.1 =
 * Feature: Install WordPress security releases immediately, even outside the Auto Update Check timeframe (on by default; plugin, theme and major WordPress updates still wait for the next scheduled check)
 * Feature: Alert emails for On-Demand Checks can now be set in the On-Demand Check settings
@@ -534,6 +547,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.6.0 =
+Adds Monitoring checks when a page is saved, a "Run monitoring now" button with a live running status, and an option for agencies to hide the plugin UI. Auto Update Checks now wait for WordPress maintenance mode to end. Recommended for all users.
 
 = 4.5.1 =
 Installs WordPress security releases immediately even outside your Auto Update Check timeframe, adds alert emails for On-Demand Checks, and moves the Auto Update Check result email to the WebChange Detector service for more reliable delivery. Recommended for all users.

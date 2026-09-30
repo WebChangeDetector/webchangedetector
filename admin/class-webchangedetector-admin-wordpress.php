@@ -77,6 +77,11 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function enqueue_styles() {
+		// Headless mode: no WCD CSS on any admin page of this site.
+		if ( WebChangeDetector_Admin_Utils::is_plugin_ui_hidden() ) {
+			return;
+		}
+
 		wp_enqueue_style( 'jquery-ui-accordion' );
 		wp_enqueue_style( $this->plugin_name, WCD_PLUGIN_URL . 'admin/css/webchangedetector-admin.css', array(), $this->version, 'all' );
 		wp_enqueue_style( $this->plugin_name . '-dashboard', WCD_PLUGIN_URL . 'admin/css/webchangedetector-dashboard.css', array( $this->plugin_name ), $this->version, 'all' );
@@ -113,9 +118,14 @@ class WebChangeDetector_Admin_WordPress {
 					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
 					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s check settings? This cannot be undone.', 'webchangedetector' ),
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
+					/* translators: %s: Maximum number of checks the monitoring run can use */
+					'confirmRunMonitoringNow'  => __( 'Run monitoring now for all selected URLs? This uses up to %s checks.', 'webchangedetector' ),
+					'viewChecks'               => __( 'View checks', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
 					'nextMonitoringChecks'     => __( 'Next monitoring checks in ', 'webchangedetector' ),
+					'checksOnPageSave'         => __( 'Checks run when a page is saved', 'webchangedetector' ),
+					'scheduleOffNeedsTrigger'  => __( 'With the schedule set to "Never", enable "Check when a page is saved" or disable the monitoring.', 'webchangedetector' ),
 					'notTracking'              => __( 'Not Tracking', 'webchangedetector' ),
 					'somethingWentWrong'       => __( 'Something went wrong. Please try again.', 'webchangedetector' ),
 					'unexpectedResponse'       => __( 'Unexpected response from server. Please try again.', 'webchangedetector' ),
@@ -442,7 +452,7 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function enqueue_admin_bar_scripts() {
-		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
+		if ( get_option( 'wcd_disable_admin_bar_menu' ) || WebChangeDetector_Admin_Utils::is_plugin_ui_hidden() ) {
 			return;
 		}
 
@@ -484,6 +494,12 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function wcd_plugin_setup_menu() {
+		// Headless mode: register no site admin page at all. Unregistered ?page= slugs
+		// are refused by WordPress core, so no extra access guard is needed.
+		if ( WebChangeDetector_Admin_Utils::is_plugin_ui_hidden() ) {
+			return;
+		}
+
 		require_once 'partials/webchangedetector-admin-display.php';
 		$allowances = get_option( WCD_ALLOWANCES );
 		// Super admins on network-activated multisite must keep full access on every
@@ -884,7 +900,7 @@ class WebChangeDetector_Admin_WordPress {
 	 * @return   void
 	 */
 	public function wcd_admin_bar_menu( $wp_admin_bar ) {
-		if ( get_option( 'wcd_disable_admin_bar_menu' ) ) {
+		if ( get_option( 'wcd_disable_admin_bar_menu' ) || WebChangeDetector_Admin_Utils::is_plugin_ui_hidden() ) {
 			return;
 		}
 
