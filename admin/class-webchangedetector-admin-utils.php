@@ -457,7 +457,13 @@ class WebChangeDetector_Admin_Utils {
 	 * stored before the key existed) means visible. URL sync, auto updates and trigger
 	 * monitoring are not affected.
 	 *
-	 * Reads only the cached `wcd_allowances` option, never the API. Call it only inside
+	 * The UI is hidden only while a website id is stored for this site. The cached flag
+	 * is corrected only by sync_plugin_view_allowance(), which needs that id; once it is
+	 * gone (site cloned to another domain, website deleted in the dashboard) a stale
+	 * falsy flag would otherwise lock the admin out of reconnecting for good.
+	 *
+	 * Reads only the cached `wcd_allowances` and website id options (both per site),
+	 * never the API. Call it only inside
 	 * hook callbacks, never at hook registration: the multisite bypass calls
 	 * is_super_admin(), which is not available before pluggable.php is loaded.
 	 *
@@ -473,6 +479,7 @@ class WebChangeDetector_Admin_Utils {
 		$allowances = get_option( WCD_ALLOWANCES );
 		return is_array( $allowances )
 			&& array_key_exists( 'plugin_view', $allowances )
-			&& empty( $allowances['plugin_view'] );
+			&& empty( $allowances['plugin_view'] )
+			&& ! empty( get_option( WCD_WP_OPTION_KEY_WEBSITE_ID ) );
 	}
 }
