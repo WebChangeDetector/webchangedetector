@@ -699,8 +699,6 @@ class WebChangeDetector_Monitoring_Trigger {
 	/**
 	 * Display name of the editor when all posts were saved by the same person, else null.
 	 *
-	 * Never an email address (WordPress may use the login, often an email, as display name).
-	 *
 	 * @param array $entries Pending entries (post ID => editor and attempts).
 	 * @return string|null
 	 */
@@ -710,7 +708,20 @@ class WebChangeDetector_Monitoring_Trigger {
 			return null;
 		}
 
-		$editor = get_userdata( reset( $editor_ids ) );
+		return self::user_display_name( reset( $editor_ids ) );
+	}
+
+	/**
+	 * Display name of a user as the API's `editor` field, else null.
+	 *
+	 * The single rule for every monitoring trigger request: never an email address
+	 * (WordPress may use the login, often an email, as display name), at most 100 chars.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string|null
+	 */
+	public static function user_display_name( $user_id ) {
+		$editor = get_userdata( $user_id );
 		if ( ! $editor || '' === $editor->display_name || is_email( $editor->display_name ) ) {
 			return null;
 		}

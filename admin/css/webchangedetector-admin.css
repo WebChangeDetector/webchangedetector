@@ -3744,7 +3744,9 @@ Settings
     border-color: #ffc107;
 }
 
-.wcd-manual-checks-card .wcd-mc-start-btn {
+.wcd-manual-checks-card .wcd-mc-start-btn,
+.wcd-monitoring-status-card .wcd-mc-start-btn,
+.wcd-monitoring-status-card .wcd-monitoring-run-result:not(:empty) {
     margin-top: 8px;
 }
 

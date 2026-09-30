@@ -313,6 +313,30 @@ class WebChangeDetector_API_V2 {
 	}
 
 	/**
+	 * Start a monitoring check for every active URL of the monitoring group right now.
+	 *
+	 * Success is a response with a non-null `data.batch_id`; rejections carry a top-level
+	 * `reason` (e.g. 'already_running', 'not_enough_credits', 'trigger_not_enabled').
+	 *
+	 * @param string      $group_id The monitoring group UUID.
+	 * @param string|null $editor   Optional display name of the user who started the run.
+	 * @return mixed|string
+	 */
+	public static function run_monitoring_now_v2( $group_id, $editor = null ) {
+		$args = array(
+			'action'   => 'monitoring/trigger',
+			'group_id' => $group_id,
+			'type'     => 'manual_trigger',
+			'scope'    => 'all',
+		);
+		if ( ! empty( $editor ) ) {
+			$args['editor'] = $editor;
+		}
+
+		return self::api_v2( $args, 'POST', false, null, true );
+	}
+
+	/**
 	 * Push back the waiting trigger checks of autosaved pages (trigger-based monitoring).
 	 *
 	 * Only pages already waiting for a check are extended; the API never starts a check

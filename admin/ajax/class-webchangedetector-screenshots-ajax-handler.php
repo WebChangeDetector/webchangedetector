@@ -74,6 +74,7 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 		add_action( 'wp_ajax_get_new_change_detections', array( $this, 'ajax_get_new_change_detections' ) );
 		add_action( 'wp_ajax_get_completed_pre_screenshots', array( $this, 'ajax_get_completed_pre_screenshots' ) );
 		add_action( 'wp_ajax_get_failed_queues_json', array( $this, 'ajax_get_failed_queues_json' ) );
+		add_action( 'wp_ajax_wcd_run_monitoring_now', array( $this, 'ajax_run_monitoring_now' ) );
 	}
 
 	/**
@@ -583,5 +584,125 @@ class WebChangeDetector_Screenshots_Ajax_Handler extends WebChangeDetector_Ajax_
 				'Exception: ' . $e->getMessage()
 			);
 		}
+	}
+
+	/**
+	 * Handle "Run monitoring now" AJAX request.
+	 *
+	 * Starts a monitoring check for every active URL of the site's monitoring group.
+	 * The group is read after the blog switch, never from the cached admin property,
+	 * which still holds the group of the blog the request started on.
+	 */
+	public function ajax_run_monitoring_now() {
+		if ( ! $this->security_check() ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in security_check().
+		$blog_id = isset( $_POST['wcd_blog_id'] ) ? sanitize_text_field( wp_unslash( $_POST['wcd_blog_id'] ) ) : '';
+		if ( 'all' === $blog_id ) {
+			$this->send_error_response(
+				__( 'Please select a single website to run monitoring.', 'webchangedetector' ),
+				'Run monitoring now rejected in all-sites mode'
+			);
+			return;
+		}
+
+		if ( ! $this->is_monitoring_settings_allowed() ) {
+			$this->send_error_response(
+				__( 'You do not have permission to perform this action.', 'webchangedetector' ),
+				'Run monitoring now denied by monitoring_checks_settings allowance',
+				403
+			);
+			return;
+		}
+
+		$website_groups = get_option( WCD_WEBSITE_GROUPS );
+		$group_id       = is_array( $website_groups ) ? ( $website_groups[ WCD_AUTO_DETECTION_GROUP ] ?? '' ) : '';
+		if ( empty( $group_id ) ) {
+			$this->send_error_response(
+				__( 'Monitoring is not enabled for this website.', 'webchangedetector' ),
+				'Run monitoring now: no monitoring group stored'
+			);
+			return;
+		}
+
+		$response = \WebChangeDetector\WebChangeDetector_API_V2::run_monitoring_now_v2(
+			$group_id,
+			WebChangeDetector_Monitoring_Trigger::user_display_name( get_current_user_id() )
+		);
+
+		if ( is_array( $response ) && ! empty( $response['data']['batch_id'] ) ) {
+			$accepted = is_array( $response['data']['accepted'] ?? null ) ? count( $response['data']['accepted'] ) : 0;
+			$this->send_success_response(
+				null,
+				sprintf(
+					/* translators: %d: number of URLs the monitoring check was started for */
+					_n( 'Monitoring check started for %d URL.', 'Monitoring check started for %d URLs.', $accepted, 'webchangedetector' ),
+					$accepted
+				)
+			);
+			return;
+		}
+
+		$this->send_error_response( $this->get_run_monitoring_now_error( $response ), 'Run monitoring now rejected' );
+	}
+
+	/**
+	 * Map a rejected "Run monitoring now" API response to a fixed user message.
+	 *
+	 * Keys on the top-level `reason` only and never echoes the API message. The post_save
+	 * handling (disabled transient) is deliberately not touched here: a manual run is not a
+	 * saved post, so a 'trigger_not_enabled' answer must not pause trigger-based monitoring.
+	 *
+	 * @param    mixed $response The API response.
+	 * @return   string Translated error message.
+	 */
+	private function get_run_monitoring_now_error( $response ) {
+		if ( is_array( $response ) && isset( $response['data'] ) && is_array( $response['data'] ) ) {
+			return __( 'There are no active URLs to check.', 'webchangedetector' );
+		}
+
+		$messages = array(
+			'already_running'     => __( 'A monitoring check is already running for this website.', 'webchangedetector' ),
+			'not_enough_credits'  => __( 'Not enough checks left in your plan.', 'webchangedetector' ),
+			'trigger_not_enabled' => __( 'Monitoring is not enabled for this website.', 'webchangedetector' ),
+			'unsupported'         => __( 'None of the selected URLs can be checked.', 'webchangedetector' ),
+		);
+
+		$reason = is_array( $response ) && is_string( $response['reason'] ?? null ) ? $response['reason'] : '';
+		if ( isset( $messages[ $reason ] ) ) {
+			return $messages[ $reason ];
+		}
+
+		\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
+			'Run monitoring now failed. Response: ' . wp_json_encode( $response ),
+			'monitoring_trigger',
+			'error'
+		);
+
+		return __( 'The monitoring check could not be started. Please try again later.', 'webchangedetector' );
+	}
+
+	/**
+	 * Whether the current site allows changing and running monitoring checks.
+	 *
+	 * Reads the allowances cached by the page render (the option of the switched blog).
+	 * is_allowed() cannot be used here: in AJAX the admin's website details are not
+	 * loaded, so it would fall back to its defaults and overwrite the cached option.
+	 * An absent option or key means the old behavior: allowed.
+	 *
+	 * @return   bool
+	 */
+	private function is_monitoring_settings_allowed() {
+		if ( WebChangeDetector_Multisite::should_bypass_allowances() ) {
+			return true;
+		}
+
+		$allowances = get_option( WCD_ALLOWANCES );
+
+		return ! is_array( $allowances )
+			|| ! array_key_exists( 'monitoring_checks_settings', $allowances )
+			|| ! empty( $allowances['monitoring_checks_settings'] );
 	}
 }

@@ -747,6 +747,13 @@ class WebChangeDetector_Admin {
 						data-date="<?php echo esc_attr( $date_next_sc ); ?>"
 						data-enabled="<?php echo esc_attr( $monitoring_enabled ? '1' : '0' ); ?>"
 						data-trigger-only="<?php echo esc_attr( $schedule_off ? '1' : '0' ); ?>"></div>
+					<?php if ( $monitoring_enabled && $has_selected_urls && $this->settings_handler->is_allowed( 'monitoring_checks_settings' ) ) : ?>
+						<button type="button" class="button button-primary wcd-mc-start-btn wcd-monitoring-run-now"
+							data-checks-count="<?php echo esc_attr( (int) $group['selected_checks_count'] ); ?>">
+							<span class="dashicons dashicons-controls-play"></span> <?php esc_html_e( 'Run monitoring now', 'webchangedetector' ); ?>
+						</button>
+						<div class="wcd-monitoring-run-result" aria-live="polite"></div>
+					<?php endif; ?>
 				</div>
 				<div class="wcd-monitoring-stats">
 					<div class="wcd-stat-item">

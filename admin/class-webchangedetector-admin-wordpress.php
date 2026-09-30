@@ -118,6 +118,8 @@ class WebChangeDetector_Admin_WordPress {
 					/* translators: %s: Settings type (e.g., "WordPress", "Manual", etc.) */
 					'confirmOverwriteSettings' => __( 'Are you sure you want to overwrite the %s check settings? This cannot be undone.', 'webchangedetector' ),
 					'confirmCancelChecks'      => __( 'Are you sure you want to cancel the on-demand checks?', 'webchangedetector' ),
+					/* translators: %s: Maximum number of checks the monitoring run can use */
+					'confirmRunMonitoringNow'  => __( 'Run monitoring now for all selected URLs? This uses up to %s checks.', 'webchangedetector' ),
 					'noTrackingsActive'        => __( 'No trackings active', 'webchangedetector' ),
 					'currently'                => __( 'Currently', 'webchangedetector' ),
 					'nextMonitoringChecks'     => __( 'Next monitoring checks in ', 'webchangedetector' ),
