@@ -668,13 +668,16 @@ class WebChangeDetector_Logs_Controller {
 													echo '<p>';
 													esc_html_e( 'WordPress automatic updates are disabled on this website, e.g. by your hosting provider or another tool. Auto Update Checks were skipped because WordPress will not perform any updates.', 'webchangedetector' );
 													echo '</p>';
-													echo '<p>';
-													if ( ! empty( $entry['error']['details']['override_active'] ) ) {
-														esc_html_e( 'The WebChange Detector override is enabled, but WP auto updates are still disabled by the server configuration.', 'webchangedetector' );
-													} else {
-														esc_html_e( 'You can re-enable WP auto updates on the Auto Update Checks settings page.', 'webchangedetector' );
+													// A removed core runner cannot be fixed with the override, so skip the hint.
+													if ( 'core_runner_removed' !== ( $entry['error']['details']['cause'] ?? '' ) ) {
+														echo '<p>';
+														if ( ! empty( $entry['error']['details']['override_active'] ) ) {
+															esc_html_e( 'The WebChange Detector override is enabled, but WP auto updates are still disabled by the server configuration.', 'webchangedetector' );
+														} else {
+															esc_html_e( 'You can re-enable WP auto updates on the Auto Update Checks settings page.', 'webchangedetector' );
+														}
+														echo '</p>';
 													}
-													echo '</p>';
 												} else {
 													// Display technical error details.
 													echo '<p><strong>' . esc_html__( 'Phase:', 'webchangedetector' ) . '</strong> ';
