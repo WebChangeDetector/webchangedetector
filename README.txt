@@ -3,7 +3,7 @@ Contributors: Mike.Miler,Repat
 Tags: visual regression testing, monitoring, auto update checks, visual checks
 Requires at least: 5.5
 Tested up to: 7.1
-Stable tag: 4.6.0
+Stable tag: 4.6.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -222,6 +222,13 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.6.1 =
+* Improvement: The screenshot delay in the group settings now has a minimum of 10 seconds, and the default is 10 seconds. A lower delay saved earlier is shown as 10 seconds and saved as 10 seconds the next time the settings are saved
+* Fix: Auto Update Checks now start only when WordPress will actually install an update. Before, a check could run and use up checks although WordPress then skipped the update, for example because it needed FTP credentials to write files, the plugin or theme is managed with Git or SVN, or the update requires a newer PHP version
+* Fix: Auto Update Checks are skipped when your hosting provider or an update manager has turned off WordPress's own automatic update process, and the Logs page explains why
+* Fix: Clearing the screenshot delay field now resets the group to the default of 10 seconds instead of silently keeping the old value
+* Fix: In multisite "All Websites" mode, saving the settings with an empty screenshot delay now resets the delay of every sub-site to the default of 10 seconds, including sub-sites that had their own delay
+
 = 4.6.0 =
 * Feature: Check when a page is saved: a few minutes after a logged-in person saves a published page or post with changed content, WebChange Detector checks only that page against its last monitoring screenshot. Opt-in in the Monitoring settings, uses checks, requires WordPress 5.6 or newer. Automated saves (WP-Cron, WP-CLI, imports) never start a check, bulk edits are capped, and saving is never slowed down by the WebChange Detector service
 * Feature: New Monitoring schedule option "Never", so checks run only when a page is saved
@@ -547,6 +554,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.6.1 =
+Auto Update Checks now start only when WordPress will really install an update, so no checks are used for skipped updates. The screenshot delay minimum and default are now 10 seconds. Note for multisite: saving "All Websites" settings with an empty screenshot delay resets all sub-sites to the default.
 
 = 4.6.0 =
 Adds Monitoring checks when a page is saved, a "Run monitoring now" button with a live running status, and an option for agencies to hide the plugin UI. Auto Update Checks now wait for WordPress maintenance mode to end. Recommended for all users.

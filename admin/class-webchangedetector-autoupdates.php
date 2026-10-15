@@ -767,7 +767,13 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Check if any WordPress updates are available.
+	 * Check whether WordPress would auto-install any pending update in this pass.
+	 *
+	 * The per-item decision is core's own: find_core_auto_update() for core and
+	 * WP_Automatic_Updater::should_update() with the contexts core's update() uses
+	 * for plugins and themes. A hand-rolled copy drifted from core and started
+	 * pre/post batches for items WordPress then skipped. should_update() may send
+	 * core's "update available" mail for a declined core offer; that is accepted.
 	 *
 	 * @return array|false Array with update info if updates available, false otherwise.
 	 */
@@ -797,25 +803,37 @@ class WebChangeDetector_Autoupdates {
 			'total'   => 0,
 		);
 
+		// Core only loads the updater in its own priority-10 cron callback, after our
+		// priority-5 callback runs, so load the same files core's wp_maybe_auto_update()
+		// loads (wp-includes/update.php). require_once makes core's later load a no-op.
+		require_once ABSPATH . 'wp-admin/includes/admin.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		$updater = new \WP_Automatic_Updater();
+
 		// Check for core updates. The forced wp_version_check() above refreshed the
-		// update_core transient, so the helper reads fresh data.
-		$core_offer = $this->get_core_autoupdate_offer();
+		// update_core transient; find_core_auto_update() is the exact call core's run() uses.
+		$core_offer = find_core_auto_update();
 		if ( $core_offer ) {
 			$has_updates['core'] = true;
 			++$has_updates['total'];
 			\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
-				'Core auto-update available: ' . $core_offer->version,
+				'Core auto-update available: ' . $core_offer->current,
 				'check_for_available_updates',
 				'debug'
 			);
 		}
 
 		// Check for plugin updates (only those WordPress will actually auto-install).
+		// Context WP_PLUGIN_DIR as in WP_Automatic_Updater::update().
 		$plugin_updates = get_site_transient( 'update_plugins' );
 		if ( $plugin_updates && ! empty( $plugin_updates->response ) ) {
 			$auto_updatable_count = 0;
 			foreach ( $plugin_updates->response as $item ) {
-				if ( $this->wp_would_auto_update_item( 'plugin', $item ) ) {
+				// Skip malformed offers; core's should_update() reads ->plugin unguarded.
+				if ( empty( $item->plugin ) ) {
+					continue;
+				}
+				if ( $updater->should_update( 'plugin', $item, WP_PLUGIN_DIR ) ) {
 					++$auto_updatable_count;
 				}
 			}
@@ -831,11 +849,17 @@ class WebChangeDetector_Autoupdates {
 		}
 
 		// Check for theme updates (only those WordPress will actually auto-install).
+		// Context get_theme_root() as in WP_Automatic_Updater::update().
 		$theme_updates = get_site_transient( 'update_themes' );
 		if ( $theme_updates && ! empty( $theme_updates->response ) ) {
 			$auto_updatable_count = 0;
 			foreach ( $theme_updates->response as $item ) {
-				if ( $this->wp_would_auto_update_item( 'theme', (object) $item ) ) {
+				// Theme offers are arrays; core's run() casts them the same way.
+				$item = (object) $item;
+				if ( empty( $item->theme ) ) {
+					continue;
+				}
+				if ( $updater->should_update( 'theme', $item, get_theme_root( $item->theme ) ) ) {
 					++$auto_updatable_count;
 				}
 			}
@@ -863,15 +887,22 @@ class WebChangeDetector_Autoupdates {
 	}
 
 	/**
-	 * Find the pending core 'autoupdate' offer WordPress would install automatically.
+	 * Find the first pending core 'autoupdate' offer that passes Core_Upgrader::should_update_to_version().
+	 *
+	 * Serves only the core security bypass (maybe_bypass_for_core_security()). The
+	 * regular installability check uses core's find_core_auto_update() instead.
+	 * The bypass must not switch to it: find_core_auto_update() returns the HIGHEST
+	 * passing offer, so on WP_AUTO_UPDATE_CORE = true sites a pending major
+	 * 'autoupdate' offer would fail is_minor_core_offer() and block the minor
+	 * security release; it would also add filesystem probes and core's decline
+	 * mail to every out-of-window pass.
 	 *
 	 * Side-effect-free: reads the update_core transient WITHOUT forcing a refresh.
-	 * Callers must ensure the transient is fresh (check_for_available_updates() runs
-	 * wp_version_check() first; the security bypass runs inside the same request
-	 * that wp_version_check() fired wp_maybe_auto_update from).
+	 * The bypass runs inside the same request that wp_version_check() fired
+	 * wp_maybe_auto_update from, so the transient is fresh.
 	 *
-	 * Only 'autoupdate' offers count (mirroring find_core_auto_update()); 'upgrade'
-	 * offers (e.g. a pending major release) are manual-only.
+	 * Only 'autoupdate' offers count; 'upgrade' offers (e.g. a pending major
+	 * release) are manual-only.
 	 *
 	 * @return object|false The core update offer object, or false if none.
 	 */
@@ -897,7 +928,7 @@ class WebChangeDetector_Autoupdates {
 			if ( empty( $update->version ) || ! \Core_Upgrader::should_update_to_version( $update->version ) ) {
 				\WebChangeDetector\WebChangeDetector_Admin_Utils::log_error(
 					'Core auto-update offer ' . ( $update->version ?? 'unknown' ) . ' rejected by Core_Upgrader::should_update_to_version(). Not counting it.',
-					'check_for_available_updates',
+					'wp_maybe_auto_update',
 					'debug'
 				);
 				continue;
@@ -1025,44 +1056,6 @@ class WebChangeDetector_Autoupdates {
 		);
 
 		return true;
-	}
-
-	/**
-	 * Replicate WordPress core's per-item auto-update decision for plugins and themes.
-	 *
-	 * Mirrors the item rule in WP_Automatic_Updater::should_update()
-	 * (wp-admin/includes/class-wp-automatic-updater.php) WITHOUT its side effects
-	 * (filesystem credential check, core notification mails): the wp.org-forced
-	 * `$item->autoupdate` flag OR the `auto_update_{$type}s` site option, minus
-	 * `disable_autoupdate`, passed through the `auto_update_{$type}` filter.
-	 * Counting only the site option (old behavior) missed forced security updates
-	 * and filter-managed setups, and counted filter-blocked items.
-	 *
-	 * @param string $type Either 'plugin' or 'theme'.
-	 * @param object $item Update offer item from the update_{plugins|themes} transient.
-	 * @return bool True when WordPress would auto-install this item.
-	 */
-	private function wp_would_auto_update_item( $type, $item ) {
-		$update = ! empty( $item->autoupdate );
-
-		// wp_is_auto_update_enabled_for_type() lives in wp-admin/includes/update.php, which core
-		// only loads in its own priority-10 cron callback, AFTER our priority-5 callback runs.
-		// Load it ourselves (core loads the superset moments later in the same request); keep the
-		// function_exists guard as belt-and-braces, defaulting to enabled like core.
-		require_once ABSPATH . 'wp-admin/includes/update.php';
-		$type_enabled = ! function_exists( 'wp_is_auto_update_enabled_for_type' ) || wp_is_auto_update_enabled_for_type( $type );
-		if ( ! $update && $type_enabled ) {
-			$enabled_items = (array) get_site_option( "auto_update_{$type}s", array() );
-			$update        = in_array( $item->{$type} ?? '', $enabled_items, true );
-		}
-
-		// The disable_autoupdate flag overrides any user choice, but filters still apply.
-		if ( ! empty( $item->disable_autoupdate ) ) {
-			$update = false;
-		}
-
-		/** This filter is documented in wp-admin/includes/class-wp-automatic-updater.php */
-		return (bool) apply_filters( "auto_update_{$type}", $update, $item );
 	}
 
 	/**
@@ -2001,16 +1994,20 @@ class WebChangeDetector_Autoupdates {
 
 		if ( false === $wcd_pre_update_data ) {
 
-			// Step 9: Skip when WP automatic updates are disabled (e.g. by a hosting
-			// tool via the 'automatic_updater_disabled' filter or constant). Core's
-			// updater would exit immediately, so pre/post screenshots would only
-			// produce pointless "no changes" results.
-			$wp_updates_status = WebChangeDetector_Autoupdate_Guard::get_status();
-			if ( $wp_updates_status['effective_disabled'] ) {
+			// Step 9: Skip when core will not run its updater in this request: WP
+			// automatic updates are disabled (e.g. by a hosting tool via the
+			// 'automatic_updater_disabled' filter or constant), or a host or update
+			// manager removed core's wp_maybe_auto_update runner. Either way pre/post
+			// screenshots would only produce pointless "no changes" results. Core also
+			// skips registering the runner for AJAX requests and non-main sites
+			// (wp-includes/update.php); core would not run there either.
+			$wp_updates_status   = WebChangeDetector_Autoupdate_Guard::get_status();
+			$core_runner_missing = false === has_action( 'wp_maybe_auto_update', 'wp_maybe_auto_update' );
+			if ( $wp_updates_status['effective_disabled'] || $core_runner_missing ) {
 				$this->log_auto_update_error(
 					'wp_updates_disabled',
 					array(
-						'cause'           => $wp_updates_status['cause'],
+						'cause'           => $wp_updates_status['effective_disabled'] ? $wp_updates_status['cause'] : 'core_runner_removed',
 						'override_active' => WebChangeDetector_Autoupdate_Guard::is_override_enabled(),
 					)
 				);
