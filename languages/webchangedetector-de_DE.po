@@ -3252,13 +3252,17 @@ msgstr ""
 msgid "10 (default)"
 msgstr "10 (Standard)"
 
-#: admin/partials/components/settings/advanced-screenshot-settings.php:147
+#: admin/partials/components/settings/advanced-screenshot-settings.php:155
 msgid "Seconds"
 msgstr "Sekunden"
 
 #: admin/partials/components/settings/advanced-screenshot-settings.php:158
-msgid "Minimum 10 seconds, maximum 60 seconds (default 10 seconds)."
-msgstr "Minimum 10 Sekunden, Maximum 60 Sekunden (Standard 10 Sekunden)."
+msgid ""
+"Minimum 10 seconds, maximum 60 seconds. Leave empty for default (10 "
+"seconds)."
+msgstr ""
+"Minimum 10 Sekunden, Maximum 60 Sekunden. Leer lassen für Standard (10 "
+"Sekunden)."
 
 #: admin/partials/components/settings/auto-update-info.php:115
 msgid "Currently enabled auto-updates: "
