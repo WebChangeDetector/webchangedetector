@@ -2874,16 +2874,16 @@ msgstr ""
 msgid "Adjust the delay between screenshot starts to reduce server load."
 msgstr ""
 
-#: admin/partials/components/settings/advanced-screenshot-settings.php:145
-msgid "7 (default)"
+#: admin/partials/components/settings/advanced-screenshot-settings.php:153
+msgid "10 (default)"
 msgstr ""
 
-#: admin/partials/components/settings/advanced-screenshot-settings.php:147
+#: admin/partials/components/settings/advanced-screenshot-settings.php:155
 msgid "Seconds"
 msgstr ""
 
-#: admin/partials/components/settings/advanced-screenshot-settings.php:150
-msgid "Minimum 7 seconds, maximum 60 seconds. Leave empty for default (7 seconds)."
+#: admin/partials/components/settings/advanced-screenshot-settings.php:158
+msgid "Minimum 10 seconds, maximum 60 seconds. Leave empty for default (10 seconds)."
 msgstr ""
 
 #: admin/partials/components/settings/auto-update-info.php:115
