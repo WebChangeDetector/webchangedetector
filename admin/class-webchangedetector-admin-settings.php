@@ -94,10 +94,11 @@ class WebChangeDetector_Admin_Settings {
 			$args['proxy_type'] = empty( $proxy_type ) ? 'none' : $proxy_type;
 		}
 
-		// Screenshot Delay.
+		// Screenshot Delay in seconds, clamped to 10..60. Empty sends null, which api_v2()
+		// form-encoding currently drops, so the stored value is kept.
 		if ( isset( $postdata['screenshot_delay'] ) ) {
 			$delay                    = $postdata['screenshot_delay'];
-			$args['screenshot_delay'] = '' === $delay ? null : intval( $delay );
+			$args['screenshot_delay'] = '' === $delay ? null : min( 60, max( 10, intval( $delay ) ) );
 		}
 
 		// Screenshot Region. Constrain to the allowed values; 'auto' lets the API

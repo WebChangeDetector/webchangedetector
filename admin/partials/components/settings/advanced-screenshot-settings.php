@@ -135,19 +135,27 @@ $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr
 		<div class="wcd-description"><?php esc_html_e( 'Adjust the delay between screenshot starts to reduce server load.', 'webchangedetector' ); ?></div>
 	</div>
 	<div class="wcd-form-control">
+		<?php
+		// The API applies stored values below 10 as 10 (older groups may still hold 7 to 9).
+		// Show them as 10 so the browser's min validation never blocks saving this form.
+		$screenshot_delay = $group_and_urls['screenshot_delay'] ?? '';
+		if ( '' !== $screenshot_delay ) {
+			$screenshot_delay = max( 10, (int) $screenshot_delay );
+		}
+		?>
 		<div class="wcd-inline">
 			<input type="number"
 				id="screenshot_delay"
 				name="screenshot_delay"
-				min="7"
+				min="10"
 				max="60"
 				step="1"
-				placeholder="<?php esc_attr_e( '7 (default)', 'webchangedetector' ); ?>"
-				value="<?php echo esc_attr( $group_and_urls['screenshot_delay'] ?? '' ); ?>">
+				placeholder="<?php esc_attr_e( '10 (default)', 'webchangedetector' ); ?>"
+				value="<?php echo esc_attr( $screenshot_delay ); ?>">
 			<span><?php esc_html_e( 'Seconds', 'webchangedetector' ); ?></span>
 		</div>
 		<small class="wcd-field-help">
-			<?php esc_html_e( 'Minimum 7 seconds, maximum 60 seconds. Leave empty for default (7 seconds).', 'webchangedetector' ); ?>
+			<?php esc_html_e( 'Minimum 10 seconds, maximum 60 seconds (default 10 seconds).', 'webchangedetector' ); ?>
 		</small>
 	</div>
 </div>
