@@ -148,14 +148,14 @@ $advanced_settings_style_attr = $advanced_settings_style ? ' style="' . esc_attr
 				id="screenshot_delay"
 				name="screenshot_delay"
 				min="10"
-				max="60"
+				max="120"
 				step="1"
 				placeholder="<?php esc_attr_e( '10 (default)', 'webchangedetector' ); ?>"
 				value="<?php echo esc_attr( $screenshot_delay ); ?>">
 			<span><?php esc_html_e( 'Seconds', 'webchangedetector' ); ?></span>
 		</div>
 		<small class="wcd-field-help">
-			<?php esc_html_e( 'Minimum 10 seconds, maximum 60 seconds. Leave empty for default (10 seconds).', 'webchangedetector' ); ?>
+			<?php esc_html_e( 'Minimum 10 seconds, maximum 120 seconds. Leave empty for default (10 seconds).', 'webchangedetector' ); ?>
 		</small>
 	</div>
 </div>
