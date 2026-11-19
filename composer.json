@@ -10,8 +10,8 @@
         "lint:fix": "phpcbf"
     },
     "require-dev": {
-        "wp-coding-standards/wpcs": "^3.1.0",
-        "squizlabs/php_codesniffer": ">=3.10.1"
+        "wp-coding-standards/wpcs": "^3.4.1",
+        "squizlabs/php_codesniffer": "^3.13.6"
     },
     "config": {
         "allow-plugins": {
