@@ -222,6 +222,9 @@ In addition to layout, the browser console log is checked for errors.
 7. AI rules: train AI to ignore regions of a check in future runs to eliminate false-positive alarms.
 
 == Changelog ==
+= 4.6.2 =
+* Improvement: The screenshot delay in the group settings can now be set up to 180 seconds (before 60). Minimum and default stay at 10 seconds
+
 = 4.6.1 =
 * Improvement: The screenshot delay in the group settings now has a minimum of 10 seconds, and the default is 10 seconds. A lower delay saved earlier is shown as 10 seconds and saved as 10 seconds the next time the settings are saved
 * Fix: Auto Update Checks now start only when WordPress will actually install an update. Before, a check could run and use up checks although WordPress then skipped the update, for example because it needed FTP credentials to write files, the plugin or theme is managed with Git or SVN, or the update requires a newer PHP version
@@ -554,6 +557,9 @@ In addition to layout, the browser console log is checked for errors.
 * Launch Stable Version
 
 == Upgrade Notice ==
+
+= 4.6.2 =
+The screenshot delay can now be set up to 180 seconds.
 
 = 4.6.1 =
 Auto Update Checks now start only when WordPress will really install an update, so no checks are used for skipped updates. The screenshot delay minimum and default are now 10 seconds. Note for multisite: saving "All Websites" settings with an empty screenshot delay resets all sub-sites to the default.
